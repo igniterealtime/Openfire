@@ -1804,11 +1804,14 @@ public class LdapManager {
         List<String> results = new ArrayList<String>();
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
-        try {
-            if (pageSizeStr != null) pageSize = Integer.parseInt(pageSizeStr, -1);
-        }
-        catch (NumberFormatException e) {
-            // poorly formatted number, ignoring
+        if (pageSizeStr != null)
+        {
+            try {
+                 pageSize = Integer.parseInt(pageSizeStr); /* radix -1 is invalid */
+            }
+            catch (NumberFormatException e) {
+                // poorly formatted number, ignoring
+            }
         }
         Boolean clientSideSort = false;
         String clientSideSortStr = properties.get("ldap.clientSideSorting");
@@ -2016,11 +2019,13 @@ public class LdapManager {
     public Integer retrieveListCount(String attribute, String searchFilter) {
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
-        try {
-            if (pageSizeStr != null) pageSize = Integer.parseInt(pageSizeStr, -1);
-        }
-        catch (NumberFormatException e) {
-            // poorly formatted number, ignoring
+        if (pageSizeStr != null) {
+            try {
+                pageSize = Integer.parseInt(pageSizeStr); /* radix -1 is invalid */
+           }
+           catch (NumberFormatException e) {
+               // poorly formatted number, ignoring
+           }
         }
         LdapContext ctx = null;
         LdapContext ctx2 = null;

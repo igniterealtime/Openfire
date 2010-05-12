@@ -35,8 +35,8 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%!
-    final int DEFAULT_RANGE = 15;
-    final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
+    final int DEFAULT_RANGE = 100;
+    final int[] RANGE_PRESETS = {25, 50, 75, 100, 500, 1000, -1};
 %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -102,7 +102,7 @@
     <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
     <option value="<%= aRANGE_PRESETS %>"
-            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%= aRANGE_PRESETS %>
+            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= userCount %><%}%>
     </option>
 
     <% } %>

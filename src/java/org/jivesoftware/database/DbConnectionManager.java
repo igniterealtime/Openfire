@@ -60,9 +60,9 @@ public class DbConnectionManager {
     private static boolean transactionsSupported;
     // True if the database requires large text fields to be streamed.
     private static boolean streamTextRequired;
-    // True if the database supports the Statement.setMaxRows() method.
+    /** True if the database supports the Statement.setMaxRows() method. */
     private static boolean maxRowsSupported;
-    // True if the database supports the Statement.setFetchSize() method.
+    /** True if the database supports the rs.setFetchSize() method. */
     private static boolean fetchSizeSupported;
     // True if the database supports correlated subqueries.
     private static boolean subqueriesSupported;
@@ -70,6 +70,9 @@ public class DbConnectionManager {
     private static boolean scrollResultsSupported;
     // True if the database supports batch updates.
     private static boolean batchUpdatesSupported;
+    /** True if the database supports the Statement.setFetchSize()) method. */
+    static boolean pstmt_fetchSizeSupported = true;
+
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 
@@ -535,6 +538,54 @@ public class DbConnectionManager {
     }
 
     /**
+     * Limits the number of the results in a result set (to startIndex + numResults).
+     * Sets the fetch size depending on the features of the JDBC driver and make
+     * sure that the size is not bigger than 500. 
+     * @param pstmt the PreparedStatement
+     * @param startIndex the first row with interesting data
+     * @param numResults the number of interesting results
+     */
+    public static void limitRowsAndFetchSize(PreparedStatement pstmt, int startIndex, int numResults) {
+        final int MAX_FETCHRESULTS = 500;
+        final int maxRows = startIndex + numResults;
+        setMaxRows(pstmt, maxRows);
+        if (pstmt_fetchSizeSupported)
+        {
+            if (scrollResultsSupported) {
+                setFetchSize(pstmt, Math.min(MAX_FETCHRESULTS, numResults));
+            }
+            else {
+                setFetchSize(pstmt, Math.min(MAX_FETCHRESULTS, maxRows));            
+            }
+        }
+    }
+    
+    /**
+     * Sets the number of rows that the JDBC driver should buffer at a time.
+     * The operation is automatically bypassed if Openfire knows that the
+     * the JDBC driver or database doesn't support it.
+     *
+     * @param pstmt the PreparedStatement to set the fetch size for.
+     * @param fetchSize the fetchSize.
+     */
+    public static void setFetchSize(PreparedStatement pstmt, int fetchSize) {
+        if (pstmt_fetchSizeSupported) {
+            try {
+                pstmt.setFetchSize(fetchSize);
+            }
+            catch (Throwable t) {
+                // Ignore. Exception may happen if the driver doesn't support
+                // this operation and we didn't set meta-data correctly.
+                // However, it is a good idea to update the meta-data so that
+                // we don't have to incur the cost of catching an exception
+                // each time.
+                Log.error("Disabling JDBC method pstmt.setFetchSize(fetchSize).", t);
+                pstmt_fetchSizeSupported = false;
+            }
+        }
+    }
+
+    /**
      * Returns the current connection provider. The only case in which this
      * method should be called is if more information about the current
      * connection provider is needed. Database connections should always be
@@ -879,6 +930,10 @@ public class DbConnectionManager {
 
     public static boolean isFetchSizeSupported() {
         return fetchSizeSupported;
+    }
+    
+    public static boolean isPstmtFetchSizeSupported() {
+        return pstmt_fetchSizeSupported;
     }
 
     public static boolean isSubqueriesSupported() {

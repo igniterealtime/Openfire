@@ -642,13 +642,19 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         // See if the cache size is within 3% of being too big. If so, clean out
         // cache until it's 10% free.
-        if (cacheSize >= maxCacheSize * .97) {
+        int desiredSize = (int)(maxCacheSize * .97);
+        if (cacheSize >= desiredSize) {
             // First, delete any old entries to see how much memory that frees.
             deleteExpiredEntries();
-            int desiredSize = (int)(maxCacheSize * .90);
-            while (cacheSize > desiredSize) {
-                // Get the key and invoke the remove method on it.
-                remove(lastAccessedList.getLast().object);
+            desiredSize = (int)(maxCacheSize * .90);
+            if (cacheSize > desiredSize) {
+                long t = System.currentTimeMillis();
+                do {
+                    // Get the key and invoke the remove method on it.
+                    remove(lastAccessedList.getLast().object);
+                } while (cacheSize > desiredSize);
+                t = System.currentTimeMillis() - t;
+                Log.warn("Cache " + name + " was full, shrinked to 90% in " + t + "ms.");
             }
         }
     }

@@ -1,0 +1,266 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Openfire: Building the Source</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Building the Source</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+	
+	<div id="pageBody">
+
+
+<p>This document provides detailed information for developers that wish to
+compile and make changes to the Openfire source code.</p>
+
+<p>For additional developer resources, please visit:
+<a href="http://www.igniterealtime.org">
+http://www.igniterealtime.org</a>. The Openfire build process is based on Ant. Visit the
+<a href="http://ant.apache.org/">Ant website</a>
+for more information. There is no need to download and install Ant - a version of it is included
+in this distribution.
+<p>
+This documentation is divided into three sections:
+<ol>
+ <li> <a href="#source">Source</a> -- get te Openfire source code.
+	<li> <a href="#setup">Setup</a> -- how to setup your environment for Openfire development.
+	<li> <a href="#tasks">Build tasks</a> -- tasks that can be performed using the build program.
+
+</ol>
+
+<p><a name="source"><b><font color="#0066cc">1.</font> Get the Openfire Source</b></a><p>
+
+You can get the Openfire source code by downloading a source distribution or
+by checking out the source code from CVS. Instructions for both options can
+be found on the <a href="http://www.igniterealtime.org/downloads/source.jsp">source page</a>. 
+
+<p><a name="setup"><b><font color="#0066cc">2.</font> Setup Your Environment</b></a><p>
+
+Getting your machine ready for development requires a few steps. Wherever
+possible, instructions are provided for both Unix/Linux and Windows users.
+<p>
+
+<b><a name="javaSetup">Configure Java for Openfire</a></b>
+<ul>
+	Java 5 (JDK 1.5) must be installed and setup on your machine. To test the installation,
+	open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
+	Java with "java -version" -- it must version 1.5 or greater.
+	If Java isn't installed, download a copy from the
+	<a href="http://java.sun.com/">Java website</a>.
+	<p>
+	<font color="red">Important!</font> -- the Openfire build tool needs to know
+	where Java is installed on your system. You must configure the "JAVA_HOME"
+	environment variable to point to the correct directory. Instructions on
+	how to set this variable for various platforms are as follows:
+	<p>
+	<ul>
+		<li> Unix/Linux
+			<ol>
+
+				<li>Edit the ".profile" file in your home directory (or
+					corresponding file for your shell).
+				<li>Set the JAVA_HOME environment variable by adding the
+					following line to the file:
+					<p><span class="code">
+					export JAVA_HOME=/usr/local/jdk1.5
+					</span>
+					<p>
+					The value "/usr/local/jdk1.5" should be replaced with your actual
+					Java directory. Be sure there are no spaces after the end of
+					the directory name. Do not add an extra slash after the directory name.
+				<li>Save changes to the file and then "source" it:
+					<p><span class="code">
+					source .profile
+					</span>
+					<p>
+
+					The JAVA_HOME variable should now be configured correctly.
+			</ol>
+	 	<p>
+		<li> WindowsNT/2000/XP
+			<ol>
+				<li>Navigate to your desktop and right click on "My Computer";
+					choose properties.
+				<li>Select the "Advanced" tab and click on the
+					"Environment Variables" button.
+				<li>Click the "New..." button in the System variables section.
+					Enter the variable name "JAVA_HOME" and set the variable
+					value to the full path of your Java installation. For example,
+					"c:\jdk1.5". Be sure to not add an extra slash to the end
+					of the directory name.
+				<li>Click "OK" in all of the menus to accept the changes.
+				<li>Close any open command prompt windows. The next time you
+					open a command prompt, the "JAVA_HOME" variable will be set
+					correctly.
+			</ol>
+		<p>
+
+		<li> Windows95/98
+			<ol>
+				<li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
+				<li>Add a line to the end of the file that resembles the following:
+					<p><span class="code">
+					set JAVA_HOME=c:\jdk1.5
+					</span>
+					<p>
+					The value "c:\jdk1.5" should be replaced with your actual
+					Java directory. Be sure there are no spaces between
+					the "=" sign or after the end of the directory name. Do
+					not add an extra slash after the directory name.
+				<li>Save changes to autoexec.bat and restart your computer.
+			</ol>
+
+	</ul>
+</ul>
+
+<p><b><a name="ant">Install the Ant Build Tool</a></b><p>
+
+The Openfire build process uses Ant, so that tool must be installed
+and configured on your computer. First download Ant from: 
+<a href="http://ant.apache.org/">http://ant.apache.org</a>. Next, follow
+the <a href="http://ant.apache.org/manual/installlist.html">installation instructions</a>.
+
+<p><b><a name="checkout">Test the Build Script</a></b><p>
+<ul>
+Navigate into the subdirectory of this distribution named "build" via the command-line.<p>
+
+<table border="0" cellpadding="2" cellspacing="0"><td bgcolor="#EEEEEE">
+<font face="verdana, arial, helvetica" size="2">
+<font color="red">Linux/Unix users only:</font>You must make the ant script
+executable. From the build directory, type:
+<p></font><code>
+chmod u+x ant
+</code>
+</td></table>
+
+<p>
+Now, invoke the build tool to compile the Openfire source code
+
+<p>
+Windows:<span class="code"> ant  <br> </span><br clear="left">
+
+Unix/Linux:<span class="code"> ./ant </span>
+<p>
+
+If the build tool is invoked correctly and Openfire compiles, you've correctly
+configured your copy of the Openfire source distribution.
+
+</ul>
+
+<p><b>Finished!</b><p>
+<ul>
+If you've gotten this far, you've finished setting up the Openfire source
+distribution. Now, read below to learn about some of the tasks that you can perform
+with the build tool.
+</ul>
+
+<br><br>
+
+<p><b><a name="tasks"><font color="#0066cc">3.</font> Build Tasks</a></b><p>
+
+	The list of common build tasks is below. All build commands should be
+	run from the "build" directory of your Openfire distribution.
+
+	<br><br>
+
+	For a full list of the commands and a brief description from the command line, type
+	<code>ant -projecthelp</code>. For more complete help on several commands, 
+    read the documentation below.
+
+	<br><br>
+
+	To execute a build task, type <code>ant [options] targetname</code> where "targetname" is
+	one of the targets listed below:
+
+	<ul>
+
+        <li><a href="#noparams"><i>Default</i></a>
+        <li><a href="#openfire">openfire</a>
+        <li><a href="#plugins">plugins</a>
+        <li><a href="#clean">clean</a>
+	</ul>
+<p>
+Each task is documented with a syntax guide and description. Optional paramaters
+for each task are enclosed with braces. If you would like to permanently set the
+value of a property, add it to build/build.xml file.
+
+<!-- default -->
+
+<p><b><a name="noparams"><i>Default</i></a></b>
+<ul>
+<i>Syntax:</i><p>
+
+<span class="code"> ant <br></span>
+
+<p><i>Description:</i></p>
+
+Equivalent of calling "ant <a href="#jar">openfire</a>".
+
+
+<p>[<a href="#tasks">return to task list</a>]
+</ul>
+
+
+<!--JAR-->
+<p><b><a name="openfire">openfire</a></b>
+<ul>
+<i>Syntax:</i><p>
+
+<span class="code"> ant openfire <br></span>
+
+<p><i>Description:</i></p>
+
+Builds Openfire into the <tt>target/openfire</tt> directory. You can then launch
+Openfire using the scripts in <tt>target/openfire/bin</tt>.
+<p>[<a href="#tasks">return to task list</a>]
+</ul>
+
+<!--PLUGINS-->
+<p><b><a name="jar">plugins</a></b>
+
+<ul>
+<i>Syntax:</i><p>
+
+<span class="code"> ant plugins <br></span>
+
+<p><i>Description:</i></p>
+
+Builds all plugins into the <tt>target/openfire/plugins</tt> directory.
+<p>[<a href="#tasks">return to task list</a>]
+
+</ul>
+
+<!--CLEAN-->
+<p><b><a name="clean">clean</a></b>
+<ul>
+<i>Syntax:</i><p>
+
+<span class="code"> ant clean <br></span>
+
+<p><i>Description:</i></p>
+
+Cleans all artifacts of the build process.<p>
+
+<p>[<a href="#tasks">return to task list</a>]
+</ul>
+
+
+	</div>
+
+</div>
+
+</body>
+</html>

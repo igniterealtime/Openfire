@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+
+if [ -f /tmp/openfireInstallBackup/openfire.xml ]; then
+        /bin/mv /tmp/openfireInstallBackup/openfire.xml /opt/openfire/conf/openfire.xml
+	/bin/chown daemon:daemon /opt/openfire/conf/openfire.xml
+fi
+
+if [ -f /tmp/openfireInstallBackup/keystore ]; then
+        /bin/mv /tmp/openfireInstallBackup/keystore /opt/openfire/resources/security/keystore
+	/bin/chown daemon:daemon /opt/openfire/resources/security/keystore
+fi
+
+if [ -f /tmp/openfireInstallBackup/truststore ]; then
+        /bin/mv /tmp/openfireInstallBackup/truststore /opt/openfire/resources/security/truststore
+	/bin/chown daemon:daemon /opt/openfire/resources/security/truststore
+fi
+
+if [ -f /tmp/openfireInstallBackup/client.truststore ]; then
+        /bin/mv /tmp/openfireInstallBackup/client.truststore /opt/openfire/resources/security/client.truststore
+	/bin/chown daemon:daemon /opt/openfire/resources/security/client.truststore
+fi
+
+if [ -d "/tmp/openfireInstallBackup" ]; then
+	/bin/rm -rf /tmp/openfireInstallBackup
+fi
+
+if [ -x "/usr/sbin/svccfg" ]; then
+	if [ -d "/opt/openfire/resources/solaris" ]; then
+		/usr/sbin/svccfg import /opt/openfire/resources/solaris/openfire.xml
+	fi
+fi
+
+if [ -x "/usr/sbin/svcadm" ]; then
+	/usr/sbin/svcadm enable openfire
+fi
+
+/bin/chmod o-rwx /opt/openfire

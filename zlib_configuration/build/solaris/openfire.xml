@@ -1,0 +1,33 @@
+<?xml version='1.0'?>
+<!DOCTYPE service_bundle SYSTEM '/usr/share/lib/xml/dtd/service_bundle.dtd.1'>
+<service_bundle type='manifest' name='export'>
+  <service name='network/openfire' type='service' version='0'>
+    <create_default_instance enabled='true'/>
+    <single_instance/>
+    <dependency name='loopback' grouping='require_all' restart_on='error' type='service'>
+      <service_fmri value='svc:/network/loopback:default'/>
+    </dependency>
+    <dependency name='physical' grouping='require_all' restart_on='error' type='service'>
+      <service_fmri value='svc:/network/physical:default'/>
+    </dependency>
+    <dependency name='fs-local' grouping='require_all' restart_on='none' type='service'>
+      <service_fmri value='svc:/system/filesystem/local'/>
+    </dependency>
+    <exec_method name='start' type='method' exec='/opt/openfire/bin/openfirectl start' timeout_seconds='60'>
+      <method_context/>
+    </exec_method>
+    <exec_method name='stop' type='method' exec='/opt/openfire/bin/openfirectl stop' timeout_seconds='60'>
+      <method_context/>
+    </exec_method>
+    <stability value='Stable'/>
+    <template>
+      <common_name>
+        <loctext xml:lang='C'>Openfire XMPP Server</loctext>
+      </common_name>
+      <documentation>
+        <doc_link name='igniterealtime.org' uri='http://www.igniterealtime.org/projects/openfire/index.jsp'/>
+      </documentation>
+    </template>
+  </service>
+</service_bundle>
+

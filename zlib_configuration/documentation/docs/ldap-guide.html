@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<title>Openfire: LDAP Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>LDAP Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
+
+<h2>Introduction</h2>
+
+<p>
+    This document details how to configure your Openfire installation to use
+    an external directory such as Open LDAP or Active Directory. Integration with a directory
+    lets users authenticate using their directory username and password. Optionally, you can
+    configure Openfire to load user profile and group information from the directory. Any group in
+    Openfire can be designated as a shared group, which means that you can pre-populate user's
+    rosters using directory groups.
+</p>
+
+<h2>Background</h2>
+
+<p>
+    LDAP (Lightweight Directory Access Protocol) has emerged as a dominant standard
+    for user authentication and for storage of user profile data. It serves as a
+    powerful tool for large organizations (or those organizations integrating many
+    applications) to simplify user management issues. Many LDAP servers are available,
+    such as <a href="http://www.openldap.org/">Open LDAP</a>, 
+    <a href="http://www.microsoft.com/windowsserver2003/technologies/directory/activedirectory/">Active Directory</a>, 
+    and Novell's <a href="http://www.novell.com/products/edirectory/">eDirectory</a>.
+
+</p>
+
+<p>
+    By default, Openfire stores all user data in its database and performs
+    authentication using database lookups. The LDAP module replaces that
+    functionality and allows Openfire to:
+    <ul>
+        <li>Use a LDAP server to authenticate a user's identity.</li>
+        <li>Load user profile information from a LDAP directory.</li>
+        <li>Load group information from an LDAP directory.</li>
+    </ul>
+
+    <b>Note:</b> Openfire treats the LDAP directory as read-only.
+</p>
+
+<p>
+    This document will guide you through configuring LDAP support in Openfire. These
+    instructions assume that you're a competent LDAP user, and that you're familiar
+    with Openfire setup issues.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+    The Openfire setup tool includes an easy to use LDAP setup wizard.
+    Choose the LDAP option on the Profile Settings page to configure directory integration.
+    The wizard along with in-line help will guide you through the rest of the process.
+    <a href="#activedirectory">Specific tips</a> for working with Active Directory are noted below.
+
+    <img src="images/setup_ldap.png" alt="LDAP settup" width="710" height="400" vspace="10">
+    <br clear="left"/>
+
+    If you have already completed the setup process but need to enable LDAP integration, you
+    can re-run the setup tool. To do so:
+    <ol>
+
+        <li>
+            Stop Openfire.
+        </li>
+        <li>Edit <tt>conf/openfire.xml</tt> in your Openfire installation folder and set
+            &lt;setup&gt;true&lt;/setup&gt; to &lt;setup&gt;false&lt;/setup&gt;.
+        </li>
+        <li>
+            Restart Openfire and enter the setup tool.
+        </li>
+    </ol>
+
+</p>
+
+<h2><a name="activedirectory">Working with Active Directory</a></h2>
+
+<p>Microsoft's Active Directory is a broadly deployed directory system that supports the
+LDAP protocol. You'll be prompted for several LDAP fields when connecting to Active Directory
+servers, some of which are detailed below:
+</p>
+
+<ul>
+    <li><b>Base DN</b><br/><br/>
+        <p>The base DN describes where to load users and groups. If you're using a default
+            Active Directory setup, all user accounts and groups are located in the
+            "Users" folder under your domain. In LDAP form, that's <tt>cn=Users;dc=&lt;Your Domain&gt;</tt>.
+            To get more specific, say your domain is <tt>activedirectory.jivesoftware.com</tt>. In that case,
+            your base DN would be <tt>cn=Users;dc=activedirectory,dc=jivesoftware,dc=com</tt>. If
+            you've customized where users are stored, you'll just need to replicate that folder
+            structure using LDAP syntax.
+        </p>
+    </li>
+    <li><b>Administrator DN</b><br/><br/>
+        <p>By default, Active Directory does not allow anonymous LDAP connections. Therefore,
+            you'll need to enter the DN of a user that's allowed to connect to the server and read
+            all user and group data. Unless you've created a special user account for this
+            purpose, an easy choice is to use the built-in administrator account. By default,
+            the administrator DN is in the form <tt>cn=Administrator,dc=&lt;Your Domain&gt;</tt>.
+            Using our previous example,
+            <tt>cn=Administrator,cn=users,dc=activedirectory,dc=jivesoftware,dc=com</tt>.
+        </p>
+    </li>
+
+</ul>
+
+
+<div align="center"><img src="images/active_directory.png" width="629" height="414"></div>
+
+
+<h3>Manually Editing the Config File</h3>
+
+<p>
+    If you prefer to edit the configuration file to enable LDAP integration directly, use the following
+    instructions. Open the configuration file <tt>conf/openfire.xml</tt> from your Openfire
+    installation in your favorite
+    editor and add or change the following settings. Properties flagged with (<font color="red">
+    <b>*</b></font>)
+    must be set. Properties flagged with (<font color="red"><b>**</b></font>) must be set in order
+    to enable LDAP group
+    support, all other properties are optional:
+
+</p>
+<ul>
+    <b>Main Settings</b><br><br>
+
+    <li>provider.user.className <font color="red"><b>*</b></font> -- set the value to
+        "org.jivesoftware.openfire.ldap.LdapUserProvider".</li>
+    <li>provider.auth.className <font color="red"><b>*</b></font> -- set the value to
+        "org.jivesoftware.openfire.ldap.LdapAuthProvider".</li>
+
+    <li>ldap.host <font color="red"><b>*</b></font> -- LDAP server host; e.g. localhost or
+        machine.example.com, etc. It is possible to use many LDAP servers but all of them
+        <b>should share the same configuration</b> (e.g. SSL, baseDN, admin account, etc).
+        To specify many LDAP servers use the comma or the white space character as delimiter.</li>
+    <li>ldap.port -- LDAP server port number. If this property is not set, the default value is
+        389.</li>
+    <li>ldap.readTimeout -- The value of this property is the string representation of an integer
+        representing the read timeout in milliseconds for LDAP operations. If the LDAP provider doesn't
+        get an LDAP response within the specified period, it aborts the read attempt. The integer should
+        be greater than zero. An integer less than or equal to zero means no read timeout is specified which
+        is equivalent to waiting for the response infinitely until it is received which defaults
+        to the original behavior. <i>Requires Java 1.6 or later.</i></li>
+    <li>ldap.baseDN <font color="red"><b>*</b></font> -- the starting DN that searches for users
+        will performed with. The entire subtree under the base DN will be searched for user accounts.
+    </li>
+
+    <li>ldap.alternateBaseDN -- a second DN in the directory can optionally be set. If set, the
+        alternate base DN will be used for authentication, loading single users and displaying a
+        list of users. Content in the base DN and the alternate DN will be treated as one.
+    <li>ldap.adminDN -- a directory administrator's DN. All directory operations will be
+            performed
+            with this account. The admin must be able to perform searches and load user records. The
+            user does
+            not need to be able to make changes to the directory, as Openfire treats the
+            directory as read-only.
+            If this property is not set, an anonymous login to the server will be attempted.
+        </li>
+    <li>ldap.adminPassword -- the password for the directory administrator.</li>
+    <li>ldap.usernameField -- the field name that the username lookups will be performed on. If
+            this property is not set, the default value is <tt>uid</tt>. Active Directory users
+            should try the default value <tt>sAMAccountName</tt>.</li>
+    <li>ldap.nameField -- the field name that holds the user's name. If this property is not
+            set, the default value is <tt>cn</tt>. Active Directory users should use the default value
+            <tt>displayName</tt>.</li>
+
+    <li>ldap.emailField -- the field name that holds the user's email address. If this property
+            is not set, the default value is <tt>mail</tt>. Active Directory users should use the
+            the default value <tt>mail</tt>.</li>
+     <li>ldap.searchFields -- the LDAP fields that will be used for user searches. If
+        this property is not set, the username, name, and email fields will be searched. An example
+        value for this field is "Username/uid,Name/cname". That searches the uid and cname fields
+        in the directory and labels them as "Username" and "Name" in the search UI. You can add
+        as many fields as you'd like using comma-delimited "DisplayName/Field" pairs. You should
+        ensure that any fields used for searching are properly indexed so that searches return
+        quickly.</li>
+    <li>ldap.searchFilter -- an optional search filter to append to the default filter when
+        loading users. The default search filter is created using the attribute specified by
+        ldap.usernameField. For example, if the username field is "uid", then the default search
+        filter would be "(uid={0})" where {0} is dynamically replaced with the username being searched
+        for.
+        <br/><br/>
+        The most common usage of a search filter is to limit the entries that are users
+        based on objectClass. For example, a reasonable search filter for a default Active Directory
+        installation is "(objectClass=organizationalPerson)". When combined with the default
+        filter, the actual search executed would be
+        "(&(sAMAccountName={0})(objectClass=organizationalPerson))".</li>
+    <li>ldap.subTreeSearch -- by default, Openfire will search the entire LDAP sub-tree (starting
+        at the base DN) when trying to load users. If this property is set to <tt>false</tt>, then
+        sub-tree searching is disabled and users will only be loaded directly from the base DN.
+        Disabling sub-tree can improve performance, but it will fail to find users if your directory
+        is setup to use sub-folders under the base DN.</li>
+
+    <br><br>
+    <b>Group Settings</b><br><br>
+
+    <li>provider.group.className <font color="red"><b>**</b></font> -- set the value to
+        "org.jivesoftware.openfire.ldap.LdapGroupProvider".</li>
+    <li>ldap.groupNameField <font color="red"><b>**</b></font> -- the field name that the groupname
+        lookups will be performed on. If this property is not set, the default value is <tt>cn</tt>.</li>
+    <li>ldap.groupMemberField -- the field name that holds the members in a group. If this property
+        is not set, the default value is <tt>member</tt>.</li>
+
+    <li>ldap.groupDescriptionField -- the field name that holds the description a group. If this
+        property is not set, the default value is <tt>description</tt>.</li>
+    <li>ldap.posixMode <font color="red"><b>**</b></font> -- a value of "true" means that users are
+        stored within the group by their user name alone. A value of "false" means that users are
+        stored by their entire DN within the group. If this property is not set, the default value
+        is <tt>false</tt>. The posix mode must be set correctly for your server in
+        order for group integration to work. Posix modes for common LDAP servers:
+        <ul>
+            <li>ActiveDirectory: false</li>
+        </ul>
+    </li>
+
+    <li>ldap.groupSearchFilter -- an optional search filter to append to the default filter when
+        loading groups. The default group search filter is created using the attribute specified
+        by ldap.groupNameField. For example, if the group name field is "cn", then the default
+        group search filter would be "(cn={0})" where {0} is dynamically replaced with the group
+        name being searched for.
+        <br/><br/>
+        The most common usage of a search filter is to limit the entries that are groups
+        based on objectClass. For example, a reasonable search filter for a default Active Directory
+        installation is "(objectClass=group)". When combined with the default
+        filter, the actual search executed would be
+        "(&(cn={0})(objectClass=group))".</li>
+
+    <br><br>
+    <b>Connection Settings</b><br><br>
+
+    <li>ldap.debugEnabled -- a value of "true" if debugging should be turned on. When on, trace
+            information about buffers sent and received by the LDAP provider is written to
+            System.out</li>
+    <li>ldap.sslEnabled -- a value of "true" to enable SSL connections to your LDAP server. If
+            you
+            enable SSL connections, the LDAP server port number most likely should be changed to
+            636.</li>
+
+    <li>ldap.initialContextFactory -- the name of the class that should be used as an initial
+        context
+        factory. if this value is not specified, "com.sun.jndi.ldap.LdapCtxFactory" will be used
+        instead.
+        Most users will not need to set this value.
+    <li>ldap.autoFollowReferrals -- a value of "true" indicates that LDAP referrals should be
+        automatically followed. If this property is not set or is set to "false", the referral policy used is left
+        up to to the provider. A referral is an entity that is used to redirect a client's request to
+        another server. A referral contains the names and locations of other objects. It is sent by the server to
+        indicate that the information that the client has requested can be found at another location (or
+        locations), possibly at another server or several servers.
+    <li>ldap.connectionPoolEnabled -- a value of "false" disables LDAP connection pooling. If this
+        property is not set, the default value is "true".
+
+</ul>
+
+<p>
+    Below is a sample config file section:
+</p>
+<pre>
+    &lt;jive&gt;
+      ...
+      &lt;ldap&gt;
+
+        &lt;host&gt;&lt;/host&gt;
+        &lt;port>389&lt;/port&gt;
+        &lt;usernameField&gt;uid&lt;/usernameField&gt;
+        &lt;nameField&gt;cn&lt;/nameField&gt;
+
+        &lt;emailField&gt;mail&lt;/emailField&gt;
+        &lt;baseDN&gt;ou=People;dc=example;dc=com&lt;/baseDN&gt;
+        &lt;adminDN&gt;cn=Directory Administrator&lt;/adminDN&gt;
+        &lt;adminPassword&gt;&lt;/adminPassword&gt;
+
+      &lt;/ldap&gt;
+      &lt;provider&gt;
+        &lt;user&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+
+        &lt;auth&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+        &lt;group&gt;
+          &lt;className&gt;org.jivesoftware.openfire.ldap.LdapGroupProvider&lt;/className&gt;
+
+        &lt;/group&gt;
+      &lt;/provider&gt;
+      ...
+    &lt;/jive&gt;
+</pre>
+
+<p>You'll most likely want to change which usernames are authorized to login to the
+    admin console. By default, only the user with username "admin" is allowed to login. However,
+    you may have different users in your LDAP directory that you'd like to be administrators. The
+    list of authorized usernames is controlled via the <tt>admin.authorizedUsernames</tt>
+    property. For example, to let the usersnames "joe" and "jane" login to the admin console:</p>
+
+<pre>
+    &lt;jive&gt;
+      ...
+      &lt;admin&gt;
+        ...
+        &lt;authorizedUsernames&gt;joe, jane&lt;/authorizedUsernames&gt;
+      &lt;/admin&gt;
+
+      ...
+    &lt;/jive&gt;
+</pre>
+
+<p><a name=""><h2>Custom Search Filter</h2></a></p>
+
+<p>By default, Openfire will load all objects under the baseDN that
+    have the attribute specified by <tt>ldap.usernameField</tt>. In the
+    case that the username field is set to "uid", the search for all users
+    would be "(uid=*)". However, there are cases when this logic does
+    not work -- for example, when a directory contains other objects besides
+    users but all objects share "uid" as a unique identifier field. In that
+    case, you may need to specify a custom search filter using
+    <tt>ldap.searchFilter</tt>. As an example, a search filter for all users
+    with a "uid" and a "cn" value of "joe" would
+    be:</p>
+
+<pre>(&(uid={0})(cn=joe))</pre>
+
+<p>The "{0}" value in the filter above is a token that should be present in
+    all custom search filters. It will be dynamically replaced with "*" when
+    loading the list of all users or a username when loading a single user.</p>
+
+<p>Some custom search filters may include reserved XML entities such as
+    "&". In that case, you must enter the search filter into the openfire.xml
+    file using CDATA:
+
+    <pre>&lt;searchFilter&gt;&lt;![CDATA[(&(sAMAccountName={0})(|(givenName=GEORGE)(givenName=admin)))]]&gt;&lt;/searchFilter&gt;</pre>
+
+    <p><a name="ctxFactory"><h2>Custom Inital Context Factory</h2></a></p>
+
+    <p>
+
+        Some LDAP servers or application servers may require that a different LDAP
+        initial context factory be used rather than the default (com.sun.jndi.ldap.LdapCtxFactory).
+        You can set a custom initial context factory by adding the following to openfire.xml:
+
+<pre>
+  &lt;ldap&gt;
+    ... other ldap settings here
+    &lt;initialContextFactory&gt;com.foo.factoryClass&lt;/initialContextFactory&gt;
+  &lt;/ldap&gt;</pre>
+    </p>
+
+    <p><a name="connectionPool"><h2>Connection Pooling</h2></a></p>
+
+    The default LDAP provider (Sun's) support pooling of connections to the LDAP
+    server. Connection pooling can greatly improve performance, especially on
+    systems with high load. Connection pooling is enabled by default, but can
+    be disabled by setting the Jive property <tt>ldap.connectionPoolEnabled</tt>
+    to <tt>false</tt>:
+
+    <pre>&lt;ldap&gt;
+        ... other ldap settings here
+        &lt;connectionPoolEnabled&gt;false&lt;/connectionPoolEnabled&gt;
+
+        &lt;/ldap&gt;</pre></p>
+
+<p>
+    You should set several Java system properties to change default pool settings.
+    For more information, see the following pages:
+    <ul>
+
+        <li><a href="http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html">
+            http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html</a>
+        <li><a href="http://java.sun.com/products/jndi/tutorial/ldap/connect/config.html">
+            http://java.sun.com/products/jndi/tutorial/ldap/connect/config.html</a>
+
+    </ul>
+</p>
+
+<p>Note that if you turn on LDAP debugging, connection pooling will not be enabled.
+    If SSL LDAP mode is enabled, you must set a system property to enable pooling of
+    SSL LDAP connections.</p>
+
+<p><a name="vcard"><h2>LDAP vCard Integration</h2></a></p>
+
+<p>The LDAP vCard provider will expose LDAP profile information as vCard data for XMPP
+clients that support the XMPP vCard extension. First, enable the provider:</p>
+
+<pre>
+    &lt;provider&gt;
+
+      ...
+      &lt;vcard&gt;
+        &lt;className&gt;org.jivesoftware.openfire.ldap.LdapVCardProvider&lt;/className&gt;
+      &lt;/vcard&gt;
+      ...
+    &lt;/provider&gt;
+</pre>
+
+<p>Next, you must add mappings between LDAP fields and vCard fields in the openfire.xml file.
+    The vcard attributes are configured by adding an attrs="attr1,attr2" attribute to the vcard
+    elements. Arbitrary text can be used for the element values as well as MessageFormat style
+    placeholders for the ldap attributes. For example, if you wanted to map the LDAP attribute
+    displayName to the vcard element FN, the XML snippet would be:
+    &lt;FN attrs="displayName"&gt;{0}&lt;/FN&gt;</p>
+
+<p>The vCard XML must be escaped in CDATA and must also be well formed. It is the exact
+    XML this provider will send to a client after after stripping attr attributes and populating
+    the placeholders with the data retrieved from LDAP. This system should be flexible enough to
+    handle any client's vCard format. An example mapping follows.</p>
+
+<pre>
+    &lt;ldap&gt;
+      &lt;vcard-mapping&gt;
+        &lt;![CDATA[
+          &lt;vCard xmlns='vcard-temp'&gt;
+
+            &lt;FN&gt;{displayName}&lt;/FN&gt;
+            &lt;NICKNAME&gt;{uid}&lt;/NICKNAME&gt;
+            &lt;BDAY&gt;{dob}&lt;/BDAY&gt;
+
+            &lt;ADR&gt;
+              &lt;HOME/&gt;
+              &lt;EXTADR&gt;Ste 500&lt;/EXTADR&gt;
+              &lt;STREET&gt;317 SW Alder St&lt;/STREET&gt;
+              &lt;LOCALITY&gt;Portland&lt;/LOCALITY&gt;
+              &lt;REGION&gt;Oregon&lt;/REGION&gt;
+              &lt;PCODE&gt;97204&lt;/PCODE&gt;
+              &lt;CTRY&gt;USA&lt;/CTRY&gt;
+            &lt;/ADR&gt;
+
+            &lt;TEL&gt;
+              &lt;HOME/&gt;
+              &lt;VOICE/&gt;
+              &lt;NUMBER&gt;{telephoneNumber}&lt;/NUMBER&gt;
+            &lt;/TEL&gt;
+
+            &lt;EMAIL&gt;
+              &lt;HOME/&gt;
+              &lt;INTERNET/&gt;
+              &lt;PREF/&gt;
+              &lt;USERID&gt;{mail}&lt;/USERID&gt;
+            &lt;/EMAIL&gt;
+
+            &lt;TITLE&gt;{title}&lt;/TITLE&gt;
+            &lt;ROLE&gt;&lt;/ROLE&gt;
+
+            &lt;ORG&gt;
+              &lt;ORGNAME&gt;{o}&lt;/ORGNAME&gt;
+              &lt;ORGUNIT&gt;&lt;/ORGUNIT&gt;
+            &lt;/ORG&gt;
+
+            &lt;URL&gt;{labeledURI}&lt;/URL&gt;
+            &lt;DESC&gt;uid: {uidNumber} home: {homeDirectory} shell: {loginShell}&lt;/DESC&gt;
+
+          &lt;/vCard&gt;
+        ]]&gt;
+      &lt;/vcard-mapping&gt;
+    &lt;/ldap&gt;
+</pre>
+
+<h2>LDAP FAQ</h2>
+
+<p>
+
+    <b>Can I create new users through Openfire when using LDAP?</b>
+    <ul>No, Openfire treats LDAP directories as read-only. Therefore, it's
+        not possible to create or edit users through the application.</ul>
+
+    <b>Why is the list of usernames not sorted in the admin console when using LDAP?</b>
+    <ul>Several popular LDAP servers such as OpenLDAP do not support server-side
+        sorting of search results. On those servers, users will appear out of order.
+        However, you can enable client-side sorting of search results by setting
+        <tt>ldap.clientSideSorting</tt> to true in the XML configuration file.</ul>
+
+    <b>I switched to LDAP and now cannot login to the admin console. What happened?</b>
+    <ul>If you can no longer login to the admin console after switching, one of two
+        things most likely happened:<ol>
+        <li>By default, only the username "admin" is allowed to login to the
+            admin console. Your directory may not contain a user with a username
+            of "admin". In that case, you should modify the list of usernames authorized
+            to login to the admin console (see above).
+        <li>You may have set the baseDN to an incorrect value. The LDAP module
+            recursively searches for users under the node in the directory specified
+            by the baseDN. When the baseDN is incorrect, no users will be found.
+    </ol>
+        You can also enable debugging to get more information from the LDAP module. To
+        do this, add &lt;log&gt;&lt;debug&gt;&lt;enabled&gt;true&lt;/enabled&gt;&lt;/debug&gt;&lt;/log&gt;
+
+        to your <tt>conf/openfire.xml</tt> file. Log statements will be written
+        to the <tt>logs/debug.log</tt> file.
+    </ul>
+
+
+	</div>
+
+</div>
+
+</body>
+</html>

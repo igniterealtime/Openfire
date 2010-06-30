@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE=1
+
+include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/ant.mk
+
+DEST := $(CURDIR)/debian/openfire
+TARGET := $(CURDIR)/target/openfire
+OPENFIRE := $(DEST)/usr/share/openfire
+ETCDIR := $(DEST)/etc/openfire
+LOGDIR := $(DEST)/var/log/openfire
+VARDIR := $(DEST)/var/lib/openfire
+
+JAVA_HOME := /usr/lib/jvm/java-1.5.0-sun
+DEB_ANT_BUILDFILE := build/build.xml
+DEB_ANT_CLEAN_TARGET := clean
+	
+install/openfire::
+	cp $(TARGET)/lib/*.jar $(OPENFIRE)/lib/
+	cp $(TARGET)/lib/log4j.xml $(ETCDIR)
+	cp -r $(TARGET)/resources/database $(OPENFIRE)/resources/database
+	cp $(TARGET)/conf/openfire.xml $(ETCDIR)
+	cp -r $(TARGET)/resources/security $(ETCDIR)/security
+	cp -r $(TARGET)/plugins $(VARDIR)/plugins

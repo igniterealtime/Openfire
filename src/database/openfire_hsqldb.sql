@@ -388,4 +388,4 @@ SET LOGSIZE 20
 
 // This controls the frequency of file sync for the log file.
 // see http://www.hsqldb.org/doc/guide/ch09.html#set_write_delay-section
-SET WRITE_DELAY 1000 MILIS;
+SET WRITE_DELAY 1000 MILLIS;

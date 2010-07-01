@@ -377,11 +377,17 @@ public class NIOConnection implements Connection {
         if (chain.contains("tls")) {
             baseFilter = "tls";
         }
-        chain.addAfter(baseFilter, "compression", new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
+        
+        int compressionLevel = JiveGlobals.getIntProperty("xmpp.client.compression.level",CompressionFilter.COMPRESSION_MAX);
+        int inflateBits = JiveGlobals.getIntProperty("xmpp.client.compression.inflate_bits",15);
+        int deflateBits = JiveGlobals.getIntProperty("xmpp.client.compression.deflate_bits",15);
+        int memLevel = JiveGlobals.getIntProperty("xmpp.client.compression.mem_level",8);
+        chain.addAfter(baseFilter, "compression",
+                        new AdvancedCompressionFilter(true, false, compressionLevel, inflateBits, deflateBits, memLevel));
     }
 
     public void startCompression() {
-        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get("compression");
+        AdvancedCompressionFilter ioFilter = (AdvancedCompressionFilter) ioSession.getFilterChain().get("compression");
         ioFilter.setCompressOutbound(true);
     }
 

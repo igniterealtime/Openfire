@@ -290,7 +290,7 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
-        Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
+        Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 

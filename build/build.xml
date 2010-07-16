@@ -225,6 +225,7 @@
                 <or>
                     <contains string="${ant.version}" substring="1.6"/>
                     <contains string="${ant.version}" substring="1.7"/>
+                    <contains string="${ant.version}" substring="1.8"/>
                 </or>
             </not>
         </condition>

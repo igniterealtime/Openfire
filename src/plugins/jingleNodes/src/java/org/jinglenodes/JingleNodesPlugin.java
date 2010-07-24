@@ -19,6 +19,13 @@
 
 package org.jinglenodes;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.slf4j.Logger;
@@ -28,19 +35,10 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.jnodes.RelayChannel;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class JingleNodesPlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(JingleNodesPlugin.class);
     private ComponentManager componentManager;
-
-    private JingleNodesComponent component;
 
     private final ConcurrentHashMap<String, RelayChannel> channels = new ConcurrentHashMap<String, RelayChannel>();
     private final long timeout = 60000;
@@ -51,7 +49,7 @@ public class JingleNodesPlugin implements Plugin {
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         componentManager = ComponentManagerFactory.getComponentManager();
-        component = new JingleNodesComponent(componentManager, this);
+        JingleNodesComponent component = new JingleNodesComponent(this);
         try {
             componentManager.addComponent(serviceName, component);
         } catch (ComponentException e) {
@@ -105,7 +103,6 @@ public class JingleNodesPlugin implements Plugin {
     }
 
     public void destroyPlugin() {
-        component.shutdown();
         try {
             componentManager.removeComponent(serviceName);
         } catch (ComponentException e) {

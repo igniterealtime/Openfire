@@ -20,115 +20,82 @@
 package org.jinglenodes;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.component.Component;
-import org.xmpp.component.ComponentException;
-import org.xmpp.component.ComponentManager;
+import org.xmpp.component.AbstractComponent;
 import org.xmpp.jnodes.RelayChannel;
-import org.xmpp.jnodes.smack.JingleChannelIQ;
 import org.xmpp.jnodes.nio.LocalIPResolver;
+import org.xmpp.jnodes.smack.JingleChannelIQ;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-class JingleNodesComponent implements Component {
-    private static final Logger Log = LoggerFactory.getLogger(JingleNodesComponent.class);
+class JingleNodesComponent extends AbstractComponent {
+	private static final Logger Log = LoggerFactory.getLogger(JingleNodesComponent.class);
 
-    private final ComponentManager componentManager;
-    private static final String UDP = "udp";
-    private static final String PROTOCOL = "protocol";
-    private static final String HOST = "host";
-    private static final String LOCAL_PORT = "localport";
-    private static final String REMOTE_PORT = "remoteport";
+	private static final String UDP = "udp";
+	private static final String PROTOCOL = "protocol";
+	private static final String HOST = "host";
+	private static final String LOCAL_PORT = "localport";
+	private static final String REMOTE_PORT = "remoteport";
 
-    private final JingleNodesPlugin plugin;
+	private final JingleNodesPlugin plugin;
 
-    public JingleNodesComponent(final ComponentManager componentManager, final JingleNodesPlugin plugin) {
-        this.componentManager = componentManager;
-        this.plugin = plugin;
-    }
+	public JingleNodesComponent(final JingleNodesPlugin plugin) {
+		this.plugin = plugin;
+	}
 
-    public String getName() {
-        return "JingleRelayNode";
-    }
+	public String getName() {
+		return "JingleRelayNode";
+	}
 
-    public String getDescription() {
-        return "Jingle Relay Service";
-    }
+	public String getDescription() {
+		return "Jingle Relay Service";
+	}
 
-    public void processPacket(Packet packet) {
-    	if (Log.isDebugEnabled()) {
-    		Log.debug("Processing packet: {}", packet.toXML());
-    	}
-        if (packet instanceof IQ) {
-            // Handle disco packets
-            IQ iq = (IQ) packet;
-            // Ignore IQs of type ERROR or RESULT
-            if (IQ.Type.error == iq.getType() || IQ.Type.result == iq.getType()) {
-                return;
-            }
-            processIQ(iq);
-        }
-    }
+	@Override
+	protected String[] discoInfoFeatureNamespaces() {
+		return new String[] { JingleChannelIQ.NAMESPACE };
+	}
 
-    private void processIQ(final IQ iq) {
-        final IQ reply = IQ.createResultIQ(iq);
-        final Element element = iq.getChildElement();
+	@Override
+	protected String discoInfoIdentityCategoryType() {
+		return "relay";
+	}
 
-        if (element != null) {
-            final String namespace = element.getNamespaceURI();
+	@Override
+	protected IQ handleIQGet(IQ iq) throws Exception {
+		final IQ reply = IQ.createResultIQ(iq);
 
-            if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-                if (iq.getTo().getNode() == null) {
-                    // Return service identity and features
-                    Element identity = element.addElement("identity");
-                    identity.addAttribute("category", "component");
-                    identity.addAttribute("type", "relay");
-                    identity.addAttribute("name", getName());
-                    element.addElement("feature").addAttribute("var", "http://jabber.org/protocol/disco#info");
-                    element.addElement("feature").addAttribute("var", JingleChannelIQ.NAMESPACE);
-                }
-            } else if (JingleChannelIQ.NAME.equals(element.getName()) && JingleChannelIQ.NAMESPACE.equals(namespace) && UDP.equals(element.attributeValue(PROTOCOL))) {
-                final Element childElement = iq.getChildElement().createCopy();
-                final RelayChannel channel = plugin.createRelayChannel();
+		final Element element = iq.getChildElement();
+		final String namespace = element.getNamespaceURI();
 
-                if (channel != null) {
-                    childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
-                    childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
-                    childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
-                    reply.setChildElement(childElement);
-                } else {
-                    reply.setError(PacketError.Condition.internal_server_error);
-                }
-            } else {
-                reply.setError(PacketError.Condition.feature_not_implemented);
-            }
-        } else {
-            reply.setError(PacketError.Condition.feature_not_implemented);
-        }
+		if (JingleChannelIQ.NAME.equals(element.getName()) && JingleChannelIQ.NAMESPACE.equals(namespace)
+				&& UDP.equals(element.attributeValue(PROTOCOL))) {
+			final Element childElement = iq.getChildElement().createCopy();
+			final RelayChannel channel = plugin.createRelayChannel();
 
-        try {
-            componentManager.sendPacket(this, reply);
-            if (Log.isDebugEnabled()) {
-            	Log.debug("Packet sent: {}", reply.toXML());
-            }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
-    }
+			if (channel != null) {
+				childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
+				childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
+				childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
+				reply.setChildElement(childElement);
+				
+				Log.debug("Created relay channel {}:{}, {}:{}, {}:{}", new Object[] { HOST,
+						LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT,
+						Integer.toString(channel.getPortB()) });
 
-    public void initialize(final JID jid, final ComponentManager componentManager) throws ComponentException {
+			} else {
+				reply.setError(PacketError.Condition.internal_server_error);
+			}
+			return reply;
+		}
 
-    }
+		return null; // feature not implemented.
+	}
 
-    public void start() {
-
-    }
-
-    public void shutdown() {
-
-    }
+	@Override
+	public String getDomain() {
+		return XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+	}
 }

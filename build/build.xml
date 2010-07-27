@@ -622,7 +622,7 @@
                 <pathelement path="${test.classes.dest.dir}"/>
             </classpath>
 
-            <formatter type="plain"/>
+            <formatter type="xml"/>
 
             <batchtest todir="${test.results.dest.dir}">
                 <fileset dir="${src.test.java.dir}">

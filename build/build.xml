@@ -1755,7 +1755,7 @@
             <replacefilter token="%COPYRIGHT%" value="${copyrightyear}"/>
         </replace>
         <copy todir="${target.osx}" file="${basedir}/build/osx/Description.plist"/>
-        <exec executable="/Developer/Tools/packagemaker">
+        <exec executable="/Developer/usr/bin/packagemaker">
             <arg value="-build"/>
             <arg value="-f"/>
             <arg value="${mac.pkg.dir}"/>

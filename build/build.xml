@@ -1782,6 +1782,7 @@
         <exec executable="hdiutil" failonerror="true">
             <arg line="attach '${target.osx}/tmp.dmg' -readwrite -noverify -noautoopen -noidme -mountpoint '${mac.dmg.dir}'"/>
         </exec>
+<!-- OF-386 - commented out since it wasn't working with our Bamboo remote agent // TODO: fix it
         <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
             <arg value="dmg_openfire.scpt"/>
             <arg value="Openfire"/>
@@ -1792,6 +1793,7 @@
             <arg value="220"/>
             <arg value="128"/>
         </exec>
+-->
         <exec executable="hdiutil" failonerror="true">
             <arg line="detach ${mac.dmg.dir} -quiet -force"/>
         </exec>

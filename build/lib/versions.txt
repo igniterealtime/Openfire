@@ -11,6 +11,7 @@ commons-el.jar                      | Jetty 6.0.1 (1.0)                         
 commons-httpclient.jar              | 3.1                                                          | Apache 2.0
 commons-codec.jar                   | 1.3                                                          | Apache 2.0
 dom4j.jar                           | 1.6.1                                                        | BSD (http://www.dom4j.org/dom4j-1.6.1/license.html)
+concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5                         | Apache 2.0
 dbutil.jar                          | Jive Code, no release version.                               | GPL
 hamcrest.jar                        | 1.0 (JMock 2.1.0)                                            | New BSD License
 hamcrest-api.jar                    | 1.0 (JMock 2.1.0)                                            | New BSD License
@@ -57,7 +58,7 @@ sitemesh.jar                        | 2.2.1                                     
 slf4j-api                           | 1.5.8                                                        | http://www.slf4j.org/license.html
 slf4j-log4j12                       | 1.5.8                                                        | http://www.slf4j.org/license.html
 standard.jar                        | Jakarta standard taglib 1.1.2                                |
-tinder.jar                          | 1.2.1                                                        | Apache 2.0
+tinder.jar                          | 1.2.2                                                        | Apache 2.0
 xmltask.jar                         | 1.11                                                         | Apache 1.1
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 

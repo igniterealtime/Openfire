@@ -147,7 +147,7 @@
     <property name="installer.application_id" value="6886-9911-0474-3571"/>
     <property name="installer.unix_install_dir" value="openfire"/>
     <property name="installer.windows_install_dir" value="Openfire"/>
-    <property name="installer.publisher" value="Jive Software"/>
+    <property name="installer.publisher" value="Ignite Realtime RTC Community"/>
     <property name="installer.publisher_url" value="www.igniterealtime.org"/>
     <property name="installer.file_prefix" value="${installer.app_short_name}"/>
     <property name="installer.release_root_path" value="${release.dest.dir}"/>

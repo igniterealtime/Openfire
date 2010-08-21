@@ -71,7 +71,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-DopenfireHome=&quot;$app_home&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -93,7 +93,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Dappdir=&quot;${launcher:sys.launcherDirectory}&quot; -DopenfireHome=&quot;$app_home&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="">
+      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Dappdir=&quot;${launcher:sys.launcherDirectory}&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -115,7 +115,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-DopenfireHome=&quot;$app_home&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-D../&quot;=&quot;${launcher:sys.launcherDirectory}../&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -137,7 +137,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=&quot;$app_home&quot; -Dopenfire.lib.dir=&quot;$app_home/lib&quot;" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot; -Dopenfire.lib.dir=&quot;$app_home/lib&quot;" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="true" />
         </classPath>

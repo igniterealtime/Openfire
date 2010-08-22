@@ -363,7 +363,7 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
     }
 
 	/**
-	 * Makes sure that each individul character is a valid XML character.
+	 * Makes sure that each individual character is a valid XML character.
 	 * 
 	 * Note that when MXParser is being modified to handle multibyte chars correctly, this method needs to change (as
 	 * then, there are more codepoints to check).

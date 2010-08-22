@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 
@@ -98,7 +99,7 @@ public class NIOConnection implements Connection {
      * Compression policy currently in use for this connection.
      */
     private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
-    private static ThreadLocal encoder = new ThreadLocalEncoder();
+    private static ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
      * is an asynch operation so instead of waiting for the connection to be actually closed just
@@ -252,7 +253,7 @@ public class NIOConnection implements Connection {
             boolean errorDelivering = false;
             try {
                 XMLWriter xmlSerializer =
-                        new XMLWriter(new ByteBufferWriter(buffer, (CharsetEncoder) encoder.get()), new OutputFormat());
+                        new XMLWriter(new ByteBufferWriter(buffer, encoder.get()), new OutputFormat());
                 xmlSerializer.write(packet.getElement());
                 xmlSerializer.flush();
                 if (flashClient) {
@@ -439,11 +440,13 @@ public class NIOConnection implements Connection {
         return super.toString() + " MINA Session: " + ioSession;
     }
 
-    private static class ThreadLocalEncoder extends ThreadLocal {
+    private static class ThreadLocalEncoder extends ThreadLocal<CharsetEncoder> {
 
         @Override
-		protected Object initialValue() {
-            return Charset.forName(CHARSET).newEncoder();
+		protected CharsetEncoder initialValue() {
+            return Charset.forName(CHARSET).newEncoder()
+				.onMalformedInput(CodingErrorAction.REPORT)
+				.onUnmappableCharacter(CodingErrorAction.REPORT);
         }
     }
 }

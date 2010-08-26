@@ -24,8 +24,7 @@ import java.io.*;
 import java.util.jar.Pack200;
 import java.util.jar.JarOutputStream;
 
-import org.jivesoftware.util.Log;
-
+import  org.jivesoftware.util.Log;
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.

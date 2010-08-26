@@ -190,16 +190,19 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         super(serverName, conn, id);
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }
 
-    boolean canProcess(Packet packet) {
+    @Override
+	boolean canProcess(Packet packet) {
         return true;
     }
 
-    void deliver(Packet packet) throws PacketException {
+    @Override
+	void deliver(Packet packet) throws PacketException {
         component.deliver(packet);
     }
 
@@ -397,7 +400,8 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             }
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return super.toString() + " - subdomains: " + subdomains;
         }
 

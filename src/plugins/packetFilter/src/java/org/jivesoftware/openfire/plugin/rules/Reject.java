@@ -17,11 +17,13 @@ public class Reject extends AbstractRule implements Rule {
 
 	private static final Logger Log = LoggerFactory.getLogger(Reject.class);
 	
-    public String getDisplayName() {
+    @Override
+	public String getDisplayName() {
         return "Reject";
     }
 
-    public Packet doAction(Packet packet) throws PacketRejectedException {
+    @Override
+	public Packet doAction(Packet packet) throws PacketRejectedException {
         SessionManager sessionManager = SessionManager.getInstance();
         ClientSession clientSession = sessionManager.getSession(packet.getFrom());
         Packet rejectPacket;

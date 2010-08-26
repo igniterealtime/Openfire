@@ -214,7 +214,8 @@ public class PresenceRouter extends BasicModule {
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();

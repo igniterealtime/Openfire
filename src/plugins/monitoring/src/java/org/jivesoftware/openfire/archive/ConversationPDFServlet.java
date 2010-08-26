@@ -38,11 +38,13 @@ public class ConversationPDFServlet extends HttpServlet {
 
 	private static final Logger Log = LoggerFactory.getLogger(ConversationPDFServlet.class);
 	
-    public void init() throws ServletException {
+    @Override
+	public void init() throws ServletException {
 
     }
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         long conversationID = ParamUtils.getLongParameter(request, "conversationID", -1);
         if (conversationID == -1) {
             return;

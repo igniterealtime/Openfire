@@ -42,7 +42,8 @@ public class UserSchemaValidator {
             SAXParserFactory saxFactory = SAXParserFactory.newInstance();
             saxFactory.setNamespaceAware(true);
             DocumentDeclaration docDeclaration = GrammarLoader.loadVGM(schema, new IgnoreController() {
-                public void error(Locator[] locations,
+                @Override
+				public void error(Locator[] locations,
                                   String message,
                                   Exception exception) {
                     Log.error("ERROR: " + message);

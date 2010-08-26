@@ -42,11 +42,13 @@ public class OfferInterceptorManager extends InterceptorManager {
         return instance;
     }
 
-    protected String getPropertySuffix() {
+    @Override
+	protected String getPropertySuffix() {
         return "offer";
     }
 
-    protected Collection<Class> getBuiltInInterceptorClasses() {
+    @Override
+	protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class) TrafficMonitor.class);
     }
 }

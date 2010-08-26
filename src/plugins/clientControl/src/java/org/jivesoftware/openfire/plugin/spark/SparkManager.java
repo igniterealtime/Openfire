@@ -387,7 +387,8 @@ public class SparkManager implements Component {
                 // TODO: A future version may want to close sessions of users that never
                 // TODO: responded the IQ version request.
                 taskEngine.schedule(new TimerTask() {
-                    public void run() {
+                    @Override
+					public void run() {
                         requestSoftwareVersion(session);
                     }
                 }, 5000);
@@ -459,7 +460,8 @@ public class SparkManager implements Component {
 
         // Disconnect user after 5 seconds.
         taskEngine.schedule(new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 // Include the not-authorized error in the response
                 StreamError error = new StreamError(StreamError.Condition.policy_violation);
                 session.deliverRawText(error.toXML());

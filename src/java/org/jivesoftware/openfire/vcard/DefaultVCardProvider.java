@@ -74,9 +74,10 @@ public class DefaultVCardProvider implements VCardProvider {
 
     public Element loadVCard(String username) {
         synchronized (username.intern()) {
-            Element vCardElement = null;
-            java.sql.Connection con = null;
+            Connection con = null;
             PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            Element vCardElement = null;
             SAXReader xmlReader = null;
             try {
                 // Get a sax reader from the pool
@@ -84,7 +85,7 @@ public class DefaultVCardProvider implements VCardProvider {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PROPERTIES);
                 pstmt.setString(1, username);
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
                 while (rs.next()) {
                     vCardElement =
                             xmlReader.read(new StringReader(rs.getString(1))).getRootElement();
@@ -98,10 +99,7 @@ public class DefaultVCardProvider implements VCardProvider {
                 if (xmlReader != null) {
                     xmlReaders.add(xmlReader);
                 }
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e.getMessage(), e); }
+                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
             return vCardElement;
         }
@@ -126,10 +124,7 @@ public class DefaultVCardProvider implements VCardProvider {
             Log.error("Error creating vCard for username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return vCardElement;
     }
@@ -152,10 +147,7 @@ public class DefaultVCardProvider implements VCardProvider {
             Log.error("Error updating vCard of username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return vCardElement;
     }
@@ -173,10 +165,7 @@ public class DefaultVCardProvider implements VCardProvider {
             Log.error("Error deleting vCard of username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

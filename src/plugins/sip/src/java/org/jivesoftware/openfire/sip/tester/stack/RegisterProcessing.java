@@ -436,7 +436,8 @@ class RegisterProcessing {
             this.expires = expires;
         }
 
-        public void run() {
+        @Override
+		public void run() {
             try {
                 if (isRegistered())
                     register(registrarAddress, registrarPort, transport,

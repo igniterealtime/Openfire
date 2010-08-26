@@ -348,7 +348,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         this.routingTable = server.getRoutingTable();
@@ -944,7 +945,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         return false;
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         // Add this module as a user event listener so we can update
         // rosters when users are created or deleted
@@ -953,7 +955,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         GroupEventDispatcher.addListener(this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(this);

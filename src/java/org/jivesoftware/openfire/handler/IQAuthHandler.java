@@ -107,7 +107,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         anonymousAllowed = JiveGlobals.getBooleanProperty("xmpp.auth.anonymous");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         JID from = packet.getFrom();
         LocalClientSession session = (LocalClientSession) sessionManager.getSession(from);
         // If no session was found then answer an error (if possible)
@@ -388,7 +389,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonymousAllowed));
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
@@ -396,7 +398,8 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
         serverName = server.getServerInfo().getXMPPDomain();
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 }

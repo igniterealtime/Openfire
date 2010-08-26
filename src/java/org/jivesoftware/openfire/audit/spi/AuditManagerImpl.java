@@ -200,9 +200,9 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     }
 
     private void saveXPath() {
-        String[] filters = new String[xpath.size()];
-        filters = (String[]) xpath.toArray(filters);
         // TODO: save XPath values!
+        //String[] filters = new String[xpath.size()];
+        //filters = (String[]) xpath.toArray(filters); 
     }
 
     public Iterator getXPathFilters() {
@@ -235,7 +235,8 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     // Basic module methods
     // #########################################################################
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         enabled = JiveGlobals.getBooleanProperty("xmpp.audit.active");
         auditMessage = JiveGlobals.getBooleanProperty("xmpp.audit.message");
@@ -272,7 +273,8 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         }
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         if (auditor != null) {
             auditor.stop();
         }

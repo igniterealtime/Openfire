@@ -327,7 +327,8 @@ public class AgentSession {
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "AI-" + Integer.toHexString(hashCode()) +
             " JID " + address.toString() +
             " CC " + Integer.toString(chatInfos.size()) +
@@ -443,7 +444,8 @@ public class AgentSession {
         return jids;
     }
 
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         boolean match = false;
         if (o instanceof AgentSession) {
             match = ((AgentSession)o).getJID().equals(address);

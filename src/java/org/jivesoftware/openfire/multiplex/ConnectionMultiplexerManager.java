@@ -118,7 +118,8 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         // Start thread that will send heartbeats to Connection Managers every 30 seconds
         // to keep connections open.
         TimerTask heartbeatTask = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 try {
                     for (ConnectionMultiplexerSession session : sessionManager.getConnectionMultiplexerSessions()) {
                         session.deliverRawText(" ");
@@ -346,11 +347,13 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
             return id;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return id;
         }
 
-        public int hashCode() {
+        @Override
+		public int hashCode() {
             return id.hashCode();
         }
     }

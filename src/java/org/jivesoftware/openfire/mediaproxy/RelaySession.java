@@ -72,7 +72,8 @@ public class RelaySession extends MediaProxySession {
         super(id, creator, localhost, hostA, portA, hostB, portB, 10000, 20000);
     }
 
-    void createChannels() {
+    @Override
+	void createChannels() {
         channelAtoB = new DynamicAddressChannel(socketA, hostB, portB);
         channelAtoBControl = new DynamicAddressChannel(socketAControl, hostB, portB + 1);
         channelBtoA = new DynamicAddressChannel(socketB, hostA, portA);
@@ -80,7 +81,8 @@ public class RelaySession extends MediaProxySession {
     }
 
 
-    void addChannelListeners() {
+    @Override
+	void addChannelListeners() {
         super.addChannelListeners();
         // Add channel as listeners
         channelAtoB.addListener((DynamicAddressChannel) channelBtoA);

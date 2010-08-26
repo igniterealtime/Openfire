@@ -100,7 +100,8 @@ public class SASLAuthentication {
 
         private String name = null;
 
-        public String toString() {
+        @Override
+		public String toString() {
             return name;
         }
 

@@ -76,7 +76,8 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         responseElement.addElement("display");
     }
 
-    public IQ handleIQ(IQ packet) {
+    @Override
+	public IQ handleIQ(IQ packet) {
         IQ response = null;
         response = IQ.createResultIQ(packet);
         response.setChildElement(buildResponse());
@@ -97,7 +98,8 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         return response;
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 

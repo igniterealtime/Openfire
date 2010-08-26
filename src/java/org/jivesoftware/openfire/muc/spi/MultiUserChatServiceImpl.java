@@ -62,6 +62,7 @@ import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -395,7 +396,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         /**
          * Remove any user that has been idle for longer than the user timeout time.
          */
-        public void run() {
+        @Override
+		public void run() {
             checkForTimedOutUsers();
         }
     }
@@ -442,7 +444,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Logs the conversation of the rooms that have this feature enabled.
      */
     private class LogConversationTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             try {
                 logConversation();
             }
@@ -485,7 +488,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * considered without activity when no occupants are present in the room for a while.
      */
     private class CleanupTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             if (ClusterManager.isClusteringStarted() && !ClusterManager.isSeniorClusterMember()) {
                 // Do nothing if we are in a cluster and this JVM is not the senior cluster member
                 return;
@@ -900,7 +904,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void initializeSettings() {
-        serviceEnabled = MUCPersistenceManager.getBooleanProperty(chatServiceName, "enabled", true);
+        serviceEnabled = JiveProperties.getInstance().getBooleanProperty("xmpp.muc.enabled", true);
+        serviceEnabled = MUCPersistenceManager.getBooleanProperty(chatServiceName, "enabled", serviceEnabled);
         // Trigger the strategy to load itself from the context
         historyStrategy.setContext(chatServiceName, "history");
         // Load the list of JIDs that are sysadmins of the MUC service
@@ -1285,7 +1290,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
                 fieldSubj.addValue(room.getSubject());
 
-                final FormField fieldOcc = dataForm.addField();
+                /*final FormField fieldOcc =*/ dataForm.addField();
                 fieldSubj.setVariable("muc#roominfo_occupants");
                 fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
                 fieldSubj.addValue(Integer.toString(room.getOccupantsCount()));

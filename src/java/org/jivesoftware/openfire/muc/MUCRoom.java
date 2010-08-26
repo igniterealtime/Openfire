@@ -450,7 +450,8 @@ public interface MUCRoom extends Externalizable, Result {
      * @throws ConflictException If the room was going to lose all its owners.
      * @deprecated Replaced by {@link #addNone(JID, MUCRole)}
      */
-    public List<Presence> addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
+    @Deprecated
+	public List<Presence> addNone(String bareJID, MUCRole senderRole) throws ForbiddenException,
             ConflictException;
 
     /**

@@ -64,7 +64,8 @@ public class IQBindHandler extends IQHandler {
         info = new IQHandlerInfo("bind", "urn:ietf:params:xml:ns:xmpp-bind");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
         // If no session was found then answer an error (if possible)
         if (session == null) {
@@ -161,13 +162,15 @@ public class IQBindHandler extends IQHandler {
         return null;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
      }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 }

@@ -117,10 +117,11 @@ Choose your database from the list below for setup details:
 
 	<b>JDBC Drivers</b><p>
 
-	The Oracle 9i or 10g "thin" drivers are recommended and can be downloaded from 
-    <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html">Oracle's website</a>. 
+	The Oracle 11g "thin" drivers are recommended and can be downloaded from 
+    <a href="http://www.oracle.com/technology/software/tech/java/sqlj_jdbc/index.html
+	 ">Oracle's website</a>. 
      
-    Various versions of the thin drivers are avaialble, but the "ojdbc14.jar" driver is recommended for use with Openfire.
+    Various versions of the thin drivers are avaialble, but the most recent (11.2.0.1.0 or newer) driver is recommended for use with Openfire. Use "ojdbc5.jar" if you are using Java 1.5 or "ojdbc5.jar" if you are using Java 1.6.
     Copy the JDBC driver to the <tt>lib/</tt> directory of your Openfire installation.
     
 	<p>
@@ -128,12 +129,14 @@ Choose your database from the list below for setup details:
     
     <ul>
 		<li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
-		<li>server: <tt>jdbc:oracle:thin:@[YOUR_HOST]:1521:[DATABASE_NAME]</tt>
+		<li>server: <tt>jdbc:oracle:thin:@[HOST]:[PORT]/[SERVICE]</tt>
 	</ul><p>
 		
-	where [YOUR_HOST] and [DATABASE_NAME] are the actual values for you server.
-	In many cases <code>localhost</code> is a suitable value for [YOUR_HOST] when
+	where [HOST], [PORT] and [SERVICE] are the actual values for you server.
+	In many cases <code>localhost</code> and <code>1521</code>
+	are suitable values for [HOST] and [PORT] when
 	your database is running on the same server as your webserver.
+	Ask your DBA for the service name.
 
 	<p><b>Setup Instructions</b><p>
 	

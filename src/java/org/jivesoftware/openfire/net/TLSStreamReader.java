@@ -151,6 +151,7 @@ public class TLSStreamReader {
 	 */
 	private InputStream createInputStream() {
 		return new InputStream() {
+			@Override
 			public synchronized int read() throws IOException {
 				doRead();
 				if (!inAppBB.hasRemaining()) {
@@ -159,6 +160,7 @@ public class TLSStreamReader {
 				return inAppBB.get();
 			}
 
+			@Override
 			public synchronized int read(byte[] bytes, int off, int len) throws IOException {
                 // Check if in the previous read the inAppBB ByteBuffer remained with unread data.
                 // If all the data was consumed then read from the socket channel. Otherwise,

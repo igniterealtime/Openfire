@@ -253,7 +253,8 @@ public final class GraphicUtils {
      * @see #focusComponentOrChild
      * @deprecated replaced by {@link #getFocusableComponentOrChild(Component, boolean)}
      */
-    public static Component getFocusableComponentOrChild(Component c) {
+    @Deprecated
+	public static Component getFocusableComponentOrChild(Component c) {
         return getFocusableComponentOrChild(c, false);
     }
 

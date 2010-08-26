@@ -38,7 +38,8 @@ public class HTTPConnectionException extends Exception {
         return errorCode;
     }
 
-    public String getMessage() {
+    @Override
+	public String getMessage() {
         if (errorCode == 400) {
             return "400 Bad Request";
         }

@@ -555,7 +555,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         HttpBindManager.getInstance().start();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         serverName = server.getServerInfo().getXMPPDomain();
@@ -853,7 +854,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // Module management
     // #####################################################################
 
-    public void start() {
+    @Override
+	public void start() {
         super.start();
         createListeners();
         startListeners();
@@ -861,7 +863,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         CertificateManager.addListener(this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         stopClientListeners();
         stopClientSSLListeners();

@@ -190,6 +190,7 @@ public class SequenceManager {
 
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         boolean abortTransaction = false;
         boolean success = false;
 
@@ -198,20 +199,16 @@ public class SequenceManager {
             // Get the current ID from the database.
             pstmt = con.prepareStatement(LOAD_ID);
             pstmt.setInt(1, type);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             long currentID = 1;
-            if (!rs.next()) {
-                rs.close();
-                pstmt.close();
-
-                createNewID(con, type);
+            if (rs.next()) {
+                currentID = rs.getLong(1);
             }
             else {
-                currentID = rs.getLong(1);
-                rs.close();
-                pstmt.close();
+                createNewID(con, type);
             }
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Increment the id to define our block.
             long newID = currentID + blockSize;
@@ -236,14 +233,7 @@ public class SequenceManager {
             abortTransaction = true;
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
+            DbConnectionManager.closeStatement(rs, pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
 

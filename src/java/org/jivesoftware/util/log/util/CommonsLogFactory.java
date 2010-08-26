@@ -113,34 +113,41 @@ public class CommonsLogFactory extends LogFactory {
         };
     }
 
-    public Object getAttribute(String string) {
+    @Override
+	public Object getAttribute(String string) {
         return null;
     }
 
-    public String[] getAttributeNames() {
+    @Override
+	public String[] getAttributeNames() {
         return new String[0];
     }
 
-    public org.apache.commons.logging.Log getInstance(Class aClass)
+    @Override
+	public org.apache.commons.logging.Log getInstance(Class aClass)
             throws LogConfigurationException {
         return log;
     }
 
-    public org.apache.commons.logging.Log getInstance(String string)
+    @Override
+	public org.apache.commons.logging.Log getInstance(String string)
             throws LogConfigurationException
     {
         return log;
     }
 
-    public void release() {
+    @Override
+	public void release() {
 
     }
 
-    public void removeAttribute(String string) {
+    @Override
+	public void removeAttribute(String string) {
 
     }
 
-    public void setAttribute(String string, Object object) {
+    @Override
+	public void setAttribute(String string, Object object) {
 
     }
 }

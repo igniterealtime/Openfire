@@ -401,7 +401,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         return features.iterator();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         this.packetRouter = server.getPacketRouter();

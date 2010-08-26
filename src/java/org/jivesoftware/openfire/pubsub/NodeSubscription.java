@@ -31,6 +31,7 @@ import java.util.TimeZone;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +147,7 @@ public class NodeSubscription {
         dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         fastDateFormat = FastDateFormat
-                .getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
+                .getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
     }
 
     /**
@@ -830,7 +831,7 @@ public class NodeSubscription {
             notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
         }
         // Include date when published item was created
-        notification.getElement().addElement("x", "jabber:x:delay")
+        notification.getElement().addElement("delay", "urn:xmpp:delay")
                 .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
         // Send the event notification to the subscriber
         service.sendNotification(node, notification, jid);
@@ -859,7 +860,8 @@ public class NodeSubscription {
         return node.getAffiliate(getOwner());
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " - JID: " + getJID() + " - State: " + getState().name();
     }
 

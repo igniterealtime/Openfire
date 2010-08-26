@@ -71,7 +71,8 @@ class ImagePresenceProvider extends PresenceInfoProvider {
         this.servlet = servlet;
     }
 
-    public void sendInfo(HttpServletRequest request,
+    @Override
+	public void sendInfo(HttpServletRequest request,
             HttpServletResponse response, Presence presence) throws IOException {
         if (presence == null) {
             writeImageContent(request, response, "offline", servlet.offline);
@@ -93,7 +94,8 @@ class ImagePresenceProvider extends PresenceInfoProvider {
         }
     }
 
-    public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	public void sendUserNotFound(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         writeImageContent(request, response, "forbidden", servlet.offline);
     }

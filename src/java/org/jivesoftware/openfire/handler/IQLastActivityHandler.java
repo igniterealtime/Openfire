@@ -52,7 +52,8 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         info = new IQHandlerInfo("query", "jabber:iq:last");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ reply = IQ.createResultIQ(packet);
         Element lastActivity = reply.setChildElement("query", "jabber:iq:last");
         String sender = packet.getFrom().getNode();
@@ -99,7 +100,8 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         return reply;
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
@@ -109,7 +111,8 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         return features.iterator();
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         presenceManager = server.getPresenceManager();
         rosterManager = server.getRosterManager();

@@ -80,7 +80,8 @@ public interface StatsViewer {
      *      more than one array is returned.
      * @deprecated will be removed pending the completion of #getData(String, TimePeriod)
      */
-    double[][] getData(String key, long startTime, long endTime, int dataPoints);
+    @Deprecated
+	double[][] getData(String key, long startTime, long endTime, int dataPoints);
 
     /**
      * Retrieves the data for the related stat for the time period.

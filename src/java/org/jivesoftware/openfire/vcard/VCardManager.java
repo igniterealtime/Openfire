@@ -244,7 +244,8 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         return vCardElement;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         instance = this;
 
         // Convert XML based provider setup to Database based
@@ -263,7 +264,8 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         }
     }
 
-    public void start() {
+    @Override
+	public void start() {
         // Add this module as a user event listener so we can delete
         // all user properties when a user is deleted
         if (!provider.isReadOnly()) {
@@ -293,7 +295,8 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         PropertyEventDispatcher.addListener(propListener);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(eventHandler);
     }
@@ -312,7 +315,8 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     private class EventHandler extends UserEventAdapter {
-        public void userDeleting(User user, Map params) {
+        @Override
+		public void userDeleting(User user, Map params) {
             try {
                 deleteVCard(user.getUsername());
             } catch (UnsupportedOperationException ue) { /* Do Nothing */ }

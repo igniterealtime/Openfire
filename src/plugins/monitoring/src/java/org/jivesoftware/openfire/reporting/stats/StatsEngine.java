@@ -298,7 +298,8 @@ public class StatsEngine implements Startable {
     private class SampleTask extends TimerTask {
         private long lastSampleTime = 0;
 
-        public void run() {
+        @Override
+		public void run() {
             if (!ClusterManager.isSeniorClusterMember()) {
                 // Create statistics definitions but do not sample them since we are not the senior cluster member
                 for (Map.Entry<String, Statistic> statisticEntry : statsManager.getAllStatistics()) {
@@ -453,26 +454,31 @@ public class StatsEngine implements Startable {
             }
         }
 
-        public double[][] getData(long startTime, long endTime) {
+        @Override
+		public double[][] getData(long startTime, long endTime) {
             return fetchData(consolidationFunction, startTime, endTime, -1);
         }
 
-        public double[][] getData(long startTime, long endTime, int dataPoints) {
+        @Override
+		public double[][] getData(long startTime, long endTime, int dataPoints) {
             // Our greatest datapoints is 60 so if it is something less than that
             // then we want an average.
             return fetchData((dataPoints != 60 ? ConsolFuns.CF_AVERAGE : consolidationFunction),
                     startTime, endTime, dataPoints);
         }
 
-        public long getLastSampleTime() {
+        @Override
+		public long getLastSampleTime() {
             return lastSampleTime;
         }
 
-        public double getLastSample() {
+        @Override
+		public double getLastSample() {
             return lastSample;
         }
 
-        public double[] getMax(long startTime, long endTime) {
+        @Override
+		public double[] getMax(long startTime, long endTime) {
             return getMax(startTime, endTime, 1);
         }
 
@@ -524,11 +530,13 @@ public class StatsEngine implements Startable {
             return (endTime - startTime) / (dataPoints * 60);
         }
 
-        public double[] getMin(long startTime, long endTime) {
+        @Override
+		public double[] getMin(long startTime, long endTime) {
             return getMin(startTime, endTime, 1);
         }
 
-        public double[] getMin(long startTime, long endTime, int dataPoints) {
+        @Override
+		public double[] getMin(long startTime, long endTime, int dataPoints) {
             double[][] fetchedData = fetchData(consolidationFunction, startTime,
                     endTime, dataPoints);
             if (fetchedData != null) {
@@ -541,7 +549,8 @@ public class StatsEngine implements Startable {
             return new double[] { 0 };
         }
 
-        public double[] getMax(long startTime, long endTime, int dataPoints) {
+        @Override
+		public double[] getMax(long startTime, long endTime, int dataPoints) {
             double[][] fetchedData = fetchData(consolidationFunction, startTime,
                     endTime, dataPoints);
             if (fetchedData != null) {

@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -419,7 +420,8 @@ public class XMPPServer {
             AdminManager.getInstance().getAdminAccounts();
 
             Thread finishSetup = new Thread() {
-                public void run() {
+                @Override
+				public void run() {
                     try {
                         if (isStandAlone()) {
                             // Always restart the HTTP server manager. This covers the case
@@ -654,7 +656,8 @@ public class XMPPServer {
      */
     public void restartHTTPServer() {
         Thread restartThread = new Thread() {
-            public void run() {
+            @Override
+			public void run() {
                 if (isStandAlone()) {
                     // Restart the HTTP server manager. This covers the case
                     // of changing the ports, as well as generating self-signed certificates.
@@ -744,14 +747,14 @@ public class XMPPServer {
      * Verify that the database is accessible.
      */
     private void verifyDataSource() {
-        java.sql.Connection conn = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            conn = DbConnectionManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT count(*) FROM ofID");
-            ResultSet rs = stmt.executeQuery();
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement("SELECT count(*) FROM ofID");
+            rs = pstmt.executeQuery();
             rs.next();
-            rs.close();
-            stmt.close();
         }
         catch (Exception e) {
             System.err.println("Database setup or configuration error: " +
@@ -761,14 +764,7 @@ public class XMPPServer {
             throw new IllegalArgumentException(e);
         }
         finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                }
-                catch (SQLException e) {
-                    Log.error(e.getMessage(), e);
-                }
-            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -897,7 +893,8 @@ public class XMPPServer {
         /**
          * <p>Logs the server shutdown.</p>
          */
-        public void run() {
+        @Override
+		public void run() {
             shutdownServer();
             Log.info("Server halted");
             System.err.println("Server halted");
@@ -916,7 +913,8 @@ public class XMPPServer {
         /**
          * <p>Shuts down the JVM after a 5 second delay.</p>
          */
-        public void run() {
+        @Override
+		public void run() {
             try {
                 Thread.sleep(5000);
                 // No matter what, we make sure it's dead

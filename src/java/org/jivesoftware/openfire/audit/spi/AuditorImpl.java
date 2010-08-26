@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -74,12 +73,12 @@ public class AuditorImpl implements Auditor {
      * Max size in bytes that all audit log files may have. When the limit is reached
      * oldest audit log files will be removed until total size is under the limit.
      */
-    private int maxTotalSize;
+    private long maxTotalSize;
     /**
      * Max size in bytes that each audit log file may have. Once the limit has been
      * reached a new audit file will be created.
      */
-    private int maxFileSize;
+    private long maxFileSize;
     /**
      * Max number of days to keep audit information. Once the limit has been reached
      * audit files that contain information that exceed the limit will be deleted.
@@ -104,6 +103,14 @@ public class AuditorImpl implements Auditor {
     private BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<AuditPacket>();
 
     /**
+     * Allow only a limited number of files for each day, max. three digits (000-999)
+     */
+    private final int maxTotalFilesDay = 1000;
+    /**
+     * Track the current index number `...-nnn.log´
+     */
+    private int filesIndex = 0;
+    /**
      * Timer to save queued logs to the XML file.
      */
     private Timer timer = new Timer("Auditor");
@@ -118,8 +125,8 @@ public class AuditorImpl implements Auditor {
     }
 
     protected void setMaxValues(int totalSize, int fileSize, int days) {
-        maxTotalSize = totalSize * 1024*1024;
-        maxFileSize = fileSize * 1024*1024;
+        maxTotalSize = (long) totalSize * 1024l * 1024l;
+        maxFileSize = (long) fileSize * 1024l * 1024l;
         maxDays = days;
     }
 
@@ -285,77 +292,74 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void createAuditFile(Date auditDate) throws IOException {
-        close();
-        if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
-            // Set limit date after which we need to rollover the audit file (based on the date)
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(auditDate);
-            calendar.set(Calendar.HOUR, 23);
-            calendar.set(Calendar.MINUTE, 59);
-            calendar.set(Calendar.SECOND, 59);
-            calendar.set(Calendar.MILLISECOND, 999);
-            currentDateLimit = calendar.getTime();
-        }
-
-        final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
-        // Get list of existing audit files
-        FilenameFilter filter = new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith(filePrefix) && name.endsWith(".log");
-            }
-        };
-        File[] files = baseFolder.listFiles(filter);
-        if (files.length == 0) {
-            // This is the first audit file for the day
-            currentAuditFile = new File(logDir, filePrefix + "000.log");
-        }
-        else {
-            // Search the last index used for the day
-            File lastFile = files[files.length - 1];
-            StringTokenizer tokenizer = new StringTokenizer(lastFile.getName(), "-.");
-            // Skip "jive"
-            tokenizer.nextToken();
-            // Skip "audit"
-            tokenizer.nextToken();
-            // Skip "date"
-            tokenizer.nextToken();
-            int index = Integer.parseInt(tokenizer.nextToken()) + 1;
-            if (index > 999) {
-                Log.warn("Failed to created audit file. Max limit of 999 files has been reached " +
-                        "for the date: " + dateFormat.format(auditDate));
-                return;
-            }
-            currentAuditFile = new File(logDir,
-                    filePrefix + StringUtils.zeroPadString(Integer.toString(index), 3) + ".log");
-        }
-
-
-        // Find the next available log file name
-        /*for (int i = 0; i < 1000; i++) {
-            currentAuditFile = new File(logDir,
-                    filePrefix + StringUtils.zeroPadString(Integer.toString(i), 3) + ".log");
-            if (!currentAuditFile.exists()) {
-                break;
-            }
-        }
-
-        if (currentAuditFile == null) {
-            Log.warn("Audit log not create since there are more than 999 files for the date: " +
-                    dateFormat.format(auditDate));
-            return;
-        }*/
-
-        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile), "UTF-8"));
-        writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
-        xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
-    }
+	/* if this new logic still causes problems one may want to 
+	* use log4j or change the file format from YYYYmmdd-nnn to YYYYmmdd-HHMM */
+	/**
+	* Sets <b>xmlWriter</b> so this class can use it to write audit logs<br>
+	* The audit filename <b>currentAuditFile</b> will be `jive.audit-YYYYmmdd-nnn.log´<br>
+	* `nnn´ will be reset to `000´ when a new log file is created the next day <br>
+	* `nnn´ will be increased for log files which belong to the same day<br>
+	* <b>WARNING:</b> If log files of the current day are deleted and the server is restarted then
+	* the value of `nnn´ may be random (it's calculated by `Math.max(files.length, filesIndex);´
+	* with `filesIndex=0´ and  `files.length=nr(existing jive.audit-YYYYmmdd-???.log files)´ - 
+	* if there are 10 audit files (033-043) then nnn will be 10 instead of 44).<br>
+	* If  `nnn=999´ then all audit data will be written to this file till the next day.<br>
+	* @param auditDate
+	* @throws IOException
+	*/
+	private void createAuditFile(Date auditDate) throws IOException {
+		final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
+		if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
+   		// Set limit date after which we need to rollover the audit file (based on the date)
+   		Calendar calendar = Calendar.getInstance();
+   		calendar.setTime(auditDate);
+   		calendar.set(Calendar.HOUR, 23);
+   		calendar.set(Calendar.MINUTE, 59);
+   		calendar.set(Calendar.SECOND, 59);
+   		calendar.set(Calendar.MILLISECOND, 999);
+   		currentDateLimit = calendar.getTime();
+   		filesIndex = 0;
+   	}
+   	// Get list of existing audit files
+   	FilenameFilter filter = new FilenameFilter() {
+   		public boolean accept(File dir, String name) {
+   			return name.startsWith(filePrefix) && name.endsWith(".log");
+   		}
+   	};
+   	File[] files = baseFolder.listFiles(filter);
+   	// if some daily files were already deleted then files.length will be smaller than filesIndex
+   	// see also WARNING above
+   	filesIndex = Math.max(files.length, filesIndex);
+		if (filesIndex >= maxTotalFilesDay)
+		{
+			// don't close this file, continue auditing to it
+			return;
+		}
+		File tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
+		if ( (filesIndex == maxTotalFilesDay-1) && !tmpAuditFile.exists() ) 
+		{
+			Log.warn("Creating last audit file for this date: " + dateFormat.format(auditDate));
+		}
+		while ( (filesIndex<(maxTotalFilesDay-1)) && (tmpAuditFile.exists()) )
+		{
+			Log.debug("Audit file '"+ tmpAuditFile.getName() +"' does already exist.");
+			filesIndex++;
+			tmpAuditFile = new File(logDir, filePrefix + StringUtils.zeroPadString(Integer.toString(filesIndex), 3) + ".log");
+		}
+		currentAuditFile = tmpAuditFile;
+		close();
+		// always append to an existing file (after restart)
+		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile, true), "UTF-8"));
+		writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
+		xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
+	}
 
     /**
      * Saves the queued entries to an XML file and checks that very old files are deleted.
      */
     private class SaveQueuedPacketsTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             try {
                 // Ensure that saved audit logs are not too old
                 ensureMaxDays();

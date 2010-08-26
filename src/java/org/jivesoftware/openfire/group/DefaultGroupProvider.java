@@ -24,7 +24,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,7 +31,6 @@ import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -78,6 +76,7 @@ public class DefaultGroupProvider implements GroupProvider {
     private static final String USER_GROUPS =
         "SELECT groupName FROM ofGroupUser WHERE username=?";
     private static final String ALL_GROUPS = "SELECT groupName FROM ofGroup ORDER BY groupName";
+    private static final String SEARCH_GROUP_NAME = "SELECT groupName FROM ofGroup WHERE groupName LIKE ? ORDER BY groupName";
 
     private XMPPServer server = XMPPServer.getInstance();
 
@@ -95,16 +94,7 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
@@ -116,11 +106,12 @@ public class DefaultGroupProvider implements GroupProvider {
 
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_GROUP);
             pstmt.setString(1, name);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new GroupNotFoundException("Group with name "
                     + name + " not found.");
@@ -131,16 +122,7 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
@@ -164,16 +146,7 @@ public class DefaultGroupProvider implements GroupProvider {
             throw new GroupNotFoundException();
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -189,12 +162,14 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt.setString(1, newName);
             pstmt.setString(2, oldName);
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
+            
             pstmt = con.prepareStatement(SET_GROUP_NAME_2);
             pstmt.setString(1, newName);
             pstmt.setString(2, oldName);
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
+            
             pstmt = con.prepareStatement(SET_GROUP_NAME_3);
             pstmt.setString(1, newName);
             pstmt.setString(2, oldName);
@@ -205,11 +180,7 @@ public class DefaultGroupProvider implements GroupProvider {
             abortTransaction = true;
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -224,12 +195,14 @@ public class DefaultGroupProvider implements GroupProvider {
             pstmt = con.prepareStatement(DELETE_GROUP_USERS);
             pstmt.setString(1, groupName);
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
+            
             // Remove all properties of the group.
             pstmt = con.prepareStatement(DELETE_PROPERTIES);
             pstmt.setString(1, groupName);
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
+            
             // Remove the group entry.
             pstmt = con.prepareStatement(DELETE_GROUP);
             pstmt.setString(1, groupName);
@@ -240,11 +213,7 @@ public class DefaultGroupProvider implements GroupProvider {
             abortTransaction = true;
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -253,29 +222,20 @@ public class DefaultGroupProvider implements GroupProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(GROUP_COUNT);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return count;
     }
@@ -289,30 +249,20 @@ public class DefaultGroupProvider implements GroupProvider {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_GROUPS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-        }
+            DbConnectionManager.closeConnection(rs, pstmt, con);       }
         return groupNames;
     }
 
@@ -320,32 +270,23 @@ public class DefaultGroupProvider implements GroupProvider {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = DbConnectionManager.createScrollablePreparedStatement(con, ALL_GROUPS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;
             while (rs.next() && count < numResults) {
                 groupNames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return groupNames;
     }
@@ -354,32 +295,21 @@ public class DefaultGroupProvider implements GroupProvider {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_GROUPS);
             pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                }
-            }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return groupNames;
     }
@@ -399,16 +329,7 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -427,16 +348,7 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -454,16 +366,7 @@ public class DefaultGroupProvider implements GroupProvider {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -472,40 +375,7 @@ public class DefaultGroupProvider implements GroupProvider {
     }
 
     public Collection<String> search(String query) {
-        if (query == null || "".equals(query)) {
-            return Collections.emptyList();
-        }
-        // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
-        // Therefore, we do a best approximiation by replacing '*' with '%' and then
-        // surrounding the whole query with two '%'. This will return more data than desired,
-        // but is better than returning less data than desired.
-        query = "%" + query.replace('*', '%') + "%";
-        if (query.endsWith("%%")) {
-            query = query.substring(0, query.length()-1);
-        }
-
-        List<String> groupNames = new ArrayList<String>();
-        Connection con = null;
-        Statement stmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            stmt = con.createStatement();
-            StringBuilder sql = new StringBuilder();
-            sql.append("SELECT groupName FROM ofGroup WHERE groupName LIKE '").append(
-                    StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
-            rs = stmt.executeQuery(sql.toString());
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
-            }
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, stmt, con);
-        }
-        return groupNames;
+        return search(query, 0, Integer.MAX_VALUE);
     }
 
     public Collection<String> search(String query, int startIndex, int numResults) {
@@ -523,28 +393,37 @@ public class DefaultGroupProvider implements GroupProvider {
 
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
-        Statement stmt = null;
+        PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
-            stmt = DbConnectionManager.createScrollableStatement(con);
-            StringBuilder sql = new StringBuilder();
-            sql.append("SELECT groupName FROM ofGroup WHERE groupName LIKE '").append(
-                    StringUtils.escapeForSQL(query)).append("' ORDER BY groupName");
-            rs = stmt.executeQuery(sql.toString());
-            DbConnectionManager.setFetchSize(rs, startIndex + numResults);
-            DbConnectionManager.scrollResultSet(rs, startIndex);
-            int count = 0;
-            while (rs.next() && count < numResults) {
-                groupNames.add(rs.getString(1));
-                count++;
+            if ((startIndex==0) && (numResults==Integer.MAX_VALUE))
+            {
+               pstmt = con.prepareStatement(SEARCH_GROUP_NAME);
+               pstmt.setString(1, query);
+               rs = pstmt.executeQuery();
+               while (rs.next()) {
+                   groupNames.add(rs.getString(1));
+               }
+            } else {
+               pstmt = DbConnectionManager.createScrollablePreparedStatement(con, SEARCH_GROUP_NAME);
+               DbConnectionManager.limitRowsAndFetchSize(pstmt, startIndex, numResults);
+               pstmt.setString(1, query);
+               rs = pstmt.executeQuery();
+               // Scroll to the start index.
+               DbConnectionManager.scrollResultSet(rs, startIndex);
+               int count = 0;
+               while (rs.next() && count < numResults) {
+                   groupNames.add(rs.getString(1));
+                   count++;
+               }	
             }
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            DbConnectionManager.closeConnection(rs, stmt, con);
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return groupNames;
     }
@@ -557,6 +436,7 @@ public class DefaultGroupProvider implements GroupProvider {
         List<JID> members = new ArrayList<JID>();
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             if (adminsOnly) {
@@ -566,7 +446,7 @@ public class DefaultGroupProvider implements GroupProvider {
                 pstmt = con.prepareStatement(LOAD_MEMBERS);
             }
             pstmt.setString(1, groupName);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String user = rs.getString(1);
                 JID userJID = null;
@@ -581,22 +461,12 @@ public class DefaultGroupProvider implements GroupProvider {
                 }
                 members.add(userJID);
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try {
-                if (con != null) {
-                    con.close();
-                } }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return members;
     }

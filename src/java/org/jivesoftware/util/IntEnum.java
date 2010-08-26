@@ -53,7 +53,8 @@ public class IntEnum extends Enum {
         return value;
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -94,11 +95,13 @@ public class IntEnum extends Enum {
         return null;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return value;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return Integer.toString(value) + " " + super.toString();
     }
 }

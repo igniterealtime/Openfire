@@ -249,7 +249,8 @@ public class IQRouter extends BasicModule {
         resultTimeout.put(id, System.currentTimeMillis() + timeoutmillis);
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         TaskEngine.getInstance().scheduleAtFixedRate(new TimeoutTask(), 5000, 5000);
         serverName = server.getServerInfo().getXMPPDomain();

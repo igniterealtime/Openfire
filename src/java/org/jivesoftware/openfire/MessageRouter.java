@@ -171,7 +171,8 @@ public class MessageRouter extends BasicModule {
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         messageStrategy = server.getOfflineMessageStrategy();
         routingTable = server.getRoutingTable();

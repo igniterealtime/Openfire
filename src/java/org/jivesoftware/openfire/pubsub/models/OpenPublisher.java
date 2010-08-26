@@ -30,11 +30,13 @@ import org.xmpp.packet.JID;
  */
 public class OpenPublisher extends PublisherModel {
 
-    public boolean canPublish(Node node, JID entity) {
+    @Override
+	public boolean canPublish(Node node, JID entity) {
         return true;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "open";
     }
 }

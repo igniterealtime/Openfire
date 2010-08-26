@@ -85,35 +85,43 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
 	    map = new ConcurrentHashMap<E,Object>(initialCapacity);
     }
 
-    public Iterator<E> iterator() {
+    @Override
+	public Iterator<E> iterator() {
 	    return map.keySet().iterator();
     }
 
-    public int size() {
+    @Override
+	public int size() {
 	    return map.size();
     }
 
-    public boolean isEmpty() {
+    @Override
+	public boolean isEmpty() {
 	    return map.isEmpty();
     }
 
-    public boolean contains(Object o) {
+    @Override
+	public boolean contains(Object o) {
 	    return map.containsKey(o);
     }
 
-    public boolean add(E o) {
+    @Override
+	public boolean add(E o) {
 	    return map.put(o, PRESENT)==null;
     }
 
-    public boolean remove(Object o) {
+    @Override
+	public boolean remove(Object o) {
 	    return map.remove(o)==PRESENT;
     }
 
-    public void clear() {
+    @Override
+	public void clear() {
 	    map.clear();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         try {
             ConcurrentHashSet<E> newSet = (ConcurrentHashSet<E>)super.clone();
             newSet.map.putAll(map);

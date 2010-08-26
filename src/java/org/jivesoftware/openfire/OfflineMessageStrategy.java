@@ -182,7 +182,8 @@ public class OfflineMessageStrategy extends BasicModule {
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         messageStore = server.getOfflineMessageStore();
         router = server.getPacketRouter();

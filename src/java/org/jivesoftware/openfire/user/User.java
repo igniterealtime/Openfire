@@ -100,25 +100,22 @@ public class User implements Cacheable, Externalizable, Result {
         String propertyValue = null;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTY);
             pstmt.setString(1, username);
             pstmt.setString(2, propertyName);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 propertyValue = rs.getString(1);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return propertyValue;
     }
@@ -404,15 +401,18 @@ public class User implements Cacheable, Externalizable, Result {
         return size;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return username;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return username.hashCode();
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -429,7 +429,8 @@ public class User implements Cacheable, Externalizable, Result {
      */
     private class PropertiesMap extends AbstractMap {
 
-        public Object put(Object key, Object value) {
+        @Override
+		public Object put(Object key, Object value) {
             Map<String,Object> eventParams = new HashMap<String,Object>();
             Object answer;
             String keyString = (String) key;
@@ -457,7 +458,8 @@ public class User implements Cacheable, Externalizable, Result {
             return answer;
         }
 
-        public Set<Entry> entrySet() {
+        @Override
+		public Set<Entry> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -467,11 +469,13 @@ public class User implements Cacheable, Externalizable, Result {
      */
     private class PropertiesEntrySet extends AbstractSet {
 
-        public int size() {
+        @Override
+		public int size() {
             return properties.entrySet().size();
         }
 
-        public Iterator iterator() {
+        @Override
+		public Iterator iterator() {
             return new Iterator() {
 
                 Iterator iter = properties.entrySet().iterator();
@@ -507,24 +511,21 @@ public class User implements Cacheable, Externalizable, Result {
     private void loadProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 properties.put(rs.getString(1), rs.getString(2));
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -543,10 +544,7 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -565,10 +563,7 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -586,10 +581,7 @@ public class User implements Cacheable, Externalizable, Result {
             Log.error(e.getMessage(), e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -621,5 +613,5 @@ public class User implements Cacheable, Externalizable, Result {
 	public String getUID()
 	{
 		return username;
-	}    
+	}
 }

@@ -55,7 +55,8 @@ public class ByteFormat extends Format {
      * @param pos
      * @return A formatted string representing the given bytes in more human-readable form.
      */
-    public StringBuffer format(Object obj, StringBuffer buf, FieldPosition pos) {
+    @Override
+	public StringBuffer format(Object obj, StringBuffer buf, FieldPosition pos) {
         if (obj instanceof Long) {
             long numBytes = ((Long)obj).longValue();
             if (numBytes < 1024 * 1024) {
@@ -77,7 +78,8 @@ public class ByteFormat extends Format {
      * @param pos
      * @return returns null in this implementation.
      */
-    public Object parseObject(String source, ParsePosition pos) {
+    @Override
+	public Object parseObject(String source, ParsePosition pos) {
         return null;
     }
 }

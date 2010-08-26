@@ -181,23 +181,27 @@ public class TransferRequest extends Request {
     }
 
 
-    public void updateSession(int state, long offerTime) {
+    @Override
+	public void updateSession(int state, long offerTime) {
         // Ignore
     }
 
-    public void offerAccepted(AgentSession agentSession) {
+    @Override
+	public void offerAccepted(AgentSession agentSession) {
         super.offerAccepted(agentSession);
         // Keep track when the offer was accepted by the agent
         offerAccepted = System.currentTimeMillis();
     }
 
-    public boolean sendOffer(AgentSession session, RequestQueue queue) {
+    @Override
+	public boolean sendOffer(AgentSession session, RequestQueue queue) {
         // Keep track of the actual entity that received the transfer offer
         actualInvitee = session.getJID();
         return super.sendOffer(session, queue);
     }
 
-    void addOfferContent(Element offerElement) {
+    @Override
+	void addOfferContent(Element offerElement) {
         Element inviteElement = offerElement.addElement("transfer", "http://jabber.org/protocol/workgroup");
 
         inviteElement.addAttribute("type", type.toString());
@@ -212,10 +216,12 @@ public class TransferRequest extends Request {
         inviteElement.addElement("reason").setText(reason);
     }
 
-    void addRevokeContent(Element revoke) {
+    @Override
+	void addRevokeContent(Element revoke) {
     }
 
-    public Element getSessionElement() {
+    @Override
+	public Element getSessionElement() {
         // Add the workgroup of the original user request
         QName qName = DocumentHelper.createQName("session", DocumentHelper.createNamespace("", "http://jivesoftware.com/protocol/workgroup"));
         Element sessionElement = DocumentHelper.createElement(qName);
@@ -224,11 +230,13 @@ public class TransferRequest extends Request {
         return sessionElement;
     }
 
-    JID getUserJID() {
+    @Override
+	JID getUserJID() {
         return userRequest.getUserJID();
     }
 
-    public void userJoinedRoom(JID roomJID, JID user) {
+    @Override
+	public void userJoinedRoom(JID roomJID, JID user) {
         Log.debug("User "+user+" has joined "+roomJID+". User should be kicked.");
         if (actualInvitee != null && actualInvitee.toBareJID().equals(user.toBareJID())) {
             joinedRoom = System.currentTimeMillis();
@@ -249,7 +257,8 @@ public class TransferRequest extends Request {
         }
     }
 
-    public void checkRequest(String roomID) {
+    @Override
+	public void checkRequest(String roomID) {
         // Monitor that the agent/user joined the room and if not send back an error to the inviter
         if (offerAccepted > 0 && !hasJoinedRoom() && System.currentTimeMillis() - offerAccepted > JOIN_TIMEOUT) {
             Log.debug("Agent or user failed to join room "+roomID);

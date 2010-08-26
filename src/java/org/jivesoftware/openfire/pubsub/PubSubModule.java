@@ -379,7 +379,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
 
         // Listen to property events so that the template is always up to date
@@ -482,7 +483,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         ClusterManager.addListener(this);
     }
 
-    public void start() {
+    @Override
+	public void start() {
         // Check that the service is enabled
         if (!isServiceEnabled()) {
             return;
@@ -498,7 +500,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());

@@ -49,11 +49,13 @@ public class RoomInterceptorManager extends InterceptorManager {
         return instance;
     }
 
-    protected String getPropertySuffix() {
+    @Override
+	protected String getPropertySuffix() {
         return "room";
     }
 
-    public void invokeInterceptors(String workgroup, Packet packet, boolean read, boolean processed) {
+    @Override
+	public void invokeInterceptors(String workgroup, Packet packet, boolean read, boolean processed) {
         try {
             super.invokeInterceptors(workgroup, packet, read, processed);
         }
@@ -63,7 +65,8 @@ public class RoomInterceptorManager extends InterceptorManager {
         }
     }
 
-    protected Collection<Class> getBuiltInInterceptorClasses() {
+    @Override
+	protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class) TrafficMonitor.class);
     }
 }

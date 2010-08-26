@@ -64,7 +64,8 @@ public class PublishedItemTask extends TimerTask {
         this.itemsToDelete = service.getItemsToDelete();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         try {
             PublishedItem entry;
             boolean success;

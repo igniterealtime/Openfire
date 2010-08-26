@@ -10,11 +10,13 @@ public class Drop extends AbstractRule implements Rule {
 
 	private static final Logger Log = LoggerFactory.getLogger(Drop.class);
 	
-    public String getDisplayName() {
+    @Override
+	public String getDisplayName() {
         return "Drop";
     }
 
-    public Packet doAction(Packet packet) throws PacketRejectedException {
+    @Override
+	public Packet doAction(Packet packet) throws PacketRejectedException {
         if (doLog()) {
             Log.info("Dropping from "+packet.getFrom()+" to "+packet.getTo());
         }

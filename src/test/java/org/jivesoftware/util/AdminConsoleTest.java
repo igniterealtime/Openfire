@@ -26,7 +26,8 @@ public class AdminConsoleTest extends TestCase {
     /**
      * Resets the admin console internal data structures.
      */
-    public void tearDown() throws Exception {
+    @Override
+	public void tearDown() throws Exception {
         Class c = AdminConsole.class;
         Method init = c.getDeclaredMethod("load", (Class[])null);
         init.setAccessible(true);

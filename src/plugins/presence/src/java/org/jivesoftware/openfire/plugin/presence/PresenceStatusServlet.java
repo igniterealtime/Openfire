@@ -67,7 +67,8 @@ public class PresenceStatusServlet extends HttpServlet {
     byte offline[];
     byte xa[];
 
-    public void init(ServletConfig servletConfig) throws ServletException {
+    @Override
+	public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         plugin =
                 (PresencePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("presence");
@@ -84,7 +85,8 @@ public class PresenceStatusServlet extends HttpServlet {
         AuthCheckFilter.addExclude("presence/status");
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String sender = request.getParameter("req_jid");
         String jid = request.getParameter("jid");
@@ -139,12 +141,14 @@ public class PresenceStatusServlet extends HttpServlet {
         }
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doGet(request, response);
     }
 
-    public void destroy() {
+    @Override
+	public void destroy() {
         super.destroy();
         available = null;
         away = null;

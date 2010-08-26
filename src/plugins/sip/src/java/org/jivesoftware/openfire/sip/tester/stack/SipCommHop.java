@@ -46,7 +46,8 @@ public class SipCommHop implements javax.sip.address.Hop {
     /**
      * Debugging println.
      */
-    public String toString() {
+    @Override
+	public String toString() {
         return host + ":" + port + "/" + transport;
     }
 

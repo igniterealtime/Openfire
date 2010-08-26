@@ -71,7 +71,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static boolean isDebugEnabled() {
+    @Deprecated
+	public static boolean isDebugEnabled() {
         return Logger.isDebugEnabled();
     }
 
@@ -91,7 +92,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static boolean isInfoEnabled() {
+    @Deprecated
+	public static boolean isInfoEnabled() {
         return Logger.isInfoEnabled();
     }
 
@@ -99,7 +101,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static boolean isWarnEnabled() {
+    @Deprecated
+	public static boolean isWarnEnabled() {
         return Logger.isWarnEnabled();
     }
 
@@ -107,7 +110,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void debug(String s) {
+    @Deprecated
+	public static void debug(String s) {
         if (isDebugEnabled()) {
             Logger.debug(s);
         }
@@ -117,7 +121,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void debug(Throwable throwable) {
+    @Deprecated
+	public static void debug(Throwable throwable) {
         if (isDebugEnabled()) {
             Logger.debug("", throwable);
         }
@@ -127,7 +132,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void debug(String s, Throwable throwable) {
+    @Deprecated
+	public static void debug(String s, Throwable throwable) {
         if (isDebugEnabled()) {
             Logger.debug(s, throwable);
         }
@@ -148,7 +154,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void info(String s) {
+    @Deprecated
+	public static void info(String s) {
         if (isInfoEnabled()) {
             Logger.info(s);
         }
@@ -158,7 +165,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void info(Throwable throwable) {
+    @Deprecated
+	public static void info(Throwable throwable) {
         if (isInfoEnabled()) {
             Logger.info("", throwable);
         }
@@ -168,7 +176,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void info(String s, Throwable throwable) {
+    @Deprecated
+	public static void info(String s, Throwable throwable) {
         if (isInfoEnabled()) {
             Logger.info(s, throwable);
         }
@@ -189,7 +198,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#warn(String)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void warn(String s) {
+    @Deprecated
+	public static void warn(String s) {
         if (isWarnEnabled()) {
             Logger.warn(s);
         }
@@ -199,7 +209,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#warn(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void warn(Throwable throwable) {
+    @Deprecated
+	public static void warn(Throwable throwable) {
         if (isWarnEnabled()) {
             Logger.warn("", throwable);
         }
@@ -209,7 +220,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void warn(String s, Throwable throwable) {
+    @Deprecated
+	public static void warn(String s, Throwable throwable) {
         if (isWarnEnabled()) {
             Logger.warn(s, throwable);
         }
@@ -230,7 +242,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#error(String)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void error(String s) {
+    @Deprecated
+	public static void error(String s) {
         if (isErrorEnabled()) {
             Logger.error(s);
             if (isDebugEnabled()) {
@@ -243,7 +256,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void error(Throwable throwable) {
+    @Deprecated
+	public static void error(Throwable throwable) {
         if (isErrorEnabled()) {
             Logger.error("", throwable);
             if (isDebugEnabled()) {
@@ -256,7 +270,8 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
 	 *             Functionality of this method is delegated there.
 	 */
-    public static void error(String s, Throwable throwable) {
+    @Deprecated
+	public static void error(String s, Throwable throwable) {
         if (isErrorEnabled()) {
             Logger.error(s, throwable);
             if (isDebugEnabled()) {

@@ -91,7 +91,8 @@ public class LeafNode extends Node {
         this.sendItemSubscribe = defaultConfiguration.isSendItemSubscribe();
     }
 
-    void configure(FormField field) {
+    @Override
+	void configure(FormField field) {
         List<String> values;
         String booleanValue;
         if ("pubsub#persist_items".equals(field.getVariable())) {
@@ -110,7 +111,8 @@ public class LeafNode extends Node {
         }
     }
 
-    void postConfigure(DataForm completedForm) {
+    @Override
+	void postConfigure(DataForm completedForm) {
         List<String> values;
         if (!persistPublishedItems) {
             // Always save the last published item when not configured to use persistent items
@@ -132,7 +134,8 @@ public class LeafNode extends Node {
         }
     }
 
-    protected void addFormFields(DataForm form, boolean isEditing) {
+    @Override
+	protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
         FormField formField = form.addField();
@@ -170,7 +173,8 @@ public class LeafNode extends Node {
 
     }
 
-    protected void deletingNode() {
+    @Override
+	protected void deletingNode() {
         synchronized (publishedItems) {
             // Remove stored published items
             while (!publishedItems.isEmpty()) {
@@ -405,7 +409,8 @@ public class LeafNode extends Node {
         service.send(result);
     }
 
-    public PublishedItem getPublishedItem(String itemID) {
+    @Override
+	public PublishedItem getPublishedItem(String itemID) {
         if (!isItemRequired()) {
             return null;
         }
@@ -414,13 +419,15 @@ public class LeafNode extends Node {
         }
     }
 
-    public List<PublishedItem> getPublishedItems() {
+    @Override
+	public List<PublishedItem> getPublishedItems() {
         synchronized (publishedItems) {
             return Collections.unmodifiableList(publishedItems);
         }
     }
 
-    public List<PublishedItem> getPublishedItems(int recentItems) {
+    @Override
+	public List<PublishedItem> getPublishedItems(int recentItems) {
         synchronized (publishedItems) {
             int size = publishedItems.size();
             if (recentItems > size) {
@@ -435,7 +442,8 @@ public class LeafNode extends Node {
         }
     }
 
-    public PublishedItem getLastPublishedItem() {
+    @Override
+	public PublishedItem getLastPublishedItem() {
         synchronized (publishedItems) {
             if (publishedItems.isEmpty()) {
                 return null;
@@ -449,7 +457,8 @@ public class LeafNode extends Node {
      *
      * @return true if the last published item is going to be sent to new subscribers.
      */
-    public boolean isSendItemSubscribe() {
+    @Override
+	public boolean isSendItemSubscribe() {
         return sendItemSubscribe;
     }
 

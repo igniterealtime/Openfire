@@ -427,9 +427,9 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
 <pre>
     &lt;ldap&gt;
       &lt;vcard-mapping&gt;
-
         &lt;![CDATA[
           &lt;vCard xmlns='vcard-temp'&gt;
+
             &lt;FN&gt;{displayName}&lt;/FN&gt;
             &lt;NICKNAME&gt;{uid}&lt;/NICKNAME&gt;
             &lt;BDAY&gt;{dob}&lt;/BDAY&gt;
@@ -439,7 +439,6 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
               &lt;EXTADR&gt;Ste 500&lt;/EXTADR&gt;
               &lt;STREET&gt;317 SW Alder St&lt;/STREET&gt;
               &lt;LOCALITY&gt;Portland&lt;/LOCALITY&gt;
-
               &lt;REGION&gt;Oregon&lt;/REGION&gt;
               &lt;PCODE&gt;97204&lt;/PCODE&gt;
               &lt;CTRY&gt;USA&lt;/CTRY&gt;
@@ -452,21 +451,22 @@ clients that support the XMPP vCard extension. First, enable the provider:</p>
             &lt;/TEL&gt;
 
             &lt;EMAIL&gt;
-            &lt;INTERNET/&gt;
-            &lt;USERID&gt;{mail}&lt;/USERID&gt;
+              &lt;HOME/&gt;
+              &lt;INTERNET/&gt;
+              &lt;PREF/&gt;
+              &lt;USERID&gt;{mail}&lt;/USERID&gt;
             &lt;/EMAIL&gt;
-            &lt;TITLE&gt;{title}&lt;/TITLE&gt;
 
+            &lt;TITLE&gt;{title}&lt;/TITLE&gt;
             &lt;ROLE&gt;&lt;/ROLE&gt;
+
             &lt;ORG&gt;
               &lt;ORGNAME&gt;{o}&lt;/ORGNAME&gt;
               &lt;ORGUNIT&gt;&lt;/ORGUNIT&gt;
-
             &lt;/ORG&gt;
+
             &lt;URL&gt;{labeledURI}&lt;/URL&gt;
-            &lt;DESC&gt;
-            uid: {uidNumber} home: {homeDirectory} shell: {loginShell}
-            &lt;/DESC&gt;
+            &lt;DESC&gt;uid: {uidNumber} home: {homeDirectory} shell: {loginShell}&lt;/DESC&gt;
 
           &lt;/vCard&gt;
         ]]&gt;

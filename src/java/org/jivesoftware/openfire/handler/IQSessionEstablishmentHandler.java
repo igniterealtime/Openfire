@@ -44,14 +44,16 @@ public class IQSessionEstablishmentHandler extends IQHandler {
         info = new IQHandlerInfo("session", "urn:ietf:params:xml:ns:xmpp-session");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // Just answer that the session has been activated
         IQ reply = IQ.createResultIQ(packet);
         reply.setChildElement(packet.getChildElement().createCopy());
         return reply;
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 }

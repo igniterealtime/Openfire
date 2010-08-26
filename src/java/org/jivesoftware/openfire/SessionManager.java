@@ -1260,7 +1260,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         router = server.getPacketRouter();
@@ -1348,12 +1349,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         return message;
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         Log.debug("SessionManager: Stopping server");
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();

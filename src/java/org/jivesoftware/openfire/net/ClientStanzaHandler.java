@@ -55,23 +55,28 @@ public class ClientStanzaHandler extends StanzaHandler {
      * @param doc the unknown DOM element that was received
      * @return always false.
      */
-    boolean processUnknowPacket(Element doc) {
+    @Override
+	boolean processUnknowPacket(Element doc) {
         return false;
     }
 
-    String getNamespace() {
+    @Override
+	String getNamespace() {
         return "jabber:client";
     }
 
-    boolean validateHost() {
+    @Override
+	boolean validateHost() {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
     }
 
-    boolean validateJIDs() {
+    @Override
+	boolean validateJIDs() {
         return true;
     }
 
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    @Override
+	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         if ("jabber:client".equals(namespace)) {
             // The connected client is a regular client so create a ClientSession
@@ -81,25 +86,29 @@ public class ClientStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    protected void processIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	protected void processIQ(IQ packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processIQ(packet);
     }
 
-    protected void processPresence(Presence packet) throws UnauthorizedException {
+    @Override
+	protected void processPresence(Presence packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processPresence(packet);
     }
 
-    protected void processMessage(Message packet) throws UnauthorizedException {
+    @Override
+	protected void processMessage(Message packet) throws UnauthorizedException {
         // Overwrite the FROM attribute to avoid spoofing
         packet.setFrom(session.getAddress());
         super.processMessage(packet);
     }
 
-    void startTLS() throws Exception {
+    @Override
+	void startTLS() throws Exception {
         Connection.ClientAuth policy;
         try {
             policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled"));

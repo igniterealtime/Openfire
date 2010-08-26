@@ -45,7 +45,8 @@ public class IQSharedGroupHandler extends IQHandler {
         info = new IQHandlerInfo("sharedgroup", "http://www.jivesoftware.org/protocol/sharedgroup");
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ result = IQ.createResultIQ(packet);
         String username = packet.getFrom().getNode();
         if (!serverName.equals(packet.getFrom().getDomain()) || username == null) {
@@ -69,11 +70,13 @@ public class IQSharedGroupHandler extends IQHandler {
         return result;
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getXMPPDomain();
         rosterManager = server.getRosterManager();

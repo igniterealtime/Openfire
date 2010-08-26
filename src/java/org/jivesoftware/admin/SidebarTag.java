@@ -132,6 +132,7 @@ public class SidebarTag extends BodyTagSupport {
     /**
      * Does nothing, returns {@link #EVAL_BODY_BUFFERED} always.
      */
+    @Override
     public int doStartTag() throws JspException {
         return EVAL_BODY_BUFFERED;
     }
@@ -145,6 +146,7 @@ public class SidebarTag extends BodyTagSupport {
      * @return {@link #EVAL_PAGE} after rendering the tabs.
      * @throws JspException if an exception occurs while rendering the sidebar items.
      */
+    @Override
     public int doEndTag() throws JspException {
         // Start by getting the request from the page context
         HttpServletRequest request = (HttpServletRequest)pageContext.getRequest();
@@ -160,7 +162,7 @@ public class SidebarTag extends BodyTagSupport {
         // Get the initial subpage and page IDs
         String subPageID = (String)request.getAttribute("subPageID");
         String pageID = (String)request.getAttribute("pageID");
-        String subnavID = (String)request.getAttribute("subnavID");
+        //String subnavID = (String)request.getAttribute("subnavID");
 
         // If the pageID is null, use the subPageID to set it. If both the pageID and
         // subPageIDs are null, return because these are key to execution of the tag.
@@ -198,7 +200,7 @@ public class SidebarTag extends BodyTagSupport {
                 // Loop through all items in the root, print them out
                 if (currentTab != null && subnav != null) {
                     Element sidebar = subnav.getParent().getParent();
-                    String header = sidebar.attributeValue("name");
+                    //String header = sidebar.attributeValue("name");
                     String pluginName = sidebar.attributeValue("plugin");
                     // Print the header:
                     String hcss = getHeadercss();

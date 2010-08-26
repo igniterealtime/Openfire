@@ -34,7 +34,8 @@ public class ImageServlet extends HttpServlet {
 
     private ChatSettingsManager chatSettingsManager;
 
-    public void init(ServletConfig config) throws ServletException {
+    @Override
+	public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         // Initialize chat settings manager.
@@ -49,7 +50,8 @@ public class ImageServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String imageName = request.getParameter("imageName");

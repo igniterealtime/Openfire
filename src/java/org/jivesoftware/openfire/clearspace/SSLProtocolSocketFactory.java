@@ -171,11 +171,13 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
         );
     }
 
-    public boolean equals(Object obj) {
+    @Override
+	public boolean equals(Object obj) {
         return ((obj != null) && obj.getClass().equals(SSLProtocolSocketFactory.class));
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return SSLProtocolSocketFactory.class.hashCode();
     }
 

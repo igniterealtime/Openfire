@@ -49,11 +49,13 @@ public class GroupCollection extends AbstractCollection {
         this.elements = elements;
     }
 
-    public Iterator iterator() {
+    @Override
+	public Iterator iterator() {
         return new UserIterator();
     }
 
-    public int size() {
+    @Override
+	public int size() {
         return elements.length;
     }
 

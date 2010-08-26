@@ -46,11 +46,13 @@ public class WorkgroupInterceptorManager extends InterceptorManager {
         return instance;
     }
 
-    protected String getPropertySuffix() {
+    @Override
+	protected String getPropertySuffix() {
         return "workgroup";
     }
 
-    protected Collection<Class> getBuiltInInterceptorClasses() {
+    @Override
+	protected Collection<Class> getBuiltInInterceptorClasses() {
         return Arrays.asList((Class)TrafficMonitor.class, (Class)UserInterceptor.class);
     }
 }

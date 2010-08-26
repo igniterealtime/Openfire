@@ -166,7 +166,8 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
         // Schedule a task to do conversation archiving.
         archiveTask = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 new ArchivingTask().run();
             }
         };
@@ -174,7 +175,8 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
         // Schedule a task to do conversation cleanup.
         cleanupTask = new TimerTask() {
-            public void run() {
+            @Override
+			public void run() {
                 for (String key : conversations.keySet()) {
                     Conversation conversation = conversations.get(key);
                     long now = System.currentTimeMillis();

@@ -275,7 +275,8 @@ public class Group implements Cacheable, Externalizable {
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return name;
     }
 
@@ -365,11 +366,13 @@ public class Group implements Cacheable, Externalizable {
         return size;
     }
 
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return name.hashCode();
     }
 
-    public boolean equals(Object object) {
+    @Override
+	public boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -394,7 +397,8 @@ public class Group implements Cacheable, Externalizable {
             this.adminCollection = adminCollection;
         }
 
-        public Iterator<JID> iterator() {
+        @Override
+		public Iterator<JID> iterator() {
             return new Iterator<JID>() {
 
                 Iterator<JID> iter = users.iterator();
@@ -439,11 +443,13 @@ public class Group implements Cacheable, Externalizable {
             };
         }
 
-        public int size() {
+        @Override
+		public int size() {
             return users.size();
         }
 
-        public boolean add(Object member) {
+        @Override
+		public boolean add(Object member) {
             // Do nothing if the provider is read-only.
             if (provider.isReadOnly()) {
                 return false;
@@ -513,7 +519,8 @@ public class Group implements Cacheable, Externalizable {
      */
     private class PropertiesMap extends AbstractMap {
 
-        public Object put(Object key, Object value) {
+        @Override
+		public Object put(Object key, Object value) {
             if (key == null || value == null) {
                 throw new NullPointerException();
             }
@@ -549,7 +556,8 @@ public class Group implements Cacheable, Externalizable {
             return answer;
         }
 
-        public Set<Entry> entrySet() {
+        @Override
+		public Set<Entry> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -559,11 +567,13 @@ public class Group implements Cacheable, Externalizable {
      */
     private class PropertiesEntrySet extends AbstractSet {
 
-        public int size() {
+        @Override
+		public int size() {
             return properties.entrySet().size();
         }
 
-        public Iterator iterator() {
+        @Override
+		public Iterator iterator() {
             return new Iterator() {
 
                 Iterator iter = properties.entrySet().iterator();

@@ -72,7 +72,8 @@ public class FaviconServlet extends HttpServlet {
      */
     private Cache<String, byte[]> hitsCache;
 
-    public void init(ServletConfig config) throws ServletException {
+    @Override
+	public void init(ServletConfig config) throws ServletException {
         super.init(config);
         // Create a pool of HTTP connections to use to get the favicons
         client = new HttpClient(new MultiThreadedHttpConnectionManager());
@@ -100,7 +101,8 @@ public class FaviconServlet extends HttpServlet {
      * @throws javax.servlet.ServletException
      * @throws java.io.IOException
      */
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String host = request.getParameter("host");

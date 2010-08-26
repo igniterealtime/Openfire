@@ -35,29 +35,35 @@ public class OpenAccess extends AccessModel {
     OpenAccess() {
     }
 
-    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         return true;
     }
 
-    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return true;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "open";
     }
 
-    public PacketError.Condition getSubsriptionError() {
+    @Override
+	public PacketError.Condition getSubsriptionError() {
         // Return nothing since users can always subscribe to the node
         return null;
     }
 
-    public Element getSubsriptionErrorDetail() {
+    @Override
+	public Element getSubsriptionErrorDetail() {
         // Return nothing since users can always subscribe to the node
         return null;
     }
 
-    public boolean isAuthorizationRequired() {
+    @Override
+	public boolean isAuthorizationRequired() {
         return false;
     }
 }

@@ -48,7 +48,8 @@ public class MonitoringDWR extends DWRServlet {
 	
     private Document document;
 
-    public void configure(ServletConfig servletConfig, Configuration configuration) throws ServletException {
+    @Override
+	public void configure(ServletConfig servletConfig, Configuration configuration) throws ServletException {
 
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -107,7 +108,8 @@ public class MonitoringDWR extends DWRServlet {
         return element;
     }
 
-    protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+    @Override
+	protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
             throws IOException, ServletException {
 
         super.doPost(new MyServletRequestWrapper(httpServletRequest), httpServletResponse);
@@ -121,7 +123,8 @@ public class MonitoringDWR extends DWRServlet {
             super(httpServletRequest);
         }
 
-        public String getPathInfo() {
+        @Override
+		public String getPathInfo() {
             String pathInfo = super.getPathInfo();
             return pathInfo.replaceAll("/monitoring/dwr", ""); 
         }

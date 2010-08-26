@@ -25,7 +25,8 @@ import org.jivesoftware.xmpp.workgroup.RequestFilterFactory;
 public class BasicRequestFilterFactory extends RequestFilterFactory {
     RequestFilter filter = new BasicRequestFilter();
 
-    public RequestFilter getFilter() {
+    @Override
+	public RequestFilter getFilter() {
         return filter;
     }
 }

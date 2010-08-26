@@ -252,8 +252,7 @@ public class PubSubPersistenceManager {
             abortTransaction = true;
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -316,22 +315,20 @@ public class PubSubPersistenceManager {
             pstmt.setString(25, service.getServiceID());
             pstmt.setString(26, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove existing JIDs associated with the the node
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
-            pstmt = null;
 
             // Save associated JIDs and roster groups
             saveAssociatedElements(con, node, service);
@@ -341,8 +338,7 @@ public class PubSubPersistenceManager {
             abortTransaction = true;
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
@@ -382,7 +378,7 @@ public class PubSubPersistenceManager {
                     pstmt.executeUpdate();
                 }
             }
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
             // Add new roster groups associated with the the node
             pstmt = con.prepareStatement(ADD_NODE_GROUPS);
             for (String groupName : node.getRosterGroupsAllowed()) {
@@ -393,7 +389,7 @@ public class PubSubPersistenceManager {
             }
         }
         finally {
-            pstmt.close();
+            DbConnectionManager.closeStatement(pstmt);
         }
     }
 
@@ -415,35 +411,35 @@ public class PubSubPersistenceManager {
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove JIDs associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove published items of the node being deleted
             pstmt = con.prepareStatement(DELETE_ITEMS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.closeStatement(pstmt);
 
             // Remove all affiliates from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove users that were subscribed to the node
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTIONS);
@@ -456,8 +452,7 @@ public class PubSubPersistenceManager {
             abortTransaction = true;
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
         return !abortTransaction;
@@ -471,19 +466,19 @@ public class PubSubPersistenceManager {
     public static void loadNodes(PubSubService service) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         Map<String, Node> nodes = new HashMap<String, Node>();
         try {
             con = DbConnectionManager.getConnection();
             // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
             pstmt = con.prepareStatement(LOAD_NON_LEAF_NODES);
             pstmt.setString(1, service.getServiceID());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
                 loadNode(service, nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get all leaf nodes (remaining unloaded nodes)
             pstmt = con.prepareStatement(LOAD_LEAF_NODES);
@@ -493,8 +488,7 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadNode(service, nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get JIDs associated with all nodes
             pstmt = con.prepareStatement(LOAD_NODES_JIDS);
@@ -504,8 +498,7 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadAssociatedJIDs(nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get roster groups associateds with all nodes
             pstmt = con.prepareStatement(LOAD_NODES_GROUPS);
@@ -515,8 +508,7 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadAssociatedGroups(nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get affiliations of all nodes
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
@@ -526,8 +518,7 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadAffiliations(nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get subscriptions to all nodes
             pstmt = con.prepareStatement(LOAD_SUBSCRIPTIONS);
@@ -537,8 +528,7 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadSubscriptions(service, nodes, rs);
             }
-            rs.close();
-            pstmt.close();
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // TODO We may need to optimize memory consumption and load items on-demand
             // Load published items of all nodes
@@ -549,16 +539,12 @@ public class PubSubPersistenceManager {
             while(rs.next()) {
                 loadItems(nodes, rs);
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
         for (Node node : nodes.values()) {
@@ -811,10 +797,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -842,10 +825,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -931,10 +911,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -962,10 +939,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -978,6 +952,7 @@ public class PubSubPersistenceManager {
     public static void loadItems(PubSubService service, LeafNode node) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         SAXReader xmlReader = null;
         try {
             // Get a sax reader from the pool
@@ -987,7 +962,7 @@ public class PubSubPersistenceManager {
             pstmt = con.prepareStatement(LOAD_ITEMS);
             pstmt.setString(1, service.getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             // Rebuild loaded published items
             while(rs.next()) {
                 String itemID = rs.getString(1);
@@ -1003,7 +978,6 @@ public class PubSubPersistenceManager {
                 // Add the published item to the node
                 node.addPublishedItem(item);
             }
-            rs.close();
         }
         catch (Exception sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -1013,10 +987,7 @@ public class PubSubPersistenceManager {
             if (xmlReader != null) {
                 xmlReaders.add(xmlReader);
             }
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -1049,10 +1020,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return success;
     }
@@ -1083,10 +1051,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return success;
     }
@@ -1104,6 +1069,7 @@ public class PubSubPersistenceManager {
             boolean isLeafType) {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         DefaultNodeConfiguration config = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1111,7 +1077,7 @@ public class PubSubPersistenceManager {
             pstmt = con.prepareStatement(LOAD_DEFAULT_CONF);
             pstmt.setString(1, service.getServiceID());
             pstmt.setInt(2, (isLeafType ? 1 : 0));
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 config = new DefaultNodeConfiguration(isLeafType);
                 // Rebuild loaded default node configuration
@@ -1135,16 +1101,12 @@ public class PubSubPersistenceManager {
                         CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(15)));
                 config.setMaxLeafNodes(rs.getInt(16));
             }
-            rs.close();
         }
         catch (Exception sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return config;
     }
@@ -1191,10 +1153,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1240,10 +1199,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try {if (pstmt != null) {pstmt.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
-            try {if (con != null) {con.close();}}
-            catch (Exception e) {Log.error(e.getMessage(), e);}
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1258,7 +1214,7 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (con != null) con.close(); }
+            try { if (con != null) con:close(); }
             catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return node;
@@ -1323,8 +1279,8 @@ public class PubSubPersistenceManager {
             node.setDescription(rs.getString(21));
             node.setLanguage(rs.getString(22));
             node.setName(rs.getString(23));
-            rs.close();
-            pstmt.close();
+            rs:close();
+            pstmt:close();
 
             pstmt = con.prepareStatement(LOAD_HISTORY);
             // Recreate the history until two days ago
@@ -1345,8 +1301,8 @@ public class PubSubPersistenceManager {
                             body);
                 }
             }
-            rs.close();
-            pstmt.close();
+            rs:close();
+            pstmt:close();
 
             pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
             pstmt.setString(1, encodeNodeID(node.getNodeID()));
@@ -1357,7 +1313,7 @@ public class PubSubPersistenceManager {
                 affiliate.setSubscription(NodeAffiliate.State.valueOf(rs.getString(3)));
                 node.addAffiliate(affiliate);
             }
-            rs.close();
+            rs:close();
 
             // Set now that the room's configuration is updated in the database. Note: We need to
             // set this now since otherwise the room's affiliations will be saved to the database
@@ -1371,9 +1327,9 @@ public class PubSubPersistenceManager {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
+            try { if (pstmt != null) pstmt:close(); }
             catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
+            try { if (con != null) con:close(); }
             catch (Exception e) { Log.error(e.getMessage(), e); }
         }
         return node;

@@ -688,7 +688,8 @@ public class SocketConnection implements Connection {
         writing.compareAndSet(true, false);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + " socket: " + socket + " session: " + session;
     }
 

@@ -82,7 +82,8 @@ public class OCSPChecker extends PKIXCertPathChecker {
         init(false);
     }
 
-    public void init(boolean forward) throws CertPathValidatorException {
+    @Override
+	public void init(boolean forward) throws CertPathValidatorException {
         if (!forward) {
             certIndex = certs.length - 1;
         } else {
@@ -91,15 +92,18 @@ public class OCSPChecker extends PKIXCertPathChecker {
         }
     }
 
-    public boolean isForwardCheckingSupported() {
+    @Override
+	public boolean isForwardCheckingSupported() {
         return false;
     }
 
-    public Set<String> getSupportedExtensions() {
+    @Override
+	public Set<String> getSupportedExtensions() {
         return Collections.<String>emptySet();
     }
 
-    public void check(Certificate cert, Collection<String> unresolvedCritExts)
+    @Override
+	public void check(Certificate cert, Collection<String> unresolvedCritExts)
             throws CertPathValidatorException {
         Log.debug("OCSPChecker: check called");
         InputStream in = null;

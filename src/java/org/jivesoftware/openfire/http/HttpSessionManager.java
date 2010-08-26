@@ -363,7 +363,8 @@ public class HttpSessionManager {
 
     private class HttpSessionReaper extends TimerTask {
 
-        public void run() {
+        @Override
+		public void run() {
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
                 long lastActive = currentTime - session.getLastActivity();

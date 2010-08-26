@@ -89,6 +89,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     
     private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
+    private FastDateFormat dateFormatOld;
     /**
      * Pattern to use for detecting invalid XML characters. Invalid XML characters will
      * be removed from the stored offline messages.
@@ -114,7 +115,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT,
+                TimeZone.getTimeZone("UTC"));
+        dateFormatOld = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
                 TimeZone.getTimeZone("UTC"));
         sizeCache = CacheFactory.createCache("Offline Message Size");
     }
@@ -189,16 +192,17 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public Collection<OfflineMessage> getMessages(String username, boolean delete) {
         List<OfflineMessage> messages = new ArrayList<OfflineMessage>();
+        SAXReader xmlReader = null;
         Connection con = null;
         PreparedStatement pstmt = null;
-        SAXReader xmlReader = null;
+        ResultSet rs = null;
         try {
             // Get a sax reader from the pool
             xmlReader = xmlReaders.take();
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
@@ -215,34 +219,44 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     message = new OfflineMessage(creationDate,
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
                 }
-                // Add a delayed delivery (JEP-0091) element to the message.
-                Element delay = message.addChildElement("x", "jabber:x:delay");
+
+                // Add a delayed delivery (XEP-0203) element to the message.
+                Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
+                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
+                delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                delay.addAttribute("stamp", dateFormatOld.format(creationDate));
                 messages.add(message);
             }
-            rs.close();
             // Check if the offline messages loaded should be deleted, and that there are
             // messages to delete.
             if (delete && !messages.isEmpty()) {
-                pstmt.close();
-
-                pstmt = con.prepareStatement(DELETE_OFFLINE);
-                pstmt.setString(1, username);
-                pstmt.executeUpdate();
-                
-                removeUsernameFromSizeCache(username);
+                PreparedStatement pstmt2 = null;
+                try {
+                    pstmt2 = con.prepareStatement(DELETE_OFFLINE);
+                    pstmt2.setString(1, username);
+                    pstmt2.executeUpdate();
+                    removeUsernameFromSizeCache(username);
+                }
+                catch (Exception e) {
+                    Log.error("Error deleting offline messages of username: " + username, e);
+                }
+                finally {
+                    DbConnectionManager.closeStatement(pstmt2);
+                } 
             }
         }
         catch (Exception e) {
             Log.error("Error retrieving offline messages of username: " + username, e);
         }
         finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
             // Return the sax reader to the pool
             if (xmlReader != null) {
                 xmlReaders.add(xmlReader);
             }
-            DbConnectionManager.closeConnection(pstmt, con);
         }
         return messages;
     }
@@ -273,10 +287,14 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 String msgXML = rs.getString(1);
                 message = new OfflineMessage(creationDate,
                         xmlReader.read(new StringReader(msgXML)).getRootElement());
-                // Add a delayed delivery (JEP-0091) element to the message.
-                Element delay = message.addChildElement("x", "jabber:x:delay");
+                // Add a delayed delivery (XEP-0203) element to the message.
+                Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
+                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
+                delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                delay.addAttribute("stamp", dateFormatOld.format(creationDate));
             }
         }
         catch (Exception e) {
@@ -432,7 +450,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         //Do nothing
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -445,7 +464,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         UserEventDispatcher.addListener(this);
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();

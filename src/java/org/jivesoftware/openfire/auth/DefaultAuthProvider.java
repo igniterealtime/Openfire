@@ -129,6 +129,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
@@ -144,7 +145,7 @@ public class DefaultAuthProvider implements AuthProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PASSWORD);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new UserNotFoundException(username);
             }
@@ -164,10 +165,7 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -222,10 +220,7 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

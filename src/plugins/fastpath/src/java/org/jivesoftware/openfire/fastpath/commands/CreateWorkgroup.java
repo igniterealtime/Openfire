@@ -40,19 +40,23 @@ import java.util.Map;
  * TODO Use i18n
  */
 public class CreateWorkgroup extends AdHocCommand {
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#add-workgroup";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Add a Workgroup";
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 
-    public void execute(SessionData sessionData, Element command) {
+    @Override
+	public void execute(SessionData sessionData, Element command) {
         Element note = command.addElement("note");
         Map<String, List<String>> data = sessionData.getData();
 
@@ -81,7 +85,8 @@ public class CreateWorkgroup extends AdHocCommand {
         note.setText("Operation finished successfully");
     }
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Adding a new workgroup");
         form.addInstruction("Fill out this form to add a workgroup.");
@@ -111,15 +116,18 @@ public class CreateWorkgroup extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) && !UserManager.getUserProvider().isReadOnly();
     }
 }

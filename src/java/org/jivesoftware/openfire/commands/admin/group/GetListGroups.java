@@ -42,7 +42,8 @@ import java.util.Map;
  */
 public class GetListGroups extends AdHocCommand {
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle("Requesting List of Existing Groups");
         form.addInstruction("Fill out this form to request list of groups.");
@@ -84,7 +85,8 @@ public class GetListGroups extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         String start = data.getData().get("start").get(0);
         String max_items = data.getData().get("max_items").get(0);
         int nStart = 0;
@@ -141,23 +143,28 @@ public class GetListGroups extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#get-groups";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get List of Existing Groups";
     }
 
-    protected List<AdHocCommand.Action> getActions(SessionData data) {
+    @Override
+	protected List<AdHocCommand.Action> getActions(SessionData data) {
         return Arrays.asList(AdHocCommand.Action.complete);
     }
 
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    @Override
+	protected AdHocCommand.Action getExecuteAction(SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 1;
     }
 }

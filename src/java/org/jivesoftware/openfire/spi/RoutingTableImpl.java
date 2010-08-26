@@ -832,7 +832,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return remotePacketRouter;
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         this.server = server;
         serverName = server.getServerInfo().getXMPPDomain();
@@ -844,12 +845,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         ClusterManager.addListener(this);
     }
 
-    public void start() throws IllegalStateException {
+    @Override
+	public void start() throws IllegalStateException {
         super.start();
         localRoutingTable.start();
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         localRoutingTable.stop();
     }

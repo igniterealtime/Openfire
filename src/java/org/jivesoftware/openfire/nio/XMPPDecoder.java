@@ -32,7 +32,8 @@ import org.apache.mina.filter.codec.ProtocolDecoderOutput;
  */
 public class XMPPDecoder extends CumulativeProtocolDecoder {
 
-    protected boolean doDecode(IoSession session, ByteBuffer in, ProtocolDecoderOutput out)
+    @Override
+	protected boolean doDecode(IoSession session, ByteBuffer in, ProtocolDecoderOutput out)
             throws Exception {
         // Get the XML light parser from the IoSession
         XMLLightweightParser parser = (XMLLightweightParser) session.getAttribute(ConnectionHandler.XML_PARSER);

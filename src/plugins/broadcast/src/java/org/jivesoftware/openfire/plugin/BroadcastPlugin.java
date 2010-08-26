@@ -36,6 +36,8 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -71,8 +73,11 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
     private List<JID> allowedUsers;
     private boolean groupMembersAllowed;
     private boolean disableGroupPermissions;
+    private boolean all2ofline;
+    private String messagePrefix;
     private ComponentManager componentManager;
     private PluginManager pluginManager;
+    private UserManager userManager;
 
     /**
      * Constructs a new broadcast plugin.
@@ -84,6 +89,8 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         groupMembersAllowed = JiveGlobals.getBooleanProperty(
                 "plugin.broadcast.groupMembersAllowed", true);
         allowedUsers = stringToList(JiveGlobals.getProperty("plugin.broadcast.allowedUsers", ""));
+        all2ofline = JiveGlobals.getBooleanProperty("plugin.broadcast.all2offline", false);
+        messagePrefix = JiveGlobals.getProperty("plugin.broadcast.messagePrefix", null);
     }
 
     // Plugin Interface
@@ -92,6 +99,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
         pluginManager = manager;
         sessionManager = SessionManager.getInstance();
         groupManager = GroupManager.getInstance();
+        userManager = UserManager.getInstance();
 
         // Register as a component.
         componentManager = ComponentManagerFactory.getComponentManager();
@@ -116,6 +124,7 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             }
         }
         componentManager = null;
+        userManager = null;
         pluginManager = null;
         sessionManager = null;
         groupManager = null;
@@ -216,7 +225,29 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
                 }
                 return;
             }
-            sessionManager.broadcast(message);
+
+            if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
+         		message.setBody(messagePrefix + " " + message.getBody());
+         	}
+           
+            if (all2ofline==false) {
+            	// send to online users
+            	sessionManager.broadcast(message);
+            } else {
+ 	            // send to all users
+	      		Collection<User> users = userManager.getUsers();
+	      		String xmppdomain = "@" + JiveGlobals.getProperty("xmpp.domain");
+	      		for (User u : users)
+	      		{
+	      			Message newMessage = message.createCopy();
+	      			newMessage.setTo(u.getUsername() + xmppdomain);
+	               try {
+	                  componentManager.sendPacket(this, newMessage);
+	              } catch (Exception e) {
+	                  Log.error(e.getMessage(), e);
+	              }
+	      		}
+            }
         }
         // See if the name is a group.
         else {
@@ -242,6 +273,9 @@ public class BroadcastPlugin implements Plugin, Component, PropertyEventListener
             else if (canProceed) {
                 // Broadcast message to group users. Users that are offline will get
                 // the message when they come back online
+               if ( ( messagePrefix != null ) && ( message.getBody() != null ) ) {
+            		message.setBody(messagePrefix + " " + message.getBody());
+            	}
                 for (JID userJID : group.getMembers()) {
                     Message newMessage = message.createCopy();
                     newMessage.setTo(userJID);

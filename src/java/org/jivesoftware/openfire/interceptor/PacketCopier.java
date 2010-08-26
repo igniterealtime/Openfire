@@ -213,7 +213,8 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     }
 
     private class ProcessPacketsTask extends TimerTask {
-        public void run() {
+        @Override
+		public void run() {
             try {
                 // Notify components of intercepted packets
                 processPackets();

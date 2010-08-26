@@ -100,7 +100,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     private final Collection<String> hostnames = new HashSet<String>();
     private OutgoingServerSocketReader socketReader;
     /**
-     * Flag that indicates if the session was created usign server-dialback.
+     * Flag that indicates if the session was created using server-dialback.
      */
     private boolean usingServerDialback = true;
 
@@ -114,7 +114,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      *
      * The Server Dialback method is currently the only implemented method for server-to-server
      * authentication. This implies that the remote server will ask the Authoritative Server
-     * to verify the domain to authenticate. Most probably this server will act as the
+     * to verify the domain to authenticate. Most probably this (local) server will act as the
      * Authoritative Server. See {@link IncomingServerSession} for more information.
      *
      * @param domain the local domain to authenticate with the remote server.
@@ -591,7 +591,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         socketReader.setSession(this);
     }
 
-    boolean canProcess(Packet packet) {
+    @Override
+	boolean canProcess(Packet packet) {
         String senderDomain = packet.getFrom().getDomain();
         if (!getAuthenticatedDomains().contains(senderDomain)) {
             synchronized (senderDomain.intern()) {
@@ -606,7 +607,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         return true;
     }
 
-    void deliver(Packet packet) throws UnauthorizedException {
+    @Override
+	void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null && !conn.isClosed()) {
             conn.deliver(packet);
         }
@@ -692,7 +694,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         XMPPServer.getInstance().getRoutingTable().addServerRoute(new JID(null, hostname, null, true), this);
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
     }

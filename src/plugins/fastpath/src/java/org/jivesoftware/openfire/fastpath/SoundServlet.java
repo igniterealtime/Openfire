@@ -43,17 +43,20 @@ public class SoundServlet extends HttpServlet {
 
 	private static final Logger Log = LoggerFactory.getLogger(SoundServlet.class);
 	
-    public void init(ServletConfig servletConfig) throws ServletException {
+    @Override
+	public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         doGet(request, response);
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException
     {
         String workgroupName = request.getParameter("workgroup");

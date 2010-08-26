@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -50,9 +51,12 @@ public class IQAdminHandler {
 
     private PacketRouter router;
 
+    private boolean skipInvite;
+
     public IQAdminHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
+        this.skipInvite = JiveGlobals.getBooleanProperty("xmpp.muc.skipInvite", false);
     }
 
     /**
@@ -245,8 +249,9 @@ public class IQAdminHandler {
                         boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.Affiliation.none;
                         presences.addAll(room.addMember(jid, nick, senderRole));
                         // If the user had an affiliation don't send an invitation. Otherwise
-                        // send an invitation if the room is members-only
-                        if (!hadAffiliation && room.isMembersOnly()) {
+                        // send an invitation if the room is members-only and skipping invites
+                       // are not disabled system-wide xmpp.muc.skipInvite
+                        if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
                             room.sendInvitation(jid, null, senderRole, null);
                         }
                     } else if ("outcast".equals(target)) {

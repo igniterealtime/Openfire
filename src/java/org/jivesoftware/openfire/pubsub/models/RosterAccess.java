@@ -49,7 +49,8 @@ public class RosterAccess extends AccessModel {
     RosterAccess() {
     }
 
-    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always subcribe to the node
         if (node.isAdmin(owner)) {
             return true;
@@ -96,24 +97,29 @@ public class RosterAccess extends AccessModel {
         return false;
     }
 
-    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return canSubscribe(node, owner, subscriber);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "roster";
     }
 
-    public PacketError.Condition getSubsriptionError() {
+    @Override
+	public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
-    public Element getSubsriptionErrorDetail() {
+    @Override
+	public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(
                 QName.get("not-in-roster-group", "http://jabber.org/protocol/pubsub#errors"));
     }
 
-    public boolean isAuthorizationRequired() {
+    @Override
+	public boolean isAuthorizationRequired() {
         return false;
     }
 }

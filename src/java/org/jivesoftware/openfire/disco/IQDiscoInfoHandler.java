@@ -96,11 +96,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         userFeatures.add(NAMESPACE_DISCO_INFO);
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 
-    public IQ handleIQ(IQ packet) {
+    @Override
+	public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
@@ -312,7 +314,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         }
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);

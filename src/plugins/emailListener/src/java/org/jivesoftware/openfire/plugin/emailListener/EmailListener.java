@@ -90,7 +90,8 @@ public class EmailListener {
             return;
         }
         Thread thread = new Thread("Email Listener Thread") {
-            public void run() {
+            @Override
+			public void run() {
                 // Open the email folder and keep it
                 folder = openFolder(getHost(), getPort(), isSSLEnabled(), getUser(), getPassword(), getFolder());
                 if (folder != null) {
@@ -118,7 +119,8 @@ public class EmailListener {
         try {
             // Add messageCountListener to listen for new messages
             messageListener = new MessageCountAdapter() {
-                public void messagesAdded(MessageCountEvent ev) {
+                @Override
+				public void messagesAdded(MessageCountEvent ev) {
                     Message[] msgs = ev.getMessages();
 
                     // Send new messages to specified users

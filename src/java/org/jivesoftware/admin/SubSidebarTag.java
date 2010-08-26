@@ -64,6 +64,7 @@ public class SubSidebarTag extends SidebarTag {
      * @return {@link #EVAL_BODY_BUFFERED} if no errors.
      * @throws javax.servlet.jsp.JspException if a parent SidebarTag is not found.
      */
+    @Override
     public int doStartTag() throws JspException {
         // The I18nTag should be our parent Tag
         parent = (SidebarTag)findAncestorWithClass(this, SidebarTag.class);
@@ -81,6 +82,7 @@ public class SubSidebarTag extends SidebarTag {
      * @return {@link #EVAL_PAGE}
      * @throws JspException if an error occurs.
      */
+    @Override
     public int doEndTag() throws JspException {
         setBody(bodyContent.getString());
         parent.setSubSidebar(this);

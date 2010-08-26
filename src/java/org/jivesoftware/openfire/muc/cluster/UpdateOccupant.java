@@ -85,7 +85,8 @@ public class UpdateOccupant extends MUCRoomTask {
         });
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
+    @Override
+	public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
@@ -93,7 +94,8 @@ public class UpdateOccupant extends MUCRoomTask {
         ExternalizableUtil.getInstance().writeInt(out, affiliation);
     }
 
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    @Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         presence = new Presence(packetElement, true);

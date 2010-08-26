@@ -50,7 +50,8 @@ public class FlashCrossDomainHandler extends BasicModule {
         super("Flash CrossDomain Handler");
     }
 
-    public void start() {
+    @Override
+	public void start() {
         Thread thread = new Thread(new Runnable() {
             public void run() {
                 try {
@@ -65,7 +66,8 @@ public class FlashCrossDomainHandler extends BasicModule {
         thread.start();
     }
 
-    public void stop() {
+    @Override
+	public void stop() {
         try {
             if (serverSocket != null) {
                 serverSocket.close();

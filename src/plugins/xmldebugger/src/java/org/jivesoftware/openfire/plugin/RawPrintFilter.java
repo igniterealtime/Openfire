@@ -47,7 +47,8 @@ public class RawPrintFilter extends IoFilterAdapter {
         this.enabled = JiveGlobals.getBooleanProperty("plugin.xmldebugger." + prefix.toLowerCase(), true);
     }
 
-    public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+    @Override
+	public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
         if (enabled && message instanceof ByteBuffer) {
             ByteBuffer byteBuffer = (ByteBuffer) message;
@@ -65,7 +66,8 @@ public class RawPrintFilter extends IoFilterAdapter {
         super.messageReceived(nextFilter, session, message);
     }
 
-    public void messageSent(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+    @Override
+	public void messageSent(NextFilter nextFilter, IoSession session, Object message) throws Exception {
         if (enabled) {
             System.out.println(prefix + " - SENT (" + session.hashCode() + "): " +
                     Charset.forName("UTF-8").decode(((ByteBuffer) message).buf()));
@@ -92,14 +94,16 @@ public class RawPrintFilter extends IoFilterAdapter {
         sessions = null;
     }
 
-    public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
+    @Override
+	public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
         // Keep track of sessions using this filter
         sessions.add(session);
 
         super.sessionCreated(nextFilter, session);
     }
 
-    public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+    @Override
+	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
         // Update list of sessions using this filter
         sessions.remove(session);
         if (enabled) {

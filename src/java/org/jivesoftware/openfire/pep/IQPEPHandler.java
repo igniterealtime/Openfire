@@ -162,7 +162,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 	 * 
 	 * @see org.jivesoftware.openfire.container.BasicModule#destroy()
 	 */
-    public void destroy() {
+    @Override
+	public void destroy() {
         super.destroy();
     }
 
@@ -171,6 +172,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 	 * 
 	 * @see org.jivesoftware.openfire.container.BasicModule#start()
 	 */
+	@Override
 	public void start() {
 		super.start();
 		
@@ -195,7 +197,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 	 * 
 	 * @see org.jivesoftware.openfire.container.BasicModule#stop()
 	 */
-    public void stop() {
+    @Override
+	public void stop() {
         super.stop();
         
         // Remove listeners

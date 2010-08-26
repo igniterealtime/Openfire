@@ -58,7 +58,8 @@ public class ServerStanzaHandler extends StanzaHandler {
         super(router, serverName, connection);
     }
 
-    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    @Override
+	boolean processUnknowPacket(Element doc) throws UnauthorizedException {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
@@ -75,20 +76,24 @@ public class ServerStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    String getNamespace() {
+    @Override
+	String getNamespace() {
         return "jabber:server";
     }
 
-    boolean validateHost() {
+    @Override
+	boolean validateHost() {
         return true;
     }
 
-    boolean validateJIDs() {
+    @Override
+	boolean validateJIDs() {
         // TODO Should we trust other servers???
         return false;
     }
 
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
+    @Override
+	boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         // TODO Finish implementation
         /*if ("jabber:server".equals(namespace)) {
@@ -99,7 +104,8 @@ public class ServerStanzaHandler extends StanzaHandler {
         return false;
     }
 
-    void startTLS() throws Exception {
+    @Override
+	void startTLS() throws Exception {
         // TODO Finish implementation. We need to get the name of the remote server if we want to validate certificates of the remote server that requested TLS
 
         boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
@@ -107,19 +113,22 @@ public class ServerStanzaHandler extends StanzaHandler {
                 !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
         connection.startTLS(false, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
     }
-    protected void processIQ(IQ packet) throws UnauthorizedException {
+    @Override
+	protected void processIQ(IQ packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processIQ(packet);
     }
 
-    protected void processPresence(Presence packet) throws UnauthorizedException {
+    @Override
+	protected void processPresence(Presence packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processPresence(packet);
     }
 
-    protected void processMessage(Message packet) throws UnauthorizedException {
+    @Override
+	protected void processMessage(Message packet) throws UnauthorizedException {
         packetReceived(packet);
         // Actually process the packet
         super.processMessage(packet);

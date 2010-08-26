@@ -45,7 +45,8 @@ public class PresenceAccess extends AccessModel {
     PresenceAccess() {
     }
 
-    public boolean canSubscribe(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always subcribe to the node
         if (node.isAdmin(owner)) {
             return true;
@@ -79,24 +80,29 @@ public class PresenceAccess extends AccessModel {
         }
     }
 
-    public boolean canAccessItems(Node node, JID owner, JID subscriber) {
+    @Override
+	public boolean canAccessItems(Node node, JID owner, JID subscriber) {
         return canSubscribe(node, owner, subscriber);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return "presence";
     }
 
-    public PacketError.Condition getSubsriptionError() {
+    @Override
+	public PacketError.Condition getSubsriptionError() {
         return PacketError.Condition.not_authorized;
     }
 
-    public Element getSubsriptionErrorDetail() {
+    @Override
+	public Element getSubsriptionErrorDetail() {
         return DocumentHelper.createElement(QName.get("presence-subscription-required",
                 "http://jabber.org/protocol/pubsub#errors"));
     }
 
-    public boolean isAuthorizationRequired() {
+    @Override
+	public boolean isAuthorizationRequired() {
         return false;
     }
 }

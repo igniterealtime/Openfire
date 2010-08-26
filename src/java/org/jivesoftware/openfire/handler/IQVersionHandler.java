@@ -57,7 +57,8 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         }
     }
 
-    public IQ handleIQ(IQ packet) throws PacketException {
+    @Override
+	public IQ handleIQ(IQ packet) throws PacketException {
         if (IQ.Type.get == packet.getType()) {
             // Could cache this information for every server we see
             Element answerElement = bodyElement.createCopy();
@@ -77,7 +78,8 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         return null;
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 

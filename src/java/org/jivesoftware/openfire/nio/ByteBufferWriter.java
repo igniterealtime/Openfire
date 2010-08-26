@@ -40,15 +40,18 @@ public class ByteBufferWriter extends Writer {
         this.byteBuffer = byteBuffer;
     }
 
-    public void write(char cbuf[], int off, int len) throws IOException {
+    @Override
+	public void write(char cbuf[], int off, int len) throws IOException {
         byteBuffer.putString(new String(cbuf, off, len), encoder);
     }
 
-    public void flush() throws IOException {
+    @Override
+	public void flush() throws IOException {
         // Ignore
     }
 
-    public void close() throws IOException {
+    @Override
+	public void close() throws IOException {
         // Ignore
     }
 }

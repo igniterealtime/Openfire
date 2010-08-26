@@ -56,7 +56,8 @@ class BlockingReadingMode extends SocketReadingMode {
      * A dedicated thread loop for reading the stream and sending incoming
      * packets to the appropriate router.
      */
-    public void run() {
+    @Override
+	public void run() {
         try {
             socketReader.reader.getXPPParser().setInput(new InputStreamReader(
                     ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
@@ -171,7 +172,8 @@ class BlockingReadingMode extends SocketReadingMode {
         }
     }
 
-    protected void tlsNegotiated() throws XmlPullParserException, IOException {
+    @Override
+	protected void tlsNegotiated() throws XmlPullParserException, IOException {
         XmlPullParser xpp = socketReader.reader.getXPPParser();
         // Reset the parser to use the new reader
         xpp.setInput(new InputStreamReader(
@@ -183,7 +185,8 @@ class BlockingReadingMode extends SocketReadingMode {
         super.tlsNegotiated();
     }
 
-    protected void saslSuccessful() throws XmlPullParserException, IOException {
+    @Override
+	protected void saslSuccessful() throws XmlPullParserException, IOException {
         MXParser xpp = socketReader.reader.getXPPParser();
         // Reset the parser since a new stream header has been sent from the client
         xpp.resetInput();
@@ -195,7 +198,8 @@ class BlockingReadingMode extends SocketReadingMode {
         super.saslSuccessful();
     }
 
-    protected boolean compressClient(Element doc) throws XmlPullParserException, IOException {
+    @Override
+	protected boolean compressClient(Element doc) throws XmlPullParserException, IOException {
         boolean answer = super.compressClient(doc);
         if (answer) {
             XmlPullParser xpp = socketReader.reader.getXPPParser();
@@ -216,7 +220,8 @@ class BlockingReadingMode extends SocketReadingMode {
         return answer;
     }
 
-    protected void compressionSuccessful() throws XmlPullParserException, IOException {
+    @Override
+	protected void compressionSuccessful() throws XmlPullParserException, IOException {
         XmlPullParser xpp = socketReader.reader.getXPPParser();
         // Skip the opening stream sent by the client
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {

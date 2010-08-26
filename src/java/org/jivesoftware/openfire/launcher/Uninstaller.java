@@ -33,11 +33,13 @@ import java.io.FilenameFilter;
  */
 public class Uninstaller extends UninstallAction {
 
-    public int getPercentOfTotalInstallation() {
+    @Override
+	public int getPercentOfTotalInstallation() {
         return 0;
     }
 
-    public boolean performAction(Context context, ProgressInterface progressInterface) {
+    @Override
+	public boolean performAction(Context context, ProgressInterface progressInterface) {
         final File installationDirectory = context.getInstallationDirectory();
 
         File libDirectory = new File(installationDirectory, "lib");

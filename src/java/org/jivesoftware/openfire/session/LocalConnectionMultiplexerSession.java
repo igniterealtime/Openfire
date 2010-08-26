@@ -200,7 +200,8 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         super(serverName, connection, streamID);
     }
 
-    public String getAvailableStreamFeatures() {
+    @Override
+	public String getAvailableStreamFeatures() {
         if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
             return null;
         }
@@ -294,11 +295,13 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         process(options);
     }
 
-    boolean canProcess(Packet packet) {
+    @Override
+	boolean canProcess(Packet packet) {
         return true;
     }
 
-    void deliver(Packet packet) throws UnauthorizedException {
+    @Override
+	void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null && !conn.isClosed()) {
             conn.deliver(packet);
         }

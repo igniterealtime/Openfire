@@ -113,7 +113,8 @@ public class Schedule {
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         StringBuilder schedule = new StringBuilder();
         boolean needsComma = false;
         for (int i = 0; i < week.length; i++) {
@@ -250,7 +251,8 @@ public class Schedule {
             *
             * @return The event as a standard schedule string
             */
-           public String toString(){
+           @Override
+		public String toString(){
                StringBuilder event = new StringBuilder(Integer.toString(hour));
                event.append('-');
                event.append(Integer.toString(minute));
@@ -259,7 +261,8 @@ public class Schedule {
                return event.toString();
            }
 
-           public boolean equals(Object o){
+           @Override
+		public boolean equals(Object o){
                boolean eq = false;
                if (o instanceof Event){
                    Event event = (Event)o;

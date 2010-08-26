@@ -44,11 +44,13 @@ import java.util.List;
  */
 public class GetAdminConsoleInfo extends AdHocCommand {
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -126,25 +128,30 @@ public class GetAdminConsoleInfo extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#get-console-info";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         return "Get admin console info.";
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 0;
     }
 
@@ -155,7 +162,8 @@ public class GetAdminConsoleInfo extends AdHocCommand {
      * @param requester the JID of the user requesting to execute this command.
      * @return true if the requester can access this command.
      */
-    public boolean hasPermission(JID requester) {
+    @Override
+	public boolean hasPermission(JID requester) {
         return super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester);
     }
 }

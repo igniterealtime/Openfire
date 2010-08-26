@@ -99,7 +99,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         info = new IQHandlerInfo("query", "jabber:iq:register");
     }
 
-    public void initialize(XMPPServer server) {
+    @Override
+	public void initialize(XMPPServer server) {
         super.initialize(server);
         userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
@@ -162,7 +163,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
     }
 
-    public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
+    @Override
+	public IQ handleIQ(IQ packet) throws PacketException, UnauthorizedException {
         ClientSession session = sessionManager.getSession(packet.getFrom());
         IQ reply = null;
         // If no session was found then answer an error (if possible)
@@ -461,7 +463,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
     }
 
-    public IQHandlerInfo getInfo() {
+    @Override
+	public IQHandlerInfo getInfo() {
         return info;
     }
 

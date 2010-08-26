@@ -419,13 +419,15 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     // XMLFilterImpl methods
     //-------------------------------------------------------------------------
-    public void parse(InputSource source) throws IOException, SAXException {
+    @Override
+	public void parse(InputSource source) throws IOException, SAXException {
         installLexicalHandler();
         super.parse(source);
     }
 
 
-    public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+	public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
         for (int i = 0; i < LEXICAL_HANDLER_NAMES.length; i++) {
             if (LEXICAL_HANDLER_NAMES[i].equals(name)) {
                 setLexicalHandler((LexicalHandler) value);
@@ -435,7 +437,8 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         super.setProperty(name, value);
     }
 
-    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+	public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
         for (int i = 0; i < LEXICAL_HANDLER_NAMES.length; i++) {
             if (LEXICAL_HANDLER_NAMES[i].equals(name)) {
                 return getLexicalHandler();
@@ -460,11 +463,13 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     // ContentHandler interface
     //-------------------------------------------------------------------------
-    public void setDocumentLocator(Locator locator) {
+    @Override
+	public void setDocumentLocator(Locator locator) {
         super.setDocumentLocator(locator);
     }
 
-    public void startDocument() throws SAXException {
+    @Override
+	public void startDocument() throws SAXException {
         try {
             writeDeclaration();
             super.startDocument();
@@ -474,7 +479,8 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
-    public void endDocument() throws SAXException {
+    @Override
+	public void endDocument() throws SAXException {
         super.endDocument();
 
         if ( autoFlush ) {
@@ -484,7 +490,8 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+    @Override
+	public void startPrefixMapping(String prefix, String uri) throws SAXException {
         if ( namespacesMap == null ) {
             namespacesMap = new HashMap();
         }
@@ -492,11 +499,13 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         super.startPrefixMapping(prefix, uri);
     }
 
-    public void endPrefixMapping(String prefix) throws SAXException {
+    @Override
+	public void endPrefixMapping(String prefix) throws SAXException {
         super.endPrefixMapping(prefix);
     }
 
-    public void startElement(String namespaceURI, String localName, String qName, Attributes attributes) throws SAXException {
+    @Override
+	public void startElement(String namespaceURI, String localName, String qName, Attributes attributes) throws SAXException {
         try {
             charactersAdded = false;
 
@@ -517,7 +526,8 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
-    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+    @Override
+	public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         try {
             charactersAdded = false;
             --indentLevel;
@@ -544,7 +554,8 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    @Override
+	public void characters(char[] ch, int start, int length) throws SAXException {
         if (ch == null || ch.length == 0 || length <= 0) {
             return;
         }
@@ -591,11 +602,13 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    @Override
+	public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
         super.ignorableWhitespace(ch, start, length);
     }
 
-    public void processingInstruction(String target, String data) throws SAXException {
+    @Override
+	public void processingInstruction(String target, String data) throws SAXException {
         try {
             indent();
             writer.write("<?");
@@ -617,11 +630,13 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     // DTDHandler interface
     //-------------------------------------------------------------------------
-    public void notationDecl(String name, String publicID, String systemID) throws SAXException {
+    @Override
+	public void notationDecl(String name, String publicID, String systemID) throws SAXException {
         super.notationDecl(name, publicID, systemID);
     }
 
-    public void unparsedEntityDecl(String name, String publicID, String systemID, String notationName) throws SAXException {
+    @Override
+	public void unparsedEntityDecl(String name, String publicID, String systemID, String notationName) throws SAXException {
         super.unparsedEntityDecl(name, publicID, systemID, notationName);
     }
 

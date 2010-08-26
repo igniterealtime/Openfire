@@ -41,11 +41,13 @@ import java.util.Set;
  */
 public class GetNumberOnlineUsers extends AdHocCommand {
 
-    protected void addStageInformation(SessionData data, Element command) {
+    @Override
+	protected void addStageInformation(SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
-    public void execute(SessionData data, Element command) {
+    @Override
+	public void execute(SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -67,26 +69,31 @@ public class GetNumberOnlineUsers extends AdHocCommand {
         command.add(form.getElement());
     }
 
-    protected List<Action> getActions(SessionData data) {
+    @Override
+	protected List<Action> getActions(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
-    public String getCode() {
+    @Override
+	public String getCode() {
         return "http://jabber.org/protocol/admin#get-online-users-num";
     }
 
-    public String getDefaultLabel() {
+    @Override
+	public String getDefaultLabel() {
         // TODO Use i18n
         return "Number of Online Users";
     }
 
-    protected Action getExecuteAction(SessionData data) {
+    @Override
+	protected Action getExecuteAction(SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
-    public int getMaxStages(SessionData data) {
+    @Override
+	public int getMaxStages(SessionData data) {
         return 0;
     }
 }

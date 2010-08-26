@@ -123,7 +123,7 @@ public class CertificateManager {
                                                 String subjectDN, String domain)
             throws GeneralSecurityException, IOException {
         // Generate public and private keys
-        KeyPair keyPair = generateKeyPair("DSA", 1024);
+        KeyPair keyPair = generateKeyPair("DSA", JiveGlobals.getIntProperty("cert.dsa.keysize", 1024));
         // Create X509 certificate with keys and specified domain
         X509Certificate cert = createX509V3Certificate(keyPair, 60, issuerDN, subjectDN, domain, "SHA1withDSA");
         // Store new certificate and private key in the keystore
@@ -161,7 +161,7 @@ public class CertificateManager {
                                                 String subjectDN, String domain)
             throws GeneralSecurityException, IOException {
         // Generate public and private keys
-        KeyPair keyPair = generateKeyPair("RSA", 1024);
+        KeyPair keyPair = generateKeyPair("RSA", JiveGlobals.getIntProperty("cert.rsa.keysize", 2048));
         // Create X509 certificate with keys and specified domain
         X509Certificate cert = createX509V3Certificate(keyPair, 60, issuerDN, subjectDN, domain, "SHA1WITHRSAENCRYPTION");
         // Store new certificate and private key in the keystore

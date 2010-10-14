@@ -253,13 +253,15 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
 
     /**
      * Returns a {@link ConnectionMultiplexerSession} for the specified connection manager
-     * domain or <tt>null</tt> if none was found. In case the connection manager has many
+     * domain or <tt>null</tt> if none was found. If a StreamID is passed in, the same connection
+     * will always be used for that StreamID. Otherwise, if the connection manager has many
      * connections established with the server then one of them will be selected randomly.
      *
      * @param connectionManagerDomain the domain of the connection manager to get a session.
+     * @param streamID if provided, the same connection will always be used for a given streamID
      * @return a session to the specified connection manager domain or null if none was found.
      */
-    public ConnectionMultiplexerSession getMultiplexerSession(String connectionManagerDomain) {
+    public ConnectionMultiplexerSession getMultiplexerSession(String connectionManagerDomain,String streamID) {
         List<ConnectionMultiplexerSession> sessions =
                 sessionManager.getConnectionMultiplexerSessions(connectionManagerDomain);
         if (sessions.isEmpty()) {
@@ -268,11 +270,28 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         else if (sessions.size() == 1) {
             return sessions.get(0);
         }
-        else {
+        else if (streamID != null) {
+            // Always use the same connection for a given streamID
+            int connectionIndex = Math.abs(streamID.hashCode()) % sessions.size();
+            return sessions.get(connectionIndex);
+        } else {
             // Pick a random session so we can distribute traffic evenly
             return sessions.get(randGen.nextInt(sessions.size()));
         }
     }
+
+    /**
+     * Returns a {@link ConnectionMultiplexerSession} for the specified connection manager
+     * domain or <tt>null</tt> if none was found. In case the connection manager has many
+     * connections established with the server then one of them will be selected randomly.
+     *
+     * @param connectionManagerDomain the domain of the connection manager to get a session.
+     * @return a session to the specified connection manager domain or null if none was found.
+     */
+    public ConnectionMultiplexerSession getMultiplexerSession(String connectionManagerDomain) {
+        return getMultiplexerSession(connectionManagerDomain,null);
+    }
+
 
     /**
      * Returns the names of the connected connection managers to this server.

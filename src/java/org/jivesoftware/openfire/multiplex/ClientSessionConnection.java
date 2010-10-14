@@ -68,11 +68,12 @@ public class ClientSessionConnection extends VirtualConnection {
      * @param packet the packet to send to the user.
      */
     public void deliver(Packet packet) {
+        String streamID = session.getStreamID().getID();
         ConnectionMultiplexerSession multiplexerSession =
-                multiplexerManager.getMultiplexerSession(connectionManagerName);
+                multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
         if (multiplexerSession != null) {
             // Wrap packet so that the connection manager can figure out the target session
-            Route wrapper = new Route(session.getStreamID().getID());
+            Route wrapper = new Route(streamID);
             wrapper.setFrom(serverName);
             wrapper.setTo(connectionManagerName);
             wrapper.setChildElement(packet.getElement().createCopy());
@@ -94,14 +95,15 @@ public class ClientSessionConnection extends VirtualConnection {
      * @param text the stanza to send to the user.
      */
     public void deliverRawText(String text) {
+        String streamID = session.getStreamID().getID();
         ConnectionMultiplexerSession multiplexerSession =
-                multiplexerManager.getMultiplexerSession(connectionManagerName);
+                multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
         if (multiplexerSession != null) {
             // Wrap packet so that the connection manager can figure out the target session
             StringBuilder sb = new StringBuilder(200 + text.length());
             sb.append("<route from=\"").append(serverName);
             sb.append("\" to=\"").append(connectionManagerName);
-            sb.append("\" streamid=\"").append(session.getStreamID().getID()).append("\">");
+            sb.append("\" streamid=\"").append(streamID).append("\">");
             sb.append(text);
             sb.append("</route>");
             // Deliver the wrapped stanza
@@ -164,7 +166,7 @@ public class ClientSessionConnection extends VirtualConnection {
         }
         else {
             ConnectionMultiplexerSession multiplexerSession =
-                    multiplexerManager.getMultiplexerSession(connectionManagerName);
+                    multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
             if (multiplexerSession != null) {
                 // Server requested to close the client session so let the connection manager
                 // know that he has to finish the client session

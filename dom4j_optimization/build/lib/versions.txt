@@ -1,0 +1,68 @@
+Name                                |  Version                                                     License
+---------------------------------------------------------------------------------------------------------------------
+ant.jar                             | Jetty 6.1.0 (1.6.5)                                          | Apache 2.0
+ant-contrib.jar                     | 1.0b1                                                        | Apache 2.0
+ant-subdirtask.jar                  | Revision 1.4 (CVS)                                           |
+bouncycastle.jar                    | JDK 1.5, 145 (bcprov-jdk15-145.jar)                          | See http://www.bouncycastle.org/licence.html
+cglib.jar                           | 2.1.3 (JMock 2.1.0)                                          |
+commons-lang.jar                    | 2.3                                                          | Apache 2.0
+commons-logging.jar                 | Jetty 5.1.10                                                 | Apache 2.0
+commons-el.jar                      | Jetty 6.0.1 (1.0)                                            | Apache 2.0
+commons-httpclient.jar              | 3.1                                                          | Apache 2.0
+commons-codec.jar                   | 1.3                                                          | Apache 2.0
+dom4j.jar                           | 1.6.1                                                        | BSD (http://www.dom4j.org/dom4j-1.6.1/license.html)
+concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5                         | Apache 2.0
+dbutil.jar                          | Jive Code, no release version.                               | GPL
+hamcrest.jar                        | 1.0 (JMock 2.1.0)                                            | New BSD License
+hamcrest-api.jar                    | 1.0 (JMock 2.1.0)                                            | New BSD License
+hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
+jetty-continuation.jar              | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-http.jar                      | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-io.jar                        | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-security.jar                  | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-server.jar                    | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-servlet.jar                   | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-util.jar                      | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-webapp.jar                    | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jetty-xml.jar                       | Jetty 7.0.1.v20091125                                        | Apache 2.0, Eclipse 1.0
+jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)                                         |
+jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)                                         |
+jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1
+jdic.jar                            | 0.9.1 (for windows only)                                     | LGPL
+jdom.jar                            | 1.0 (required by rome)                                       | Apache 1.1
+jstl.jar                            | Jakarta standard taglib 1.1.2                                |
+jmdns.jar                           | PRE 1.0, patched                                             | Apache 2.0
+jmock.jar                           | 2.1.0                                                        |
+jmock-junit4.jar                    | 2.1.0                                                        |
+jmock-legacy.jar                    | 2.1.0                                                        |
+jsp-api.jar                         | Jetty 6.0.1 (2.0)                                            |
+jtds.jar                            | 1.2.2                                                        | LGPL
+junit.jar                           | 4.3.1                                                        |
+jzlib.jar                           | 1.0.7                                                        | GPL
+libidn.jar                          | 1.15                                                         | GNU Lesser General Public License version 2.1 or later (http://www.gnu.org/licenses/licenses.html)
+log4j.jar                           | 1.2.15                                                       | Apache 2.0 (http://logging.apache.org/log4j/1.2/license.html)
+mail.jar                            | 1.4.1 (JavaMail)                                             |
+mina-core.jar                       | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mina-filter-compression.jar         | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mina-filter-ssl.jar                 | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mysql.jar                           | 5.0.8                                                        | GPL
+objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
+pack200task.jar                     | August 5, 2004                                               | LGPL
+postgres.jar                        | 8.3-604.jdbc3                                                | BSD (http://jdbc.postgresql.org/license.html)
+proxool.jar                         | 0.9.0RC3+ (see note #1)                                      | Apache 1.1 (http://proxool.sourceforge.net/licence.html)
+rome.jar                            | 0.9                                                          | Apache 2.0
+rome-fetcher.jar                    | 0.9                                                          | Apache 2.0
+servlet.jar                         | Jetty 6.1.10 (2.5)                                           |
+shaj.jar                            | 0.5                                                          | Apache 2.0
+sitemesh.jar                        | 2.2.1                                                        | Apache 1.1
+slf4j-api                           | 1.5.8                                                        | http://www.slf4j.org/license.html
+slf4j-log4j12                       | 1.5.8                                                        | http://www.slf4j.org/license.html
+standard.jar                        | Jakarta standard taglib 1.1.2                                |
+tinder.jar                          | SVN rev 11877 (post 1.2.2)                                   | Apache 2.0
+xmltask.jar                         | 1.11                                                         | Apache 1.1
+xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
+
+
+Notes
+-----
+1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn

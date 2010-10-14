@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>User Service Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+User Service Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The User Service Plugin provides the ability to add,edit,delete users by sending an http request to the server.
+It is intended to be used by applications automating the user administration process. 
+This plugin's functionality is useful for applications that need to administer users outside of the Openfire admin console.
+An example of such an application might be a live sports reporting application that uses XMPP as its transport, and
+creates/deletes users according to the receipt, or non receipt, of a subscription fee.
+
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy userservice.jar into the plugins directory of your Openfire server. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+userservice.jar file over the existing file.</p>
+
+<h2>Configuration</h2>
+
+Access to the service is restricted with a "secret" that can be viewed and 
+set from the User Service page in the Openfire admin console.  This page is
+located on the admin console under "Server" and then "Server Settings".
+This should really only be considered weak security. The plugin was initially written with the assumption that http access to the Openfire service was
+only available to trusted machines. In the case of the plugin's author, a web application running on the same server as 
+Openfire makes the request.
+
+<h2>Using the Plugin</h2>
+
+To administer users, submit HTTP requests to the userservice service. 
+The service address is [hostname]plugins/userService/userservice. For example,
+if your server name is "example.com", the URL is http://example.com/plugins/userService/userservice<p>
+
+The following parameters can be passed into the request:<p>
+
+<div id="datatable">
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+<tr>
+    <th colspan=2>Name</th><th>Description</th>
+</tr>
+<tr>
+    <td class="name">type</td><td>Required</td><td>The admin service required. 
+    Possible values are add, delete, update, enable, disable</td>
+</tr>
+<tr>
+    <td class="name">secret</td><td>Required</td>
+    <td>The secret key that allows access to the User Service.</td>
+</tr>
+<tr>
+    <td class="name">username</td><td>Required</td>
+    <td>The username of the user to add, update, delete, enable, or disable. ie the part before the @ symbol.</td>
+</tr>
+<tr>
+    <td class="name">password</td><td>Required for add operation</td>
+    <td>The password of the new user or the user being updated.</td>
+</tr>
+<tr>
+    <td class="name">name</td><td>Optional</td>
+    <td>The display name of the new user or the user being updated.</td>
+</tr>
+<tr>
+    <td class="name">email</td><td>Optional</td>
+    <td>The email address of the new user or the user being updated.</td>
+</tr>
+<tr>
+    <td class="name">groups</td><td>Optional</td>
+    <td>List of groups where the user is a member. Values are comma delimited.</td>
+</tr>
+
+
+</table><p>
+
+
+<p><b>Sample HTML</b><p>
+
+The following example adds a user
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=add&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=franz@kafka.com
+</textarea>
+</form>
+</ul>
+
+The following example deletes a user
+
+<ul>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=delete&secret=bigsecret&username=kafka
+</textarea>
+</form>
+</ul>
+
+The following example disables a user (lockout)
+
+<ul>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=disable&secret=bigsecret&username=kafka
+</textarea>
+</form>
+</ul>
+
+The following example enables a user (removes lockout)
+
+<ul>
+<form>
+<textarea cols=65 rows=4 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=enable&secret=bigsecret&username=kafka
+</textarea>
+</form>
+</ul>
+
+
+This example updates a user
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=update&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=beetle@kafka.com
+</textarea>
+</form>
+</ul>
+
+<br><br>
+* When sending double characters (Chinese/Japanese/Korean etc) you should URLEncode the string as utf8.<br> 
+In Java this is done like this<br> 
+URLEncoder.encode(username, "UTF-8"));
+<br>If the strings are encoded incorrectly, double byte characters will look garbeled in the Admin Console.
+
+
+<h2>Server Reply</h2>
+
+The server will reply to all User Service requests with an XML result page. 
+If the request was processed successfully the return will be a "result" element with a text body of "OK".
+If the request was unsuccessful, the return will be an "error" element with a text body of one of the following error strings.
+<p>
+
+
+<div id="datatable">
+<table cellpadding="3" cellspacing="1" border="0" width="700">
+<tr>
+    <th >Error String</th><th>Description</th>
+</tr>
+<tr>
+    <td class="name">IllegalArgumentException</td>
+    <td>one of the parameters passed in to the User Service was bad.</td>
+</tr>
+<tr>
+    <td class="name">UserNotFoundException</td>
+    <td>No user of the name specified, for a delete or update operation, exists on this server.</td>
+</tr>
+<tr>
+    <td class="name">UserAlreadyExistsException</td>
+    <td>A user with the same name as the user about to be added, already exists. 
+    </td>
+</tr>
+<tr>
+    <td class="name">RequestNotAuthorised</td>
+    <td>The supplied secret does not match the secret specified in the Admin Console or the requester is not a valid IP address.</td>
+</tr>
+<tr>
+    <td class="name">UserServiceDisabled</td>
+    <td>The User Service is currently set to disabled in the Admin Console.</td>
+</tr>
+
+
+</table><p>
+
+
+</body>
+</html>

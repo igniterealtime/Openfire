@@ -1,0 +1,387 @@
+<?xml version="1.0"?>
+<adminconsole>
+
+    <global>
+        <appname>${title}</appname>
+        <logo-image>images/header-title.gif</logo-image>
+        <login-image>images/logo-wildfire.gif</login-image>
+    </global>
+
+    <!-- Server -->
+    <tab id="tab-server" name="${tab.server}" url="index.jsp" description="${tab.server.descr}">
+
+        <!-- Server Manager -->
+        <sidebar id="sidebar-server-manager" name="${sidebar.server-manager}">
+
+            <!-- Server Settings -->
+            <item id="server-settings" name="${sidebar.server-settings}"
+                  url="index.jsp"
+                  description="${sidebar.server-settings.descr}"/>
+
+            <!-- System Properties -->
+            <item id="server-props" name="${sidebar.system-props}"
+                  url="server-properties.jsp"
+                  description="${sidebar.system-props.descr}"/>
+
+            <!-- System Locale -->
+            <item id="server-locale" name="${sidebar.server-locale}"
+                  url="server-locale.jsp"
+                  description="${sidebar.server-locale.descr}"/>
+
+            <!-- Clustering -->
+            <item id="system-clustering" name="${sidebar.system-clustering}"
+                  url="system-clustering.jsp"
+                  description="${sidebar.system-clustering.descr}"/>
+
+            <!-- System Cache -->
+            <item id="system-cache" name="${sidebar.system-cache}"
+                  url="system-cache.jsp"
+                  description="${sidebar.system-cache.descr}"/>
+
+            <!-- Database -->
+            <item id="server-db" name="${sidebar.server-db}"
+                  url="server-db.jsp"
+                  description="${sidebar.server-db.descr}"/>
+
+            <!-- Logs -->
+            <item id="server-logs" name="${sidebar.server-logs}"
+                  url="logviewer.jsp"
+                  description="${sidebar.server-logs.descr}"/>
+
+            <!-- Email -->
+            <item id="system-email" name="${sidebar.server-email}"
+                  url="system-email.jsp"
+                  description="${sidebar.server-email.descr}"/>
+
+            <!-- Security Audit Viewer -->
+            <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
+                  url="security-audit-viewer.jsp"
+                  description="${sidebar.security-audit-viewer.descr}"/>
+        </sidebar>
+
+        <!-- Server Settings -->
+        <sidebar id="sidebar-server-settings" name="${sidebar.sidebar-server-settings}">
+
+            <!-- Profile Settings -->
+            <item id="profile-settings" name="${sidebar.profile-settings}"
+                  url="profile-settings.jsp"
+                  description="${sidebar.profile-settings.descr}"/>
+
+            <!-- Client connections settings-->
+            <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
+                  url="client-connections-settings.jsp"
+                  description="${sidebar.client-connections-settings.descr}"/>
+                  
+            <!-- Server to server -->
+            <item id="server2server-settings" name="${sidebar.server2server-settings}"
+                  url="server2server-settings.jsp"
+                  description="${sidebar.server2server-settings.descr}"/>
+
+            <!-- External components -->
+            <item id="external-components-settings" name="${sidebar.external-components-settings}"
+                  url="external-components-settings.jsp"
+                  description="${sidebar.external-components-settings.descr}"/>
+
+            <!-- Connection Managers -->
+            <item id="connection-managers-settings" name="${sidebar.connection-managers-settings}"
+                  url="connection-managers-settings.jsp"
+                  description="${sidebar.connection-managers-settings.descr}"/>
+
+            <!-- HTTP binding -->
+            <item id="http-bind" name="${sidebar.http-bind}"
+                  url="http-bind.jsp"
+                  description="${sidebar.http-bind.descr}"/>
+
+            <!-- Manage updates -->
+            <item id="manage-updates" name="${sidebar.manage-updates}"
+                  url="manage-updates.jsp"
+                  description="${sidebar.manage-updates.descr}"/>
+
+            <!-- Registration &amp; Login -->
+            <item id="server-reg-and-login" name="${sidebar.server-reg-and-login}"
+                  url="reg-settings.jsp"
+                  description="${sidebar.server-reg-and-login.descr}"/>
+
+            <!-- Resource Policy -->
+            <item id="server-session-conflict" name="${sidebar.server-session-conflict}"
+                  url="session-conflict.jsp"
+                  description="${sidebar.server-session-conflict.descr}"/>
+
+            <!-- Offline Messages -->
+            <item id="server-offline-messages" name="${sidebar.server-offline-messages}"
+                  url="offline-messages.jsp"
+                  description="${sidebar.server-offline-messages.descr}"/>
+
+            <!-- Message Audit Policy -->
+            <item id="server-audit-policy" name="${sidebar.server-audit-policy}"
+                  url="audit-policy.jsp"
+                  description="${sidebar.server-audit-policy.descr}"/>
+
+            <!-- Private Data Storage -->
+            <item id="server-data-settings" name="${sidebar.server-data-settings}"
+                  url="private-data-settings.jsp"
+                  description="${sidebar.server-data-settings.descr}"/>
+
+            <!-- SSL Settings -->
+            <item id="server-ssl" name="${sidebar.server-ssl}"
+                  url="ssl-settings.jsp"
+                  description="${sidebar.server-ssl.descr}"/>
+
+            <!-- SSL Certificates -->
+            <item id="ssl-certificates" name="${sidebar.ssl-certificates}"
+                  url="ssl-certificates.jsp"
+                  description="${sidebar.ssl-certificates.descr}"/>
+
+            <!-- Compression Settings -->
+            <item id="server-compression" name="${sidebar.server-compression}"
+                  url="compression-settings.jsp"
+                  description="${sidebar.server-compression.descr}"/>
+
+            <!-- File Transfer Settings -->
+            <item id="server-transfer-proxy" name="${sidebar.transfer-proxy}"
+                  url="file-transfer-proxy.jsp"
+                  description="${sidebar.transfer-proxy.descr}"/>
+
+        </sidebar>
+
+        <!-- Server Settings -->
+        <sidebar id="sidebar-media-services" name="${sidebar.sidebar-media-services}">
+            <!-- Media Proxy Settings -->
+            <item id="media-proxy-service" name="${sidebar.media-proxy}"
+                  url="media-proxy.jsp"
+                  description="${sidebar.media-proxy.descr}"/>
+
+            <!-- STUN Server Settings -->
+            <item id="stun-settings" name="${sidebar.stun}"
+                  url="stun-settings.jsp"
+                  description="${sidebar.stun.descr}"/>
+        </sidebar>
+                
+    </tab>
+
+    <!-- Users/Groups -->
+    <tab id="tab-users" name="${tab.tab-users}" url="user-summary.jsp" description="${tab.tab-users.descr}">
+
+        <!-- Users -->
+        <sidebar id="sidebar-users" name="${sidebar.sidebar-users}">
+
+            <!-- User Summary -->
+            <item id="user-summary" name="${sidebar.user-summary}"
+                  url="user-summary.jsp"
+                  description="${sidebar.user-summary.descr}">
+
+                <!-- User Options -->
+                <sidebar id="sidebar-users-options" name="${sidebar.sidebar-users-options}">
+
+                    <!-- User Properties -->
+                    <item id="user-properties" name="${sidebar.user-properties}"
+                          url="user-properties.jsp"
+                          description="${sidebar.user-properties.descr}"/>
+
+                    <!-- User Roster -->
+                    <item id="user-roster" name="${sidebar.user-roster}"
+                          url="user-roster.jsp"
+                          description="${sidebar.user-roster.descr}"/>
+
+                    <!-- Password -->
+                    <item id="user-password" name="${sidebar.user-password}"
+                          url="user-password.jsp"
+                          description="${sidebar.user-password.descr}"/>
+
+                    <!-- Lock Out -->
+                    <item id="user-lockout" name="${sidebar.user-lockout}"
+                          url="user-lockout.jsp"
+                          description="${sidebar.user-lockout.descr}"/>
+
+                    <!-- Delete User -->
+                    <item id="user-delete" name="${sidebar.user-delete}"
+                          url="user-delete.jsp"
+                          description="${sidebar.user-delete.descr}"/>
+                </sidebar>
+            </item>
+
+            <!-- Create New User -->
+            <item id="user-create" name="${sidebar.user-create}"
+                  url="user-create.jsp"
+                  description="${sidebar.user-create.descr}"/>
+
+            <!-- User Search -->
+            <item id="user-search" name="${sidebar.user-search}"
+                  url="user-search.jsp"
+                  description="${sidebar.user-search.descr}"/>
+        </sidebar>
+
+        <!-- Groups -->
+        <sidebar id="sidebar-groups" name="${sidebar.sidebar-groups}">
+
+            <!-- Group Summary -->
+            <item id="group-summary" name="${sidebar.group-summary}"
+                  url="group-summary.jsp"
+                  description="${sidebar.group-summary.descr}">
+
+                <!-- Group Options -->
+                <sidebar id="sidebar-group-options" name="${sidebar.sidebar-group-options}">
+
+                    <!-- Edit Group -->
+                    <item id="group-edit" name="${sidebar.group-edit}"
+                          url="group-edit.jsp"
+                          description="${sidebar.group-edit.descr}"/>
+
+                    <!-- Delete Group -->
+                    <item id="group-delete" name="${sidebar.group-delete}"
+                          url="group-delete.jsp"
+                          description="${sidebar.group-delete.descr}"/>
+                </sidebar>
+            </item>
+
+            <!-- Create New Group -->
+            <item id="group-create" name="${sidebar.group-create}"
+                  url="group-create.jsp"
+                  description="${sidebar.group-create.descr}"/>
+        </sidebar>
+    </tab>
+
+    <!-- Sessions -->
+    <tab id="tab-session" name="${tab.tab-session}" url="session-summary.jsp" description="${tab.tab-session.descr}">
+
+        <!-- Active Sessions -->
+        <sidebar id="sidebar-session" name="${sidebar.active-sessions}">
+
+            <item id="session-summary" name="${sidebar.session-summary}"
+                  url="session-summary.jsp"
+                  description="${sidebar.session-summary.descr}"/>
+
+            <item id="server-session-summary" name="${sidebar.server-session-summary}"
+                  url="server-session-summary.jsp"
+                  description="${sidebar.server-session-summary.descr}"/>
+
+            <item id="component-session-summary" name="${sidebar.component-session-summary}"
+                  url="component-session-summary.jsp"
+                  description="${sidebar.component-session-summary.descr}"/>
+        </sidebar>
+
+        <!-- Tools -->
+        <sidebar id="sidebar-tools" name="${sidebar.tools}">
+
+            <item id="user-message" name="${sidebar.user-message}"
+                  url="user-message.jsp"
+                  description="${sidebar.user-message.descr}"/>
+
+        </sidebar>
+    </tab>
+
+    <!-- Group Chat -->
+    <tab id="tab-groupchat" name="${tab.tab-groupchat}" url="muc-room-summary.jsp"
+         description="${tab.tab-groupchat.descr}">
+
+        <!-- Room Administration -->
+        <sidebar id="sidebar-groupchat-administration" name="${sidebar.sidebar-groupchat-administration}">
+            <!-- Room Summary -->
+            <item id="muc-room-summary" name="${sidebar.muc-room-summary}"
+                  url="muc-room-summary.jsp"
+                  description="${sidebar.muc-room-summary.descr}">
+
+                <!-- Room Options -->
+                <sidebar id="sidebar-groupchat-options" name="${sidebar.sidebar-groupchat-options}">
+
+                    <!-- Room Settings -->
+                    <item id="muc-room-edit-form" name="${sidebar.muc-room-edit-form}"
+                          url="muc-room-edit-form.jsp"
+                          description="${sidebar.muc-room-edit-form.descr}"/>
+
+                    <!-- Room Occupants -->
+                    <item id="muc-room-occupants" name="${sidebar.muc-room-occupants}"
+                          url="muc-room-occupants.jsp"
+                          description="${sidebar.muc-room-occupants.descr}"/>
+
+                    <!-- User Permissions -->
+                    <item id="muc-room-affiliations" name="${sidebar.muc-room-affiliations}"
+                          url="muc-room-affiliations.jsp"
+                          description="${sidebar.muc-room-affiliations.descr}"/>
+
+                    <!-- Delete Room -->
+                    <item id="muc-room-delete" name="${sidebar.muc-room-delete}"
+                          url="muc-room-delete.jsp"
+                          description="${sidebar.muc-room-delete.descr}"/>
+                </sidebar>
+            </item>
+
+            <!-- Create New Room -->
+            <item id="muc-room-create" name="${sidebar.muc-room-create}"
+                  url="muc-room-create.jsp"
+                  description="${sidebar.muc-room-create.descr}"/>
+        </sidebar>
+
+        <!-- Group Chat Settings -->
+        <sidebar id="sidebar-groupchat-settings" name="${sidebar.sidebar-groupchat-settings}">
+            <!-- Group Chat Service Summary -->
+            <item id="muc-service-summary" name="${sidebar.muc-service-summary}"
+                  url="muc-service-summary.jsp"
+                  description="${sidebar.muc-service-summary.descr}">
+
+                <!-- Service Options -->
+                <sidebar id="sidebar-muc-service-options" name="${sidebar.sidebar-muc-service-options}">
+
+                    <!-- Service Properties -->
+                    <item id="muc-service-edit-form" name="${sidebar.muc-server-props}"
+                          url="muc-service-edit-form.jsp"
+                          description="${sidebar.muc-server-props.descr}"/>
+
+                    <!-- Service History Settings -->
+                    <item id="muc-history" name="${sidebar.muc-history}"
+                          url="muc-history-settings.jsp"
+                          description="${sidebar.muc-history.descr}"/>
+
+                    <!-- Service Administrators -->
+                    <item id="muc-sysadmin" name="${sidebar.muc-sysadmin}"
+                          url="muc-sysadmins.jsp"
+                          description="${sidebar.muc-sysadmin.descr}"/>
+
+                    <!-- Service Room Creation Permissions -->
+                    <item id="muc-perms" name="${sidebar.muc-perms}"
+                          url="muc-create-permission.jsp"
+                          description="${sidebar.muc-perms.descr}"/>
+
+                    <!-- Service Room Default Settings -->
+                    <item id="muc-defaultsettings" name="${sidebar.muc-defaultsettings}"
+                          url="muc-default-settings.jsp"
+                          description="${sidebar.muc-defaultsettings.descr}"/>
+
+                    <!-- Service Other Settings -->
+                    <item id="muc-tasks" name="${sidebar.muc-tasks}"
+                          url="muc-tasks.jsp"
+                          description="${sidebar.muc-tasks.descr}"/>
+
+                    <!-- Delete Service -->
+                    <item id="muc-service-delete" name="${sidebar.muc-service-delete}"
+                          url="muc-service-delete.jsp"
+                          description="${sidebar.muc-service-delete.descr}"/>
+                </sidebar>
+            </item>
+
+            <!-- Create New MUC Service -->
+            <item id="muc-service-create" name="${sidebar.muc-service-create}"
+                  url="muc-service-create.jsp"
+                  description="${sidebar.muc-service-create.descr}"/>
+        </sidebar>
+    </tab>
+
+    <!-- Plugins -->
+    <tab id="tab-plugins" name="${tab.tab-plugins}" url="plugin-admin.jsp" description="${tab.tab-plugins.descr}">
+
+        <!-- Group Chat Settings -->
+        <sidebar id="sidebar-plugin-adamin" name="${sidebar.sidebar-plugin-admin}">
+
+            <!-- Plugins -->
+            <item id="plugin-settings" name="${sidebar.plugin-settings}"
+                  url="plugin-admin.jsp"
+                  description="${sidebar.plugin-settings.descr}"/>
+
+            <!-- Available Plugins -->
+            <item id="available-plugins" name="${sidebar.available-plugins}"
+                  url="available-plugins.jsp"
+                  description="${sidebar.available-plugins.descr}"/>
+        </sidebar>
+    </tab>
+
+</adminconsole>

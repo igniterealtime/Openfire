@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Clustering Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Clustering Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The clustering plugin adds support for running multiple redundant Openfire
+servers together in a cluster.  By running Openfire in a cluster, you can
+distribute the load amongst a number of servers, as well as having some
+form of redundency in the event that one of your servers dies. <font color="red">This
+plugin requires a valid <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence</a> license.</font> 
+</p>
+
+<h2>Installation</h2>
+
+<p>
+Follow steps 1 through 4 for adding Oracle Coherence libraries to Openfire. Step 5
+explains how to add this plugin to your Openfire setup.
+    <ol>
+    <li>Get <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence for Java Version</a>.</li>
+    <li>Unzip the coherence file and locate <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> in folder coherence/lib.</li>
+    <li>Copy <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to [openfire_home]/lib.</li>
+    <li>Restart Openfire server.</li>
+    <li>Copy clustering.jar into the plugins directory of your Openfire installation. The plugin will then be automatically deployed.</li>
+    </ol>
+
+This plugin has been tested with Oracle Coherence Version 3.3.1/389. To upgrade
+to a new Oracle Coherence version follow steps 1 through 4 as explained above.
+To upgrade to a new version of the plugin just get the latest version from igniterealtime.org
+and follow step 5.
+</p>
+
+<h2>Upgrading from Openfire Enterprise</h2>
+
+<p>
+To upgrade from Enterprise, you will need to shut down your server,
+remove the <b>enterprise.jar</b> file and <b>enterprise</b> directory from
+the plugins directory in your Openfire install root, and then follow the steps
+outlined in the <i>Installation</i> section above.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+To enable clustering or monitor the cluster go to: Server --&gt; Server Manager --&gt; Clustering
+</p>
+
+<h2>Compiling from source code</h2>
+
+<p>
+If you want to modify or maintain this plugin you will need to get its source code and compile it.
+Source code of this plugin is now available in the list of plugins that you get when you download
+the <a href="http://www.igniterealtime.org/downloads/source.jsp">Openfire's source code</a>. Follow
+these steps to have a working environment:
+    <ol>
+    <li>Get <a href="http://www.igniterealtime.org/downloads/source.jsp">Openfire's source code</a>.</li>
+    <li>Get <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence for Java Version</a>.</li>
+    <li>Unzip the coherence file and locate <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> in folder coherence/lib.</li>
+    <li>Copy <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to [openfire]/build/lib.</li>
+    <li>Add <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to your build path.</li>
+    </ol>
+</p>
+
+</body>
+</html>

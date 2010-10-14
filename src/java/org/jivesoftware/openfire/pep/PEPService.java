@@ -57,6 +57,7 @@ import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.FastDateFormat;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cacheable;
@@ -166,7 +167,7 @@ public class PEPService implements PubSubService, Cacheable {
     private PublishedItemTask publishedItemTask;
 
     static {
-        fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone("UTC"));
+        fastDateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
     }
 
     /**
@@ -544,7 +545,7 @@ public class PEPService implements PubSubService, Cacheable {
                 notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
             }
             // Include date when published item was created
-            notification.getElement().addElement("x", "jabber:x:delay").addAttribute("stamp", fastDateFormat.format(leafLastPublishedItem.getCreationDate()));
+            notification.getElement().addElement("delay", "urn:xmpp:delay").addAttribute("stamp", fastDateFormat.format(leafLastPublishedItem.getCreationDate()));
             // Send the event notification to the subscriber
             this.sendNotification(subscription.getNode(), notification, subscription.getJID());
         }

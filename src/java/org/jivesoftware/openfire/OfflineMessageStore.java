@@ -89,6 +89,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     
     private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
+    private FastDateFormat dateFormatOld;
     /**
      * Pattern to use for detecting invalid XML characters. Invalid XML characters will
      * be removed from the stored offline messages.
@@ -114,7 +115,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT,
+                TimeZone.getTimeZone("UTC"));
+        dateFormatOld = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
                 TimeZone.getTimeZone("UTC"));
         sizeCache = CacheFactory.createCache("Offline Message Size");
     }
@@ -216,10 +219,15 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     message = new OfflineMessage(creationDate,
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
                 }
-                // Add a delayed delivery (JEP-0091) element to the message.
-                Element delay = message.addChildElement("x", "jabber:x:delay");
+
+                // Add a delayed delivery (XEP-0203) element to the message.
+                Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
+                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
+                delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                delay.addAttribute("stamp", dateFormatOld.format(creationDate));
                 messages.add(message);
             }
             // Check if the offline messages loaded should be deleted, and that there are
@@ -279,10 +287,14 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 String msgXML = rs.getString(1);
                 message = new OfflineMessage(creationDate,
                         xmlReader.read(new StringReader(msgXML)).getRootElement());
-                // Add a delayed delivery (JEP-0091) element to the message.
-                Element delay = message.addChildElement("x", "jabber:x:delay");
+                // Add a delayed delivery (XEP-0203) element to the message.
+                Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", dateFormat.format(creationDate));
+                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
+                delay = message.addChildElement("x", "jabber:x:delay");
+                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                delay.addAttribute("stamp", dateFormatOld.format(creationDate));
             }
         }
         catch (Exception e) {

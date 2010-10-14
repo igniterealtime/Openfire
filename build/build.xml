@@ -137,7 +137,7 @@
     <property name="copy.dbscripts" value="true"/>
     <property name="overwrite" value="true"/>
 
-    <property name="installer.install4j.home" value="c:\\Program Files\\install4j"/>
+    <property name="installer.install4j.home" value="/home/j2ee-bamboo/install4j.4.0.5"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}"/>
     <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>
@@ -147,7 +147,7 @@
     <property name="installer.application_id" value="6886-9911-0474-3571"/>
     <property name="installer.unix_install_dir" value="openfire"/>
     <property name="installer.windows_install_dir" value="Openfire"/>
-    <property name="installer.publisher" value="Jive Software"/>
+    <property name="installer.publisher" value="Ignite Realtime RTC Community"/>
     <property name="installer.publisher_url" value="www.igniterealtime.org"/>
     <property name="installer.file_prefix" value="${installer.app_short_name}"/>
     <property name="installer.release_root_path" value="${release.dest.dir}"/>
@@ -225,6 +225,7 @@
                 <or>
                     <contains string="${ant.version}" substring="1.6"/>
                     <contains string="${ant.version}" substring="1.7"/>
+                    <contains string="${ant.version}" substring="1.8"/>
                 </or>
             </not>
         </condition>
@@ -621,7 +622,7 @@
                 <pathelement path="${test.classes.dest.dir}"/>
             </classpath>
 
-            <formatter type="plain"/>
+            <formatter type="xml"/>
 
             <batchtest todir="${test.results.dest.dir}">
                 <fileset dir="${src.test.java.dir}">
@@ -1754,7 +1755,7 @@
             <replacefilter token="%COPYRIGHT%" value="${copyrightyear}"/>
         </replace>
         <copy todir="${target.osx}" file="${basedir}/build/osx/Description.plist"/>
-        <exec executable="/Developer/Tools/packagemaker">
+        <exec executable="/Developer/usr/bin/packagemaker">
             <arg value="-build"/>
             <arg value="-f"/>
             <arg value="${mac.pkg.dir}"/>
@@ -1781,6 +1782,7 @@
         <exec executable="hdiutil" failonerror="true">
             <arg line="attach '${target.osx}/tmp.dmg' -readwrite -noverify -noautoopen -noidme -mountpoint '${mac.dmg.dir}'"/>
         </exec>
+<!-- OF-386 - commented out since it wasn't working with our Bamboo remote agent // TODO: fix it
         <exec executable="osascript" dir="${basedir}/build/osx/" failonerror="true">
             <arg value="dmg_openfire.scpt"/>
             <arg value="Openfire"/>
@@ -1791,6 +1793,7 @@
             <arg value="220"/>
             <arg value="128"/>
         </exec>
+-->
         <exec executable="hdiutil" failonerror="true">
             <arg line="detach ${mac.dmg.dir} -quiet -force"/>
         </exec>

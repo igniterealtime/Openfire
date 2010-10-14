@@ -100,7 +100,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     private final Collection<String> hostnames = new HashSet<String>();
     private OutgoingServerSocketReader socketReader;
     /**
-     * Flag that indicates if the session was created usign server-dialback.
+     * Flag that indicates if the session was created using server-dialback.
      */
     private boolean usingServerDialback = true;
 
@@ -114,7 +114,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      *
      * The Server Dialback method is currently the only implemented method for server-to-server
      * authentication. This implies that the remote server will ask the Authoritative Server
-     * to verify the domain to authenticate. Most probably this server will act as the
+     * to verify the domain to authenticate. Most probably this (local) server will act as the
      * Authoritative Server. See {@link IncomingServerSession} for more information.
      *
      * @param domain the local domain to authenticate with the remote server.

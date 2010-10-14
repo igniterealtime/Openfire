@@ -101,7 +101,7 @@
 
     <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
-    <option value="<%= aRANGE_PRESETS %>"
+    <option value="<%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= userCount %><%}%>"
             <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= userCount %><%}%>
     </option>
 

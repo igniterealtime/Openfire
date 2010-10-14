@@ -21,6 +21,8 @@ package org.jivesoftware.openfire.nio;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +103,7 @@ class XMLLightweightParser {
 
     protected boolean insideChildrenTag = false;
 
-    Charset encoder;
+    CharsetDecoder encoder;
 
     static {
         // Set default max buffer size to 1MB. If limit is reached then close connection
@@ -110,9 +112,11 @@ class XMLLightweightParser {
         PropertyEventDispatcher.addListener(new PropertyListener());
     }
 
-    public XMLLightweightParser(String charset) {
-        encoder = Charset.forName(charset);
-    }
+	public XMLLightweightParser(String charset) {
+		encoder = Charset.forName(charset).newDecoder()
+					.onMalformedInput(CodingErrorAction.REPORT)
+					.onUnmappableCharacter(CodingErrorAction.REPORT);
+	}
 
     /*
     * true if the parser has found some complete xml message.
@@ -204,14 +208,7 @@ class XMLLightweightParser {
         }
 
         buffer.append(buf, 0, readByte);
-        // Do nothing if the buffer only contains white spaces
-        if (buffer.charAt(0) <= ' ' && buffer.charAt(buffer.length()-1) <= ' ') {
-            if ("".equals(buffer.toString().trim())) {
-                // Empty the buffer so there is no memory leak
-                buffer.delete(0, buffer.length());
-                return;
-            }
-        }
+
         // Robot.
         char ch;
         boolean isHighSurrogate = false;

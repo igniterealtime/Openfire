@@ -105,10 +105,12 @@
     <li>jdbcAuthProvider.passwordSQL -- the SQL String to select a user's password. The SQL
         statement should contain a single "?" character, which will be dynamically replaced with
         a username when being executed.</li>
-    <li>jdbcAuthProvider.passwordType -- the type of the password. Valid values are "plain" (the
-        password is stored as plain text), "md5" (the password is stored as a hex-encoded MD5 hash)
-        and "sha1" (the password is stored as a hex-encoded SHA-1 hash). If this value is not set,
-        the password type is assumed to be plain.</li>
+    <li>jdbcAuthProvider.passwordType -- the type of the password. Valid values are <ul><li>"plain" (the password is stored as plain text)</li>
+	 <li>"md5" (the password is stored as a hex-encoded MD5 hash)</li>
+    <li>"sha1" (the password is stored as a hex-encoded SHA-1 hash)</li>
+    <li>"sha256" (the password is stored as a hex-encoded SHA-256 hash)</li>
+    <li>"sha512" (the password is stored as a hex-encoded SHA-512 hash)</li></ul>
+	 If this value is not set, the password type is assumed to be plain.</li>
 </ul>
 
 <p>

@@ -69,6 +69,8 @@ import org.slf4j.LoggerFactory;
  *      <li>{@link PasswordType#plain plain}
  *      <li>{@link PasswordType#md5 md5}
  *      <li>{@link PasswordType#sha1 sha1}
+ *      <li>{@link PasswordType#sha256 sha256}
+ *      <li>{@link PasswordType#sha512 sha512}
  *  </ul>
  *
  * @author David Snopek
@@ -158,6 +160,12 @@ public class JDBCAuthProvider implements AuthProvider {
         }
         else if (passwordType == PasswordType.sha1) {
             password = StringUtils.hash(password, "SHA-1");
+        }
+        else if (passwordType == PasswordType.sha256) {
+            password = StringUtils.hash(password, "SHA-256");
+        }
+        else if (passwordType == PasswordType.sha512) {
+            password = StringUtils.hash(password, "SHA-512");
         }
         if (!password.equals(userPassword)) {
             throw new UnauthorizedException();
@@ -328,6 +336,12 @@ public class JDBCAuthProvider implements AuthProvider {
             else if (passwordType == PasswordType.sha1) {
                 password = StringUtils.hash(password, "SHA-1");
             }
+            else if (passwordType == PasswordType.sha256) {
+                password = StringUtils.hash(password, "SHA-256");
+            }
+            else if (passwordType == PasswordType.sha512) {
+                password = StringUtils.hash(password, "SHA-512");
+            }
             pstmt.setString(1, password);
             pstmt.executeQuery();
         }
@@ -360,8 +374,18 @@ public class JDBCAuthProvider implements AuthProvider {
         /**
          * The password is stored as a hex-encoded SHA-1 hash.
          */
-        sha1;
-    }
+        sha1,
+        
+        /**
+         * The password is stored as a hex-encoded SHA-256 hash.
+         */
+        sha256,
+              
+        /**
+          * The password is stored as a hex-encoded SHA-512 hash.
+          */
+        sha512;
+   }
 
     /**
      * Checks to see if the user exists; if not, a new user is created.

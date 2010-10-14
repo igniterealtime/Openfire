@@ -244,7 +244,7 @@ public class WebDAVLiteServlet extends HttpServlet {
             // File listing
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/plain");
-            response.setCharacterEncoding("utf-8");
+            response.setCharacterEncoding("UTF-8");
             String content = "Files available for "+room+"@"+service+":\n";
             File fileDir = getFileReference(service, room, null);
             Log.debug("WebDAVListServlet: File path = "+fileDir.getAbsolutePath());

@@ -368,7 +368,7 @@ public class StringUtils {
      */
     public static String hash(String data, String algorithm) {
         try {
-            return hash(data.getBytes("utf-8"), algorithm);
+            return hash(data.getBytes("UTF-8"), algorithm);
         }
         catch (UnsupportedEncodingException e) {
             Log.error(e.getMessage(), e);

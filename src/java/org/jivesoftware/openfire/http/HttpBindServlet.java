@@ -356,7 +356,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("GET".equals(method) ? "text/javascript" : "text/xml");
-        response.setCharacterEncoding("utf-8");
+        response.setCharacterEncoding("UTF-8");
 
         if ("GET".equals(method)) {
             if (JiveGlobals.getBooleanProperty("xmpp.httpbind.client.no-cache.enabled", true)) {
@@ -371,7 +371,7 @@ public class HttpBindServlet extends HttpServlet {
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
             System.out.println(new Date()+": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
-        byte[] byteContent = content.getBytes("utf-8");
+        byte[] byteContent = content.getBytes("UTF-8");
         response.setContentLength(byteContent.length);
         response.getOutputStream().write(byteContent);
         response.getOutputStream().close();
@@ -421,6 +421,6 @@ public class HttpBindServlet extends HttpServlet {
     private Document createDocument(InputStream request) throws
             DocumentException, IOException, XmlPullParserException
     {
-        return getPacketReader().read("utf-8", request);
+        return getPacketReader().read("UTF-8", request);
     }
 }

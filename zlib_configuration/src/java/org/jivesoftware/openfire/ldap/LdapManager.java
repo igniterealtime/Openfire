@@ -1782,6 +1782,22 @@ public class LdapManager {
         this.groupSearchFilter = groupSearchFilter;
         properties.put("ldap.groupSearchFilter", groupSearchFilter);
     }
+    
+    public boolean isEnclosingDNs() {
+        String encloseStr = properties.get("ldap.encloseDNs");
+        if (encloseStr != null) {
+            encloseDNs = Boolean.valueOf(encloseStr);
+        } else {
+        	encloseDNs = true;
+        }
+        
+        return encloseDNs;
+    }
+    
+    public void setIsEnclosingDNs(boolean enable) {
+    	this.encloseDNs = enable;
+    	properties.put("ldap.encloseDNs", Boolean.toString(enable));
+    }
 
     /**
      * Generic routine for retrieving a list of results from the LDAP server.  It's meant to be very

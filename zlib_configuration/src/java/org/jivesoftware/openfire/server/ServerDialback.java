@@ -194,35 +194,35 @@ public class ServerDialback {
      * Creates a new connection from the Originating Server to the Receiving Server for
      * authenticating the specified domain.
      *
-     * @param domain domain of the Originating Server to authenticate with the Receiving Server.
-     * @param hostname IP address or hostname of the Receiving Server.
+     * @param localDomain domain of the Originating Server to authenticate with the Receiving Server.
+     * @param remoteDomain IP address or hostname of the Receiving Server.
      * @param port port of the Receiving Server.
      * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
      */
-    public LocalOutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
-        String realHostname = null;
+    public LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
+        String hostname = null;
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
             Socket socket = new Socket();
             // Get a list of real hostnames to connect to using DNS lookup of the specified hostname
-            List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, port);
+            List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(remoteDomain, port);
             for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
                 try {
                     DNSUtil.HostAddress address = it.next();
-                    realHostname = address.getHost();
+                    hostname = address.getHost();
                     realPort = address.getPort();
-                    Log.debug("ServerDialback: OS - Trying to connect to " + hostname + ":" + port +
-                            "(DNS lookup: " + realHostname + ":" + realPort + ")");
+                    Log.debug("ServerDialback: OS - Trying to connect to " + remoteDomain + ":" + port +
+                            "(DNS lookup: " + hostname + ":" + realPort + ")");
                     // Establish a TCP connection to the Receiving Server
-                    socket.connect(new InetSocketAddress(realHostname, realPort),
+                    socket.connect(new InetSocketAddress(hostname, realPort),
                             RemoteServerManager.getSocketTimeout());
-                    Log.debug("ServerDialback: OS - Connection to " + hostname + ":" + port + " successful");
+                    Log.debug("ServerDialback: OS - Connection to " + remoteDomain + ":" + port + " successful");
                     break;
                 }
                 catch (Exception e) {
-                    Log.warn("Error trying to connect to remote server: " + hostname +
-                            "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                    Log.warn("Error trying to connect to remote server: " + remoteDomain +
+                            "(DNS lookup: " + hostname + ":" + realPort + ")", e);
                 }
             }
             connection =
@@ -234,7 +234,10 @@ public class ServerDialback {
             stream.append("<stream:stream");
             stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             stream.append(" xmlns=\"jabber:server\"");
-            stream.append(" xmlns:db=\"jabber:server:dialback\">");
+            stream.append(" to=\"").append(remoteDomain).append("\"");
+            stream.append(" from=\"").append(localDomain).append("\"");
+            stream.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.append(" version=\"1.0\">");
             connection.deliverRawText(stream.toString());
 
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
@@ -255,13 +258,13 @@ public class ServerDialback {
                 socket.setSoTimeout(soTimeout);
                 String id = xpp.getAttributeValue("", "id");
                 OutgoingServerSocketReader socketReader = new OutgoingServerSocketReader(reader);
-                if (authenticateDomain(socketReader, domain, hostname, id)) {
+                if (authenticateDomain(socketReader, localDomain, remoteDomain, id)) {
                     // Domain was validated so create a new OutgoingServerSession
                     StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                    LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, socketReader, streamID);
+                    LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, socketReader, streamID);
                     connection.init(session);
                     // Set the hostname as the address of the session
-                    session.setAddress(new JID(null, hostname, null));
+                    session.setAddress(new JID(null, remoteDomain, null));
                     return session;
                 }
                 else {
@@ -279,17 +282,17 @@ public class ServerDialback {
             }
         }
         catch (IOException e) {
-            Log.debug("ServerDialback: Error connecting to the remote server: " + hostname + "(DNS lookup: " +
-                    realHostname + ":" + realPort + ")", e);
+            Log.debug("ServerDialback: Error connecting to the remote server: " + remoteDomain + "(DNS lookup: " +
+                    hostname + ":" + realPort + ")", e);
             // Close the connection
             if (connection != null) {
                 connection.close();
             }
         }
         catch (Exception e) {
-            Log.error("Error creating outgoing session to remote server: " + hostname +
+            Log.error("Error creating outgoing session to remote server: " + remoteDomain +
                     "(DNS lookup: " +
-                    realHostname +
+                    hostname +
                     ")",
                     e);
             // Close the connection

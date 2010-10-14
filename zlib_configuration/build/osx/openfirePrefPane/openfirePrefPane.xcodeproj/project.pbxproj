@@ -57,7 +57,7 @@
 		32DBCFA20370C41700C91783 /* openfirePrefPane_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openfirePrefPane_Prefix.pch; sourceTree = "<group>"; };
 		6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
 		633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = /System/Library/Frameworks/SecurityInterface.framework; sourceTree = "<absolute>"; };
-		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
+		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
 		633BEA790B39EB60003AD355 /* authTool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = authTool.c; sourceTree = "<group>"; };
 		633BEAAC0B39EEF8003AD355 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		63A50BAA0BB338EF009E9FD0 /* openfire-logo-notext.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = "openfire-logo-notext.tif"; sourceTree = "<group>"; };
@@ -247,6 +247,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 65E2E72D0A5E8C0F00DFFC2E /* Build configuration list for PBXProject "openfirePrefPane" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 089C166AFE841209C02AAC07 /* openfirePrefPane */;
 			projectDirPath = "";
@@ -431,7 +432,6 @@
 				LIBRARY_SEARCH_PATHS = "";
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-bundle",
@@ -454,6 +454,8 @@
 		65E2E72A0A5E8C0F00DFFC2E /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -466,6 +468,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = openfirePrefPane_Prefix.pch;
+				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
@@ -475,7 +478,6 @@
 				LIBRARY_SEARCH_PATHS = "";
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				OPTIMIZATION_CFLAGS = "-O0";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = (
 					"-bundle",
@@ -483,6 +485,7 @@
 				);
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = Openfire;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SECTORDER_FLAGS = "";
 				SYMROOT = "$(PROJECT_DIR)/build";
 				WARNING_CFLAGS = (
@@ -582,15 +585,22 @@
 		65E2E72E0A5E8C0F00DFFC2E /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = 4.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Development;
 		};
 		65E2E72F0A5E8C0F00DFFC2E /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = 4.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};

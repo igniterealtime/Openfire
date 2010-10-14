@@ -542,13 +542,33 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 long roomID = rs.getLong(1);
-                JID jid = new JID(rs.getString(2));
-                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
                 LocalMUCRoom room = rooms.get(roomID);
                 // Skip to the next position if the room does not exist
                 if (room == null) {
                     continue;
                 }
+                
+                final MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(3));
+
+				final String jidValue = rs.getString(2);
+				final JID jid;
+				try {
+					jid = new JID(jidValue);
+				} catch (IllegalArgumentException ex) {
+					Log.warn("An illegal JID ({}) was found in the database, "
+							+ "while trying to load all affiliations for room "
+							+ "{} on the MUC service {}. An attempt is made to"
+							+ " delete the associated affiliation. The JID is"
+							+ "  otherwise ignored.", new Object[] { jidValue,
+							roomID, chatserver.getName() });
+					try {
+						removeAffiliationFromDB(room, jidValue, affiliation);
+						Log.warn("Affiliation removed.");
+					} catch (RuntimeException e) {
+						Log.warn("Unable to remove affiliation.", e);
+					}
+					continue;
+				}
                 try {
                     switch (affiliation) {
                         case owner:

@@ -16,6 +16,7 @@
     boolean debugEnabled = false;
     boolean referralsEnabled = false;
     boolean aliasReferralsEnabled = true;
+    boolean encloseDNs = true;
 
     @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
@@ -48,7 +49,8 @@
         debugEnabled = ParamUtils.getBooleanParameter(request, "debug", debugEnabled);
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", referralsEnabled);
         aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", aliasReferralsEnabled);
-
+        encloseDNs = ParamUtils.getBooleanParameter(request, "enclosedns", encloseDNs);
+	
         if (errors.isEmpty()) {
             // Store settings in a map and keep it in the session
             Map<String, String> settings = new HashMap<String, String>();
@@ -68,6 +70,8 @@
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
             settings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
             settings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
+    		settings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
+
             // Always disable connection pooling so that connections aren't left hanging open.
             settings.put("ldap.connectionPoolEnabled", "false");
             session.setAttribute("ldapSettings", settings);
@@ -89,7 +93,8 @@
                 manager.setDebugEnabled(debugEnabled);
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
-
+				manager.setIsEnclosingDNs(encloseDNs);
+				
                 // Save the settings for later, if we're in setup
                 if (xmppSettings != null) {
                     xmppSettings.put("ldap.host", host);
@@ -102,6 +107,8 @@
                     xmppSettings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
                     xmppSettings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
                     xmppSettings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
+                    xmppSettings.put("ldap.encloseDNs", Boolean.toString(encloseDNs));
+
                     session.setAttribute("xmppSettings", xmppSettings);
                 }
 
@@ -129,6 +136,7 @@
         debugEnabled = manager.isDebugEnabled();
         referralsEnabled = manager.isFollowReferralsEnabled();
         aliasReferralsEnabled = manager.isFollowAliasReferralsEnabled();
+        encloseDNs = manager.isEnclosingDNs();
     }
 %>
 <html>
@@ -334,6 +342,20 @@
                         <input type="radio" name="aliasreferrals" value="false" <% if (!aliasReferralsEnabled) { %>checked <% } %>>
                     </td>
                 </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.ldap.server.enclose_dns" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.ldap.server.enclose_dns_help" />
+                    </td>
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                        <input type="radio" name="enclosedns" value="true" <% if (encloseDNs) { %>checked <% } %>>
+                    </td>
+                    <td class="jive-advancedBorderBottom" align="center">
+                        <input type="radio" name="enclosedns" value="false" <% if (!encloseDNs) { %>checked <% } %>>
+                    </td>
+                </tr>                
                 </tbody>
 				</table>
 			</div>

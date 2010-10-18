@@ -47,7 +47,7 @@ public class JingleNodesPlugin implements Plugin {
 
     private final String serviceName = "relay";
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {        
         componentManager = ComponentManagerFactory.getComponentManager();
         JingleNodesComponent component = new JingleNodesComponent(this);
         try {
@@ -100,6 +100,10 @@ public class JingleNodesPlugin implements Plugin {
     private void removeChannel(final RelayChannel c) {
         channels.remove((String) c.getAttachment());
         c.close();
+    }
+
+    public String getServiceName() {
+        return serviceName;
     }
 
     public void destroyPlugin() {

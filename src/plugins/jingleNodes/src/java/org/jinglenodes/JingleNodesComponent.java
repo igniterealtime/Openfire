@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.AbstractComponent;
 import org.xmpp.jnodes.RelayChannel;
+import org.xmpp.jnodes.RelayPublicMask;
 import org.xmpp.jnodes.nio.LocalIPResolver;
 import org.xmpp.jnodes.smack.JingleChannelIQ;
 import org.xmpp.jnodes.smack.JingleTrackerIQ;
@@ -82,9 +83,18 @@ class JingleNodesComponent extends AbstractComponent {
             final RelayChannel channel = plugin.createRelayChannel();
 
             if (channel != null) {
+
                 childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
                 childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
                 childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
+
+//                    final RelayPublicMask rpm = new RelayPublicMask(channel);
+//                    rpm.discover("stun.xten.com", 3478);
+//                    childElement.addAttribute(HOST, rpm.getAddressA().getAddress().getHostAddress());
+//                    childElement.addAttribute(LOCAL_PORT, Integer.toString(rpm.getAddressA().getPort()));
+//                    childElement.addAttribute(REMOTE_PORT, Integer.toString(rpm.getAddressB().getPort()));
+
+
                 reply.setChildElement(childElement);
 
                 Log.debug("Created relay channel {}:{}, {}:{}, {}:{}", new Object[]{HOST,

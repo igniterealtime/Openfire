@@ -29,6 +29,7 @@ import java.net.InetSocketAddress;
 
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentException;
@@ -41,16 +42,24 @@ import org.xmpp.jnodes.nio.PublicIPResolver;
 public class JingleNodesPlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(JingleNodesPlugin.class);
+
+    public static final String JN_PUB_IP_PROPERTY = "jinglenodes.publicip";
     private ComponentManager componentManager;
 
     private final ConcurrentHashMap<String, RelayChannel> channels = new ConcurrentHashMap<String, RelayChannel>();
     private final long timeout = 60000;
     private final AtomicInteger ids = new AtomicInteger(0);
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-
     private final String serviceName = "relay";
 
+    private final boolean bindAllInterfaces;
+
     private boolean hasPublicIP = false;
+
+    public JingleNodesPlugin() {
+        final String os = System.getProperty("os.name");
+        bindAllInterfaces = !(os != null && os.toLowerCase().indexOf("win") > -1);
+    }
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         componentManager = ComponentManagerFactory.getComponentManager();
@@ -82,13 +91,11 @@ public class JingleNodesPlugin implements Plugin {
         verifyNetwork();
     }
 
-    private void verifyNetwork() {
-
-        final String localAddress = LocalIPResolver.getLocalIP();
+    public void verifyNetwork() {
+        final String localAddress = JiveGlobals.getProperty(JN_PUB_IP_PROPERTY, LocalIPResolver.getLocalIP());
+        LocalIPResolver.setOverrideIp(localAddress);
         final InetSocketAddress publicAddress = PublicIPResolver.getPublicAddress("stun.xten.com", 3478);
-
         hasPublicIP = publicAddress != null && publicAddress.getAddress().getHostAddress().equals(localAddress);
-
     }
 
     private void closeAllChannels() {
@@ -100,7 +107,8 @@ public class JingleNodesPlugin implements Plugin {
     public RelayChannel createRelayChannel() {
         RelayChannel rc = null;
         try {
-            rc = RelayChannel.createLocalRelayChannel(LocalIPResolver.getLocalIP(), 30000, 50000);
+
+            rc = RelayChannel.createLocalRelayChannel(bindAllInterfaces ? "0.0.0.0" : LocalIPResolver.getLocalIP(), 30000, 50000);
             final int id = ids.incrementAndGet();
             final String sId = String.valueOf(id);
             rc.setAttachment(sId);

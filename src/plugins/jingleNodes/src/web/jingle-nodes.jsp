@@ -1,7 +1,11 @@
 <%@ page import="org.jinglenodes.JingleNodesPlugin" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="java.util.Collection" %>
-<%@ page import="org.jivesoftware.openfire.container.Plugin" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.xmpp.jnodes.nio.LocalIPResolver" %>
+<%@ page import="java.net.InetAddress" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.xmpp.jnodes.nio.PublicIPResolver" %>
+<%@ page import="java.net.InetSocketAddress" %>
 <%--
   -	$Revision: $
   -	$Date: $
@@ -27,9 +31,34 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <%
 
+    boolean update = request.getParameter("update") != null;
+    String errorMessage = null;
+
     // Get handle on the Monitoring plugin
     JingleNodesPlugin plugin = (JingleNodesPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("jinglenodes");
 
+    if (update) {
+        String overrideIP = request.getParameter("overrideip");
+        if (overrideIP != null) {
+            overrideIP = overrideIP.trim();
+            try {
+                InetAddress.getByName(overrideIP);
+                LocalIPResolver.setOverrideIp(overrideIP);
+                JiveGlobals.setProperty(JingleNodesPlugin.JN_PUB_IP_PROPERTY, overrideIP);
+                plugin.verifyNetwork();
+            } catch (Exception e) {
+                errorMessage = LocaleUtils.getLocalizedString("jn.settings.invalid.publicip", "jinglenodes");
+            }
+        }
+    }
+
+    String publicIP = "none";
+    if (!plugin.hasPublicIP()) {
+        final InetSocketAddress addr = PublicIPResolver.getPublicAddress("stun.xten.com", 3478);
+        if (addr != null) {
+            publicIP = addr.getAddress().getHostAddress();
+        }
+    }
 %>
 <html>
 <head>
@@ -37,32 +66,53 @@
     <meta name="pageID" content="jingle-nodes"/>
 </head>
 <body>
+<% if (errorMessage != null) { %>
+<div class="error">
+    <%= errorMessage%>
+</div>
+<br/>
+<% } %>
 
 <div class="jive-table">
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
-        <thead>
-        <tr>
-            <th colspan="2"><fmt:message key="jn.settings.title"/></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td><label class="jive-label"><fmt:message key="jn.verified.ip"/>:</label><br></td>
-            <td align="left"><% if (plugin.hasPublicIP()) { %>
-                <img src="/images/check.gif" width="17" height="17" border="0">
-                <% } else { %>
-                <img src="/images/x.gif" width="17" height="17" border="0"><i>&nbsp;<fmt:message key="jn.verified.ip.warning"/></i>
-                <% } %>
-            </td>
-        </tr>
-        <tr>
-            <td><label class="jive-label"><fmt:message key="jn.active.channels"/>:</label><br>
-            </td>
-            <td align="left"><%=plugin.getActiveChannelCount()%>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <form action="jingle-nodes.jsp" method="post">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <thead>
+            <tr>
+                <th colspan="2"><fmt:message key="jn.settings.title"/></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.verified.ip"/>:</label><br></td>
+                <td align="left"><% if (plugin.hasPublicIP()) { %>
+                    <img src="/images/check.gif" width="17" height="17" border="0">
+                    <% } else { %>
+                    <img src="/images/x.gif" width="17" height="17" border="0"><i>&nbsp;<fmt:message
+                            key="jn.verified.ip.warning"/></i>&nbsp;<b><%=publicIP%></b>
+                    <% } %>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.active.channels"/>:</label><br>
+                </td>
+                <td align="left"><%=plugin.getActiveChannelCount()%>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.settings.overrideip"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="overrideip" type="text" maxlength="15" size="15"
+                           value="<%=LocalIPResolver.getLocalIP()%>"/>
+                </td>
+            </tr>
+            <tr>
+                <th colspan="2"><input type="submit" name="update"
+                                       value="<fmt:message key="jn.settings.update.settings" />"></th>
+            </tr>
+            </tbody>
+        </table>
+    </form>
 </div>
 
 </body>

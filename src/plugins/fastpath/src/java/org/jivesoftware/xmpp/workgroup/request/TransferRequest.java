@@ -101,8 +101,10 @@ public class TransferRequest extends Request {
             }
             else {
                 JID workgroupJID = new JID(jid);
-                userRequest = WorkgroupManager.getInstance().getWorkgroup(workgroupJID)
-                        .getUserRequest(sessionID);
+		// Replace the workgroup if the original offer originated from a different
+		// workgroup
+		this.workgroup = WorkgroupManager.getInstance().getWorkgroup(workgroupJID);
+		userRequest = this.workgroup.getUserRequest(sessionID);
             }
             // Notify the user request that is now related to this new request
             userRequest.addRelatedRequest(this);

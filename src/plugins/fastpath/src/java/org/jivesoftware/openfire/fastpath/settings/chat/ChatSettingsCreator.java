@@ -479,7 +479,7 @@ public class ChatSettingsCreator {
         labelMap.put(KeyEnum.transcript_sent_text, "Transcript Sent Message");
         descriptions.put(KeyEnum.transcript_sent_text.toString(), "Message displayed to user when their transcript has been sent successfully");
 
-        textMap.put(KeyEnum.transcript_not_sent_text, "The transcript could not be sent. We are sorry for the inconvience");
+        textMap.put(KeyEnum.transcript_not_sent_text, "The transcript could not be sent. We are sorry for the inconvenience");
         labelMap.put(KeyEnum.transcript_not_sent_text, "Transcript Send Error");
         descriptions.put(KeyEnum.transcript_not_sent_text.toString(), "Message displayed when a transcript could not be sent.");
 

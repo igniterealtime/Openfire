@@ -162,12 +162,140 @@ hr {
 	
 	<div id="pageBody">
 
-<h2>3.6.5 -- <span style="font-weight: normal;">??, 2009</span></h2>
+<h2>3.7.0 -- <span style="font-weight: normal;">March 2, 2011</span></h2>
 
 <h3>Openfire New Features</h3>
 <ul>
-    <li>Migration to Apache 2.0 Open Source license from GPL</li>
-</ul>   
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-21'>OF-21</a>] - Add JiveGlobal options for FlashCrossDomain</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-22'>OF-22</a>] - Be able to set default room properties from the admin console</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-43'>OF-43</a>] - Add reCAPTCHA check for registration via web</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-45'>OF-45</a>] - Search plugin lithuanian translation</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-61'>OF-61</a>] - allow admin console to only listen on specific device</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-66'>OF-66</a>] - StartTLS for LDAP queries</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-71'>OF-71</a>] - flash cross domain handler property</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-80'>OF-80</a>] - Allow components tocreate nodes for pubsub</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-127'>OF-127</a>] - [patch] Prepend string to broadcast messages</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-222'>OF-222</a>] - Add disable/enable (unlock/lock) type to UserService plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-223'>OF-223</a>] - Add &quot;Last Logout&quot; to search plugin results on admin console</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-359'>OF-359</a>] - broadcast-plugin: allow broadcasting to all (online and offline) users</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-60'>OF-60</a>] - Add Russian Translation to Admin Console</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-379'>OF-379</a>] - Add Jingle Relay Nodes plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-401'>OF-401</a>] - Add sha256 and sha512 support to JDBCAuthProvider</li>
+</ul>
+
+<h3>Openfire Improvements</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-1'>OF-1</a>] - Replace code with Tinder</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-4'>OF-4</a>] - Search result columns that contain JIDs should be marked as type JID-SINGLE, instead of TEXT-SINGLE</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-18'>OF-18</a>] - MUC Private Conversation Logging</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-28'>OF-28</a>] - Change the order of showing Signing requests on the Server Certificates page</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-46'>OF-46</a>] - Upgrading Openfire to  use Jetty 7 Continuations</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-47'>OF-47</a>] - Add a comment about remote setup and administration</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-49'>OF-49</a>] - UserService plugin should check over username before handing over to UserManager</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-53'>OF-53</a>] - Replace custom logging implementation with a third party library</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-54'>OF-54</a>] - Allow for Serializable collections to be processed by ExternalizableUtilStrategy</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-58'>OF-58</a>] - Log the username of failed SASL logins</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-63'>OF-63</a>] - MUC affiliation improvements</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-65'>OF-65</a>] - Migrate license from GPL to Apache 2.0</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-67'>OF-67</a>] - init script improvement</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-76'>OF-76</a>] - Limit the size of queues</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-78'>OF-78</a>] - Update Tinder to 1.2.1</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-88'>OF-88</a>] - Update installation package with the latest Java JRE</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-109'>OF-109</a>] - Webchat adds double quotes to the value of auto-populated elements in Workgroup Web Form</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-131'>OF-131</a>] - Oracle JDBC documentation needs to be updated</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-133'>OF-133</a>] - add source of stringprep to ./build/lib/versions.txt</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-140'>OF-140</a>] - Allow to enable/disable if invitations should be sent to new room members</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-268'>OF-268</a>] - improve reliability of embedded database</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-285'>OF-285</a>] - add XEP-0126 to &quot;Protocol Support&quot;</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-327'>OF-327</a>] - Slovak translation update</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-328'>OF-328</a>] - Add Slovak translation for the connection manager</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-343'>OF-343</a>] - Add @Override annotations</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-344'>OF-344</a>] - Add @Deprecated annotations</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-349'>OF-349</a>] - User import/export plugin should ignore empty groups</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-372'>OF-372</a>] - XEP-0203 support</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-377'>OF-377</a>] - RSA key size of CSR should be configurable</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-381'>OF-381</a>] - Server Dialback stream should have addressing</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-389'>OF-389</a>] - Update bouncycastle library to latest version</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-390'>OF-390</a>] - Upgrade Tinder to 1.2.2</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-399'>OF-399</a>] - Upgrade Tinder to anything higher than version 1.2.2</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-412'>OF-412</a>] - FastPath WebChat adds quotation marks around auto-populated values</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-413'>OF-413</a>] - Repeatedly transferring a chat between workgroups in Fastpath</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-420'>OF-420</a>] - Disco services become null after the upgrade to 3.7.0 Beta</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-424'>OF-424</a>] - Fix a typo in &quot;Transcript Send Error&quot; of Fastpath plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-426'>OF-426</a>] - Renaming a group removes it from a groups list and in the clients</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-428'>OF-428</a>] - getExtendedInfo creates malformed XML</li>
+</ul>
+                
+<h3>Openfire Bug Fixes</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-5'>OF-5</a>] - Request to get items on persistent pubsub node should not require a subscription id if user has 1 subscription</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-6'>OF-6</a>] - Getting specific items from a pubsub node copies the request items into the result packet,  which produces an invalid result</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-7'>OF-7</a>] - Requst for subscription on a pubsub node returns all subscriptions for all nodes</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-12'>OF-12</a>] - Error when publishing multiple items at once to pubsub node</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-13'>OF-13</a>] - Pubsub configuration event is incorrect</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-16'>OF-16</a>] - Persistent pubsub nodes will not store items unless max_items is set.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-17'>OF-17</a>] - Posting mulitple items to a pubsub node with the same ID will cause a new ID to be generated for the item instead of overwriting the item.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-20'>OF-20</a>] - In pubsub, subscription items include and &#39;affiliation&#39; attribute which is not in the schema</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-23'>OF-23</a>] - OutgoingSessionPromise is not sending error back to the client in s2s scenario</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-24'>OF-24</a>] - &quot;Issue with IQ subscription=&quot;remove&quot;</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-26'>OF-26</a>] - fix password update for JDBC Auth Provider </li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-27'>OF-27</a>] - Create conferences services with invalid service name</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-29'>OF-29</a>] - route.all-resources does not work</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-30'>OF-30</a>] - Fix generating of the self-signed certificates after truststore deletion</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-32'>OF-32</a>] - Loading and creating rooms with multiple conferences services fails</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-33'>OF-33</a>] - Some issues with the first conference service which is manually created.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-38'>OF-38</a>] - Issue with JabberNet and massive subscription requests from the server</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-41'>OF-41</a>] - Fix exception on muc-room-affiliations</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-42'>OF-42</a>] - Don&#39;t allow setup affiliations for invalid JIDs</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-44'>OF-44</a>] - Support multiple SRV records, weights, and priorities</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-48'>OF-48</a>] - Openfire is sending two unavailable packets after leaving the room</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-52'>OF-52</a>] - Possible Memory leaks in PubSubPersistenceManager</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-56'>OF-56</a>] - Ignore presence stanza of type &quot;subscribed&quot; without previous subscription request</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-57'>OF-57</a>] - typo in pubsub Node.java</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-59'>OF-59</a>] - Should handle trailing spaces more gracefully (Room User Permissions)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-62'>OF-62</a>] - Exception shown if one refeshes particular user&#39;s session info</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-64'>OF-64</a>] - Fix for the &quot;Broadcast presence for&quot; option in the room settings</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-70'>OF-70</a>] - Unresponsive clients cause Openfire to run out of memory</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-72'>OF-72</a>] - Openfire can&#39;t detect broken clients&#39; connections</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-73'>OF-73</a>] - Upgrade from OF3.5 fails due to incorrect sqlserver database script</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-75'>OF-75</a>] - Packets sent to non-connected components are processed by OutgoingSessionPromise</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-77'>OF-77</a>] - IQPepHandler stores JIDs that become available, but never removes them from the cache</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-79'>OF-79</a>] - NullPointerException if no DNS SRV records can be found for a particular domain</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-82'>OF-82</a>] - Empathy client can cause OOM</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-86'>OF-86</a>] - Admin console does not automatically log an admin out after the idle time limit</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-87'>OF-87</a>] - DWR in Monitorplugin fails, causes statistics to be inaccessible</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-89'>OF-89</a>] - ldap.adminPassword is plain text</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-90'>OF-90</a>] - Cross-site scripting attack in the login form</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-91'>OF-91</a>] - Client session will be terminate when receiving invalid surrogate characters</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-106'>OF-106</a>] - French translation update</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-156'>OF-156</a>] - fix LDAP email in vCard documentation (also javadoc)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-180'>OF-180</a>] - Build fails in CI due to new Open Source Clustering Plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-211'>OF-211</a>] - userservice plugin should check for null when updating user properties</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-212'>OF-212</a>] - Radio button changes wrong option on Registration &amp; Login page</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-213'>OF-213</a>] - Revert Postgresql for java 5 support</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-214'>OF-214</a>] - Dup Security Audit entry for enabling/disabling db profiling [patch]</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-215'>OF-215</a>] - Wrong Clearspace webservice URL used to create avatars</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-216'>OF-216</a>] - Presence issues with LDAP and shared groups</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-217'>OF-217</a>] - Admin is unable to login after the last step of the setup</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-218'>OF-218</a>] - Licence bug, migrate to GPLv3 ?</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-219'>OF-219</a>] - fix documentation of auth. provider</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-220'>OF-220</a>] - group-edit.jsp text is misleading for contact sharing</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-221'>OF-221</a>] - Openfire does not honor option to stop password changes</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-301'>OF-301</a>] - audit log files deleted</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-330'>OF-330</a>] - Allow MUC room subject to set blank on admin console</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-333'>OF-333</a>] - getCachedSize() of Cachable returns incorrect value (causing OOMs!)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-334'>OF-334</a>] - fastpath secure image does not update</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-339'>OF-339</a>] - Openfire queries users for disco#info after each presence change (CAPS is being polled)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-346'>OF-346</a>] - BOSH uses incorrect Namespace</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-350'>OF-350</a>] - System property for MUC disabling doesnt work</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-357'>OF-357</a>] - reading characters of openfire.xml file fails if it is UTF-8 and not &quot;locale&quot; encoded</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-358'>OF-358</a>] - fix 2 GB problem within Auditor</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-368'>OF-368</a>] - fix and improve ldap paged results</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-374'>OF-374</a>] - Ant buildscript should not check for explicit Ant version numbers</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-384'>OF-384</a>] - OS X Preference Pane fails to build on newer OS</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-391'>OF-391</a>] - Security-related issue reported by Mark Dolinger at August 17, 2010.</li>
+</ul>
+
 
 <h2>3.6.4 -- <span style="font-weight: normal;">May 1, 2009</span></h2>
 

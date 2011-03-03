@@ -359,9 +359,14 @@ public class LdapGroupProvider implements GroupProvider {
                             LdapName ldapName = new LdapName(username);
                             // Turn the LDAP name into something we can use in a
                             // search by stripping off the comma.
-                            String userDNPart = ldapName.get(ldapName.size() - 1);
+                            StringBuilder userFilter = new StringBuilder();
+                            userFilter.append("(&(");
+                            userFilter.append(ldapName.get(ldapName.size() - 1));
+                            userFilter.append(")");
+                            userFilter.append(MessageFormat.format(manager.getSearchFilter(), "*"));
+                            userFilter.append(")");
                             NamingEnumeration usrAnswer = ctx.search("",
-                                    userDNPart, searchControls);
+                                    userFilter.toString(), searchControls);
                             if (usrAnswer != null && usrAnswer.hasMoreElements()) {
                                 Attribute usernameAttr = ((SearchResult)usrAnswer.next()).getAttributes().get(manager.getUsernameField());
                                 if (usernameAttr != null) {

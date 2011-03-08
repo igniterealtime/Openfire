@@ -9,7 +9,7 @@ Homepage: http://www.igniterealtime.org
 Package: openfire
 Section: net
 Priority: optional
-Pre-Depends: sun-java5-jre | sun-java6-jre | default-jre-headless >= 1.5
+Pre-Depends: sun-java5-jre | sun-java6-jre | default-jre-headless
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

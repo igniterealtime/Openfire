@@ -168,7 +168,7 @@ status() {
 	pid=`cat $OPENFIRE_PIDFILE 2>&1`
 	if [ "$?" = "1" ]; then
 		echo "openfire is not running"
-		RETVAL=0
+		RETVAL=3
 	else 
 		ps -p $pid > /dev/null 2>&1
 		if [ "$?" = "0" ]; then 
@@ -176,7 +176,7 @@ status() {
 			RETVAL=0
 		else 
 			echo "openfire is not running"
-			RETVAL=0
+			RETVAL=1
 		fi
 	fi
 }

@@ -1290,10 +1290,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
                 fieldSubj.addValue(room.getSubject());
 
-                /*final FormField fieldOcc = dataForm.addField(); */
-                fieldSubj.setVariable("muc#roominfo_occupants");
-                fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
-                fieldSubj.addValue(Integer.toString(room.getOccupantsCount()));
+                final FormField fieldOcc = dataForm.addField();
+                fieldOcc.setVariable("muc#roominfo_occupants");
+                fieldOcc.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
+                fieldOcc.addValue(Integer.toString(room.getOccupantsCount()));
 
                 /*field = new XFormFieldImpl("muc#roominfo_lang");
                 field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.language"));

@@ -63,7 +63,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
- * A session represents a serious of interactions with an XMPP client sending packets using the HTTP
+ * A session represents a series of interactions with an XMPP client sending packets using the HTTP
  * Binding protocol specified in <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  * A session can have several client connections open simultaneously while awaiting packets bound
  * for the client from the server.

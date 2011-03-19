@@ -124,6 +124,7 @@ public class HttpConnection {
         if (continuation != null) {
             continuation.setAttribute("response-body", body);
             continuation.resume();
+            session.incrementServerPacketCount();
         }
         else {
             this.body = body;

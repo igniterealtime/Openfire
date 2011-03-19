@@ -48,7 +48,6 @@ public class IQSessionEstablishmentHandler extends IQHandler {
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
         // Just answer that the session has been activated
         IQ reply = IQ.createResultIQ(packet);
-        reply.setChildElement(packet.getChildElement().createCopy());
         return reply;
     }
 

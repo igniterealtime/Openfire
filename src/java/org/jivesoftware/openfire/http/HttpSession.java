@@ -940,7 +940,7 @@ public class HttpSession extends LocalClientSession {
                     failDelivery(delivered.getPackets());
                 }
                 else {
-                    Log.warn("Packets could not be found for session " + getStreamID() + " cannot" +
+                    Log.warn("Packets could not be found for session " + getStreamID() + " cannot " +
                             "be delivered to client");
                 }
             }

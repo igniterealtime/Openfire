@@ -20,8 +20,10 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.security.KeyStoreException;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -119,7 +121,6 @@ public class SASLAuthentication {
         }
     }
 
-    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum Status {
         /**
          * Entity needs to respond last challenge. Session is still negotiating
@@ -153,20 +154,24 @@ public class SASLAuthentication {
         StringBuilder sb = new StringBuilder(195);
         sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         if (session instanceof IncomingServerSession) {
-            // Server connections dont follow the same rules as clients
+            // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
-                boolean usingSelfSigned = false;
-                Certificate[] certificates = session.getConnection().getLocalCertificates();
-                for (Certificate certificate : certificates) {
-                    try {
-                        if (CertificateManager
-                                .isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) certificate)) {
-                            usingSelfSigned = true;
-                        }
-                    } catch (Exception e) {
-                        usingSelfSigned = true;
-                    }
+                boolean usingSelfSigned;
+                final Certificate[] chain = session.getConnection().getLocalCertificates();
+                if (chain == null || chain.length == 0) {
+                	usingSelfSigned = true;
+                } else {
+                	try {
+						usingSelfSigned = CertificateManager.isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) chain[0]);
+					} catch (KeyStoreException ex) {
+						Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
+						usingSelfSigned = true;
+					} catch (IOException ex) {
+						Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
+						usingSelfSigned = true;
+					}
                 }
+                
                 if (!usingSelfSigned) {
                     // Offer SASL EXTERNAL only if TLS has already been negotiated and we are not
                     // using a self-signed certificate

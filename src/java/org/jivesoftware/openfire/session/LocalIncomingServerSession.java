@@ -20,6 +20,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
+import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -363,27 +364,34 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
     @Override
 	public String getAvailableStreamFeatures() {
         StringBuilder sb = new StringBuilder();
+        
         // Include Stream Compression Mechanism
         if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             sb.append("<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
         }
-        // Offer server dialback if using self-signed certificaftes and no authentication has been done yet
-        boolean usingSelfSigned = false;
-        Certificate[] certificates = conn.getLocalCertificates();
-        for (Certificate certificate : certificates) {
-            try {
-                if (CertificateManager
-                        .isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) certificate)) {
-                    usingSelfSigned = true;
-                }
-            } catch (Exception e) {
-                // Ignore
-            }
+        
+        // Offer server dialback if using self-signed certificates and no authentication has been done yet
+        boolean usingSelfSigned;
+        final Certificate[] chain = conn.getLocalCertificates();
+        if (chain == null || chain.length == 0) {
+        	usingSelfSigned = true;
+        } else {
+        	try {
+				usingSelfSigned = CertificateManager.isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) chain[0]);
+			} catch (KeyStoreException ex) {
+				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
+				usingSelfSigned = true;
+			} catch (IOException ex) {
+				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
+				usingSelfSigned = true;
+			}
         }
+        
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
             sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
         }
+        
         return sb.toString();
     }
 }

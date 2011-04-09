@@ -97,18 +97,23 @@ public interface Connection {
      */
     public String getHostName() throws UnknownHostException;
 
-    /**
-     * Returns the local underlying {@link javax.security.cert.X509Certificate} for the connection.
-     *
-     * @return <tt>null</tt> if no {@link javax.security.cert.X509Certificate} is present for the connection.
-     */
+	/**
+	 * Returns the local underlying {@link javax.security.cert.X509Certificate}
+	 * chain for the connection.
+	 * 
+	 * @return an ordered array of certificates, with the local certificate
+	 *         first followed by any certificate authorities. If no certificates
+	 *         is present for the connection, then <tt>null</tt> is returned.
+	 */
     public Certificate[] getLocalCertificates();
 
-    /**
-     * Returns the underlying {@link javax.security.cert.X509Certificate} for the connection of the peer.
-     *
-     * @return <tt>null</tt> if no {@link javax.security.cert.X509Certificate} is present for the connection.
-     */
+	/**
+	 * Returns the underlying {@link javax.security.cert.X509Certificate} for
+	 * the connection of the peer.
+	 * 
+	 * @return an ordered array of peer certificates, with the peer's own
+	 *         certificate first followed by any certificate authorities.
+	 */
     public Certificate[] getPeerCertificates();
 
     /**

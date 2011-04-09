@@ -110,29 +110,39 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection) throws XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();
+        
+        if (xpp.getNamespace("db") != null) {
+            if (ServerDialback.isEnabled()) {
+                Log.debug("Server is trying to establish connection and authenticate using server dialback: " + connection);
+                ServerDialback method = new ServerDialback(connection, serverName);
+                return method.createIncomingSession(reader);
+            } else {
+                Log.debug("Server is trying to establish connection and authenticate using server dialback, " +
+                		"but Server Dialback is disabled by configuration. Rejecting connection: " + connection);
+                connection.close();
+                return null;
+            }
+        }
+        
         String version = xpp.getAttributeValue("", "version");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
-        if (serverVersion[0] >= 1) {
+        if (serverVersion[0] >= 1) {        	
             // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
             try {
                 return createIncomingSession(connection, serverName);
             }
             catch (Exception e) {
-                Log.error("Error establishing connection from remote server", e);
+                Log.error("Error establishing connection from remote server:" + connection, e);
+                connection.close();
+                return null;
             }
         }
-        else if (xpp.getNamespace("db") != null) {
-            // Server is trying to establish connection and authenticate using server dialback (pre XMPP 1.0)
-            if (ServerDialback.isEnabled()) {
-                ServerDialback method = new ServerDialback(connection, serverName);
-                return method.createIncomingSession(reader);
-            }
-            Log.debug("LocalIncomingServerSession: Server dialback is disabled. Rejecting connection: " + connection);
-        }
-        // Close the connection since remote server is not XMPP 1.0 compliant and is not
-        // using server dialback to establish and authenticate the connection
-        connection.close();
-        return null;
+        
+		Log.debug("Server is not 1.0 compliant and is not using dialback to establish and "
+				+ "authenticate the connection. Rejecting connection: "
+				+ connection);
+		connection.close();
+		return null;
     }
 
     /**

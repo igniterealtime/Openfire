@@ -156,7 +156,8 @@ public class ServerTrustManager implements X509TrustManager {
                     Log.error(e.getMessage(), e);
                 }
                 if (!trusted) {
-                    throw new CertificateException("root certificate not trusted of " + peerIdentities);
+                    throw new CertificateException("Root certificate (subject: "+x509Certificates[nSize - 1].getSubjectX500Principal()
+                    		+ ") of " + peerIdentities + " not trusted.");
                 }
             }
 

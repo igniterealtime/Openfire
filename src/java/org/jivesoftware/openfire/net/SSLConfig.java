@@ -98,7 +98,7 @@ public class SSLConfig {
                 "resources" + File.separator + "security" + File.separator + "truststore");
         s2sTrustStoreLocation = JiveGlobals.getHomeDirectory() + File.separator + s2sTrustStoreLocation;
 
-        // Get the truststore passwprd; default is "changeit".
+        // Get the truststore password; default is "changeit".
         s2sTrustpass = JiveGlobals.getProperty("xmpp.socket.ssl.trustpass", "changeit");
         s2sTrustpass = s2sTrustpass.trim();
 
@@ -115,7 +115,7 @@ public class SSLConfig {
             keyStore = null;
             s2sFactory = null;
         }
-        // Load s2s trusstore
+        // Load s2s truststore
         try {
             s2sTrustStore = KeyStore.getInstance(storeType);
             s2sTrustStore.load(new FileInputStream(s2sTrustStoreLocation), s2sTrustpass.toCharArray());
@@ -128,7 +128,7 @@ public class SSLConfig {
             s2sTrustStore = null;
             s2sFactory = null;
         }
-        // Load c2s trusstore
+        // Load c2s truststore
         try {
             if (s2sTrustStoreLocation.equals(c2sTrustStoreLocation)) {
                 c2sTrustStore = s2sTrustStore;
@@ -155,9 +155,9 @@ public class SSLConfig {
         }
         resetFactory();
 
-        // Reset ssl factoty when certificates are modified
+        // Reset SSL factory when certificates are modified
         CertificateManager.addListener(new CertificateEventListener() {
-            // Reset ssl factory since keystores have changed
+            // Reset SSL factory since keystores have changed
             public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
                 resetFactory();
             }

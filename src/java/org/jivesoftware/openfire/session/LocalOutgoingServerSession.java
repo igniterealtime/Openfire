@@ -405,27 +405,27 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     private static LocalOutgoingServerSession secureAndAuthenticate(String hostname,
             SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream,
             String domain) throws Exception {
+    	final Logger log = LoggerFactory.getLogger(LocalOutgoingServerSession.class.getName()+"['"+hostname+"']");
         Element features;
-        Log.debug("LocalOutgoingServerSession: OS - Indicating we want TLS to " + hostname);
+        log.debug("Indicating we want TLS to " + hostname);
         connection.deliverRawText("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
 
         MXParser xpp = reader.getXPPParser();
         // Wait for the <proceed> response
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
-            Log.debug("LocalOutgoingServerSession: OS - Negotiating TLS with " + hostname);
+            log.debug("Negotiating TLS...");
             boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
-                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
-                    !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+                    		 JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
+                    		 !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
             connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
-            Log.debug("LocalOutgoingServerSession: OS - TLS negotiation with " + hostname + " was successful");
+            log.debug("TLS negotiation was successful.");
 
             // TLS negotiation was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
 
             // Reset the parser to use the new secured reader
-            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(),
-                    CHARSET));
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), CHARSET));
             // Skip new stream element
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
@@ -436,10 +436,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             features = reader.parseDocument().getRootElement();
             if (features != null && (features.element("mechanisms") != null || features.element("dialback") != null)) {
                 // Check if we can use stream compression
-                String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy",
-                        Connection.CompressionPolicy.disabled.toString());
-                Connection.CompressionPolicy compressionPolicy =
-                        Connection.CompressionPolicy.valueOf(policyName);
+                String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy", Connection.CompressionPolicy.disabled.toString());
+                Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
                 if (Connection.CompressionPolicy.optional == compressionPolicy) {
                     // Verify if the remote server supports stream compression
                     Element compression = features.element("compression");
@@ -453,7 +451,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                             }
                         }
                         if (zlibSupported) {
-                            // Request Stream Compression
+                            log.debug("Requesting stream compression (zlib).");
                             connection.deliverRawText("<compress xmlns='http://jabber.org/protocol/compress'><method>zlib</method></compress>");
                             // Check if we are good to start compression
                             Element answer = reader.parseDocument().getRootElement();
@@ -461,7 +459,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                                 // Server confirmed that we can use zlib compression
                                 connection.addCompression();
                                 connection.startCompression();
-                                Log.debug("LocalOutgoingServerSession: OS - Stream compression was successful with " + hostname);
+                                log.debug("Stream compression was successful.");
                                 // Stream compression was successful so initiate a new stream
                                 connection.deliverRawText(openingStream.toString());
                                 // Reset the parser to use stream compression over TLS
@@ -477,100 +475,130 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                                 // Get new stream features
                                 features = reader.parseDocument().getRootElement();
                                 if (features == null || features.element("mechanisms") == null) {
-                                    Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL was not offered by " + hostname);
+                                    log.debug("Error, EXTERNAL SASL was not offered.");
                                     return null;
                                 }
                             }
                             else {
-                                Log.debug("LocalOutgoingServerSession: OS - Stream compression was rejected by " + hostname);
+                                log.debug("Stream compression was rejected by " + hostname);
                             }
                         }
                         else {
-                            Log.debug(
-                                    "LocalOutgoingServerSession: OS - Stream compression found but zlib method is not supported by" +
-                                            hostname);
+                            log.debug("Stream compression found but zlib method is not supported by " + hostname);
                         }
                     }
                     else {
-                        Log.debug("LocalOutgoingServerSession: OS - Stream compression not supoprted by " + hostname);
+                        log.debug("Stream compression not supported by " + hostname);
                     }
                 }
 
-                // Skip SASL EXTERNAL and use server dialback over TLS when using self-signed certificates
-                boolean dialbackOffered = features.element("dialback") != null;
-                if (!dialbackOffered || !connection.isUsingSelfSignedCertificate()) {
-                    Iterator it = features.element("mechanisms").elementIterator();
+                // Bookkeeping: determine what functionality the remote server offers.
+                boolean saslEXTERNALoffered = false;
+                if (features.element("mechanisms") != null) {
+                    Iterator<Element> it = features.element("mechanisms").elementIterator();
                     while (it.hasNext()) {
-                        Element mechanism = (Element) it.next();
+                        Element mechanism = it.next();
                         if ("EXTERNAL".equals(mechanism.getTextTrim())) {
-                            Log.debug("LocalOutgoingServerSession: OS - Starting EXTERNAL SASL with " + hostname);
-                            if (doExternalAuthentication(domain, connection, reader)) {
-                                Log.debug("LocalOutgoingServerSession: OS - EXTERNAL SASL with " + hostname + " was successful");
-                                // SASL was successful so initiate a new stream
-                                connection.deliverRawText(openingStream.toString());
-
-                                // Reset the parser
-                                xpp.resetInput();
-                                // Skip the opening stream sent by the server
-                                for (int eventType = xpp.getEventType();
-                                     eventType != XmlPullParser.START_TAG;) {
-                                    eventType = xpp.next();
-                                }
-
-                                // SASL authentication was successful so create new
-                                // OutgoingServerSession
-                                id = xpp.getAttributeValue("", "id");
-                                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain,
-                                        connection, new OutgoingServerSocketReader(reader), streamID);
-                                connection.init(session);
-                                // Set the hostname as the address of the session
-                                session.setAddress(new JID(null, hostname, null));
-                                // Set that the session was created using TLS+SASL (no server dialback)
-                                session.usingServerDialback = false;
-                                return session;
-                            }
-                            else {
-                                Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL authentication with " + hostname +
-                                        " failed");
-                                return null;
-                            }
+                        	saslEXTERNALoffered = true;
+                        	break;
                         }
                     }
+                }
+                final boolean dialbackOffered = features.element("dialback") != null;
+                final boolean usesSelfSigned = connection.isUsingSelfSignedCertificate();
+                
+                log.debug("Offering dialback functionality: {}",dialbackOffered);
+                log.debug("Offering EXTERNAL SASL: {}", saslEXTERNALoffered);
+                log.debug("Is using a self-signed certificate: {}", usesSelfSigned);
+                
+                // Skip SASL EXTERNAL and use server dialback over TLS when using self-signed certificates
+                LocalOutgoingServerSession result = null;
+                if (usesSelfSigned) {
+                	log.debug("As remote server is using self-signed certificate, SASL EXTERNAL is skipped. Attempting dialback over TLS instead.");
+                	result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
+                } else {
+                	// first, try SASL
+                	if (saslEXTERNALoffered) {
+                		result = attemptSASLexternal(connection, xpp, reader, domain, hostname, id, openingStream);
+                	}
+                	if (result == null) {
+                		// SASL unavailable or failed, try dialback.
+                		result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
+                	}
                 }
                 
-                // Check if server dialback (over TLS) was offered
-                if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {
-                    Log.debug("LocalOutgoingServerSession: OS - About to try connecting using server dialback over TLS with: " + hostname);
-                    ServerDialback method = new ServerDialback(connection, domain);
-                    OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
-                    if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
-                        Log.debug("LocalOutgoingServerSession: OS - SERVER DIALBACK OVER TLS with " + hostname + " was successful");
-                        StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                        LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
-                        connection.init(session);
-                        // Set the hostname as the address of the session
-                        session.setAddress(new JID(null, hostname, null));
-                        return session;
-                    }
-                    else {
-                        Log.debug("LocalOutgoingServerSession: OS - Error, SERVER DIALBACK with " + hostname + " failed");
-                    }
-                }
-                else {
-                    Log.debug("LocalOutgoingServerSession: OS - Error, EXTERNAL SASL and SERVER DIALBACK were not offered by " + hostname);
-                }
+                return result;
             }
             else {
-                Log.debug("LocalOutgoingServerSession: OS - Error, no SASL mechanisms or SERVER DIALBACK were offered by " + hostname);
+                log.debug("Cannot create outgoing server session, as neither SASL mechanisms nor SERVER DIALBACK were offered by " + hostname);
+                return null;
             }
         }
         else {
-            Log.debug("LocalOutgoingServerSession: OS - Error, <proceed> was not received");
+            log.debug("Error, <proceed> was not received!");
+            return null;
         }
-        return null;
     }
 
+    private static LocalOutgoingServerSession attemptDialbackOverTLS(Connection connection, XMPPPacketReader reader, String domain, String hostname, String id) {
+    	final Logger log = LoggerFactory.getLogger(LocalOutgoingServerSession.class.getName()+"['"+hostname+"']");
+        if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+            log.debug("Trying to connecting using dialback over TLS.");
+            ServerDialback method = new ServerDialback(connection, domain);
+            OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
+            if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
+                log.debug("Dialback over TLS was successful.");
+                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
+                connection.init(session);
+                // Set the hostname as the address of the session
+                session.setAddress(new JID(null, hostname, null));
+                return session;
+            }
+            else {
+                log.debug("Dialback over TLS failed");
+                return null;
+            }
+        }
+        else {
+            log.debug("Skipping server dialback attempt as it has been disabled by local configuration.");
+            return null;
+        }    	
+    }
+    
+    private static LocalOutgoingServerSession attemptSASLexternal(SocketConnection connection, MXParser xpp, XMPPPacketReader reader, String domain, String hostname, String id, StringBuilder openingStream) throws DocumentException, IOException, XmlPullParserException {
+    	final Logger log = LoggerFactory.getLogger(LocalOutgoingServerSession.class.getName()+"['"+hostname+"']");
+        log.debug("Starting EXTERNAL SASL.");
+        if (doExternalAuthentication(domain, connection, reader)) {
+            log.debug("EXTERNAL SASL was successful.");
+            // SASL was successful so initiate a new stream
+            connection.deliverRawText(openingStream.toString());
+
+            // Reset the parser
+            xpp.resetInput();
+            // Skip the opening stream sent by the server
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+
+            // SASL authentication was successful so create new OutgoingServerSession
+            id = xpp.getAttributeValue("", "id");
+            StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain,
+                    connection, new OutgoingServerSocketReader(reader), streamID);
+            connection.init(session);
+            // Set the hostname as the address of the session
+            session.setAddress(new JID(null, hostname, null));
+            // Set that the session was created using TLS+SASL (no server dialback)
+            session.usingServerDialback = false;
+            return session;
+        }
+        else {
+            log.debug("EXTERNAL SASL failed.");
+            return null;
+        }  	
+    }
+    
     private static boolean doExternalAuthentication(String domain, SocketConnection connection,
             XMPPPacketReader reader) throws DocumentException, IOException, XmlPullParserException {
 

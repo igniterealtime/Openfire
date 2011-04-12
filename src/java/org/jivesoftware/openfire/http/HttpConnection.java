@@ -34,17 +34,19 @@ import java.security.cert.X509Certificate;
  * @author Alexander Wenckus
  */
 public class HttpConnection {
-    private long requestId;
+	
+    private static final String CONNECTION_CLOSED = "connection closed";
+    private static final String SUSPENDED = "org.eclipse.jetty.continuation.Suspended";
+
+    private final long requestId;
+    private final X509Certificate[] sslCertificates;
+    private final boolean isSecure;
+    
     private String body;
     private HttpSession session;
     private Continuation continuation;
     private boolean isClosed;
-    private boolean isSecure = false;
-    private boolean isDelivered;
-    private X509Certificate[] sslCertificates;
-
-    private static final String CONNECTION_CLOSED = "connection closed";
-    private static final String SUSPENDED = "org.eclipse.jetty.continuation.Suspended";
+    private boolean isDelivered = false;
 
     /**
      * Constructs an HTTP Connection.
@@ -56,7 +58,6 @@ public class HttpConnection {
     public HttpConnection(long requestId, boolean isSecure, X509Certificate[] sslCertificates) {
         this.requestId = requestId;
         this.isSecure = isSecure;
-        this.isDelivered = false;
         this.sslCertificates = sslCertificates;
     }
 

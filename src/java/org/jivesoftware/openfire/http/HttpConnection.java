@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.http;
 
 import org.jivesoftware.util.JiveConstants;
 import org.eclipse.jetty.continuation.Continuation;
+import org.eclipse.jetty.util.log.Log;
 
 import java.security.cert.X509Certificate;
 
@@ -71,13 +72,13 @@ public class HttpConnection {
             deliverBody(CONNECTION_CLOSED);
         }
         catch (HttpConnectionClosedException e) {
-            /* Shouldn't happen */
+            Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
         }
     }
 
     /**
      * Returns true if this connection has been closed, either a response was delivered to the
-     * client or the server closed the connection aburbtly.
+     * client or the server closed the connection abrubtly.
      *
      * @return true if this connection has been closed.
      */

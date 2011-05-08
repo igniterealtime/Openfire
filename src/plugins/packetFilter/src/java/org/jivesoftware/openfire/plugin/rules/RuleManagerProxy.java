@@ -6,10 +6,8 @@ import java.util.List;
 public class RuleManagerProxy implements RuleManager {
 
     private DbRuleManager dbRuleManager = DbRuleManager.getInstance();
-    //private List<Rule> rules = null;
 
     public RuleManagerProxy() {
-       // rules = dbRuleManager.getRules();
     }
 
     public Rule getRuleById(int id) {
@@ -22,30 +20,16 @@ public class RuleManagerProxy implements RuleManager {
     }
 
     public void addRule(Rule rule, Integer order) {
-       /*if (order != null && order.intValue() > 0) {
-            DbRuleManager.getInstance().addRule(rule,order);
-        }
-        rules.add(order.intValue(),rule);
-         */
          
     }
 
     public void addRule(Rule rule) {
         dbRuleManager.addRule(rule);
-        //rulesUpdated();
     }
 
-    public void deleteRule(String ruleId) {
+    public void deleteRule(int ruleId) {
         //Remove rule from storage (db)
         dbRuleManager.deleteRule(ruleId);
-
-        //Recreate array.
-        /*for (Rule rule : rules) {
-            if (rule == null) break;
-            if (rule.getRuleId().equals(ruleId)) {
-                rules.remove(rule);
-            }
-        } */
     }
 
     public void moveOne(int srcId, int destId) {
@@ -58,9 +42,6 @@ public class RuleManagerProxy implements RuleManager {
     }
 
     public int getLastOrder() {
-        //Get the last rule in the "Cache" and return it's order
-        //if (rules.size() == 0) return 0;
-       // return rules.get(rules.size()-1).getOrder();
         return dbRuleManager.getLastOrderId();
     }
 

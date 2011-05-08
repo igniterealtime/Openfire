@@ -12,7 +12,7 @@ public interface RuleManager {
 
     public void addRule(Rule rule);
 
-    public void deleteRule(String ruleId);
+    public void deleteRule(int ruleId);
 
     public void moveOne(int srcId, int destId);
     public int getLastOrder();

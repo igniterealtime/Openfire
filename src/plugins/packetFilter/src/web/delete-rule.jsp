@@ -24,7 +24,7 @@
         return;
     }
     if (delete) {
-        rm.deleteRule(ruleId);
+        rm.deleteRule(Integer.parseInt(ruleId));
         response.sendRedirect("pf-main.jsp");
     }
 %>

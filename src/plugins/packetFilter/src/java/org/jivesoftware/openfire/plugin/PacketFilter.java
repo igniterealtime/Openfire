@@ -111,7 +111,7 @@ public class PacketFilter {
     private boolean packetToFromGroup(String rulegroup, JID packetToFrom) {
         Group group = null;
         try {
-            group = GroupManager.getInstance().getProvider().getGroup(rulegroup);
+            group = GroupManager.getInstance().getGroup(rulegroup);
         } catch (GroupNotFoundException e) {
             e.printStackTrace();
         }

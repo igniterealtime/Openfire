@@ -230,16 +230,16 @@ public class DbRuleManager {
             pstmt.setString(4, rule.getSource());
             pstmt.setString(5, rule.getClass().getName());
             if (rule.isDisabled()) {
-                pstmt.setByte(6, new Byte("1"));
+                pstmt.setBoolean(6, Boolean.TRUE);
             }
             else {
-                pstmt.setByte(6, new Byte("0"));
+                pstmt.setBoolean(6, Boolean.FALSE);
             }
             if (rule.doLog()) {
-                pstmt.setByte(7, new Byte("1"));
+                pstmt.setBoolean(7, Boolean.TRUE);
             }
             else {
-                pstmt.setByte(7, new Byte("0"));
+                pstmt.setBoolean(7, Boolean.FALSE);
             }
             pstmt.setString(8, rule.getDescription());
             pstmt.setString(9, rule.getSourceType().toString());
@@ -261,17 +261,17 @@ public class DbRuleManager {
     }
 
 
-    public boolean deleteRule(String ruleId) {
+    public boolean deleteRule(int ruleId) {
         Connection con = null;
         PreparedStatement pstmt = null;
 
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_RULE);
-            pstmt.setString(1, ruleId);
+            pstmt.setInt(1,new Integer(ruleId));
             pstmt.execute();
 
-            rules.remove(getRuleById(new Integer(ruleId)));
+            rules.remove(getRuleById(ruleId));
 
         } catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -383,13 +383,13 @@ public class DbRuleManager {
             pstmt.setString(3, rule.getSource());
             pstmt.setString(4, rule.getClass().getName());
             if (rule.isDisabled())
-                pstmt.setByte(5, new Byte("1"));
+                pstmt.setBoolean(5, Boolean.TRUE);
             else
-                pstmt.setByte(5, new Byte("0"));
+                pstmt.setBoolean(5, Boolean.FALSE);
             if (rule.doLog())
-                pstmt.setByte(6, new Byte("1"));
+                pstmt.setBoolean(6, Boolean.TRUE);
             else
-                pstmt.setByte(6, new Byte("0"));
+                pstmt.setBoolean(6, Boolean.FALSE);
             pstmt.setString(7, rule.getDescription());
             pstmt.setInt(8, order);
 

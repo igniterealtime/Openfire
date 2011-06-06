@@ -336,7 +336,7 @@ public class IQMUCSearchHandler
 			resultform.addReportedField("is_member_only", "Is a member only room.", FormField.Type.boolean_type);
 			resultform.addReportedField("jid", "JID", FormField.Type.jid_single);
 		}
-
+                res.add(resultform.getElement());
 		if (applyRSM)
 		{
 			res.add(searchResults.generateSetElementFromResults(mucrsm));

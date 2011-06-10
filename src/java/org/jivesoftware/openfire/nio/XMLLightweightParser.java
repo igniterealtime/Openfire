@@ -22,10 +22,8 @@ package org.jivesoftware.openfire.nio;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -114,11 +112,11 @@ class XMLLightweightParser {
         PropertyEventDispatcher.addListener(new PropertyListener());
     }
 
-    public XMLLightweightParser(String charset) {
-        encoder = Charset.forName(charset).newDecoder()
-			.onMalformedInput(CodingErrorAction.REPLACE)
-			.onUnmappableCharacter(CodingErrorAction.REPLACE);
-    }
+	public XMLLightweightParser(String charset) {
+		encoder = Charset.forName(charset).newDecoder()
+					.onMalformedInput(CodingErrorAction.REPORT)
+					.onUnmappableCharacter(CodingErrorAction.REPORT);
+	}
 
     /*
     * true if the parser has found some complete xml message.
@@ -182,23 +180,39 @@ class XMLLightweightParser {
         if (buffer.length() > maxBufferSize) {
             throw new Exception("Stopped parsing never ending stanza");
         }
-        CharBuffer charBuffer = CharBuffer.allocate(byteBuffer.capacity());
-        encoder.reset();
-        CoderResult coderResult = encoder.decode(byteBuffer.buf(), charBuffer, false);
-        char[] buf = Arrays.copyOf(charBuffer.array(), charBuffer.position());
-        int readChar = buf.length;
+        CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
+        char[] buf = charBuffer.array();
+        int readByte = charBuffer.remaining();
 
         // Just return if nothing was read
-        if (readChar == 0) {
+        if (readByte == 0) {
             return;
         }
 
-        buffer.append(buf);
+        // Verify if the last received byte is an incomplete double byte character
+        char lastChar = buf[readByte-1];
+        if (lastChar >= 0xfff0) {
+            if (Log.isDebugEnabled()) {
+                Log.debug("Waiting to get complete char: " + String.valueOf(buf));
+            }
+            // Rewind the position one place so the last byte stays in the buffer
+            // The missing byte should arrive in the next iteration. Once we have both
+            // of bytes we will have the correct character
+            byteBuffer.position(byteBuffer.position()-1);
+            // Decrease the number of bytes read by one
+            readByte--;
+            // Just return if nothing was read
+            if (readByte == 0) {
+                return;
+            }
+        }
+
+        buffer.append(buf, 0, readByte);
 
         // Robot.
         char ch;
         boolean isHighSurrogate = false;
-        for (int i = 0; i < readChar; i++) {
+        for (int i = 0; i < readByte; i++) {
             ch = buf[i];
             if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD && ch != 0x0) {
                  //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
@@ -229,7 +243,7 @@ class XMLLightweightParser {
                     if (tailCount == head.length()) {
                         // Close stanza found!
                         // Calculate the correct start,end position of the message into the buffer
-                        int end = buffer.length() - readChar + (i + 1);
+                        int end = buffer.length() - readByte + (i + 1);
                         String msg = buffer.substring(startLastMsg, end);
                         // Add message to the list
                         foundMsg(msg);
@@ -268,7 +282,7 @@ class XMLLightweightParser {
                     status = XMLLightweightParser.OUTSIDE;
                     if (depth < 1) {
                         // Found a tag in the form <tag />
-                        int end = buffer.length() - readChar + (i + 1);
+                        int end = buffer.length() - readByte + (i + 1);
                         String msg = buffer.substring(startLastMsg, end);
                         // Add message to the list
                         foundMsg(msg);
@@ -314,7 +328,7 @@ class XMLLightweightParser {
                     if (insideRootTag && ("stream:stream>".equals(head.toString()) ||
                             ("?xml>".equals(head.toString())) || ("flash:stream>".equals(head.toString())))) {
                         // Found closing stream:stream
-                        int end = buffer.length() - readChar + (i + 1);
+                        int end = buffer.length() - readByte + (i + 1);
                         // Skip LF, CR and other "weird" characters that could appear
                         while (startLastMsg < end && '<' != buffer.charAt(startLastMsg)) {
                             startLastMsg++;

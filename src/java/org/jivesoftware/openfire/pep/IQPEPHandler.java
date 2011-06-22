@@ -393,6 +393,20 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 
                 // Process with PubSub as usual.
                 pepServiceManager.process(pepService, packet);
+            } else if (packet.getType() == IQ.Type.get) {
+                final String jidFrom = senderJID.toBareJID();
+                final PEPService pepService = pepServiceManager.getPEPService(jidFrom);            	
+
+                if (pepService != null) {
+                	pepServiceManager.process(pepService, packet);
+                } else {
+                    // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
+                    // a user who does not have a PEP service, we wish to utilize the error reporting flow
+                    // already present in the PubSubEngine. This gives the illusion that every user has a
+                    // PEP service, as required by the specification.
+                    PEPService dummyService = new PEPService(XMPPServer.getInstance(), senderJID.toBareJID());
+                    pepServiceManager.process(dummyService, packet);
+                }
             }
         }
         else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {

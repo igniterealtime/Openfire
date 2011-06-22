@@ -329,9 +329,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         final JID senderJID = packet.getFrom();
         if (packet.getTo() == null) {
         	// packet addressed to service itself (not to a node/user)
-        	
+            final String jidFrom = senderJID.toBareJID();
+            packet = packet.createCopy();
+            packet.setTo(jidFrom);
+
             if (packet.getType() == IQ.Type.set) {
-                final String jidFrom = senderJID.toBareJID();
                 PEPService pepService = pepServiceManager.getPEPService(jidFrom);
 
                 // If no service exists yet for jidFrom, create one.
@@ -394,21 +396,17 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 // Process with PubSub as usual.
                 pepServiceManager.process(pepService, packet);
             } else if (packet.getType() == IQ.Type.get) {
-                final String jidFrom = senderJID.toBareJID();
                 final PEPService pepService = pepServiceManager.getPEPService(jidFrom);            	
-
-                final IQ deepCopy = packet.createCopy();
-                deepCopy.setTo(jidFrom);
                 
                 if (pepService != null) {
-                	pepServiceManager.process(pepService, deepCopy);
+                	pepServiceManager.process(pepService, packet);
                 } else {
                     // Process with PubSub using a dummyService. In the case where an IQ packet is sent to
                     // a user who does not have a PEP service, we wish to utilize the error reporting flow
                     // already present in the PubSubEngine. This gives the illusion that every user has a
                     // PEP service, as required by the specification.
                     PEPService dummyService = new PEPService(XMPPServer.getInstance(), senderJID.toBareJID());
-                    pepServiceManager.process(dummyService, deepCopy);
+                    pepServiceManager.process(dummyService, packet);
                 }
             }
         }

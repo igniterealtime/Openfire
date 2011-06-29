@@ -3,19 +3,22 @@
 #		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
 #		Modified for Debian 
 #		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#              Modified for LSB compliance
-#              by Steffen Zieger .
+#       LSBize the script
+#       by Erwan 'Labynocle' Ben Souiden <erwan@aleikoum.net>
 #
 # Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
 #
+
 ### BEGIN INIT INFO
-# Provides:            openfire
-# Required-Start:      $local_fs $network $remote_fs $syslog
-# Required-Stop:       $local_fs $network $remote_fs $syslog
-# Default-Start:       2 3 4 5
-# Default-Stop:                1
-# Short-Description:   Openfire is a Jabber/XMPP server
-### END INIT INFO
+# Provides:             openfire
+# Required-Start:       $local_fs $remote_fs $network $syslog
+# Required-Stop:        $local_fs $remote_fs $network $syslog
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    Start/stop openfire jabber server
+# Description:          Start/stop openfire jabber server
+### END INIT INFO 
+
 
 # Attempt to locate JAVA_HOME, code borrowed from jabref package
 if [ -z $JAVA_HOME ]
@@ -91,4 +94,3 @@ case "$1" in
 esac
 
 exit 0
-

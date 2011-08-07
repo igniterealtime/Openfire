@@ -107,12 +107,40 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     }
 
     public void process(Presence presence) throws PacketException {
-        try {
-            JID senderJID = presence.getFrom();
-            JID recipientJID = presence.getTo();
-            Presence.Type type = presence.getType();
+    	if (presence == null) {
+    		throw new IllegalArgumentException("Argument 'presence' cannot be null.");
+    	}
 
-            // Reject presence subscription requests sent to the local server itself.
+        final Presence.Type type = presence.getType();
+
+		if (type != Presence.Type.subscribe 
+				&& type != Presence.Type.unsubscribe
+				&& type != Presence.Type.subscribed 
+				&& type != Presence.Type.unsubscribed) {
+			throw new IllegalArgumentException("Packet processed by PresenceSubscribeHandler is "
+					+ "not of a subscription-related type, but: " + type);
+		}
+
+		// RFC-6121 paragraph 3: "When a server processes or generates an outbound presence stanza
+		// of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp
+		// the outgoing presence stanza with the bare JID <localpart@domainpart> of the sending entity,
+		// not the full JID <localpart@domainpart/resourcepart>."
+		presence.setFrom(presence.getFrom().toBareJID());
+		
+		// RFC-6121 paragraph 3.1.3: "Before processing the inbound presence subscription request, the
+		// contact's server SHOULD check the syntax of the JID contained in the 'to' attribute. If the
+		// JID is of the form <contact@domainpart/resourcepart> instead of <contact@domainpart>, the
+		// contact's server SHOULD treat it as if the request had been directed to the contact's bare
+		// JID and modify the 'to' address accordingly.
+		if (presence.getTo() != null) {
+			presence.setTo(presence.getTo().toBareJID());
+		}
+
+        final JID senderJID = presence.getFrom();
+        final JID recipientJID = presence.getTo();
+
+        try {            
+			// Reject presence subscription requests sent to the local server itself.
             if (recipientJID == null || recipientJID.toString().equals(serverName)) {
                 if (type == Presence.Type.subscribe) {
                     Presence reply = new Presence();

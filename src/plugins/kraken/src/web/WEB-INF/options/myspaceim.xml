@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel>
+        <item type="toggle" sysprop="plugin.gateway.myspaceim.reconnect" var="autoreconnect" desckey="gateway.web.transports.autoreconnect" default="true">
+            <item type="text" sysprop="plugin.gateway.myspaceim.reconnectattempts" var="autoreconnectattempts" desckey="gateway.web.transports.autoreconnectattempts" default="3" size="5" maxlength="5"/>
+        </item>
+    </leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.myspaceim.connecthost" var="host" desckey="gateway.web.transports.host" default="im.myspace.akadns.net"/>
+        <item type="text" sysprop="plugin.gateway.myspaceim.connectport" var="port" desckey="gateway.web.transports.port" default="1863"/>
+    </rightpanel>
+</optionsconfig>

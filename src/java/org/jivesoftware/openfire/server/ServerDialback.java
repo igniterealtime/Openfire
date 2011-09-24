@@ -335,35 +335,36 @@ public class ServerDialback {
 
             // Process the answer from the Receiving Server
             try {
-                Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(),
-                        TimeUnit.MILLISECONDS);
-                if (doc == null) {
-                    Log.debug("ServerDialback: OS - Time out waiting for answer in validation from: " + hostname +
-                            " id: " +
-                            id +
-                            " for domain: " +
-                            domain);
-                    return false;
-                }
-                else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
-                    boolean success = "valid".equals(doc.attributeValue("type"));
-                    Log.debug("ServerDialback: OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
-                            hostname +
-                            " id: " +
-                            id +
-                            " for domain: " +
-                            domain);
-                    return success;
-                }
-                else {
-                    Log.debug("ServerDialback: OS - Unexpected answer in validation from: " + hostname + " id: " +
-                            id +
-                            " for domain: " +
-                            domain +
-                            " answer:" +
-                            doc.asXML());
-                    return false;
-                }
+            	while (true) {
+	                Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(),
+	                        TimeUnit.MILLISECONDS);
+	                if (doc == null) {
+	                    Log.debug("ServerDialback: OS - Time out waiting for answer in validation from: " + hostname +
+	                            " id: " +
+	                            id +
+	                            " for domain: " +
+	                            domain);
+	                    return false;
+	                }
+	                else if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+	                    boolean success = "valid".equals(doc.attributeValue("type"));
+	                    Log.debug("ServerDialback: OS - Validation " + (success ? "GRANTED" : "FAILED") + " from: " +
+	                            hostname +
+	                            " id: " +
+	                            id +
+	                            " for domain: " +
+	                            domain);
+	                    return success;
+	                }
+	                else {
+	                    Log.warn("ServerDialback: OS - Ignoring unexpected answer in validation from: " + hostname + " id: " +
+	                            id +
+	                            " for domain: " +
+	                            domain +
+	                            " answer:" +
+	                            doc.asXML());
+	                }
+            	}
             }
             catch (InterruptedException e) {
                 Log.debug("ServerDialback: OS - Validation FAILED from: " + hostname +
@@ -398,6 +399,7 @@ public class ServerDialback {
         XmlPullParser xpp = reader.getXPPParser();
         StringBuilder sb;
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+            Log.debug("ServerDialback: Processing incoming session.");
 
             StreamID streamID = sessionManager.nextStreamID();
 
@@ -413,9 +415,11 @@ public class ServerDialback {
             try {
                 Element doc = reader.parseDocument().getRootElement();
                 if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
+                    String hostname = doc.attributeValue("from");
+                    String recipient = doc.attributeValue("to");
+                    Log.debug("ServerDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
                     if (validateRemoteDomain(doc, streamID)) {
-                        String hostname = doc.attributeValue("from");
-                        String recipient = doc.attributeValue("to");
+                        Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was successful.", hostname, recipient);
                         // Create a server Session for the remote server
                         LocalIncomingServerSession session = sessionManager.
                                 createIncomingServerSession(connection, streamID);
@@ -425,6 +429,9 @@ public class ServerDialback {
                         // validating the session
                         session.setLocalDomain(recipient);
                         return session;
+                    } else {
+                        Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was not successful.", hostname, recipient);
+                        return null;
                     }
                 }
                 else if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
@@ -440,6 +447,7 @@ public class ServerDialback {
                     return null;
                 }
                 else {
+                	Log.debug("ServerDialback: Received an invalid/unknown packet while trying to process an incoming session: {}", doc.asXML());
                     // The remote server sent an invalid/unknown packet
                     connection.deliverRawText(
                             new StreamError(StreamError.Condition.invalid_xml).toXML());
@@ -457,14 +465,13 @@ public class ServerDialback {
 
         }
         else {
-            // Include the invalid-namespace stream error condition in the response
+        	Log.debug("ServerDialback: Received a stanza in an invalid namespace while trying to process an incoming session: {}", xpp.getNamespace("db"));
             connection.deliverRawText(
                     new StreamError(StreamError.Condition.invalid_namespace).toXML());
             // Close the underlying connection
             connection.close();
             return null;
         }
-        return null;
     }
 
     /**
@@ -473,7 +480,7 @@ public class ServerDialback {
      * Authoritative Server. The Authoritative Server may be the same Originating Server or
      * some other machine in the Originating Server's network.<p>
      *
-     * If the domain was not valid or some error occured while validating the domain then the
+     * If the domain was not valid or some error occurred while validating the domain then the
      * underlying TCP connection will be closed.
      *
      * @param doc the request for validating the new domain.

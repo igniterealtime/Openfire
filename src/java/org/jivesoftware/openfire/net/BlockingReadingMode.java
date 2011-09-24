@@ -108,15 +108,13 @@ class BlockingReadingMode extends SocketReadingMode {
                     socketReader.session.close();
                 }
                 catch (Exception e) {
-                    Log.warn(LocaleUtils.getLocalizedString("admin.error.connection")
-                            + "\n" + socket.toString());
+                    Log.warn(LocaleUtils.getLocalizedString("admin.error.connection") + socket.toString());
                 }
             }
             else {
                 // Close and release the created connection
                 socketReader.connection.close();
-                Log.debug(LocaleUtils.getLocalizedString("admin.error.connection")
-                        + "\n" + socket.toString());
+                Log.debug(LocaleUtils.getLocalizedString("admin.error.connection") + socket.toString());
             }
             socketReader.shutdown();
         }

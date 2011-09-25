@@ -52,31 +52,39 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         if (bodyElement == null) {
             bodyElement = DocumentHelper.createElement(QName.get("query", "jabber:iq:version"));
             bodyElement.addElement("name").setText(AdminConsole.getAppName());
-            bodyElement.addElement("os").setText("Java " + System.getProperty("java.version"));
-            bodyElement.addElement("version");
+            bodyElement.addElement("version").setText(AdminConsole.getVersionString());
         }
     }
 
-    @Override
+	@Override
 	public IQ handleIQ(IQ packet) throws PacketException {
-        if (IQ.Type.get == packet.getType()) {
-            // Could cache this information for every server we see
-            Element answerElement = bodyElement.createCopy();
-            answerElement.element("name").setText(AdminConsole.getAppName());
-            answerElement.element("version").setText(AdminConsole.getVersionString());
-            IQ result = IQ.createResultIQ(packet);
-            result.setChildElement(answerElement);
-            return result;
-        }
-        else if (IQ.Type.set == packet.getType()) {
-            // Answer an not-acceptable error since IQ should be of type GET
-            IQ result = IQ.createResultIQ(packet);
-            result.setError(PacketError.Condition.not_acceptable);
-            return result;
-        }
-        // Ignore any other type of packet
-        return null;
-    }
+		if (IQ.Type.get == packet.getType()) {
+			// Could cache this information for every server we see
+			Element answerElement = bodyElement.createCopy();
+			try {
+				// Try to retrieve this for every request - security settings
+				// might be changed runtime!
+				final String os = System.getProperty("os.name") + ' ' 
+						+ System.getProperty("os.version") + " ("
+						+ System.getProperty("os.arch") + ')';
+				final String java = "Java " + System.getProperty("java.version");
+				answerElement.addElement("os").setText(os + " - " + java);
+			} catch (SecurityException ex) {
+				// Security settings don't allow the OS to be read. We'll honor
+				// this and simply not report it.
+			}
+			IQ result = IQ.createResultIQ(packet);
+			result.setChildElement(answerElement);
+			return result;
+		} else if (IQ.Type.set == packet.getType()) {
+			// Answer an not-acceptable error since IQ should be of type GET
+			IQ result = IQ.createResultIQ(packet);
+			result.setError(PacketError.Condition.not_acceptable);
+			return result;
+		}
+		// Ignore any other type of packet
+		return null;
+	}
 
     @Override
 	public IQHandlerInfo getInfo() {

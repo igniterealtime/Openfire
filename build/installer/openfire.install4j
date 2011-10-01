@@ -23,7 +23,7 @@
     <variables>
       <variable name="VERSION_MAJOR" value="3" />
       <variable name="VERSION_MINOR" value="7" />
-      <variable name="VERSION_REVISION" value="0" />
+      <variable name="VERSION_REVISION" value="1" />
       <variable name="APP_NAME" value="Openfire" />
       <variable name="APP_SHORT_NAME" value="openfire" />
       <variable name="PRODUCT_NAME" value="openfire" />

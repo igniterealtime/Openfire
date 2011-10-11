@@ -13,19 +13,21 @@ package org.jivesoftware.openfire.commands;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.component.ComponentEventListener;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.event.SessionEventListener;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An AdHocCommandManager is responsible for keeping the list of available commands offered
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Gaston Dombiak
  */
-public class AdHocCommandManager {
+public class AdHocCommandManager implements SessionEventListener, ComponentEventListener {
 
     private static final String NAMESPACE = "http://jabber.org/protocol/commands";
 
@@ -44,10 +46,10 @@ public class AdHocCommandManager {
      */
     private Map<String, AdHocCommand> commands = new ConcurrentHashMap<String, AdHocCommand>();
     /**
-     * Map that holds the number of command sessions of each requester.
-     * Note: Key=requester full's JID, Value=number of sessions
+     * Map that holds the id of command sessions of each requester.
+     * Note: Key=requester full's JID, Value=collection with command sessions ids
      */
-    private Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<String, AtomicInteger>();
+    private Map<String, Collection<String>> sessionsCounter = new ConcurrentHashMap<String, Collection<String>>();
     /**
      * Map that holds the command sessions. Used mainly to quickly locate a SessionData.
      * Note: Key=sessionID, Value=SessionData
@@ -145,27 +147,44 @@ public class AdHocCommandManager {
                 }
                 else {
                     // The command requires user interactions (ie. has stages)
-                    // Check that the user has not excedded the limit of allowed simultaneous
-                    // command sessions.
-                    AtomicInteger counter = sessionsCounter.get(from);
-                    if (counter == null) {
+
+                    // Clean up expired sessions data
+                    Collection<String> sessionsIDs = sessionsCounter.get(from);
+                    if (sessionsIDs != null) {
                         synchronized (from.intern()) {
-                            counter = sessionsCounter.get(from);
-                            if (counter == null) {
-                                counter = new AtomicInteger(0);
-                                sessionsCounter.put(from, counter);
+                            Collection<String> existingSessionsIDs = new ArrayList<String>(sessionsIDs);
+                            for (String existingSessionID : existingSessionsIDs) {
+                                SessionData session = sessions.get(existingSessionID);
+                                // Check if the Session data has expired (default is 10 minutes)
+                                expireSessionData(session, from);
+                            }
+                        }
+                    }
+
+                    // Check that the user has not exceeded the limit of allowed simultaneous
+                    // command sessions.
+                    sessionsIDs = sessionsCounter.get(from);
+                    if (sessionsIDs == null) {
+                        synchronized (from.intern()) {
+                            sessionsIDs = sessionsCounter.get(from);
+                            if (sessionsIDs == null) {
+                                sessionsIDs = new ArrayList<String>();
+                                sessionsCounter.put(from, sessionsIDs);
                             }
                         }
                     }
                     int limit = JiveGlobals.getIntProperty("xmpp.command.limit", 100);
-                    if (counter.incrementAndGet() > limit) {
-                        counter.decrementAndGet();
+                    if (sessionsIDs.size() > limit) {
                         // Answer a not_allowed error since the user has exceeded limit. This
                         // checking prevents bad users from consuming all the system memory by not
                         // allowing them to create infinite simultaneous command sessions.
                         reply.setChildElement(iqCommand.createCopy());
                         reply.setError(PacketError.Condition.not_allowed);
                         return reply;
+                    }
+                    // Keep track of sessions per XMPP entity
+                    synchronized (from.intern()) {
+                        sessionsIDs.add(sessionid);
                     }
                     // Originate a new command session.
                     SessionData session = new SessionData(sessionid, packet.getFrom());
@@ -196,11 +215,7 @@ public class AdHocCommandManager {
             }
 
             // Check if the Session data has expired (default is 10 minutes)
-            int timeout = JiveGlobals.getIntProperty("xmpp.command.timeout", 10 * 60 * 1000);
-            if (System.currentTimeMillis() - session.getCreationStamp() > timeout) {
-                // TODO Check all sessions that might have timed out (use another thread?)
-                // Remove the old session
-                removeSessionData(sessionid, from);
+            if (expireSessionData(session, from)) {
                 // Answer a not_allowed error (session-expired)
                 reply.setChildElement(iqCommand.createCopy());
                 reply.setError(PacketError.Condition.not_allowed);
@@ -300,10 +315,29 @@ public class AdHocCommandManager {
      */
     private void removeSessionData(String sessionid, String from) {
         sessions.remove(sessionid);
-        if (sessionsCounter.get(from).decrementAndGet() <= 0) {
-            // Remove the AtomicInteger when no commands are being executed
+        synchronized (from.intern()) {
+            Collection<String> sessionsIDs = sessionsCounter.get(from);
+            sessionsIDs.remove(sessionid);
+            if (sessionsIDs.isEmpty()) {
+            // Remove the Collection when no commands are being executed for this XMPP entity
             sessionsCounter.remove(from);
+            }
         }
+    }
+
+    private void removeSessionsData(String from) {
+        synchronized (from.intern()) {
+            Collection<String> sessionsIDs = sessionsCounter.get(from);
+            if (sessionsIDs == null) {
+                // Nothing to clean up since there are no ad-hoc commands being executed
+                // from this address at this time
+                return;
+            }
+            for (String sessionid : sessionsIDs) {
+                sessions.remove(sessionid);
+            }
+        }
+        sessionsCounter.remove(from);
     }
 
     public void stop() {
@@ -312,4 +346,50 @@ public class AdHocCommandManager {
         sessionsCounter.clear();
     }
 
+    private boolean expireSessionData(SessionData session, String from) {
+        int timeout = JiveGlobals.getIntProperty("xmpp.command.timeout", 10 * 60 * 1000);
+        if (System.currentTimeMillis() - session.getCreationStamp() > timeout) {
+            // Remove the old session
+            removeSessionData(session.getId(), from);
+            return true;
+        }
+        return false;
+    }
+    /***************** Session Listeners **********************/
+    public void componentRegistered(JID componentJID) {
+        //Ignore
+    }
+
+    public void componentUnregistered(JID componentJID) {
+        removeSessionsData(componentJID.toString());
+    }
+
+    public void componentInfoReceived(IQ iq) {
+        //Ignore
+    }
+
+    public void sessionCreated(Session session) {
+        //Ignore
+    }
+
+    public void sessionDestroyed(Session session) {
+        removeSessionsData(session.getAddress().toString());
+    }
+
+    public void anonymousSessionCreated(Session session) {
+        //Ignore
+    }
+
+    public void anonymousSessionDestroyed(Session session) {
+        removeSessionsData(session.getAddress().toString());
+    }
+
+    public void resourceBound(Session session) {
+        //Ignore
+    }
+
+    public void init() {
+        InternalComponentManager.getInstance().addListener(this);
+        SessionEventDispatcher.addListener(this);
+    }
 }

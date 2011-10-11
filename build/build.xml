@@ -66,7 +66,7 @@
 
     <property name="version.major" value="3"/>
     <property name="version.minor" value="6"/>
-    <property name="version.revision" value="4"/>
+    <property name="version.revision" value="4a"/>
     <property name="version.extra" value=""/>    <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="openfire"/>
 
@@ -224,6 +224,7 @@
                 <or>
                     <contains string="${ant.version}" substring="1.6"/>
                     <contains string="${ant.version}" substring="1.7"/>
+                    <contains string="${ant.version}" substring="1.8"/>
                 </or>
             </not>
         </condition>

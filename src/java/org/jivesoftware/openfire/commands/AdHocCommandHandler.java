@@ -147,6 +147,7 @@ public class AdHocCommandHandler extends IQHandler
         super.start();
         infoHandler.setServerNodeInfoProvider(NAMESPACE, this);
         itemsHandler.setServerNodeInfoProvider(NAMESPACE, this);
+        manager.init();
         // Add the "out of the box" commands
         addDefaultCommands();
     }

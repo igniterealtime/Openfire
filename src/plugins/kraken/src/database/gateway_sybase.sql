@@ -3,7 +3,7 @@ CREATE TABLE ofGatewayRegistration (
    jid               NVARCHAR(255)   NOT NULL,
    transportType     NVARCHAR(15)    NOT NULL,
    username          NVARCHAR(255)   NOT NULL,
-   password          NVARCHAR(255),
+   password          NVARCHAR(1024),
    nickname          NVARCHAR(255),
    registrationDate  INTEGER         NOT NULL,
    lastLogin         INTEGER,
@@ -46,4 +46,4 @@ CREATE TABLE ofGatewayVCards (
 );
 CREATE INDEX ofGatewayVCards_jid_idx ON ofGatewayVCards (jid);
 
-INSERT INTO ofVersion (name, version) VALUES ('gateway', 11);
+INSERT INTO ofVersion (name, version) VALUES ('gateway', 12);

@@ -33,7 +33,7 @@ import org.jivesoftware.smack.util.Base64;
  */
 public class FacebookConnectSASLMechanism extends SASLMechanism {
 
-	private String sessionKey = "";
+	private String accessToken = "";
 	private String appSecret = "";
 	private String apiKey = "";
 	
@@ -60,23 +60,23 @@ public class FacebookConnectSASLMechanism extends SASLMechanism {
 		getSASLAuthentication().send(new AuthMechanism(getName(), null));
 	}
 
-	public void authenticate(String apiKeyAndAppSecret, String host, String sessionKey)
+	public void authenticate(String apiKeyAndAppSecret, String host, String accessToken)
 			throws IOException, XMPPException {
 
-		if(apiKeyAndAppSecret==null || sessionKey==null)
+		if(apiKeyAndAppSecret==null || accessToken==null)
 			throw new IllegalStateException("Invalid parameters!");
 		
 		String[] keyArray = apiKeyAndAppSecret.split("\\|");
 		
 		if(keyArray==null || keyArray.length != 2)
-			throw new IllegalStateException("Api key or session key is not present!");
+			throw new IllegalStateException("Api key or access token is not present!");
 		
 		this.apiKey = keyArray[0];
 		this.appSecret = keyArray[1];
-		this.sessionKey = sessionKey;
+		this.accessToken = accessToken;
 		
-		this.authenticationId = sessionKey;
-		this.password = sessionKey;
+		this.authenticationId = accessToken;
+		this.password = accessToken;
 		this.hostname = host;
 
 		String[] mechanisms = { "DIGEST-MD5" };
@@ -116,7 +116,7 @@ public class FacebookConnectSASLMechanism extends SASLMechanism {
 							+"call_id="+callId
 							+"method="+method
 							+"nonce="+nonce
-							+"session_key="+sessionKey
+							+"access_token="+accessToken
 							+"v="+version
 							+appSecret;
 			
@@ -130,7 +130,7 @@ public class FacebookConnectSASLMechanism extends SASLMechanism {
 										+"call_id="+callId+"&"
 										+"method="+method+"&"
 										+"nonce="+nonce+"&"
-										+"session_key="+sessionKey+"&"
+										+"access_token="+accessToken+"&"
 										+"v="+version+"&"
 										+"sig="+sig;
 

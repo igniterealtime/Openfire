@@ -319,7 +319,7 @@ public class JDBCUserProvider implements UserProvider {
         ResultSet rs = null;
         try {
             StringBuilder sql = new StringBuilder(90);
-            sql.append("SELECT username FROM ofUser WHERE");
+            sql.append(searchSQL);
             boolean first = true;
             if (fields.contains("Username")) {
                 sql.append(" username LIKE ?");

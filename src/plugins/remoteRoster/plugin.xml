@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>org.jivesoftware.openfire.plugin.RemoteRosterPlugin</class>
+
+
+    <name>Remote Roster</name>
+    <description>ProtoXEP-xxxx: Remote Roster Management support</description>
+    <author>Daniel Henninger</author>
+    <version>1.0.0</version>
+    <date>10/16/2011</date>
+    <minServerVersion>3.7.0</minServerVersion>
+
+    <!-- Admin console entries -->
+
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="remoteRoster" name="${rr.summary.title}"
+                    url="rr-main.jsp"
+                    description="${rr.summary.title}" />
+            </sidebar>
+         </tab>
+    </adminconsole>
+</plugin>

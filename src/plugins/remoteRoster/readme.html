@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Remote Roster Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+
+<h1>
+Remote Roster Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+This plugin will implement the proto-XEP, Remote Roster, discussed
+<a href="http://jkaluza.fedorapeople.org/remote-roster.html">here</a>.
+Basically it's purpose is to allow an external component full
+control over the part of a roster it's assigned.  For example,
+if the AIM transport is at aim.example.org, you can allow that transport
+to make whatever modifications it needs without involving the end user.
+This is especially useful so that a user does not get flooded with
+subscription requests upon registration.  This plugin also implements
+a few minor extensions that Kraken used to implement for Spark, though
+those are optional.
+</p>
+
+<h2>Installation</h2>
+
+<p>Copy remoteRoster.jar into the plugins directory of your Openfire installation. The
+plugin will then be automatically deployed. To upgrade to a new version, copy the new
+remoteRoster.jar file over the existing file.</p>
+
+<h2>Configuration</h2>
+
+<p>The Remote Roster plugin can be configured under "Server"-"Server Settings"-"Remote Roster".</p>
+
+</body>
+</html>

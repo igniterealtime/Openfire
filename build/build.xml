@@ -446,7 +446,7 @@
 
         <java jar="${target.openfireHome}/lib/startup.jar" fork="true" spawn="${run.spawn}"
               dir="${target.openfireHome}/bin">
-            <jvmarg line="${run.debug}"/>
+            <jvmarg line="${run.debug} -DopenfireHome=${target.openfireHome}"/>
         </java>
     </target>
 

@@ -13,7 +13,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
-public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProcessor {
+public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProcessor{
 
 	private RosterManager _rosterManager;
 
@@ -37,6 +37,11 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 				roster = _rosterManager.getRoster(username);
 				String jid = n.valueOf("@jid");
 				String name = n.valueOf("@name");
+				if (jid.equals(myPacket.getFrom().toString()))
+				{
+					//Do not add the component itself to the contact list
+					break;
+				}
 				List<String> grouplist = new ArrayList<String>();
 				List<Node> groupnodes = findNodesInDocument(n.getDocument(), "//roster:group");
 				for (Node ne : groupnodes) {
@@ -53,5 +58,4 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 			}
 		}
 	}
-
 }

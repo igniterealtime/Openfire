@@ -15,8 +15,12 @@
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
     boolean persistentRoster = ParamUtils.getBooleanAttribute(request, "persistentEnabled");
+    String sparkdiscoParam = request.getParameter("sparkDiscoInfo");
+    boolean sparkDiscoInfo = sparkdiscoParam == null? false: sparkdiscoParam.equals("true");
     String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
-
+	
+    
+    
     Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         for (String property : JiveGlobals.getPropertyNames("plugin.remoteroster.jids")) {
@@ -28,6 +32,7 @@
             }
         }
         JiveGlobals.setProperty("plugin.remoteroster.persistent", (persistentRoster ? "true" : "false"));
+        JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
         response.sendRedirect("rr-main.jsp?success=true");
         return;
     }
@@ -147,6 +152,39 @@
    </tbody>
    </table>
 </div>
+
+
+
+<div class="jive-contentBoxHeader">Client specific options</div>
+<div class="jive-contentBox">
+   <table cellpadding="3" cellspacing="0" border="0" width="100%">
+   <tbody>
+   <tr valign="top">
+       <td width="1%" nowrap class="c1">
+           Spark:
+       </td>
+       <td width="99%">
+           <table cellpadding="0" cellspacing="0" border="0">
+           <tbody>
+               <tr>
+                   <td>
+                       <input type="checkbox" name="sparkDiscoInfo" id="SDI" value="true" <%= JiveGlobals.getBooleanProperty("plugin.remoteroster.sparkDiscoInfo", false) ? "checked=\"checked\"" : "" %> />
+                      
+                   </td>
+                   <td><label for="SDI"> Support jabber:iq:registered feature*</label></td>
+               </tr>
+               <tr>
+                   <td />
+                   <td align="left" style="font-size:-3;color:grey">*If you use Spark clients within your network, it might be necessary to modify the service discovery packets between Spark and the external component. If you check this RemoteRoster will add the feature "jabber:iq:registered" to the disco#info to indicate that the Client is registered with the external component.</td>
+               </tr>
+           </tbody>
+           </table>
+       </td>
+   </tr>
+   </tbody>
+   </table>
+</div>
+
 
 <input type="submit" name="save" value="Save Settings" />
 

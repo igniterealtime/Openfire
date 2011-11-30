@@ -28,7 +28,6 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 	{
 		IQ myPacket = (IQ) packet;
 
-		String from = myPacket.getFrom().toString();
 		String to = myPacket.getFrom().toString();
 		String username = getUsernameFromJid(to);
 
@@ -48,10 +47,9 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 		IQ response = IQ.createResultIQ(iq);
 		response.setTo(_componentName);
 		Element query = new DefaultElement("query");
-
 		for (RosterItem i : items) {
-			CharSequence serverName = getServerNameFromComponentName(_componentName);
-			if (i.getJid().toString().contains(serverName)) {
+			if (i.getJid().toString().contains(_componentName)) {
+				System.out.println("roster exchange: habe: "+i.getJid().toString());
 				Element item = new DefaultElement("item");
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
 				item.add(new DefaultAttribute("name", i.getNickname()));
@@ -66,6 +64,7 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 		}
 		query.addNamespace("", "jabber:iq:roster");
 		response.setChildElement(query);
+		System.out.println("sende response: "+response.toString());
 		dispatchPacket(response);
 	}
 

@@ -8,10 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.dom4j.XPath;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -86,7 +84,7 @@ public class RemoteRosterPlugin implements Plugin {
 				if (_waitingForIQResponse.contains(from)) {
 					Element packet = iq.getChildElement();
 					Document doc = packet.getDocument();
-					List<Node> nodes = findNodesInDocument(doc, "//xmpp:identity[@category='gateway']");
+					List<Node> nodes = Utils.findNodesInDocument(doc, "//disco:identity[@category='gateway']");
 					//Is this external component a gateway and there is no package interceptor for it?
 					if (nodes.size() > 0 && !_interceptors.containsKey(from))
 					{
@@ -151,22 +149,6 @@ public class RemoteRosterPlugin implements Plugin {
 
 	}
 
-	/**
-	 * Search the specified document for Nodes corresponding to the xpath 
-	 * Keep in mind that you have to use xmpp namespace for searching e.g. '//xmpp:features'
-	 * @param doc document
-	 * @param xpath with xmpp namespace for searching in query nodes
-	 * @return list of nodes
-	 */
-	private List<Node> findNodesInDocument(Document doc, String xpath)
-	{
-		Map<String, String> namespaceUris = new HashMap<String, String>();
-		namespaceUris.put("xmpp", "http://jabber.org/protocol/disco#info");
-		XPath xPath = DocumentHelper.createXPath(xpath);
-		xPath.setNamespaceURIs(namespaceUris);
-		return xPath.selectNodes(doc);
-	}
-	
 	public static PluginManager getPluginManager()
 	{
 		return pluginManager;

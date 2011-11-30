@@ -48,13 +48,15 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 					String groupName = ne.getText();
 					grouplist.add(groupName);
 				}
-				boolean rosterPersisten = JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false);
-				roster.createRosterItem(new JID(jid), name, grouplist, true, rosterPersisten);
-				RosterItem getThat = roster.getRosterItem(new JID(jid));
-				getThat.setSubStatus(RosterItem.SUB_BOTH);
-				roster.updateRosterItem(getThat);
+				boolean rosterPersisten = JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", true);
+//				System.out.println("füge item hinzu: "+jid+" mit gruppen: "+grouplist.toString());
+				RosterItem item = roster.createRosterItem(new JID(jid), name, grouplist, false, rosterPersisten);
+				//RosterItem getThat = roster.getRosterItem(new JID(jid));
+				item.setSubStatus(RosterItem.SUB_BOTH);
+				roster.updateRosterItem(item);
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.out.println("Exception beim hinzufuegen eines Konaktes!");
 			}
 		}
 	}

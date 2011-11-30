@@ -47,6 +47,9 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 				if (!processed && incoming) {
 					if (packet instanceof IQ) {
 						IQ iqPacket = (IQ) packet;
+						Element packetElement = iqPacket.getChildElement();
+						if (packetElement == null)
+							return;
 						String ns = iqPacket.getChildElement().getNamespace().getURI();
 						if (iqPacket.getType().equals(IQ.Type.result) && ns.equals("jabber:iq:register")
 								&& iqPacket.getFrom().toString().equals(_mySubdoman)) {
@@ -66,7 +69,7 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 								iqPacket.getChildElement().addElement("feature").add(attribut);
 							}
 						}
-					}
+					} 
 				}
 			}
 		};

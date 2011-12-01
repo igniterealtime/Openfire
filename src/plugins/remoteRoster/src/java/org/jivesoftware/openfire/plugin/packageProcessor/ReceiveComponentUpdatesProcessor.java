@@ -16,15 +16,18 @@ import org.xmpp.packet.Packet;
 public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProcessor{
 
 	private RosterManager _rosterManager;
+	private String _mySubdomain;
 
-	public ReceiveComponentUpdatesProcessor(RosterManager rosterManager) {
+	public ReceiveComponentUpdatesProcessor(RosterManager rosterManager, String subdomain) {
+		_mySubdomain = subdomain;
+		Log.debug("Createt ReceiveComponentUpdatesProcessor for "+_mySubdomain);
 		_rosterManager = rosterManager;
 	}
 
 	@Override
 	public void process(Packet packet) throws PacketRejectedException
 	{
-
+		Log.debug("Processing packet in ClientToComponentUpdateProcessor for "+_mySubdomain);
 		IQ myPacket = (IQ) packet;
 		String to = myPacket.getTo().toString();
 		String username = getUsernameFromJid(to);
@@ -49,14 +52,13 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 					grouplist.add(groupName);
 				}
 				boolean rosterPersisten = JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", true);
-//				System.out.println("füge item hinzu: "+jid+" mit gruppen: "+grouplist.toString());
+				Log.debug("Adding user "+jid+" to roster "+ to);
 				RosterItem item = roster.createRosterItem(new JID(jid), name, grouplist, false, rosterPersisten);
-				//RosterItem getThat = roster.getRosterItem(new JID(jid));
 				item.setSubStatus(RosterItem.SUB_BOTH);
 				roster.updateRosterItem(item);
 			} catch (Exception e) {
+				Log.debug("Could not add user to Roster "+username,e);
 				e.printStackTrace();
-				System.out.println("Exception beim hinzufuegen eines Konaktes!");
 			}
 		}
 	}

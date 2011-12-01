@@ -21,17 +21,18 @@ import org.xmpp.packet.Packet;
 
 public class RemotePackageInterceptor implements PacketInterceptor {
 
-	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
+	private static final Logger Log = LoggerFactory.getLogger(RemotePackageInterceptor.class);
 	private String _mySubdomain;
 	private Map<String, AbstractRemoteRosterProcessor> _packetProcessor = new HashMap<String, AbstractRemoteRosterProcessor>();
 
 	public RemotePackageInterceptor(String initialSubdomain) {
-
+		
+		Log.debug("Starting Package Interceptor for "+initialSubdomain);
 		_mySubdomain = initialSubdomain;
 		XMPPServer server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
 		AbstractRemoteRosterProcessor sendroster = new SendRosterProcessor(rosterMananger, _mySubdomain);
-		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger);
+		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger, _mySubdomain);
 		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQResigteredProcessor(_mySubdomain);
 		AbstractRemoteRosterProcessor cleanUp = new CleanUpRosterProcessor(rosterMananger, _mySubdomain);
 		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor(_mySubdomain);
@@ -48,6 +49,7 @@ public class RemotePackageInterceptor implements PacketInterceptor {
 	{
 		if (!processed && incoming) {
 			if (packet instanceof IQ) {
+				Log.debug("Incomping unprocessed package i might be interested in. Package: \n"+packet.toString()+"\n");
 				IQ myPacket = (IQ) packet;
 				if (myPacket.getFrom() == null || myPacket.getTo() == null) {
 					/*
@@ -63,6 +65,7 @@ public class RemotePackageInterceptor implements PacketInterceptor {
 					}
 					return;
 				}
+				@SuppressWarnings("unused")
 				String to = myPacket.getTo().toString();
 				String from = myPacket.getFrom().toString();
 

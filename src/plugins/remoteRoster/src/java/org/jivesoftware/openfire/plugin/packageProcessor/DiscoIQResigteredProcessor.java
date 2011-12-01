@@ -21,16 +21,18 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 	private String _mySubdoman;
 
 	public DiscoIQResigteredProcessor(String subdomain) {
+		Log.debug("Createt DiscoIQResigteredProcessor for " + subdomain);
 		_mySubdoman = subdomain;
 	}
 
 	@Override
 	public void process(Packet packet) throws PacketRejectedException
 	{
-		//Check if the jabber:iq:register is enabled in admin panel
+		Log.debug("Processing packet in DiscoIQResigteredProcessor for "+_mySubdoman);
+		// Check if the jabber:iq:register is enabled in admin panel
 		boolean isFeatureEnabled = JiveGlobals.getBooleanProperty("plugin.remoteroster.sparkDiscoInfo", false);
-		if (!isFeatureEnabled)
-		{
+		if (!isFeatureEnabled) {
+			Log.debug("Spark extension is deactivated. Won't change the disco#info");
 			return;
 		}
 
@@ -39,7 +41,6 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 		final InterceptorManager interceptorManager = InterceptorManager.getInstance();
 		final PacketInterceptor interceptor = new PacketInterceptor() {
 
-			
 			@Override
 			public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 					throws PacketRejectedException
@@ -60,20 +61,23 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 								&& ns.equals("http://jabber.org/protocol/disco#info")
 								&& iqPacket.getFrom().toString().equals(_mySubdoman)) {
 
-							// This is the answer of the disco#info from spark
-							// to our component.
-							// add the jabber:iq:register feature if we are
-							// registered
+							/*
+							 * This is the answer of the disco#info from spark
+							 * to our component. add the jabber:iq:register
+							 * feature if we are registered
+							 */
 							if (isRegistered()) {
+								Log.debug("Modifying disco#info packge to send registered iq feature to Spark user "+iqPacket.getTo().toString());
 								Attribute attribut = new DefaultAttribute("var", "jabber:iq:registered");
 								iqPacket.getChildElement().addElement("feature").add(attribut);
 							}
 						}
-					} 
+					}
 				}
 			}
 		};
 
+		Log.debug("Creating my own listener for jabber:iq:register result to external component "+_mySubdoman);
 		interceptorManager.addInterceptor(interceptor);
 
 		IQ askComponent = new IQ();
@@ -84,21 +88,21 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 		query.addNamespace("", "jabber:iq:register");
 		askComponent.setChildElement(query);
 
-		
-		//Remove the package intercepter in 1sec
+		// Remove the package intercepter in 1sec
 		TimerTask removeInterceptorTask = new TimerTask() {
 
 			@Override
 			public void run()
 			{
+				Log.debug("Removing my created listener for jabber:iq:register. Component "+_mySubdoman);
 				interceptorManager.removeInterceptor(interceptor);
 			}
 		};
-		
+
 		Timer timer = new Timer();
 		timer.schedule(removeInterceptorTask, 1000);
-		
-		//Send the register query to component
+
+		// Send the register query to component
 		dispatchPacket(askComponent);
 
 	}

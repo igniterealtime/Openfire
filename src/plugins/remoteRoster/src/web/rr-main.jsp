@@ -14,7 +14,8 @@
     webManager.init(request, response, session, application, out);
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
-    boolean persistentRoster = ParamUtils.getBooleanAttribute(request, "persistentEnabled");
+    //boolean persistentRoster = ParamUtils.getBooleanAttribute(request, "persistentEnabled");
+    boolean persistentRoster = true;
     String sparkdiscoParam = request.getParameter("sparkDiscoInfo");
     boolean sparkDiscoInfo = sparkdiscoParam == null? false: sparkdiscoParam.equals("true");
     String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
@@ -121,7 +122,8 @@
     }
 %>
 </div>
-
+<!--  DISABLED PERSISTENT ROSTER UNTIL SPECTRUM SUPPORTS IT
+		
 <div class="jive-contentBoxHeader">Options</div>
 <div class="jive-contentBox">
    <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -153,7 +155,7 @@
    </table>
 </div>
 
-
+ -->
 
 <div class="jive-contentBoxHeader">Client specific options</div>
 <div class="jive-contentBox">

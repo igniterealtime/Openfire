@@ -20,12 +20,14 @@ import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 public class RemoteRosterPlugin implements Plugin {
 
-//	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
+	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
 	final SessionManager _sessionManager = SessionManager.getInstance();
 	private Map<String, RemotePackageInterceptor> _interceptors = new HashMap<String, RemotePackageInterceptor>();
 	private static PluginManager pluginManager;
@@ -40,6 +42,7 @@ public class RemoteRosterPlugin implements Plugin {
 
 	public void initializePlugin(PluginManager manager, File pluginDirectory)
 	{
+		Log.debug("Starting RemoteRoster Plguin");
 		pluginManager = manager;
 		manageExternalComponents();
 		listenToSettings();
@@ -127,6 +130,7 @@ public class RemoteRosterPlugin implements Plugin {
 	
 	private void updateInterceptors(String componentJID)
 	{
+		Log.debug("Updating my package interceptors for component "+componentJID);
 		boolean allowed = JiveGlobals.getBooleanProperty("plugin.remoteroster.jids."+componentJID, false);
 		if (allowed)
 		{
@@ -158,6 +162,7 @@ public class RemoteRosterPlugin implements Plugin {
 	{
 		RemotePackageInterceptor interceptor = _interceptors.get(initialSubdomain);
 		if (interceptor != null) {
+			Log.debug("Removing package interceptor for "+initialSubdomain);
 			_interceptorManager.removeInterceptor(interceptor);
 			_interceptors.remove(initialSubdomain);
 		}
@@ -165,6 +170,7 @@ public class RemoteRosterPlugin implements Plugin {
 
 	private void createNewPackageIntercetor(String initialSubdomain)
 	{
+		Log.debug("Creating package interceptor.");
 		RemotePackageInterceptor interceptor = new RemotePackageInterceptor(initialSubdomain);
 		_interceptors.put(initialSubdomain, interceptor);
 		_interceptorManager.addInterceptor(interceptor);

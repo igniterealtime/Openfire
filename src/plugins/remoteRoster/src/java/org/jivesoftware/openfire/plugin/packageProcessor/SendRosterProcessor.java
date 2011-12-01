@@ -19,6 +19,7 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 	private String _componentName;
 
 	public SendRosterProcessor(RosterManager rosterMananger, String componentName) {
+		Log.debug("Createt SendRosterProcessor for "+componentName);
 		_rosterManager = rosterMananger;
 		_componentName = componentName;
 	}
@@ -26,10 +27,11 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 	@Override
 	public void process(Packet packet) throws PacketRejectedException
 	{
+		Log.debug("Processing packet in SendRosterProcessor for "+_componentName);
 		IQ myPacket = (IQ) packet;
 
-		String to = myPacket.getFrom().toString();
-		String username = getUsernameFromJid(to);
+		String from = myPacket.getFrom().toString();
+		String username = getUsernameFromJid(from);
 
 		Roster roster;
 		try {
@@ -43,13 +45,14 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 
 	private void sendRosterToComponent(Packet requestPacket, Collection<RosterItem> items)
 	{
+		Log.debug("Sending contacts from user "+requestPacket.getFrom().toString()+" to external Component");
 		IQ iq = (IQ) requestPacket;
 		IQ response = IQ.createResultIQ(iq);
 		response.setTo(_componentName);
 		Element query = new DefaultElement("query");
 		for (RosterItem i : items) {
 			if (i.getJid().toString().contains(_componentName)) {
-				System.out.println("roster exchange: habe: "+i.getJid().toString());
+				Log.debug("Roster exchange for external component "+_componentName+". Sending user "+i.getJid().toString());
 				Element item = new DefaultElement("item");
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
 				item.add(new DefaultAttribute("name", i.getNickname()));
@@ -64,7 +67,6 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 		}
 		query.addNamespace("", "jabber:iq:roster");
 		response.setChildElement(query);
-		System.out.println("sende response: "+response.toString());
 		dispatchPacket(response);
 	}
 

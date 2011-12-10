@@ -348,7 +348,9 @@
               if (isSigningPending) {
                   // Generate new signing request for certificate
                   PrivateKey privKey = (PrivateKey) keyStore.getKey(a, SSLConfig.getKeyPassword().toCharArray());
-                  signingRequests.put(a, CertificateManager.createSigningRequest(c, privKey));
+                  if (privKey != null) {
+                      signingRequests.put(a, CertificateManager.createSigningRequest(c, privKey));
+                  }
               }
   %>
       <tr valign="top">

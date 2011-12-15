@@ -6,9 +6,9 @@
 
     <name>Remote Roster</name>
     <description>ProtoXEP-xxxx: Remote Roster Management support</description>
-    <author>Holger Bergunde & Daniel Henninger</author>
+    <author>Holger Bergunde and Daniel Henninger</author>
     <version>1.0.0 Alpha</version>
-    <date>12/01/2011</date>
+    <date>12/06/2011</date>
     <minServerVersion>3.7.0</minServerVersion>
 
     <!-- Admin console entries -->

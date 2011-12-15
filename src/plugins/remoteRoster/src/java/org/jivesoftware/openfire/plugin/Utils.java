@@ -32,6 +32,7 @@ public class Utils {
 	{
 		Map<String, String> namespaceUris = new HashMap<String, String>();
 		namespaceUris.put("roster", "jabber:iq:roster");
+		namespaceUris.put("discoitems", "http://jabber.org/protocol/disco#items");
 		namespaceUris.put("register", "jabber:iq:register");
 		namespaceUris.put("disco", "http://jabber.org/protocol/disco#info");
 		XPath xPath = DocumentHelper.createXPath(xpath);

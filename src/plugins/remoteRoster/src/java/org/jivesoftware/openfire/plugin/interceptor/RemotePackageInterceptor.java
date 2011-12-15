@@ -1,4 +1,4 @@
-package org.jivesoftware.openfire.plugin;
+package org.jivesoftware.openfire.plugin.interceptor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Map;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.plugin.Utils;
 import org.jivesoftware.openfire.plugin.packageProcessor.AbstractRemoteRosterProcessor;
 import org.jivesoftware.openfire.plugin.packageProcessor.CleanUpRosterProcessor;
 import org.jivesoftware.openfire.plugin.packageProcessor.ClientToComponentUpdateProcessor;

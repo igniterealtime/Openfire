@@ -1,0 +1,99 @@
+@CHARSET "ISO-8859-1";
+
+
+.suggest_link {
+	background-color: #FFFFFF;
+	padding: 2px 6px 2px 6px;
+}
+
+.suggest_link_over {
+	background-color: #3366CC;
+	padding: 2px 6px 2px 6px;
+}
+
+#search_suggest {
+	position: absolute;
+	background-color: #FFFFFF;
+	text-align: left;
+	border: 1px solid #000000;
+	display:none;
+}
+
+.slider {
+	margin-left:1%;
+	padding-top:0px;
+	background-color:rgb(230,230,230);
+	border-color:#CCCCCC rgb(204, 204, 204);
+	color:white;
+	width:58%;
+	border-style: solid;
+	border-width: 1px;
+	border-top:none;
+	display: none;
+	}
+	
+.gatewayHeader {
+	width:60%;
+	background-color:#EEEEEE;
+    border-color:#CCCCCC rgb(204, 204, 204);
+    border-style:solid solid solid;
+    border-width:1px 1px 1px;
+}
+
+.gatewayName {
+	padding-left: 10px;
+}
+
+.gatewayIcon  {
+	border-left: 1px;
+	}
+
+.gatewayCheckbox {
+	width: 20px;
+}
+
+.configTable {
+	width: 80%;
+
+	}
+
+
+.configTable1Column {
+	width: 50%;
+}
+
+.gatewayIcons img {
+	float: right;
+	padding: 4px;
+}
+
+#permissions {
+	margin-left:1%;
+	padding-top:0px;
+	background-color:rgb(230,230,230);
+	border-color:#CCCCCC rgb(204, 204, 204);
+	color:white;
+	width:58%;
+	border-style: solid;
+	border-width: 1px;
+	border-top:none;
+	display: none;
+}
+
+.permissionTableColumn
+{
+	width: 50%;
+}
+
+.ajaxloading {
+	padding-left: 4px;
+	padding-top: 3px;
+	}
+
+.permissionTitle {
+	color:black;
+	size:+2;
+}
+
+
+

@@ -27,10 +27,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -38,6 +42,8 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.LinkedList;
+import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,6 +145,12 @@ public class PubSubPersistenceManager {
     private static final String LOAD_ITEMS =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
+    private static final String LOAD_ITEM =
+            "SELECT jid,creationDate,payload FROM ofPubsubItem " +
+            "WHERE serviceID=? AND nodeID=? AND id=?";
+    private static final String LOAD_LAST_ITEM =
+            "SELECT jid,creationDate,payload FROM ofPubsubItem " +
+            "WHERE serviceID=? AND nodeID=? AND creationDate IN (select MAX(creationDate) FROM ofPubsubItem GROUP BY serviceId,nodeId)";
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
@@ -166,8 +178,30 @@ public class PubSubPersistenceManager {
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
+    private static Timer flushTimer = new Timer("Pubsub item flush timer");
+    private static long timerDelay = 1000 * 120; 
     private static final int POOL_SIZE = 50; 
+
+    private static final int ITEM_CACHE_SIZE = 100;
+    private static int publishedItemSize = 0;
+    private static final Object itemLock = new Object();
     
+    /**
+     * Queue that holds the items that need to be added to the database.
+     */
+    private static LinkedList itemsToAdd = new LinkedList();
+
+    /**
+     * Queue that holds the items that need to be deleted from the database.
+     */
+    private static LinkedList itemsToDelete = new LinkedList();
+
+    /**
+     * Keeps reference to published items that haven't been persisted yet so they can be removed
+     * before being deleted.
+     */
+    private static final HashMap<String, LinkedListNode> itemMap = new HashMap<String, LinkedListNode>();
+
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
@@ -180,6 +214,14 @@ public class PubSubPersistenceManager {
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);
         }
+        
+        flushTimer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				flushItems();
+			}
+		}, timerDelay, timerDelay);
     }
 
     /**
@@ -188,14 +230,14 @@ public class PubSubPersistenceManager {
      * @param service The pubsub service that is hosting the node.
      * @param node The newly created node.
      */
-    public static void createNode(PubSubService service, Node node) {
+    public static void createNode(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(ADD_NODE);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));
@@ -245,7 +287,7 @@ public class PubSubPersistenceManager {
             pstmt.executeUpdate();
 
             // Save associated JIDs and roster groups
-            saveAssociatedElements(con, node, service);
+            saveAssociatedElements(con, node);
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -263,7 +305,7 @@ public class PubSubPersistenceManager {
      * @param service The pubsub service that is hosting the node.
      * @param node The updated node.
      */
-    public static void updateNode(PubSubService service, Node node) {
+    public static void updateNode(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -312,26 +354,26 @@ public class PubSubPersistenceManager {
                 pstmt.setString(23, null);
                 pstmt.setInt(24, 0);
             }
-            pstmt.setString(25, service.getServiceID());
+            pstmt.setString(25, node.getService().getServiceID());
             pstmt.setString(26, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove existing JIDs associated with the the node
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
 
             // Save associated JIDs and roster groups
-            saveAssociatedElements(con, node, service);
+            saveAssociatedElements(con, node);
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -343,27 +385,26 @@ public class PubSubPersistenceManager {
         }
     }
 
-    private static void saveAssociatedElements(Connection con, Node node,
-            PubSubService service) throws SQLException {
+    private static void saveAssociatedElements(Connection con, Node node) throws SQLException {
         // Add new JIDs associated with the the node
         PreparedStatement pstmt = con.prepareStatement(ADD_NODE_JIDS);
         try {
             for (JID jid : node.getContacts()) {
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "contacts");
                 pstmt.executeUpdate();
             }
             for (JID jid : node.getReplyRooms()) {
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "replyRooms");
                 pstmt.executeUpdate();
             }
             for (JID jid : node.getReplyTo()) {
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "replyTo");
@@ -371,7 +412,7 @@ public class PubSubPersistenceManager {
             }
             if (node.isCollectionNode()) {
                 for (JID jid : ((CollectionNode) node).getAssociationTrusted()) {
-                    pstmt.setString(1, service.getServiceID());
+                    pstmt.setString(1, node.getService().getServiceID());
                     pstmt.setString(2, encodeNodeID(node.getNodeID()));
                     pstmt.setString(3, jid.toString());
                     pstmt.setString(4, "associationTrusted");
@@ -382,7 +423,7 @@ public class PubSubPersistenceManager {
             // Add new roster groups associated with the the node
             pstmt = con.prepareStatement(ADD_NODE_GROUPS);
             for (String groupName : node.getRosterGroupsAllowed()) {
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, groupName);
                 pstmt.executeUpdate();
@@ -400,7 +441,7 @@ public class PubSubPersistenceManager {
      * @param node The node that is being deleted.
      * @return true If the operation was successful.
      */
-    public static boolean removeNode(PubSubService service, Node node) {
+    public static boolean removeNode(Node node) {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -408,42 +449,42 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getTransactionConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_NODE);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove JIDs associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove published items of the node being deleted
             pstmt = con.prepareStatement(DELETE_ITEMS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.closeStatement(pstmt);
 
             // Remove all affiliates from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove users that were subscribed to the node
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTIONS);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
         }
@@ -557,8 +598,7 @@ public class PubSubPersistenceManager {
         }
     }
 
-    private static void loadNode(PubSubService service, Map<String, Node> loadedNodes,
-            ResultSet rs) {
+    private static void loadNode(PubSubService service, Map<String, Node> loadedNodes, ResultSet rs) {
         Node node;
         try {
             String nodeID = decodeNodeID(rs.getString(1));
@@ -684,8 +724,7 @@ public class PubSubPersistenceManager {
         }
     }
 
-    private static void loadSubscriptions(PubSubService service, Map<String, Node> nodes,
-            ResultSet rs) {
+    private static void loadSubscriptions(PubSubService service, Map<String, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
             Node node = nodes.get(nodeID);
@@ -747,7 +786,7 @@ public class PubSubPersistenceManager {
                         xmlReader.read(new StringReader(rs.getString(4))).getRootElement());
             }
             // Add the published item to the node
-            node.addPublishedItem(item);
+            node.setLastPublishedItem(item);
         }
         catch (Exception sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -768,8 +807,7 @@ public class PubSubPersistenceManager {
      * @param affiliate The new affiliation of the user in the node.
      * @param create    True if this is a new affiliate.
      */
-    public static void saveAffiliation(PubSubService service, Node node, NodeAffiliate affiliate,
-            boolean create) {
+    public static void saveAffiliation(Node node, NodeAffiliate affiliate, boolean create) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -777,7 +815,7 @@ public class PubSubPersistenceManager {
             if (create) {
                 // Add the user to the generic affiliations table
                 pstmt = con.prepareStatement(ADD_AFFILIATION);
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, affiliate.getJID().toString());
                 pstmt.setString(4, affiliate.getAffiliation().name());
@@ -787,7 +825,7 @@ public class PubSubPersistenceManager {
                 // Update the affiliate's data in the backend store
                 pstmt = con.prepareStatement(UPDATE_AFFILIATION);
                 pstmt.setString(1, affiliate.getAffiliation().name());
-                pstmt.setString(2, service.getServiceID());
+                pstmt.setString(2, node.getService().getServiceID());
                 pstmt.setString(3, encodeNodeID(node.getNodeID()));
                 pstmt.setString(4, affiliate.getJID().toString());
                 pstmt.executeUpdate();
@@ -808,15 +846,14 @@ public class PubSubPersistenceManager {
      * @param node      The node where the affiliation of the user was updated.
      * @param affiliate The existing affiliation and subsription state of the user in the node.
      */
-    public static void removeAffiliation(PubSubService service, Node node,
-            NodeAffiliate affiliate) {
+    public static void removeAffiliation(Node node, NodeAffiliate affiliate) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATION);
-            pstmt.setString(1, service.getServiceID());
+            pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.executeUpdate();
@@ -837,8 +874,7 @@ public class PubSubPersistenceManager {
      * @param subscription The new subscription of the user to the node.
      * @param create    True if this is a new affiliate.
      */
-    public static void saveSubscription(PubSubService service, Node node,
-            NodeSubscription subscription, boolean create) {
+    public static void saveSubscription(Node node, NodeSubscription subscription, boolean create) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -846,7 +882,7 @@ public class PubSubPersistenceManager {
             if (create) {
                 // Add the subscription of the user to the database
                 pstmt = con.prepareStatement(ADD_SUBSCRIPTION);
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, node.getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, subscription.getID());
                 pstmt.setString(4, subscription.getJID().toString());
@@ -875,7 +911,7 @@ public class PubSubPersistenceManager {
                 if (NodeSubscription.State.none == subscription.getState()) {
                     // Remove the subscription of the user from the table
                     pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
-                    pstmt.setString(1, service.getServiceID());
+                    pstmt.setString(1, node.getService().getServiceID());
                     pstmt.setString(2, encodeNodeID(node.getNodeID()));
                     pstmt.setString(2, subscription.getID());
                     pstmt.executeUpdate();
@@ -900,7 +936,7 @@ public class PubSubPersistenceManager {
                     pstmt.setString(9, subscription.getType().name());
                     pstmt.setInt(10, subscription.getDepth());
                     pstmt.setString(11, subscription.getKeyword());
-                    pstmt.setString(12, service.getServiceID());
+                    pstmt.setString(12, node.getService().getServiceID());
                     pstmt.setString(13, encodeNodeID(node.getNodeID()));
                     pstmt.setString(14, subscription.getID());
                     pstmt.executeUpdate();
@@ -922,16 +958,15 @@ public class PubSubPersistenceManager {
      * @param node        The node where the user was subscribed to.
      * @param subscription The existing subsription of the user to the node.
      */
-    public static void removeSubscription(PubSubService service, Node node,
-            NodeSubscription subscription) {
+    public static void removeSubscription(NodeSubscription subscription) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            pstmt.setString(1, subscription.getNode().getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(subscription.getNode().getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.executeUpdate();
         }
@@ -944,77 +979,86 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Loads and adds the published items to the specified node.
-     *
-     * @param service the pubsub service that is hosting the node.
-     * @param node the leaf node to load its published items.
-     */
-    public static void loadItems(PubSubService service, LeafNode node) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        SAXReader xmlReader = null;
-        try {
-            // Get a sax reader from the pool
-            xmlReader = xmlReaders.take();
-            con = DbConnectionManager.getConnection();
-            // Get published items of the specified node
-            pstmt = con.prepareStatement(LOAD_ITEMS);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, encodeNodeID(node.getNodeID()));
-            rs = pstmt.executeQuery();
-            // Rebuild loaded published items
-            while(rs.next()) {
-                String itemID = rs.getString(1);
-                JID publisher = new JID(rs.getString(2));
-                Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-                // Create the item
-                PublishedItem item = new PublishedItem(node, publisher, itemID, creationDate);
-                // Add the extra fields to the published item
-                if (rs.getString(4) != null) {
-                    item.setPayload(
-                            xmlReader.read(new StringReader(rs.getString(4))).getRootElement());
-                }
-                // Add the published item to the node
-                node.addPublishedItem(item);
-            }
-        }
-        catch (Exception sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            // Return the sax reader to the pool
-            if (xmlReader != null) {
-                xmlReaders.add(xmlReader);
-            }
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    /**
      * Creates and stores the published item in the database.
      *
-     * @param service the pubsub service that is hosting the node.
      * @param item The published item to save.
      * @return true if the item was successfully saved to the database.
      */
-    public static boolean createPublishedItem(PubSubService service, PublishedItem item) {
-        boolean success = false;
+    public static void savePublishedItem(PublishedItem item) {
+    	synchronized(itemLock)
+    	{
+    		LinkedListNode listNode = itemsToAdd.addLast(item);
+    		itemMap.put(item.getID(), listNode);
+    		publishedItemSize++;
+    		
+    		if (publishedItemSize > ITEM_CACHE_SIZE)
+    			flushItems();
+    	}
+    }
+
+    /**
+     * Flush the cache of items to be persisted and deleted.
+     */
+    public static void flushItems()
+    {
+    	Log.debug("Flushing items to database");
+    	System.out.println("Flushing " + publishedItemSize + " items to database");
+    	LinkedList addList = null;
+    	LinkedList delList = null;
+    	
+    	// Swap the cache so we can parse and save the contents from this point in time
+    	// while not blocking new entries from being cached.
+    	synchronized(itemLock)
+    	{
+    		addList = itemsToAdd;
+    		delList = itemsToDelete;
+    		
+    		itemsToAdd = new LinkedList();
+    		delList = new LinkedList();
+    		itemMap.clear();
+    		publishedItemSize = 0;
+    	}
+    	
         Connection con = null;
         PreparedStatement pstmt = null;
+        
         try {
-            con = DbConnectionManager.getConnection();
-            // Remove the published item from the database
-            pstmt = con.prepareStatement(ADD_ITEM);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-            pstmt.setString(3, item.getID());
-            pstmt.setString(4, item.getPublisher().toString());
-            pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
-            pstmt.setString(6, item.getPayloadXML());
-            pstmt.executeUpdate();
-            // Set that the item was successfully saved to the database
-            success = true;
+            con = DbConnectionManager.getTransactionConnection();
+            
+            // Add all items that were cached
+            LinkedListNode itemNode = addList.getFirst();
+            
+            while (itemNode != null)
+            {
+            	PublishedItem item = (PublishedItem) itemNode.object;
+                pstmt = con.prepareStatement(ADD_ITEM);
+                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                pstmt.setString(3, item.getID());
+                pstmt.setString(4, item.getPublisher().toString());
+                pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
+                pstmt.setString(6, item.getPayloadXML());
+                pstmt.executeUpdate();
+                
+                itemNode = itemNode.next;
+            }
+            
+            // Delete all items that were cached
+            itemNode = delList.getFirst();
+            
+            while (itemNode != null)
+            {
+            	PublishedItem item = (PublishedItem) itemNode.object;
+                pstmt = con.prepareStatement(DELETE_ITEM);
+                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                pstmt.setString(3, item.getID());
+                pstmt.executeUpdate();
+                
+                itemNode = itemNode.next;
+            }
+
+            con.commit();
         }
         catch (SQLException sqle) {
             Log.error(sqle.getMessage(), sqle);
@@ -1022,38 +1066,23 @@ public class PubSubPersistenceManager {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        return success;
     }
 
     /**
      * Removes the specified published item from the DB.
      *
-     * @param service the pubsub service that is hosting the node.
      * @param item The published item to delete.
      * @return true if the item was successfully deleted from the database.
      */
-    public static boolean removePublishedItem(PubSubService service, PublishedItem item) {
-        boolean success = false;
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            // Remove the published item from the database
-            pstmt = con.prepareStatement(DELETE_ITEM);
-            pstmt.setString(1, service.getServiceID());
-            pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-            pstmt.setString(3, item.getID());
-            pstmt.executeUpdate();
-            // Set that the item was successfully deleted from the database
-            success = true;
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-        return success;
+    public static void removePublishedItem(PublishedItem item) {
+    	synchronized (itemLock) 
+    	{
+    		itemsToDelete.addLast(item);
+			LinkedListNode nodeToDelete = itemMap.remove(item.getID());
+			
+			if (nodeToDelete != null)
+				nodeToDelete.remove();
+		}
     }
 
     /**
@@ -1203,139 +1232,186 @@ public class PubSubPersistenceManager {
         }
     }
 
-    /*public static Node loadNode(PubSubService service, String nodeID) {
+
+    /**
+     * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
+     *
+     * @param service the pubsub service that is hosting the node.
+     * @param node the leaf node to load its published items.
+     */
+    public static List<PublishedItem> getPublishedItems(LeafNode node) {
+    	return getPublishedItems(node, node.getMaxPublishedItems());
+    }
+    
+    /**
+     * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
+     *
+     * @param service the pubsub service that is hosting the node.
+     * @param node the leaf node to load its published items.
+     */
+    public static List<PublishedItem> getPublishedItems(LeafNode node, int maxRows) {
+    	// Flush all items to the database first to ensure the list is all recent items.
+    	flushItems();
         Connection con = null;
-        Node node = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        SAXReader xmlReader = null;
+        List<PublishedItem> results = new ArrayList<PublishedItem>(node.getMaxPublishedItems());
+        
         try {
+            // Get a sax reader from the pool
+            xmlReader = xmlReaders.take();
             con = DbConnectionManager.getConnection();
-            node = loadNode(service, nodeID, con);
+            // Get published items of the specified node
+            pstmt = con.prepareStatement(LOAD_ITEMS);
+            pstmt.setMaxRows(node.getMaxPublishedItems());
+            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            rs = pstmt.executeQuery();
+            // Rebuild loaded published items
+            while(rs.next()) {
+                String itemID = rs.getString(1);
+                JID publisher = new JID(rs.getString(2));
+                Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
+                // Create the item
+                PublishedItem item = new PublishedItem(node, publisher, itemID, creationDate);
+                // Add the extra fields to the published item
+                if (rs.getString(4) != null) {
+                    item.setPayload(
+                            xmlReader.read(new StringReader(rs.getString(4))).getRootElement());
+                }
+                // Add the published item to the node
+                results.add(item);
+            }
         }
-        catch (SQLException sqle) {
+        catch (Exception sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (con != null) con:close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            // Return the sax reader to the pool
+            if (xmlReader != null) {
+                xmlReaders.add(xmlReader);
+            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return node;
+        
+        if (results.size() == 0)
+        	return Collections.emptyList();
+        return results;
     }
 
-    private static Node loadNode(PubSubService service, String nodeID, Connection con) {
-        Node node = null;
+    /**
+     * Fetches the last published item for the specified node.
+     *
+     * @param node the leaf node to load its last published items.
+     */
+    public static PublishedItem getLastPublishedItem(LeafNode node) {
+    	flushItems();
+        Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        SAXReader xmlReader = null;
+        PublishedItem item = null;
+        
         try {
-            pstmt = con.prepareStatement(LOAD_NODE);
-            pstmt.setString(1, encodeNodeID(nodeID));
-            ResultSet rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                // No node was found for the specified nodeID so return null
-                return null;
-            }
-            boolean leaf = rs.getInt(1) == 1;
-            String parent = decodeNodeID(rs.getString(4));
-            JID creator = new JID(rs.getString(20));
-            CollectionNode parentNode = null;
-            if (parent != null) {
-                // Check if the parent has already been loaded
-                parentNode = (CollectionNode) service.getNode(parent);
-                if (parentNode == null) {
-                    // Parent is not in memory so try to load it
-                    synchronized (parent.intern()) {
-                        // Check again if parent has not been already loaded (concurrency issues)
-                        parentNode = (CollectionNode) service.getNode(parent);
-                        if (parentNode == null) {
-                            // Parent was never loaded so load it from the database now
-                            parentNode = (CollectionNode) loadNode(service, parent, con);
-                        }
-                    }
+            // Get a sax reader from the pool
+            xmlReader = xmlReaders.take();
+            con = DbConnectionManager.getConnection();
+            // Get published items of the specified node
+            pstmt = con.prepareStatement(LOAD_LAST_ITEM);
+            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            rs = pstmt.executeQuery();
+            // Rebuild loaded published items
+            if (rs.next()) {
+                String itemID = rs.getString(1);
+                JID publisher = new JID(rs.getString(2));
+                Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
+                // Create the item
+                item = new PublishedItem(node, publisher, itemID, creationDate);
+                // Add the extra fields to the published item
+                if (rs.getString(4) != null) {
+                    item.setPayload(
+                            xmlReader.read(new StringReader(rs.getString(4))).getRootElement());
                 }
             }
-
-            if (leaf) {
-                // Retrieving a leaf node
-                node = new LeafNode(parentNode, nodeID, creator);
-            }
-            else {
-                // Retrieving a collection node
-                node = new CollectionNode(parentNode, nodeID, creator);
-            }
-            node.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim())));
-            node.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim())));
-            node.setPayloadDelivered(rs.getInt(5) == 1);
-            node.setMaxPayloadSize(rs.getInt(6));
-            node.setPersistPublishedItems(rs.getInt(7) == 1);
-            node.setMaxPublishedItems(rs.getInt(8));
-            node.setNotifiedOfConfigChanges(rs.getInt(9) == 1);
-            node.setNotifiedOfDelete(rs.getInt(10) == 1);
-            node.setNotifiedOfRetract(rs.getInt(11) == 1);
-            node.setPresenceBasedDelivery(rs.getInt(12) == 1);
-            node.setSendItemSubscribe(rs.getInt(13) == 1);
-            node.setPublisherModel(Node.PublisherModel.valueOf(rs.getString(14)));
-            node.setSubscriptionEnabled(rs.getInt(15) == 1);
-            node.setAccessModel(Node.AccessModel.valueOf(rs.getString(16)));
-            node.setPayloadType(rs.getString(17));
-            node.setBodyXSLT(rs.getString(18));
-            node.setDataformXSLT(rs.getString(19));
-            node.setDescription(rs.getString(21));
-            node.setLanguage(rs.getString(22));
-            node.setName(rs.getString(23));
-            rs:close();
-            pstmt:close();
-
-            pstmt = con.prepareStatement(LOAD_HISTORY);
-            // Recreate the history until two days ago
-            long from = System.currentTimeMillis() - (86400000 * 2);
-            pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
-            pstmt.setLong(2, room.getID());
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String senderJID = rs.getString(1);
-                String nickname = rs.getString(2);
-                Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
-                String subject = rs.getString(4);
-                String body = rs.getString(5);
-                // Recreate the history only for the rooms that have the conversation logging
-                // enabled
-                if (room.isLogEnabled()) {
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
-                            body);
-                }
-            }
-            rs:close();
-            pstmt:close();
-
-            pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
-            pstmt.setString(1, encodeNodeID(node.getNodeID()));
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                NodeAffiliate affiliate = new NodeAffiliate(new JID(rs.getString(1)));
-                affiliate.setAffiliation(NodeAffiliate.Affiliation.valueOf(rs.getString(2)));
-                affiliate.setSubscription(NodeAffiliate.State.valueOf(rs.getString(3)));
-                node.addAffiliate(affiliate);
-            }
-            rs:close();
-
-            // Set now that the room's configuration is updated in the database. Note: We need to
-            // set this now since otherwise the room's affiliations will be saved to the database
-            // "again" while adding them to the room!
-            node.setSavedToDB(true);
-
-            // Add the retrieved node to the pubsub service
-            service.addChildNode(node);
         }
-        catch (SQLException sqle) {
+        catch (Exception sqle) {
             Log.error(sqle.getMessage(), sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt:close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
-            try { if (con != null) con:close(); }
-            catch (Exception e) { Log.error(e.getMessage(), e); }
+            // Return the sax reader to the pool
+            if (xmlReader != null) {
+                xmlReaders.add(xmlReader);
+            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return node;
-    }*/
+        return item;
+    }
 
-    private static String encodeWithComma(Collection<String> strings) {
+    public static PublishedItem getPublishedItem(LeafNode node, String itemID) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        SAXReader xmlReader = null;
+        PublishedItem result = null;
+        
+        try {
+        	xmlReader = xmlReaders.take();
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_ITEM);
+            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(2, node.getNodeID());
+            pstmt.setString(3, itemID);
+            rs = pstmt.executeQuery();
+            
+            // Add to each node the corresponding subscriptions
+            if (rs.next()) {
+                JID publisher = new JID(rs.getString(1));
+                Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
+                // Create the item
+                result = new PublishedItem(node, publisher, itemID, creationDate);
+                // Add the extra fields to the published item
+                if (rs.getString(3) != null) {
+                    result.setPayload(
+                            xmlReader.read(new StringReader(rs.getString(3))).getRootElement());
+                }
+            }
+        }
+        catch (Exception exc) {
+            Log.error(exc.getMessage(), exc);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+            
+            if (xmlReader != null)
+            	xmlReaders.add(xmlReader);
+        }
+        return result;
+	}
+
+
+	public static void purgeNode(LeafNode leafNode) {
+        // Remove published items of the node being deleted
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_ITEMS);
+            pstmt.setString(1, leafNode.getService().getServiceID());
+            pstmt.setString(2, encodeNodeID(leafNode.getNodeID()));
+            pstmt.executeUpdate();
+        }
+        catch (Exception exc) {
+            Log.error(exc.getMessage(), exc);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+	}
+
+	private static String encodeWithComma(Collection<String> strings) {
         StringBuilder sb = new StringBuilder(90);
         for (String group : strings) {
             sb.append(group).append(",");
@@ -1376,4 +1452,32 @@ public class PubSubPersistenceManager {
         }
         return nodeID;
     }
+
+	public static void shutdown() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	static class ItemHolder
+	{
+		volatile private PublishedItem item;
+		
+		ItemHolder(PublishedItem itemToStore)
+		{
+			item = itemToStore;
+		}
+		
+		/**
+		 * Remove the item since it has been marked for deletion, therefore it won't get stored.
+		 */
+		void delete()
+		{
+			item = null;
+		}
+		
+		PublishedItem getItem()
+		{
+			return item;
+		}
+	}
 }

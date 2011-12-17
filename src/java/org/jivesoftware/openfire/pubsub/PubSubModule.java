@@ -101,35 +101,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             new ConcurrentHashMap<String, Map<String, String>>();
     
     /**
-     * Queue that holds the items that need to be added to the database.
-     */
-    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>(10000);
-    /**
-     * Queue that holds the items that need to be deleted from the database.
-     */
-    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>(10000);
-    
-    /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
     private AdHocCommandManager manager;
     
-    /**
-     * The time to elapse between each execution of the maintenance process. Default
-     * is 2 minutes.
-     */
-    private int items_task_timeout = 2 * 60 * 1000;
-
-    /**
-     * Task that saves or deletes published items from the database.
-     */
-    private PublishedItemTask publishedItemTask;
-
-    /**
-     * Timer to save published items to the database or remove deleted or old items.
-     */
-    private Timer timer = new Timer("PubSub maintenance");
-
     /**
      * Returns the permission policy for creating nodes. A true value means that not anyone can
      * create a node, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
@@ -188,11 +163,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Initialize the ad-hoc commands manager to use for this pubsub service
         manager = new AdHocCommandManager();
         manager.addCommand(new PendingSubscriptionsCommand(this));
-        
-        // Save or delete published items from the database every 2 minutes starting in
-        // 2 minutes (default values)
-        publishedItemTask = new PublishedItemTask(this);
-        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
     }
 
     public void process(Packet packet) {
@@ -301,14 +271,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     public void presenceSubscriptionRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionRequired(this, node, user);
-    }
-
-    public void queueItemToAdd(PublishedItem newItem) {
-        PubSubEngine.queueItemToAdd(this, newItem);
-    }
-
-    public void queueItemToRemove(PublishedItem removedItem) {
-        PubSubEngine.queueItemToRemove(this, removedItem);
     }
 
     public String getServiceName() {
@@ -828,36 +790,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return barePresences;
     }
 
-    public Queue<PublishedItem> getItemsToAdd() {
-        return itemsToAdd;
-    }
-
-    public Queue<PublishedItem> getItemsToDelete() {
-        return itemsToDelete;
-    }
-
     public AdHocCommandManager getManager() {
         return manager;
-    }
-
-    public PublishedItemTask getPublishedItemTask() {
-        return publishedItemTask;
-    }
-
-    public void setPublishedItemTask(PublishedItemTask task) {
-        publishedItemTask = task;
-    }
-
-    public Timer getTimer() {
-        return timer;
-    }
-    
-    public int getItemsTaskTimeout() {
-        return items_task_timeout;
-    }
-
-    public void setItemsTaskTimeout(int timeout) {
-        items_task_timeout = timeout;
     }
 
     public void propertySet(String property, Map<String, Object> params) {

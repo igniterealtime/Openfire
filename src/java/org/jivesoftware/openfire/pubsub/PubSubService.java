@@ -240,75 +240,9 @@ public interface PubSubService {
     boolean isMultipleSubscriptionsEnabled();
 
     /**
-     * Adds the item to the queue of items to add to the database. The queue is going
-     * to be processed by another thread.
-     *
-     * @param newItem the item to add to the database.
-     */
-    void queueItemToAdd(PublishedItem newItem);
-
-    /**
-     * Gets the queue that holds the items that need to be added to the database.
-     * 
-     * @return the queue that holds the items that need to be added to the database.
-     */
-    Queue<PublishedItem> getItemsToAdd();
-
-    /**
-     * Gets the queue that holds the items that need to be deleted from the database.
-     * 
-     * @return the queue that holds the items that need to be deleted from the database.
-     */
-    Queue<PublishedItem> getItemsToDelete();
-
-    /**
      * Returns the ad-hoc commands manager used for this service.
      * 
      * @return the ad-hoc commands manager used for this service.
      */
     AdHocCommandManager getManager();
-
-    /**
-     * Returns the published item task used for this service.
-     * 
-     * @return the published item task used for this service.
-     */
-    PublishedItemTask getPublishedItemTask();
-
-    /**
-     * Sets the published item task used for this service.
-     * 
-     * @param task the PublishedItemTask to set for this service.
-     */
-    void setPublishedItemTask(PublishedItemTask task);
-
-    /**
-     * Adds the item to the queue of items to remove from the database. The queue is going
-     * to be processed by another thread.
-     *
-     * @param removedItem the item to remove from the database.
-     */
-    void queueItemToRemove(PublishedItem removedItem);
-
-    /**
-     * Returns the timer used for the maintenance process of this service.
-     * 
-     * @return the timer used for the maintenance process of this service.
-     */
-    Timer getTimer();
-
-    /**
-     * Returns the timeout value for the published items maintenance task.
-     * 
-     * @return the timeout value for the published items maintenance task.
-     */
-    int getItemsTaskTimeout();
-
-    /**
-     * Sets the timeout value for the published items maintenance task.
-     *
-     * @param timeout the timeout value for the published items maintenance task.
-     */
-    void setItemsTaskTimeout(int timeout);
-
 }

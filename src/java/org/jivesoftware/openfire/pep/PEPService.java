@@ -23,12 +23,9 @@ package org.jivesoftware.openfire.pep;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -49,7 +46,6 @@ import org.jivesoftware.openfire.pubsub.PubSubEngine;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
 import org.jivesoftware.openfire.pubsub.PubSubService;
 import org.jivesoftware.openfire.pubsub.PublishedItem;
-import org.jivesoftware.openfire.pubsub.PublishedItemTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.openfire.roster.Roster;
@@ -77,12 +73,6 @@ import org.xmpp.packet.PacketExtension;
  */
 public class PEPService implements PubSubService, Cacheable {
 	
-    /**
-     * Timer to save published items to the database or remove deleted or old
-     * items.
-     */
-    private static final Timer timer = new Timer("PEP service maintenance");
-
     /**
      * Date format to use for time stamps in delayed event notifications.
      */
@@ -135,16 +125,6 @@ public class PEPService implements PubSubService, Cacheable {
     private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<String, Map<String, String>>();
 
     /**
-     * Queue that holds the items that need to be added to the database.
-     */
-    private Queue<PublishedItem> itemsToAdd = new LinkedBlockingQueue<PublishedItem>(10000);
-
-    /**
-     * Queue that holds the items that need to be deleted from the database.
-     */
-    private Queue<PublishedItem> itemsToDelete = new LinkedBlockingQueue<PublishedItem>(10000);
-
-    /**
      * Manager that keeps the list of ad-hoc commands and processing command
      * requests.
      */
@@ -154,17 +134,6 @@ public class PEPService implements PubSubService, Cacheable {
      * Used to handle filtered-notifications.
      */
     private EntityCapabilitiesManager entityCapsManager = EntityCapabilitiesManager.getInstance();
-
-    /**
-     * The time to elapse between each execution of the maintenance process.
-     * Default is 2 minutes.
-     */
-    private int items_task_timeout = 2 * 60 * 1000;
-
-    /**
-     * Task that saves or deletes published items from the database.
-     */
-    private PublishedItemTask publishedItemTask;
 
     static {
         fastDateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
@@ -183,13 +152,6 @@ public class PEPService implements PubSubService, Cacheable {
         // Initialize the ad-hoc commands manager to use for this pep service
         adHocCommandManager = new AdHocCommandManager();
         adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
-
-        // Save or delete published items from the database every 2 minutes
-        // starting in 2 minutes (default values)
-        publishedItemTask = new PublishedItemTask(this) {
-        	
-        };
-        timer.schedule(publishedItemTask, items_task_timeout, items_task_timeout);
 
         // Load default configuration for leaf nodes
         leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);
@@ -551,48 +513,12 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
-    public void queueItemToAdd(PublishedItem newItem) {
-        PubSubEngine.queueItemToAdd(this, newItem);
-    }
-
-    public void queueItemToRemove(PublishedItem removedItem) {
-        PubSubEngine.queueItemToRemove(this, removedItem);
-    }
-
     public Map<String, Map<String, String>> getBarePresences() {
         return barePresences;
     }
 
-    public Queue<PublishedItem> getItemsToAdd() {
-        return itemsToAdd;
-    }
-
-    public Queue<PublishedItem> getItemsToDelete() {
-        return itemsToDelete;
-    }
-
     public AdHocCommandManager getManager() {
         return adHocCommandManager;
-    }
-
-    public PublishedItemTask getPublishedItemTask() {
-        return publishedItemTask;
-    }
-
-    public void setPublishedItemTask(PublishedItemTask task) {
-        publishedItemTask = task;
-    }
-
-    public Timer getTimer() {
-        return timer;
-    }
-
-    public int getItemsTaskTimeout() {
-        return items_task_timeout;
-    }
-
-    public void setItemsTaskTimeout(int timeout) {
-        items_task_timeout = timeout;
     }
 
 	public int getCachedSize() {

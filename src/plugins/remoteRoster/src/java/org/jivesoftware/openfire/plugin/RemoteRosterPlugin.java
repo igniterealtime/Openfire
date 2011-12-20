@@ -58,13 +58,12 @@ public class RemoteRosterPlugin implements Plugin {
 			 */
 			@Override
 			public void componentUnregistered(JID componentJID)
-			{
-
+			{	
 				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
 				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
 					String initialSubdomain = session.getExternalComponent().getInitialSubdomain();
 					// Remove it from Map & ComponentManager
-					updateInterceptors(initialSubdomain);
+					removeInterceptor(initialSubdomain);
 				}
 			}
 
@@ -152,6 +151,7 @@ public class RemoteRosterPlugin implements Plugin {
 	{
 		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
 		if (interceptor != null) {
+			_interceptors.remove(initialSubdomain);
 			interceptor.stop();
 		}
 	}

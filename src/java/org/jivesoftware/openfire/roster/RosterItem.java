@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
@@ -540,7 +541,7 @@ public class RosterItem implements Cacheable, Externalizable {
 	 * 
 	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
 	 */
-    public int getCachedSize() {
+    public int getCachedSize() throws CannotCalculateSizeException {
         int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
         size += CacheSizes.sizeOfCollection(groups);

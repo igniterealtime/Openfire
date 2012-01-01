@@ -45,6 +45,7 @@ import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -387,7 +388,8 @@ public class User implements Cacheable, Externalizable, Result {
         }
     }
 
-    public int getCachedSize() {
+    public int getCachedSize()
+            throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
         int size = 0;

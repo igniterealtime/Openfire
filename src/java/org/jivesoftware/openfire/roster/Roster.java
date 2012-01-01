@@ -51,6 +51,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -732,7 +733,7 @@ public class Roster implements Cacheable, Externalizable {
         }
     }
 
-    public int getCachedSize() {
+    public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of the content of each field, if that content is likely to be eligable for
     	// garbage collection if the Roster instance is dereferenced.
@@ -743,8 +744,8 @@ public class Roster implements Cacheable, Externalizable {
         
         // implicitFrom
         for(Map.Entry<String, Set<String>> entry : implicitFrom.entrySet()) {
-        	size += CacheSizes.sizeOfString(entry.getKey());
-        	size += CacheSizes.sizeOfCollection(entry.getValue());
+               size += CacheSizes.sizeOfString(entry.getKey());
+               size += CacheSizes.sizeOfCollection(entry.getValue());
         }
         
         return size;

@@ -27,6 +27,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 
 /**
  * Implementation of the Cache interface that uses the Coherence LocalCache class.
@@ -153,34 +154,19 @@ public class CoherenceCache extends LocalCache implements Cache {
     public class Entry extends OldCache.Entry {
 
         public int calculateUnits(Object object) {
-            // If the object is Cacheable, ask for its size.
-            if (object instanceof Cacheable) {
-                return ((Cacheable) object).getCachedSize();
-            }
-            // Coherence puts com.tangosol.util.Binary objects in cache.
-            else if (object instanceof com.tangosol.util.Binary) {
-                return ((com.tangosol.util.Binary) object).length();
-            }
-            // Check for other common types of objects put into cache.
-            else if (object instanceof Long) {
-                return CacheSizes.sizeOfLong();
-            }
-            else if (object instanceof Integer) {
-                return CacheSizes.sizeOfObject() + CacheSizes.sizeOfInt();
-            }
-            else if (object instanceof Boolean) {
-                return CacheSizes.sizeOfObject() + CacheSizes.sizeOfBoolean();
-            }
-            else if (object instanceof long[]) {
-                long[] array = (long[]) object;
-                return CacheSizes.sizeOfObject() + array.length * CacheSizes.sizeOfLong();
-            }
-            else if (object instanceof String) {
-                return CacheSizes.sizeOfString((String)object);
-            }
-            else {
+            try {
+		// Coherence puts com.tangosol.util.Binary objects in cache.
+		if (object instanceof com.tangosol.util.Binary) {
+		    return ((com.tangosol.util.Binary) object).length();
+		}
+		// Check for other common types of objects put into cache.
+		else {
+		    return CacheSizes.sizeOfAnything(object);
+		}
+	   } catch (CannotCalculateSizeException e) {
+                Log.warn(e.getMessage(), e);
                 return 1;
-            }
+           }
         }
 
     }

@@ -26,8 +26,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 
-import javax.net.ssl.SSLContext;
-
+import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -160,30 +159,30 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                SslSelectChannelConnector sslConnector = new SslSelectChannelConnector();
-                sslConnector.setHost(getBindInterface());
-                sslConnector.setPort(securePort);
-
-                sslConnector.setTrustPassword(SSLConfig.getc2sTrustPassword());
-                sslConnector.setTruststoreType(SSLConfig.getStoreType());
-                sslConnector.setTruststore(SSLConfig.getc2sTruststoreLocation());
+                final SslContextFactory sslContextFactory = new SslContextFactory(SSLConfig.getKeystoreLocation());
+                sslContextFactory.setTrustStorePassword(SSLConfig.getc2sTrustPassword());
+                sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
+                sslContextFactory.setTrustStore(SSLConfig.getc2sTruststoreLocation());
+                sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
+                sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
 
                 // Set policy for checking client certificates
                 String certPol = JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled");
                 if(certPol.equals("needed")) {                    
-                    sslConnector.setNeedClientAuth(true);
-                    sslConnector.setWantClientAuth(true);
+                	sslContextFactory.setNeedClientAuth(true);
+                	sslContextFactory.setWantClientAuth(true);
                 } else if(certPol.equals("wanted")) {
-                    sslConnector.setNeedClientAuth(false);
-                    sslConnector.setWantClientAuth(true);
+                	sslContextFactory.setNeedClientAuth(false);
+                	sslContextFactory.setWantClientAuth(true);
                 } else {
-                    sslConnector.setNeedClientAuth(false);
-                    sslConnector.setWantClientAuth(false);
+                	sslContextFactory.setNeedClientAuth(false);
+                	sslContextFactory.setWantClientAuth(false);
                 }
                 
-                sslConnector.setKeyPassword(SSLConfig.getKeyPassword());
-                sslConnector.setKeystoreType(SSLConfig.getStoreType());
-                sslConnector.setKeystore(SSLConfig.getKeystoreLocation());
+                final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector();
+                sslConnector.setHost(getBindInterface());
+                sslConnector.setPort(securePort);
+                
                 httpsConnector = sslConnector;
             }
         }

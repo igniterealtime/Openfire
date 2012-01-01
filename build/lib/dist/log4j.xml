@@ -55,6 +55,11 @@
 			<param name="AcceptOnMatch" value="true" />
 		</filter>
 	</appender>
+
+	<!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
+	<logger name="org.eclipse.jetty">
+		<level value="warn" />
+	</logger>
 	
    	<root>
 		<level value="info" />

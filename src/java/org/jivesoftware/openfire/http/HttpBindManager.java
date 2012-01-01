@@ -91,8 +91,6 @@ public final class HttpBindManager {
     }
 
     private HttpBindManager() {
-        // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.eclipse.jetty.util.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
 

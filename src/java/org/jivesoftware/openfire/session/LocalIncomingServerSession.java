@@ -122,7 +122,15 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(serverName).append("\"");
             openingStream.append(" id=\"").append(streamID).append("\"");
-            openingStream.append(" version=\"1.0\">");
+            
+            // OF-443: Not responding with a 1.0 version in the stream header when federating with older
+            // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
+            if (serverVersion[0] >= 1) {
+                openingStream.append(" version=\"1.0\">");
+            } else {
+                openingStream.append(">");
+            }
+            
             connection.deliverRawText(openingStream.toString());
 
             if (serverVersion[0] >= 1) {        	

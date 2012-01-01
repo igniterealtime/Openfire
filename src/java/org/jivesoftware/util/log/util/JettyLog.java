@@ -50,37 +50,55 @@ public class JettyLog implements org.eclipse.jetty.util.log.Logger {
         // Do nothing.
     }
 
-    public void info(String string) {
-        Log.info("JettyLog: " + string);
-    }
 
-    public void info(String string, Object object, Object object1) {
+
+
+    public void info(String string, Object... object) {
         // Send info log messages to debug because they are generally not useful.
-        Log.debug("JettyLog: "+format(string,object,object1));
+        Log.debug("JettyLog: " + object);
     }
 
-    public void debug(String string) {
+    public void info(String string, Throwable throwable) {
         Log.debug("JettyLog: " + string);
     }
 
+    public void info(Throwable throwable) {
+        // do nothing
+    }
+
+
+
+    public void debug(String string, Object... object) {
+        Log.debug("JettyLog: " + object);
+    }
+
     public void debug(String string, Throwable throwable) {
-        Log.debug("JettyLog: "+string, throwable);
+        Log.debug(string);
     }
 
-    public void debug(String string, Object object, Object object1) {
-        Log.debug("JettyLog: "+format(string,object,object1));
+    public void debug(Throwable throwable) {
+        // do nothing
     }
 
-    public void warn(String string) {
-        Log.warn("JettyLog: " + string);
-    }
 
-    public void warn(String string, Object object, Object object1) {
-        Log.warn(format(string,object,object1));
+
+
+    public void warn(String string, Object... object) {
+        Log.warn("JettyLog: "+ object);
     }
 
     public void warn(String string, Throwable throwable) {
-        Log.warn(string, throwable);
+        Log.warn(string);
+    }
+
+    public void warn(Throwable throwable) {
+        // do nothing
+    }
+
+
+
+    public void ignore(Throwable throwable) {
+        // do nothing
     }
 
     public Logger getLogger(String string) {

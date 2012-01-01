@@ -28,6 +28,18 @@ import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
@@ -35,20 +47,6 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
-import org.eclipse.jetty.servlet.ServletHandler;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.WebAppContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,7 +162,7 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                JiveSslConnector sslConnector = new JiveSslConnector();
+                SslSelectChannelConnector sslConnector = new SslSelectChannelConnector();
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
 
@@ -334,21 +332,16 @@ public final class HttpBindManager {
         collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
     }
 
-    private void createBoshHandler(ContextHandlerCollection contexts, String boshPath) {
-        ServletHandler handler = new ServletHandler();
-        handler.addServletWithMapping(HttpBindServlet.class, "/");
-
-        handler.addFilterWithMapping(org.eclipse.jetty.continuation.ContinuationFilter.class,"/*",0);
-        ContextHandler boshContextHandler = new ContextHandler(contexts, boshPath);
-        boshContextHandler.setHandler(handler);
+    private void createBoshHandler(ContextHandlerCollection contexts, String boshPath)
+    {
+        ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
+        context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
     }
 
-    private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath) {
-        ServletHandler handler = new ServletHandler();
-        handler.addServletWithMapping(FlashCrossDomainServlet.class, "/crossdomain.xml");
-
-        ContextHandler crossContextHandler = new ContextHandler(contexts, crossPath);
-        crossContextHandler.setHandler(handler);
+    private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
+    {
+        ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
+        context.addServlet(new ServletHolder(new HttpBindServlet()),"/crossdomain.xml");
     }
 
     private void loadStaticDirectory(ContextHandlerCollection contexts) {
@@ -528,14 +521,6 @@ public final class HttpBindManager {
         }
 
         public void xmlPropertyDeleted(String property, Map<String, Object> params) {
-        }
-    }
-
-    private class JiveSslConnector extends SslSelectChannelConnector {
-
-        @Override
-        protected SSLContext createSSLContext() throws Exception {
-            return SSLConfig.getc2sSSLContext();
         }
     }
 

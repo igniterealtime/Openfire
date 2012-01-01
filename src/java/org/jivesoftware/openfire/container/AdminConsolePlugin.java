@@ -127,7 +127,7 @@ public class AdminConsolePlugin implements Plugin {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
                          
-                JiveSslConnector httpsConnector = new JiveSslConnector();
+                SslSelectChannelConnector httpsConnector = new SslSelectChannelConnector();
                 String bindInterface = getBindInterface();
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
@@ -362,14 +362,6 @@ public class AdminConsolePlugin implements Plugin {
             if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
                 restartNeeded = true;
             }
-        }
-    }
-
-    private class JiveSslConnector extends SslSelectChannelConnector {
-
-        @Override
-        protected SSLContext createSSLContext() throws Exception {
-            return SSLConfig.getSSLContext();
         }
     }
 }

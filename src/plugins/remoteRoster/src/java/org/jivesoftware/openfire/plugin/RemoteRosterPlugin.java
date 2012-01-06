@@ -46,6 +46,8 @@ public class RemoteRosterPlugin implements Plugin {
 		pluginManager = manager;
 		manageExternalComponents();
 		listenToSettings();
+		
+		
 	}
 
 	private void manageExternalComponents()

@@ -3,11 +3,13 @@ package org.jivesoftware.openfire.plugin.interceptor;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 
 public abstract class AbstractInterceptorHandler {
 
+	private static Logger Log = Logger.getLogger(AbstractInterceptorHandler.class);
 	private String _subdomain;
 	private boolean _isRunning = false;
 	private Set<PacketInterceptor> _interceptors = new HashSet<PacketInterceptor>();
@@ -36,7 +38,7 @@ public abstract class AbstractInterceptorHandler {
 
 	public void start()
 	{
-		System.out.println("Start handling message interceptors for gateway " + _subdomain);
+		Log.debug("Start handling message interceptors for gateway " + _subdomain);
 		_isRunning = true;
 		for (PacketInterceptor interceptor : _interceptors) {
 			_iManager.addInterceptor(interceptor);
@@ -45,7 +47,7 @@ public abstract class AbstractInterceptorHandler {
 
 	public void stop()
 	{
-		System.out.println("Stop handling message interceptors for gateway " + _subdomain);
+		Log.debug("Stop handling message interceptors for gateway " + _subdomain);
 		if (!_isRunning)
 			return;
 		_isRunning = false;

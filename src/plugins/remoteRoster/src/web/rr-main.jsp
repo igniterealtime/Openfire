@@ -9,6 +9,7 @@
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.List"%>
+<%@ page import="org.jivesoftware.openfire.plugin.database.DatabaseManager"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>
@@ -24,6 +25,7 @@
 	boolean sparkDiscoInfo = sparkdiscoParam == null ? false : sparkdiscoParam.equals("true");
 	String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
 	PermissionManager _pmanager = new PermissionManager();
+	DatabaseManager _db;
 
 	Map<String, String> errors = new HashMap<String, String>();
 	if (save) {
@@ -49,17 +51,22 @@
 	SessionManager sessionManager = webManager.getSessionManager();
 
 	Collection<ComponentSession> sessions = sessionManager.getComponentSessions();
+
+	_db = DatabaseManager.getInstance();
 %>
 
 <html>
 <head>
 <title><fmt:message key="rr.summary.title" /></title>
-<link href="rr.css" rel="stylesheet" type="text/css">
-<script src="http.js" type="text/javascript"></script>
-<script src="jquery.js" type="text/javascript"></script>
-<script src="rr.js" type="text/javascript"></script>
-<script src="jquery.sparkline.js" type="text/javascript"></script>
-
+<link href="./css/rr.css" rel="stylesheet" type="text/css">
+<script src="./js/http.js" type="text/javascript"></script>
+<script src="./js/jquery.js" type="text/javascript"></script>
+<script src="./js/rr.js" type="text/javascript"></script>
+<script src="./js/jquery.sparkline.js" type="text/javascript"></script>
+<script src="./js/jquery.horiz-bar-graph.js" type="text/javascript"></script>
+<!--[if lte IE 8]><script language="javascript" type="text/javascript" src="./js/excanvas.min.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="./js/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="./js/jquery.flot.pie.js"></script>
 
 <meta name="pageID" content="remoteRoster" />
 <meta name="helpPage" content="" />
@@ -122,6 +129,12 @@
 						continue;
 					}
 					gatewayFound = true;
+
+					long incoming = componentSession.getNumClientPackets();
+					long outgoing = componentSession.getNumServerPackets();
+					long both = incoming + outgoing;
+					int incomingPercent = (int) (incoming * 100 / both);
+					int outgoingPercent = (int) (outgoing * 100 / both);
 			%>
 			<table class="gatewayHeader">
 				<tbody>
@@ -133,37 +146,46 @@
 						: ""%> />
 						</td>
 						<td class="gatewayName"><%=componentSession.getExternalComponent().getName()%></td>
-						<td class="gatewayIcons"><img src="images/info-16x16.png" id="showConfig"
-							onclick="slideToggle('#config<%=i%>')"> <img src="images/permissions-16x16.png" id="showPermissions"
-							onclick="slideToggle('#permission<%=i%>')"> <img src="images/log-16x16.png"></td>
+						<td class="gatewayIcons"><img src="images/log-16x16.png" onclick="slideToggle('#logs<%=i%>')"><img
+							src="images/permissions-16x16.png" id="showPermissions" onclick="slideToggle('#permission<%=i%>')"><img
+							src="images/info-16x16.png" id="showConfig" onclick="slideToggle('#config<%=i%>')"></td>
 					</tr>
 				</tbody>
 			</table>
 			<div id="config<%=i%>" class="slider">
+				<div class="sildeHeader">Information</div>
 				<table class="configTable">
 					<tbody>
-						<tr>
-							<td class="configTable1Column">Domain:</td>
+						<tr id="logodd">
+							<td width="200px">Domain:</td>
 							<td><%=componentSession.getExternalComponent().getInitialSubdomain()%></td>
 						</tr>
-						<tr>
-							<td class="configTable1Column">Status:</td>
+						<tr id="logeven">
+							<td>Status:</td>
 							<td>Online</td>
 						</tr>
-						<tr>
-							<td class="configTable1Column">Packages Send/Received:</td>
-							<td><%=componentSession.getNumServerPackets()%> / <%=componentSession.getNumClientPackets()%><div id="inlinesparkline<%=i%>">1,4,4,7,5,9,10</div></td>
+						<tr id="logodd">
+							<td>Packages Send/Received:</td>
+							<td><dl class="browser-data" title="">
+									<dt>Incoming</dt>
+									<dd><%=incomingPercent%></dd>
+									<dt>Outgoing</dt>
+									<dd><%=outgoingPercent%></dd>
+								</dl></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 			<div id="permission<%=i%>" class="slider">
-				> <span class="permissionTitle">You can limit the access to the external component to an existing group</span>)
+				<div class="sildeHeader">Access control</div>
 				<table class="groupTable">
 					<tbody>
+						<tr id="loghead">
+							<td colspan="3">You can limit the access to the external component to an existing group</td>
+						</tr>
 						<tr>
 							<td class="permissionTableColumn">Groupname:</td>
-							<td><input type="text" id="groupSearch<%=i%>"
+							<td><input class="groupInput" type="text" id="groupSearch<%=i%>"
 								name="input_group.<%=componentSession.getExternalComponent().getInitialSubdomain()%>" alt="Find Groups"
 								onkeyup="searchSuggest('<%=i%>');" autocomplete="off"
 								value="<%=_pmanager.getGroupForGateway(componentSession.getExternalComponent().getInitialSubdomain())%>">
@@ -171,10 +193,62 @@
 							<td style="vertical-align: top;">
 								<div class="ajaxloading" id="ajaxloading<%=i%>"></div>
 							</td>
-
 						</tr>
 					</tbody>
 				</table>
+			</div>
+			<div id="logs<%=i%>" class="slider">
+				<%
+					int iqs = _db.getPacketCount(componentSession.getExternalComponent().getInitialSubdomain(),
+								Class.forName("org.xmpp.packet.IQ"));
+						int msgs = _db.getPacketCount(componentSession.getExternalComponent().getInitialSubdomain(),
+								Class.forName("org.xmpp.packet.Message"));
+						int rosters = _db.getPacketCount(componentSession.getExternalComponent().getInitialSubdomain(),
+								Class.forName("org.xmpp.packet.Roster"));
+						int presences = _db.getPacketCount(componentSession.getExternalComponent().getInitialSubdomain(),
+								Class.forName("org.xmpp.packet.Presence"));
+				%>
+				<div class="sildeHeader">Logs & Statistics</div>
+
+				<table class="logtable">
+					<tfoot>
+						<tr id="logfoot">
+							<td colspan="2">Packages being logged for 60 minutes</td>
+							<td><a style="float: right;"
+								onClick="window.open('liveStats.jsp?component=<%=componentSession.getExternalComponent().getInitialSubdomain()%>','mywindow','width=1200,height=700')">Show
+									realtime Log</a>
+						</tr>
+					</tfoot>
+					<tbody>
+						<tr id="loghead">
+							<td width="200px">Paket type</td>
+							<td width="100px">Number</td>
+							<td></td>
+						</tr>
+						<tr id="logodd">
+							<td>IQ</td>
+							<td id="logiq<%=i%>"><%=iqs%></td>
+							<td rowspan="5"><div id="pie<%=i%>" class="graph"></div></td>
+						</tr>
+						<tr id="logeven">
+							<td>Messages</td>
+							<td id="logmsg<%=i%>"><%=msgs%></td>
+						</tr>
+						<tr id="logodd">
+							<td>Roster</td>
+							<td id="logroster<%=i%>"><%=rosters%></td>
+						</tr>
+						<tr id="logeven">
+							<td>Presence</td>
+							<td id="logpresence<%=i%>"><%=presences%></td>
+						</tr>
+						<tr id="logodd">
+							<td><span style="font-weight: bold;">Total:</span></td>
+							<td><span style="font-weight: bold;"><%=iqs + msgs + rosters + presences%></span></td>
+						</tr>
+					</tbody>
+				</table>
+
 			</div>
 
 

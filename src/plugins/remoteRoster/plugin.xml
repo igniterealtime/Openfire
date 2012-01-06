@@ -4,11 +4,13 @@
     <class>org.jivesoftware.openfire.plugin.RemoteRosterPlugin</class>
 
 
-    <name>Remote Roster</name>
+    <name>GoJara</name>
     <description>ProtoXEP-xxxx: Remote Roster Management support</description>
     <author>Holger Bergunde and Daniel Henninger</author>
-    <version>1.0.0 Alpha</version>
-    <date>12/06/2011</date>
+    <version>1.1.0 Alpha</version>
+    <date>01/06/2012</date>
+	<databaseKey>gojara</databaseKey>
+    <databaseVersion>0</databaseVersion>
     <minServerVersion>3.7.0</minServerVersion>
 
     <!-- Admin console entries -->

@@ -13,13 +13,13 @@ import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-public class DiscoPackageInterceptor implements PacketInterceptor {
+public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 
 	private PermissionManager _permissions;
 	private String _subDomain;
 	private String _host;
 
-	public DiscoPackageInterceptor(String subdomain) {
+	public DiscoPackageInterceptorHandler(String subdomain) {
 		_permissions = new PermissionManager();
 		_subDomain = subdomain;
 		XMPPServer server = XMPPServer.getInstance();

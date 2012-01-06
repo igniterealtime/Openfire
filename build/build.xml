@@ -234,6 +234,7 @@
                 <or>
                     <contains string="${ant.java.version}" substring="1.5"/>
                     <contains string="${ant.java.version}" substring="1.6"/>
+                    <contains string="${ant.java.version}" substring="1.7"/>
                 </or>
             </not>
         </condition>

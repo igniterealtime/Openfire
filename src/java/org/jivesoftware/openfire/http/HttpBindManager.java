@@ -179,7 +179,7 @@ public final class HttpBindManager {
                 	sslContextFactory.setWantClientAuth(false);
                 }
                 
-                final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector();
+                final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
                 

@@ -234,6 +234,19 @@ public class DatabaseManager {
 	}
 
 	/**
+	 * Counts the number of log entries in the databse
+	 * 
+	 * @param subdomain
+	 *            subdomain of the component the packages were flown by
+	 * @param packetClass
+	 *            the class the packet was instance of
+	 * @return number of rows found in database or -1 if there was an error
+	 */
+	public int getPacketCount(String subdomain, @SuppressWarnings("rawtypes") Class packetClass) {
+		return getPacketCountOlderThan(subdomain, packetClass, _dbCleanMinutes);
+	}
+
+	/**
 	 * Counts the number of log entries in the databse that are older than
 	 * specified value
 	 * 
@@ -246,7 +259,7 @@ public class DatabaseManager {
 	 *            smaller than currentTime - minutes)
 	 * @return number of rows found in database or -1 if there was an error
 	 */
-	public int getPacketCountOlderThan(String component, Class packetClass, int minutes) {
+	public int getPacketCountOlderThan(String component, @SuppressWarnings("rawtypes") Class packetClass, int minutes) {
 		String classname = packetClass.getName();
 		Connection con = null;
 		PreparedStatement pstmt = null;

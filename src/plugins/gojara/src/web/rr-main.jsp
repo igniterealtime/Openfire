@@ -1,4 +1,5 @@
-<%@page import="org.jivesoftware.openfire.plugin.PermissionManager"%>
+<%@ page import="org.jivesoftware.openfire.plugin.gojara.database.DatabaseManager"%>
+<%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.PermissionManager"%>
 <%@ page import="org.dom4j.tree.DefaultElement"%>
 <%@ page import="org.jivesoftware.openfire.group.GroupManager"%>
 <%@ page import="org.jivesoftware.openfire.group.Group"%>
@@ -9,7 +10,6 @@
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.List"%>
-<%@ page import="org.jivesoftware.openfire.plugin.database.DatabaseManager"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>

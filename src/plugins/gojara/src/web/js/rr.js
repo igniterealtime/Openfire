@@ -97,7 +97,7 @@ $(document).ready(function() {
 				}
 			},
 			legend : {
-				show : true,
+				show : true
 			},
 			grid : {
 				hoverable : true,

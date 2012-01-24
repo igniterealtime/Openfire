@@ -11,8 +11,8 @@ $(document).ready(function() {
 	drawGraph();
 	$('#tableLimit').val(limit);
 	window.setInterval("pollStats()", 1000);
-	
-	$('#formLimit').submit(function (e) {
+
+	$('#formLimit').submit(function(e) {
 		e.preventDefault();
 		console.log(e);
 		limit = $('#tableLimit').val();
@@ -71,6 +71,19 @@ function pollStats() {
 	updateData(firstDate);
 }
 
+// Read a page's GET URL variables and return them as an associative array.
+function getUrlVars() {
+	var vars = [], hash;
+	var hashes = window.location.href.slice(
+			window.location.href.indexOf('?') + 1).split('&');
+	for ( var i = 0; i < hashes.length; i++) {
+		hash = hashes[i].split('=');
+		vars.push(hash[0]);
+		vars[hash[0]] = hash[1];
+	}
+	return vars;
+}
+
 function updateData(lastDate) {
 
 	var callback = function(data, textStatus, jqXHR) {
@@ -121,8 +134,9 @@ function updateData(lastDate) {
 	}
 
 	drawGraph();
+	var myDomain = getUrlVars()["component"];
 	$.ajax({
-		url : 'stats?component=xmpp.dew08299&date=' + lastDate,
+		url : 'stats?component=' + myDomain + '&date=' + lastDate,
 		dataType : 'json',
 		data : '',
 		success : callback

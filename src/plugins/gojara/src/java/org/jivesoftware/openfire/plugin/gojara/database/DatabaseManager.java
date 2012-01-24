@@ -31,7 +31,7 @@ public class DatabaseManager {
 	// "SELECT toJID, count(logID) AS counter FROM `ofGojaraStatistics` GROUP by toJID ORDER BY counter DESC";
 	private static final String ADD_NEW_LOG = "INSERT INTO ofGojaraStatistics(messageDate, messageType, fromJID, toJId, component) VALUES(?,?,?,?,?)";
 	private static final String CLEAN_OLD_DATA = "DELETE FROM ofGojaraStatistics WHERE messageDate < ?";
-	private static final String GET_LOGS_DATE_LIMIT_COMPONENT = "SELECT * FROM ofGojaraStatistics WHERE messageDate > ? AND component LIKE ? ORDER BY messageDate DESC LIMIT ?";
+	private static final String GET_LOGS_DATE_LIMIT_COMPONENT = "SELECT * FROM ofGojaraStatistics WHERE messageDate > ? AND component = ? ORDER BY messageDate DESC LIMIT ?";
 	private final int _dbCleanMinutes;
 
 	private DatabaseManager() {
@@ -97,8 +97,8 @@ public class DatabaseManager {
 			pstmt.setLong(1, olderThan);
 			pstmt.setString(2, component);
 			pstmt.setInt(3, limit);
-
 			ResultSet rs = pstmt.executeQuery();
+
 			while (rs.next()) {
 				String from = rs.getString(4);
 				String to = rs.getString(5);

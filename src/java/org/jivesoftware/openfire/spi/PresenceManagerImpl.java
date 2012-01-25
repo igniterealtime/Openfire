@@ -273,6 +273,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             }
             lastActivityCache.put(username, offlinePresenceDate.getTime());
 
+            // delete existing offline presence
+            deleteOfflinePresenceFromDB(username);
+            
             // Insert data into the database.
             Connection con = null;
             PreparedStatement pstmt = null;

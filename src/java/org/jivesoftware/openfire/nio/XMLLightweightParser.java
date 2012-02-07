@@ -22,18 +22,17 @@ package org.jivesoftware.openfire.nio;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.mina.common.ByteBuffer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is a Light-Weight XML Parser.
@@ -47,8 +46,8 @@ import org.slf4j.LoggerFactory;
  * @author Gaston Dombiak
  */
 class XMLLightweightParser {
-	
-	private static final Logger Log = LoggerFactory.getLogger(XMLLightweightParser.class);
+
+	private static final Pattern XML_HAS_CHARREF = Pattern.compile("&#(0*([0-9]+)|[xX]0*([0-9a-fA-F]+));");
 
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
@@ -156,9 +155,12 @@ class XMLLightweightParser {
     /*
     * Method that add a message to the list and reinit parser.
     */
-    protected void foundMsg(String msg) {
+    protected void foundMsg(String msg) throws Exception {
         // Add message to the complete message list
         if (msg != null) {
+        	if (hasIllegalCharacterReferences(msg)) {
+        		throw new Exception("Illegal character reference found in: " + msg);
+        	}
             msgs.add(msg);
         }
         // Move the position into the buffer
@@ -183,7 +185,7 @@ class XMLLightweightParser {
         }
         CharBuffer charBuffer = CharBuffer.allocate(byteBuffer.capacity());
         encoder.reset();
-        CoderResult coderResult = encoder.decode(byteBuffer.buf(), charBuffer, false);
+        encoder.decode(byteBuffer.buf(), charBuffer, false);
         char[] buf = new char[charBuffer.position()];
         charBuffer.flip();charBuffer.get(buf);
         int readChar = buf.length;
@@ -368,6 +370,65 @@ class XMLLightweightParser {
         }
     }
 
+	/**
+	 * This method verifies if the provided argument contains at least one numeric character reference (
+	 * <code>CharRef	   ::=   	'&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';</code>) for which the decimal or hexidecimal
+	 * character value refers to an invalid XML 1.0 character.
+	 * 
+	 * @param string
+	 *            The input string
+	 * @return <tt>true</tt> if the input string contains an invalid numeric character reference, <tt>false</tt>
+	 *         otherwise.
+	 * @see http://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref
+	 */
+	public static boolean hasIllegalCharacterReferences(String string) {
+		// If there's no character reference, don't bother to do more specific checking.
+		final Matcher matcher = XML_HAS_CHARREF.matcher(string);
+
+		while (matcher.find()) {
+			final String decValue = matcher.group(2);
+			if (decValue != null) {
+				final int value = Integer.parseInt(decValue);
+				if (!isLegalXmlCharacter(value)) {
+					return true;
+				} else {
+					continue;
+				}
+			}
+
+			final String hexValue = matcher.group(3);
+			if (hexValue != null) {
+				final int value = Integer.parseInt(hexValue, 16);
+				if (!isLegalXmlCharacter(value)) {
+					return true;
+				} else {
+					continue;
+				}
+			}
+
+			// This is bad. The XML_HAS_CHARREF expression should have a hit for either the decimal
+			// or the heximal notation.
+			throw new IllegalStateException(
+					"An error occurred while searching for illegal character references in the value [" + string + "].");
+		}
+
+		return false;
+	}
+
+	/**
+	 * Verifies if the codepoint value represents a valid character as defined in paragraph 2.2 of
+	 * "Extensible Markup Language (XML) 1.0 (Fifth Edition)"
+	 * 
+	 * @param value
+	 *            the codepoint
+	 * @return <tt>true</tt> if the codepoint is a valid charater per XML 1.0 definition, <tt>false</tt> otherwise.
+	 * @see http://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char
+	 */
+	public static boolean isLegalXmlCharacter(int value) {
+		return value == 0x9 || value == 0xA || value == 0xD || (value >= 0x20 && value <= 0xD7FF)
+				|| (value >= 0xE000 && value <= 0xFFFD) || (value >= 0x10000 && value <= 0x10FFFF);
+	}
+	
     private static class PropertyListener implements PropertyEventListener {
         public void propertySet(String property, Map<String, Object> params) {
             if (MAX_PROPERTY_NAME.equals(property)) {

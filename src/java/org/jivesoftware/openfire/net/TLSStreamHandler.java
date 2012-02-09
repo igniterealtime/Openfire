@@ -20,13 +20,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.util.JiveGlobals;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,6 +30,16 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.WritableByteChannel;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLSession;
+
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
  * a new instance of this class the plain connection will be secured.
@@ -45,6 +48,8 @@ import java.nio.channels.WritableByteChannel;
  */
 public class TLSStreamHandler {
 
+	private static Logger Log = LoggerFactory.getLogger(TLSStreamHandler.class);
+	
     private TLSStreamWriter writer;
 
     private TLSStreamReader reader;
@@ -209,7 +214,11 @@ public class TLSStreamHandler {
         switch (initialHSStatus) {
 
         case NEED_UNWRAP:
-            if (rbc.read(incomingNetBB) == -1) {
+        	final int bytesRead = rbc.read(incomingNetBB);
+        	if (bytesRead == 0) {
+        		Log.error("Read 0 bytes!");
+        	}
+            if (bytesRead == -1) {
                 tlsEngine.closeInbound();
                 return initialHSComplete;
             }

@@ -260,11 +260,16 @@ public class CertificateManager {
                         }
 
                         // Get identity string
-                        DERUTF8String derStr = DERUTF8String.getInstance(otherNameSeq.getObjectAt(1));
-                        String identity = derStr.getString();
-                        if (identity != null && identity.length() > 0) {
-                            // Add the decoded server name to the list of identities
-                            identities.add(identity);
+                        try {
+	                        DERUTF8String derStr = DERUTF8String.getInstance(otherNameSeq.getObjectAt(1));
+	                        String identity = derStr.getString();
+	                        if (identity != null && identity.length() > 0) {
+	                            // Add the decoded server name to the list of identities
+	                            identities.add(identity);
+	                        }
+                        } catch (IllegalArgumentException ex) {
+                        	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
+                        	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
                         }
                     }
                     catch (UnsupportedEncodingException e) {
@@ -324,7 +329,7 @@ public class CertificateManager {
     }
 
     /**
-     * Returns true if a certificate with the specifed configuration was found in the key store.
+     * Returns true if a certificate with the specified configuration was found in the key store.
      *
      * @param ksKeys the keystore to use for searching the certificate.
      * @param domain the domain present in the subjectAltName or "*" if anything is accepted.
@@ -333,24 +338,27 @@ public class CertificateManager {
      * @throws KeyStoreException
      */
     private static boolean isCertificate(KeyStore ksKeys, String domain, String algorithm) throws KeyStoreException {
-        for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
+        boolean result = false;
+    	for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) ksKeys.getCertificate(aliases.nextElement());
             if ("*".equals(domain)) {
                 // Any domain certified by the certificate is accepted
                 if (certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
-                    return true;
+                    result = true;
                 }
             }
             else {
                 // Only accept certified domains that match the specified domain
                 for (String identity : getPeerIdentities(certificate)) {
                     if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
-                        return true;
+                        result = true;
                     }
                 }
             }
         }
-        return false;
+
+    	Log.info("Check for certificate for '{}' using algorithm {} returned: ", new Object[] { domain, algorithm, result} );
+    	return result;
     }
 
     /**

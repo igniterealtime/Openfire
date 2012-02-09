@@ -357,7 +357,7 @@ public class CertificateManager {
             }
         }
 
-    	Log.info("Check for certificate for '{}' using algorithm {} returned: ", new Object[] { domain, algorithm, result} );
+    	Log.debug("Check for certificate for '{}' using algorithm {} returned: {}", new Object[] { domain, algorithm, result} );
     	return result;
     }
 

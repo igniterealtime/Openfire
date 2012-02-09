@@ -42,6 +42,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedList;
 import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
@@ -144,7 +145,7 @@ public class PubSubPersistenceManager {
             "WHERE serviceID=? ORDER BY creationDate";
     private static final String LOAD_ITEMS =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
     private static final String LOAD_ITEM =
             "SELECT jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? AND id=?";
@@ -179,12 +180,14 @@ public class PubSubPersistenceManager {
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static Timer flushTimer = new Timer("Pubsub item flush timer");
-    private static long timerDelay = 1000 * 120; 
+    private static long timerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.flush.timer", 120) * 1000;
     private static final int POOL_SIZE = 50; 
 
     private static final int ITEM_CACHE_SIZE = 100;
     private static int publishedItemSize = 0;
     private static final Object itemLock = new Object();
+    
+    private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty("xmpp.pubsub.fetch.max", 2000);
     
     /**
      * Queue that holds the items that need to be added to the database.
@@ -214,6 +217,10 @@ public class PubSubPersistenceManager {
             xmlReader.setEncoding("UTF-8");
             xmlReaders.add(xmlReader);
         }
+        
+        // Enforce a min of 20s
+        if (timerDelay < 20000)
+        	timerDelay = 20000;
         
         flushTimer.schedule(new TimerTask() {
 			
@@ -987,6 +994,14 @@ public class PubSubPersistenceManager {
     public static void savePublishedItem(PublishedItem item) {
     	synchronized(itemLock)
     	{
+    		LinkedListNode nodeToReplace = itemMap.get(item.getID());
+    		
+    		if (nodeToReplace != null)
+    		{
+    			nodeToReplace.remove();
+    			publishedItemSize--;
+    		}
+    		
     		LinkedListNode listNode = itemsToAdd.addLast(item);
     		itemMap.put(item.getID(), listNode);
     		publishedItemSize++;
@@ -1002,7 +1017,6 @@ public class PubSubPersistenceManager {
     public static void flushItems()
     {
     	Log.debug("Flushing items to database");
-    	System.out.println("Flushing " + publishedItemSize + " items to database");
     	LinkedList addList = null;
     	LinkedList delList = null;
     	
@@ -1014,48 +1028,62 @@ public class PubSubPersistenceManager {
     		delList = itemsToDelete;
     		
     		itemsToAdd = new LinkedList();
-    		delList = new LinkedList();
+    		itemsToDelete = new LinkedList();
     		itemMap.clear();
     		publishedItemSize = 0;
     	}
     	
+        LinkedListNode addItem = addList.getFirst();
+        LinkedListNode delItem = delList.getFirst();
+        
+        // Check to see if there is anything to actually do.
+        if ((addItem == null) && (delItem == null))
+        	return;
+        
         Connection con = null;
         PreparedStatement pstmt = null;
         
         try {
+            
             con = DbConnectionManager.getTransactionConnection();
             
             // Add all items that were cached
-            LinkedListNode itemNode = addList.getFirst();
             
-            while (itemNode != null)
+            if (addItem != null)
             {
-            	PublishedItem item = (PublishedItem) itemNode.object;
-                pstmt = con.prepareStatement(ADD_ITEM);
-                pstmt.setString(1, item.getNode().getService().getServiceID());
-                pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-                pstmt.setString(3, item.getID());
-                pstmt.setString(4, item.getPublisher().toString());
-                pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
-                pstmt.setString(6, item.getPayloadXML());
-                pstmt.executeUpdate();
+                LinkedListNode addHead = addList.getLast().next;
                 
-                itemNode = itemNode.next;
+                while (addItem != addHead)
+                {
+                	PublishedItem item = (PublishedItem) addItem.object;
+                    pstmt = con.prepareStatement(ADD_ITEM);
+                    pstmt.setString(1, item.getNode().getService().getServiceID());
+                    pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                    pstmt.setString(3, item.getID());
+                    pstmt.setString(4, item.getPublisher().toString());
+                    pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
+                    pstmt.setString(6, item.getPayloadXML());
+                    pstmt.executeUpdate();
+                    
+                    addItem = addItem.next;
+                }
             }
             
-            // Delete all items that were cached
-            itemNode = delList.getFirst();
-            
-            while (itemNode != null)
+            if (delItem != null)
             {
-            	PublishedItem item = (PublishedItem) itemNode.object;
-                pstmt = con.prepareStatement(DELETE_ITEM);
-                pstmt.setString(1, item.getNode().getService().getServiceID());
-                pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-                pstmt.setString(3, item.getID());
-                pstmt.executeUpdate();
+                LinkedListNode delHead = delList.getLast().next;
                 
-                itemNode = itemNode.next;
+                while (delItem != delHead)
+                {
+                	PublishedItem item = (PublishedItem) delItem.object;
+                    pstmt = con.prepareStatement(DELETE_ITEM);
+                    pstmt.setString(1, item.getNode().getService().getServiceID());
+                    pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                    pstmt.setString(3, item.getID());
+                    pstmt.executeUpdate();
+                    
+                    delItem = delItem.next;
+                }
             }
 
             con.commit();
@@ -1256,7 +1284,17 @@ public class PubSubPersistenceManager {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         SAXReader xmlReader = null;
-        List<PublishedItem> results = new ArrayList<PublishedItem>(node.getMaxPublishedItems());
+        int max = MAX_ROWS_FETCH;
+        int maxPublished = node.getMaxPublishedItems();
+        
+        // Limit the max rows until a solution is in place with Result Set Management
+        if (maxRows != -1)
+        	max = maxPublished == -1 ? Math.min(maxRows, MAX_ROWS_FETCH) :  Math.min(maxRows, maxPublished);
+        else if (maxPublished != -1)
+        	max = Math.min(MAX_ROWS_FETCH, maxPublished);
+        
+        // We don't know how many items are in the db, so we will start with an allocation of 500
+        List<PublishedItem> results = new ArrayList<PublishedItem>(max);
         
         try {
             // Get a sax reader from the pool
@@ -1264,12 +1302,14 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getConnection();
             // Get published items of the specified node
             pstmt = con.prepareStatement(LOAD_ITEMS);
-            pstmt.setMaxRows(node.getMaxPublishedItems());
+            pstmt.setMaxRows(max);
             pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             rs = pstmt.executeQuery();
+            int counter = 0;
+            
             // Rebuild loaded published items
-            while(rs.next()) {
+            while(rs.next() && (counter < max)) {
                 String itemID = rs.getString(1);
                 JID publisher = new JID(rs.getString(2));
                 Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
@@ -1282,6 +1322,7 @@ public class PubSubPersistenceManager {
                 }
                 // Add the published item to the node
                 results.add(item);
+                counter++;
             }
         }
         catch (Exception sqle) {
@@ -1296,7 +1337,8 @@ public class PubSubPersistenceManager {
         }
         
         if (results.size() == 0)
-        	return Collections.emptyList();
+        	results = Collections.emptyList();
+        
         return results;
     }
 
@@ -1350,6 +1392,7 @@ public class PubSubPersistenceManager {
     }
 
     public static PublishedItem getPublishedItem(LeafNode node, String itemID) {
+    	flushItems();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -1392,6 +1435,7 @@ public class PubSubPersistenceManager {
 
 
 	public static void purgeNode(LeafNode leafNode) {
+		flushItems();
         // Remove published items of the node being deleted
         Connection con = null;
         PreparedStatement pstmt = null;

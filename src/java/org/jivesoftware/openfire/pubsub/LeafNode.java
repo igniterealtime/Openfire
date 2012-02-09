@@ -356,7 +356,7 @@ public class LeafNode extends Node {
 
     @Override
 	public List<PublishedItem> getPublishedItems(int recentItems) {
-        return PubSubPersistenceManager.getPublishedItems(this, Math.min(getMaxPublishedItems(), recentItems));
+        return PubSubPersistenceManager.getPublishedItems(this, recentItems);
     }
 
     @Override

@@ -155,11 +155,11 @@ class XMLLightweightParser {
     /*
     * Method that add a message to the list and reinit parser.
     */
-    protected void foundMsg(String msg) throws Exception {
+    protected void foundMsg(String msg) throws XMLNotWellFormedException {
         // Add message to the complete message list
         if (msg != null) {
         	if (hasIllegalCharacterReferences(msg)) {
-        		throw new Exception("Illegal character reference found in: " + msg);
+        		throw new XMLNotWellFormedException("Illegal character reference found in: " + msg);
         	}
             msgs.add(msg);
         }
@@ -205,7 +205,7 @@ class XMLLightweightParser {
             if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD && ch != 0x0) {
                  //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
                  //We need to allow the NULL character, however, for Flash XMLSocket clients to work.
-                throw new Exception("Disallowed character");
+                throw new XMLNotWellFormedException("Character is invalid in: " + ch);
             }
             if (isHighSurrogate) {
                 if (Character.isLowSurrogate(ch)) {

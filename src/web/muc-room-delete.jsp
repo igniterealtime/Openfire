@@ -34,7 +34,13 @@
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
-    String alternateJID = ParamUtils.getParameter(request,"alternateJID");
+    String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
+    JID alternateJID;
+    if (alternateJIDString != null && alternateJIDString.trim().length() > 0 ) {
+    	alternateJID = new JID(alternateJIDString.trim());
+    } else {
+    	alternateJID = null;
+    }
     String reason = ParamUtils.getParameter(request,"reason");
     String roomName = roomJID.getNode();
 

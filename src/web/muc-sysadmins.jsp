@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
+                 org.xmpp.packet.*,
                  org.jivesoftware.openfire.muc.MultiUserChatService"
          errorPage="error.jsp"
 %>
@@ -47,28 +48,32 @@
 
     // Handle a save
     Map<String,String> errors = new HashMap<String,String>();
-    if (add) {
+    JID bareJID = null;
+    try {
         // do validation
-        if (userJID == null || userJID.indexOf('@') == -1) {
-            errors.put("userJID","userJID");
-        }
-        if (errors.size() == 0) {
-            mucService.addSysadmin(userJID);
+    	bareJID = new JID(new JID(userJID).toBareJID());
+    } catch (IllegalArgumentException e) {
+        errors.put("userJID","userJID");
+    }
+    
+    if (errors.size() == 0) {
+	    if (add) {
+            mucService.addSysadmin(bareJID);
             // Log the event
             webManager.logEvent("added muc sysadmin "+userJID+" for service "+mucname, null);
             response.sendRedirect("muc-sysadmins.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
-    }
 
-    if (delete) {
-        // Remove the user from the list of system administrators
-        mucService.removeSysadmin(userJID);
-        // Log the event
-        webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
-        // done, return
-        response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-        return;
+	    if (delete) {
+	        // Remove the user from the list of system administrators
+	        mucService.removeSysadmin(bareJID);
+	        // Log the event
+	        webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
+	        // done, return
+	        response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+	        return;
+	    }
     }
 %>
 
@@ -160,14 +165,16 @@
 
 				<%  } %>
 
-				<%  for (String user : mucService.getSysadmins()) { %>
-
+				<%  for (JID user : mucService.getSysadmins()) {
+	                	String username = JID.unescapeNode(user.getNode());
+	                    String userDisplay = username + '@' + user.getDomain();
+	            %>
 					<tr>
 						<td width="99%">
-							<%= user %>
+							<%= userDisplay %>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-sysadmins.jsp?userJID=<%= user %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+							<a href="muc-sysadmins.jsp?userJID=<%= user.toString() %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="groupchat.admins.dialog.title" />"
 							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

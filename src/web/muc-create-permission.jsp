@@ -20,6 +20,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
+                 org.xmpp.packet.*,
                  org.jivesoftware.openfire.muc.MultiUserChatService"
     errorPage="error.jsp"
 %>
@@ -55,12 +56,11 @@
     if (save) {
         if (openPerms) {
             // Remove all users who have the ability to create rooms
-            List<String> removeables = new ArrayList<String>();
-            for (Object obj : mucService.getUsersAllowedToCreate()) {
-                String user = (String)obj;
+            List<JID> removeables = new ArrayList<JID>();
+            for (JID user : mucService.getUsersAllowedToCreate()) {
                 removeables.add(user);
             }
-            for (String user : removeables) {
+            for (JID user : removeables) {
                 mucService.removeUserAllowedToCreate(user);
             }
             mucService.setRoomCreationRestricted(false);
@@ -78,30 +78,34 @@
         }
     }
 
-    // Handle an add
-    if (add) {
+    JID bareJID = null;
+    try {
         // do validation
-        if (userJID == null || userJID.indexOf('@') == -1) {
-            errors.put("userJID","userJID");
-        }
-        if (errors.size() == 0) {
-            mucService.addUserAllowedToCreate(userJID);
-            // Log the event
-            webManager.logEvent("added MUC room creation permission to "+userJID+" for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-            return;
-        }
+    	bareJID = new JID(new JID(userJID).toBareJID());
+    } catch (java.lang.IllegalArgumentException ex) {
+        errors.put("userJID","userJID");
     }
 
-    if (delete) {
-        // Remove the user from the allowed list
-        mucService.removeUserAllowedToCreate(userJID);
-        // Log the event
-        webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
-        // done, return
-        response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-        return;
-    }
+    if (errors.size() == 0) {
+	    // Handle an add
+	    if (add) {
+	            mucService.addUserAllowedToCreate(bareJID);
+	            // Log the event
+	            webManager.logEvent("added MUC room creation permission to "+userJID+" for service "+mucname, null);
+	            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+	            return;
+	    }
+	
+	    if (delete) {
+	        // Remove the user from the allowed list
+	        mucService.removeUserAllowedToCreate(bareJID);
+	        // Log the event
+	        webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
+	        // done, return
+	        response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+	        return;
+	    }
+	}
 %>
 
 <html>

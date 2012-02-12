@@ -241,19 +241,11 @@
             </tr>
         <%  }
             else {
-                ArrayList<String> owners = new ArrayList<String>(room.getOwners());
+                ArrayList<JID> owners = new ArrayList<JID>(room.getOwners());
                 Collections.sort(owners);
-                for (String user : owners) {
-                    String userDisplay;
-                    if (user.indexOf('@') > 0) {
-                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                        String rest = user.substring(user.indexOf('@'), user.length());
-                        userDisplay = username + rest;
-                    }
-                    else {
-                        userDisplay = user;
-                    }
-
+                for (JID user : owners) {
+                	String username = JID.unescapeNode(user.getNode());
+                    String userDisplay = username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>
@@ -281,18 +273,11 @@
             </tr>
         <%  }
             else {
-                ArrayList<String> admins = new ArrayList<String>(room.getAdmins());
+                ArrayList<JID> admins = new ArrayList<JID>(room.getAdmins());
                 Collections.sort(admins);
-                for (String user : admins) {
-                    String userDisplay;
-                    if (user.indexOf('@') > 0) {
-                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                        String rest = user.substring(user.indexOf('@'), user.length());
-                        userDisplay = username + rest;
-                    }
-                    else {
-                        userDisplay = user;
-                    }
+                for (JID user : admins) {
+                	String username = JID.unescapeNode(user.getNode());
+                    String userDisplay = username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>
@@ -320,19 +305,11 @@
             </tr>
         <%  }
             else {
-                ArrayList<String> members = new ArrayList<String>(room.getMembers());
+                ArrayList<JID> members = new ArrayList<JID>(room.getMembers());
                 Collections.sort(members);
-                for (String user : members) {
-                    String userDisplay;
-                    if (user.indexOf('@') > 0) {
-                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                        String rest = user.substring(user.indexOf('@'), user.length());
-                        userDisplay = username + rest;
-                    }
-                    else {
-                        userDisplay = user;
-                    }
-
+                for (JID user : members) {
+                	String username = JID.unescapeNode(user.getNode());
+                    String userDisplay = username + '@' + user.getDomain();
                     String nickname = room.getReservedNickname(user);
                     nickname = (nickname == null ? "" : " (" + nickname + ")");
         %>
@@ -362,18 +339,11 @@
             </tr>
         <%  }
             else {
-                ArrayList<String> outcasts = new ArrayList<String>(room.getOutcasts());
+                ArrayList<JID> outcasts = new ArrayList<JID>(room.getOutcasts());
                 Collections.sort(outcasts);
-                for (String user : outcasts) {
-                    String userDisplay;
-                    if (user.indexOf('@') > 0) {
-                        String username = JID.unescapeNode(user.substring(0, user.indexOf('@')));
-                        String rest = user.substring(user.indexOf('@'), user.length());
-                        userDisplay = username + rest;
-                    }
-                    else {
-                        userDisplay = user;
-                    }
+                for (JID user : outcasts) {
+                	String username = JID.unescapeNode(user.getNode());
+                    String userDisplay = username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>

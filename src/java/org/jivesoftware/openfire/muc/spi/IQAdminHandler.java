@@ -47,11 +47,11 @@ import org.xmpp.packet.Presence;
  */
 public class IQAdminHandler {
 	
-	private LocalMUCRoom room;
+	private final LocalMUCRoom room;
 
-    private PacketRouter router;
+    private final PacketRouter router;
 
-    private boolean skipInvite;
+    private final boolean skipInvite;
 
     public IQAdminHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
@@ -89,7 +89,9 @@ public class IQAdminHandler {
         Element element = packet.getChildElement();
 
         // Analyze the action to perform based on the included element
-        List itemsList = element.elements("item");
+        @SuppressWarnings("unchecked")
+		List<Element> itemsList = element.elements("item");
+        
         if (!itemsList.isEmpty()) {
             handleItemsElement(role, itemsList, reply);
         }
@@ -122,13 +124,13 @@ public class IQAdminHandler {
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
-    private void handleItemsElement(MUCRole senderRole, List itemsList, IQ reply)
+    private void handleItemsElement(MUCRole senderRole, List<Element> itemsList, IQ reply)
             throws ForbiddenException, ConflictException, NotAllowedException, CannotBeInvitedException {
         Element item;
         String affiliation;
         String roleAttribute;
-        boolean hasJID = ((Element)itemsList.get(0)).attributeValue("jid") != null;
-        boolean hasNick = ((Element)itemsList.get(0)).attributeValue("nick") != null;
+        boolean hasJID = itemsList.get(0).attributeValue("jid") != null;
+        boolean hasNick = itemsList.get(0).attributeValue("nick") != null;
         // Check if the client is requesting or changing the list of moderators/members/etc.
         if (!hasJID && !hasNick) {
             // The client is requesting the list of moderators/members/participants/outcasts
@@ -147,10 +149,10 @@ public class IQAdminHandler {
                             && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    for (String jid : room.getOutcasts()) {
+                    for (JID jid : room.getOutcasts()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("affiliation", "outcast");
-                        metaData.addAttribute("jid", jid);
+                        metaData.addAttribute("jid", jid.toString());
                     }
 
                 } else if ("member".equals(affiliation)) {
@@ -161,10 +163,10 @@ public class IQAdminHandler {
                             && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();
                     }
-                    for (String jid : room.getMembers()) {
+                    for (JID jid : room.getMembers()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("affiliation", "member");
-                        metaData.addAttribute("jid", jid);
+                        metaData.addAttribute("jid", jid.toString());
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
                             MUCRole role = roles.get(0);
@@ -210,7 +212,7 @@ public class IQAdminHandler {
             JID jid;
             String nick;
             String target;
-            boolean hasAffiliation = ((Element) itemsList.get(0)).attributeValue("affiliation") !=
+            boolean hasAffiliation = itemsList.get(0).attributeValue("affiliation") !=
                     null;
 
             // Keep a registry of the updated presences
@@ -246,7 +248,7 @@ public class IQAdminHandler {
                         presences.add(room.addVisitor(jid, senderRole));
                     } else if ("member".equals(target)) {
                         // Add the user as a member of the room based on the bare JID
-                        boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.Affiliation.none;
+                        boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
                         presences.addAll(room.addMember(jid, nick, senderRole));
                         // If the user had an affiliation don't send an invitation. Otherwise
                         // send an invitation if the room is members-only and skipping invites

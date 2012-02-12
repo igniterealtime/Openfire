@@ -30,21 +30,23 @@ import org.xmpp.packet.JID;
  * Represents an entry in the conversation log of a room. An entry basically obtains the necessary
  * information to log from the message adding a timestamp of when the message was sent to the room.
  * 
+ * Instances of this class are immutable, and therefor thread safe.
+ * 
  * @author Gaston Dombiak
  */
 class ConversationLogEntry {
 
-    private Date date;
+    private final Date date;
 
-    private String subject;
+    private final String subject;
 
-    private String body;
+    private final String body;
 
-    private JID sender;
+    private final JID sender;
     
-    private String nickname;
+    private final String nickname;
     
-    private long roomID;
+    private final long roomID;
 
     /**
      * Creates a new ConversationLogEntry that registers that a given message was sent to a given

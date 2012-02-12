@@ -312,9 +312,12 @@ public class LocalMUCUser implements MUCUser {
                                     List<Element> extensions = new ArrayList<Element>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
+                                    
                                     // Send invitations to invitees
-                                    for (Iterator it=userInfo.elementIterator("invite");it.hasNext();) {
-                                        Element info = (Element) it.next();
+                                    @SuppressWarnings("unchecked")
+									Iterator<Element> it = userInfo.elementIterator("invite");
+                                    while(it.hasNext()) {
+                                        Element info = it.next();
                                         JID jid = new JID(info.attributeValue("to"));
 
                                         // Add the user as a member of the room if the room is

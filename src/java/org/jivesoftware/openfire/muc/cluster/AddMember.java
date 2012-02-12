@@ -20,12 +20,13 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.xmpp.packet.JID;
 
 /**
  * Task that adds a new member to the room in the other cluster nodes.
@@ -33,20 +34,26 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class AddMember extends MUCRoomTask {
-    private String bareJID;
+    private JID bareJID;
     private String nickname;
 
     public AddMember() {
         super();
     }
 
+    public AddMember(LocalMUCRoom room, JID bareJID, String nickname) {
+        super(room);
+        this.bareJID = new JID(bareJID.toBareJID());
+        this.nickname = nickname;
+    }
+    
     public AddMember(LocalMUCRoom room, String bareJID, String nickname) {
         super(room);
-        this.bareJID = bareJID;
+        this.bareJID = new JID(new JID(bareJID).toBareJID());
         this.nickname = nickname;
     }
 
-    public String getBareJID() {
+    public JID getBareJID() {
         return bareJID;
     }
 
@@ -70,14 +77,14 @@ public class AddMember extends MUCRoomTask {
     @Override
 	public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, bareJID);
+        ExternalizableUtil.getInstance().writeSafeUTF(out, bareJID.toFullJID());
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
     }
 
     @Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        bareJID = ExternalizableUtil.getInstance().readSafeUTF(in);
+        bareJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
     }
 }

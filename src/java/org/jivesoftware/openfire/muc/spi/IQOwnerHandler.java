@@ -60,15 +60,15 @@ public class IQOwnerHandler {
 	
 	private static final Logger Log = LoggerFactory.getLogger(IQOwnerHandler.class);
 
-    private LocalMUCRoom room;
+    private final LocalMUCRoom room;
 
-    private PacketRouter router;
+    private final PacketRouter router;
 
     private DataForm configurationForm;
 
     private Element probeResult;
 
-    private boolean skipInvite;
+    private final boolean skipInvite;
 
     public IQOwnerHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
@@ -122,8 +122,8 @@ public class IQOwnerHandler {
                     }
                 }
 
-                room.destroyRoom(destroyElement.attributeValue("jid"), destroyElement
-                        .elementTextTrim("reason"));
+				room.destroyRoom(new JID(destroyElement.attributeValue("jid")),
+						destroyElement.elementTextTrim("reason"));
             }
             else {
                 List<Element> itemsList = element.elements("item");
@@ -183,10 +183,10 @@ public class IQOwnerHandler {
                     // The client is requesting the list of owners
                     Element ownerMetaData;
                     MUCRole role;
-                    for (String jid : room.getOwners()) {
+                    for (JID jid : room.getOwners()) {
                         ownerMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
                         ownerMetaData.addAttribute("affiliation", "owner");
-                        ownerMetaData.addAttribute("jid", jid);
+                        ownerMetaData.addAttribute("jid", jid.toString());
                         // Add role and nick to the metadata if the user is in the room
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
@@ -202,10 +202,10 @@ public class IQOwnerHandler {
                     // The client is requesting the list of admins
                     Element adminMetaData;
                     MUCRole role;
-                    for (String jid : room.getAdmins()) {
+                    for (JID jid : room.getAdmins()) {
                         adminMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
                         adminMetaData.addAttribute("affiliation", "admin");
-                        adminMetaData.addAttribute("jid", jid);
+                        adminMetaData.addAttribute("jid", jid.toString());
                         // Add role and nick to the metadata if the user is in the room
                         try {
                             List<MUCRole> roles = room.getOccupantsByBareJID(jid);
@@ -270,7 +270,7 @@ public class IQOwnerHandler {
                             presences.addAll(room.addAdmin(jid, senderRole));
                         } else if ("member".equals(targetAffiliation)) {
                             // Add the new user as a member of the room
-                            boolean hadAffiliation = room.getAffiliation(jid.toBareJID()) != MUCRole.Affiliation.none;
+                            boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
                             presences.addAll(room.addMember(jid, null, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only and skipping invites
@@ -365,17 +365,25 @@ public class IQOwnerHandler {
         // Get the new list of admins
         field = completedForm.getField("muc#roomconfig_roomadmins");
         boolean adminsSent = field != null;
-        List<String> admins = new ArrayList<String>();
+        List<JID> admins = new ArrayList<JID>();
         if (field != null) {
-        	admins.addAll(field.getValues());
+        	for (String value : field.getValues()) {
+        		// XEP-0045: "Affiliations are granted, revoked, and 
+        		// maintained based on the user's bare JID, (...)"
+        		admins.add(new JID(new JID(value).toBareJID()));
+        	}
         }
 
         // Get the new list of owners
         field = completedForm.getField("muc#roomconfig_roomowners");
         boolean ownersSent = field != null;
-        List<String> owners = new ArrayList<String>(); 
+        List<JID> owners = new ArrayList<JID>(); 
         if (field != null) {
-        	owners.addAll(field.getValues());
+        	for(String value : field.getValues()) {
+        		// XEP-0045: "Affiliations are granted, revoked, and 
+        		// maintained based on the user's bare JID, (...)"
+        		owners.add(new JID(new JID(value).toBareJID()));
+        	}
         }
 
         // Answer a conflic error if all the current owners will be removed
@@ -526,22 +534,22 @@ public class IQOwnerHandler {
         if (ownersSent) {
             // Change the affiliation to "member" for the current owners that won't be neither
             // owner nor admin (if the form included the owners field)
-            List<String> ownersToRemove = new ArrayList<String>(room.owners);
+            List<JID> ownersToRemove = new ArrayList<JID>(room.owners);
             ownersToRemove.removeAll(admins);
             ownersToRemove.removeAll(owners);
-            for (String jid : ownersToRemove) {
-                presences.addAll(room.addMember(new JID(jid), null, senderRole));
+            for (JID jid : ownersToRemove) {
+                presences.addAll(room.addMember(jid, null, senderRole));
             }
         }
 
         if (adminsSent) {
             // Change the affiliation to "member" for the current admins that won't be neither
             // owner nor admin (if the form included the admins field)
-            List<String> adminsToRemove = new ArrayList<String>(room.admins);
+            List<JID> adminsToRemove = new ArrayList<JID>(room.admins);
             adminsToRemove.removeAll(admins);
             adminsToRemove.removeAll(owners);
-            for (String jid : adminsToRemove) {
-                presences.addAll(room.addMember(new JID(jid), null, senderRole));
+            for (JID jid : adminsToRemove) {
+                presences.addAll(room.addMember(jid, null, senderRole));
             }
         }
 
@@ -632,14 +640,14 @@ public class IQOwnerHandler {
 
             field = configurationForm.getField("muc#roomconfig_roomadmins");
             field.clearValues();
-            for (String jid : room.getAdmins()) {
-                field.addValue(jid);
+            for (JID jid : room.getAdmins()) {
+                field.addValue(jid.toString());
             }
 
             field = configurationForm.getField("muc#roomconfig_roomowners");
             field.clearValues();
-            for (String jid : room.getOwners()) {
-                field.addValue(jid);
+            for (JID jid : room.getOwners()) {
+                field.addValue(jid.toString());
             }
 
             // Remove the old element

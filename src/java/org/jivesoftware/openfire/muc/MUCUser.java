@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.openfire.ChannelHandler;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 /**
  * The chat user is a separate user abstraction for interacting with
@@ -36,7 +37,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public interface MUCUser extends ChannelHandler {
+public interface MUCUser extends ChannelHandler<Packet> {
 
     /**
       * Obtain the address of the user. The address is used by services like the core

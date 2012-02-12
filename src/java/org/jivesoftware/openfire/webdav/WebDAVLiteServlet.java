@@ -145,7 +145,6 @@ public class WebDAVLiteServlet extends HttpServlet {
     private Boolean isAuthorized(HttpServletRequest request, HttpServletResponse response,
                                  String service, String room) throws ServletException, IOException {
         String auth = request.getHeader("Authorization");
-        JID jid;
         try {
             if (auth == null || !request.getAuthType().equals(HttpServletRequest.BASIC_AUTH)) {
                 throw new Exception("No authorization or improper authorization provided.");
@@ -157,8 +156,8 @@ public class WebDAVLiteServlet extends HttpServlet {
             if (!username.contains("@")) {
                 throw new Exception("Not a valid JID.");
             }
-            jid = new JID(username);
-            XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(service).getChatRoom(room).getOccupantsByBareJID(jid.toBareJID());
+            final JID bareJID = new JID(new JID(username).toBareJID());
+            XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(service).getChatRoom(room).getOccupantsByBareJID(bareJID);
             return true;
         }
         catch (Exception e) {

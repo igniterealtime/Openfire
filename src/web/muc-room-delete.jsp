@@ -33,11 +33,20 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
+
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
-    JID alternateJID;
+    JID alternateJID = null;
     if (alternateJIDString != null && alternateJIDString.trim().length() > 0 ) {
-    	alternateJID = new JID(alternateJIDString.trim());
+    	// OF-526: Ignore invalid alternative JIDs.
+    	try {
+    		alternateJID = new JID(alternateJIDString.trim());
+    		if (alternateJID.getNode() == null) {
+    			alternateJID == null;
+    		}
+    	catch (IllegalArgumentException ex) {
+    		alternateJID = null;
+    	}
     } else {
     	alternateJID = null;
     }
@@ -56,11 +65,11 @@
     // Handle a room delete:
     if (delete) {
         // Delete the room
-        if (room !=  null) {
+        if (room != null) {
             // If the room still exists then destroy it
             room.destroyRoom(alternateJID, reason);
             // Log the event
-            webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID);
+            webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID.toString());
         }
         // Done, so redirect
         response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&deletesuccess=true");

@@ -148,7 +148,7 @@
                     try {
                         room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName, address);
                         // Check if the room was created concurrently by another user
-                        if (!room.getOwners().contains(address.toBareJID())) {
+                        if (!room.getOwners().contains(new JID(address.toBareJID()))) {
                             errors.put("room_already_exists", "room_already_exists");
                         }
                     }

@@ -76,9 +76,7 @@ public class StunServerAddress {
                 } catch (UnknownHostException e) {
                     return false;
                 }
-
             }
-
         }
         return false;
     }

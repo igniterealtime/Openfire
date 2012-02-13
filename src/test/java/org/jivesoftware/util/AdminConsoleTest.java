@@ -10,12 +10,14 @@ package org.jivesoftware.util;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Iterator;
-import java.lang.reflect.Method;
+
 import junit.framework.TestCase;
-import org.jivesoftware.admin.AdminConsole;
+
 import org.dom4j.Element;
+import org.jivesoftware.admin.AdminConsole;
 
 public class AdminConsoleTest extends TestCase {
 

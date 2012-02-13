@@ -8,6 +8,7 @@
 package org.jivesoftware.util;
 
 import junit.framework.TestCase;
+
 import org.xmpp.packet.JID;
 
 /**

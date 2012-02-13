@@ -10,6 +10,7 @@
 package org.jivesoftware.util;
 
 import junit.framework.TestCase;
+
 import org.jivesoftware.openfire.ldap.LdapManager;
 
 /**

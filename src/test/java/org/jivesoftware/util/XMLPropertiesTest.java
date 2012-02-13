@@ -20,9 +20,9 @@
 
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
-
 import java.io.ByteArrayInputStream;
+
+import junit.framework.TestCase;
 
 public class XMLPropertiesTest extends TestCase {
 

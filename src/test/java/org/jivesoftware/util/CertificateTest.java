@@ -1,11 +1,11 @@
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import junit.framework.TestCase;
 
 /**
  * Basic tests for code used by CertificateManager.

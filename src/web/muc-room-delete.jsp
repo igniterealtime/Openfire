@@ -42,9 +42,9 @@
     	try {
     		alternateJID = new JID(alternateJIDString.trim());
     		if (alternateJID.getNode() == null) {
-    			alternateJID == null;
+    			alternateJID = null;
     		}
-    	catch (IllegalArgumentException ex) {
+    	} catch (IllegalArgumentException ex) {
     		alternateJID = null;
     	}
     } else {

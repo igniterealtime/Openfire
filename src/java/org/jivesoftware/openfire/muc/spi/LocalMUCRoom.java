@@ -1572,7 +1572,7 @@ public class LocalMUCRoom implements MUCRoom {
     public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException,
             ConflictException {
     	final JID bareJID = new JID(jid.toBareJID());
-        List<Presence> updatedPresences = null;
+        List<Presence> updatedPresences = Collections.emptyList();
         boolean wasMember = false;
         lock.writeLock().lock();
         try {

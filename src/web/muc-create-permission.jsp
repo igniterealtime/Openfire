@@ -80,8 +80,10 @@
 
     JID bareJID = null;
     try {
-        // do validation
-    	bareJID = new JID(new JID(userJID).toBareJID());
+    	if (userJID != null && userJID.trim().length() > 0) {
+	        // do validation
+	    	bareJID = new JID(new JID(userJID.trim()).toBareJID());
+    	}
     } catch (java.lang.IllegalArgumentException ex) {
         errors.put("userJID","userJID");
     }

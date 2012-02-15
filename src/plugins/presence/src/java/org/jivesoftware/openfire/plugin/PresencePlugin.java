@@ -194,6 +194,7 @@ public class PresencePlugin implements Plugin, Component {
             throw new UserNotFoundException("Target JID not found in request");
         }
         JID targetJID = new JID(jid);
+
         // Check that the sender is not requesting information of a remote server entity
         if (targetJID.getDomain() == null || XMPPServer.getInstance().isRemote(targetJID)) {
             throw new UserNotFoundException("Domain does not matches local server domain");
@@ -236,8 +237,13 @@ public class PresencePlugin implements Plugin, Component {
             if (sender == null) {
                 throw new UserNotFoundException("Sender is null");
             }
-            else if (!presenceManager.canProbePresence(new JID(sender), targetJID.getNode())) {
-                throw new UserNotFoundException("Sender is not allowed to probe this user");
+            else {
+                //  If sender is same as target, then we can see ourselves
+                JID senderJID = new JID(sender);
+                if (!senderJID.getNode().equals(targetJID.getNode()) &&
+                    !presenceManager.canProbePresence(new JID(sender), targetJID.getNode())) {
+                    throw new UserNotFoundException("Sender is not allowed to probe this user");
+                }
             }
         }
         User user = userManager.getUser(targetJID.getNode());

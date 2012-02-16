@@ -43,6 +43,9 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 			if (packet instanceof IQ) {
 				IQ iqpacket = (IQ) packet;
 				Element root = iqpacket.getChildElement();
+				if (root == null)
+					return; 
+				
 				String ns = root.getNamespaceURI();
 				if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
 					if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {

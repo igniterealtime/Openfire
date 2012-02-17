@@ -97,7 +97,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private PacketRouter router;
     private RoutingTable routingTable;
     private String serverName;
-    private XMPPServer server;
     private String localIPAddress = null;
 
     // Used to know if the sockets have been started
@@ -558,7 +557,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     @Override
 	public void initialize(XMPPServer server) {
         super.initialize(server);
-        this.server = server;
         serverName = server.getServerInfo().getXMPPDomain();
         router = server.getPacketRouter();
         routingTable = server.getRoutingTable();

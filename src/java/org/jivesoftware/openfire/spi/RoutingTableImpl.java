@@ -565,10 +565,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
-     * Returns the sessions that had the highest presence priority greater than zero.
+     * Returns the sessions that had the highest presence priority that is non-negative.
      *
      * @param sessions the list of user sessions that filter and get the ones with highest priority.
-     * @return the sessions that had the highest presence priority greater than zero or empty collection
+     * @return the sessions that had the highest presence non-negative priority or empty collection
      *         if all were negative.
      */
     private List<ClientSession> getHighestPrioritySessions(List<ClientSession> sessions) {

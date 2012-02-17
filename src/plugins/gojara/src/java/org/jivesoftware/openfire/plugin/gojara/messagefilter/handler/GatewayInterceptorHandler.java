@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.handler;
 
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.interceptors.DiscoPackageInterceptorHandler;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.interceptors.IQLastInterceptor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.interceptors.StatisticPackageInterceptor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;
 
@@ -19,8 +20,12 @@ public class GatewayInterceptorHandler extends AbstractInterceptorHandler {
 		DiscoPackageInterceptorHandler discoInterceptor = new DiscoPackageInterceptorHandler(subdomain);
 		RemoteRosterInterceptor remoteRosterInterceptor = new RemoteRosterInterceptor(subdomain);
 		StatisticPackageInterceptor statisticInterceptor = new StatisticPackageInterceptor(subdomain);
+		IQLastInterceptor iqLastInterceptor = new IQLastInterceptor(subdomain);
 		addInterceptor(remoteRosterInterceptor);
 		addInterceptor(discoInterceptor);
 		addInterceptor(statisticInterceptor);
+		addInterceptor(iqLastInterceptor);
+
 	}
+
 }

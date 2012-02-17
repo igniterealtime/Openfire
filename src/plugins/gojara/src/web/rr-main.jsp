@@ -23,6 +23,10 @@
 	boolean persistentRoster = true;
 	String sparkdiscoParam = request.getParameter("sparkDiscoInfo");
 	boolean sparkDiscoInfo = sparkdiscoParam == null ? false : sparkdiscoParam.equals("true");
+	
+	String iqLastFilterPram = request.getParameter("iqLastFilter");
+	boolean iqLastFilter = iqLastFilterPram == null ? false : iqLastFilterPram.equals("true");
+	
 	String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
 	PermissionManager _pmanager = new PermissionManager();
 	DatabaseManager _db;
@@ -43,6 +47,7 @@
 		}
 		JiveGlobals.setProperty("plugin.remoteroster.persistent", (persistentRoster ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.iqLastFilter", (iqLastFilter ? "true" : "false"));
 		response.sendRedirect("rr-main.jsp?success=true");
 		return;
 	}
@@ -321,14 +326,28 @@
 					: ""%> />
 
 										</td>
-										<td><label for="SDI"> Support jabber:iq:registered feature*</label></td>
+										<td><label for="SDI"> Support jabber:iq:registered feature</label></td>
 									</tr>
 									<tr>
 										<td />
-										<td align="left" style="font-size: -3; color: grey">*If you use Spark clients within your network, it
+										<td align="left" style="font-size: -3; color: grey">If you use Spark clients within your network, it
 											might be necessary to modify the service discovery packets between Spark and the external component. If you
 											check this RemoteRoster will add the feature "jabber:iq:registered" to the disco#info to indicate that the
 											Client is registered with the external component.</td>
+									</tr>
+									<tr>
+										<td><input type="checkbox" name="iqLastFilter" id="SDI2" value="true"
+											<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.iqLastFilter", false) ? "checked=\"checked\""
+					: ""%> />
+
+										</td>
+										<td><label for="SDI">Reply to jabber:iq:last </label></td>
+									</tr>
+									<tr>
+										<td />
+										<td align="left" style="font-size: -3; color: grey">Some clients try to check how long a contact is already offline.
+										 This feature is not supported by spectrum so it won't response to this IQ stanza. To prevent the client from waiting
+										 for a response we could answer with a service-unavailable message as described in XEP-12.</td>
 									</tr>
 								</tbody>
 							</table>

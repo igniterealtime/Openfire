@@ -54,7 +54,8 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
     public SimpleSSLSocketFactory() {
 
         try {
-            SSLContext sslcontent = SSLContext.getInstance("TLS");
+            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+            SSLContext sslcontent = SSLContext.getInstance(algorithm);
             sslcontent.init(null, // KeyManager not required
                             new TrustManager[] { new DummyTrustManager() },
                             new java.security.SecureRandom());

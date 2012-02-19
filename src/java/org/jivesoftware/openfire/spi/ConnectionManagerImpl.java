@@ -409,10 +409,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients SSL unless it's been disabled.
         if (isClientSSLListenerEnabled()) {
             int port = getClientSSLListenerPort();
-            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm");
-            if ("".equals(algorithm) || algorithm == null) {
-                algorithm = "TLS";
-            }
+            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
             try {
                 // Create SocketAcceptor with correct number of processors
                 sslSocketAcceptor = buildSocketAcceptor();

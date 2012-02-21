@@ -168,4 +168,7 @@
 
 		</plugins>
 	</build>
+	<modules>
+		<module>xmppserver</module>
+	</modules>
 </project>

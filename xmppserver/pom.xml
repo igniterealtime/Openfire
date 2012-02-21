@@ -8,6 +8,21 @@
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>xmppserver</artifactId>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+					<excludes>
+						<exclude>**/MINAStatCollector.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 	<dependencies>
 		<dependency>
 			<groupId>dom4j</groupId>
@@ -74,22 +89,27 @@
 			<artifactId>log4j</artifactId>
 			<version>1.2.16</version>
 		</dependency>
-<dependency>
-	<groupId>xpp3</groupId>
-	<artifactId>xpp3</artifactId>
-	<version>1.1.4c</version>
-</dependency>
-           <dependency>
-	<groupId>javax.mail</groupId>
-	<artifactId>mail</artifactId>
-	<version>1.4.1</version>
-</dependency>
-            <dependency>
-	<groupId>javax.jmdns</groupId>
-	<artifactId>jmdns</artifactId>
-	<version>3.4.1</version>
-</dependency>
-             
+		<dependency>
+			<groupId>xpp3</groupId>
+			<artifactId>xpp3</artifactId>
+			<version>1.1.4c</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.jmdns</groupId>
+			<artifactId>jmdns</artifactId>
+			<version>3.4.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>rome</groupId>
+			<artifactId>rome-fetcher</artifactId>
+			<version>1.0</version>
+		</dependency>
 
 	</dependencies>
 </project>

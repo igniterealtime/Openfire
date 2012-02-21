@@ -1,0 +1,171 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.igniterealtime.openfire</groupId>
+	<artifactId>parent</artifactId>
+	<version>4.0.0-SNAPSHOT</version>
+
+	<packaging>pom</packaging>
+
+	<organization>
+		<name>Ignite Realtime</name>
+		<url>http://www.igniterealtime.org</url>
+	</organization>
+	<url>http://www.igniterealtime.org/projects/openfire/</url>
+
+	<inceptionYear>2003</inceptionYear>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<issueManagement>
+		<system>jira</system>
+		<url>http://issues.igniterealtime.org/browse/OF</url>
+	</issueManagement>
+
+	<scm>
+		<connection>scm:svn:http://svn.igniterealtime.org/svn/repos/openfire/trunk/</connection>
+		<developerConnection>scm:svn:https://svn.igniterealtime.org/svn/repos/openfire/trunk/</developerConnection>
+		<url>http://fisheye.igniterealtime.org/viewrep/openfire/trunk/</url>
+	</scm>
+	
+	<developers>
+		<developer>
+			<name>Guus der Kinderen</name>
+			<roles>
+				<role>Lead Developer</role>
+			</roles>
+			<email>guus.der.kinderen@gmail.com</email>
+			<timezone>+1</timezone>
+			<organization>Ignite Realtime</organization>
+			<organizationUrl>http://www.igniterealtime.org</organizationUrl>
+		</developer>
+	</developers>
+
+	<contributors>
+		<contributor>
+			<name>Matt Tucker</name>
+			<roles>
+				<role>Original author</role>
+				<role>Developer</role>
+			</roles>
+			<email>matt@jivesoftware.com</email>
+			<organization>Jive Software</organization>
+			<organizationUrl>http://www.jivesoftware.com</organizationUrl>
+			<timezone>-8</timezone>
+		</contributor>
+		<contributor>
+			<name>Gaston Dombiak</name>
+			<roles>
+				<role>Original author</role>
+				<role>Developer</role>
+			</roles>
+			<email>gaston@jivesoftware.com</email>
+			<organization>Jive Software</organization>
+			<organizationUrl>http://www.jivesoftware.com</organizationUrl>
+			<timezone>-8</timezone>
+		</contributor>
+	</contributors>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+
+		<pluginManagement>
+
+			<plugins>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+					<configuration>
+						<archive>
+							<manifest>
+								<addClasspath>false</addClasspath>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							</manifest>
+							<manifestEntries>
+								<MavenGroupId>${project.groupId}</MavenGroupId>
+								<MavenArtifactId>${project.artifactId}</MavenArtifactId>
+								<MavenVersion>${project.version}</MavenVersion>
+								<MavenParentGroupId>${project.parent.groupId}</MavenParentGroupId>
+								<MavenParentArtifactId>${project.parent.artifactId}</MavenParentArtifactId>
+								<MavenParentVersion>${project.parent.version}</MavenParentVersion>
+								<BambooBuildKey>${bamboo.buildKey}</BambooBuildKey>
+								<BambooBuildNumber>${bamboo.buildNumber}</BambooBuildNumber>
+								<BambooCustomSVNRevisionNumber>${bamboo.custom.svn.revision.number}</BambooCustomSVNRevisionNumber>
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-war-plugin</artifactId>
+					<version>2.2</version>
+					<configuration>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+							<manifestEntries>
+								<MavenGroupId>${project.groupId}</MavenGroupId>
+								<MavenArtifactId>${project.artifactId}</MavenArtifactId>
+								<MavenVersion>${project.version}</MavenVersion>
+								<MavenParentGroupId>${project.parent.groupId}</MavenParentGroupId>
+								<MavenParentArtifactId>${project.parent.artifactId}</MavenParentArtifactId>
+								<MavenParentVersion>${project.parent.version}</MavenParentVersion>
+								<BambooBuildKey>${bamboo.buildKey}</BambooBuildKey>
+								<BambooBuildNumber>${bamboo.buildNumber}</BambooBuildNumber>
+								<BambooCustomSVNRevisionNumber>${bamboo.custom.svn.revision.number}</BambooCustomSVNRevisionNumber>
+							</manifestEntries>
+						</archive>
+					</configuration>
+				</plugin>
+
+			</plugins>
+
+		</pluginManagement>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>findbugs-maven-plugin</artifactId>
+				<version>2.4.0</version>
+				<configuration>
+					<findbugsXmlOutput>true</findbugsXmlOutput>
+				</configuration>
+				<executions>
+					<execution>
+						<id>findbugs</id>
+						<phase>test</phase>
+						<goals>
+							<goal>findbugs</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>

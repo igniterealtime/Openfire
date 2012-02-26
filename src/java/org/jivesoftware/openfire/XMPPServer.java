@@ -98,7 +98,6 @@ import org.jivesoftware.openfire.spi.PacketTransporterImpl;
 import org.jivesoftware.openfire.spi.PresenceManagerImpl;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
-import org.jivesoftware.openfire.stun.STUNService;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
@@ -1420,17 +1419,6 @@ public class XMPPServer {
      */
     public MediaProxyService getMediaProxyService() {
         return (MediaProxyService) modules.get(MediaProxyService.class);
-    }
-
-    /**
-     * Returns the <code>STUNService</code> registered with this server. The
-     * <code>MediaProxyService</code> was registered with the server as a module while starting up
-     * the server.
-     *
-     * @return the <code>STUNService</code> registered with this server.
-     */
-    public STUNService getSTUNService() {
-        return (STUNService) modules.get(STUNService.class);
     }
 
     /**

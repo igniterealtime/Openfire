@@ -61,7 +61,7 @@ public class MulticastDNSService extends BasicModule {
 
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
 
-            public void propertySet(String property, Map params) {
+            public void propertySet(String property, Map<String, Object> params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
                         property.equals(" xmpp.component.socket.port"))
@@ -71,7 +71,7 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
 
-            public void propertyDeleted(String property, Map params) {
+            public void propertyDeleted(String property, Map<String, Object> params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
                         property.equals(" xmpp.component.socket.port"))
@@ -81,10 +81,10 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
 
-            public void xmlPropertySet(String property, Map params) {
+            public void xmlPropertySet(String property, Map<String, Object> params) {
             }
 
-            public void xmlPropertyDeleted(String property, Map params) {
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) {
             }
         });
     }
@@ -116,17 +116,17 @@ public class MulticastDNSService extends BasicModule {
                 }
                 try {
                     if (jmdns == null) {
-                        jmdns = new JmDNS();
+                        jmdns = JmDNS.create();
                     }
                     String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
                     if (clientPortNum != -1) {
-                        ServiceInfo clientService = new ServiceInfo("_xmpp-client._tcp.local.",
+                        ServiceInfo clientService = ServiceInfo.create("_xmpp-client._tcp.local.",
                                 serverName + "._xmpp-client._tcp.local.", clientPortNum, "XMPP Server");
                         jmdns.registerService(clientService);
                     }
                     if (componentPortNum != -1) {
-                        ServiceInfo componentService = new ServiceInfo("_xmpp-component._tcp.local.",
+                        ServiceInfo componentService = ServiceInfo.create("_xmpp-component._tcp.local.",
                                 serverName +  "._xmpp-component._tcp.local.", componentPortNum, "XMPP Component Server");
                         jmdns.registerService(componentService);
                     }
@@ -136,7 +136,7 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
         };
-        // Schedule the task to run in 5 seconds, to give Wildire time to start the ports. 
+        // Schedule the task to run in 5 seconds, to give Openfire time to start the ports. 
         TaskEngine.getInstance().schedule(startService, 5000);
     }
 

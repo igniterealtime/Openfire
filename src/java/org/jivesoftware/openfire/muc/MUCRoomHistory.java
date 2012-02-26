@@ -84,12 +84,10 @@ public final class MUCRoomHistory {
         if (isNonAnonymousRoom != room.canAnyoneDiscoverJID()) {
             isNonAnonymousRoom = room.canAnyoneDiscoverJID();
             // Update the "from" attribute of the delay information in the history
-            Message message;
-            Element delayElement;
             // TODO Make this update in a separate thread
-            for (Iterator it = getMessageHistory(); it.hasNext();) {
-                message = (Message) it.next();
-                delayElement = message.getChildElement("x", "jabber:x:delay");
+            for (Iterator<Message> it = getMessageHistory(); it.hasNext();) {
+                Message message = it.next();
+                Element delayElement = message.getChildElement("x", "jabber:x:delay");
                 if (room.canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute
                     try {
@@ -133,7 +131,7 @@ public final class MUCRoomHistory {
         historyStrategy.addMessage(packetToAdd);
     }
 
-    public Iterator getMessageHistory() {
+    public Iterator<Message> getMessageHistory() {
         return historyStrategy.getMessageHistory();
     }
 
@@ -144,7 +142,7 @@ public final class MUCRoomHistory {
      * 
      * @return A list iterator of Message objects positioned at the end of the list.
      */
-    public ListIterator getReverseMessageHistory() {
+    public ListIterator<Message> getReverseMessageHistory() {
         return historyStrategy.getReverseMessageHistory();
     }
 

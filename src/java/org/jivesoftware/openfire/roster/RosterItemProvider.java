@@ -357,7 +357,9 @@ public class RosterItemProvider {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException e) {
-                    Log.error(e.getMessage(), e);
+					Log.error("Unable to insert group with name '" + groupName
+							+ "' (rank: '" + i + "')into roster with id '"
+							+ rosterID + "'.", e);
                 }
             }
         }

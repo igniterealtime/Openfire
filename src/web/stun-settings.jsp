@@ -38,6 +38,9 @@
         if (ip1 == ip2) {
             msg += "<fmt:message key="stun.settings.alert.notvalidip" />";
         }
+        if (ip1 == 'CHOOSE' || ip2 == 'CHOOSE') {
+            msg += "<fmt:message key="stun.settings.alert.notvalidip" />";
+        }
         if (port1 == port2) {
             if (msg != "") msg += "\n";
             msg += "<fmt:message key="stun.settings.alert.notvalidip" />";

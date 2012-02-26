@@ -37,6 +37,7 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,8 +69,6 @@ public class TLSWrapper {
      */
     private static boolean debug = false;
 
-    private static final String PROTOCOL = "TLS";
-
     private SSLEngine tlsEngine;
     private SSLEngineResult tlsEngineResult;
 
@@ -82,6 +81,8 @@ public class TLSWrapper {
         if (debug) {
             System.setProperty("javax.net.debug", "all");
         }
+
+        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
 
         // Create/initialize the SSLContext with key material
         try {
@@ -108,7 +109,7 @@ public class TLSWrapper {
                 }
             }
 
-            SSLContext tlsContext = SSLContext.getInstance(PROTOCOL);
+            SSLContext tlsContext = SSLContext.getInstance(algorithm);
 
             tlsContext.init(km, tm, null);
 
@@ -128,7 +129,7 @@ public class TLSWrapper {
         } catch (KeyManagementException e) {
             Log.error("TLSHandler startup problem.\n" + "  SSLContext initialisation failed.", e);
         } catch (NoSuchAlgorithmException e) {
-            Log.error("TLSHandler startup problem.\n" + "  The " + PROTOCOL + " does not exist", e);
+            Log.error("TLSHandler startup problem.\n" + "  The " + algorithm + " does not exist", e);
         } catch (IOException e) {
             Log.error("TLSHandler startup problem.\n"
                     + "  the KeyStore or TrustStore does not exist", e);

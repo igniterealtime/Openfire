@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.entitycaps;
 
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
@@ -136,7 +137,7 @@ public class EntityCapabilities implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeSafeUTF(out, verAttribute);
     }
 
-    public int getCachedSize() {
+    public int getCachedSize() throws CannotCalculateSizeException {
         int size = CacheSizes.sizeOfCollection(identities);
         size += CacheSizes.sizeOfCollection(features);
         size += CacheSizes.sizeOfString(verAttribute);

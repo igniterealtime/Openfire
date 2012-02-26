@@ -557,16 +557,8 @@ public class MUCPersistenceManager {
 				} catch (IllegalArgumentException ex) {
 					Log.warn("An illegal JID ({}) was found in the database, "
 							+ "while trying to load all affiliations for room "
-							+ "{} on the MUC service {}. An attempt is made to"
-							+ " delete the associated affiliation. The JID is"
-							+ "  otherwise ignored.", new Object[] { jidValue,
-							roomID, chatserver.getName() });
-					try {
-						removeAffiliationFromDB(room, jidValue, affiliation);
-						Log.warn("Affiliation removed.");
-					} catch (RuntimeException e) {
-						Log.warn("Unable to remove affiliation.", e);
-					}
+							+ "{} on the MUC service {}. The JID is ignored."
+							, new Object[] { jidValue, roomID, chatserver.getName() });
 					continue;
 				}
                 try {
@@ -727,9 +719,10 @@ public class MUCPersistenceManager {
      * @param newAffiliation the new affiliation of the user in the room.
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
-    public static void saveAffiliationToDB(MUCRoom room, String bareJID, String nickname,
+    public static void saveAffiliationToDB(MUCRoom room, JID jid, String nickname,
             MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
     {
+    	final String bareJID = jid.toBareJID();
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -880,9 +873,10 @@ public class MUCPersistenceManager {
      * @param bareJID The bareJID of the user to remove his affiliation.
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
-    public static void removeAffiliationFromDB(MUCRoom room, String bareJID,
+    public static void removeAffiliationFromDB(MUCRoom room, JID jid,
             MUCRole.Affiliation oldAffiliation)
     {
+    	final String bareJID = jid.toBareJID();
         if (room.isPersistent() && room.wasSavedToDB()) {
             if (MUCRole.Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
@@ -1004,13 +998,14 @@ public class MUCPersistenceManager {
      * @param name the name of the property to return.
      * @return the property value specified by name.
      */
-    public static String getProperty(String subdomain, String name) {
-        MUCServiceProperties properties = propertyMaps.get(subdomain);
-        if (properties == null) {
-            properties = new MUCServiceProperties(subdomain);
-            propertyMaps.put(subdomain, properties);
-        }
-        return properties.get(name);
+    public static String getProperty(String subdomain, String name) {    	
+    	final MUCServiceProperties newProps = new MUCServiceProperties(subdomain);
+    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, newProps);
+    	if (oldProps != null) {
+    		return oldProps.get(name);
+    	} else {
+    		return newProps.get(name);
+    	}
     }
 
     /**
@@ -1023,18 +1018,12 @@ public class MUCPersistenceManager {
      * @return the property value specified by name.
      */
     public static String getProperty(String subdomain, String name, String defaultValue) {
-        MUCServiceProperties properties = propertyMaps.get(subdomain);
-        if (properties == null) {
-            properties = new MUCServiceProperties(subdomain);
-            propertyMaps.put(subdomain, properties);
-        }
-        String value = properties.get(name);
-        if (value != null) {
-            return value;
-        }
-        else {
-            return defaultValue;
-        }
+    	final String value = getProperty(subdomain, name);
+    	if (value != null) {
+    		return value;
+    	} else {
+    		return defaultValue;
+    	}
     }
 
     /**
@@ -1130,11 +1119,11 @@ public class MUCPersistenceManager {
      * @return a List of all immediate children property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain, String parent) {
-        MUCServiceProperties properties = propertyMaps.get(subdomain);
-        if (properties == null) {
-            properties = new MUCServiceProperties(subdomain);
-            propertyMaps.put(subdomain, properties);
-        }
+    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+    	if (oldProps != null) {
+    		properties = oldProps;
+    	} 
         return new ArrayList<String>(properties.getChildrenNames(parent));
     }
 
@@ -1150,11 +1139,11 @@ public class MUCPersistenceManager {
      * @return all child property values for the given parent.
      */
     public static List<String> getProperties(String subdomain, String parent) {
-        MUCServiceProperties properties = propertyMaps.get(subdomain);
-        if (properties == null) {
-            properties = new MUCServiceProperties(subdomain);
-            propertyMaps.put(subdomain, properties);
-        }
+    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+    	if (oldProps != null) {
+    		properties = oldProps;
+    	} 
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
         List<String> values = new ArrayList<String>();
@@ -1175,11 +1164,11 @@ public class MUCPersistenceManager {
      * @return a List of all property names (Strings).
      */
     public static List<String> getPropertyNames(String subdomain) {
-        MUCServiceProperties properties = propertyMaps.get(subdomain);
-        if (properties == null) {
-            properties = new MUCServiceProperties(subdomain);
-            propertyMaps.put(subdomain, properties);
-        }
+    	MUCServiceProperties properties = new MUCServiceProperties(subdomain);
+    	final MUCServiceProperties oldProps = propertyMaps.putIfAbsent(subdomain, properties);
+    	if (oldProps != null) {
+    		properties = oldProps;
+    	} 
         return new ArrayList<String>(properties.getPropertyNames());
     }
 

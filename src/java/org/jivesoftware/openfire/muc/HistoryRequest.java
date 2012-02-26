@@ -149,9 +149,9 @@ public class HistoryRequest {
      */
     public void sendHistory(LocalMUCRole joinRole, MUCRoomHistory roomHistory) {
         if (!isConfigured()) {
-            Iterator history = roomHistory.getMessageHistory();
+            Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {
-                joinRole.send((Message) history.next());
+                joinRole.send(history.next());
             }
         }
         else {
@@ -164,14 +164,13 @@ public class HistoryRequest {
                 }
                 return;
             }
-            Message message;
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
             Element delayInformation;
             LinkedList<Message> historyToSend = new LinkedList<Message>();
-            ListIterator iterator = roomHistory.getReverseMessageHistory();
+            ListIterator<Message> iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
-                message = (Message)iterator.previous();
+                Message message = iterator.previous();
                 // Update number of characters to send
                 String text = message.getBody() == null ? message.getSubject() : message.getBody();
                 if (text == null) {

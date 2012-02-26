@@ -148,7 +148,7 @@
                     try {
                         room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName, address);
                         // Check if the room was created concurrently by another user
-                        if (!room.getOwners().contains(address.toBareJID())) {
+                        if (!room.getOwners().contains(new JID(address.toBareJID()))) {
                             errors.put("room_already_exists", "room_already_exists");
                         }
                     }
@@ -248,15 +248,15 @@
 
             // Keep the existing list of admins
             field = new XFormFieldImpl("muc#roomconfig_roomadmins");
-            for (String jid : room.getAdmins()) {
-                field.addValue(jid);
+            for (JID jid : room.getAdmins()) {
+                field.addValue(jid.toString());
             }
             dataForm.addField(field);
 
             // Keep the existing list of owners
             field = new XFormFieldImpl("muc#roomconfig_roomowners");
-            for (String jid : room.getOwners()) {
-                field.addValue(jid);
+            for (JID jid : room.getOwners()) {
+                field.addValue(jid.toString());
             }
             dataForm.addField(field);
 

@@ -24,16 +24,7 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-import javax.net.ssl.SSLContext;
-
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-
+import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -45,7 +36,13 @@ import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
-
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,8 +78,6 @@ public class AdminConsolePlugin implements Plugin {
     public AdminConsolePlugin() {
         contexts = new ContextHandlerCollection();
         
-        // Configure Jetty logging to a more reasonable default.
-        System.setProperty("org.eclipse.jetty.util.log.class", "org.jivesoftware.util.log.util.JettyLog");
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
@@ -126,21 +121,21 @@ public class AdminConsolePlugin implements Plugin {
                         XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
-                         
-                JiveSslConnector httpsConnector = new JiveSslConnector();
+             
+                final SslContextFactory sslContextFactory = new SslContextFactory(SSLConfig.getKeystoreLocation());
+                sslContextFactory.setTrustStorePassword(SSLConfig.gets2sTrustPassword());
+                sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
+                sslContextFactory.setTrustStore(SSLConfig.gets2sTruststoreLocation());
+                sslContextFactory.setNeedClientAuth(false);
+                sslContextFactory.setWantClientAuth(false);
+                sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
+                sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
+                
+                final SslSelectChannelConnector httpsConnector = new SslSelectChannelConnector(sslContextFactory);
                 String bindInterface = getBindInterface();
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
 
-                httpsConnector.setTrustPassword(SSLConfig.gets2sTrustPassword());
-                httpsConnector.setTruststoreType(SSLConfig.getStoreType());
-                httpsConnector.setTruststore(SSLConfig.gets2sTruststoreLocation());
-                httpsConnector.setNeedClientAuth(false);
-                httpsConnector.setWantClientAuth(false);
-
-                httpsConnector.setKeyPassword(SSLConfig.getKeyPassword());
-                httpsConnector.setKeystoreType(SSLConfig.getStoreType());
-                httpsConnector.setKeystore(SSLConfig.getKeystoreLocation());
                 adminServer.addConnector(httpsConnector);
 
                 sslEnabled = true;
@@ -362,14 +357,6 @@ public class AdminConsolePlugin implements Plugin {
             if ("RSA".equals(certificates.get(0).getPublicKey().getAlgorithm())) {
                 restartNeeded = true;
             }
-        }
-    }
-
-    private class JiveSslConnector extends SslSelectChannelConnector {
-
-        @Override
-        protected SSLContext createSSLContext() throws Exception {
-            return SSLConfig.getSSLContext();
         }
     }
 }

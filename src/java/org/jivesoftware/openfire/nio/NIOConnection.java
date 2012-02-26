@@ -346,7 +346,8 @@ public class NIOConnection implements Connection {
             }
         }
 
-        SSLContext tlsContext = SSLContext.getInstance("TLS");
+        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+        SSLContext tlsContext = SSLContext.getInstance(algorithm);
 
         tlsContext.init(km, tm, null);
 

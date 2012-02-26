@@ -57,6 +57,8 @@ import java.util.regex.Pattern;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DEREncodable;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSequence;
@@ -253,18 +255,34 @@ public class CertificateManager {
 
                         // Check the object identifier
                         DERObjectIdentifier objectId = (DERObjectIdentifier) otherNameSeq.getObjectAt(0);
+                    	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
+                        
                         if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
                             // Not a XMPP otherName
-                            Log.debug("CertificateManager: Ignoring non-XMPP otherName, " + objectId.getId());
+                            Log.debug("Ignoring non-XMPP otherName, " + objectId.getId());
                             continue;
                         }
 
                         // Get identity string
-                        DERUTF8String derStr = DERUTF8String.getInstance(otherNameSeq.getObjectAt(1));
-                        String identity = derStr.getString();
-                        if (identity != null && identity.length() > 0) {
-                            // Add the decoded server name to the list of identities
-                            identities.add(identity);
+                        try {
+                        	final String identity;
+	                        DEREncodable o = otherNameSeq.getObjectAt(1);
+	                        if (o instanceof DERTaggedObject) {
+	                        	ASN1TaggedObject ato = DERTaggedObject.getInstance(o);
+	                        	Log.debug("... processing DERTaggedObject: " + ato.toString());
+	                        	// TODO: there's bound to be a better way...
+	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
+	                        } else {
+								DERUTF8String derStr = DERUTF8String.getInstance(o);
+		                        identity = derStr.getString();
+	                        }
+	                        if (identity != null && identity.length() > 0) {
+	                            // Add the decoded server name to the list of identities
+	                            identities.add(identity);
+	                        }
+                        } catch (IllegalArgumentException ex) {
+                        	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
+                        	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
                         }
                     }
                     catch (UnsupportedEncodingException e) {
@@ -274,14 +292,14 @@ public class CertificateManager {
                         // Ignore
                     }
                     catch (Exception e) {
-                        Log.error("CertificateManager: Error decoding subjectAltName", e);
+                        Log.error("Error decoding subjectAltName", e);
                     }
                 }
                 // Other types are not applicable for XMPP, so silently ignore them
             }
         }
         catch (CertificateParsingException e) {
-            Log.error("CertificateManager: Error parsing SubjectAltName in certificate: " + certificate.getSubjectDN(), e);
+            Log.error("Error parsing SubjectAltName in certificate: " + certificate.getSubjectDN(), e);
         }
         return identities;
     }
@@ -324,7 +342,7 @@ public class CertificateManager {
     }
 
     /**
-     * Returns true if a certificate with the specifed configuration was found in the key store.
+     * Returns true if a certificate with the specified configuration was found in the key store.
      *
      * @param ksKeys the keystore to use for searching the certificate.
      * @param domain the domain present in the subjectAltName or "*" if anything is accepted.
@@ -333,24 +351,27 @@ public class CertificateManager {
      * @throws KeyStoreException
      */
     private static boolean isCertificate(KeyStore ksKeys, String domain, String algorithm) throws KeyStoreException {
-        for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
+        boolean result = false;
+    	for (Enumeration<String> aliases = ksKeys.aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) ksKeys.getCertificate(aliases.nextElement());
             if ("*".equals(domain)) {
                 // Any domain certified by the certificate is accepted
                 if (certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
-                    return true;
+                    result = true;
                 }
             }
             else {
                 // Only accept certified domains that match the specified domain
                 for (String identity : getPeerIdentities(certificate)) {
                     if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
-                        return true;
+                        result = true;
                     }
                 }
             }
         }
-        return false;
+
+    	Log.debug("Check for certificate for '{}' using algorithm {} returned: {}", new Object[] { domain, algorithm, result} );
+    	return result;
     }
 
     /**

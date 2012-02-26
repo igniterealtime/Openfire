@@ -22,8 +22,12 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.util.cache.Cacheable;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility class for determining the sizes in bytes of commonly used objects.
@@ -112,23 +116,24 @@ public class CacheSizes {
     }
 
     /**
-     * Returns the size in bytes of a Map object. All keys and
-     * values <b>must be Strings</b>.
+     * Returns the size in bytes of a Map object. 
      *
      * @param map the Map object to determine the size of.
      * @return the size of the Map object.
      */
-    public static int sizeOfMap(Map<String, String> map) {
+    public static int sizeOfMap(Map map)
+	    throws CannotCalculateSizeException {
         if (map == null) {
             return 0;
         }
         // Base map object -- should be something around this size.
         int size = 36;
+		Set<? extends Map.Entry> set = map.entrySet();
         
         // Add in size of each value
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-			size += sizeOfString(entry.getKey());
-            size += sizeOfString(entry.getValue());
+        for (Map.Entry<Object, Object> entry : set) {
+			size += sizeOfAnything(entry.getKey());
+            size += sizeOfAnything(entry.getValue());
         }
         return size;
     }
@@ -140,7 +145,8 @@ public class CacheSizes {
      * @param list the Collection object to determine the size of.
      * @return the size of the Collection object.
      */
-    public static int sizeOfCollection(Collection list) {
+    public static int sizeOfCollection(Collection list) 
+            throws CannotCalculateSizeException {
         if (list == null) {
             return 0;
         }
@@ -149,17 +155,99 @@ public class CacheSizes {
         // Add in size of each value
         Object[] values = list.toArray();
         for (int i = 0; i < values.length; i++) {
-            Object obj = values[i];
-            if (obj instanceof String) {
-                size += sizeOfString((String)obj);
-            }
-            else if (obj instanceof Long) {
-                size += sizeOfLong() + sizeOfObject();
-            }
-            else {
-                size += ((Cacheable)obj).getCachedSize();
-            }
+            size += sizeOfAnything(values[i]);
         }
         return size;
+    }
+
+    /**
+     * Returns the size of an object in bytes. Determining size by serialization
+     * is only used as a last resort.
+     *
+     * @return the size of an object in bytes.
+     */
+    public static int sizeOfAnything(Object object) 
+	    throws CannotCalculateSizeException {
+        // If the object is Cacheable, ask it its size.
+        if (object == null) {
+            return 0;
+        }
+        if (object instanceof Cacheable) {
+            return ((Cacheable)object).getCachedSize();
+        }
+        // Check for other common types of objects put into cache.
+        else if (object instanceof String) {
+            return sizeOfString((String)object);
+        }
+        else if (object instanceof Long) {
+            return sizeOfLong();
+        }
+        else if (object instanceof Integer) {
+            return sizeOfObject() + sizeOfInt();
+        }
+        else if (object instanceof Double) {
+            return sizeOfObject() + sizeOfDouble();
+        }
+        else if (object instanceof Boolean) {
+            return sizeOfObject() + sizeOfBoolean();
+        }
+        else if (object instanceof Map) {
+            return sizeOfMap((Map)object);
+        }
+        else if (object instanceof long[]) {
+            long[] array = (long[])object;
+            return sizeOfObject() + array.length * sizeOfLong();
+        }
+        else if (object instanceof Collection) {
+            return sizeOfCollection((Collection)object);
+        }
+        else if (object instanceof byte[]) {
+            byte [] array = (byte[])object;
+            return sizeOfObject() + array.length;
+        }
+        // Default behavior -- serialize the object to determine its size.
+        else {
+            int size = 1;
+            try {
+                // Default to serializing the object out to determine size.
+                CacheSizes.NullOutputStream out = new NullOutputStream();
+                ObjectOutputStream outObj = new ObjectOutputStream(out);
+                outObj.writeObject(object);
+                size = out.size();
+            }
+            catch (IOException ioe) {
+                throw new CannotCalculateSizeException(object);
+            }
+            return size;
+        }
+    }
+
+    private static class NullOutputStream extends OutputStream {
+
+        int size = 0;
+
+        @Override
+        public void write(int b) throws IOException {
+            size++;
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            size += b.length;
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) {
+            size += len;
+        }
+
+        /**
+         * Returns the number of bytes written out through the stream.
+         *
+         * @return the number of bytes written to the stream.
+         */
+        public int size() {
+            return size;
+        }
     }
 }

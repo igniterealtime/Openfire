@@ -62,7 +62,7 @@ public interface MultiUserChatService extends Component {
      * 
      * @return a list of bare JIDs.
      */
-    Collection<String> getSysadmins();
+    Collection<JID> getSysadmins();
 
     /**
      * Adds a new system administrator of the MUC service. A sysadmin has the same permissions as 
@@ -70,14 +70,14 @@ public interface MultiUserChatService extends Component {
      * 
      * @param userJID the bare JID of the new user to add as a system administrator.
      */
-    void addSysadmin(String userJID);
+    void addSysadmin(JID userJID);
 
     /**
      * Removes a system administrator of the MUC service.
      * 
      * @param userJID the bare JID of the user to remove from the list.
      */
-    void removeSysadmin(String userJID);
+    void removeSysadmin(JID userJID);
 
     /**
      * Returns false if anyone can create rooms or true if only the returned JIDs in
@@ -101,21 +101,21 @@ public interface MultiUserChatService extends Component {
      * 
      * @return a list of bare JIDs.
      */
-    Collection<String> getUsersAllowedToCreate();
+    Collection<JID> getUsersAllowedToCreate();
 
     /**
      * Adds a new user to the list of JIDs that are allowed to create MUC rooms.
      * 
      * @param userJID the bare JID of the new user to add to list.
      */
-    void addUserAllowedToCreate(String userJID);
+    void addUserAllowedToCreate(JID userJID);
 
     /**
      * Removes a user from list of JIDs that are allowed to create MUC rooms.
      * 
      * @param userJID the bare JID of the user to remove from the list.
      */
-    void removeUserAllowedToCreate(String userJID);
+    void removeUserAllowedToCreate(JID userJID);
 
     /**
      * Sets the time to elapse between clearing of idle chat users. A <code>TimerTask</code> will be

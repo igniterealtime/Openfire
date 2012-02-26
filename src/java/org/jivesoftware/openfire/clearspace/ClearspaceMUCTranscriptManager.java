@@ -186,7 +186,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
                     MUCRoom room = mucService.getChatRoom(jid.getNode());
                     // Not count room owners as occupants
                     int totalOccupants = room.getOccupantsCount();
-                    for (String owner : room.getOwners()) {
+                    for (JID owner : room.getOwners()) {
                         try {
                             if (!room.getOccupantsByBareJID(owner).isEmpty()) {
                                 totalOccupants--;

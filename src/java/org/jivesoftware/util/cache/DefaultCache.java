@@ -19,9 +19,6 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -138,7 +135,13 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // Delete an old entry if it exists.
         V answer = remove(key);
 
-        int objectSize = calculateSize(value);
+        int objectSize = 1;
+        try {
+             objectSize = CacheSizes.sizeOfAnything(value);
+        }
+        catch (CannotCalculateSizeException e) {
+             Log.warn(e.getMessage(), e);
+        }
 
         // If the object is bigger than the entire cache, simply don't add it.
         if (maxCacheSize > 0 && objectSize > maxCacheSize * .90) {
@@ -542,55 +545,6 @@ public class DefaultCache<K, V> implements Cache<K, V> {
     }
 
     /**
-     * Returns the size of an object in bytes. Determining size by serialization
-     * is only used as a last resort.
-     *
-     * @return the size of an object in bytes.
-     */
-    private int calculateSize(Object object) {
-        // If the object is Cacheable, ask it its size.
-        if (object instanceof Cacheable) {
-            return ((Cacheable)object).getCachedSize();
-        }
-        // Check for other common types of objects put into cache.
-        else if (object instanceof String) {
-            return CacheSizes.sizeOfString((String)object);
-        }
-        else if (object instanceof Long) {
-            return CacheSizes.sizeOfLong();
-        }
-        else if (object instanceof Integer) {
-            return CacheSizes.sizeOfObject() + CacheSizes.sizeOfInt();
-        }
-        else if (object instanceof Boolean) {
-            return CacheSizes.sizeOfObject() + CacheSizes.sizeOfBoolean();
-        }
-        else if (object instanceof long[]) {
-            long[] array = (long[])object;
-            return CacheSizes.sizeOfObject() + array.length * CacheSizes.sizeOfLong();
-        }
-        else if (object instanceof byte[]) {
-            byte [] array = (byte[])object;
-            return CacheSizes.sizeOfObject() + array.length;
-        }
-        // Default behavior -- serialize the object to determine its size.
-        else {
-            int size = 1;
-            try {
-                // Default to serializing the object out to determine size.
-                DefaultCache.NullOutputStream out = new DefaultCache.NullOutputStream();
-                ObjectOutputStream outObj = new ObjectOutputStream(out);
-                outObj.writeObject(object);
-                size = out.size();
-            }
-            catch (IOException ioe) {
-                Log.error(ioe.getMessage(), ioe);
-            }
-            return size;
-        }
-    }
-
-    /**
      * Clears all entries out of cache where the entries are older than the
      * maximum defined age.
      */
@@ -710,39 +664,6 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         public CacheObject(V object, int size) {
             this.object = object;
             this.size = size;
-        }
-    }
-
-    /**
-     * An extension of OutputStream that does nothing but calculate the number
-     * of bytes written through it.
-     */
-    private static class NullOutputStream extends OutputStream {
-
-        int size = 0;
-
-        @Override
-		public void write(int b) throws IOException {
-            size++;
-        }
-
-        @Override
-		public void write(byte[] b) throws IOException {
-            size += b.length;
-        }
-
-        @Override
-		public void write(byte[] b, int off, int len) {
-            size += len;
-        }
-
-        /**
-         * Returns the number of bytes written out through the stream.
-         *
-         * @return the number of bytes written to the stream.
-         */
-        public int size() {
-            return size;
         }
     }
 }

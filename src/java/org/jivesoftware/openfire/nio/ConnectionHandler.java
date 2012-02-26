@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.StreamError;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -135,14 +136,25 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
-            Log.debug("ConnectionHandler: ",cause);
+            Log.info("ConnectionHandler reports IOException for session: " + session, cause);
         }
         else if (cause instanceof ProtocolDecoderException) {
             Log.warn("Closing session due to exception: " + session, cause);
+            
+            // PIO-524: Determine stream:error message.
+            final StreamError error;
+            if (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) {
+            	error = new StreamError(StreamError.Condition.xml_not_well_formed);
+            } else {
+            	error = new StreamError(StreamError.Condition.internal_server_error);
+            }
+            
+            final Connection connection = (Connection) session.getAttribute(CONNECTION);
+            connection.deliverRawText(error.toXML());
             session.close();
         }
         else {
-            Log.error(cause.getMessage(), cause);
+            Log.error("ConnectionHandler reports unexpected exception for session: " + session, cause);
         }
     }
 

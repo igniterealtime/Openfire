@@ -52,65 +52,63 @@ class IQMUCRegisterHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
 
-    private static Element probeResult;
-    private MultiUserChatService mucService;
+    private static final Element probeResult;
+    
+    static {
+        // Create the registration form of the room which contains information
+        // such as: first name, last name and  nickname.
+        final DataForm registrationForm = new DataForm(DataForm.Type.form);
+        registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title"));
+        registrationForm.addInstruction(LocaleUtils
+                .getLocalizedString("muc.form.reg.instruction"));
+
+        final FormField fieldForm = registrationForm.addField();
+        fieldForm.setVariable("FORM_TYPE");
+        fieldForm.setType(FormField.Type.hidden);
+        fieldForm.addValue("http://jabber.org/protocol/muc#register");
+
+        final FormField fieldReg = registrationForm.addField();
+        fieldReg.setVariable("muc#register_first");
+        fieldReg.setType(FormField.Type.text_single);
+        fieldReg.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
+        fieldReg.setRequired(true);
+
+        final FormField fieldLast = registrationForm.addField();
+        fieldLast.setVariable("muc#register_last");
+        fieldLast.setType(FormField.Type.text_single);
+        fieldLast.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
+        fieldLast.setRequired(true);
+
+        final FormField fieldNick = registrationForm.addField();
+        fieldNick.setVariable("muc#register_roomnick");
+        fieldNick.setType(FormField.Type.text_single);
+        fieldNick.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
+        fieldNick.setRequired(true);
+
+        final FormField fieldUrl = registrationForm.addField();
+        fieldUrl.setVariable("muc#register_url");
+        fieldUrl.setType(FormField.Type.text_single);
+        fieldUrl.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
+
+        final FormField fieldMail = registrationForm.addField();
+        fieldMail.setVariable("muc#register_email");
+        fieldMail.setType(FormField.Type.text_single);
+        fieldMail.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
+
+        final FormField fieldFaq = registrationForm.addField();
+        fieldFaq.setVariable("muc#register_faqentry");
+        fieldFaq.setType(FormField.Type.text_single);
+        fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
+
+        // Create the probeResult and add the registration form
+        probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
+        probeResult.add(registrationForm.getElement());
+    }
+    
+    private final MultiUserChatService mucService;
 
     public IQMUCRegisterHandler(MultiUserChatService mucService) {
         this.mucService = mucService;
-        initialize();
-    }
-
-    public void initialize() {
-        if (probeResult == null) {
-            // Create the registration form of the room which contains information
-            // such as: first name, last name and  nickname.
-            final DataForm registrationForm = new DataForm(DataForm.Type.form);
-            registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title"));
-            registrationForm.addInstruction(LocaleUtils
-                    .getLocalizedString("muc.form.reg.instruction"));
-
-            final FormField fieldForm = registrationForm.addField();
-            fieldForm.setVariable("FORM_TYPE");
-            fieldForm.setType(FormField.Type.hidden);
-            fieldForm.addValue("http://jabber.org/protocol/muc#register");
-
-            final FormField fieldReg = registrationForm.addField();
-            fieldReg.setVariable("muc#register_first");
-            fieldReg.setType(FormField.Type.text_single);
-            fieldReg.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
-            fieldReg.setRequired(true);
-
-            final FormField fieldLast = registrationForm.addField();
-            fieldLast.setVariable("muc#register_last");
-            fieldLast.setType(FormField.Type.text_single);
-            fieldLast.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
-            fieldLast.setRequired(true);
-
-            final FormField fieldNick = registrationForm.addField();
-            fieldNick.setVariable("muc#register_roomnick");
-            fieldNick.setType(FormField.Type.text_single);
-            fieldNick.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
-            fieldNick.setRequired(true);
-
-            final FormField fieldUrl = registrationForm.addField();
-            fieldUrl.setVariable("muc#register_url");
-            fieldUrl.setType(FormField.Type.text_single);
-            fieldUrl.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
-
-            final FormField fieldMail = registrationForm.addField();
-            fieldMail.setVariable("muc#register_email");
-            fieldMail.setType(FormField.Type.text_single);
-            fieldMail.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
-
-            final FormField fieldFaq = registrationForm.addField();
-            fieldFaq.setVariable("muc#register_faqentry");
-            fieldFaq.setType(FormField.Type.text_single);
-            fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
-
-            // Create the probeResult and add the registration form
-            probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
-            probeResult.add(registrationForm.getElement());
-        }
     }
 
     public IQ handleIQ(IQ packet) {
@@ -138,16 +136,19 @@ class IQMUCRegisterHandler {
 
         if (IQ.Type.get == packet.getType()) {
             reply = IQ.createResultIQ(packet);
-            String nickname = room.getReservedNickname(packet.getFrom().toBareJID());
+            String nickname = room.getReservedNickname(packet.getFrom());
             Element currentRegistration = probeResult.createCopy();
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
                 ElementUtil.setProperty(currentRegistration, "query.registered", null);
                 Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                Iterator fields = form.elementIterator("field");
+                
+                @SuppressWarnings("unchecked")
+				Iterator<Element> fields = form.elementIterator("field");
+                
                 Element field;
                 while (fields.hasNext()) {
-                    field = (Element) fields.next();
+                    field = fields.next();
                     if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
                         field.addElement("value").addText(nickname);
                     }

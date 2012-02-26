@@ -124,7 +124,7 @@ public class ExternalizableUtil {
      * @return a Map of Long key/Integer value pairs.
      * @throws IOException if an error occurs.
      */
-    public Map readLongIntMap(DataInput in) throws IOException {
+    public Map<Long, Integer> readLongIntMap(DataInput in) throws IOException {
         return strategy.readLongIntMap(in);
     }
 
@@ -136,7 +136,7 @@ public class ExternalizableUtil {
      * @param stringList the List of Strings.
      * @throws IOException if an error occurs.
      */
-    public void writeStringList(DataOutput out, List stringList) throws IOException {
+    public void writeStringList(DataOutput out, List<String> stringList) throws IOException {
         strategy.writeStringList(out, stringList);
     }
 
@@ -291,14 +291,14 @@ public class ExternalizableUtil {
     }
 
     /**
-     * Writes a Map of String key and value pairs. This method handles the
+     * Writes a Map of Serializable key and value pairs. This method handles the
      * case when the Map is <tt>null</tt>.
      *
      * @param out       the output stream.
-     * @param map       the Map of String key and Externalizable value pairs.
+     * @param map       the Map of Serializable key and value pairs.
      * @throws java.io.IOException if an error occurs.
      */
-    public void writeSerializableMap(DataOutput out, Map<String, ? extends Serializable> map) throws IOException {
+    public void writeSerializableMap(DataOutput out, Map<? extends Serializable, ? extends Serializable> map) throws IOException {
         strategy.writeSerializableMap(out, map);
     }
     
@@ -317,16 +317,16 @@ public class ExternalizableUtil {
     }
 
     /**
-     * Reads a Map of String key and value pairs. This method will return
+     * Reads a Map of Serializable key and value pairs. This method will return
      * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
      *
      * @param in the input stream.
-     * @param map a Map of String key and Serializable value pairs.
+     * @param map a Map of Serializable key and value pairs.
      * @param loader class loader to use to build elements inside of the serialized collection.
      * @throws IOException if an error occurs.
      * @return the number of elements added to the collection.
      */
-    public int readSerializableMap(DataInput in, Map<String, ? extends Serializable> map, ClassLoader loader) throws IOException {
+    public int readSerializableMap(DataInput in, Map<? extends Serializable, ? extends Serializable> map, ClassLoader loader) throws IOException {
         return strategy.readSerializableMap(in, map, loader);
     }
 

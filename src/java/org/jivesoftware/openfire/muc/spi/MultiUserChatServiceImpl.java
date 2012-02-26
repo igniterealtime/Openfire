@@ -198,13 +198,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can 
      * create a room. 
      */
-    private List<String> allowedToCreate = new CopyOnWriteArrayList<String>();
+    private List<JID> allowedToCreate = new CopyOnWriteArrayList<JID>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
      * permissions as a room owner.
      */
-    private List<String> sysadmins = new CopyOnWriteArrayList<String>();
+    private List<JID> sysadmins = new CopyOnWriteArrayList<JID>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
@@ -547,15 +547,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     else {
                         // The room does not exist so check for creation permissions
                         // Room creation is always allowed for sysadmin
-                        if (isRoomCreationRestricted() && !sysadmins.contains(userjid.toBareJID())) {
+                        final JID bareJID = new JID(userjid.toBareJID());
+						if (isRoomCreationRestricted() && !sysadmins.contains(bareJID)) {
                             // The room creation is only allowed for certain JIDs
-                            if (!allowedToCreate.contains(userjid.toBareJID())) {
+                            if (!allowedToCreate.contains(bareJID)) {
                                 // The user is not in the list of allowed JIDs to create a room so raise
                                 // an exception
                                 throw new NotAllowedException();
                             }
                         }
-                        room.addFirstOwner(userjid.toBareJID());
+                        room.addFirstOwner(userjid);
                         created = true;
                     }
                 }
@@ -806,31 +807,42 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return log_batch_size;
     }
 
-    public Collection<String> getUsersAllowedToCreate() {
-        return allowedToCreate;
+    public Collection<JID> getUsersAllowedToCreate() {
+        return Collections.unmodifiableCollection(allowedToCreate);
     }
 
-    public Collection<String> getSysadmins() {
-        return sysadmins;
+    public Collection<JID> getSysadmins() {
+        return Collections.unmodifiableCollection(sysadmins);
     }
 
-    public void addSysadmin(String userJID) {
-        sysadmins.add(userJID.trim().toLowerCase());
+    public void addSysadmin(JID userJID) {
+    	final JID bareJID = new JID(userJID.toBareJID());
+    	
+        sysadmins.add(bareJID);
+        
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-        ArrayList<String> tempList = new ArrayList<String>(sysadmins);
+        ArrayList<JID> tempList = new ArrayList<JID>(sysadmins);
         Collections.sort(tempList);
-        sysadmins = new CopyOnWriteArrayList<String>(tempList);
+        sysadmins = new CopyOnWriteArrayList<JID>(tempList);
+        
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
+        for (int i = 0; i < jids.length; i++) {
+			jids[i] = sysadmins.get(i).toBareJID();
+		}
         MUCPersistenceManager.setProperty(chatServiceName, "sysadmin.jid", fromArray(jids));
     }
 
-    public void removeSysadmin(String userJID) {
-        sysadmins.remove(userJID.trim().toLowerCase());
+    public void removeSysadmin(JID userJID) {
+    	final JID bareJID = new JID(userJID.toBareJID());
+    	
+        sysadmins.remove(bareJID);
+        
         // Update the config.
         String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
+        for (int i = 0; i < jids.length; i++) {
+			jids[i] = sysadmins.get(i).toBareJID();
+		}
         MUCPersistenceManager.setProperty(chatServiceName, "sysadmin.jid", fromArray(jids));
     }
 
@@ -868,27 +880,39 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "create.anyone", Boolean.toString(roomCreationRestricted));
     }
 
-    public void addUserAllowedToCreate(String userJID) {
+    public void addUserAllowedToCreate(JID userJID) {
+    	final JID bareJID = new JID(userJID.toBareJID());
+    	
         // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
         // variable there is no need to restart the service
-        allowedToCreate.add(userJID.trim().toLowerCase());
+    	
+        allowedToCreate.add(bareJID);
+        
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-        ArrayList<String> tempList = new ArrayList<String>(allowedToCreate);
+        ArrayList<JID> tempList = new ArrayList<JID>(allowedToCreate);
         Collections.sort(tempList);
-        allowedToCreate = new CopyOnWriteArrayList<String>(tempList);
+        allowedToCreate = new CopyOnWriteArrayList<JID>(tempList);
+        
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
+        for (int i = 0; i < jids.length; i++) {
+			jids[i] = allowedToCreate.get(i).toBareJID();
+		}
         MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromArray(jids));
     }
 
-    public void removeUserAllowedToCreate(String userJID) {
+    public void removeUserAllowedToCreate(JID userJID) {
+    	final JID bareJID = new JID(userJID.toBareJID());
+    	
         // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
         // variable there is no need to restart the service
-        allowedToCreate.remove(userJID.trim().toLowerCase());
+        allowedToCreate.remove(bareJID);
+        
         // Update the config.
         String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
+        for (int i = 0; i < jids.length; i++) {
+			jids[i] = allowedToCreate.get(i).toBareJID();
+		}
         MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromArray(jids));
     }
 
@@ -915,7 +939,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (property != null) {
             jids = property.split(",");
             for (String jid : jids) {
-                sysadmins.add(jid.trim().toLowerCase());
+                sysadmins.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
             }
         }
         allowToDiscoverLockedRooms =
@@ -928,7 +952,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (property != null) {
             jids = property.split(",");
             for (String jid : jids) {
-                allowedToCreate.add(jid.trim().toLowerCase());
+            	allowedToCreate.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
             }
         }
         String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.timeout");
@@ -1201,7 +1225,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Answer reserved nickname for the sender of the disco request in the requested room
             MUCRoom room = getChatRoom(name);
             if (room != null) {
-                String reservedNick = room.getReservedNickname(senderJID.toBareJID());
+                String reservedNick = room.getReservedNickname(senderJID);
                 if (reservedNick != null) {
                     Element identity = DocumentHelper.createElement("identity");
                     identity.addAttribute("category", "conference");
@@ -1346,12 +1370,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param name Name of identity to remove.
      */
     public void removeExtraIdentity(String name) {
-        for (Element elem : extraDiscoIdentities) {
+    	final Iterator<Element> iter = extraDiscoIdentities.iterator();
+    	while (iter.hasNext()) {
+			Element elem = iter.next();
             if (name.equals(elem.attribute("name").getStringValue())) {
-                extraDiscoFeatures.remove(elem);
+                iter.remove();
                 break;
             }
-        }
+		}
     }
 
     /**

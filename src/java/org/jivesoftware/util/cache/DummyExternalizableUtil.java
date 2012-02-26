@@ -74,7 +74,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @return a Map of Long key/Integer value pairs.
      * @throws IOException if an error occurs.
      */
-    public Map readLongIntMap(DataInput in) throws IOException {
+    public Map<Long, Integer> readLongIntMap(DataInput in) throws IOException {
         // Do nothing
         return Collections.emptyMap();
     }
@@ -87,7 +87,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @param stringList the List of Strings.
      * @throws IOException if an error occurs.
      */
-    public void writeStringList(DataOutput out, List stringList) throws IOException {
+    public void writeStringList(DataOutput out, List<String> stringList) throws IOException {
         // Do nothing
     }
 
@@ -206,11 +206,11 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
         return 0;
     }
 
-    public void writeSerializableMap(DataOutput out, Map<String, ? extends Serializable> map) throws IOException {
+    public void writeSerializableMap(DataOutput out, Map<? extends Serializable, ? extends Serializable> map) throws IOException {
         // Do nothing
     }
 
-    public int readSerializableMap(DataInput in, Map<String, ? extends Serializable> map, ClassLoader loader)
+    public int readSerializableMap(DataInput in, Map<? extends Serializable, ? extends Serializable> map, ClassLoader loader)
             throws IOException {
         // Do nothing
         return 0;

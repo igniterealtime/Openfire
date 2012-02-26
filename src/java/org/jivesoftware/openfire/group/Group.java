@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -347,7 +348,8 @@ public class Group implements Cacheable, Externalizable {
         }
     }
 
-    public int getCachedSize() {
+    public int getCachedSize() 
+	    throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
         int size = 0;

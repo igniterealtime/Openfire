@@ -184,7 +184,7 @@
 			<td width="1%" nowrap>
 				<label for="groupstf"><fmt:message key="user.roster.groups" />:</label></td>
 			<td width="99%">
-				<input type="text" name="email" size="30" maxlength="255" value="<%= ((groups!=null) ? groups : "") %>"
+				<input type="text" name="groups" size="30" maxlength="255" value="<%= ((groups!=null) ? groups : "") %>"
 				 id="groupstf">
 			</td>
 		</tr>

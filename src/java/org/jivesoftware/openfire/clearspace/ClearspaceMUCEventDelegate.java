@@ -108,8 +108,8 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 	public boolean joiningRoom(MUCRoom room, JID userjid) {
         // Always allow an owner to join the room (especially since they need to join to configure the
         // room on initial creation).
-        Collection<String> owners = room.getOwners();
-        if (owners != null && owners.contains(userjid.toBareJID())) {
+        Collection<JID> owners = room.getOwners();
+        if (owners != null && owners.contains(new JID(userjid.toBareJID()))) {
             return true;
         }
 
@@ -186,9 +186,11 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
             Log.warn(GET_ROOM_CONFIG_WARNING + " Room: " + roomJid.toBareJID());
             return null;
         }
-        Iterator fields = xElement.elementIterator("field");
+        
+        @SuppressWarnings("unchecked")
+		Iterator<Element> fields = xElement.elementIterator("field");
         while (fields.hasNext()) {
-            Element field = (Element) fields.next();
+            Element field = fields.next();
             Attribute varAttribute = field.attribute("var");
             if (varAttribute != null) {
                 Element value = field.element("value");

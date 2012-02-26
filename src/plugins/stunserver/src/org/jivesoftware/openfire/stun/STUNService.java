@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.stun;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -29,7 +30,8 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -48,7 +50,7 @@ import de.javawi.jstun.test.demo.StunServer;
  *
  * @author Thiago Camargo
  */
-public class STUNService extends BasicModule {
+public class STUNService implements Plugin {
 
 	private static final Logger Log = LoggerFactory.getLogger(STUNService.class);
 
@@ -72,23 +74,7 @@ public class STUNService extends BasicModule {
 
     private List<StunServerAddress> externalServers = null;
 
-    /**
-     * Constructs a new STUN Service
-     */
-    public STUNService() {
-        super("STUN Service");
-    }
-
-    @Override
-	public void destroy() {
-        super.destroy();
-        stunServer = null;
-    }
-
-    @Override
-	public void initialize(XMPPServer server) {
-        super.initialize(server);
-
+	public void initializePlugin(PluginManager manager, File pluginDirectory) {
         this.enabled = JiveGlobals.getBooleanProperty("stun.enabled", true);
 
         primaryAddress = JiveGlobals.getProperty("stun.address.primary");
@@ -114,6 +100,8 @@ public class STUNService extends BasicModule {
             }
         }
 
+        start();
+        
         // Add listeners for STUN service being enabled and disabled via manual property changes.
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
 
@@ -150,7 +138,10 @@ public class STUNService extends BasicModule {
         });
     }
 
-    @Override
+	public void destroyPlugin() {
+		stop();
+	}
+
 	public void start() {
         if (isEnabled()) {
             startSTUNService();
@@ -200,9 +191,7 @@ public class STUNService extends BasicModule {
         }
     }
 
-    @Override
 	public void stop() {
-        super.stop();
         this.enabled = false;
         stopSTUNService();
         stopLocal();
@@ -213,11 +202,6 @@ public class STUNService extends BasicModule {
             stunServer.stop();
         }
         stunServer = null;
-    }
-
-    @Override
-	public String getName() {
-        return "stun";
     }
 
     public List<StunServerAddress> getExternalServers() {

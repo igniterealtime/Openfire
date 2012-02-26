@@ -557,7 +557,6 @@ public class XMPPServer {
         loadModule(DefaultFileTransferManager.class.getName());
         loadModule(FileTransferProxy.class.getName());
         loadModule(MediaProxyService.class.getName());
-        loadModule(STUNService.class.getName());
         loadModule(PubSubModule.class.getName());
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());

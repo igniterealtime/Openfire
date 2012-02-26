@@ -150,11 +150,6 @@
             <item id="media-proxy-service" name="${sidebar.media-proxy}"
                   url="media-proxy.jsp"
                   description="${sidebar.media-proxy.descr}"/>
-
-            <!-- STUN Server Settings -->
-            <item id="stun-settings" name="${sidebar.stun}"
-                  url="stun-settings.jsp"
-                  description="${sidebar.stun.descr}"/>
         </sidebar>
                 
     </tab>

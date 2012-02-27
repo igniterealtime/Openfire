@@ -57,8 +57,7 @@
 </script>
 
 <%
-
-    STUNService stunService = XMPPServer.getInstance().getSTUNService();
+	STUNService stunService = (STUNService) XMPPServer.getInstance().getPluginManager().getPlugin("stunserver");
 
     boolean save = request.getParameter("save") != null;
     boolean add = request.getParameter("add") != null;
@@ -91,7 +90,6 @@
         JiveGlobals.setProperty("stun.local.enabled", String.valueOf(localEnabled));
 
         stunService.stop();
-        stunService.initialize(XMPPServer.getInstance());
         if (!enabled) localEnabled = false;
         stunService.setEnabled(enabled, localEnabled);
 

@@ -34,7 +34,6 @@
 <%@ page import="org.jivesoftware.openfire.session.LocalClientSession" %>
 <%@ page import="org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
-<%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
@@ -86,7 +85,6 @@
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
-    STUNService stunService = XMPPServer.getInstance().getSTUNService();
     FlashCrossDomainHandler flashCrossDomainHandler = XMPPServer.getInstance().getFlashCrossDomainHandler();
 
     // Search for s2s and external component ports info
@@ -605,17 +603,6 @@
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.media_proxy" /></td>
         <td><fmt:message key="ports.media_proxy.desc" /></td>
-    </tr>
-    <% } %>
-    <%
-        if (stunService.isEnabled()) {
-    %>
-    <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
-        <td><%= stunService.getPrimaryPort() %> & <%= stunService.getSecondaryPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <td><fmt:message key="ports.stun" /></td>
-        <td><fmt:message key="ports.stun.desc" /></td>
     </tr>
     <% } %>
     <tr>

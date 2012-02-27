@@ -40,6 +40,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.DbConnectionManager.DatabaseType;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.JiveGlobals;
@@ -66,6 +67,9 @@ public class PubSubPersistenceManager {
  "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND "
 	    + "ofPubsubItem.serviceID = ? AND nodeID = ?";
 	
+	private static final String PURGE_FOR_SIZE_HSQLDB = "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN "
+			+ "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC LIMIT ?)";
+
     private static final String LOAD_NON_LEAF_NODES =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
             "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
@@ -1494,19 +1498,17 @@ public class PubSubPersistenceManager {
             
             PreparedStatement nodeConfig = con.prepareStatement(persistentNodeQuery);
             rs = nodeConfig.executeQuery();
-            PreparedStatement purgeNode = con.prepareStatement(PURGE_FOR_SIZE);
             
+			PreparedStatement purgeNode = con
+					.prepareStatement(getPurgeStatement(DbConnectionManager.getDatabaseType()));
+
             while (rs.next())
             {
             	String svcId = rs.getString(1);
             	String nodeId = rs.getString(2);
             	int maxItems = rs.getInt(3);
         	
-            	purgeNode.setString(1, svcId);
-            	purgeNode.setString(2, nodeId);
-            	purgeNode.setInt(3, maxItems);
-            	purgeNode.setString(4, svcId);
-            	purgeNode.setString(5, nodeId);
+				setPurgeParams(DbConnectionManager.getDatabaseType(), purgeNode, svcId, nodeId, maxItems);
         	
             	int rowsAffected = purgeNode.executeUpdate();
 
@@ -1525,9 +1527,44 @@ public class PubSubPersistenceManager {
 		}
     }
 
+	private static void setPurgeParams(DatabaseType dbType, PreparedStatement purgeStmt, String serviceId,
+			String nodeId, int maxItems) throws SQLException
+	{
+		switch (dbType)
+		{
+		case hsqldb:
+			purgeStmt.setString(1, serviceId);
+			purgeStmt.setString(2, nodeId);
+			purgeStmt.setString(3, serviceId);
+			purgeStmt.setString(4, nodeId);
+			purgeStmt.setInt(5, maxItems);
+			break;
+
+		default:
+			purgeStmt.setString(1, serviceId);
+			purgeStmt.setString(2, nodeId);
+			purgeStmt.setInt(3, maxItems);
+			purgeStmt.setString(4, serviceId);
+			purgeStmt.setString(5, nodeId);
+			break;
+		}
+	}
+
+	private static String getPurgeStatement(DatabaseType type)
+	{
+		switch (type)
+		{
+		case hsqldb:
+			return PURGE_FOR_SIZE_HSQLDB;
+
+		default:
+			return PURGE_FOR_SIZE;
+		}
+	}
+
     public static void shutdown()
     {
-	flushItems();
-	purgeItems();
+		flushItems();
+		purgeItems();
     }
 }

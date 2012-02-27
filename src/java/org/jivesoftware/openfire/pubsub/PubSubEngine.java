@@ -1732,23 +1732,7 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-        // Stop the maintenance processes
-    	service.getPublishedItemTask().cancel();
-        // Delete from the database items contained in the itemsToDelete queue
-        PublishedItem entry;
-        while (!service.getItemsToDelete().isEmpty()) {
-            entry = service.getItemsToDelete().poll();
-            if (entry != null) {
-                PubSubPersistenceManager.removePublishedItem(service, entry);
-            }
-        }
-        // Save to the database items contained in the itemsToAdd queue
-        while (!service.getItemsToAdd().isEmpty()) {
-            entry = service.getItemsToAdd().poll();
-            if (entry != null) {
-                PubSubPersistenceManager.createPublishedItem(service, entry);
-            }
-        }
+    	PubSubPersistenceManager.shutdown();
         // Stop executing ad-hoc commands
         service.getManager().stop();
         
@@ -1840,77 +1824,6 @@ public class PubSubEngine {
             // not optimal algorithm shouldn't bother the user since the user's server
             // should reply when already subscribed to the user's presence instead of
             // asking the user to accept the subscription request.
-        }
-    }
-
-    /*******************************************************************************
-     * Methods related to PubSub maintenance tasks. Such as
-     * saving or deleting published items.
-     ******************************************************************************/
-
-    /**
-     * Schedules the maintenance task for repeated <i>fixed-delay execution</i>,
-     * beginning after the specified delay.  Subsequent executions take place
-     * at approximately regular intervals separated by the specified period.
-     *
-     * @param service the PubSub service this action is to be performed for.
-     * @param timeout the new frequency of the maintenance task.
-     */
-    void setPublishedItemTaskTimeout(PubSubService service, int timeout) {
-        int items_task_timeout = service.getItemsTaskTimeout();
-        if (items_task_timeout == timeout) {
-            return;
-        }
-        // Cancel the existing task because the timeout has changed
-        PublishedItemTask publishedItemTask = service.getPublishedItemTask();
-        if (publishedItemTask != null) {
-            publishedItemTask.cancel();
-        }
-        service.setItemsTaskTimeout(timeout);
-        // Create a new task and schedule it with the new timeout
-        service.setPublishedItemTask(new PublishedItemTask(service));
-        service.getTimer().schedule(publishedItemTask, items_task_timeout, items_task_timeout);
-    }
-
-    /**
-     * Adds the item to the queue of items to remove from the database. The queue is going
-     * to be processed by another thread.
-     *
-     * @param service the PubSub service this action is to be performed for.
-     * @param removedItem the item to remove from the database.
-     */
-    public static void queueItemToRemove(PubSubService service, PublishedItem removedItem) {
-        // Remove the removed item from the queue of items to add to the database
-        if (!service.getItemsToAdd().remove(removedItem)) {
-            // The item is already present in the database so add the removed item
-            // to the queue of items to delete from the database
-            service.getItemsToDelete().add(removedItem);
-        }
-    }
-
-    /**
-     * Adds the item to the queue of items to add to the database. The queue is going
-     * to be processed by another thread.
-     *
-     * @param service the PubSub service this action is to be performed for.
-     * @param newItem the item to add to the database.
-     */
-    public static void queueItemToAdd(PubSubService service, PublishedItem newItem) {
-        service.getItemsToAdd().add(newItem);
-    }
-
-    /**
-     * Cancels any queued operation for the specified list of items. This operation is
-     * usually required when a node was deleted so any pending operation of the node items
-     * should be cancelled.
-     *
-     * @param service the PubSub service this action is to be performed for.
-     * @param items the list of items to remove the from queues.
-     */
-    void cancelQueuedItems(PubSubService service, Collection<PublishedItem> items) {
-        for (PublishedItem item : items) {
-            service.getItemsToAdd().remove(item);
-            service.getItemsToDelete().remove(item);
         }
     }
 

@@ -348,7 +348,7 @@ public abstract class Node {
 
         if (savedToDB) {
             // Add or update the affiliate in the database
-            PubSubPersistenceManager.saveAffiliation(service, this, affiliate, created);
+            PubSubPersistenceManager.saveAffiliation(this, affiliate, created);
         }
         return affiliate;
     }
@@ -367,7 +367,7 @@ public abstract class Node {
         affiliates.remove(affiliate);
         if (savedToDB) {
             // Remove the affiliate from the database
-            PubSubPersistenceManager.removeAffiliation(service, this, affiliate);
+            PubSubPersistenceManager.removeAffiliation(this, affiliate);
         }
     }
 
@@ -1134,6 +1134,15 @@ public abstract class Node {
     }
 
     /**
+     * Returns the {@link PubSubService} to which this node belongs.
+     *
+     * @return the pubsub service.
+     */
+    public PubSubService getService() {
+        return service;
+    }
+
+    /**
      * Returns the unique identifier for a node within the context of a pubsub service.
      *
      * @return the unique identifier for a node within the context of a pubsub service.
@@ -1698,16 +1707,16 @@ public abstract class Node {
     public void saveToDB() {
         // Make the room persistent
         if (!savedToDB) {
-            PubSubPersistenceManager.createNode(service, this);
+            PubSubPersistenceManager.createNode(this);
             // Set that the node is now in the DB
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
             for (NodeAffiliate affialiate : affiliates) {
-                PubSubPersistenceManager.saveAffiliation(service, this, affialiate, true);
+                PubSubPersistenceManager.saveAffiliation(this, affialiate, true);
             }
             // Add new subscriptions to the database
             for (NodeSubscription subscription : subscriptionsByID.values()) {
-                PubSubPersistenceManager.saveSubscription(service, this, subscription, true);
+                PubSubPersistenceManager.saveSubscription(this, subscription, true);
             }
             // Add the new node to the list of available nodes
             service.addNode(this);
@@ -1717,7 +1726,7 @@ public abstract class Node {
             }
         }
         else {
-            PubSubPersistenceManager.updateNode(service, this);
+            PubSubPersistenceManager.updateNode(this);
         }
     }
 
@@ -1776,7 +1785,7 @@ public abstract class Node {
      */
     public boolean delete() {
         // Delete node from the database
-        if (PubSubPersistenceManager.removeNode(service, this)) {
+        if (PubSubPersistenceManager.removeNode(this)) {
             // Remove this node from the parent node (if any)
             if (parent != null) {
                 parent.removeChildNode(this);
@@ -1837,7 +1846,7 @@ public abstract class Node {
             parent.addChildNode(this);
         }
         if (savedToDB) {
-            PubSubPersistenceManager.updateNode(service, this);
+            PubSubPersistenceManager.updateNode(this);
         }
     }
 
@@ -2018,7 +2027,7 @@ public abstract class Node {
 
         if (savedToDB) {
             // Add the new subscription to the database
-            PubSubPersistenceManager.saveSubscription(service, this, subscription, true);
+            PubSubPersistenceManager.saveSubscription(this, subscription, true);
         }
 
         if (originalIQ != null) {
@@ -2072,7 +2081,7 @@ public abstract class Node {
         }
         if (savedToDB) {
             // Remove the subscription from the database
-            PubSubPersistenceManager.removeSubscription(service, this, subscription);
+            PubSubPersistenceManager.removeSubscription(subscription);
         }
         // Check if we need to unsubscribe from the presence of the owner
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {

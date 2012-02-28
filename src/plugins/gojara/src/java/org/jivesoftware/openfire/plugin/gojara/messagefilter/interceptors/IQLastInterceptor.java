@@ -45,7 +45,7 @@ public class IQLastInterceptor implements PacketInterceptor {
 		if (packet instanceof IQ && incoming && processed) {
 
 			IQ iqpacket = (IQ) packet;
-			if (!iqpacket.getTo().toString().contains(_subDomain))
+			if (iqpacket.getTo() == null || !iqpacket.getTo().toString().contains(_subDomain))
 				return;
 
 			Element root = iqpacket.getChildElement();
@@ -54,7 +54,6 @@ public class IQLastInterceptor implements PacketInterceptor {
 
 			String ns = root.getNamespaceURI();
 			if (ns.equals("jabber:iq:last") && iqpacket.getType().equals(IQ.Type.get)) {
-
 				IQ answer = new IQ();
 				answer.setType(IQ.Type.error);
 				answer.setFrom(iqpacket.getTo());
@@ -73,7 +72,6 @@ public class IQLastInterceptor implements PacketInterceptor {
 				Log.debug("Auto response to jabber:iq:last for " + _subDomain);
 				PacketRouter router = XMPPServer.getInstance().getPacketRouter();
 				router.route(answer);
-
 			}
 		}
 

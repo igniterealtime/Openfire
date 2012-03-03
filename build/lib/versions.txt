@@ -32,7 +32,7 @@ jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)             
 jdic.jar                            | 0.9.1 (for windows only)                                     | LGPL
 jdom.jar                            | 1.0 (required by rome)                                       | Apache 1.1
 jstl.jar                            | Jakarta standard taglib 1.1.2                                |
-jmdns.jar                           | 3.4.1                                                        | Apache 2.0
+jmdns.jar                           | PRE 1.0, patched                                             | Apache 2.0
 jmock.jar                           | 2.1.0                                                        |
 jmock-junit4.jar                    | 2.1.0                                                        |
 jmock-legacy.jar                    | 2.1.0                                                        |

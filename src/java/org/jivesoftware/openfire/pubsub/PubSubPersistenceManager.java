@@ -997,6 +997,7 @@ public class PubSubPersistenceManager {
     {
     	log.debug("Flushing items to database");
 
+		boolean abortTransaction = false;
     	LinkedList addList = null;
     	LinkedList delList = null;
     	
@@ -1066,15 +1067,15 @@ public class PubSubPersistenceManager {
                     delItem = delItem.next;
                 }
             }
-            con.commit();
         }
 		catch (SQLException sqle)
 		{
             log.error(sqle.getMessage(), sqle);
+			abortTransaction = true;
         }
 		finally
 		{
-            DbConnectionManager.closeConnection(pstmt, con);
+			DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
     }
 
@@ -1488,17 +1489,17 @@ public class PubSubPersistenceManager {
     	String persistentNodeQuery = "SELECT serviceID, nodeID, maxItems FROM ofPubsubNode WHERE "
     			+ "leaf=1 AND persistItems=1 AND maxItems > 0";
 	
+		boolean abortTransaction = false;
         Connection con = null;
         PreparedStatement pstmt = null;
+		PreparedStatement nodeConfig = null;
         ResultSet rs = null;
 
         try
         {
             con = DbConnectionManager.getTransactionConnection();
-            
-            PreparedStatement nodeConfig = con.prepareStatement(persistentNodeQuery);
+			nodeConfig = con.prepareStatement(persistentNodeQuery);
             rs = nodeConfig.executeQuery();
-            
 			PreparedStatement purgeNode = con
 					.prepareStatement(getPurgeStatement(DbConnectionManager.getDatabaseType()));
 
@@ -1510,20 +1511,20 @@ public class PubSubPersistenceManager {
         	
 				setPurgeParams(DbConnectionManager.getDatabaseType(), purgeNode, svcId, nodeId, maxItems);
         	
-            	int rowsAffected = purgeNode.executeUpdate();
-
-				if (log.isDebugEnabled())
-					log.debug(rowsAffected + " deleted rows from service: " + svcId + " nodeId: " + nodeId);
+				purgeNode.addBatch();
             }
+			purgeNode.executeBatch();
 		}
 		catch (Exception sqle)
 		{
-		    sqle.printStackTrace();
 		    log.error(sqle.getMessage(), sqle);
+			abortTransaction = true;
 		}
 		finally
 		{
-		    DbConnectionManager.closeConnection(rs, pstmt, con);
+			DbConnectionManager.closeResultSet(rs);
+			DbConnectionManager.closeStatement(rs, nodeConfig);
+			DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
 		}
     }
 

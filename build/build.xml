@@ -32,11 +32,6 @@
             <pathelement location="${basedir}/build/lib/ant-contrib.jar"/>
         </classpath>
     </taskdef>
-    <taskdef name="subdirinfo" classname="org.jivesoftware.ant.SubDirInfoTask">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/ant-subdirtask.jar"/>
-        </classpath>
-    </taskdef>
     <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
         <classpath>
             <pathelement location="${basedir}/build/lib/xmltask.jar"/>
@@ -338,7 +333,7 @@
         </if>
     </target>
 
-    <target name="plugins-dev">
+    <target name="plugins-dev" depends="anttasks">
         <!-- Setup Openfire -->
         <ant antfile="${basedir}/build/build.xml" dir="${basedir}" target="openfire"
              inheritAll="false" inheritRefs="false"/>
@@ -1206,7 +1201,7 @@
     </target>
 
     <!-- plugins =============================================================================== -->
-    <target name="plugins" description="Builds all plugins">
+    <target name="plugins" description="Builds all plugins" depends="anttasks">
         <tstamp>
             <format property="buildJavaDate" pattern="MMM dd, yyyy"/>
         </tstamp>
@@ -1248,7 +1243,7 @@
         </for>
 
     </target>
-    <target name="-plugins-impl-dev" if="plugin.dev.dir">
+    <target name="-plugins-impl-dev" if="plugin.dev.dir" depends="anttasks">
 
         <!-- Get a list of plugins in the optional dev dir -->
         <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml"/>
@@ -1638,6 +1633,12 @@
         <jar jarfile="${anttools.target.dir}/ant-subdirtask.jar">
             <fileset dir="${anttools.target.dir}/classes" includes="**/*.class"/>
         </jar>
+ 
+        <taskdef name="subdirinfo" classname="org.jivesoftware.ant.SubDirInfoTask">
+            <classpath>
+                <pathelement location="${basedir}/build/lib/ant-subdirtask.jar"/>
+            </classpath>
+        </taskdef>
     </target>
 
     <!-- clean ================================================================================= -->

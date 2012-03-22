@@ -89,11 +89,11 @@ public class HybridUserProvider implements UserProvider {
             }
         }
         String tertiaryClass = JiveGlobals.getXMLProperty("hybridUserProvider.tertiaryProvider.className");
-        if (secondaryClass != null) {
+        if (tertiaryClass != null) {
             try {
-                Class c = ClassUtils.forName(secondaryClass);
+                Class c = ClassUtils.forName(tertiaryClass);
                 tertiaryProvider = (UserProvider) c.newInstance();
-                Log.debug("Secondary user provider: " + secondaryClass);
+                Log.debug("Tertiary user provider: " + tertiaryClass);
             } catch (Exception e) {
                 Log.error("Unable to load tertiary user provider: " + tertiaryClass, e);
             }

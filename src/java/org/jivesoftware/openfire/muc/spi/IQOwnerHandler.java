@@ -179,6 +179,9 @@ public class IQOwnerHandler {
                 // Create the result that will hold an item for each owner or admin
                 Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#owner");
 
+                // muc#owner shouldn't be used as namespace for owner and admin
+                // listings according to the newest versions of XEP-0045
+                // this code remains here for backwards compatibility
                 if ("owner".equals(affiliation)) {
                     // The client is requesting the list of owners
                     Element ownerMetaData;
@@ -262,6 +265,9 @@ public class IQOwnerHandler {
                 try {
                     for (JID jid : jids.keySet()) {
                         String targetAffiliation = jids.get(jid);
+                        // muc#owner shouldn't be used as namespace for owner and admin
+                        // changes according to the newest versions of XEP-0045
+                        // this code remains here for backwards compatibility
                         if ("owner".equals(targetAffiliation)) {
                             // Add the new user as an owner of the room
                             presences.addAll(room.addOwner(jid, senderRole));

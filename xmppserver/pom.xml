@@ -28,6 +28,7 @@
 					<excludes>
 						<exclude>**/Admin*.java</exclude>
 						<exclude>**/XMLProp*.java</exclude>
+						<exclude>**/TestUtils.java</exclude> <!-- Maven 2 thinks this is a unit-test. -->
 					</excludes>
 				</configuration>
 			</plugin>			

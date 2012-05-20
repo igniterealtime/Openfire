@@ -77,6 +77,16 @@
 			<organizationUrl>http://www.jivesoftware.com</organizationUrl>
 			<timezone>-8</timezone>
 		</contributor>
+		<contributor>
+                        <name>daryl herzmann</name>
+                        <roles>
+                                <role>Community Organizer</role>
+                        </roles>
+                        <email>akrherz@iastate.edu</email>
+                        <organization>Iowa State University</organization>
+                        <organizationUrl>http://mesonet.agron.iastate.edu</organizationUrl>
+		        <timezone>-6</timezone>
+	        </contributor>
 	</contributors>
 
 	<properties>

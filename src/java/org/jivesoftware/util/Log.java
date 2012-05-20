@@ -62,7 +62,7 @@ public class Log {
 	 * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
 	 *             Functionality of this method is delegated there.
 	 */
-	@Deprecated()
+	@Deprecated
     public static boolean isErrorEnabled() {
         return Logger.isErrorEnabled();
     }

@@ -14,16 +14,31 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
 					<excludes>
 						<exclude>**/MINAStatCollector.java</exclude>
+						<exclude>**/org/jivesoftware/openfire/launcher/Launcher.java</exclude>
+						<exclude>**/org/jivesoftware/openfire/launcher/Uninstaller.java</exclude>						
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/Admin*.java</exclude>
+						<exclude>**/XMLProp*.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>			
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>dbutil</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>dom4j</groupId>
 			<artifactId>dom4j</artifactId>
@@ -65,6 +80,11 @@
 			<version>1.1.7</version>
 		</dependency>
 		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<version>3.1</version>
+		</dependency>
+  		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk16</artifactId>
 			<version>1.46</version>
@@ -104,12 +124,59 @@
 			<artifactId>jmdns</artifactId>
 			<version>3.4.1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>rome</groupId>
+			<artifactId>rome</artifactId>
+			<version>0.9</version>
+		</dependency>
 		<dependency>
 			<groupId>rome</groupId>
 			<artifactId>rome-fetcher</artifactId>
 			<version>1.0</version>
 		</dependency>
-
+		<dependency>
+			<groupId>jstl</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>tomcat</groupId>
+			<artifactId>jasper-compiler</artifactId>
+			<version>5.5.15</version>
+		</dependency>
+		<dependency>
+			<groupId>tomcat</groupId>
+			<artifactId>jasper-runtime</artifactId>
+			<version>5.5.15</version>
+		</dependency>
+		<dependency>
+			<groupId>proxool</groupId>
+			<artifactId>proxool</artifactId>
+			<version>0.8.3</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.atlassian.shaj</groupId>
+			<artifactId>atlassian-shaj</artifactId>
+			<version>0.5</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>atlassian</id>
+			<url>https://maven.atlassian.com/content/groups/public/</url>
+		</repository>
+	</repositories>
 </project>

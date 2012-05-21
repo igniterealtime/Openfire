@@ -178,7 +178,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         synchronized (session) {
             try {
-                respond(session, response, session.getResponse((Long) request.getAttribute("request")),
+                respond(session, response, session.consumeResponse((HttpConnection) request.getAttribute("connection")),
                         request.getMethod());
             }
             catch (HttpBindException e) {
@@ -281,8 +281,9 @@ public class HttpBindServlet extends HttpServlet {
                 connection.setContinuation(ContinuationSupport.getContinuation(request));
                 request.setAttribute("request-session", connection.getSession());
                 request.setAttribute("request", connection.getRequestId());
+                request.setAttribute("connection", connection);
                 try {
-                    respond(session, response, session.getResponse(connection.getRequestId()),
+                    respond(session, response, session.consumeResponse(connection),
                             request.getMethod());
                 }
                 catch (HttpBindException e) {

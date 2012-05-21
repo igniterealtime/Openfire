@@ -567,6 +567,10 @@ public class HttpSession extends LocalClientSession {
 		this.lastResponseEmpty = lastResponseEmpty;
 	}
 
+	/**
+	 * @deprecated Doesn't make sense if we have multiple connections with the same rid in the queue.
+	 * 	Use {@link #consumeResponse(HttpConnection)} instead
+	 */
     public String getResponse(long requestID) throws HttpBindException {
         for (HttpConnection connection : connectionQueue) {
             if (connection.getRequestId() == requestID) {
@@ -581,6 +585,28 @@ public class HttpSession extends LocalClientSession {
             }
         }
         throw new InternalError("Could not locate connection: " + requestID);
+    }
+    
+    /**
+     * Similar to {@link #getResponse(long)} but returns the response for a specific connection instance
+     * rather than looking up on the request id. This is because it is possible for there to be multiple
+     * connections in the queue for the same rid so we need to be careful that we are accessing the correct
+     * connection.
+     * <p><b>Note that this method also removes the connection from the internal connection queue.</b>
+     * 
+     * @param connection the connection for which to get the response.
+     * @return the response from the connection
+     * @throws HttpBindException
+     */
+    protected String consumeResponse(HttpConnection connection) throws HttpBindException {
+    	Log.debug("consumeResponse: " + connection);
+    	if(connectionQueue.contains(connection)) {
+            String response = getResponse(connection);
+            connectionQueue.remove(connection);
+            fireConnectionClosed(connection);
+            return response;
+    	}
+	    throw new InternalError("Could not locate connection: " + connection);
     }
 
     private String getResponse(HttpConnection connection) throws HttpBindException {
@@ -685,6 +711,7 @@ public class HttpSession extends LocalClientSession {
                         BoshBindingError.itemNotFound);
             }
             connection.deliverBody(createDeliverable(deliverable.deliverables));
+            addConnection(connection, isPoll);
             return connection;
         }
         else if (rid > (lastRequestID + maxRequests)) {
@@ -714,13 +741,53 @@ public class HttpSession extends LocalClientSession {
         if (connection == null) {
             throw new IllegalArgumentException("Connection cannot be null.");
         }
-
-        checkOveractivity(isPoll);
-
+        
         if (isSecure && !connection.isSecure()) {
             throw new HttpBindException("Session was started from secure connection, all " +
                     "connections on this session must be secured.", BoshBindingError.badRequest);
         }
+
+        final long rid = connection.getRequestId();
+
+        /*
+         * Search through the connection queue to see if this rid already exists on it. If it does then we
+         * will close and deliver the existing connection (if appropriate), and close and deliver the same
+         * deliverable on the new connection. This is under the assumption that a connection has been dropped,
+         * and re-requested before jetty has realised.
+         */
+		for (HttpConnection queuedConnection : connectionQueue) {
+			if (queuedConnection.getRequestId() == rid) {
+				if(Log.isDebugEnabled()) {
+					Log.debug("Found previous connection in queue with rid " + rid);
+				}
+				if(queuedConnection.isClosed()) {
+					if(Log.isDebugEnabled()) {
+						Log.debug("It's closed - copying deliverables");
+					}
+					
+		            Delivered deliverable = retrieveDeliverable(rid);
+		            if (deliverable == null) {
+		                Log.warn("Deliverable unavailable for " + rid);
+		                throw new HttpBindException("Unexpected RID error.",
+		                        BoshBindingError.itemNotFound);
+		            }
+		            connection.deliverBody(createDeliverable(deliverable.deliverables));
+				} else {
+					if(Log.isDebugEnabled()) {
+						Log.debug("It's still open - calling close()");
+					}
+					deliver(queuedConnection, Collections.singleton(new Deliverable("")));
+					connection.close();
+					
+					if(rid == (lastRequestID + 1)) {
+						lastRequestID = rid;
+					}
+				}
+				break;
+			}
+		}
+
+        checkOveractivity(isPoll);
 
         sslCertificates = connection.getPeerCertificates();
 

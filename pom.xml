@@ -12,6 +12,7 @@
 		<module>xmppserver</module>
 		<module>dbutil</module>
 		<module>webadmin</module>
+		<module>plugins</module>
 	</modules>
 
 	<organization>

@@ -14,6 +14,7 @@
 	<modules>
 		<module>openfire-plugin-assembly-descriptor</module>
 		<module>broadcast</module>
+		<module>stunserver</module>
 	</modules>
 
 	<build>

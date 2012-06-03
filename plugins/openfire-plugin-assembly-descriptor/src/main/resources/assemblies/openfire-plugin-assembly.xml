@@ -8,19 +8,40 @@
 	</formats>
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<fileSets>
+		
 		<!-- metadata files (plugin.xml, icons, etc). -->
 		<fileSet>
-			<useDefaultExcludes>true</useDefaultExcludes>
 			<outputDirectory>/</outputDirectory>
 			<directory>src/main/metadata</directory>
 		</fileSet>
-		<!-- the jar-file containing the compiled plugin code. -->
+		
+		<!-- The jar-file containing the compiled plugin code. This is assembled 
+		     by the assembly descriptor "openfire-plugin-jar" -->
 		<fileSet>
 			<directory>${project.build.directory}</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory>/lib</outputDirectory>
 			<includes>
-				<include>*.jar</include>
+				<include>plugin-${project.artifactId}.jar</include>
 			</includes>
 		</fileSet>
+		
+		<!-- The jar-file containing the pre-compiled JSP pages. This is assembled 
+		     by the assembly descriptor "openfire-plugin-jspc" -->
+		<fileSet>
+			<directory>${project.build.directory}</directory>
+			<outputDirectory>/lib</outputDirectory>
+			<includes>
+				<include>plugin-${project.artifactId}-jspc.jar</include>
+			</includes>
+		</fileSet>
+		
 	</fileSets>
+	
+	<!-- Bundle the dependencies of this plugin -->
+	<dependencySets>
+		<dependencySet>
+			<outputDirectory>/lib</outputDirectory>
+			<useProjectArtifact>false</useProjectArtifact>
+		</dependencySet>
+	</dependencySets>
 </assembly>

@@ -13,7 +13,7 @@
 
 	<modules>
 		<module>openfire-plugin-assembly-descriptor</module>
-		<module>broadcast-plugin</module>
+		<module>broadcast</module>
 	</modules>
 
 	<dependencies>

@@ -12,6 +12,7 @@
 	<name>Openfire Plugins</name>
 
 	<modules>
+		<module>openfire-plugin-assembly-descriptor</module>
 		<module>broadcast-plugin</module>
 	</modules>
 

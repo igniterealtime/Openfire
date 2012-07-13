@@ -194,11 +194,10 @@ public class ImportExportPlugin implements Plugin {
                 itemElement.addAttribute("substatus", String.valueOf(ri.getSubStatus().getValue()));
                 itemElement.addAttribute("name", ri.getNickname());
                 
-                Element groupElement = itemElement.addElement("Group");
                 List<String> groups = ri.getGroups();
                 for (String group : groups) {
                     if (group != null && group.trim().length() > 0) {
-                        groupElement.addText(group);
+                    	itemElement.addElement("Group").addText(group);
                     }
                 }
             }

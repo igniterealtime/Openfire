@@ -25,11 +25,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -166,10 +163,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public void process(Packet packet) {
-        // TODO Remove this method when moving PubSub as a component and removing module code
-        // The MUC service will receive all the packets whose domain matches the domain of the MUC
-        // service. This means that, for instance, a disco request should be responded by the
-        // service itself instead of relying on the server to handle the request.
         try {
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
@@ -510,27 +503,32 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return serviceEnabled;
     }
 
+	@Override
     public void joinedCluster() {
         // Disable the service until we know that we are the senior cluster member
-        enableService(false);
+		// enableService(false);
     }
 
+	@Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+	@Override
     public void leftCluster() {
         // Offer the service when not running in a cluster
-        enableService(true);
+		// enableService(true);
     }
 
+	@Override
     public void leftCluster(byte[] nodeID) {
         // Do nothing
     }
 
+	@Override
     public void markedAsSeniorClusterMember() {
         // Offer the service since we are the senior cluster member
-        enableService(true);
+		// enableService(true);
     }
 
     public Iterator<DiscoServerItem> getItems() {

@@ -20,20 +20,27 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.dom4j.Element;
+import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A virtual location to which information can be published and from which event
@@ -1734,7 +1741,8 @@ public abstract class Node {
         affiliates.add(affiliate);
     }
 
-    void addSubscription(NodeSubscription subscription) {
+	public void addSubscription(NodeSubscription subscription)
+	{
         subscriptionsByID.put(subscription.getID(), subscription);
         subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
@@ -2017,8 +2025,7 @@ public abstract class Node {
         // Generate a subscription ID (override even if one was sent by the client)
         String id = StringUtils.randomString(40);
         // Create new subscription
-        NodeSubscription subscription =
-                new NodeSubscription(service, this, owner, subscriber, subState, id);
+        NodeSubscription subscription = new NodeSubscription(this, owner, subscriber, subState, id);
         // Configure the subscription with the specified configuration (if any)
         if (options != null) {
             subscription.configure(options);
@@ -2041,6 +2048,10 @@ public abstract class Node {
         if (subscription.isAuthorizationPending()) {
             subscription.sendAuthorizationRequest();
         }
+        
+		// Synchronous so the task can flush all other cluster nodes before
+		// the last item is retrieved.
+		CacheFactory.doSynchronousClusterTask(new NewSubscriptionTask(subscription), false);
 
         // Send last published item (if node is leaf node and subscription status is ok)
         if (isSendItemSubscribe() && subscription.isActive()) {

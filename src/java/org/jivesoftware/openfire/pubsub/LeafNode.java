@@ -21,19 +21,15 @@
 package org.jivesoftware.openfire.pubsub;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -76,11 +72,9 @@ public class LeafNode extends Node {
      */
     private boolean sendItemSubscribe;
     /**
-     * List of items that were published to the node and that are still active. If the node is
-     * not configured to persist items then the last published item will be kept. The list is
-     * sorted cronologically.
+     * The last item published to this node.  In a cluster this may have occurred on a different cluster node.
      */
-    volatile private PublishedItem lastPublished;
+    private PublishedItem lastPublished;
 
     // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
@@ -173,8 +167,10 @@ public class LeafNode extends Node {
 	protected void deletingNode() {
     }
 
-    void setLastPublishedItem(PublishedItem item) {
-    	lastPublished = item;
+	public synchronized void setLastPublishedItem(PublishedItem item)
+	{
+		if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate()))
+			lastPublished = item;
     }
 
     public int getMaxPayloadSize() {
@@ -360,7 +356,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	public PublishedItem getLastPublishedItem() {
+	public synchronized PublishedItem getLastPublishedItem() {
     	return lastPublished;
     }
 

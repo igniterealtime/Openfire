@@ -61,31 +61,28 @@ public class PubSubPersistenceManager {
     private static final Logger log = LoggerFactory.getLogger(PubSubPersistenceManager.class);
     
     private static final String PURGE_FOR_SIZE = 
-	    "DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
-	    "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
-	    "ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
- "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND "
-	    + "ofPubsubItem.serviceID = ? AND nodeID = ?";
+    		"DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+			"(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
+			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
+			"ofPubsubItem.serviceID = ? AND nodeID = ?";
 	
 	private static final String PURGE_FOR_SIZE_HSQLDB = "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN "
 			+ "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC LIMIT ?)";
 
-    private static final String LOAD_NON_LEAF_NODES =
+	private static final String LOAD_NODE_BASE =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
             "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
             "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
             "bodyXSLT, dataformXSLT, creator, description, language, name, " +
             "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
-            "WHERE serviceID=? AND leaf=0 ORDER BY nodeID";
-    private static final String LOAD_LEAF_NODES =
-            "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
-            "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
-            "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
-            "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
-            "bodyXSLT, dataformXSLT, creator, description, language, name, " +
-            "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
-            "WHERE serviceID=? AND leaf=1 ORDER BY nodeID";
+ "WHERE serviceID=?";
+
+	private static final String LOAD_NODES = LOAD_NODE_BASE + " AND leaf=? ORDER BY nodeID";
+
+	private static final String LOAD_NODE = LOAD_NODE_BASE + " AND nodeID=?";
+
     private static final String UPDATE_NODE =
             "UPDATE ofPubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
             "maxPayloadSize=?, persistItems=?, maxItems=?, " +
@@ -107,7 +104,8 @@ public class PubSubPersistenceManager {
 
     private static final String LOAD_NODES_JIDS =
             "SELECT nodeID, jid, associationType FROM ofPubsubNodeJIDs WHERE serviceID=?";
-    private static final String ADD_NODE_JIDS =
+	private static final String LOAD_NODE_JIDS = "SELECT nodeID, jid, associationType FROM ofPubsubNodeJIDs WHERE serviceID=? AND nodeID=?";
+	private static final String ADD_NODE_JIDS =
             "INSERT INTO ofPubsubNodeJIDs (serviceID, nodeID, jid, associationType) " +
             "VALUES (?,?,?,?)";
     private static final String DELETE_NODE_JIDS =
@@ -115,6 +113,7 @@ public class PubSubPersistenceManager {
 
     private static final String LOAD_NODES_GROUPS =
             "SELECT nodeID, rosterGroup FROM ofPubsubNodeGroups WHERE serviceID=?";
+	private static final String LOAD_NODE_GROUPS = "SELECT nodeID, rosterGroup FROM ofPubsubNodeGroups WHERE serviceID=? AND nodeID=?";
     private static final String ADD_NODE_GROUPS =
             "INSERT INTO ofPubsubNodeGroups (serviceID, nodeID, rosterGroup) " +
             "VALUES (?,?,?)";
@@ -124,6 +123,7 @@ public class PubSubPersistenceManager {
     private static final String LOAD_AFFILIATIONS =
             "SELECT nodeID,jid,affiliation FROM ofPubsubAffiliation WHERE serviceID=? " +
             "ORDER BY nodeID";
+	private static final String LOAD_NODE_AFFILIATIONS = "SELECT nodeID,jid,affiliation FROM ofPubsubAffiliation WHERE serviceID=? AND nodeID=?";
     private static final String ADD_AFFILIATION =
             "INSERT INTO ofPubsubAffiliation (serviceID,nodeID,jid,affiliation) VALUES (?,?,?,?)";
     private static final String UPDATE_AFFILIATION =
@@ -133,10 +133,13 @@ public class PubSubPersistenceManager {
     private static final String DELETE_AFFILIATIONS =
             "DELETE FROM ofPubsubAffiliation WHERE serviceID=? AND nodeID=?";
 
-    private static final String LOAD_SUBSCRIPTIONS =
-            "SELECT nodeID, id, jid, owner, state, deliver, digest, digest_frequency, " +
-            "expire, includeBody, showValues, subscriptionType, subscriptionDepth, " +
-            "keyword FROM ofPubsubSubscription WHERE serviceID=? ORDER BY nodeID";
+	private static final String LOAD_SUBSCRIPTIONS_BASE = "SELECT nodeID, id, jid, owner, state, deliver, digest, digest_frequency, "
+			+ "expire, includeBody, showValues, subscriptionType, subscriptionDepth, "
+			+ "keyword FROM ofPubsubSubscription WHERE serviceID=? ";
+	private static final String LOAD_NODE_SUBSCRIPTION = LOAD_SUBSCRIPTIONS_BASE + "AND nodeID=? AND id=?";
+	private static final String LOAD_NODE_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "AND nodeID=?";
+	private static final String LOAD_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "ORDER BY nodeID";
+
     private static final String ADD_SUBSCRIPTION =
             "INSERT INTO ofPubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
             "deliver, digest, digest_frequency, expire, includeBody, showValues, " +
@@ -544,8 +547,9 @@ public class PubSubPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
-            pstmt = con.prepareStatement(LOAD_NON_LEAF_NODES);
+			pstmt = con.prepareStatement(LOAD_NODES);
             pstmt.setString(1, service.getServiceID());
+			pstmt.setInt(2, 0);
             rs = pstmt.executeQuery();
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
@@ -554,8 +558,9 @@ public class PubSubPersistenceManager {
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             // Get all leaf nodes (remaining unloaded nodes)
-            pstmt = con.prepareStatement(LOAD_LEAF_NODES);
+			pstmt = con.prepareStatement(LOAD_NODES);
             pstmt.setString(1, service.getServiceID());
+			pstmt.setInt(2, 1);
             rs = pstmt.executeQuery();
             // Rebuild loaded leaf nodes
             while(rs.next()) {
@@ -620,6 +625,105 @@ public class PubSubPersistenceManager {
         }
     }
 
+	/**
+	 * Loads all nodes from the database and adds them to the PubSub service.
+	 * 
+	 * @param service
+	 *            the pubsub service that is hosting the nodes.
+	 */
+	public static void loadNode(PubSubService service, String nodeId)
+	{
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Map<String, Node> nodes = new HashMap<String, Node>();
+		try
+		{
+			con = DbConnectionManager.getConnection();
+			// Get all non-leaf nodes (to ensure parent nodes are loaded before
+			// their children)
+			pstmt = con.prepareStatement(LOAD_NODE);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, nodeId);
+			rs = pstmt.executeQuery();
+
+			// Rebuild loaded non-leaf nodes
+			if (rs.next())
+			{
+				loadNode(service, nodes, rs);
+			}
+			DbConnectionManager.fastcloseStmt(rs, pstmt);
+
+			// Get JIDs associated with all nodes
+			pstmt = con.prepareStatement(LOAD_NODE_JIDS);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, nodeId);
+			rs = pstmt.executeQuery();
+			// Add to each node the associated JIDs
+			while (rs.next())
+			{
+				loadAssociatedJIDs(nodes, rs);
+			}
+			DbConnectionManager.fastcloseStmt(rs, pstmt);
+
+			// Get roster groups associated with all nodes
+			pstmt = con.prepareStatement(LOAD_NODE_GROUPS);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, nodeId);
+			rs = pstmt.executeQuery();
+			// Add to each node the associated Groups
+			while (rs.next())
+			{
+				loadAssociatedGroups(nodes, rs);
+			}
+			DbConnectionManager.fastcloseStmt(rs, pstmt);
+
+			// Get affiliations of all nodes
+			pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, nodeId);
+			rs = pstmt.executeQuery();
+			// Add to each node the corresponding affiliates
+			while (rs.next())
+			{
+				loadAffiliations(nodes, rs);
+			}
+			DbConnectionManager.fastcloseStmt(rs, pstmt);
+
+			// Get subscriptions to all nodes
+			pstmt = con.prepareStatement(LOAD_NODE_SUBSCRIPTIONS);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, nodeId);
+			rs = pstmt.executeQuery();
+			// Add to each node the corresponding subscriptions
+			while (rs.next())
+			{
+				loadSubscriptions(service, nodes, rs);
+			}
+			DbConnectionManager.fastcloseStmt(rs, pstmt);
+		}
+		catch (SQLException sqle)
+		{
+			log.error(sqle.getMessage(), sqle);
+		}
+		finally
+		{
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+
+		for (Node node : nodes.values())
+		{
+			// Set now that the node is persistent in the database. Note: We
+			// need to
+			// set this now since otherwise the node's affiliations will be
+			// saved to the database
+			// "again" while adding them to the node!
+			node.setSavedToDB(true);
+			// Add the node to the service
+			service.addNode(node);
+		}
+	}
+
     private static void loadNode(PubSubService service, Map<String, Node> loadedNodes, ResultSet rs) {
         Node node;
         try {
@@ -632,9 +736,14 @@ public class PubSubPersistenceManager {
                 // Check if the parent has already been loaded
                 parentNode = (CollectionNode) loadedNodes.get(parent);
                 if (parentNode == null) {
-                    // Parent is not in memory so try to load it
-                    log.warn("Node not loaded due to missing parent. NodeID: " + nodeID);
-                    return;
+					parentNode = (CollectionNode) service.getNode(parent);
+
+					if (parentNode == null)
+					{
+						// Parent is not in memory so try to load it
+						log.warn("Node not loaded due to missing parent. NodeID: " + nodeID);
+						return;
+					}
                 }
             }
 
@@ -746,6 +855,41 @@ public class PubSubPersistenceManager {
         }
     }
 
+	public static void loadSubscription(PubSubService service, Node node, String subId)
+	{
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		Map<String, Node> nodes = new HashMap<String, Node>();
+		nodes.put(node.getNodeID(), node);
+
+		try
+		{
+			con = DbConnectionManager.getConnection();
+
+			// Get subscriptions to all nodes
+			pstmt = con.prepareStatement(LOAD_NODE_SUBSCRIPTION);
+			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(2, node.getNodeID());
+			pstmt.setString(3, subId);
+			rs = pstmt.executeQuery();
+
+			// Add to each node the corresponding subscription
+			if (rs.next())
+			{
+				loadSubscriptions(service, nodes, rs);
+			}
+		}
+		catch (SQLException sqle)
+		{
+			log.error(sqle.getMessage(), sqle);
+		}
+		finally
+		{
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+	}
+
     private static void loadSubscriptions(PubSubService service, Map<String, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
@@ -763,8 +907,7 @@ public class PubSubPersistenceManager {
                 return;
             }
             NodeSubscription.State state = NodeSubscription.State.valueOf(rs.getString(5));
-            NodeSubscription subscription =
-                    new NodeSubscription(service, node, owner, subscriber, state, subID);
+			NodeSubscription subscription = new NodeSubscription(node, owner, subscriber, state, subID);
             subscription.setShouldDeliverNotifications(rs.getInt(6) == 1);
             subscription.setUsingDigest(rs.getInt(7) == 1);
             subscription.setDigestFrequency(rs.getInt(8));
@@ -993,7 +1136,7 @@ public class PubSubPersistenceManager {
     /**
      * Flush the cache of items to be persisted and deleted.
      */
-    public static void flushItems()
+	public static void flushItems()
     {
     	log.debug("Flushing items to database");
 

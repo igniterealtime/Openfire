@@ -155,7 +155,7 @@ public class PubSubPersistenceManager {
             "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=?";
     private static final String LOAD_ITEMS =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
     private static final String LOAD_ITEM =
             "SELECT jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? AND id=?";

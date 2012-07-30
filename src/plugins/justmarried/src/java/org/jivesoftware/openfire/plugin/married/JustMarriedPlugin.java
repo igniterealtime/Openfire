@@ -121,7 +121,7 @@ public class JustMarriedPlugin implements Plugin {
 				for (Group gr : item.getInvisibleSharedGroups()) {
 					justCreated.addInvisibleSharedGroup(gr);
 				}
-
+				newRoster.updateRosterItem(justCreated);
 				addNewUserToOthersRoster(newUser, item, currentUserName);
 
 			} catch (UserAlreadyExistsException e) {
@@ -129,6 +129,9 @@ public class JustMarriedPlugin implements Plugin {
 			} catch (SharedGroupException e) {
 				Log.error("Could not create roster item for user " + item.getJid()
 						+ " because it is a contact from a shared group", e);
+			} catch (UserNotFoundException e) {
+				Log.error("Could not update Roster item for user " + newUser.getName()
+						+ " because it was not properly created.", e);
 			}
 		}
 
@@ -157,6 +160,7 @@ public class JustMarriedPlugin implements Plugin {
 						justCreated.setAskStatus(oldUserOnOthersRoster.getAskStatus());
 						justCreated.setRecvStatus(oldUserOnOthersRoster.getRecvStatus());
 						justCreated.setSubStatus(oldUserOnOthersRoster.getSubStatus());
+						otherRoster.updateRosterItem(justCreated);
 					}
 				} catch (UserAlreadyExistsException e) {
 					Log.error("Could not create roster item for user " + newUser.getUsername(), e);

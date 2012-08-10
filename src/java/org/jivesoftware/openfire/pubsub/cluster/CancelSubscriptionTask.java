@@ -2,9 +2,13 @@ package org.jivesoftware.openfire.pubsub.cluster;
 
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CancelSubscriptionTask extends SubscriptionTask
 {
+    private static final Logger log = LoggerFactory.getLogger(CancelSubscriptionTask.class);
+
 	public CancelSubscriptionTask()
 	{
 	}
@@ -17,7 +21,7 @@ public class CancelSubscriptionTask extends SubscriptionTask
 	@Override
 	public void run()
 	{
-		System.out.println("Running DeleteSubscriptionTask: " + toString());
+		log.debug("[TASK] Cancel Subscription : {}", toString());
 
 		Node node = getNode();
 		

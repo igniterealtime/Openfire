@@ -41,12 +41,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DbConnectionManager.DatabaseType;
+import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedList;
 import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -197,7 +199,7 @@ public class PubSubPersistenceManager {
 
     private static final int POOL_SIZE = 50; 
 
-    private static final int ITEM_CACHE_SIZE = JiveGlobals.getIntProperty("xmpp.pubsub.flush.cache", 1000);
+	private static final int ITEM_CACHE_SIZE = JiveGlobals.getIntProperty("xmpp.pubsub.item.cache", 1000);
     private static int publishedItemSize = 0;
     private static final Object itemLock = new Object();
     
@@ -1128,7 +1130,7 @@ public class PubSubPersistenceManager {
     		itemMap.put(item.getID(), listNode);
     		publishedItemSize++;
     		
-    		if (publishedItemSize > ITEM_CACHE_SIZE)
+			if (publishedItemSize > ITEM_CACHE_SIZE)
     			flushItems();
     	}
     }
@@ -1139,6 +1141,8 @@ public class PubSubPersistenceManager {
 	public static void flushItems()
     {
     	log.debug("Flushing items to database");
+
+		CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
 
 		boolean abortTransaction = false;
     	LinkedList addList = null;

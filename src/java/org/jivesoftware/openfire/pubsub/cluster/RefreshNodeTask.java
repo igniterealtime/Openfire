@@ -2,6 +2,8 @@ package org.jivesoftware.openfire.pubsub.cluster;
 
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Forces the node to be refreshed from the database. This will load a node from
@@ -13,6 +15,8 @@ import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
  */
 public class RefreshNodeTask extends NodeTask
 {
+    private static final Logger log = LoggerFactory.getLogger(RefreshNodeTask.class);
+
 	public RefreshNodeTask()
 	{
 	}
@@ -31,7 +35,7 @@ public class RefreshNodeTask extends NodeTask
 	@Override
 	public void run()
 	{
-		System.out.println("Refreshing node task");
+		log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
 		PubSubPersistenceManager.loadNode(getService(), getNodeId());
 	}
 

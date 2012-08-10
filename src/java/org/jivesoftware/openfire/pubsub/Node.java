@@ -30,7 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
+import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
+import org.jivesoftware.openfire.pubsub.cluster.RemoveNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
@@ -415,6 +418,21 @@ public abstract class Node {
      */
     Collection<NodeSubscription> getSubscriptions() {
         return subscriptionsByID.values();
+    }
+
+    /**
+     * Returns all subscriptions to the node. If multiple subscriptions are enabled,
+     * this method returns the subscriptions by <tt>subId</tt>, otherwise it returns
+     * the subscriptions by {@link JID}.
+     *
+     * @return All subscriptions to the node.
+     */
+    public Collection<NodeSubscription> getAllSubscriptions() {
+        if (isMultipleSubscriptionsEnabled()) {
+            return subscriptionsByID.values();
+        } else {
+            return subscriptionsByJID.values();
+        }
     }
 
     /**
@@ -1817,6 +1835,7 @@ public abstract class Node {
             cancelPresenceSubscriptions();
             // Remove the node from memory
             service.removeNode(getNodeID());
+            CacheFactory.doClusterTask(new RemoveNodeTask(this));
             // Clear collections in memory (clear them after broadcast was sent)
             affiliates.clear();
             subscriptionsByID.clear();
@@ -2094,6 +2113,8 @@ public abstract class Node {
             // Remove the subscription from the database
             PubSubPersistenceManager.removeSubscription(subscription);
         }
+		CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));
+
         // Check if we need to unsubscribe from the presence of the owner
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {
             service.presenceSubscriptionNotRequired(this, subscription.getOwner());
@@ -2194,6 +2215,7 @@ public abstract class Node {
         if (approved) {
             // Mark that the subscription to the node has been approved
             subscription.approved();
+			CacheFactory.doClusterTask(new ModifySubscriptionTask(subscription));
         }
         else  {
             // Cancel the subscription to the node

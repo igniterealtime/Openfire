@@ -2,10 +2,13 @@ package org.jivesoftware.openfire.pubsub.cluster;
 
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NewSubscriptionTask extends SubscriptionTask
 {
+    private static final Logger log = LoggerFactory.getLogger(NewSubscriptionTask.class);
+
 	public NewSubscriptionTask()
 	{
 
@@ -19,7 +22,7 @@ public class NewSubscriptionTask extends SubscriptionTask
 	@Override
 	public void run()
 	{
-		System.out.println("Running NewSubscriptionTask: " + toString());
+		log.debug("[TASK] New subscription : {}", toString());
 
 		Node node = getNode();
 
@@ -45,7 +48,5 @@ public class NewSubscriptionTask extends SubscriptionTask
 				getService().presenceSubscriptionRequired(getNode(), getOwner());
 			}
 		}
-		// We have to flush so the originating node can do a get last item.
-		PubSubPersistenceManager.flushItems();
 	}
 }

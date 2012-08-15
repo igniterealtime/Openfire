@@ -22,7 +22,7 @@ public class FlushTask implements ClusterTask
 	public void run()
 	{
 		log.debug("[TASK] Flush pubsub");
-		PubSubPersistenceManager.flushItems();
+        PubSubPersistenceManager.flushItems(false); // just this member
 	}
 
 	@Override

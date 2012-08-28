@@ -31,14 +31,18 @@ public class JustMarriedPlugin implements Plugin {
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 	}
 
-	public static boolean changeName(String currentUserName, String newUserName, boolean deleteOldUser) {
+	public static boolean changeName(String currentUserName, String newUserName, boolean deleteOldUser,
+			String newEmail, String newRealName) {
 		UserManager userManager = UserManager.getInstance();
 
 		try {
 			User currentUser = userManager.getUser(currentUserName);
 			// Old user found, create new one
 			String password = AuthFactory.getPassword(currentUserName);
-			User newUser = userManager.createUser(newUserName, password, currentUser.getName(), currentUser.getEmail());
+			String newName = (newRealName == null | newRealName.length() == 0) ? currentUser.getName() : newRealName;
+			String newMail = (newEmail == null | newEmail.length() == 0) ? currentUser.getEmail() : newEmail;
+			User newUser = userManager.createUser(newUserName, password, currentUser.getName(), newMail);
+			newUser.setName(newName);
 			newUser.setNameVisible(currentUser.isNameVisible());
 			newUser.setEmailVisible(currentUser.isEmailVisible());
 			newUser.setCreationDate(currentUser.getCreationDate());

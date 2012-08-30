@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Just married Plugin Readme</title>
+<style type="text/css">
+BODY {
+	font-size: 100%;
+}
+
+BODY,TD,TH {
+	font-family: tahoma, verdana, arial, helvetica, sans-serif;
+	font-size: 0.8em;
+}
+
+H2 {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+A:hover {
+	text-decoration: none;
+}
+
+H1 {
+	font-family: tahoma, arial, helvetica, sans-serif;
+	font-size: 1.4em;
+	font-weight: bold;
+	border-bottom: 1px #ccc solid;
+	padding-bottom: 2px;
+}
+
+TT {
+	font-family: courier new;
+	font-weight: bold;
+	color: #060;
+}
+
+PRE {
+	font-family: courier new;
+	font-size: 100%;
+}
+
+#datatable TH {
+	color: #fff;
+	background-color: #2A448C;
+	text-align: left;
+}
+
+#datatable TD {
+	background-color: #FAF6EF;
+}
+
+#datatable .name {
+	background-color: #DCE2F5;
+}
+</style>
+</head>
+<body>
+
+
+	<h1>Just married Plugin Readme</h1>
+
+	<h2>Overview</h2>
+
+	<p>This plugins allows admins to rename or copy users on the local
+		server. By default Openfire does not allow to rename users because the
+		username is the primary key in database. This plugin creates a new
+		contact and tries to copy roster entries, groups (including shared
+		groups), properties and vcard from the old contact to the new renamed
+		one. If you want you could keep the old user as well.</p>
+
+	<h2>Installation</h2>
+
+	<p>Copy justmarried.jar into the plugins directory of your Openfire
+		installation. The plugin will then be automatically deployed. To
+		upgrade to a new version, copy the new remoteRoster.jar file over the
+		existing file.</p>
+
+	<h2>Configuration</h2>
+
+	<p>The Just married plugin can be configured under
+		"User/Groups"-"Users"-"Just married".</p>
+
+</body>
+</html>

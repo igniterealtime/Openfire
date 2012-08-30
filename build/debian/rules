@@ -13,10 +13,10 @@ ETCDIR := $(DEST)/etc/openfire
 LOGDIR := $(DEST)/var/log/openfire
 VARDIR := $(DEST)/var/lib/openfire
 
-JAVA_HOME := /usr/lib/jvm/java-1.5.0-sun
+JAVA_HOME ?= /usr/lib/jvm/java-6-sun
 DEB_ANT_BUILDFILE := build/build.xml
 DEB_ANT_CLEAN_TARGET := clean
-	
+
 install/openfire::
 	cp $(TARGET)/lib/*.jar $(OPENFIRE)/lib/
 	cp $(TARGET)/lib/log4j.xml $(ETCDIR)

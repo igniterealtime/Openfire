@@ -261,6 +261,9 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         username = JID.unescapeNode(username);
         Map<String, String> map = getLdapAttributes(username);
         Log.debug("LdapVCardProvider: Retrieving LDAP mapped vcard for " + username);
+        if (map.isEmpty()) {
+            return null;
+        }
         Element vcard = new VCard(template).getVCard(map);
         if (mergeVCard == null) {
             // No vcard passed in?  Hrm.  Fine, return LDAP vcard.

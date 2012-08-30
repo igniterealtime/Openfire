@@ -202,6 +202,44 @@ public class IQAdminHandler {
                         metaData.addAttribute("nick", role.getNickname());
                         metaData.addAttribute("affiliation", role.getAffiliation().toString());
                     }
+                } else if ("owner".equals(affiliation)) {
+                    // The client is requesting the list of owners
+                    Element ownerMetaData;
+                    MUCRole role;
+                    for (JID jid : room.getOwners()) {
+                        ownerMetaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        ownerMetaData.addAttribute("affiliation", "owner");
+                        ownerMetaData.addAttribute("jid", jid.toBareJID());
+                        // Add role and nick to the metadata if the user is in the room
+                        try {
+                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
+                            role = roles.get(0);
+                            ownerMetaData.addAttribute("role", role.getRole().toString());
+                            ownerMetaData.addAttribute("nick", role.getNickname());
+                        }
+                        catch (UserNotFoundException e) {
+                            // Do nothing
+                        }
+                    }
+                } else if ("admin".equals(affiliation)) {
+                    // The client is requesting the list of admins
+                    Element adminMetaData;
+                    MUCRole role;
+                    for (JID jid : room.getAdmins()) {
+                        adminMetaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
+                        adminMetaData.addAttribute("affiliation", "admin");
+                        adminMetaData.addAttribute("jid", jid.toBareJID());
+                        // Add role and nick to the metadata if the user is in the room
+                        try {
+                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
+                            role = roles.get(0);
+                            adminMetaData.addAttribute("role", role.getRole().toString());
+                            adminMetaData.addAttribute("nick", role.getNickname());
+                        }
+                        catch (UserNotFoundException e) {
+                            // Do nothing
+                        }
+                    }
                 } else {
                     reply.setError(PacketError.Condition.bad_request);
                 }
@@ -238,6 +276,10 @@ public class IQAdminHandler {
                     if ("moderator".equals(target)) {
                         // Add the user as a moderator of the room based on the full JID
                         presences.add(room.addModerator(jid, senderRole));
+                    } else if ("owner".equals(target)) {
+                        presences.addAll(room.addOwner(jid, senderRole));
+                    } else if ("admin".equals(target)) {
+                        presences.addAll(room.addAdmin(jid, senderRole));
                     } else if ("participant".equals(target)) {
                         // Add the user as a participant of the room based on the full JID
                         presences.add(room.addParticipant(jid,

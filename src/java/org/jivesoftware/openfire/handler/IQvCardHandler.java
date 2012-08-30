@@ -143,6 +143,10 @@ public class IQvCardHandler extends IQHandler {
                     result.setChildElement(packet.getChildElement().createCopy());
                     result.setError(PacketError.Condition.item_not_found);
                 }
+            } else {
+                result = IQ.createResultIQ(packet);
+                result.setChildElement(packet.getChildElement().createCopy());
+                result.setError(PacketError.Condition.item_not_found);
             }
         }
         else {

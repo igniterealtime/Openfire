@@ -123,7 +123,7 @@ public class HttpConnection {
             isClosed = true;
         }
 
-        if (continuation != null) {
+        if (continuation != null && continuation.isSuspended()) {
             continuation.setAttribute("response-body", body);
             continuation.resume();
             session.incrementServerPacketCount();
@@ -153,6 +153,9 @@ public class HttpConnection {
         }
         else if (body == null) {
             throw new IllegalStateException("Continuation not set, cannot wait for deliverable.");
+        }
+        else if(CONNECTION_CLOSED.equals(body)) {
+        	return null;
         }
         return body;
     }
@@ -199,9 +202,9 @@ public class HttpConnection {
 
     private String waitForResponse() throws HttpBindTimeoutException {
         // we enter this method when we have no messages pending delivery
-	// when we resume a suspended continuation, or when we time out
-	if (!Boolean.TRUE.equals(continuation.getAttribute(SUSPENDED))) {
-	    continuation.setTimeout(session.getWait() * JiveConstants.SECOND);
+		// when we resume a suspended continuation, or when we time out
+		if (!Boolean.TRUE.equals(continuation.getAttribute(SUSPENDED))) {
+		    continuation.setTimeout(session.getWait() * JiveConstants.SECOND);
             continuation.suspend();
             continuation.setAttribute(SUSPENDED, Boolean.TRUE);
             continuation.undispatch();

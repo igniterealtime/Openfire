@@ -6,8 +6,8 @@
    <name>User Import Export</name>
    <description>Enables import and export of user data</description>
    <author>Ryan Graham</author>
-   <version>2.3.0</version>
-   <date>2/19/2010</date>
+   <version>2.3.1</version>
+   <date>7/13/2012</date>
    <minServerVersion>3.7.0</minServerVersion>
 
    <adminconsole>

@@ -37,7 +37,7 @@
    <xs:element name="Item">
       <xs:complexType>
          <xs:sequence>
-            <xs:element ref="Group" maxOccurs="unbounded" />
+            <xs:element ref="Group" minOccurs="0" maxOccurs="unbounded" />
          </xs:sequence>
          <xs:attribute ref="jid" use="required" />
          <xs:attribute name="askstatus" use="required" />

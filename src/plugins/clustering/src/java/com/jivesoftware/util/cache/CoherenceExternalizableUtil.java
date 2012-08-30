@@ -286,7 +286,7 @@ public class CoherenceExternalizableUtil implements ExternalizableUtilStrategy {
     }
 
     public Serializable readSerializable(DataInput in) throws IOException {
-        return ExternalizableHelper.readSerializable(in);
+        return (Serializable) ExternalizableHelper.readSerializable(in);
     }
 
     public void writeSafeUTF(DataOutput out, String value) throws IOException {

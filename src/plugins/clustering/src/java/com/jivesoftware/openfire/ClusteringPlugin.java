@@ -23,6 +23,8 @@ package com.jivesoftware.openfire;
 import com.jivesoftware.openfire.session.RemoteSessionLocator;
 import com.jivesoftware.util.cache.CoherenceExternalizableUtil;
 import com.jivesoftware.util.cluster.CoherencePacketRouter;
+import com.tangosol.net.CacheFactory;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
@@ -143,6 +145,8 @@ public class ClusteringPlugin implements Plugin, PropertyEventListener {
         XMPPServer.getInstance().setRemoteSessionLocator(new RemoteSessionLocator());
         // Set packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new CoherencePacketRouter());
+        // Initialize the Coherence cluster configuration
+        CacheFactory.getClusterConfig();
     }
 
     /**

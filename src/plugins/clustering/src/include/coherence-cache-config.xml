@@ -783,7 +783,7 @@ http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
                 </init-param>
                 <init-param>
                     <param-name>back-size-low</param-name>
-                    <param-value>943718</param-value>
+                    <param-value>9437180</param-value>
                 </init-param>
             </init-params>
         </cache-mapping>
@@ -802,7 +802,7 @@ http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
                 </init-param>
                 <init-param>
                     <param-name>back-size-low</param-name>
-                    <param-value>943718</param-value>
+                    <param-value>9437180</param-value>
                 </init-param>
             </init-params>
         </cache-mapping>

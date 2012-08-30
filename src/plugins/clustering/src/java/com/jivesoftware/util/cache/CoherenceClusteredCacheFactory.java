@@ -93,7 +93,7 @@ public class CoherenceClusteredCacheFactory implements CacheFactoryStrategy {
                 }
                 else {
                     com.tangosol.net.CacheFactory.getCache("opt-$cacheStats");
-                    taskService = com.tangosol.net.CacheFactory.getInvocationService("OpenFire Cluster Service");
+                    taskService = (InvocationService) com.tangosol.net.CacheFactory.getService("OpenFire Cluster Service");
 
                     // Update the running state of the cluster
                     state = cluster != null ? State.started : State.stopped;

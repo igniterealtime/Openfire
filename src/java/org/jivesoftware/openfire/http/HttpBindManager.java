@@ -300,7 +300,7 @@ public final class HttpBindManager {
     }
     
     public void setCORSAllowOrigin(String origins) {
-        if (origins == null || origins.trim().isEmpty())
+        if (origins == null || origins.trim().length() == 0)
              origins = HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT;
         else {
             origins = origins.replaceAll("\\s+", "");

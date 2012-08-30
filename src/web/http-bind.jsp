@@ -36,13 +36,21 @@
         Map<String, String> errorMap = new HashMap<String, String>();
         boolean isEnabled = ParamUtils.getBooleanParameter(request, "httpBindEnabled",
                 serverManager.isHttpBindEnabled());
+        // CORS        
+        boolean isCORSEnabled = ParamUtils.getBooleanParameter(request, "CORSEnabled",
+                serverManager.isCORSEnabled());        
         if (isEnabled) {
             int requestedPort = ParamUtils.getIntParameter(request, "port",
                     serverManager.getHttpBindUnsecurePort());
             int requestedSecurePort = ParamUtils.getIntParameter(request, "securePort",
                     serverManager.getHttpBindSecurePort());
+            // CORS
+            String CORSDomains = ParamUtils.getParameter(request, "CORSDomains", true);     
             try {
                 serverManager.setHttpBindPorts(requestedPort, requestedSecurePort);
+                // CORS
+                serverManager.setCORSEnabled(isCORSEnabled);
+                serverManager.setCORSAllowOrigin(CORSDomains);
             }
             catch (Exception e) {
                 Log.error("An error has occured configuring the HTTP binding ports", e);
@@ -71,6 +79,8 @@
     int port = serverManager.getHttpBindUnsecurePort();
     int securePort = serverManager.getHttpBindSecurePort();
     boolean isScriptSyntaxEnabled = serverManager.isScriptSyntaxEnabled();
+    // CORS
+    boolean isCORSEnabled = serverManager.isCORSEnabled();
 %>
 
 <%@page import="org.jivesoftware.openfire.http.FlashCrossDomainServlet"%><html>
@@ -86,6 +96,9 @@
             $("securePort").disabled = !enabled;
             $("rb03").disabled = !enabled;
             $("rb04").disabled = !enabled;
+            $("rb05").disabled = !enabled;
+            $("rb06").disabled = !enabled;
+            $("CORSDomains").disabled = !enabled;
             $("crossdomain").disabled = !enabled;
         }
         window.onload = setTimeout("setEnabled()", 500);
@@ -198,6 +211,53 @@
 		</tbody>
 		</table>
     </div>
+    
+    <!-- CORS -->
+	<div class="jive-contentBoxHeader">Provides support for CORS (Cross-Origin Resource Sharing)</div>
+    <div class="jive-contentbox">
+    	<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+			<tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="CORSEnabled" value="true" id="rb05"
+					 <%= (isCORSEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb05">
+						<b>Enabled</b> - Activate CORS support for cross domain scripting
+					</label>
+					<table border="0">
+						<tr>
+							<td>
+								<label for="CORSDomains">
+									Enter domain list below separated by commas or * to allow any :
+								</label>
+							</td>
+						</tr>
+                        <tr>
+                            <td>
+                                <input id="CORSDomains" type="text" size="80" name="CORSDomains" value="<%= serverManager.getCORSAllowOrigin() %>">
+                            </td>
+                        </tr>
+                    </table>
+				</td>
+			</tr>
+            <tr valign="top">
+				<td width="1%" nowrap>
+					<input type="radio" name="CORSEnabled" value="false" id="rb06"
+					 <%= (!isCORSEnabled ? "checked" : "") %>>
+				</td>
+				<td width="99%">
+					<label for="rb06">
+					<b>Disabled</b> - Disable CORS support
+					</label>
+				</td>
+			</tr>
+		</tbody>
+		</table>
+    </div>
+    <!-- CORS -->
+    
     <div class="jive-contentBoxHeader">Cross-domain policy</div>
     <div class="jive-contentbox">
     	<p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>

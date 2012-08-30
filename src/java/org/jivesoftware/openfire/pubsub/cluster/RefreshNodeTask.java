@@ -27,12 +27,6 @@ public class RefreshNodeTask extends NodeTask
 	}
 
 	@Override
-	public Object getResult()
-	{
-		return null;
-	}
-
-	@Override
 	public void run()
 	{
 		log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());

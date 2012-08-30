@@ -80,12 +80,6 @@ public abstract class SubscriptionTask extends NodeTask
 	}
 
 	@Override
-	public Object getResult()
-	{
-		return null;
-	}
-
-	@Override
 	public String toString()
 	{
 		return getClass().getSimpleName() + " [(service=" + serviceId + "), (nodeId=" + nodeId + "), (owner=" + owner

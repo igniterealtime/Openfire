@@ -14,7 +14,6 @@ import org.xmpp.packet.JID;
 
 public abstract class NodeTask implements ClusterTask
 {
-	private static final String PUBSUB_SVC_ID = XMPPServer.getInstance().getPubSubModule().getServiceID();
 
 	protected String nodeId;
 	protected String serviceId;
@@ -44,13 +43,19 @@ public abstract class NodeTask implements ClusterTask
 
 	public PubSubService getService()
 	{
-		if (PUBSUB_SVC_ID.equals(serviceId))
+		if (Node.PUBSUB_SVC_ID.equals(serviceId))
 			return XMPPServer.getInstance().getPubSubModule();
 		else
 		{
 			PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
 			return serviceMgr.hasCachedService(new JID(serviceId)) ? serviceMgr.getPEPService(serviceId) : null;
 		}
+	}
+
+	@Override
+	public Object getResult()
+	{
+		return null;
 	}
 
 	@Override

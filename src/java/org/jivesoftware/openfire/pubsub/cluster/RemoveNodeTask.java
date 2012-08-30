@@ -24,12 +24,6 @@ public class RemoveNodeTask extends NodeTask
     }
 
     @Override
-    public Object getResult()
-    {
-        return null;
-    }
-
-    @Override
     public void run()
     {
 		log.debug("[TASK] Removing node - nodeID: {}", getNodeId());

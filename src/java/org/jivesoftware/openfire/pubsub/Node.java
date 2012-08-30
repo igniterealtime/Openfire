@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
@@ -54,6 +55,8 @@ import org.xmpp.packet.Message;
  * @author Matt Tucker
  */
 public abstract class Node {
+
+    public static final String PUBSUB_SVC_ID = XMPPServer.getInstance().getPubSubModule().getServiceID();
 
     /**
      * Reference to the publish and subscribe service.

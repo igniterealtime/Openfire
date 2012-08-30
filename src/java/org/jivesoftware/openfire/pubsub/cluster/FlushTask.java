@@ -6,14 +6,10 @@ import java.io.ObjectOutput;
 
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
 import org.jivesoftware.util.cache.ClusterTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class FlushTask implements ClusterTask
 {
-	private static final Logger log = LoggerFactory.getLogger(FlushTask.class);
-
 	public FlushTask()
 	{
 	}
@@ -21,7 +17,6 @@ public class FlushTask implements ClusterTask
 	@Override
 	public void run()
 	{
-		log.debug("[TASK] Flush pubsub");
         PubSubPersistenceManager.flushItems(false); // just this member
 	}
 

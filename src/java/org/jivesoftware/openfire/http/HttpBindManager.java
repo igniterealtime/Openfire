@@ -23,7 +23,6 @@ package org.jivesoftware.openfire.http;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,24 +67,6 @@ public final class HttpBindManager {
     public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
 
     public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 7443;
-    
-    // http binding CORS default properties
-    
-    public static final String HTTP_BIND_CORS_ENABLED = "httpbind.CORS.enabled";
-    
-    public static final boolean HTTP_BIND_CORS_ENABLED_DEFAULT = true;
-    
-    public static final String HTTP_BIND_CORS_ALLOW_ORIGIN = "httpbind.CORS.domains";
-    
-    public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT = "*";
-    
-    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = "GET, POST, OPTIONS";
-    
-    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Content-Type";
-    
-    public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
-    
-    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
 
     private static HttpBindManager instance = new HttpBindManager();
 
@@ -104,9 +85,6 @@ public final class HttpBindManager {
 
     private ContextHandlerCollection contexts;
 
-    // is all orgin allowed flag
-    private boolean allowAllOrigins;
-    
     public static HttpBindManager getInstance() {
         return instance;
     }
@@ -118,9 +96,6 @@ public final class HttpBindManager {
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
         contexts = new ContextHandlerCollection();
-        
-        // setup the cache for the allowed origins
-        this.setupAllowedOriginsMap();
     }
 
     public void start() {
@@ -267,57 +242,7 @@ public final class HttpBindManager {
     public String getJavaScriptUrl() {
         return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                 bindPort + "/scripts/";
-    }   
-
-    // http binding CORS support start
-    
-    private void setupAllowedOriginsMap() {
-        String originString = getCORSAllowOrigin();
-        if (originString.equals(HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT)) {
-            allowAllOrigins = true;
-        } else {
-            allowAllOrigins = false;
-            String[] origins = originString.split(",");
-            // reset the cache
-            HTTP_BIND_ALLOWED_ORIGINS.clear();
-            for (String str : origins) {
-                HTTP_BIND_ALLOWED_ORIGINS.put(str, true);
-            }
-        }
     }
-    
-    public boolean isCORSEnabled() {
-        return JiveGlobals.getBooleanProperty(HTTP_BIND_CORS_ENABLED, HTTP_BIND_CORS_ENABLED_DEFAULT);
-    }
-    
-    public void setCORSEnabled(Boolean value) {
-        if (value != null)
-            JiveGlobals.setProperty(HTTP_BIND_CORS_ENABLED, String.valueOf(value));
-    }
-    
-    public String getCORSAllowOrigin() {
-        return JiveGlobals.getProperty(HTTP_BIND_CORS_ALLOW_ORIGIN , HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
-    }
-    
-    public void setCORSAllowOrigin(String origins) {
-        if (origins == null || origins.trim().isEmpty())
-             origins = HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT;
-        else {
-            origins = origins.replaceAll("\\s+", "");
-        }
-        JiveGlobals.setProperty(HTTP_BIND_CORS_ALLOW_ORIGIN, origins);
-        setupAllowedOriginsMap();
-    }
-    
-    public boolean isAllOriginsAllowed() {
-        return allowAllOrigins;
-    }
-    
-    public boolean isThisOriginAllowed(String origin) {
-        return HTTP_BIND_ALLOWED_ORIGINS.get(origin) != null;
-    }
-    
-    // http binding CORS support end
 
     public void setHttpBindEnabled(boolean isEnabled) {
         JiveGlobals.setProperty(HTTP_BIND_ENABLED, String.valueOf(isEnabled));

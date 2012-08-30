@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
@@ -1759,8 +1760,8 @@ public abstract class Node {
         affiliates.add(affiliate);
     }
 
-	public void addSubscription(NodeSubscription subscription)
-	{
+    public void addSubscription(NodeSubscription subscription)
+    {
         subscriptionsByID.put(subscription.getID(), subscription);
         subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
@@ -2067,10 +2068,10 @@ public abstract class Node {
         if (subscription.isAuthorizationPending()) {
             subscription.sendAuthorizationRequest();
         }
-        
-		// Synchronous so the task can flush all other cluster nodes before
-		// the last item is retrieved.
-		CacheFactory.doSynchronousClusterTask(new NewSubscriptionTask(subscription), false);
+
+        // Synchronous so the task can flush all other cluster nodes before
+        // the last item is retrieved.
+        CacheFactory.doSynchronousClusterTask(new NewSubscriptionTask(subscription), false);
 
         // Send last published item (if node is leaf node and subscription status is ok)
         if (isSendItemSubscribe() && subscription.isActive()) {
@@ -2097,8 +2098,9 @@ public abstract class Node {
      * remove the existing affiliation too.
      *
      * @param subscription the subscription to cancel.
+     * @param sendToCluster True to forward cancel order to cluster peers
      */
-    public void cancelSubscription(NodeSubscription subscription) {
+    public void cancelSubscription(NodeSubscription subscription, boolean sendToCluster) {
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
         subscriptionsByJID.remove(subscription.getJID().toString());
@@ -2113,12 +2115,25 @@ public abstract class Node {
             // Remove the subscription from the database
             PubSubPersistenceManager.removeSubscription(subscription);
         }
-		CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));
+        if (sendToCluster) {
+            CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));
+        }
 
         // Check if we need to unsubscribe from the presence of the owner
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {
             service.presenceSubscriptionNotRequired(this, subscription.getOwner());
         }
+    }
+
+    /**
+     * Cancels an existing subscription to the node. If the subscriber does not have any
+     * other subscription to the node and his affiliation was of type <tt>none</tt> then
+     * remove the existing affiliation too.
+     *
+     * @param subscription the subscription to cancel.
+     */
+    public void cancelSubscription(NodeSubscription subscription) {
+        cancelSubscription(subscription, ClusterManager.isClusteringEnabled());
     }
 
     /**
@@ -2182,7 +2197,7 @@ public abstract class Node {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " - ID: " + getNodeID();
     }
 
@@ -2215,7 +2230,7 @@ public abstract class Node {
         if (approved) {
             // Mark that the subscription to the node has been approved
             subscription.approved();
-			CacheFactory.doClusterTask(new ModifySubscriptionTask(subscription));
+            CacheFactory.doClusterTask(new ModifySubscriptionTask(subscription));
         }
         else  {
             // Cancel the subscription to the node

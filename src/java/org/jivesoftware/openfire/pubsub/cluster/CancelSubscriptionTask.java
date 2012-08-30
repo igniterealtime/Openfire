@@ -32,6 +32,6 @@ public class CancelSubscriptionTask extends SubscriptionTask
 		
 		// This method will make a db call, but it will simply do nothing since
 		// the record will already be deleted.
-		node.cancelSubscription(getSubscription());
+		node.cancelSubscription(getSubscription(), false);
 	}
 }

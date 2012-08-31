@@ -17,7 +17,7 @@ public class FlushTask implements ClusterTask
 	@Override
 	public void run()
 	{
-        PubSubPersistenceManager.flushItems(false); // just this member
+        PubSubPersistenceManager.flushPendingItems(false); // just this member
 	}
 
 	@Override

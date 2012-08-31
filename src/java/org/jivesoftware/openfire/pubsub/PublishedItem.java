@@ -20,10 +20,19 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import org.xmpp.packet.JID;
-import org.dom4j.Element;
-
+import java.io.Serializable;
+import java.io.StringReader;
 import java.util.Date;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pep.PEPServiceManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * A published item to a node. Once an item was published to a node, node subscribers will be
@@ -37,9 +46,28 @@ import java.util.Date;
  *
  * @author Matt Tucker
  */
-public class PublishedItem {
+public class PublishedItem implements Serializable {
 
+    private static final Logger log = LoggerFactory.getLogger(PublishedItem.class);
+
+    private static final int POOL_SIZE = 50;
     /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+
+    private static final long serialVersionUID = 7012925993623144574L;
+    
+    static {
+        // Initialize the pool of sax readers
+        for (int i=0; i<POOL_SIZE; i++) {
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
+        }    	
+    }
+	
+	/**
      * JID of the entity that published the item to the node. This is the full JID
      * of the publisher.
      */
@@ -47,7 +75,15 @@ public class PublishedItem {
     /**
      * The node where the item was published.
      */
-    private LeafNode node;
+    private transient LeafNode node;
+    /**
+     * The id for the node where the item was published.
+     */
+    private String nodeId;
+    /**
+     * The id for the service hosting the node for this item
+     */
+    private String serviceId;
     /**
      * ID that uniquely identifies the published item in the node.
      */
@@ -57,20 +93,31 @@ public class PublishedItem {
      */
     private Date creationDate;
     /**
-     * The payload included when publishing the item.
+     * The optional payload is included when publishing the item. This value
+     * is created from the payload XML and cached as/when needed.
      */
-    private Element payload;
+    private transient Element payload;
     /**
-     * XML representation of the payload. This is actually a cache that avoids
-     * doing Element#asXML.
+     * XML representation of the payload (for serialization)
      */
     private String payloadXML;
 
     PublishedItem(LeafNode node, JID publisher, String id, Date creationDate) {
         this.node = node;
+        this.nodeId = node.getNodeID();
+        this.serviceId = node.getService().getServiceID();
         this.publisher = publisher;
         this.id = id;
         this.creationDate = creationDate;
+    }
+
+    /**
+     * Returns the id for the {@link LeafNode} where this item was published.
+     *
+     * @return the ID for the leaf node where this item was published.
+     */
+    public String getNodeID() {
+        return nodeId;
     }
 
     /**
@@ -79,7 +126,16 @@ public class PublishedItem {
      * @return the leaf node where this item was published.
      */
     public LeafNode getNode() {
-        return node;
+    	if (node == null) {
+	    	if (Node.PUBSUB_SVC_ID.equals(serviceId)) {
+	            node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
+	    	} else {
+				PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+				node = serviceMgr.hasCachedService(new JID(serviceId)) ? 
+						(LeafNode) serviceMgr.getPEPService(serviceId).getNode(nodeId) : null;
+	    	}
+    	}
+    	return node;
     }
 
     /**
@@ -117,6 +173,20 @@ public class PublishedItem {
      * @return the payload included when publishing the item or <tt>null</tt> if none was found.
      */
     public Element getPayload() {
+    	if (payload == null && payloadXML != null) {
+    		// payload initialized as XML string from DB
+            SAXReader xmlReader = null;
+    		try {
+    			xmlReader = xmlReaders.take();
+    			payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
+    		} catch (Exception ex) {
+    			 log.error("Failed to parse payload XML", ex);
+    		} finally {
+    			if (xmlReader != null) {
+    				xmlReaders.add(xmlReader);
+    			}
+    		}
+    	}
         return payload;
     }
 
@@ -136,6 +206,19 @@ public class PublishedItem {
      * have a payload. Transient nodes that are configured to not broadcast payloads may allow
      * published items to have no payload.
      *
+     * @param payloadXML the payload included when publishing the item or <tt>null</tt>
+     *        if none was found.
+     */
+    void setPayloadXML(String payloadXML) {
+    	this.payloadXML = payloadXML;
+    	this.payload = null; // will be recreated only if needed
+    }
+
+    /**
+     * Sets the payload included when publishing the item. A published item may or may not
+     * have a payload. Transient nodes that are configured to not broadcast payloads may allow
+     * published items to have no payload.
+     *
      * @param payload the payload included when publishing the item or <tt>null</tt>
      *        if none was found.
      */
@@ -144,8 +227,7 @@ public class PublishedItem {
         // Update XML representation of the payload
         if (payload == null) {
             payloadXML = null;
-        }
-        else {
+        } else {
             payloadXML = payload.asXML();
         }
     }
@@ -158,7 +240,7 @@ public class PublishedItem {
      * @return true if payload contains the specified keyword.
      */
     boolean containsKeyword(String keyword) {
-        if (payloadXML == null || keyword == null) {
+        if (getPayloadXML() == null || keyword == null) {
             return true;
         }
         return payloadXML.contains(keyword);
@@ -173,9 +255,41 @@ public class PublishedItem {
      */
     public boolean canDelete(JID user) {
         if (publisher.equals(user) || publisher.toBareJID().equals(user.toBareJID()) ||
-                node.isAdmin(user)) {
+                getNode().isAdmin(user)) {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns a string that uniquely identifies this published item
+     * in the following format: <i>nodeId:itemId</i>
+     * @return Unique identifier for this item
+     */
+    public String getItemKey() {
+    	return getItemKey(nodeId,id);
+    }
+
+    /**
+     * Returns a string that uniquely identifies this published item
+     * in the following format: <i>nodeId:itemId</i>
+     * @param node Node for the published item
+     * @param itemId Id for the published item (unique within the node)
+     * @return Unique identifier for this item
+     */
+    public static String getItemKey(LeafNode node, String itemId) {
+    	return getItemKey(node.getNodeID(), itemId);
+    }
+
+    /**
+     * Returns a string that uniquely identifies this published item
+     * in the following format: <i>nodeId:itemId</i>
+     * @param nodeId Node id for the published item
+     * @param itemId Id for the published item (unique within the node)
+     * @return Unique identifier for this item
+     */
+    public static String getItemKey(String nodeId, String itemId) {
+    	return new StringBuilder(nodeId)
+    		.append(":").append(itemId).toString();
     }
 }

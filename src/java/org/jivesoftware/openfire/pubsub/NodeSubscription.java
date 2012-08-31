@@ -150,7 +150,6 @@ public class NodeSubscription {
     /**
      * Creates a new subscription of the specified user with the node.
      *
-     * @param service the pubsub service hosting the node where this subscription lives.
      * @param node Node to which this subscription is interested in.
      * @param owner the JID of the entity that owns this subscription.
      * @param jid the JID of the user that owns the subscription.

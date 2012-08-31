@@ -495,7 +495,7 @@ public class PEPService implements PubSubService, Cacheable {
             Message notification = new Message();
             Element event = notification.getElement().addElement("event", "http://jabber.org/protocol/pubsub#event");
             Element items = event.addElement("items");
-            items.addAttribute("node", leafLastPublishedItem.getNode().getNodeID());
+            items.addAttribute("node", leafLastPublishedItem.getNodeID());
             Element item = items.addElement("item");
             if (((LeafNode) leafLastPublishedItem.getNode()).isItemRequired()) {
                 item.addAttribute("id", leafLastPublishedItem.getID());

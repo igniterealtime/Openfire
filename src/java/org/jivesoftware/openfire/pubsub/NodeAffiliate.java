@@ -102,7 +102,7 @@ public class NodeAffiliate {
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
                     if (getNode().getNodeID().indexOf("@") >= 0) {
-                        items.addAttribute("node", publishedItem.getNode().getNodeID());                        
+                        items.addAttribute("node", publishedItem.getNodeID());                        
                     }
 
                     // Add item information to the event notification

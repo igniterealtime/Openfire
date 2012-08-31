@@ -128,6 +128,7 @@ public class CacheFactory {
         cacheNames.put("Entity Capabilities Users", "entityCapabilitiesUsers");
         cacheNames.put("Clearspace SSO Nonce", "clearspaceSSONonce");
         cacheNames.put("PEPServiceManager", "pepServiceManager");
+        cacheNames.put("Published Items", "publishedItems");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.maxLifetime", 1000 * 60 * 10l);
@@ -199,6 +200,8 @@ public class CacheFactory {
         cacheProps.put("cache.clearspaceSSONonce.maxLifetime", JiveConstants.MINUTE * 2);
         cacheProps.put("cache.pepServiceManager.size", 1024l * 1024 * 10);
         cacheProps.put("cache.pepServiceManager.maxLifetime", JiveConstants.MINUTE * 30);
+        cacheProps.put("cache.publishedItems.size", 1024l * 1024 * 10);
+        cacheProps.put("cache.publishedItems.maxLifetime", JiveConstants.MINUTE * 15);
     }
 
     private CacheFactory() {

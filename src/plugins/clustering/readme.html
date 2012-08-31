@@ -59,28 +59,41 @@ Clustering Plugin Readme
 <p>
 The clustering plugin adds support for running multiple redundant Openfire
 servers together in a cluster.  By running Openfire in a cluster, you can
-distribute the load amongst a number of servers, as well as having some
-form of redundency in the event that one of your servers dies. <font color="red">This
+distribute the connection load among several servers, as well as having some
+form of failover in the event that one of your servers dies. <font color="red">This
 plugin requires a valid <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence</a> license.</font> 
-</p>
+</p><p>
+In order to run Oracle Coherence in production mode, you will need to secure
+licensing for (at least) the Enterprise Edition (EE) of Coherence. Refer to the 
+<a href="http://docs.oracle.com/cd/E14571_01/doc.1111/e14860/products.htm#BABIEAJF">
+Oracle Fusion licensing docs</a> for more information. Openfire uses the Compute Grid
+InvocationService to distribute tasks among the cluster members, but this feature is 
+currently available only in EE or Grid Edition (GE).
+</p><p>
+Note that Coherence is configured to run as GE in development mode by default. 
+You can change this setting by overriding the following Java system properties
+via /etc/sysconfig/openfire (RPM) or openfired.vmoptions (Windows):
+</p><pre>
+   -Dtangosol.coherence.edition=EE
+   -Dtangosol.coherence.mode=prod
+</pre><p>
+The current Coherence release is version 3.7.1.</p>
 
 <h2>Installation</h2>
 
-<p>
-Follow steps 1 through 4 for adding Oracle Coherence libraries to Openfire. Step 5
+<p>After installing the clustering plugin (by copying clustering.jar into the Openfire plugins directory),
+follow steps 1 through 4 for adding Oracle Coherence libraries to Openfire. Step 5
 explains how to add this plugin to your Openfire setup.
     <ol>
     <li>Get <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence for Java Version</a>.</li>
-    <li>Unzip the coherence file and locate <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> in folder coherence/lib.</li>
-    <li>Copy <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to [openfire_home]/lib.</li>
+    <li>Unzip the coherence file and locate <b>coherence.jar</b> and <b>coherence-work.jar</b> in folder coherence/lib.</li>
+    <li>Copy <b>coherence.jar</b> and <b>coherence-work.jar</b> to [openfire_home]/plugins/clustering/lib.</li>
     <li>Restart Openfire server.</li>
-    <li>Copy clustering.jar into the plugins directory of your Openfire installation. The plugin will then be automatically deployed.</li>
     </ol>
 
-This plugin has been tested with Oracle Coherence Version 3.3.1/389. To upgrade
-to a new Oracle Coherence version follow steps 1 through 4 as explained above.
-To upgrade to a new version of the plugin just get the latest version from igniterealtime.org
-and follow step 5.
+This version of the plugin has been updated to be compatible with Oracle Coherence Version 3.7.1. Earlier
+versions of the clustering plugin are incompatible with Coherence 3.7.1 due to certain changes in the
+Coherence API.
 </p>
 
 <h2>Upgrading from Openfire Enterprise</h2>
@@ -97,6 +110,15 @@ outlined in the <i>Installation</i> section above.
 <p>
 To enable clustering or monitor the cluster go to: Server --&gt; Server Manager --&gt; Clustering
 </p>
+<p>
+You can change a number of Coherence properties by overriding Java system properties
+via /etc/sysconfig/openfire (RPM) or openfired.vmoptions (Windows). For example,
+to change the default cluster multicast port number, use the following:
+</p><pre>
+   -Dtangosol.coherence.clusterport=32380
+</pre><p>
+Other such settings may be found in the tangosol-coherence.xml file located in the 
+coherence.jar file, identified via the "system-property" attribute.</p>
 
 <h2>Compiling from source code</h2>
 
@@ -108,9 +130,10 @@ these steps to have a working environment:
     <ol>
     <li>Get <a href="http://www.igniterealtime.org/downloads/source.jsp">Openfire's source code</a>.</li>
     <li>Get <a href="http://www.oracle.com/technology/products/coherence/index.html">Oracle Coherence for Java Version</a>.</li>
-    <li>Unzip the coherence file and locate <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> in folder coherence/lib.</li>
-    <li>Copy <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to [openfire]/build/lib.</li>
-    <li>Add <b>coherence.jar</b>, <b>coherence-work.jar</b> and <b>tangosol.jar</b> to your build path.</li>
+    <li>Unzip the coherence file and locate <b>coherence.jar</b> and <b>coherence-work.jar</b> in folder coherence/lib.</li>
+    <li>Copy <b>coherence.jar</b> and <b>coherence-work.jar</b> to [openfire]/plugins/clustering/lib.</li>
+    <li>Add <b>coherence.jar</b> and <b>coherence-work.jar</b> to your IDE build path, or use the Ant build script provided
+    with the Openfire source distribution (e.g. "ant -Dplugin=clustering plugin").</li>
     </ol>
 </p>
 

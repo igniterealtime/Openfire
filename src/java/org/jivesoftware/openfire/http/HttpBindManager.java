@@ -79,9 +79,9 @@ public final class HttpBindManager {
     
     public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT = "*";
     
-    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = "GET, POST, OPTIONS";
+    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = "PROPFIND, PROPPATCH, COPY, MOVE, DELETE, MKCOL, LOCK, UNLOCK, PUT, GETLIB, VERSION-CONTROL, CHECKIN, CHECKOUT, UNCHECKOUT, REPORT, UPDATE, CANCELUPLOAD, HEAD, OPTIONS, GET, POST";
     
-    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Content-Type";
+    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Overwrite, Destination, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control";
     
     public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
     

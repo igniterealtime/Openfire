@@ -1759,7 +1759,7 @@ public abstract class Node {
         }
     }
 
-    void addAffiliate(NodeAffiliate affiliate) {
+    public void addAffiliate(NodeAffiliate affiliate) {
         affiliates.add(affiliate);
     }
 
@@ -2072,9 +2072,8 @@ public abstract class Node {
             subscription.sendAuthorizationRequest();
         }
 
-        // Synchronous so the task can flush all other cluster nodes before
-        // the last item is retrieved.
-        CacheFactory.doSynchronousClusterTask(new NewSubscriptionTask(subscription), false);
+        // Update the other members with the new subscription
+        CacheFactory.doClusterTask(new NewSubscriptionTask(subscription));
 
         // Send last published item (if node is leaf node and subscription status is ok)
         if (isSendItemSubscribe() && subscription.isActive()) {

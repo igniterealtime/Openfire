@@ -40,7 +40,7 @@ public class NodeAffiliate {
 
     private Affiliation affiliation;
 
-    NodeAffiliate(Node node, JID jid) {
+    public NodeAffiliate(Node node, JID jid) {
         this.node = node;
         this.jid = jid;
     }
@@ -57,7 +57,7 @@ public class NodeAffiliate {
         return affiliation;
     }
 
-    void setAffiliation(Affiliation affiliation) {
+    public void setAffiliation(Affiliation affiliation) {
         this.affiliation = affiliation;
     }
 

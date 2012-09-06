@@ -1,9 +1,11 @@
 package org.jivesoftware.openfire.pubsub.cluster;
 
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeAffiliate;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 public class NewSubscriptionTask extends SubscriptionTask
 {
@@ -33,7 +35,10 @@ public class NewSubscriptionTask extends SubscriptionTask
 
 		if (node.getAffiliate(getOwner()) == null)
 		{
-			node.addNoneAffiliation(getOwner());
+			// add the missing 'none' affiliation
+            NodeAffiliate affiliate = new NodeAffiliate(node, getOwner());
+            affiliate.setAffiliation(NodeAffiliate.Affiliation.none);
+            node.addAffiliate(affiliate);
 		}
 		node.addSubscription(getSubscription());
 

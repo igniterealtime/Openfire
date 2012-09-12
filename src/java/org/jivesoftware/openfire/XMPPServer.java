@@ -354,7 +354,7 @@ public class XMPPServer {
             Log.warn("Unable to determine local hostname.", ex);
         }
 
-        version = new Version(3, 7, 2, Version.ReleaseStatus.Alpha, -1);
+        version = new Version(3, 7, 2, Version.ReleaseStatus.Beta, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -934,9 +934,6 @@ public class XMPPServer {
         for (XMPPServerListener listener : listeners) {
             listener.serverStopping();
         }
-        // Shutdown the task engine.
-        TaskEngine.getInstance().shutdown();
-
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
@@ -953,6 +950,10 @@ public class XMPPServer {
         modules.clear();
         // Stop the Db connection manager.
         DbConnectionManager.destroyConnectionProvider();
+
+        // Shutdown the task engine.
+        TaskEngine.getInstance().shutdown();
+
         // hack to allow safe stopping
         Log.info("Openfire stopped");
     }

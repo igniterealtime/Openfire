@@ -41,7 +41,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Gaston Dombiak
  */
-public class CoherenceClusteredCacheFactory implements CacheFactoryStrategy {
+public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     /**
      * Storage for cache statistics
@@ -331,6 +331,11 @@ public class CoherenceClusteredCacheFactory implements CacheFactoryStrategy {
             cacheStats.put(uid, stats);
         }
     }
+
+	@Override
+	public String getPluginName() {
+		return "clustering";
+	}
 
     private static Invocable buildInvocable(final ClusterTask task) {
         return new AbstractInvocable() {

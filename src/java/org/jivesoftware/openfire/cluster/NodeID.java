@@ -93,6 +93,11 @@ public class NodeID implements Externalizable {
 	public int hashCode() {
         return Arrays.hashCode(nodeID);
     }
+    
+    @Override
+    public String toString() {
+    	return new String(nodeID);
+    }
 
     public byte[] toByteArray() {
         return nodeID;

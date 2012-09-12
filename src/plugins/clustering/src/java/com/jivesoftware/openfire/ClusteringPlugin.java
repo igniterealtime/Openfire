@@ -69,13 +69,13 @@ public class ClusteringPlugin implements Plugin, PropertyEventListener {
         File[] jars = pluginDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 String fileName = pathname.getName().toLowerCase();
-                return (fileName.equalsIgnoreCase("enterprise.jar"));
+                return (fileName.equalsIgnoreCase("enterprise.jar") || fileName.equalsIgnoreCase("hazelcast.jar"));
             }
         });
         if (jars.length > 0) {
             // Do not load this plugin since Enterprise is still installed
-            System.out.println("Enterprise plugin found. Stopping Clustering Plugin");
-            throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
+            System.out.println("Conflicting plugin found. Stopping Clustering Plugin");
+            throw new IllegalStateException("This plugin cannot run with the Enterprise or Hazelcast plugin");
         }
 
         // Make sure that the enteprise folder exists under the home directory

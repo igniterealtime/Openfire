@@ -38,6 +38,7 @@ import java.util.concurrent.locks.Lock;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
 import org.jivesoftware.util.cache.CacheWrapper;
@@ -62,8 +63,10 @@ import com.hazelcast.core.MultiTask;
  */
 public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
-	// TODO: make this a configurable setting
-    private static final long MAX_CLUSTER_EXECUTION_TIME = 30;
+    private static final long MAX_CLUSTER_EXECUTION_TIME = 
+    		JiveGlobals.getLongProperty("hazelcast.max.execution.seconds", 30);
+    private static final String HAZELCAST_CONFIG_FILE = 
+    		JiveGlobals.getProperty("hazelcast.config.xml.filename", "hazelcast-cache-config.xml");
 
 	private static Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
 
@@ -90,7 +93,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
             oldLoader = Thread.currentThread().getContextClassLoader();
             ClassLoader loader = new ClusterClassLoader();
             Thread.currentThread().setContextClassLoader(loader);
-            Config config = new ClasspathXmlConfig("hazelcast-cache-config.xml");
+            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
             config.setInstanceName("openfire");
         	hazelcast = Hazelcast.newHazelcastInstance(config);
             cluster = hazelcast.getCluster();

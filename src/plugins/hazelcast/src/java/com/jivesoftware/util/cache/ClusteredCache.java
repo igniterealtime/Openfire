@@ -45,6 +45,7 @@ public class ClusteredCache implements Cache {
      */
     protected IMap map;
     private String name;
+    private long numberOfGets = 0;
 
     /**
      * Create a new cache using the supplied named cache as the actual cache implementation
@@ -81,6 +82,7 @@ public class ClusteredCache implements Cache {
     }
 
     public Object get(Object key) {
+    	numberOfGets++;
         return map.get(key);
     }
 
@@ -130,10 +132,8 @@ public class ClusteredCache implements Cache {
     }
 
     public long getCacheMisses() {
-    	LocalMapStats stats = map.getLocalMapStats();
-    	long gets = stats.getOperationStats().getNumberOfGets();
-    	long hits = stats.getHits();
-    	return gets > hits ? gets - hits : 0;
+    	long hits = map.getLocalMapStats().getHits();
+    	return numberOfGets > hits ? numberOfGets - hits : 0;
     }
 
     public int getCacheSize() {

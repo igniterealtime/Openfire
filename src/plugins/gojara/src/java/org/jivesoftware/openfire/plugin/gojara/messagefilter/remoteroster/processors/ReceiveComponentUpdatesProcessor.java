@@ -34,7 +34,7 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 
 	public ReceiveComponentUpdatesProcessor(RosterManager rosterManager, String subdomain) {
 		_mySubdomain = subdomain;
-		Log.debug("Createt ReceiveComponentUpdatesProcessor for " + _mySubdomain);
+		Log.debug("Created ReceiveComponentUpdatesProcessor for " + _mySubdomain);
 		_rosterManager = rosterManager;
 	}
 

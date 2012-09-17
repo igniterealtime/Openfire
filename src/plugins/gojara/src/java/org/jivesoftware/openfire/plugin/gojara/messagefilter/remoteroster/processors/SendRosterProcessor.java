@@ -32,7 +32,7 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 	private String _componentName;
 
 	public SendRosterProcessor(RosterManager rosterMananger, String componentName) {
-		Log.debug("Createt SendRosterProcessor for " + componentName);
+		Log.debug("Created SendRosterProcessor for " + componentName);
 		_rosterManager = rosterMananger;
 		_componentName = componentName;
 	}

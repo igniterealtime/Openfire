@@ -24,7 +24,7 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 	private String _myDomain;
 
 	public ClientToComponentUpdateProcessor(String mySubdomain) {
-		Log.debug("Createt ClientToComponentUpdateProcessor for " + mySubdomain);
+		Log.debug("Created ClientToComponentUpdateProcessor for " + mySubdomain);
 		_myDomain = mySubdomain;
 	}
 

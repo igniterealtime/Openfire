@@ -1597,10 +1597,9 @@ public class PubSubPersistenceManager {
             
             // drop cached items for purged node 
             synchronized(itemCache) {
-	            Iterator<PublishedItem> items = itemCache.values().iterator();
-	            while (items.hasNext()) {
-	            	if (leafNode.getNodeID().equals(items.next().getNodeID())) {
-	            		items.remove();
+	            for (PublishedItem item : itemCache.values()) {
+	            	if (leafNode.getNodeID().equals(item.getNodeID())) {
+	            		itemCache.remove(item.getItemKey());
 	            	}
 	            }
             }

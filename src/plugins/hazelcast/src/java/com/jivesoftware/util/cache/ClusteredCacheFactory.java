@@ -65,6 +65,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     private static final long MAX_CLUSTER_EXECUTION_TIME = 
     		JiveGlobals.getLongProperty("hazelcast.max.execution.seconds", 30);
+    private static final long CLUSTER_STARTUP_RETRY_TIME = 
+    		JiveGlobals.getLongProperty("hazelcast.startup.retry.seconds", 10);
+    private static final long CLUSTER_STARTUP_RETRY_COUNT = 
+    		JiveGlobals.getLongProperty("hazelcast.startup.retry.count", 1);
     private static final String HAZELCAST_CONFIG_FILE = 
     		JiveGlobals.getProperty("hazelcast.config.xml.filename", "hazelcast-cache-config.xml");
 
@@ -85,45 +89,48 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     private State state = State.stopped;
 
     public boolean startCluster() {
-        ClassLoader oldLoader = null;
-        // Set that we are starting up the cluster service
         state = State.starting;
-        try {
-            // Store previous class loader (in case we change it)
-            oldLoader = Thread.currentThread().getContextClassLoader();
-            ClassLoader loader = new ClusterClassLoader();
-            Thread.currentThread().setContextClassLoader(loader);
-            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
-            config.setInstanceName("openfire");
-        	hazelcast = Hazelcast.newHazelcastInstance(config);
-            cluster = hazelcast.getCluster();
-
-            // Update the running state of the cluster
-            state = cluster != null ? State.started : State.stopped;
-
-            Member localMember = cluster.getLocalMember();
-
-            // Set the ID of this cluster node
-            XMPPServer.getInstance().setNodeID(NodeID.getInstance(getClusterMemberID()));
-            // CacheFactory is now using clustered caches. We can add our listeners.
-            clusterListener = new ClusterListener(cluster);
-            hazelcast.getLifecycleService().addLifecycleListener(clusterListener);
-            cluster.addMembershipListener(clusterListener);
-
-            return cluster != null;
+        ClassLoader oldLoader = null;
+        // Store previous class loader (in case we change it)
+        oldLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader loader = new ClusterClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
+        int retry = 0;
+        do {
+            try {
+	            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
+	            config.setInstanceName("openfire");
+	        	hazelcast = Hazelcast.newHazelcastInstance(config);
+	            cluster = hazelcast.getCluster();
+	
+	            // Update the running state of the cluster
+	            state = cluster != null ? State.started : State.stopped;
+	
+	            // Set the ID of this cluster node
+	            XMPPServer.getInstance().setNodeID(NodeID.getInstance(getClusterMemberID()));
+	            // CacheFactory is now using clustered caches. We can add our listeners.
+	            clusterListener = new ClusterListener(cluster);
+	            hazelcast.getLifecycleService().addLifecycleListener(clusterListener);
+	            cluster.addMembershipListener(clusterListener);
+	            break;
+	        } catch (Exception e) {
+	            if (retry < CLUSTER_STARTUP_RETRY_COUNT) {
+	            	logger.warn("Failed to start clustering (" +  e.getMessage() + "); " +
+	            			"will retry in " + CLUSTER_STARTUP_RETRY_TIME + " seconds");
+	                try { Thread.sleep(CLUSTER_STARTUP_RETRY_TIME*1000); }
+	                catch (InterruptedException ie) { /* ignore */ }
+	            } else {
+	            	logger.error("Unable to start clustering - continuing in local mode", e);
+		            state = State.stopped;
+	            }
+	        }
+    	} while (retry++ < CLUSTER_STARTUP_RETRY_COUNT);
+        
+        if (oldLoader != null) {
+            // Restore previous class loader
+            Thread.currentThread().setContextClassLoader(oldLoader);
         }
-        catch (Exception e) {
-            logger.error("Unable to start clustering - continuing in local mode", e);
-        }
-        finally {
-            if (oldLoader != null) {
-                // Restore previous class loader
-                Thread.currentThread().setContextClassLoader(oldLoader);
-            }
-        }
-        // For some reason the cluster was not started so update the status
-        state = State.stopped;
-        return false;
+        return cluster != null;
     }
 
     public void stopCluster() {

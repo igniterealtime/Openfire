@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimerTask;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -35,6 +36,7 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.jivesoftware.util.cache.ExternalizableUtilStrategy;
 import org.slf4j.Logger;
@@ -51,10 +53,13 @@ import com.jivesoftware.util.cluster.ClusterPacketRouter;
  * @author Tom Evans
  * @author Matt Tucker
  */
-public class HazelcastPlugin implements Plugin, PropertyEventListener {
+public class HazelcastPlugin extends TimerTask implements Plugin, PropertyEventListener {
 
     private static Logger logger = LoggerFactory.getLogger(HazelcastPlugin.class);
 
+    private static final long CLUSTER_STARTUP_DELAY_TIME = 
+    		JiveGlobals.getLongProperty("hazelcast.startup.delay.seconds", 5);
+    
     /**
      * Keep serialization strategy the server was using before we set our strategy. We will
      * restore old strategy when plugin is unloaded.
@@ -62,7 +67,14 @@ public class HazelcastPlugin implements Plugin, PropertyEventListener {
     private ExternalizableUtilStrategy serializationStrategy;
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        System.out.println("Starting Clustering Plugin");
+    	// start cluster using a separate thread after a short delay
+    	// this will allow other plugins to initialize during startup
+    	TaskEngine.getInstance().schedule(this, CLUSTER_STARTUP_DELAY_TIME*1000);
+    }
+
+	@Override
+	public void run() {
+        System.out.println("Starting Hazelcast Clustering Plugin");
 
         // Check if another cluster is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
@@ -88,10 +100,9 @@ public class HazelcastPlugin implements Plugin, PropertyEventListener {
             // Start up or join the cluster and initialize caches
             ClusterManager.startup();
         }
+	}
 
-    }
-
-    private void initForClustering() {
+	private void initForClustering() {
         // Set the serialization strategy to use for transmitting objects between node clusters
         serializationStrategy = ExternalizableUtil.getInstance().getStrategy();
         ExternalizableUtil.getInstance().setStrategy(new ClusterExternalizableUtil());
@@ -151,4 +162,5 @@ public class HazelcastPlugin implements Plugin, PropertyEventListener {
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
     }
+
 }

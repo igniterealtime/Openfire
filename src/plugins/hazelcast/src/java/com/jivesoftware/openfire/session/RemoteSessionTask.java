@@ -74,7 +74,7 @@ public abstract class RemoteSessionTask implements ClusterTask {
             result = getSession().getNumServerPackets();
         }
         else if (operation == Operation.close) {
-            // Run in another thread so we avoid blocking calls (in coherence) 
+            // Run in another thread so we avoid blocking calls (in hazelcast) 
             final Session session = getSession();
             if (session != null) {
                 final Future<?> future = TaskEngine.getInstance().submit(new Runnable() {

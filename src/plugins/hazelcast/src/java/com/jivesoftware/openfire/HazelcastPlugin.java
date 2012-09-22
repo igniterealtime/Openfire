@@ -49,6 +49,7 @@ import com.jivesoftware.util.cluster.ClusterPacketRouter;
 /**
  * Hazelcast clustering plugin. This implementation is based upon
  * (and borrows heavily from) the original Openfire clustering plugin.
+ * See this plugin's README file for more information.
  *
  * @author Tom Evans
  * @author Matt Tucker

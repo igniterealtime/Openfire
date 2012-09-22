@@ -161,7 +161,7 @@ public class NodeRuntimeStats {
         /**
          * Returns the current time on the cluster node in long format. This is useful
          * monitoring information for applications that require the local times of each
-         * cluster member be to roughly in-synch (on top of the standard Coherence
+         * cluster member be to roughly in-synch (on top of the standard Hazelcast
          * cluster time).<p>
          *
          * This value will always be somewhat inaccurate due to network delays, etc, so

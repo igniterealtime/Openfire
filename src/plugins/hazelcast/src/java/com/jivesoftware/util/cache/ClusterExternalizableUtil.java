@@ -35,7 +35,7 @@ import org.jivesoftware.util.cache.ExternalizableUtilStrategy;
 import com.hazelcast.nio.SerializationHelper;
 
 /**
- * Serialization strategy that uses Coherence as its underlying mechanism.
+ * Serialization strategy that uses Hazelcast as its underlying mechanism.
  *
  * @author Tom Evans
  * @author Gaston Dombiak

@@ -23,7 +23,7 @@ import org.jivesoftware.openfire.session.*;
 import org.xmpp.packet.JID;
 
 /**
- * Locator of sessions that know how to talk to Coherence cluster nodes.
+ * Locator of sessions that know how to talk to Hazelcast cluster nodes.
  *
  * @author Gaston Dombiak
  */

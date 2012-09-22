@@ -2,59 +2,64 @@ package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.proce
 
 import java.util.Collection;
 
+import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
 
 /**
- * This class is a part of the command pattern used in
- * {@link RemoteRosterInterceptor}. If the remote contacts should not be saved
- * permanently in the users roster this command will clean up the users roster.
- * If the remote contact went offline it will get removed from user's roster.
  * 
- * @author Holger Bergunde
+ * This class cleans up a roster from contacts if the user removes/deletes the
+ * gateway registration. After deleting a registration there should not be any
+ * gateway related contacts left
+ * 
+ * @author holger.bergunde
  * 
  */
+
 public class CleanUpRosterProcessor extends AbstractRemoteRosterProcessor {
 
+	private String _myDomain;
 	private RosterManager _rosterManager;
-	private String _subDomain;
 
-	public CleanUpRosterProcessor(RosterManager rostermananger, String subdomain) {
-		Log.debug("Createt CleanUpRosterProcessor for " + subdomain);
-		_rosterManager = rostermananger;
-		_subDomain = subdomain;
+	public CleanUpRosterProcessor(RosterManager rosterMananger, String mySubdomain) {
+		Log.debug("Created CleanUpRosterProcessor for " + mySubdomain);
+		_myDomain = mySubdomain;
+		_rosterManager = rosterMananger;
 	}
 
 	@Override
 	public void process(Packet packet) throws PacketRejectedException {
-		Log.debug("Processing packet in CleanUpRosterProcessor for " + _subDomain);
-		Presence myPacket = (Presence) packet;
-		String to = myPacket.getTo().toString();
-		String username = getUsernameFromJid(to);
-		if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable)) {
-			try {
-				Roster roster = _rosterManager.getRoster(username);
+		if (packet instanceof IQ) {
+			IQ iqPacket = (IQ) packet;
 
-				Collection<RosterItem> items = roster.getRosterItems();
+			if (findNodesInDocument(iqPacket.getElement().getDocument(), "//register:remove").size() > 0) {
+				String username = getUsernameFromJid(packet.getFrom().toString());
 
-				for (RosterItem item : items) {
-					String itemName = item.getJid().toString();
-					if (itemName.contains(_subDomain) && !itemName.equals(_subDomain)) {
-						Log.debug("Removing contact " + item.getJid().toString() + " from contact list.");
-						roster.deleteRosterItem(item.getJid(), false);
+				Roster roster;
+				try {
+					roster = _rosterManager.getRoster(username);
+
+					Collection<RosterItem> items = roster.getRosterItems();
+
+					for (RosterItem item : items) {
+						String itemName = item.getJid().toString();
+						if (itemName.contains(_myDomain) && !itemName.equals(_myDomain)) {
+							Log.debug("Removing contact " + username + " from contact list.");
+							roster.deleteRosterItem(item.getJid(), false);
+						}
 					}
+				} catch (UserNotFoundException e) {
+					Log.debug("Could not found user while cleaning up the roster in GoJara for user " + username, e);
+				} catch (SharedGroupException e) {
+					// We should ignore this. External contacts cannot be in
+					// shared groups
 				}
-			} catch (Exception e) {
-				Log.debug("Execption occured when cleaning up the Roster.", e);
-				e.printStackTrace();
 			}
-
 		}
 	}
-
 }

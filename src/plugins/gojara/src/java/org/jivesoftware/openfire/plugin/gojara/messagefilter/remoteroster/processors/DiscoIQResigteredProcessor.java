@@ -32,7 +32,7 @@ public class DiscoIQResigteredProcessor extends AbstractRemoteRosterProcessor {
 	private String _mySubdoman;
 
 	public DiscoIQResigteredProcessor(String subdomain) {
-		Log.debug("Createt DiscoIQResigteredProcessor for " + subdomain);
+		Log.debug("Created DiscoIQResigteredProcessor for " + subdomain);
 		_mySubdoman = subdomain;
 	}
 

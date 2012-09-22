@@ -102,6 +102,9 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 					 * admin panel
 					 */
 					_packetProcessor.get("sparkIQRegistered").process(packet);
+				} else if (myPacket.getType().equals(IQ.Type.set) && myPacket.getTo().toString().equals(_mySubdomain)) {
+					System.out.println("war das ein remove an mich????");
+					_packetProcessor.get("handleCleanUp").process(packet);
 				}
 			}
 			// else if (packet instanceof Presence) {

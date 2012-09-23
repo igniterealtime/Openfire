@@ -88,7 +88,7 @@ public class CacheFactory {
         localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
                 "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
         clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
-                "com.jivesoftware.util.cache.CoherenceClusteredCacheFactory");
+                "com.jivesoftware.util.cache.ClusteredCacheFactory");
 
         cacheNames.put("Favicon Hits", "faviconHits");
         cacheNames.put("Favicon Misses", "faviconMisses");
@@ -128,6 +128,7 @@ public class CacheFactory {
         cacheNames.put("Entity Capabilities Users", "entityCapabilitiesUsers");
         cacheNames.put("Clearspace SSO Nonce", "clearspaceSSONonce");
         cacheNames.put("PEPServiceManager", "pepServiceManager");
+        cacheNames.put("Published Items", "publishedItems");
 
         cacheProps.put("cache.fileTransfer.size", 128 * 1024l);
         cacheProps.put("cache.fileTransfer.maxLifetime", 1000 * 60 * 10l);
@@ -199,6 +200,8 @@ public class CacheFactory {
         cacheProps.put("cache.clearspaceSSONonce.maxLifetime", JiveConstants.MINUTE * 2);
         cacheProps.put("cache.pepServiceManager.size", 1024l * 1024 * 10);
         cacheProps.put("cache.pepServiceManager.maxLifetime", JiveConstants.MINUTE * 30);
+        cacheProps.put("cache.publishedItems.size", 1024l * 1024 * 10);
+        cacheProps.put("cache.publishedItems.maxLifetime", JiveConstants.MINUTE * 15);
     }
 
     private CacheFactory() {
@@ -216,7 +219,7 @@ public class CacheFactory {
     }
 
     /**
-     * Sets a local property which overrides the maximum cache size as configured in coherence-cache-config.xml for the
+     * Sets a local property which overrides the maximum cache size for the
      * supplied cache name.
      * @param cacheName the name of the cache to store a value for.
      * @param size the maximum cache size.
@@ -242,7 +245,7 @@ public class CacheFactory {
     }
 
     /**
-     * Sets a local property which overrides the maximum cache entry lifetime as configured in coherence-cache-config.xml
+     * Sets a local property which overrides the maximum cache entry lifetime
      * for the supplied cache name.
      * @param cacheName the name of the cache to store a value for.
      * @param lifetime the maximum cache entry lifetime.
@@ -482,7 +485,7 @@ public class CacheFactory {
                     getClusteredCacheStrategyClassLoader()).newInstance();
             return cacheFactory.getMaxClusterNodes();
         } catch (ClassNotFoundException e) {
-            // Do nothing
+            Log.warn("Clustering implementation class " + clusteredCacheFactoryClass + " not found");
         } catch (Exception e) {
             Log.error("Error instantiating clustered cache factory", e);
         }
@@ -538,6 +541,10 @@ public class CacheFactory {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
 
+    public static String getPluginName() {
+        return cacheFactoryStrategy.getPluginName();
+    }
+
     public static synchronized void initialize() throws InitializationException {
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class
@@ -556,9 +563,12 @@ public class CacheFactory {
 
     private static ClassLoader getClusteredCacheStrategyClassLoader() {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        Plugin plugin = pluginManager.getPlugin("clustering");
+        Plugin plugin = pluginManager.getPlugin("hazelcast");
         if (plugin == null) {
-            plugin = pluginManager.getPlugin("enterprise");
+            plugin = pluginManager.getPlugin("clustering");
+            if (plugin == null) {
+                plugin = pluginManager.getPlugin("enterprise");
+            }
         }
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {

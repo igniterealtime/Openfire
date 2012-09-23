@@ -181,4 +181,11 @@ public interface CacheFactoryStrategy {
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
     Lock getLock(Object key, Cache cache);
+    
+    /**
+     * Get the plugin name corresponding to this clustering implementation
+     * 
+     * @return the plugin name for this clustering implementation
+     */
+    String getPluginName();
 }

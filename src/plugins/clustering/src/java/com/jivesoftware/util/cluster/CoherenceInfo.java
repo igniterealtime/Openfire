@@ -64,7 +64,7 @@ public class CoherenceInfo {
      */
     public static Map getNodeInfo() {
 
-        InvocationService service = com.tangosol.net.CacheFactory.getInvocationService("OpenFire Cluster Service");
+        InvocationService service = (InvocationService) com.tangosol.net.CacheFactory.getService("OpenFire Cluster Service");
 
         // Run cluster-wide stats query
         Map results = service.query(new AbstractInvocable() {
@@ -107,7 +107,7 @@ public class CoherenceInfo {
      */
     public static void clearCacheStats() {
 
-        InvocationService service = com.tangosol.net.CacheFactory.getInvocationService("OpenFire Cluster Service");
+        InvocationService service = (InvocationService) com.tangosol.net.CacheFactory.getService("OpenFire Cluster Service");
 
         service.execute(new AbstractInvocable() {
             public void run() {

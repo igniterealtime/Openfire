@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Hazelcast Clustering Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+<h1>Hazelcast Clustering Plugin Readme</h1>
+<h2>Overview</h2>
+<p>
+The Hazelcast plugin adds support for running multiple redundant Openfire
+servers together in a cluster.  By running Openfire in a cluster, you can
+distribute the connection load among several servers, while also providing
+failover in the event that one of your servers fails. This plugin is a
+drop-in replacement for the original Openfire clustering plugin, using the
+open source <a href="http://www.hazelcast.com">Hazelcast</a> data distribution 
+framework in lieu of an expensive proprietary third-party product.
+</p>
+<p>
+The current Hazelcast release is version 2.3.1.
+</p>
+<h2>Installation</h2>
+<p>
+To install Hazelcast, simply drop the hazelcast.jar into $OPENFIRE_HOME/plugins along
+with any other plugins you may have installed. Note that Hazelcast and the original
+Openfire clustering plugin (clustering.jar) are mutually exclusive. You will need to
+remove the clustering plugin before installing Hazelcast into your Openfire instance.
+</p>
+<p>
+To create an Openfire cluster, you will need at least two separate Openfire servers,
+and each server must have the Hazelcast plugin installed. By default, the servers
+will discover each other by exchanging UDP (multicast) packets via a configurable 
+IP address and port, but other initialization options are available if your network
+does not support multicast communication (see "Configuration" below).
+</p>
+<p>
+In addition, you will need some form of load balancer to distribute the connection
+load among the members of your Openfire cluster. There are several commercial and
+open source alternatives for this, including the Apache web server (httpd) plus 
+<a href="http://httpd.apache.org/docs/current/mod/mod_proxy_balancer.html">mod_proxy_balancer</a>
+(if you are using the HTTP/BOSH Openfire connector). Some popular solutions include the
+<a href="http://www.f5.com/products/big-ip/big-ip-local-traffic-manager/overview/">F5 LTM</a>
+(commercial) and <a href="http://haproxy.1wt.eu/">HAProxy</a> (open source), among
+<a href="http://en.wikipedia.org/wiki/Load_balancing_%28computing%29">many others</a>. 
+</p>
+<h2>Configuration</h2>
+<p>
+There are several configuration options built into the Hazelcast plugin
+as Openfire system properties:
+<ol>
+<li><i>hazelcast.startup.delay.seconds</i> (5): Number of seconds
+to wait before launching the Hazelcast plugin. This allows Openfire to
+deploy any other plugins before initializing the cluster caches, etc.</li>
+<li><i>hazelcast.startup.retry.count</i> (1): Number of times to retry
+initialization if the cluster fails to start on the first attempt.</li>
+<li><i>hazelcast.startup.retry.seconds</i> (10): Number of seconds to wait
+between subsequent attempts to start the cluster.</li>
+<li><i>hazelcast.max.execution.seconds</i> (30): Maximum time to wait
+when running a synchronous task across members of the cluster.</li>
+<li><i>hazelcast.config.xml.filename</i> (hazelcast-cache-config.xml): Name
+of the Hazelcast configuration file. By overriding this value you can easily
+install a custom cluster configuration file in the Hazelcast plugin /classes/
+directory, or in the classpath of your own custom plugin.</li>
+</ol>
+</p>
+<p>
+The Hazelcast plugin uses the <a href="http://www.hazelcast.com/docs/2.3/manual/single_html/#Config">
+XML configuration builder</a> to initialize the cluster from the XML file described above.
+By default the cluster members will attempt to discover each other via multicast at the 
+following location:
+<ul>
+<li>IP Address: 224.2.2.3</li>
+<li>Port: 54327</li>
+</ul>
+Note that these values can be overridden in the plugin's /classes/hazelcast-cache-config.xml
+file (via the multicast-group and multicast-port elements). Many other initialization and
+discovery options exist, as documented in the Hazelcast configuration docs noted above. For
+example, to set up a two-node cluster using well-known DNS name/port values, try the
+following alternative:
+<pre>
+...
+&lt;join&gt;
+    &lt;multicast enabled="false"/&gt;
+    &lt;tcp-ip enabled="true"&gt;
+      &lt;hostname&gt;of-node-a.example.com:5701&lt;/hostname&gt;
+      &lt;hostname&gt;of-node-b.example.com:5701&lt;/hostname&gt;
+    &lt;/tcp-ip&gt;
+    &lt;aws enabled="false"/&gt;
+&lt;/join&gt;
+...
+</pre>
+Please refer to the <a href="http://www.hazelcast.com/docs/2.3/manual/single_html/">
+Hazelcast reference manual</a> for more information.
+</p>
+</body>
+</html>

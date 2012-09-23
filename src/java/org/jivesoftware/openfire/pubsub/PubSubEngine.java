@@ -39,9 +39,11 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -1210,6 +1212,8 @@ public class PubSubEngine {
                     else {
                         newNode.saveToDB();
                     }
+
+					CacheFactory.doClusterTask(new RefreshNodeTask(newNode));
                 }
                 else {
                     conflict = true;
@@ -1302,6 +1306,8 @@ public class PubSubEngine {
                 // Update node configuration with the provided data form
                 // (and update the backend store)
                 node.configure(completedForm);
+
+				CacheFactory.doClusterTask(new RefreshNodeTask(node));
                 // Return that node configuration was successful
                 router.route(IQ.createResultIQ(iq));
             }

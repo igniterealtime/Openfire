@@ -157,6 +157,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         pepServiceManager = new PEPServiceManager();
     }
 
+	public PEPServiceManager getServiceManager()
+	{
+		return pepServiceManager;
+	}
+
     /*
 	 * (non-Javadoc)
 	 * 
@@ -441,7 +446,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      *
      * @return the knownRemotePresences map
      */
-    public Map<String, Set<JID>> getKnownRemotePresenes() {
+    public Map<String, Set<JID>> getKnownRemotePresences() {
         return knownRemotePresences;
     }
 

@@ -190,7 +190,7 @@ public class ClusteredCache implements Cache, QueryMap, InvocableMap {
 
     public long getCacheHits() {
         if (map instanceof NearCache) {
-             return ((NearCache)map).getCacheHits();
+             return ((NearCache)map).getCacheStatistics().getCacheHits();
         }
         else if (backingCache != null) {
             return backingCache.getCacheHits();
@@ -202,7 +202,7 @@ public class ClusteredCache implements Cache, QueryMap, InvocableMap {
 
     public long getCacheMisses() {
        if (map instanceof NearCache) {
-             return ((NearCache)map).getCacheMisses();
+             return ((NearCache)map).getCacheStatistics().getCacheMisses();
         }
         else if (backingCache != null) {
             return backingCache.getCacheMisses();

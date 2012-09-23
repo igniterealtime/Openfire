@@ -20,20 +20,32 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
+import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
+import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
+import org.jivesoftware.openfire.pubsub.cluster.RemoveNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A virtual location to which information can be published and from which event
@@ -43,6 +55,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Matt Tucker
  */
 public abstract class Node {
+
+    public static final String PUBSUB_SVC_ID = XMPPServer.getInstance().getPubSubModule().getServiceID();
 
     /**
      * Reference to the publish and subscribe service.
@@ -408,6 +422,21 @@ public abstract class Node {
      */
     Collection<NodeSubscription> getSubscriptions() {
         return subscriptionsByID.values();
+    }
+
+    /**
+     * Returns all subscriptions to the node. If multiple subscriptions are enabled,
+     * this method returns the subscriptions by <tt>subId</tt>, otherwise it returns
+     * the subscriptions by {@link JID}.
+     *
+     * @return All subscriptions to the node.
+     */
+    public Collection<NodeSubscription> getAllSubscriptions() {
+        if (isMultipleSubscriptionsEnabled()) {
+            return subscriptionsByID.values();
+        } else {
+            return subscriptionsByJID.values();
+        }
     }
 
     /**
@@ -1730,11 +1759,12 @@ public abstract class Node {
         }
     }
 
-    void addAffiliate(NodeAffiliate affiliate) {
+    public void addAffiliate(NodeAffiliate affiliate) {
         affiliates.add(affiliate);
     }
 
-    void addSubscription(NodeSubscription subscription) {
+    public void addSubscription(NodeSubscription subscription)
+    {
         subscriptionsByID.put(subscription.getID(), subscription);
         subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
@@ -1809,6 +1839,7 @@ public abstract class Node {
             cancelPresenceSubscriptions();
             // Remove the node from memory
             service.removeNode(getNodeID());
+            CacheFactory.doClusterTask(new RemoveNodeTask(this));
             // Clear collections in memory (clear them after broadcast was sent)
             affiliates.clear();
             subscriptionsByID.clear();
@@ -2017,8 +2048,7 @@ public abstract class Node {
         // Generate a subscription ID (override even if one was sent by the client)
         String id = StringUtils.randomString(40);
         // Create new subscription
-        NodeSubscription subscription =
-                new NodeSubscription(service, this, owner, subscriber, subState, id);
+        NodeSubscription subscription = new NodeSubscription(this, owner, subscriber, subState, id);
         // Configure the subscription with the specified configuration (if any)
         if (options != null) {
             subscription.configure(options);
@@ -2041,6 +2071,9 @@ public abstract class Node {
         if (subscription.isAuthorizationPending()) {
             subscription.sendAuthorizationRequest();
         }
+
+        // Update the other members with the new subscription
+        CacheFactory.doClusterTask(new NewSubscriptionTask(subscription));
 
         // Send last published item (if node is leaf node and subscription status is ok)
         if (isSendItemSubscribe() && subscription.isActive()) {
@@ -2067,8 +2100,9 @@ public abstract class Node {
      * remove the existing affiliation too.
      *
      * @param subscription the subscription to cancel.
+     * @param sendToCluster True to forward cancel order to cluster peers
      */
-    public void cancelSubscription(NodeSubscription subscription) {
+    public void cancelSubscription(NodeSubscription subscription, boolean sendToCluster) {
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
         subscriptionsByJID.remove(subscription.getJID().toString());
@@ -2083,10 +2117,25 @@ public abstract class Node {
             // Remove the subscription from the database
             PubSubPersistenceManager.removeSubscription(subscription);
         }
+        if (sendToCluster) {
+            CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));
+        }
+
         // Check if we need to unsubscribe from the presence of the owner
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).isEmpty()) {
             service.presenceSubscriptionNotRequired(this, subscription.getOwner());
         }
+    }
+
+    /**
+     * Cancels an existing subscription to the node. If the subscriber does not have any
+     * other subscription to the node and his affiliation was of type <tt>none</tt> then
+     * remove the existing affiliation too.
+     *
+     * @param subscription the subscription to cancel.
+     */
+    public void cancelSubscription(NodeSubscription subscription) {
+        cancelSubscription(subscription, ClusterManager.isClusteringEnabled());
     }
 
     /**
@@ -2150,7 +2199,7 @@ public abstract class Node {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return super.toString() + " - ID: " + getNodeID();
     }
 
@@ -2183,6 +2232,7 @@ public abstract class Node {
         if (approved) {
             // Mark that the subscription to the node has been approved
             subscription.approved();
+            CacheFactory.doClusterTask(new ModifySubscriptionTask(subscription));
         }
         else  {
             // Cancel the subscription to the node

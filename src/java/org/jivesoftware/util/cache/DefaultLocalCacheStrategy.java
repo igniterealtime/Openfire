@@ -105,6 +105,11 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     public void updateCacheStats(Map<String, Cache> caches) {
     }
 
+	@Override
+	public String getPluginName() {
+		return "local";
+	}
+
     public Lock getLock(Object key, Cache cache) {
         Object lockKey = key;
         if (key instanceof String) {

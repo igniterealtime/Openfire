@@ -281,7 +281,7 @@ public class TaskEngine {
      */
     public void shutdown() {
         if (executor != null) {
-            executor.shutdownNow();
+            executor.shutdown();
             executor = null;
         }
 

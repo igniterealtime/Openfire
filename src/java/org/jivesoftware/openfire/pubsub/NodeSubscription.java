@@ -69,10 +69,7 @@ public class NodeSubscription {
 
     private static final SimpleDateFormat dateFormat;
     private static final FastDateFormat fastDateFormat;
-    /**
-     * Reference to the publish and subscribe service.
-     */
-    private PubSubService service;
+
     /**
      * The node to which this subscription is interested in.
      */
@@ -153,15 +150,14 @@ public class NodeSubscription {
     /**
      * Creates a new subscription of the specified user with the node.
      *
-     * @param service the pubsub service hosting the node where this subscription lives.
      * @param node Node to which this subscription is interested in.
      * @param owner the JID of the entity that owns this subscription.
      * @param jid the JID of the user that owns the subscription.
      * @param state the state of the subscription with the node.
      * @param id the id the uniquely identifies this subscriptin within the node.
      */
-    NodeSubscription(PubSubService service, Node node, JID owner, JID jid, State state, String id) {
-        this.service = service;
+	public NodeSubscription(Node node, JID owner, JID jid, State state, String id)
+	{
         this.node = node;
         this.jid = jid;
         this.owner = owner;
@@ -405,7 +401,7 @@ public class NodeSubscription {
         configure(options);
         if (originalIQ != null) {
             // Return success response
-            service.send(IQ.createResultIQ(originalIQ));
+			node.getService().send(IQ.createResultIQ(originalIQ));
         }
 
         if (wasUnconfigured) {
@@ -519,10 +515,10 @@ public class NodeSubscription {
         // Check if the service needs to subscribe or unsubscribe from the owner presence
         if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
             if (presenceStates.isEmpty()) {
-                service.presenceSubscriptionNotRequired(node, owner);
+				node.getService().presenceSubscriptionNotRequired(node, owner);
             }
             else {
-                service.presenceSubscriptionRequired(node, owner);
+				node.getService().presenceSubscriptionRequired(node, owner);
             }
         }
     }
@@ -719,7 +715,7 @@ public class NodeSubscription {
         }
         // Check if delivery is subject to presence-based policy
         if (!getPresenceStates().isEmpty()) {
-            Collection<String> shows = service.getShowPresences(jid);
+			Collection<String> shows = node.getService().getShowPresences(jid);
             if (shows.isEmpty() || Collections.disjoint(getPresenceStates(), shows)) {
                 return false;
             }
@@ -727,7 +723,8 @@ public class NodeSubscription {
         // Check if node is only sending events when user is online
         if (node.isPresenceBasedDelivery()) {
             // Check that user is online
-            if (service.getShowPresences(jid).isEmpty()) {
+			if (node.getService().getShowPresences(jid).isEmpty())
+			{
                 return false;
             }
         }
@@ -795,7 +792,7 @@ public class NodeSubscription {
             subscribeOptions.addElement("required");
         }
         // Send the result
-        service.send(result);
+		node.getService().send(result);
     }
 
     /**
@@ -834,7 +831,7 @@ public class NodeSubscription {
         notification.getElement().addElement("delay", "urn:xmpp:delay")
                 .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
         // Send the event notification to the subscriber
-        service.sendNotification(node, notification, jid);
+		node.getService().sendNotification(node, notification, jid);
     }
 
     /**
@@ -846,7 +843,7 @@ public class NodeSubscription {
      * @return true if the specified user is allowed to modify or cancel the subscription.
      */
     boolean canModify(JID user) {
-        return user.equals(getJID()) || user.equals(getOwner()) || service.isServiceAdmin(user);
+		return user.equals(getJID()) || user.equals(getOwner()) || node.getService().isServiceAdmin(user);
     }
 
     /**
@@ -899,9 +896,9 @@ public class NodeSubscription {
         Message authRequest = new Message();
         authRequest.addExtension(node.getAuthRequestForm(this));
         authRequest.setTo(owner);
-        authRequest.setFrom(service.getAddress());
+		authRequest.setFrom(node.getService().getAddress());
         // Send authentication request to node owners
-        service.send(authRequest);
+		node.getService().send(authRequest);
     }
 
     /**
@@ -912,7 +909,7 @@ public class NodeSubscription {
         Message authRequest = new Message();
         authRequest.addExtension(node.getAuthRequestForm(this));
         // Send authentication request to node owners
-        service.broadcast(node, authRequest, node.getOwners());
+		node.getService().broadcast(node, authRequest, node.getOwners());
     }
 
     /**

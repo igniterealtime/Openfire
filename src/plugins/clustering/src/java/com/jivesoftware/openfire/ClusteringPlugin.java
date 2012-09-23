@@ -23,6 +23,8 @@ package com.jivesoftware.openfire;
 import com.jivesoftware.openfire.session.RemoteSessionLocator;
 import com.jivesoftware.util.cache.CoherenceExternalizableUtil;
 import com.jivesoftware.util.cluster.CoherencePacketRouter;
+import com.tangosol.net.CacheFactory;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.Plugin;
@@ -67,13 +69,13 @@ public class ClusteringPlugin implements Plugin, PropertyEventListener {
         File[] jars = pluginDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 String fileName = pathname.getName().toLowerCase();
-                return (fileName.equalsIgnoreCase("enterprise.jar"));
+                return (fileName.equalsIgnoreCase("enterprise.jar") || fileName.equalsIgnoreCase("hazelcast.jar"));
             }
         });
         if (jars.length > 0) {
             // Do not load this plugin since Enterprise is still installed
-            System.out.println("Enterprise plugin found. Stopping Clustering Plugin");
-            throw new IllegalStateException("This plugin cannot run next to the Enterprise plugin");
+            System.out.println("Conflicting plugin found. Stopping Clustering Plugin");
+            throw new IllegalStateException("This plugin cannot run with the Enterprise or Hazelcast plugin");
         }
 
         // Make sure that the enteprise folder exists under the home directory
@@ -143,6 +145,8 @@ public class ClusteringPlugin implements Plugin, PropertyEventListener {
         XMPPServer.getInstance().setRemoteSessionLocator(new RemoteSessionLocator());
         // Set packet router to use to deliver packets to remote cluster nodes
         XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new CoherencePacketRouter());
+        // Initialize the Coherence cluster configuration
+        CacheFactory.getClusterConfig();
     }
 
     /**

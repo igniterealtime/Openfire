@@ -123,7 +123,7 @@
     }
 
     // Get the cache stats object:
-    Map cacheStats = com.tangosol.net.CacheFactory.getReplicatedCache(
+    Map cacheStats = com.tangosol.net.CacheFactory.getCache(
             "opt-$cacheStats", com.tangosol.net.CacheFactory.class.getClassLoader());
 
     // Decimal formatter for nubmers
@@ -354,8 +354,8 @@ Cache statistics for this cluster node appear below.
 
         double memUsed = (double) size / (1024 * 1024);
         double totalMem = (double) maxSize / (1024 * 1024);
-        double freeMem = 100 - 100 * memUsed / totalMem;
-        double usedMem = 100 * memUsed / totalMem;
+        double freeMem = 100 - 100 * memUsed / Math.max(1, totalMem);
+        double usedMem = 100 * memUsed / Math.max(1, totalMem);
         long hits = theStats[3];
         long misses = theStats[4];
         double hitPercent = 0.0;

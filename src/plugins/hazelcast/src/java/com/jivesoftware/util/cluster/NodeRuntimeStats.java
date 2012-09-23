@@ -75,7 +75,7 @@ public class NodeRuntimeStats {
      */
     public static class NodeInfoTask implements ClusterTask {
     	private Object result = null;
-		@Override
+    	
 		public void run() {
             // Get runtime stats - mem and time:
             Runtime runtime = Runtime.getRuntime();
@@ -87,17 +87,14 @@ public class NodeRuntimeStats {
             result = new NodeInfo(CacheFactory.getClusterMemberID(), free, total, max, time);
 		}
 
-		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
 			ExternalizableUtil.getInstance().writeSerializable(out, (NodeInfo) result);
 		}
-
-		@Override
+		
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			result = ExternalizableUtil.getInstance().readSerializable(in);
 		}
 
-		@Override
 		public Object getResult() { return result; }
     	
     }

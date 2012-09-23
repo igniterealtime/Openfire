@@ -14,24 +14,20 @@ public class FlushTask implements ClusterTask
 	{
 	}
 
-	@Override
 	public void run()
 	{
         PubSubPersistenceManager.flushPendingItems(false); // just this member
 	}
 
-	@Override
 	public Object getResult()
 	{
 		return null;
 	}
 
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 	}
 
-	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 	}

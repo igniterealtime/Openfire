@@ -412,7 +412,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
      */
     private class DirectedPresenceListener implements EntryListener {
 
-		@Override
         public void entryAdded(EntryEvent event) {
 			byte[] nodeID = event.getMember().getUuid().getBytes();
             // Ignore events origintated from this JVM
@@ -438,7 +437,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             }
         }
 
-		@Override
         public void entryUpdated(EntryEvent event) {
 			byte[] nodeID = event.getMember().getUuid().getBytes();
             // Ignore events originated from this JVM
@@ -468,7 +466,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             }
         }
 
-		@Override
         public void entryRemoved(EntryEvent event) {
             if (event.getValue() == null && ((Collection)event.getOldValue()).isEmpty()) {
                 // Nothing to remove
@@ -500,7 +497,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             return Collections.emptySet();
         }
 
-		@Override
 		public void entryEvicted(EntryEvent event) {
 			entryRemoved(event);
 		}
@@ -511,7 +507,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
      */
     private class ComponentCacheListener implements EntryListener {
 
-		@Override
         public void entryAdded(EntryEvent event) {
             Object newValue = event.getValue();
             if (newValue != null) {
@@ -525,7 +520,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             }
         }
 
-		@Override
         public void entryUpdated(EntryEvent event) {
             // Remove any trace to the component that was added/deleted to some node
             String domain = event.getKey().toString();
@@ -538,7 +532,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             entryAdded(event);
         }
 
-		@Override
         public void entryRemoved(EntryEvent event) {
             Object newValue = event.getValue();
             if (newValue != null) {
@@ -552,7 +545,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
             }
         }
 
-		@Override
 		public void entryEvicted(EntryEvent event) {
 			entryRemoved(event);
 		}
@@ -615,7 +607,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         done = true;
     }
 
-	@Override
 	public void memberAdded(MembershipEvent event) {
     	// local member only
         if (event.getMember().localMember()) { // We left and re-joined the cluster
@@ -630,7 +621,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         		new HazelcastClusterNodeInfo(event.getMember(), cluster.getClusterTime()));
 	}
 
-	@Override
 	public void memberRemoved(MembershipEvent event) {
         byte[] nodeID = event.getMember().getUuid().getBytes();
 
@@ -667,7 +657,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 		return new ArrayList<ClusterNodeInfo>(clusterNodesInfo.values());
 	}
 
-	@Override
 	public void stateChanged(LifecycleEvent event) {
 		if (event.getState().equals(LifecycleState.SHUTDOWN)) {
 			leaveCluster();

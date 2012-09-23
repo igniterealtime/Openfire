@@ -105,7 +105,6 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     public void updateCacheStats(Map<String, Cache> caches) {
     }
 
-	@Override
 	public String getPluginName() {
 		return "local";
 	}

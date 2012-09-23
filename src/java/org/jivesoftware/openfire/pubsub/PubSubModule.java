@@ -503,29 +503,24 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return serviceEnabled;
     }
 
-	@Override
     public void joinedCluster() {
         // Disable the service until we know that we are the senior cluster member
 		// enableService(false);
     }
 
-	@Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
-	@Override
     public void leftCluster() {
         // Offer the service when not running in a cluster
 		// enableService(true);
     }
 
-	@Override
     public void leftCluster(byte[] nodeID) {
         // Do nothing
     }
 
-	@Override
     public void markedAsSeniorClusterMember() {
         // Offer the service since we are the senior cluster member
 		// enableService(true);

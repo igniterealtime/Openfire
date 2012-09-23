@@ -219,7 +219,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method does not provide the result set for the given
      * task, as the task is run asynchronously across the cluster.
      */
-    @Override
     public void doClusterTask(final ClusterTask task) {
         Set<Member> members = new TreeSet<Member>();
         Member current = cluster.getLocalMember();
@@ -243,7 +242,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method does not provide the result set for the given
      * task, as the task is run asynchronously across the cluster.
      */
-    @Override
     public boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
     	Member target = null;
     	for(Member member: cluster.getMembers()) {
@@ -268,7 +266,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method blocks for up to MAX_CLUSTER_EXECUTION_TIME
      * (seconds) until the task is run on all members.
      */
-    @Override
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
         Set<Member> members = new HashSet<Member>();
         Member current = cluster.getLocalMember();
@@ -303,7 +300,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method blocks for up to MAX_CLUSTER_EXECUTION_TIME
      * (seconds) until the task is run on the given member.
      */
-    @Override
     public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
     	Member target = null;
     	for(Member member: cluster.getMembers()) {
@@ -360,7 +356,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
-	@Override
 	public String getPluginName() {
 		return "hazelcast";
 	}
@@ -413,8 +408,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     	public CallableTask(ClusterTask task) {
     		this.task = task;
     	}
-    	
-    	@Override
+
         public Object call() {
             task.run();
             logger.debug("CallableTask[" + task.getClass().getName() + "] result: " + task.getResult());

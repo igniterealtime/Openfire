@@ -52,20 +52,17 @@ public abstract class NodeTask implements ClusterTask
 		}
 	}
 
-	@Override
 	public Object getResult()
 	{
 		return null;
 	}
 
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 		ExternalizableUtil.getInstance().writeSafeUTF(out, nodeId);
 		ExternalizableUtil.getInstance().writeSafeUTF(out, serviceId);
 	}
 
-	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);

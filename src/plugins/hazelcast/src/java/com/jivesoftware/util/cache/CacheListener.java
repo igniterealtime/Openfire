@@ -46,22 +46,18 @@ class CacheListener implements EntryListener {
         this.cacheName = cacheName;
     }
 
-    @Override
     public void entryAdded(EntryEvent event) {
         handleMapEvent(event, false);
     }
 
-    @Override
     public void entryUpdated(EntryEvent event) {
         handleMapEvent(event, false);
     }
 
-    @Override
     public void entryRemoved(EntryEvent event) {
         handleMapEvent(event, true);
     }
 
-    @Override
     public void entryEvicted(EntryEvent event) {
         handleMapEvent(event, true);
     }

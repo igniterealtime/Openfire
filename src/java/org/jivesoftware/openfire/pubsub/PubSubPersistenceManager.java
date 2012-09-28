@@ -1093,6 +1093,7 @@ public class PubSubPersistenceManager {
 
     /**
      * Creates and stores the published item in the database.
+     * Duplicate item (if found) is removed before storing the item.
      *
      * @param item The published item to save.
      */
@@ -1103,8 +1104,9 @@ public class PubSubPersistenceManager {
         synchronized (itemsPending) {
     		LinkedListNode itemToReplace = itemsPending.remove(itemKey);
     		if (itemToReplace != null) {
-    			itemToReplace.remove(); // delete from itemsToAdd linked list
+    			itemToReplace.remove(); // remove duplicate from itemsToAdd linked list
     		}
+    		itemsToDelete.addLast(item); // delete stored duplicate (if any)
     		LinkedListNode listNode = itemsToAdd.addLast(item);
     		itemsPending.put(itemKey, listNode);
         }
@@ -1145,7 +1147,7 @@ public class PubSubPersistenceManager {
 
     	// Swap pending items so we can parse and save the contents from this point in time
     	// while not blocking new entries from being cached.
-    	synchronized(itemsPending)
+    	synchronized(itemsPending) 
     	{
     		addList = itemsToAdd;
     		delList = itemsToDelete;
@@ -1179,13 +1181,40 @@ public class PubSubPersistenceManager {
         Connection con = null;
         PreparedStatement pstmt = null;
 
-		try
-		{
-            con = DbConnectionManager.getTransactionConnection();
+        // delete first (to remove possible duplicates), then add new items
+        if (delItem != null) {
+			try {
+				con = DbConnectionManager.getTransactionConnection();
 
-            // Add all items that were cached
-            if (addItem != null)
-            {
+                LinkedListNode delHead = delList.getLast().next;
+				pstmt = con.prepareStatement(DELETE_ITEM);
+
+                while (delItem != delHead)
+                {
+                	PublishedItem item = (PublishedItem) delItem.object;
+                    pstmt.setString(1, item.getNode().getService().getServiceID());
+                    pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
+                    pstmt.setString(3, item.getID());
+                    pstmt.addBatch();
+
+                    delItem = delItem.next;
+                }
+				pstmt.executeBatch();
+            }
+			catch (SQLException sqle)
+			{
+	            log.error(sqle.getMessage(), sqle);
+				abortTransaction = true;
+	        }
+			finally
+			{
+				DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+	        }
+        }
+		
+        if (addItem != null) {
+    		try {
+                con = DbConnectionManager.getTransactionConnection();
                 LinkedListNode addHead = addList.getLast().next;
 				pstmt = con.prepareStatement(ADD_ITEM);
 
@@ -1204,33 +1233,15 @@ public class PubSubPersistenceManager {
                 }
 				pstmt.executeBatch();
             }
-
-
-            if (delItem != null)
-            {
-                LinkedListNode delHead = delList.getLast().next;
-				pstmt = con.prepareStatement(DELETE_ITEM);
-
-                while (delItem != delHead)
-                {
-                	PublishedItem item = (PublishedItem) delItem.object;
-                    pstmt.setString(1, item.getNode().getService().getServiceID());
-                    pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
-                    pstmt.setString(3, item.getID());
-                    pstmt.executeUpdate();
-
-                    delItem = delItem.next;
-                }
-            }
-        }
-		catch (SQLException sqle)
-		{
-            log.error(sqle.getMessage(), sqle);
-			abortTransaction = true;
-        }
-		finally
-		{
-			DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+			catch (SQLException sqle)
+			{
+	            log.error(sqle.getMessage(), sqle);
+				abortTransaction = true;
+	        }
+			finally
+			{
+				DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+	        }
         }
     }
 
@@ -1245,9 +1256,9 @@ public class PubSubPersistenceManager {
         synchronized (itemsPending)
     	{
     		itemsToDelete.addLast(item);
-			LinkedListNode itemToDelete = itemsPending.remove(itemKey);
-			if (itemToDelete != null)
-				itemToDelete.remove();
+			LinkedListNode itemToAdd = itemsPending.remove(itemKey);
+			if (itemToAdd != null)
+				itemToAdd.remove();  // drop from itemsToAdd linked list
 		}
     }
 

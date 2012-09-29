@@ -581,18 +581,16 @@ public class CacheFactory {
     }
 
     public static void startClustering() {
-        clusteringStarted = false;
-        clusteringStarting = true;
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
                     getClusteredCacheStrategyClassLoader())
                     .newInstance();
-            clusteringStarted = cacheFactoryStrategy.startCluster();
+            clusteringStarting = cacheFactoryStrategy.startCluster();
         }
         catch (Exception e) {
             Log.error("Unable to start clustering - continuing in local mode", e);
         }
-        if (!clusteringStarted) {
+        if (!clusteringStarting) {
             // Revert to local cache factory if cluster fails to start
             try {
                 cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
@@ -656,7 +654,6 @@ public class CacheFactory {
                 statsThread.start();
             }
         }
-        clusteringStarting = false;
     }
 
     public static void stopClustering() {
@@ -667,7 +664,6 @@ public class CacheFactory {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass)
                     .newInstance();
 
-            clusteringStarted = false;
         }
         catch (Exception e) {
             Log.error("Unable to stop clustering - continuing in clustered mode", e);
@@ -684,12 +680,15 @@ public class CacheFactory {
             Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             cacheWrapper.setWrappedCache(clusteredCache);
         }
+        clusteringStarting = false;
+        clusteringStarted = true;
     }
 
     /**
      * Notification message indicating that this JVM has left the cluster.
      */
     public static void leftCluster() {
+        clusteringStarted = false;
         // Loop through clustered caches and change them to local caches (migrate content)
         try {
             cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();

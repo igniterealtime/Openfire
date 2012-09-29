@@ -29,7 +29,7 @@ import java.security.cert.X509Certificate;
 /**
  * Represents one HTTP connection with a client using the HTTP Binding service. The client will wait
  * on {@link #getResponse()} until the server forwards a message to it or the wait time on the
- * session timesout.
+ * session timeout.
  *
  * @author Alexander Wenckus
  */
@@ -79,7 +79,7 @@ public class HttpConnection {
 
     /**
      * Returns true if this connection has been closed, either a response was delivered to the
-     * client or the server closed the connection abrubtly.
+     * client or the server closed the connection abruptly.
      *
      * @return true if this connection has been closed.
      */
@@ -107,22 +107,23 @@ public class HttpConnection {
      *
      * @param body the XMPP content to be forwarded to the client inside of a body tag.
      *
-     * @throws HttpConnectionClosedException when this connection to the client has already recieved
+     * @throws HttpConnectionClosedException when this connection to the client has already received
      * a deliverable to forward to the client
      */
     public void deliverBody(String body) throws HttpConnectionClosedException {
-        if(body == null) {
-            throw new IllegalArgumentException("Body cannot be null!");
-        }
         // We only want to use this function once so we will close it when the body is delivered.
-        if (isClosed) {
-            throw new HttpConnectionClosedException("The http connection is no longer " +
-                    "available to deliver content");
+    	synchronized (this) {
+	        if (isClosed) {
+	            throw new HttpConnectionClosedException("The http connection is no longer " +
+	                    "available to deliver content");
+	        }
+	        else {
+	            isClosed = true;
+	        }
+    	}
+        if (body == null) {
+            body = CONNECTION_CLOSED;
         }
-        else {
-            isClosed = true;
-        }
-
         if (continuation != null && continuation.isSuspended()) {
             continuation.setAttribute("response-body", body);
             continuation.resume();
@@ -212,7 +213,7 @@ public class HttpConnection {
 
         if (continuation.isResumed()) {
             String deliverable = (String) continuation.getAttribute("response-body");
-            // This will occur when the hold attribute of a session has been exceded.
+            // This will occur when the hold attribute of a session has been exceeded.
             this.isDelivered = true;
             if (deliverable == null) {
                 throw new HttpBindTimeoutException();

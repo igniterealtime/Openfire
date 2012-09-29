@@ -838,7 +838,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-	void deliver(Packet packet) throws UnauthorizedException {
+	public void deliver(Packet packet) throws UnauthorizedException {
         if (conn != null && !conn.isClosed()) {
             conn.deliver(packet);
         }

@@ -69,6 +69,10 @@ public final class HttpBindManager {
 
     public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 7443;
     
+    public static final String HTTP_BIND_THREADS = "httpbind.client.processing.threads";
+
+    public static final int HTTP_BIND_THREADS_DEFAULT = 254;
+    
     // http binding CORS default properties
     
     public static final String HTTP_BIND_CORS_ENABLED = "httpbind.CORS.enabled";
@@ -378,7 +382,8 @@ public final class HttpBindManager {
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
-        final QueuedThreadPool tp = new QueuedThreadPool(254);
+        final QueuedThreadPool tp = new QueuedThreadPool(
+        		JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
         tp.setName("Jetty-QTP-BOSH");
         httpBindServer.setThreadPool(tp);
         

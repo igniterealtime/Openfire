@@ -51,7 +51,8 @@ public class HttpSessionManager {
 	private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
 
     private SessionManager sessionManager;
-    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();
+    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>(
+    		JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private Executor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
@@ -73,7 +74,8 @@ public class HttpSessionManager {
         this.sessionManager = SessionManager.getInstance();
 
         // Set the executor to use for processing http requests
-        int eventThreads = JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16);
+        int eventThreads = JiveGlobals.getIntProperty("httpbind.client.processing.threads", 
+        		JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16));
         sendPacketPool = new ThreadPoolExecutor(
             eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>() );
     }

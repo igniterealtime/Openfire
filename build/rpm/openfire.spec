@@ -72,7 +72,6 @@ rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/osx-ppc
 rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/solaris-sparc
 rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/win32-x86
 rm -f $RPM_BUILD_ROOT%{homedir}/lib/*.dll
-rm -rf $RPM_BUILD_ROOT%{homedir}/resources/spank
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -129,6 +128,10 @@ exit 0
 %dir %{homedir}/resources/nativeAuth/linux-i386
 %{homedir}/resources/nativeAuth/linux-i386/*
 %dir %{homedir}/resources/security
+%dir %{homedir}/resources/spank
+%{homedir}/resources/spank/index.html
+%dir %{homedir}/resources/spank/WEB-INF
+%{homedir}/resources/spank/WEB-INF/web.xml
 %config(noreplace) %{homedir}/resources/security/keystore
 %config(noreplace) %{homedir}/resources/security/truststore
 %config(noreplace) %{homedir}/resources/security/client.truststore

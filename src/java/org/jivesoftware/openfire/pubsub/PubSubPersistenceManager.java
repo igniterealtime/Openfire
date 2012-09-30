@@ -1455,9 +1455,11 @@ public class PubSubPersistenceManager {
         	max = Math.min(MAX_ROWS_FETCH, maxPublished);
 
         // We don't know how many items are in the db, so we will start with an allocation of 500
-        List<PublishedItem> results = new ArrayList<PublishedItem>(max);
+		java.util.LinkedList<PublishedItem> results = new java.util.LinkedList<PublishedItem>();
+		boolean descending = JiveGlobals.getBooleanProperty("xmpp.pubsub.order.descending", false);
 
-        try {
+		try
+		{
             con = DbConnectionManager.getConnection();
             // Get published items of the specified node
             pstmt = con.prepareStatement(LOAD_ITEMS);
@@ -1479,7 +1481,10 @@ public class PubSubPersistenceManager {
                 	item.setPayloadXML(rs.getString(4));
                 }
                 // Add the published item to the node
-                results.add(item);
+				if (descending)
+					results.add(item);
+				else
+					results.addFirst(item);
                 counter++;
             }
         }
@@ -1491,7 +1496,7 @@ public class PubSubPersistenceManager {
         }
 
         if (results.size() == 0)
-        	results = Collections.emptyList();
+			return Collections.emptyList();
 
         return results;
     }

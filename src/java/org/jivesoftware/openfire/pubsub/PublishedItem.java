@@ -75,7 +75,7 @@ public class PublishedItem implements Serializable {
     /**
      * The node where the item was published.
      */
-    private transient LeafNode node;
+	private volatile transient LeafNode node;
     /**
      * The id for the node where the item was published.
      */
@@ -96,7 +96,7 @@ public class PublishedItem implements Serializable {
      * The optional payload is included when publishing the item. This value
      * is created from the payload XML and cached as/when needed.
      */
-    private transient Element payload;
+	private volatile transient Element payload;
     /**
      * XML representation of the payload (for serialization)
      */
@@ -127,13 +127,20 @@ public class PublishedItem implements Serializable {
      */
     public LeafNode getNode() {
     	if (node == null) {
-	    	if (Node.PUBSUB_SVC_ID.equals(serviceId)) {
-	            node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
-	    	} else {
-				PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-				node = serviceMgr.hasCachedService(new JID(serviceId)) ? 
-						(LeafNode) serviceMgr.getPEPService(serviceId).getNode(nodeId) : null;
-	    	}
+			synchronized (this) {
+				if (node == null) {
+					if (Node.PUBSUB_SVC_ID.equals(serviceId))
+					{
+						node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
+					}
+					else
+					{
+						PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+						node = serviceMgr.hasCachedService(new JID(serviceId)) ? (LeafNode) serviceMgr.getPEPService(
+								serviceId).getNode(nodeId) : null;
+					}
+				}
+			}
     	}
     	return node;
     }
@@ -174,18 +181,22 @@ public class PublishedItem implements Serializable {
      */
     public Element getPayload() {
     	if (payload == null && payloadXML != null) {
-    		// payload initialized as XML string from DB
-            SAXReader xmlReader = null;
-    		try {
-    			xmlReader = xmlReaders.take();
-    			payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
-    		} catch (Exception ex) {
-    			 log.error("Failed to parse payload XML", ex);
-    		} finally {
-    			if (xmlReader != null) {
-    				xmlReaders.add(xmlReader);
-    			}
-    		}
+    		synchronized (this) {
+				if (payload == null) {
+		    		// payload initialized as XML string from DB
+		            SAXReader xmlReader = null;
+		    		try {
+		    			xmlReader = xmlReaders.take();
+		    			payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
+		    		} catch (Exception ex) {
+		    			 log.error("Failed to parse payload XML", ex);
+		    		} finally {
+		    			if (xmlReader != null) {
+		    				xmlReaders.add(xmlReader);
+		    			}
+		    		}
+				}
+			}
     	}
         return payload;
     }

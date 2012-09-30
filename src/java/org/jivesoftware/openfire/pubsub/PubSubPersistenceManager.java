@@ -157,7 +157,7 @@ public class PubSubPersistenceManager {
             "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=?";
     private static final String LOAD_ITEMS =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate";
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
     private static final String LOAD_ITEM =
             "SELECT jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? AND id=?";
@@ -497,7 +497,10 @@ public class PubSubPersistenceManager {
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove published items of the node being deleted
-            if (node instanceof LeafNode) { purgeNode((LeafNode)node); }
+			if (node instanceof LeafNode)
+			{
+				purgeNode((LeafNode) node, con);
+			}
 
             // Remove all affiliates from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
@@ -1129,6 +1132,27 @@ public class PubSubPersistenceManager {
      */
     public static void flushPendingItems(boolean sendToCluster)
     {
+		Connection con = null;
+		boolean rollback = false;
+
+		try
+		{
+			con = DbConnectionManager.getTransactionConnection();
+			flushPendingItems(sendToCluster, con);
+		}
+		catch (Exception e)
+		{
+			log.error("Failed to flush pending items", e);
+			rollback = true;
+		}
+		finally
+		{
+			DbConnectionManager.closeTransactionConnection(con, rollback);
+		}
+	}
+
+	private static void flushPendingItems(boolean sendToCluster, Connection con) throws SQLException
+	{
         if (sendToCluster) {
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
@@ -1141,7 +1165,6 @@ public class PubSubPersistenceManager {
     		log.debug("Flush " + itemsPending.size() + " pending items to database");
     	}
 
-		boolean abortTransaction = false;
     	LinkedList addList = null;
     	LinkedList delList = null;
 
@@ -1178,14 +1201,11 @@ public class PubSubPersistenceManager {
         if ((addItem == null) && (delItem == null))
         	return;
 
-        Connection con = null;
         PreparedStatement pstmt = null;
 
         // delete first (to remove possible duplicates), then add new items
         if (delItem != null) {
 			try {
-				con = DbConnectionManager.getTransactionConnection();
-
                 LinkedListNode delHead = delList.getLast().next;
 				pstmt = con.prepareStatement(DELETE_ITEM);
 
@@ -1201,20 +1221,14 @@ public class PubSubPersistenceManager {
                 }
 				pstmt.executeBatch();
             }
-			catch (SQLException sqle)
-			{
-	            log.error(sqle.getMessage(), sqle);
-				abortTransaction = true;
-	        }
 			finally
 			{
-				DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+				DbConnectionManager.closeStatement(pstmt);
 	        }
         }
 		
         if (addItem != null) {
     		try {
-                con = DbConnectionManager.getTransactionConnection();
                 LinkedListNode addHead = addList.getLast().next;
 				pstmt = con.prepareStatement(ADD_ITEM);
 
@@ -1233,14 +1247,9 @@ public class PubSubPersistenceManager {
                 }
 				pstmt.executeBatch();
             }
-			catch (SQLException sqle)
-			{
-	            log.error(sqle.getMessage(), sqle);
-				abortTransaction = true;
-	        }
 			finally
 			{
-				DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
+				DbConnectionManager.closeStatement(pstmt);
 	        }
         }
     }
@@ -1592,35 +1601,75 @@ public class PubSubPersistenceManager {
         return result;
 	}
 
+	public static void purgeNode(LeafNode leafNode)
+	{
+		Connection con = null;
+		boolean rollback = false;
 
-	public static void purgeNode(LeafNode leafNode) {
-		flushPendingItems();
+		try
+		{
+			con = DbConnectionManager.getTransactionConnection();
+
+			purgeNode(leafNode, con);
+
+			// Delete all the entries from the itemsToAdd list and pending map
+			// that match this node.
+			synchronized (itemsPending)
+			{
+				Iterator<Map.Entry<String, LinkedListNode>> pendingIt = itemsPending.entrySet().iterator();
+
+				while (pendingIt.hasNext())
+				{
+					LinkedListNode itemNode = pendingIt.next().getValue();
+
+					if (((PublishedItem) itemNode.object).getNodeID().equals(leafNode.getNodeID()))
+					{
+						itemNode.remove();
+						pendingIt.remove();
+					}
+				}
+			}
+		}
+		catch (SQLException exc)
+		{
+			log.error(exc.getMessage(), exc);
+			rollback = true;
+		}
+		finally
+		{
+			DbConnectionManager.closeTransactionConnection(con, rollback);
+		}
+	}
+
+	private static void purgeNode(LeafNode leafNode, Connection con) throws SQLException
+	{
+		flushPendingItems(ClusterManager.isClusteringEnabled(), con);
         // Remove published items of the node being deleted
-        Connection con = null;
         PreparedStatement pstmt = null;
 
-        try {
-            con = DbConnectionManager.getConnection();
+		try
+		{
             pstmt = con.prepareStatement(DELETE_ITEMS);
             pstmt.setString(1, leafNode.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(leafNode.getNodeID()));
             pstmt.executeUpdate();
-            
-            // drop cached items for purged node 
-            synchronized(itemCache) {
-	            for (PublishedItem item : itemCache.values()) {
-	            	if (leafNode.getNodeID().equals(item.getNodeID())) {
-	            		itemCache.remove(item.getItemKey());
-	            	}
-	            }
+		}
+		finally
+		{
+			DbConnectionManager.closeStatement(pstmt);
+		}
+
+		// drop cached items for purged node
+		synchronized (itemCache)
+		{
+			for (PublishedItem item : itemCache.values())
+			{
+				if (leafNode.getNodeID().equals(item.getNodeID()))
+				{
+					itemCache.remove(item.getItemKey());
+				}
             }
-        }
-        catch (Exception exc) {
-            log.error(exc.getMessage(), exc);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
+		}
 	}
 
 	private static String encodeWithComma(Collection<String> strings) {

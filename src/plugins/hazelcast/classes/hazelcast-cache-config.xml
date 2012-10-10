@@ -89,6 +89,21 @@
         -->
         <backing-map-ref>default</backing-map-ref>
     </queue>
+    <!--
+    	Default Openfire cluster configuration. 
+    	
+    	This defines a distributed map with a local (near cache) component,
+    	suitable for stable caches having frequent reads and relatively
+		few updates. The cluster-wide limit for items in the map is
+		10000, with up to 1000 items available in the local cache. Items 
+		in the distributed map will be evicted after an hour of idle time, 
+		and items in the local cache(s) will be evicted after 10 minutes
+		of idle time.
+		
+		The cluster will maintain each item in the distributed map on at least
+		two nodes (for HA/failover), and any item can be read from the "owner"
+		member node or from a backup node.
+    -->
     <map name="default">
         <!--
             Number of backups. If 1 is set as the backup-count for example,
@@ -100,6 +115,12 @@
             Number of async backups. 0 means no backup.
         -->
         <async-backup-count>0</async-backup-count>
+        <!--
+            Can we read the local backup entries? Default value is false for
+            strong consistency. Being able to read backup data will give you
+            greater performance.
+        -->
+        <read-backup-data>true</read-backup-data>
         <!--
 			Maximum number of seconds for each entry to stay in the map. Entries that are
 			older than <time-to-live-seconds> and not updated for <time-to-live-seconds>
@@ -113,7 +134,7 @@
 			automatically evicted from the map. Entry is touched if get, put or containsKey is called.
 			Any integer between 0 and Integer.MAX_VALUE. 0 means infinite. Default is 0.
 		-->
-        <max-idle-seconds>0</max-idle-seconds>
+        <max-idle-seconds>3600</max-idle-seconds>
         <!--
             Valid values are:
             NONE (no eviction),
@@ -121,14 +142,14 @@
             LFU (Least Frequently Used).
             NONE is the default.
         -->
-        <eviction-policy>NONE</eviction-policy>
+        <eviction-policy>LRU</eviction-policy>
         <!--
             Maximum size of the map. When max size is reached,
             map is evicted based on the policy defined.
             Any integer between 0 and Integer.MAX_VALUE. 0 means
             Integer.MAX_VALUE. Default is 0.
         -->
-        <max-size policy="cluster_wide_map_size">0</max-size>
+        <max-size policy="cluster_wide_map_size">10000</max-size>
         <!--
             When max. size is reached, specified percentage of
             the map will be evicted. Any integer between 0 and 100.
@@ -153,5 +174,195 @@
             hz.LATEST_UPDATE ; entry with the latest update wins.
         -->
         <merge-policy>hz.ADD_NEW_ENTRY</merge-policy>
+		<!--
+			Near cache provides a local view of the clustered map, which is
+			ideal for high-read caches. Each cluster member retains a local
+			copy of entries retrieved from the distributed map. This reduces 
+			network load for caches that require frequent reads. However, if 
+			the	entries are updated frequently, there can be a performance 
+			penalty due to invalidations on the other cluster members.
+		-->
+        <near-cache>
+            <max-size>1000</max-size>
+            <time-to-live-seconds>0</time-to-live-seconds>
+            <max-idle-seconds>600</max-idle-seconds>
+            <eviction-policy>LRU</eviction-policy>
+            <invalidate-on-change>true</invalidate-on-change>
+        </near-cache>
+    </map>
+    <!-- 
+    	Replicated Openfire caches; entries copied to all members (up to 6 max).
+     	The settings for these caches were derived from the configuration of 
+    	the original clustering plugin.
+    -->
+    <map name="opt-$cacheStats">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Clearspace SSO Nonce">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+        <time-to-live-seconds>120</time-to-live-seconds>
+    </map>
+    <map name="Client Session Info Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Javascript Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-size>256</max-size>
+        <time-to-live-seconds>864000</time-to-live-seconds>
+        <eviction-policy>LRU</eviction-policy>
+    </map>
+    <map name="Components Sessions">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Connection Managers Sessions">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Secret Keys Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Validated Domains">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Disco Server Features">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Disco Server Items">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Incoming Server Sessions">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Sessions by Hostname">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Entity Capabilities">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+        <time-to-live-seconds>172800</time-to-live-seconds>
+    </map>
+    <map name="Routing Servers Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Routing Components Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Routing Users Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Routing Users Sessions">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Routing AnonymousUsers Cache">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Directed Presences">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+    </map>
+    <map name="Published Items">
+        <backup-count>1</backup-count>
+        <async-backup-count>5</async-backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-size>10000</max-size>
+        <time-to-live-seconds>900</time-to-live-seconds>
+        <eviction-policy>LRU</eviction-policy>
+    </map>
+    <!-- 
+    	Partitioned Openfire caches; entries copied to a single backup node and
+    	replicated as needed in each node using near-cache configuration.
+     	The settings for these caches were derived from the configuration of 
+    	the original clustering plugin.
+    -->
+    <map name="Roster">
+        <backup-count>1</backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-idle-seconds>21600</max-idle-seconds>
+        <eviction-policy>LRU</eviction-policy>
+        <max-size policy="cluster_wide_map_size">100000</max-size>
+        <eviction-percentage>10</eviction-percentage>
+        <near-cache>
+            <max-size>10000</max-size>
+            <max-idle-seconds>1800</max-idle-seconds>
+            <eviction-policy>LRU</eviction-policy>
+            <invalidate-on-change>true</invalidate-on-change>
+        </near-cache>
+    </map>
+    <map name="User">
+        <backup-count>1</backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-idle-seconds>1800</max-idle-seconds>
+        <eviction-policy>LRU</eviction-policy>
+        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <eviction-percentage>10</eviction-percentage>
+        <near-cache>
+            <max-size>1000</max-size>
+            <max-idle-seconds>600</max-idle-seconds>
+            <eviction-policy>LRU</eviction-policy>
+            <invalidate-on-change>true</invalidate-on-change>
+        </near-cache>
+    </map>
+    <map name="Group">
+        <backup-count>1</backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-idle-seconds>1800</max-idle-seconds>
+        <eviction-policy>LRU</eviction-policy>
+        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <eviction-percentage>10</eviction-percentage>
+        <near-cache>
+            <max-size>1000</max-size>
+            <max-idle-seconds>600</max-idle-seconds>
+            <eviction-policy>LRU</eviction-policy>
+            <invalidate-on-change>true</invalidate-on-change>
+        </near-cache>
+    </map>
+    <map name="Group Metadata Cache">
+        <backup-count>1</backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-idle-seconds>1800</max-idle-seconds>
+        <eviction-policy>LRU</eviction-policy>
+        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <eviction-percentage>10</eviction-percentage>
+        <near-cache>
+            <max-size>1000</max-size>
+            <max-idle-seconds>600</max-idle-seconds>
+            <eviction-policy>LRU</eviction-policy>
+            <invalidate-on-change>true</invalidate-on-change>
+        </near-cache>
     </map>
 </hazelcast>

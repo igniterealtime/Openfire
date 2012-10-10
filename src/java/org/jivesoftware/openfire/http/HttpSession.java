@@ -53,6 +53,7 @@ import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -1002,8 +1003,32 @@ public class HttpSession extends LocalClientSession {
 	        isClosed = true;
     	}
 
-        if (pendingElements.size() > 0) {
-            failDelivery();
+        // close connection(s) and deliver pending elements (if any)
+        synchronized (connectionQueue) {
+	        for (HttpConnection toClose : connectionQueue) {
+	            try {
+	            	if (!toClose.isClosed()) {
+	            		if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
+	            			synchronized(pendingElements) {
+		            			deliver(toClose, pendingElements);
+				                lastRequestID = toClose.getRequestId();
+				                pendingElements.clear();
+	            			}
+            			} else {
+            				toClose.deliverBody(null);
+            			}
+	            	}
+	            } catch (HttpConnectionClosedException e) {
+	            	/* ignore ... already closed */
+	            }
+	        }
+        }
+
+    	synchronized (pendingElements) {
+	        for (Deliverable deliverable : pendingElements) {
+	            failDelivery(deliverable.getPackets());
+	        }
+	        pendingElements.clear();
         }
 
         for (SessionListener listener : listeners) {
@@ -1012,50 +1037,25 @@ public class HttpSession extends LocalClientSession {
         this.listeners.clear();
     }
 
-    private void failDelivery() {
-    	synchronized (pendingElements) {
-	        for (Deliverable deliverable : pendingElements) {
-	            Collection<Packet> packet = deliverable.getPackets();
-	            if (packet != null) {
-	                failDelivery(packet);
-	            }
-	        }
-	        pendingElements.clear();
-    	}
-
-        synchronized (connectionQueue) {
-	        for (HttpConnection toClose : connectionQueue) {
-	            if (!toClose.isDelivered()) {
-	                Delivered delivered = retrieveDeliverable(toClose.getRequestId());
-	                if (delivered != null) {
-	                    failDelivery(delivered.getPackets());
-	                }
-	                else {
-	                    Log.warn("Packets could not be found for session " + getStreamID() + " cannot " +
-	                            "be delivered to client");
-	                }
-	            }
-	            toClose.close();
-	            fireConnectionClosed(toClose);
-	        }
-        }
-    }
-
-    private void failDelivery(Collection<Packet> packets) {
+    private void failDelivery(final Collection<Packet> packets) {
         if (packets == null) {
             // Do nothing if someone asked to deliver nothing :)
             return;
         }
-        for (Packet packet : packets) {
-            try {
-                backupDeliverer.deliver(packet);
-            }
-            catch (UnauthorizedException e) {
-                Log.error("Unable to deliver message to backup deliverer", e);
-            }
-        }
+        // use a separate thread to schedule backup delivery
+   		TaskEngine.getInstance().submit(new Runnable() {
+			public void run() {
+		        for (Packet packet : packets) {
+    	            try {
+        				backupDeliverer.deliver(packet);
+    	            }
+    	            catch (UnauthorizedException e) {
+    	                Log.error("Unable to deliver message to backup deliverer", e);
+    	            }
+		        }
+			}
+   		});
     }
-
 
     private String createEmptyBody() {
         Element body = DocumentHelper.createElement("body");

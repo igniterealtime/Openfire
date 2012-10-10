@@ -19,21 +19,22 @@
 
 package com.jivesoftware.openfire.session;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Class that defines possible remote operations that could be performed
@@ -42,7 +43,11 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class ClientSessionTask extends RemoteSessionTask {
+
+    private static Logger logger = LoggerFactory.getLogger(ClientSessionTask.class);
+
     private JID address;
+    private transient Session session;
 
     public ClientSessionTask() {
         super();
@@ -54,10 +59,17 @@ public class ClientSessionTask extends RemoteSessionTask {
     }
 
     Session getSession() {
-        return XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+    	if (session == null) {
+    		session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+    	}
+    	return session;
     }
 
     public void run() {
+    	if (getSession() == null || getSession().isClosed()) {
+    		logger.error("Session not found for JID: " + address);
+    		return;
+    	}
         super.run();
 
         ClientSession session = (ClientSession) getSession();
@@ -67,7 +79,7 @@ public class ClientSessionTask extends RemoteSessionTask {
             ClientRoute route = usersCache.get(address.toString());
             NodeID nodeID = route.getNodeID();
 
-            Log.warn("Found remote session instead of local session. JID: " + address + " found in Node: " +
+            logger.warn("Found remote session instead of local session. JID: " + address + " found in Node: " +
                     nodeID.toByteArray() + " and local node is: " + XMPPServer.getInstance().getNodeID().toByteArray());
         }
         if (operation == Operation.isInitialized) {

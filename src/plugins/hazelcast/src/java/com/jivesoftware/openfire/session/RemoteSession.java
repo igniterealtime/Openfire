@@ -19,15 +19,16 @@
 
 package com.jivesoftware.openfire.session;
 
+import java.net.UnknownHostException;
+import java.util.Date;
+
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
-
-import java.net.UnknownHostException;
-import java.util.Date;
 
 /**
  * Base class for sessions being hosted in other cluster nodes. Almost all
@@ -168,7 +169,16 @@ public abstract class RemoteSession implements Session {
      * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
     protected Object doSynchronousClusterTask(ClusterTask task) {
-        return CacheFactory.doSynchronousClusterTask(task, nodeID);
+        try {
+        	return CacheFactory.doSynchronousClusterTask(task, nodeID);
+        } catch (IllegalStateException ise) {
+        	if (task instanceof RemoteSessionTask) {
+	        	// clean up invalid session
+	        	SessionManager.getInstance().removeSession(null, 
+	        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+        	}
+        	throw ise;
+        }
     }
 
     /**
@@ -178,7 +188,16 @@ public abstract class RemoteSession implements Session {
      * @throws IllegalStateException if requested node was not found or not running in a cluster. 
      */
     protected void doClusterTask(ClusterTask task) {
-        CacheFactory.doClusterTask(task, nodeID);
+        try {
+        	CacheFactory.doClusterTask(task, nodeID);
+        } catch (IllegalStateException ise) {
+        	if (task instanceof RemoteSessionTask) {
+	        	// clean up invalid session
+	        	SessionManager.getInstance().removeSession(null, 
+	        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+        	}
+        	throw ise;
+        }
     }
 
     /**

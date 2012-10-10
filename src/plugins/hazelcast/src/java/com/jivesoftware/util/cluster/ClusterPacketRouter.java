@@ -46,7 +46,7 @@ public class ClusterPacketRouter implements RemotePacketRouter {
             CacheFactory.doClusterTask(new RemotePacketExecution(receipient, packet), nodeID);
             return true;
         } catch (IllegalStateException  e) {
-            logger.warn("Error while routing packet to remote node", e);
+            logger.warn("Error while routing packet to remote node: " + e);
             return false;
         }
     }

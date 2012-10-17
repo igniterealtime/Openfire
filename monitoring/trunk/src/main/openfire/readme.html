@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Monitoring2 Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+        #datatable TH {
+            color : #fff;
+            background-color : #2A448C;
+            text-align : left;
+        }
+        #datatable TD {
+            background-color : #FAF6EF;
+        }
+        #datatable .name {
+            background-color : #DCE2F5;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Monitoring2 Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+
+<p>
+The monitoring plugin adds support for chat archiving and server statistics to
+Openfire.  It provides support for generating various reports on the server
+statistics, as well as managing, viewing, and reporting on chat logs.
+</p>
+
+<h2>Installation</h2>
+
+<p>
+Copy monitoring.jar into the plugins directory of your Openfire installation.
+The plugin will then be automatically deployed. To upgrade to a new version,
+copy the new monitoring.jar file over the existing file.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+Chat archiving is enabled by default.  However, only information about
+who is communicating and at what time is stored unless chat transcript
+archiving is enabled.  To enable chat transcript archiving or group chat
+archiving, you will need to log into the admin console and go to:<br />
+Server --&gt; Archiving --&gt; Archiving Settings
+</p>
+
+</body>
+</html>

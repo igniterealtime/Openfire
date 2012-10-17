@@ -1,0 +1,211 @@
+
+Disco:
+<iq id="vsIz2-25" to="derek.gltd.local" type="get">
+	<query xmlns="http://jabber.org/protocol/disco#info" />
+</iq>
+
+<iq id="vsIz2-25" to="leon@derek.gltd.local/Spark 2.6.3" from="derek.gltd.local"
+	type="result">
+	<query xmlns="http://jabber.org/protocol/disco#info">
+		<identity category="server" name="Openfire Server" type="im" />
+		<identity category="pubsub" name="null" type="pep" />
+		<feature var="http://jabber.org/protocol/pubsub#manage-subscriptions" />
+		<feature var="http://jabber.org/protocol/pubsub#modify-affiliations" />
+		<feature var="http://jabber.org/protocol/pubsub#retrieve-default" />
+		<feature var="http://jabber.org/protocol/pubsub#collections" />
+		<feature var="jabber:iq:private" />
+		<feature var="http://jabber.org/protocol/disco#items" />
+		<feature var="vcard-temp" />
+		<feature var="http://jabber.org/protocol/pubsub#publish" />
+		<feature var="urn:xmpp:archive:auto" />
+		<feature var="http://jabber.org/protocol/pubsub#subscribe" />
+		<feature var="http://jabber.org/protocol/pubsub#retract-items" />
+		<feature var="http://jabber.org/protocol/offline" />
+		<feature var="http://jabber.org/protocol/pubsub#meta-data" />
+		<feature var="jabber:iq:register" />
+		<feature var="http://jabber.org/protocol/pubsub#retrieve-subscriptions" />
+		<feature var="http://jabber.org/protocol/pubsub#default_access_model_open" />
+		<feature var="jabber:iq:roster" />
+		<feature var="http://jabber.org/protocol/pubsub#config-node" />
+		<feature var="http://jabber.org/protocol/address" />
+		<feature var="http://jabber.org/protocol/pubsub#publisher-affiliation" />
+		<feature var="http://jabber.org/protocol/pubsub#item-ids" />
+		<feature var="http://jabber.org/protocol/pubsub#instant-nodes" />
+		<feature var="http://jabber.org/protocol/commands" />
+		<feature var="http://jabber.org/protocol/pubsub#multi-subscribe" />
+		<feature var="http://jabber.org/protocol/pubsub#outcast-affiliation" />
+		<feature var="http://jabber.org/protocol/pubsub#get-pending" />
+		<feature var="google:jingleinfo" />
+		<feature var="jabber:iq:privacy" />
+		<feature var="urn:xmpp:archive:manage" />
+		<feature var="http://jabber.org/protocol/pubsub#subscription-options" />
+		<feature var="jabber:iq:last" />
+		<feature var="http://jabber.org/protocol/pubsub#create-and-configure" />
+		<feature var="urn:xmpp:ping" />
+		<feature var="http://jabber.org/protocol/pubsub#retrieve-items" />
+		<feature var="jabber:iq:time" />
+		<feature var="http://jabber.org/protocol/pubsub#create-nodes" />
+		<feature var="http://jabber.org/protocol/pubsub#persistent-items" />
+		<feature var="jabber:iq:version" />
+		<feature var="http://jabber.org/protocol/pubsub#presence-notifications" />
+		<feature var="http://jabber.org/protocol/pubsub" />
+		<feature var="http://jabber.org/protocol/pubsub#retrieve-affiliations" />
+		<feature var="http://jabber.org/protocol/pubsub#delete-nodes" />
+		<feature var="http://jabber.org/protocol/pubsub#purge-nodes" />
+		<feature var="http://jabber.org/protocol/disco#info" />
+		<feature var="http://jabber.org/protocol/rsm" />
+	</query>
+</iq>
+
+Retrieving a list with a user:
+<iq type='get' id='id-gyzza'>
+	<list xmlns='urn:xmpp:archive' with='andy@derek.gltd.local'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>30</max>
+		</set>
+	</list>
+</iq>
+
+<iq type="result" id="id-gyzza" to="leon@derek.gltd.local/Spark 2.6.3">
+	<list xmlns="urn:xmpp:archive">
+		<chat with="andy@derek.gltd.local" start="2011-09-14T08:59:48.247Z" />
+		<chat with="leonsplace@conference.derek.gltd.local" start="2011-09-14T09:03:06.250Z" />
+		<set xmlns="http://jabber.org/protocol/rsm">
+			<first index="0">2</first>
+			<last>3</last>
+			<count>2</count>
+		</set>
+	</list>
+</iq>
+
+Retrieving a list with a conference:
+<iq type='get' id='id-gyzza'>
+	<list xmlns='urn:xmpp:archive' with='leonsplace@conference.derek.gltd.local'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>30</max>
+		</set>
+	</list>
+</iq>
+
+<iq type="result" id="id-gyzza" to="leon@derek.gltd.local/Spark 2.6.3">
+	<list xmlns="urn:xmpp:archive">
+		<chat with="leonsplace@conference.derek.gltd.local" start="2011-09-14T09:03:06.250Z" />
+		<set xmlns="http://jabber.org/protocol/rsm">
+			<first index="0">3</first>
+			<last>3</last>
+			<count>1</count>
+		</set>
+	</list>
+</iq>
+
+
+Retrieving a list with all:
+<iq type='get' id='id-gyzza'>
+	<list xmlns='urn:xmpp:archive'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>30</max>
+		</set>
+	</list>
+</iq>
+
+<iq type="result" id="id-gyzza" to="leon@derek.gltd.local/Spark 2.6.3">
+	<list xmlns="urn:xmpp:archive">
+		<chat with="andy@derek.gltd.local" start="2011-09-14T08:59:48.247Z" />
+		<chat with="leonsplace@conference.derek.gltd.local" start="2011-09-14T09:03:06.250Z" />
+		<chat with="oliver@derek.gltd.local" start="2011-09-14T10:57:36.233Z" />
+		<set xmlns="http://jabber.org/protocol/rsm">
+			<first index="0">2</first>
+			<last>3</last>
+			<count>2</count>
+		</set>
+	</list>
+</iq>
+
+Retrieving conversation with a user:
+<iq type='get' id='id-gyzzb'>
+	<retrieve xmlns='urn:xmpp:archive' with='andy@derek.gltd.local'
+		start='2011-09-14T08:59:48.247Z'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>100</max>
+		</set>
+	</retrieve>
+</iq>
+
+<iq type="result" id="id-gyzzb" to="leon@derek.gltd.local/Spark 2.6.3">
+	<chat xmlns="urn:xmpp:archive" with="andy@derek.gltd.local" start="2011-09-14T08:59:48.247Z">
+		<from secs="0" jid="andy@derek.gltd.local">
+			<body>hi leon</body>
+		</from>
+		<to secs="12">
+			<body>hi andy</body>
+		</to>
+		<to secs="16">
+			<body>what's up andy?</body>
+		</to>
+		<from secs="20" jid="andy@derek.gltd.local">
+			<body>not much leon</body>
+		</from>
+		<from secs="24" jid="andy@derek.gltd.local">
+			<body>bye leon</body>
+		</from>
+		<to secs="28">
+			<body>bye andy</body>
+		</to>
+		<set xmlns="http://jabber.org/protocol/rsm">
+			<first index="0">0</first>
+			<last>5</last>
+			<count>6</count>
+		</set>
+	</chat>
+</iq>
+
+Retrieving a conversation with a conference:
+<iq type='get' id='id-gyzzb'>
+	<retrieve xmlns='urn:xmpp:archive' with='leonsplace@conference.derek.gltd.local'
+		start='2011-09-14T09:03:06.250Z'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>100</max>
+		</set>
+	</retrieve>
+</iq>
+
+<iq type="result" id="id-gyzzb" to="leon@derek.gltd.local/Spark 2.6.3">
+	<chat xmlns="urn:xmpp:archive" with="leonsplace@conference.derek.gltd.local"
+		start="2011-09-14T09:03:06.250Z">
+		<from secs="0" jid="andy@derek.gltd.local">
+			<body>hello leon</body>
+		</from>
+		<from secs="5" jid="andy@derek.gltd.local">
+			<body>nice place you have here</body>
+		</from>
+		<to secs="9">
+			<body>thanks andy</body>
+		</to>
+		<from secs="161" jid="oliver@derek.gltd.local">
+			<body>hello everybody!</body>
+		</from>
+		<to secs="166">
+			<body>hi ollie</body>
+		</to>
+		<from secs="170" jid="andy@derek.gltd.local">
+			<body>hi ok</body>
+		</from>
+		<from secs="172" jid="andy@derek.gltd.local">
+			<body>bye guys, gtg</body>
+		</from>
+		<to secs="176">
+			<body>bye ag</body>
+		</to>
+		<from secs="180" jid="oliver@derek.gltd.local">
+			<body>bye all</body>
+		</from>
+		<set xmlns="http://jabber.org/protocol/rsm">
+			<first index="0">0</first>
+			<last>8</last>
+			<count>9</count>
+		</set>
+	</chat>
+</iq>
+
+
+

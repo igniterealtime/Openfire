@@ -1,0 +1,48 @@
+Get List of messages:
+<iq type='get' id='id-gyzza'>
+	<list xmlns='urn:xmpp:archive'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>30</max>
+		</set>
+	</list>
+</iq>
+
+Goes to:
+com.reucon.openfire.plugin.archive.xep0136.IQListHandler.handleIQ
+
+
+Get conversation:
+<iq type='get' id='id-gyzzb'>
+	<retrieve xmlns='urn:xmpp:archive' with='andy@derek.gltd.local'
+		start='2011-08-17T16:30:49.280Z'>
+		<set xmlns='http://jabber.org/protocol/rsm'>
+			<max>100</max>
+		</set>
+	</retrieve>
+</iq>
+
+Goes to:
+com.reucon.openfire.plugin.archive.xep0136.IQRetrieveHandler.handleIQ
+
+
+SQL sample select:
+
+SELECT 
+gtmsConversation.conversationID, 
+gtmsConversation.room, 
+gtmsConversation.isExternal, 
+gtmsConversation.startDate, 
+gtmsConversation.lastActivity, 
+gtmsConversation.messageCount, 
+gtmsConParticipant.joinedDate, 
+gtmsConParticipant.leftDate, 
+gtmsConParticipant.bareJID, 
+gtmsConParticipant.jidResource, 
+gtmsConParticipant.nickname, 
+gtmsMessageArchive.fromJID, 
+gtmsMessageArchive.toJID, 
+gtmsMessageArchive.sentDate, 
+gtmsMessageArchive.body 
+FROM gtmsConversation, gtmsConParticipant, gtmsMessageArchive 
+INNER JOIN gtmsConParticipant ON gtmsConversation.conversationID = gtmsConParticipant.conversationID
+INNER JOIN gtmsMessageArchive ON gtmsConParticipant.conversationID = gtmsMessageArchive.conversationID;

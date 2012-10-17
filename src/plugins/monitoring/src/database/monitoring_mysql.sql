@@ -1,7 +1,7 @@
 # $Revision$
 # $Date$
 
-INSERT INTO ofVersion (name, version) VALUES ('monitoring', 0);
+INSERT INTO ofVersion (name, version) VALUES ('monitoring', 1);
 
 CREATE TABLE ofConversation (
   conversationID        BIGINT        NOT NULL,
@@ -30,10 +30,12 @@ CREATE TABLE ofConParticipant (
 CREATE TABLE ofMessageArchive (
    conversationID    BIGINT           NOT NULL,
    fromJID           VARCHAR(255)     NOT NULL,
+   fromJIDResource   VARCHAR(100)     NULL,
    toJID             VARCHAR(255)     NOT NULL,
+   toJIDResource     VARCHAR(100)     NULL,
    sentDate          BIGINT           NOT NULL,
    body              TEXT,
-   INDEX entMsgArchive_con_idx (conversationID)
+   INDEX gtmsMsgArchive_con_idx (conversationID)
 );
 
 CREATE TABLE ofRRDs (

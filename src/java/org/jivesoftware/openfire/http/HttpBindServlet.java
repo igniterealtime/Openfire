@@ -269,7 +269,7 @@ public class HttpBindServlet extends HttpServlet {
 
             if ("terminate".equals(type)) {
                 session.close();
-                respond(session, request, response, createEmptyBody(), request.getMethod());
+                respond(session, request, response, createEmptyBody(true), request.getMethod());
             }
             else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {
                 try {
@@ -281,7 +281,7 @@ public class HttpBindServlet extends HttpServlet {
             }
             else if (pauseDuration > 0 && pauseDuration <= session.getMaxPause()) {
             	session.pause(pauseDuration);
-                respond(session, request, response, createEmptyBody(), request.getMethod());
+                respond(session, request, response, createEmptyBody(false), request.getMethod());
                 session.setLastResponseEmpty(true);
             }
             else {
@@ -355,7 +355,7 @@ public class HttpBindServlet extends HttpServlet {
             content = connection.getResponse();
         }
         catch (HttpBindTimeoutException e) {
-            content = createEmptyBody();
+            content = createEmptyBody(false);
             connection.getSession().setLastResponseEmpty(true);
         }
 
@@ -411,8 +411,9 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    private static String createEmptyBody() {
+    private static String createEmptyBody(boolean terminate) {
         Element body = DocumentHelper.createElement("body");
+        if (terminate) { body.addAttribute("type", "terminate"); }
         body.addNamespace("", "http://jabber.org/protocol/httpbind");
         return body.asXML();
     }

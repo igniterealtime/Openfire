@@ -1111,16 +1111,33 @@
         <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
 
 
-        <rpm specFile="openfire.spec"
-             topDir="${target.rpm}"
-             command="-ba --target i386 --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-             failOnError="true"
-             />
-             
-        <copy todir="${release.dest.dir}" >
-            <fileset dir="${target.rpm}/SRPMS" />
-            <fileset dir="${target.rpm}/RPMS/i386" />
-        </copy>
+        <if>
+            <equals arg1="${bundle.jre}" arg2="true"/>
+            <then>
+	      <rpm specFile="openfire.spec"
+		  topDir="${target.rpm}"
+		  command="-ba --target i386 --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+		  failOnError="true"
+		  />
+
+	      <copy todir="${release.dest.dir}" >
+		  <fileset dir="${target.rpm}/SRPMS" />
+		  <fileset dir="${target.rpm}/RPMS/i386" />
+	      </copy>
+	    </then>
+            <else>
+	      <rpm specFile="openfire.spec"
+		  topDir="${target.rpm}"
+		  command="-ba --target noarch --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+		  failOnError="true"
+		  />
+
+	      <copy todir="${release.dest.dir}" >
+		  <fileset dir="${target.rpm}/SRPMS" />
+		  <fileset dir="${target.rpm}/RPMS/noarch" />
+	      </copy>
+	    </else>
+        </if>
     </target>
 
     <!-- installer.solaris ========================================================================= -->

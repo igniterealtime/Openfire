@@ -4,7 +4,9 @@ Version: %{OPENFIRE_VERSION}
 Release: 1
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{OPENFIRE_SOURCE}
+%ifnarch noarch
 Source1: jre-dist.tar.gz
+%endif
 Group: Applications/Communications
 Vendor: Jive Software
 Packager: Jive Software
@@ -39,10 +41,12 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{prefix}
 # Copy over the main install tree.
 cp -R target/openfire $RPM_BUILD_ROOT%{homedir}
+%ifnarch noarch
 # Set up distributed JRE
 pushd $RPM_BUILD_ROOT%{homedir}
 gzip -cd %{SOURCE1} | tar xvf -
 popd
+%endif
 # Set up the init script.
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp $RPM_BUILD_ROOT%{homedir}/bin/extra/redhat/openfire $RPM_BUILD_ROOT/etc/init.d/openfire
@@ -141,7 +145,9 @@ exit 0
 %doc %{homedir}/changelog.html
 %{_sysconfdir}/init.d/openfire
 %config(noreplace) %{_sysconfdir}/sysconfig/openfire
+%ifnarch noarch
 %{homedir}/jre
+%endif
 
 %changelog
 * %{OPENFIRE_BUILDDATE} Jive Software <webmaster@jivesoftware.com> %{OPENFIRE_VERSION}-1

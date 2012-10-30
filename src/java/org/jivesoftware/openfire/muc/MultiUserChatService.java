@@ -109,6 +109,12 @@ public interface MultiUserChatService extends Component {
      * @param userJID the bare JID of the new user to add to list.
      */
     void addUserAllowedToCreate(JID userJID);
+    
+    /**
+     * Adds new users to the list of JIDs that are allowed to create MUC rooms.
+     * @param userJIDs collection of bare JIDs if users to add to list.
+     */
+    void addUsersAllowedToCreate(Collection<JID> userJIDs);
 
     /**
      * Removes a user from list of JIDs that are allowed to create MUC rooms.
@@ -116,6 +122,13 @@ public interface MultiUserChatService extends Component {
      * @param userJID the bare JID of the user to remove from the list.
      */
     void removeUserAllowedToCreate(JID userJID);
+
+    /**
+     * Removes users from list of JIDs that are allowed to create MUC rooms.
+     * 
+     * @param userJIDs collection of bare JIDs of users to remove from the list.
+     */
+    void removeUsersAllowedToCreate(Collection<JID> userJIDs);
 
     /**
      * Sets the time to elapse between clearing of idle chat users. A <code>TimerTask</code> will be

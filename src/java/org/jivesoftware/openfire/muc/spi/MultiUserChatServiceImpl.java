@@ -70,8 +70,8 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
-import org.xmpp.forms.FormField;
 import org.xmpp.forms.DataForm.Type;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -82,8 +82,8 @@ import org.xmpp.resultsetmanagement.ResultSet;
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
  * responsible for responding Multi-User Chat disco requests as well as removing inactive users from
- * the rooms after a period of time and to maintain a log of the conversation in the rooms that 
- * require to log their conversations. The conversations log is saved to the database using a 
+ * the rooms after a period of time and to maintain a log of the conversation in the rooms that
+ * require to log their conversations. The conversations log is saved to the database using a
  * separate process<p>
  *
  * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
@@ -162,12 +162,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * The handler of packets with namespace jabber:iq:register for the server.
      */
     private IQMUCRegisterHandler registerHandler = null;
-    
+
     /**
      * The handler of search requests ('jabber:iq:search' namespace).
      */
     private IQMUCSearchHandler searchHandler = null;
-    
+
     /**
      * The total time all agents took to chat *
      */
@@ -195,8 +195,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private boolean roomCreationRestricted = false;
 
     /**
-     * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can 
-     * create a room. 
+     * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can
+     * create a room.
      */
     private List<JID> allowedToCreate = new CopyOnWriteArrayList<JID>();
 
@@ -265,7 +265,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     /**
 	 * Create a new group chat server.
-	 * 
+	 *
 	 * @param subdomain
 	 *            Subdomain portion of the conference services (for example,
 	 *            conference for conference.example.org)
@@ -817,14 +817,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     public void addSysadmin(JID userJID) {
     	final JID bareJID = new JID(userJID.toBareJID());
-    	
+
         sysadmins.add(bareJID);
-        
+
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
         ArrayList<JID> tempList = new ArrayList<JID>(sysadmins);
         Collections.sort(tempList);
         sysadmins = new CopyOnWriteArrayList<JID>(tempList);
-        
+
         // Update the config.
         String[] jids = new String[sysadmins.size()];
         for (int i = 0; i < jids.length; i++) {
@@ -835,9 +835,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     public void removeSysadmin(JID userJID) {
     	final JID bareJID = new JID(userJID.toBareJID());
-    	
+
         sysadmins.remove(bareJID);
-        
+
         // Update the config.
         String[] jids = new String[sysadmins.size()];
         for (int i = 0; i < jids.length; i++) {
@@ -880,40 +880,51 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "create.anyone", Boolean.toString(roomCreationRestricted));
     }
 
+    public void addUsersAllowedToCreate(Collection<JID> userJIDs) {
+    	boolean listChanged = false;
+
+    	for(JID userJID: userJIDs) {
+            // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
+            // variable there is no need to restart the service
+            listChanged |= allowedToCreate.add(userJID);
+    	}
+
+    	// if nothing was added, there's nothing to update
+    	if(listChanged) {
+            // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
+            List<JID> tempList = new ArrayList<JID>(allowedToCreate);
+            Collections.sort(tempList);
+            allowedToCreate = new CopyOnWriteArrayList<JID>(tempList);
+            // Update the config.
+            MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromCollection(allowedToCreate));
+    	}
+    }
+
     public void addUserAllowedToCreate(JID userJID) {
-    	final JID bareJID = new JID(userJID.toBareJID());
-    	
-        // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
-        // variable there is no need to restart the service
-    	
-        allowedToCreate.add(bareJID);
-        
-        // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-        ArrayList<JID> tempList = new ArrayList<JID>(allowedToCreate);
-        Collections.sort(tempList);
-        allowedToCreate = new CopyOnWriteArrayList<JID>(tempList);
-        
-        // Update the config.
-        String[] jids = new String[allowedToCreate.size()];
-        for (int i = 0; i < jids.length; i++) {
-			jids[i] = allowedToCreate.get(i).toBareJID();
-		}
-        MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromArray(jids));
+        List<JID> asList = new ArrayList<JID>();
+        asList.add(userJID);
+    	addUsersAllowedToCreate(asList);
+    }
+
+    public void removeUsersAllowedToCreate(Collection<JID> userJIDs) {
+    	boolean listChanged = false;
+
+    	for(JID userJID: userJIDs) {
+            // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
+            // variable there is no need to restart the service
+            listChanged |= allowedToCreate.remove(userJID);
+    	}
+
+    	// if none of the JIDs were on the list, there's nothing to update
+    	if(listChanged) {
+            MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromCollection(allowedToCreate));
+    	}
     }
 
     public void removeUserAllowedToCreate(JID userJID) {
-    	final JID bareJID = new JID(userJID.toBareJID());
-    	
-        // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
-        // variable there is no need to restart the service
-        allowedToCreate.remove(bareJID);
-        
-        // Update the config.
-        String[] jids = new String[allowedToCreate.size()];
-        for (int i = 0; i < jids.length; i++) {
-			jids[i] = allowedToCreate.get(i).toBareJID();
-		}
-        MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromArray(jids));
+        List<JID> asList = new ArrayList<JID>();
+        asList.add(userJID);
+    	removeUsersAllowedToCreate(asList);
     }
 
     public void initialize(XMPPServer server) {
@@ -1180,7 +1191,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 		{
 			return null;
 		}
-		
+
 		final ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
 		final DiscoServerItem item = new DiscoServerItem(new JID(
 			getServiceDomain()), getDescription(), null, null, this, this);
@@ -1248,7 +1259,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             features.add("http://jabber.org/protocol/disco#items");
             features.add("jabber:iq:search");
             features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
-            if (!extraDiscoFeatures.isEmpty()) features.addAll(extraDiscoFeatures);
+            if (!extraDiscoFeatures.isEmpty()) {
+				features.addAll(extraDiscoFeatures);
+			}
         }
         else if (name != null && node == null) {
             // Answer the features of a given room
@@ -1355,7 +1368,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Adds an extra Disco identity to the list of identities returned for the conference service.
      * @param category Category for identity.  e.g. conference
      * @param name Descriptive name for identity.  e.g. Public Chatrooms
-     * @param type Type for identity.  e.g. text 
+     * @param type Type for identity.  e.g. text
      */
     public void addExtraIdentity(String category, String name, String type) {
         Element identity = DocumentHelper.createElement("identity");
@@ -1456,10 +1469,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Converts an array to a comma-delimitted String.
+     * Converts an array to a comma-delimited String.
      *
      * @param array the array.
-     * @return a comma delimtted String of the array values.
+     * @return a comma delimited String of the array values.
      */
     private static String fromArray(String [] array) {
         StringBuilder buf = new StringBuilder();
@@ -1471,7 +1484,22 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         return buf.toString();
     }
-    
+
+    /**
+     * Converts a collection to a comma-delimited String.
+     *
+     * @param coll the collection.
+     * @return a comma delimited String of the array values.
+     */
+    private static String fromCollection(Collection<JID> coll) {
+        StringBuilder buf = new StringBuilder();
+        for (JID elem: coll) {
+            buf.append(elem.toBareJID()).append(",");
+        }
+        int endPos = buf.length() > 1 ? buf.length() - 1 : 0;
+        return buf.substring(0, endPos);
+    }
+
     public boolean isHidden() {
         return isHidden;
     }

@@ -22,10 +22,17 @@ PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
 # Check that we are root ... so non-root users stop here.
-[ "`id -u`" = 0 ] || exit 1
+if [ "`id -u`" != 0 ]; then
+	echo $0 must be run as root
+	exit 1
+fi
 
 # Get config.
 [ -f "/etc/sysconfig/openfire" ] && . /etc/sysconfig/openfire
+if [ -f "/etc/init.d/functions" ]; then
+  FUNCTIONS_FOUND=true
+  . /etc/init.d/functions
+fi
 
 # If openfire user is not set in sysconfig, set to daemon.
 [ -z "$OPENFIRE_USER" ] && OPENFIRE_USER="daemon"
@@ -107,25 +114,19 @@ start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_LOGDIR
 
-    # Check if the server is already running. We look only for the pid file
-    pid=`cat $OPENFIRE_PIDFILE 2>&1`                                       
-    if [ "$?" = "0" ]; then                                                
-        echo "Openfire is already running. Remove $OPENFIRE_PIDFILE if you know this to be untrue."                                 
-        RETVAL=1                                                           
-        return                                                             
-    fi                                                                     
-                                                                           
-    # Start daemons.                                                       
-    echo -n "Starting openfire: "                                          
+	PID=$(findPID)
+	if [ -n "$PID" ]; then                                                
+	    echo "Openfire is already running."                                 
+	    RETVAL=1                                                           
+	    return                                                             
+	fi                                                                     
+
+	# Start daemons.                                                       
+	echo -n "Starting openfire: "                                          
 
 	rm -f nohup.out
 	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER
 	RETVAL=$?
-	PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
-
-	if [ $RETVAL -eq 0 -a ! -z "$PID" -a ! -z "$OPENFIRE_PIDFILE" ]; then
-		echo $PID > $OPENFIRE_PIDFILE
-	fi
 
 	echo
 
@@ -139,11 +140,23 @@ stop() {
 	# Stop daemons.
 	echo -n "Shutting down openfire: "
 
-	[ -f "$OPENFIRE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
+	PID=$(findPID)
+	if [ -n "$PID" ]; then
+		if [ -n "$FUNCTIONS_FOUND" ]; then
+			echo $PID > $OPENFIRE_PIDFILE
+			# delay copied from restart
+			killproc -p $OPENFIRE_PIDFILE -d 10
+			rm -f $OPENFIRE_PIDFILE
+		else
+			kill $PID
+		fi
+	else
+		echo "Openfire is not running."
+	fi
+	
 	RETVAL=$?
 	echo
 
-	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
 	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
 
@@ -159,22 +172,19 @@ condrestart() {
 }
 
 status() {
-	pid=`cat $OPENFIRE_PIDFILE 2>&1`
-	if [ "$?" = "1" ]; then
-		echo "openfire is not running"
-		RETVAL=3
+	PID=$(findPID)
+	if [ -n "$PID" ]; then
+		echo "openfire is running"
+		RETVAL=0
 	else 
-		ps -p $pid > /dev/null 2>&1
-		if [ "$?" = "0" ]; then 
-			echo "openfire is running"
-			RETVAL=0
-		else 
-			echo "openfire is not running"
-			RETVAL=1
-		fi
+		echo "openfire is not running"
+		RETVAL=1
 	fi
 }
 
+findPID() {
+	echo `ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+}
 
 # Handle how we were called.
 case "$1" in

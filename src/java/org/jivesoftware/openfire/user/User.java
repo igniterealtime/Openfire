@@ -206,11 +206,11 @@ public class User implements Cacheable, Externalizable, Result {
         if (name != null && name.matches("\\s*")) {
         	name = null;
         }
-        
+
         if (name == null && UserManager.getUserProvider().isNameRequired()) {
             throw new IllegalArgumentException("User provider requires name.");
         }
-        
+
         try {
             String originalName = this.name;
             UserManager.getUserProvider().setName(username, name);
@@ -259,7 +259,7 @@ public class User implements Cacheable, Externalizable, Result {
         if (UserManager.getUserProvider().isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
-        
+
         if (email != null && email.matches("\\s*")) {
         	email = null;
         }
@@ -436,7 +436,7 @@ public class User implements Cacheable, Externalizable, Result {
             Map<String,Object> eventParams = new HashMap<String,Object>();
             Object answer;
             String keyString = (String) key;
-            synchronized (keyString.intern()) {
+            synchronized (getName() + keyString.intern()) {
                 if (properties.containsKey(keyString)) {
                     String originalValue = properties.get(keyString);
                     answer = properties.put(keyString, (String)value);
@@ -607,7 +607,7 @@ public class User implements Cacheable, Externalizable, Result {
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
     }
-    
+
     /*
      * (non-Javadoc)
      * @see org.jivesoftware.util.resultsetmanager.Result#getUID()

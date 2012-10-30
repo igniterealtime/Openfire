@@ -247,7 +247,9 @@ public class LeafNode extends Node {
                 setLastPublishedItem(newItem);
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
-                PubSubPersistenceManager.savePublishedItem(newItem);
+                if (isPersistPublishedItems()) {
+                	PubSubPersistenceManager.savePublishedItem(newItem);
+                }
             }
         }
 

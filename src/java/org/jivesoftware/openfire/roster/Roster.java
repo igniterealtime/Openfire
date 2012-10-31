@@ -129,7 +129,7 @@ public class Roster implements Cacheable, Externalizable {
         //Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
 
         // Add RosterItems that belong to the personal roster
-        rosterItemProvider =  RosterItemProvider.getInstance();
+        rosterItemProvider =  RosterManager.getRosterItemProvider();
         Iterator<RosterItem> items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = items.next();
@@ -1152,7 +1152,7 @@ public class Roster implements Cacheable, Externalizable {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();
         sessionManager = SessionManager.getInstance();
-        rosterItemProvider =  RosterItemProvider.getInstance();
+        rosterItemProvider =  RosterManager.getRosterItemProvider();
         routingTable = XMPPServer.getInstance().getRoutingTable();
 
         username = ExternalizableUtil.getInstance().readSafeUTF(in);

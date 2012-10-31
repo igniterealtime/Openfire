@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<title>Openfire: Pluggable Roster Support Guide</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<div id="pageContainer">
+
+<a name="top"></a>
+
+	<div id="pageHeader">
+		<div id="logo"></div>
+		<h1>Pluggable Roster Support Guide</h1>
+	</div>
+	<div class="navigation">
+		<a href="index.html">&laquo; Back to documentation index</a>
+	</div>
+
+	<div id="pageBody">
+
+<h2>Introduction</h2>
+
+<p>
+    This document provides instructions on how to configure Openfire's roster support to work 
+    with alternate sources of roster data rather than the provided database tables.
+</p>
+<p>
+    Consider the scenario where Openfire is integrated as the chat server solution for an existing 
+    'social' application. In this application a user is linked to other users via a relationship 
+    of sorts, and the system of record for the relationship data is NOT the Openfire system. 
+    Using an XMPP server such as Openfire the applications benefit from the real-time nature of 
+    XMPP rosters and other subscription based features such as PEP, but with the caveat that 
+    the existing relationship information has to be duplicated in Openfire and could potentially
+    become out of sync.
+</p>
+<p>
+    With the introduction of pluggable roster providers, Openfire can be instructed to retrieve and 
+    modify roster data that lives in alternative locations to the standard database tables. The options 
+    are limitless as to what this could be, e.g. an alternative database table(s), a web service, a NoSQL 
+    database etc. 
+</p>
+
+<h2>Background</h2>
+
+<p>
+    This integration requires some Java knowledge in order to implement a custom roster provider 
+    for Openfire. The skill needed will vary depending on what you are trying to achieve.
+    The extension approach is similar to the custom AuthProvider approach on which it is based.
+</p>
+
+<h2>The RosterItemProvider extension point</h2>
+
+<p>
+    As of Openfire 3.7.2, the class RosterItemProvider has changed from being a concrete class to an interface.
+    The default implementation of this provider is the DefaultRosterItemProvider, which as the name suggests is the 
+    version of this provider Openfire will use if not overriden. The DefaultRosterItemProvider uses the Openfire 
+    database to retrieve roster information. 
+</p>
+<p>
+   The steps to get Openfire using a custom RosterItemProvider are described below.  
+    <ol>
+        <li>Write a class that implements RosterItemProvider, providing your own business logic.</li>
+        <li>Make the class available in a jar and make this available to Openfire by placing it in the lib directory.
+	There are numerous ways to package a jar with this class inside it, popular build systems such as Gradle and Maven
+        can make your life easier.</li>
+        <li>Set the property 'provider.roster.className' to be the full name of your class, e.g. 'com.foo.bar.MyRosterItemProvider'. 
+        </li>
+        <li>Restart Openfire. Your custom class should now be handling all the roster based operations.</li>
+    </ol>
+
+</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<p>
+    <ol>
+        <li><b>Do I have to compile my custom class into the Openfire jar?</b> No, the class only needs to be visible on the Openfire classpath.</li>
+        <li><b>How do I ensure my custom class is visible on the Openfire classpath?</b> Just place your new custom library in the Openfire lib directory,
+        this will ensure it is automatically available at startup.</li>
+        <li><b>Will I have a degradation in performance using a custom RosterItemProvider?</b> It completely depends on your implementation. As with any 
+        Openfire customisation or plugin, badly written code has the potential to cause Openfire to perform slower. Use performance testing tools such 
+        as Tsung to ensure issues haven't been introduced.</li>
+        <li><b>How can I have my custom class connect to another DB/Web service/NoSQL store etc?</b>
+	This is outside of the scope of this documentation and is your choice as a developer. If you are looking to externalize properties like 
+	connection details, the Openfire properties mechanism and the JiveGlobals class are good places to start investigating.</li>
+        <li><b>Can I have multiple RosterItemProviders, in a similar vein to the HybridAuthProvider?</b> No, this feature is currently not implemented.
+	Get involved if you feel a need to have it!</li>
+    </ol>
+
+</p>
+    </div>
+
+</div>
+
+</body>
+</html>

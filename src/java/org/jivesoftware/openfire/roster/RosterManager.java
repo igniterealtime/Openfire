@@ -34,9 +34,14 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
@@ -55,9 +60,12 @@ import java.util.*;
  */
 public class RosterManager extends BasicModule implements GroupEventListener, UserEventListener {
 
+    private static final Logger Log = LoggerFactory.getLogger(RosterManager.class);
+
     private Cache<String, Roster> rosterCache = null;
     private XMPPServer server;
     private RoutingTable routingTable;
+    private RosterItemProvider provider;
 
     /**
      * Returns true if the roster service is enabled. When disabled it is not possible to
@@ -72,6 +80,20 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     public RosterManager() {
         super("Roster Manager");
         rosterCache = CacheFactory.createCache("Roster");
+
+        initProvider();
+
+        PropertyEventDispatcher.addListener(new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                if (property.equals("provider.roster.className")) {
+                    initProvider();
+                }
+            }
+            public void propertyDeleted(String property, Map params) {}
+            public void xmlPropertySet(String property, Map params) {}
+            public void xmlPropertyDeleted(String property, Map params) {}
+        });
+
     }
 
     /**
@@ -127,8 +149,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             rosterCache.remove(username);
 
             // Get the rosters that have a reference to the deleted user
-            RosterItemProvider rosteItemProvider = RosterItemProvider.getInstance();
-            Iterator<String> usernames = rosteItemProvider.getUsernames(user.toBareJID());
+            Iterator<String> usernames = provider.getUsernames(user.toBareJID());
             while (usernames.hasNext()) {
                 username = usernames.next();
                 try {
@@ -804,7 +825,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      *
      * This is useful when the group is being edited and some properties has changed and we need to
      * obtain the related users of the group based on the previous group state.
-     */ 
+     */
     private Collection<JID> getAffectedUsers(Group group, String showInRoster, String groupNames) {
         // Answer an empty collection if the group is not being shown in users' rosters
         if (!"onlyGroup".equals(showInRoster) && !"everybody".equals(showInRoster)) {
@@ -833,20 +854,20 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         }
         return users;
     }
-    
+
     Collection<JID> getSharedUsersForRoster(Group group, Roster roster) {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         String groupNames = group.getProperties().get("sharedRoster.groupList");
-        
+
         // Answer an empty collection if the group is not being shown in users' rosters
         if (!"onlyGroup".equals(showInRoster) && !"everybody".equals(showInRoster)) {
             return new ArrayList<JID>();
         }
-        
+
         // Add the users of the group
         Collection<JID> users = new HashSet<JID>(group.getMembers());
         users.addAll(group.getAdmins());
-        
+
         // If the user of the roster belongs to the shared group then we should return
         // users that need to be in the roster with subscription "from"
         if (group.isUser(roster.getUsername())) {
@@ -963,4 +984,27 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Remove this module as a listener of group events
         GroupEventDispatcher.removeListener(this);
     }
+
+    public static RosterItemProvider getRosterItemProvider() {
+        return XMPPServer.getInstance().getRosterManager().provider;
+    }
+
+    private void initProvider() {
+        JiveGlobals.migrateProperty("provider.roster.className");
+        String className = JiveGlobals.getProperty("provider.roster.className",
+                "org.jivesoftware.openfire.roster.DefaultRosterItemProvider");
+
+        if (provider == null || !className.equals(provider.getClass().getName())) {
+            try {
+                Class c = ClassUtils.forName(className);
+                provider = (RosterItemProvider) c.newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading roster provider: " + className, e);
+                provider = new DefaultRosterItemProvider();
+            }
+        }
+
+    }
+
 }

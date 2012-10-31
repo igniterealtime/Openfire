@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterItemProvider;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -210,7 +211,7 @@ public class ImportExportPlugin implements Plugin {
         List<String> invalidUsers = new ArrayList<String>();
         
         UserManager userManager = UserManager.getInstance();
-        RosterItemProvider rosterItemProvider = RosterItemProvider.getInstance();
+        RosterItemProvider rosterItemProvider = RosterManager.getRosterItemProvider();
         
         Element users = document.getRootElement();
         

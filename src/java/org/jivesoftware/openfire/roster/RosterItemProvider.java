@@ -22,7 +22,7 @@ public interface RosterItemProvider {
     * @return the new roster item.
     * @throws UserAlreadyExistsException if a roster item with the username already exists.
     */
-    public abstract RosterItem createItem(String username, RosterItem item)
+    RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException;
 
     /**
@@ -35,7 +35,7 @@ public interface RosterItemProvider {
      * @param item   The roster item to update
      * @throws UserNotFoundException If no entry could be found to update
      */
-    public abstract void updateItem(String username, RosterItem item)
+    void updateItem(String username, RosterItem item)
             throws UserNotFoundException;
 
     /**
@@ -47,7 +47,7 @@ public interface RosterItemProvider {
     * @param username the long ID of the user/chatbot that owns the roster item
     * @param rosterItemID The roster item to delete
     */
-    public abstract void deleteItem(String username, long rosterItemID);
+    void deleteItem(String username, long rosterItemID);
 
     /**
     * Returns an iterator on the usernames whose roster includes the specified JID.
@@ -55,7 +55,7 @@ public interface RosterItemProvider {
     * @param jid the jid that the rosters should include.
     * @return an iterator on the usernames whose roster includes the specified JID.
     */
-    public abstract Iterator<String> getUsernames(String jid);
+    Iterator<String> getUsernames(String jid);
 
     /**
     * Obtain a count of the number of roster items available for the given user.
@@ -63,7 +63,7 @@ public interface RosterItemProvider {
     * @param username the username of the user/chatbot that owns the roster items
     * @return The number of roster items available for the user
     */
-    public abstract int getItemCount(String username);
+    int getItemCount(String username);
 
     /**
     * Retrieve an iterator of RosterItems for the given user.<p>
@@ -75,6 +75,6 @@ public interface RosterItemProvider {
     * @param username the username of the user/chatbot that owns the roster items
     * @return An iterator of all RosterItems owned by the user
 	*/
-	public abstract Iterator<RosterItem> getItems(String username);
+	Iterator<RosterItem> getItems(String username);
 
 }

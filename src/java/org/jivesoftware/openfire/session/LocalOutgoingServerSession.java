@@ -261,14 +261,14 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         }
 
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
-        SocketConnection connection = null;
         String realHostname = null;
         int realPort = port;
-        Socket socket = new Socket();
+        Socket socket = null;
         // Get a list of real hostnames to connect to using DNS lookup of the specified hostname
         List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, port);
         for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
             try {
+                socket = new Socket();
                 DNSUtil.HostAddress address = it.next();
                 realHostname = address.getHost();
                 realPort = address.getPort();
@@ -283,12 +283,21 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             catch (Exception e) {
                 Log.warn("Error trying to connect to remote server: " + hostname +
                         "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                try {
+                    if (socket != null) {
+                        socket.close();
+                    }
+                }
+                catch (IOException ex) {
+                    Log.debug("Additional exception while trying to close socket when connection to remote server failed.", ex);
+                }
             }
         }
         if (!socket.isConnected()) {
             return null;
         }
 
+        SocketConnection connection = null;
         try {
             connection =
                     new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,

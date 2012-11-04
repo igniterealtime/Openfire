@@ -103,10 +103,18 @@ public class ServerTrustManager implements X509TrustManager {
         boolean verify = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
         if (verify) {
             int nSize = x509Certificates.length;
+            if (Log.isDebugEnabled()) {
+                Log.debug("Certificate chain:");
+                for (int i=1; i<= nSize; i++) {
+                    Log.debug("Certificate " + i + ": " + x509Certificates[i-1].toString());
+                }
+            }
 
             List<String> peerIdentities = CertificateManager.getPeerIdentities(x509Certificates[0]);
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
+                Log.debug("Verifying certificate chain...");
+
                 // Working down the chain, for every certificate in the chain,
                 // verify that the subject of the certificate is the issuer of the
                 // next certificate in the chain.
@@ -115,6 +123,7 @@ public class ServerTrustManager implements X509TrustManager {
                     X509Certificate x509certificate = x509Certificates[i];
                     Principal principalIssuer = x509certificate.getIssuerDN();
                     Principal principalSubject = x509certificate.getSubjectDN();
+                    Log.debug("Certificate " + (i+1) + " issuer: '" + principalIssuer + "' subject: '" + principalSubject + "'");
                     if (principalLast != null) {
                         if (principalIssuer.equals(principalLast)) {
                             try {
@@ -124,12 +133,14 @@ public class ServerTrustManager implements X509TrustManager {
                             }
                             catch (GeneralSecurityException generalsecurityexception) {
                                 throw new CertificateException(
-                                        "signature verification failed of " + peerIdentities);
+                                        "signature verification failed of " + peerIdentities, generalsecurityexception);
                             }
                         }
                         else {
                             throw new CertificateException(
-                                    "subject/issuer verification failed of " + peerIdentities);
+                                    "subject/issuer verification failed of " + peerIdentities + ". In certificate "
+                                     + (i+1) + " of the chain, I expected the issuer to be '" + principalLast
+                                     +"' but was '"+principalIssuer+"'.");
                         }
                     }
                     principalLast = principalSubject;
@@ -137,6 +148,7 @@ public class ServerTrustManager implements X509TrustManager {
             }
 
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.root", true)) {
+                Log.debug("Verifying certificate chain root certificate...");
                 // Verify that the the last certificate in the chain was issued
                 // by a third-party that the client trusts.
                 boolean trusted = false;
@@ -179,16 +191,17 @@ public class ServerTrustManager implements X509TrustManager {
             if (!found) {
                 throw new CertificateException("target verification failed of " + peerIdentities);
             }
-            
+
             if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.validity", true)) {
+                Log.debug("Verifying certificate chain validity (by date)...");
+
                 // For every certificate in the chain, verify that the certificate
                 // is valid at the current time.
                 Date date = new Date();
-                for (int i = 0; i < nSize; i++) {
+                for (X509Certificate x509Certificate : x509Certificates) {
                     try {
-                        x509Certificates[i].checkValidity(date);
-                    }
-                    catch (GeneralSecurityException generalsecurityexception) {
+                        x509Certificate.checkValidity(date);
+                    } catch (GeneralSecurityException generalsecurityexception) {
                         throw new CertificateException("invalid date of " + peerIdentities);
                     }
                 }

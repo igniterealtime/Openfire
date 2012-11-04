@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.eclipse.jetty.util.MultiMap;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +33,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Utilty class to perform DNS lookups for XMPP services.
@@ -117,20 +111,19 @@ public class DNSUtil {
      */
     public static List<HostAddress> resolveXMPPDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
-        List<HostAddress> results = null;
+        List<HostAddress> results = new LinkedList<HostAddress>();
         if (dnsOverride != null) {
             HostAddress hostAddress = dnsOverride.get(domain);
             if (hostAddress != null) {
-                results = new ArrayList<HostAddress>();
                 results.add(hostAddress);
                 return results;
             }
         }
 
         // Attempt the SRV lookup.
-        results = srvLookup("_xmpp-server._tcp." + domain);
-        if (results == null || results.isEmpty()) {
-            results = srvLookup("_jabber._tcp." + domain);
+        results.addAll(srvLookup("_xmpp-server._tcp." + domain));
+        if (results.isEmpty()) {
+            results.addAll(srvLookup("_jabber._tcp." + domain));
         }
 
         // Use domain and default port as fallback.
@@ -191,7 +184,7 @@ public class DNSUtil {
         return answer;
     }
 
-    private static List<HostAddress> srvLookup(String lookup) {
+    private static List<? extends HostAddress> srvLookup(String lookup) {
         if (lookup == null) {
             throw new NullPointerException("DNS lookup can't be null");
         }
@@ -200,17 +193,15 @@ public class DNSUtil {
                     context.getAttributes(lookup, new String[]{"SRV"});
             Attribute srvRecords = dnsLookup.get("SRV");
             if (srvRecords == null) {
-            	logger.debug("No SRV record found for domain: " + lookup);
-            	return new ArrayList<HostAddress>();
+                logger.debug("No SRV record found for domain: " + lookup);
+                return new ArrayList<HostAddress>();
             }
-            HostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+            WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
             for (int i = 0; i < srvRecords.size(); i++) {
                 hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "));
             }
-            if (srvRecords.size() > 1) {
-                Arrays.sort(hosts, new SrvRecordWeightedPriorityComparator());
-            }
-            return Arrays.asList(hosts);
+
+            return prioritize(hosts);
         }
         catch (NameNotFoundException e) {
             logger.debug("No SRV record found for: " + lookup, e);
@@ -259,11 +250,72 @@ public class DNSUtil {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return host + ":" + port;
         }
     }
 
+    public static List<WeightedHostAddress> prioritize(WeightedHostAddress[] records) {
+        final List<WeightedHostAddress> result = new LinkedList<WeightedHostAddress>();
+
+        // sort by priority (ascending)
+        SortedMap<Integer, Set<WeightedHostAddress>> byPriority = new TreeMap<Integer, Set<WeightedHostAddress>>();
+        for(final WeightedHostAddress record : records) {
+            if (byPriority.containsKey(record.getPriority())) {
+                byPriority.get(record.getPriority()).add(record);
+            } else {
+                final Set<WeightedHostAddress> set = new HashSet<WeightedHostAddress>();
+                set.add(record);
+                byPriority.put(record.getPriority(), set);
+            }
+        }
+
+        // now, randomize each priority set by weight.
+        for(Map.Entry<Integer, Set<WeightedHostAddress>> weights : byPriority.entrySet()) {
+
+            List<WeightedHostAddress> zeroWeights = new LinkedList<WeightedHostAddress>();
+
+            int totalWeight = 0;
+            final Iterator<WeightedHostAddress> i = weights.getValue().iterator();
+            while (i.hasNext()) {
+                final WeightedHostAddress next = i.next();
+                if (next.weight == 0) {
+                    // set aside, as these should be considered last according to the RFC.
+                    zeroWeights.add(next);
+                    i.remove();
+                    continue;
+                }
+
+                totalWeight += next.getWeight();
+            }
+
+            int iterationWeight = totalWeight;
+            Iterator<WeightedHostAddress> iter = weights.getValue().iterator();
+            while (iter.hasNext()) {
+                int needle = new Random().nextInt(iterationWeight);
+
+                while (true) {
+                    final WeightedHostAddress record = iter.next();
+                    needle -= record.getWeight();
+                    if (needle <= 0) {
+                        result.add(record);
+                        iter.remove();
+                        iterationWeight -= record.getWeight();
+                        break;
+                    }
+                }
+                iter = weights.getValue().iterator();
+            }
+
+            // finally, append the hosts with zero priority (shuffled)
+            Collections.shuffle(zeroWeights);
+            for(WeightedHostAddress zero : zeroWeights) {
+                result.add(zero);
+            }
+        }
+
+        return result;
+    }
     /**
      * The representation of weighted address.
      */
@@ -273,13 +325,13 @@ public class DNSUtil {
         private final int weight;
 
         private WeightedHostAddress(String [] srvRecordEntries) {
-            super(srvRecordEntries[srvRecordEntries.length-1], 
+            super(srvRecordEntries[srvRecordEntries.length-1],
                     Integer.parseInt(srvRecordEntries[srvRecordEntries.length-2]));
             weight = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-3]);
             priority = Integer.parseInt(srvRecordEntries[srvRecordEntries.length-4]);
         }
 
-        private WeightedHostAddress(String host, int port, int priority, int weight) {
+        WeightedHostAddress(String host, int port, int priority, int weight) {
             super(host, port);
             this.priority = priority;
             this.weight = weight;
@@ -287,7 +339,7 @@ public class DNSUtil {
 
         /**
          * Returns the priority.
-         * 
+         *
          * @return the priority.
          */
         public int getPriority() {
@@ -296,31 +348,11 @@ public class DNSUtil {
 
         /**
          * Returns the weight.
-         * 
+         *
          * @return the weight.
          */
         public int getWeight() {
             return weight;
-        }
-    }
-
-    /**
-     * A comparator for sorting multiple weighted host addresses according to RFC 2782.
-     */
-    public static class SrvRecordWeightedPriorityComparator implements Comparator<HostAddress>, Serializable {
-        private static final long serialVersionUID = -9207293572898848260L;
-
-        public int compare(HostAddress o1, HostAddress o2) {
-            if (o1 instanceof WeightedHostAddress && o2 instanceof WeightedHostAddress) {
-                WeightedHostAddress srv1 = (WeightedHostAddress) o1;
-                WeightedHostAddress srv2 = (WeightedHostAddress) o2;
-                // 16 bit unsigned priority is more important as the 16 bit weight
-                return ((srv1.priority << 15) - (srv2.priority << 15)) + (srv2.weight - srv1.weight);
-            }
-            else {
-                // This shouldn't happen but if we don't have priorities we sort the addresses
-                return o1.toString().compareTo(o2.toString());
-            }
         }
     }
 }

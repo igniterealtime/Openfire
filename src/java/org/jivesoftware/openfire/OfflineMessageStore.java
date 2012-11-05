@@ -132,9 +132,13 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         if (message == null) {
             return;
         }
+		// ignore empty bodied message (typically chat-state notifications).
         if (message.getBody() == null || message.getBody().length() == 0) {
-        	// ignore empty bodied message (typically chat-state notifications).
-        	return;
+        	// allow empty pubsub messages (OF-191)
+        	if (message.getChildElement("event", "http://jabber.org/protocol/pubsub#event") == null)
+        	{ 
+        		return; 
+        	}
         }
         JID recipient = message.getTo();
         String username = recipient.getNode();

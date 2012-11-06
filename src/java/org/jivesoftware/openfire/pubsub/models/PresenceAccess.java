@@ -51,33 +51,32 @@ public class PresenceAccess extends AccessModel {
         if (node.isAdmin(owner)) {
             return true;
         }
-        // Get the only owner of the node
-        JID nodeOwner = node.getOwners().iterator().next();
-        // Give access to the owner of the roster :)
-        if (nodeOwner.toBareJID().equals(owner.toBareJID())) {
-            return true;
-        }
-        // Get the roster of the node owner
         XMPPServer server = XMPPServer.getInstance();
-        // Check that the node owner is a local user
-        if (server.isLocal(nodeOwner)) {
-            try {
-                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
-                RosterItem item = roster.getRosterItem(owner);
-                // Check that the subscriber is subscribe to the node owner's presence
-                return item != null && (RosterItem.SUB_BOTH == item.getSubStatus() ||
-                        RosterItem.SUB_FROM == item.getSubStatus());
-            }
-            catch (UserNotFoundException e) {
-                return false;
-            }
+        for (JID nodeOwner : node.getOwners()) {
+	        // Give access to the owner of the roster :)
+	        if (nodeOwner.equals(owner.toBareJID())) {
+	            return true;
+	        }
+	        // Check that the node owner is a local user
+	        if (server.isLocal(nodeOwner)) {
+	            try {
+	                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
+	                RosterItem item = roster.getRosterItem(owner);
+	                // Check that the subscriber is subscribe to the node owner's presence
+	                return item != null && (RosterItem.SUB_BOTH == item.getSubStatus() ||
+	                        RosterItem.SUB_FROM == item.getSubStatus());
+	            }
+	            catch (UserNotFoundException e) {
+	            	// Do nothing
+	            }
+	        }
+	        else {
+	            // Owner of the node is a remote user. This should never happen.
+	            Log.warn("Node with access model Presence has a remote user as owner: " +
+	                    node.getNodeID());
+	        }
         }
-        else {
-            // Owner of the node is a remote user. This should never happen.
-            Log.warn("Node with access model Presence has a remote user as owner: " +
-                    node.getNodeID());
-            return false;
-        }
+        return false;
     }
 
     @Override

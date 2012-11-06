@@ -55,44 +55,43 @@ public class RosterAccess extends AccessModel {
         if (node.isAdmin(owner)) {
             return true;
         }
-        // Get the only owner of the node
-        JID nodeOwner = node.getOwners().iterator().next();
-        // Give access to the owner of the roster :)
-        if (nodeOwner.toBareJID().equals(owner.toBareJID())) {
-            return true;
-        }
-        // Get the roster of the node owner
         XMPPServer server = XMPPServer.getInstance();
-        // Check that the node owner is a local user
-        if (server.isLocal(nodeOwner)) {
-            try {
-                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
-                RosterItem item = roster.getRosterItem(owner);
-                // Check that the subscriber is subscribe to the node owner's presence
-                boolean isSubscribed = item != null && (
-                        RosterItem.SUB_BOTH == item.getSubStatus() ||
-                                RosterItem.SUB_FROM == item.getSubStatus());
-                if (isSubscribed) {
-                    // Get list of groups where the contact belongs
-                    List<String> contactGroups = new ArrayList<String>(item.getGroups());
-                    for (Group group : item.getSharedGroups()) {
-                        contactGroups.add(group.getName());
-                    }
-                    for (Group group : item.getInvisibleSharedGroups()) {
-                        contactGroups.add(group.getName());
-                    }
-                    // Check if subscriber is present in the allowed groups of the node
-                    return contactGroups.removeAll(node.getRosterGroupsAllowed());
-                }
+        for (JID nodeOwner : node.getOwners()) {
+            // Give access to the owner of the roster :)
+            if (nodeOwner.equals(owner.toBareJID())) {
+                return true;
             }
-            catch (UserNotFoundException e) {
-                // Do nothing
-            }
-        }
-        else {
-            // Owner of the node is a remote user. This should never happen.
-            Log.warn("Node with access model Roster has a remote user as owner: " +
-                    node.getNodeID());
+	        // Check that the node owner is a local user
+	        if (server.isLocal(nodeOwner)) {
+	            try {
+	                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
+	                RosterItem item = roster.getRosterItem(owner);
+	                // Check that the subscriber is subscribed to the node owner's presence
+	                boolean isSubscribed = item != null && (
+	                        RosterItem.SUB_BOTH == item.getSubStatus() ||
+	                                RosterItem.SUB_FROM == item.getSubStatus());
+	                if (isSubscribed) {
+	                    // Get list of groups where the contact belongs
+	                    List<String> contactGroups = new ArrayList<String>(item.getGroups());
+	                    for (Group group : item.getSharedGroups()) {
+	                        contactGroups.add(group.getName());
+	                    }
+	                    for (Group group : item.getInvisibleSharedGroups()) {
+	                        contactGroups.add(group.getName());
+	                    }
+	                    // Check if subscriber is present in the allowed groups of the node
+	                    return contactGroups.removeAll(node.getRosterGroupsAllowed());
+	                }
+	            }
+	            catch (UserNotFoundException e) {
+	                // Do nothing
+	            }
+	        }
+	        else {
+	            // Owner of the node is a remote user. This should never happen.
+	            Log.warn("Node with access model Roster has a remote user as owner: " +
+	                    node.getNodeID());
+	        }
         }
         return false;
     }

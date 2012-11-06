@@ -222,11 +222,16 @@ public class NodeAffiliate {
             }
         }
         else {
-            // Affiliate should have at most one subscription so send the notification to
-            // the subscriber
+            // Affiliate should have at most one subscription per unique JID
             if (!notifySubscriptions.isEmpty()) {
-                NodeSubscription subscription = notifySubscriptions.get(0);
-                node.sendEventNotification(subscription.getJID(), notification, null);
+            	List<JID> subs = new ArrayList<JID>();
+            	for(NodeSubscription subscription: notifySubscriptions) {
+            		JID sub = subscription.getJID();
+            		if (!subs.contains(sub)) {
+            			node.sendEventNotification(subscription.getJID(), notification, null);
+            			subs.add(sub);
+            		}
+            	}
             }
         }
     }

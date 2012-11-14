@@ -28,7 +28,6 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Gaston Dombiak
  */
-public class AdHocCommandManager implements Serializable {
+public class AdHocCommandManager {
 
     private static final String NAMESPACE = "http://jabber.org/protocol/commands";
 

@@ -23,7 +23,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.xmpp.packet.JID;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +44,7 @@ import java.util.Map;
  *
  * @author Gaston Dombiak
  */
-public abstract class AdHocCommand implements Serializable {
+public abstract class AdHocCommand {
 
     /**
      * Label of the command. This information may be used to display the command as a button

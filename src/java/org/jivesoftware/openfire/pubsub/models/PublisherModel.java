@@ -23,12 +23,14 @@ package org.jivesoftware.openfire.pubsub.models;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.xmpp.packet.JID;
 
+import java.io.Serializable;
+
 /**
  * Policy that defines who is allowed to publish items to the node.
  *
  * @author Matt Tucker
  */
-public abstract class PublisherModel {
+public abstract class PublisherModel implements Serializable {
 
     public final static PublisherModel open = new OpenPublisher();
     public final static PublisherModel publishers = new OnlyPublishers();

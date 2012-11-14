@@ -25,12 +25,14 @@ import org.jivesoftware.openfire.pubsub.Node;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
+import java.io.Serializable;
+
 /**
  * Policy that defines who is allowed to subscribe and retrieve items.
  *
  * @author Matt Tucker
  */
-public abstract class AccessModel {
+public abstract class AccessModel implements Serializable {
 
     public final static AccessModel whitelist = new WhitelistAccess();
     public final static AccessModel open = new OpenAccess();

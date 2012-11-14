@@ -26,8 +26,6 @@ import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.io.Serializable;
-
 /**
  * A DefaultNodeConfiguration keeps the default configuration values for leaf or collection
  * nodes of a particular publish-subscribe service. New nodes created for the service 
@@ -35,7 +33,7 @@ import java.io.Serializable;
  *
  * @author Matt Tucker
  */
-public class DefaultNodeConfiguration implements Serializable {
+public class DefaultNodeConfiguration {
 
     /**
      * Flag indicating whether this default configutation belongs to a leaf node or not.

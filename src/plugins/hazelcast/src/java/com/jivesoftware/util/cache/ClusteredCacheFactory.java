@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -220,7 +219,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * task, as the task is run asynchronously across the cluster.
      */
     public void doClusterTask(final ClusterTask task) {
-        Set<Member> members = new TreeSet<Member>();
+        Set<Member> members = new HashSet<Member>();
         Member current = cluster.getLocalMember();
         for(Member member : cluster.getMembers()) {
         	if (!member.getUuid().equals(current.getUuid())) {

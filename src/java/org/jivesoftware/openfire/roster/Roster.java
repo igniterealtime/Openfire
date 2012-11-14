@@ -73,7 +73,7 @@ import org.xmpp.packet.Presence;
 @JiveID(JiveConstants.ROSTER)
 public class Roster implements Cacheable, Externalizable {
 
-	private static final Logger Log = LoggerFactory.getLogger(Roster.class);
+    private static final Logger Log = LoggerFactory.getLogger(Roster.class);
 
     /**
      * Roster item cache - table: key jabberid string; value roster item.
@@ -129,7 +129,7 @@ public class Roster implements Cacheable, Externalizable {
         //Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
 
         // Add RosterItems that belong to the personal roster
-        rosterItemProvider =  RosterManager.getRosterItemProvider();
+        rosterItemProvider = RosterManager.getRosterItemProvider();
         Iterator<RosterItem> items = rosterItemProvider.getItems(username);
         while (items.hasNext()) {
             RosterItem item = items.next();
@@ -145,7 +145,7 @@ public class Roster implements Cacheable, Externalizable {
             rosterItems.put(item.getJid().toBareJID(), item);
         }
         // Add RosterItems that belong only to shared groups
-        Map<JID,List<Group>> sharedUsers = getSharedUsers(sharedGroups);
+        Map<JID, List<Group>> sharedUsers = getSharedUsers(sharedGroups);
         for (Map.Entry<JID, List<Group>> entry : sharedUsers.entrySet()) {
             JID jid = entry.getKey();
             List<Group> groups = entry.getValue();
@@ -153,14 +153,13 @@ public class Roster implements Cacheable, Externalizable {
                 Collection<Group> itemGroups = new ArrayList<Group>();
                 String nickname = "";
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
-                        RosterItem.RECV_NONE, nickname , null);
+                        RosterItem.RECV_NONE, nickname, null);
                 // Add the shared groups to the new roster item
                 for (Group group : groups) {
                     if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
-                    }
-                    else {
+                    } else {
                         item.addInvisibleSharedGroup(group);
                     }
                 }
@@ -168,8 +167,7 @@ public class Roster implements Cacheable, Externalizable {
                 // that is mutually visible with a shared group of the new roster item
                 if (rosterManager.hasMutualVisibility(username, sharedGroups, jid, itemGroups)) {
                     item.setSubStatus(RosterItem.SUB_BOTH);
-                }
-                else {
+                } else {
                     // Set subscription type to FROM if the contact does not belong to any of
                     // the associated shared groups
                     boolean belongsToGroup = false;
@@ -191,14 +189,12 @@ public class Roster implements Cacheable, Externalizable {
                 if (item.getSubStatus() != RosterItem.SUB_FROM) {
                     item.setNickname(UserNameManager.getUserName(jid));
                     rosterItems.put(item.getJid().toBareJID(), item);
-                }
-                else {
+                } else {
                     // Cache information about shared contacts with subscription status FROM
                     implicitFrom
                             .put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
                 }
-            }
-            catch (UserNotFoundException e) {
+            } catch (UserNotFoundException e) {
                 Log.error("Groups (" + groups + ") include non-existent username (" +
                         jid.getNode() +
                         ")");
@@ -295,7 +291,7 @@ public class Roster implements Cacheable, Externalizable {
      * @param nickname   The nickname for the roster entry (can be null).
      * @param push       True if the new item must be push to the user.
      * @param persistent True if the new roster item should be persisted to the DB.
-     * @param groups   The list of groups to assign this roster item to (can be null)
+     * @param groups     The list of groups to assign this roster item to (can be null)
      */
     public RosterItem createRosterItem(JID user, String nickname, List<String> groups, boolean push,
                                        boolean persistent)
@@ -350,7 +346,7 @@ public class Roster implements Cacheable, Externalizable {
 
         // Check if we need to make the new roster item persistent
         if (persistent) {
-            rosterItemProvider.createItem(username, rosterItem);
+            rosterItem = rosterItemProvider.createItem(username, rosterItem);
         }
 
         if (push) {
@@ -396,8 +392,7 @@ public class Roster implements Cacheable, Externalizable {
                     String defaultContactName;
                     try {
                         defaultContactName = UserNameManager.getUserName(item.getJid());
-                    }
-                    catch (UserNotFoundException e) {
+                    } catch (UserNotFoundException e) {
                         // Cannot update a roster item for a local user that does not exist
                         defaultContactName = item.getNickname();
                     }
@@ -407,16 +402,13 @@ public class Roster implements Cacheable, Externalizable {
                 }
                 try {
                     rosterItemProvider.createItem(username, item);
-                }
-                catch (UserAlreadyExistsException e) {
+                } catch (UserAlreadyExistsException e) {
                     // Do nothing. We shouldn't be here.
                 }
-            }
-            else {
+            } else {
                 // Item is not persistent and it does not belong to a shared contact so do nothing
             }
-        }
-        else {
+        } else {
             // Update the backend data store
             rosterItemProvider.updateItem(username, item);
         }
@@ -436,7 +428,7 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Remove a user from the roster.
      *
-     * @param user the user to remove from the roster.
+     * @param user       the user to remove from the roster.
      * @param doChecking flag that indicates if checkings should be done before deleting the user.
      * @return The roster item being removed or null if none existed
      * @throws SharedGroupException if the user to remove belongs to a shared group
@@ -490,8 +482,7 @@ public class Roster implements Cacheable, Externalizable {
             }
 
             return item;
-        }
-        else {
+        } else {
             // Verify if the item being removed is an implicit roster item
             // that only exists due to some shared group
             RosterItem item = getImplicitRosterItem(user);
@@ -549,8 +540,7 @@ public class Roster implements Cacheable, Externalizable {
                 String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
                 if (displayName != null) {
                     groups.add(displayName);
-                }
-                else {
+                } else {
                     // Do not add the shared group if it does not have a displayName. 
                     Log.warn("Found shared group: " + sharedGroup.getName() +
                             " with no displayName");
@@ -611,8 +601,7 @@ public class Roster implements Cacheable, Externalizable {
                 for (JID jid : routingTable.getRoutes(searchNode, null)) {
                     try {
                         routingTable.routePacket(jid, packet, false);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         // Theoretically only happens if session has been closed.
                         Log.debug(e.getMessage(), e);
                     }
@@ -623,7 +612,7 @@ public class Roster implements Cacheable, Externalizable {
         for (String contact : implicitFrom.keySet()) {
             if (contact.contains("@")) {
                 String node = contact.substring(0, contact.lastIndexOf("@"));
-                String domain = contact.substring(contact.lastIndexOf("@")+1);
+                String domain = contact.substring(contact.lastIndexOf("@") + 1);
                 node = JID.escapeNode(node);
                 contact = new JID(node, domain, null).toBareJID();
             }
@@ -633,11 +622,10 @@ public class Roster implements Cacheable, Externalizable {
                 // Outgoing presence notifications are blocked for this contact
                 continue;
             }
-            for (JID jid: routingTable.getRoutes(new JID(contact), null)) {
+            for (JID jid : routingTable.getRoutes(new JID(contact), null)) {
                 try {
                     routingTable.routePacket(jid, packet, false);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     // Theoretically only happens if session has been closed.
                     Log.debug(e.getMessage(), e);
                 }
@@ -656,10 +644,10 @@ public class Roster implements Cacheable, Externalizable {
      * @param sharedGroups the shared groups of this user.
      * @return the list of users that belong ONLY to a shared group of this user.
      */
-    private Map<JID,List<Group>> getSharedUsers(Collection<Group> sharedGroups) {
+    private Map<JID, List<Group>> getSharedUsers(Collection<Group> sharedGroups) {
         // Get the users to process from the shared groups. Users that belong to different groups
         // will have one entry in the map associated with all the groups
-        Map<JID,List<Group>> sharedGroupUsers = new HashMap<JID,List<Group>>();
+        Map<JID, List<Group>> sharedGroupUsers = new HashMap<JID, List<Group>>();
         for (Group group : sharedGroups) {
             // Get all the users that should be in this roster
             Collection<JID> users = rosterManager.getSharedUsersForRoster(group, this);
@@ -736,18 +724,18 @@ public class Roster implements Cacheable, Externalizable {
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of the content of each field, if that content is likely to be eligable for
-    	// garbage collection if the Roster instance is dereferenced.
+        // garbage collection if the Roster instance is dereferenced.
         int size = 0;
         size += CacheSizes.sizeOfObject();                           // overhead of object
         size += CacheSizes.sizeOfCollection(rosterItems.values());   // roster item cache
         size += CacheSizes.sizeOfString(username);                   // username
-        
+
         // implicitFrom
-        for(Map.Entry<String, Set<String>> entry : implicitFrom.entrySet()) {
-               size += CacheSizes.sizeOfString(entry.getKey());
-               size += CacheSizes.sizeOfCollection(entry.getValue());
+        for (Map.Entry<String, Set<String>> entry : implicitFrom.entrySet()) {
+            size += CacheSizes.sizeOfString(entry.getKey());
+            size += CacheSizes.sizeOfCollection(entry.getValue());
         }
-        
+
         return size;
     }
 
@@ -759,7 +747,7 @@ public class Roster implements Cacheable, Externalizable {
      * group will be added to the shared groups lists. In any case an update broadcast will be sent
      * to all the users logged resources.
      *
-     * @param group the shared group where the user was added.
+     * @param group     the shared group where the user was added.
      * @param addedUser the contact to update in the roster.
      */
     void addSharedUser(Group group, JID addedUser) {
@@ -773,8 +761,7 @@ public class Roster implements Cacheable, Externalizable {
                 return;
             }
             newItem = false;
-        }
-        catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
                 String nickname = UserNameManager.getUserName(addedUser);
@@ -784,8 +771,7 @@ public class Roster implements Cacheable, Externalizable {
                 // Add the new item to the list of items
                 rosterItems.put(item.getJid().toBareJID(), item);
                 newItem = true;
-            }
-            catch (UserNotFoundException ex) {
+            } catch (UserNotFoundException ex) {
                 Log.error("Group (" + group.getName() + ") includes non-existent username (" +
                         addedUser +
                         ")");
@@ -813,16 +799,14 @@ public class Roster implements Cacheable, Externalizable {
         // user and this user
         else if (group.isUser(addedUser) && !group.isUser(getUsername())) {
             item.setSubStatus(RosterItem.SUB_TO);
-        }
-        else if (!group.isUser(addedUser) && group.isUser(getUsername())) {
+        } else if (!group.isUser(addedUser) && group.isUser(getUsername())) {
             item.setSubStatus(RosterItem.SUB_FROM);
         }
 
         // Add the shared group to the list of shared groups
         if (item.getSubStatus() != RosterItem.SUB_FROM) {
             item.addSharedGroup(group);
-        }
-        else {
+        } else {
             item.addInvisibleSharedGroup(group);
         }
 
@@ -832,8 +816,7 @@ public class Roster implements Cacheable, Externalizable {
             if (prevSubscription == RosterItem.SUB_TO &&
                     item.getSubStatus() == RosterItem.SUB_FROM) {
                 item.setSubStatus(RosterItem.SUB_BOTH);
-            }
-            else if (prevSubscription == RosterItem.SUB_FROM &&
+            } else if (prevSubscription == RosterItem.SUB_FROM &&
                     item.getSubStatus() == RosterItem.SUB_TO) {
                 item.setSubStatus(RosterItem.SUB_BOTH);
             }
@@ -845,8 +828,7 @@ public class Roster implements Cacheable, Externalizable {
             rosterItems.remove(item.getJid().toBareJID());
             // Cache information about shared contacts with subscription status FROM
             implicitFrom.put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
-        }
-        else {
+        } else {
             // Remove from list of shared contacts with status FROM (if any)
             implicitFrom.remove(item.getJid().toBareJID());
             // Ensure that the item is an explicit roster item
@@ -862,8 +844,7 @@ public class Roster implements Cacheable, Externalizable {
         if (newItem) {
             // Fire event indicating that a roster item has been added
             RosterEventDispatcher.contactAdded(this, item);
-        }
-        else {
+        } else {
             // Fire event indicating that a roster item has been updated
             RosterEventDispatcher.contactUpdated(this, item);
         }
@@ -875,7 +856,7 @@ public class Roster implements Cacheable, Externalizable {
      * vary.
      *
      * @param addedUser the new contact to add to the roster
-     * @param groups the groups where the contact is a member
+     * @param groups    the groups where the contact is a member
      */
     void addSharedUser(JID addedUser, Collection<Group> groups, Group addedGroup) {
         boolean newItem = false;
@@ -884,8 +865,7 @@ public class Roster implements Cacheable, Externalizable {
             // Get the RosterItem for the *local* user to add
             item = getRosterItem(addedUser);
             newItem = false;
-        }
-        catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
                 String nickname = UserNameManager.getUserName(addedUser);
@@ -895,8 +875,7 @@ public class Roster implements Cacheable, Externalizable {
                 // Add the new item to the list of items
                 rosterItems.put(item.getJid().toBareJID(), item);
                 newItem = true;
-            }
-            catch (UserNotFoundException ex) {
+            } catch (UserNotFoundException ex) {
                 Log.error("Couldn't find a user with username (" + addedUser + ")");
             }
         }
@@ -922,8 +901,7 @@ public class Roster implements Cacheable, Externalizable {
                     item.addInvisibleSharedGroup(group);
                 }
             }
-        }
-        else {
+        } else {
             // If an item already exists then take note of the old subscription status
             RosterItem.SubType prevSubscription = null;
             if (!newItem) {
@@ -951,8 +929,7 @@ public class Roster implements Cacheable, Externalizable {
                 if (prevSubscription == RosterItem.SUB_TO &&
                         item.getSubStatus() == RosterItem.SUB_FROM) {
                     item.setSubStatus(RosterItem.SUB_BOTH);
-                }
-                else if (prevSubscription == RosterItem.SUB_FROM &&
+                } else if (prevSubscription == RosterItem.SUB_FROM &&
                         item.getSubStatus() == RosterItem.SUB_TO) {
                     item.setSubStatus(RosterItem.SUB_BOTH);
                 }
@@ -964,8 +941,7 @@ public class Roster implements Cacheable, Externalizable {
             rosterItems.remove(item.getJid().toBareJID());
             // Cache information about shared contacts with subscription status FROM
             implicitFrom.put(item.getJid().toBareJID(), item.getInvisibleSharedGroupsNames());
-        }
-        else {
+        } else {
             // Remove from list of shared contacts with status FROM (if any)
             implicitFrom.remove(item.getJid().toBareJID());
             // Ensure that the item is an explicit roster item
@@ -981,8 +957,7 @@ public class Roster implements Cacheable, Externalizable {
         if (newItem) {
             // Fire event indicating that a roster item has been added
             RosterEventDispatcher.contactAdded(this, item);
-        }
-        else {
+        } else {
             // Fire event indicating that a roster item has been updated
             RosterEventDispatcher.contactUpdated(this, item);
         }
@@ -1012,8 +987,7 @@ public class Roster implements Cacheable, Externalizable {
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(deletedUser, false);
-            }
-            else {
+            } else {
                 // Remove the removed shared group from the list of shared groups
                 item.removeSharedGroup(sharedGroup);
                 // Update the subscription of the item based on the remaining groups
@@ -1027,23 +1001,19 @@ public class Roster implements Cacheable, Externalizable {
                     if (rosterManager.hasMutualVisibility(getUsername(), userGroups, deletedUser,
                             sharedGroups)) {
                         item.setSubStatus(RosterItem.SUB_BOTH);
-                    }
-                    else if (item.getSharedGroups().isEmpty() &&
+                    } else if (item.getSharedGroups().isEmpty() &&
                             !item.getInvisibleSharedGroups().isEmpty()) {
                         item.setSubStatus(RosterItem.SUB_FROM);
-                    }
-                    else {
+                    } else {
                         item.setSubStatus(RosterItem.SUB_TO);
                     }
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
             }
-        }
-        catch (SharedGroupException e) {
+        } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
-        }
-        catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
         }
     }
@@ -1057,12 +1027,11 @@ public class Roster implements Cacheable, Externalizable {
                     // Do not delete the item if deletedUser belongs to a public group since the
                     // subcription status will change
                     !(deletedGroup.isUser(deletedUser) &&
-                    RosterManager.isPublicSharedGroup(deletedGroup))) {
+                            RosterManager.isPublicSharedGroup(deletedGroup))) {
                 // Delete the roster item from the roster since it exists only because of this
                 // group which is being removed
                 deleteRosterItem(deletedUser, false);
-            }
-            else {
+            } else {
                 // Remove the shared group from the item if deletedUser does not belong to a
                 // public group
                 if (!(deletedGroup.isUser(deletedUser) &&
@@ -1088,8 +1057,7 @@ public class Roster implements Cacheable, Externalizable {
                     if (rosterManager
                             .hasMutualVisibility(getUsername(), userGroups, deletedUser, groups)) {
                         item.setSubStatus(RosterItem.SUB_BOTH);
-                    }
-                    else {
+                    } else {
                         // Assume by default that the contact has subscribed from the presence of
                         // this user
                         item.setSubStatus(RosterItem.SUB_FROM);
@@ -1104,11 +1072,9 @@ public class Roster implements Cacheable, Externalizable {
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
             }
-        }
-        catch (SharedGroupException e) {
+        } catch (SharedGroupException e) {
             // Do nothing. Checkings are disabled so this exception should never happen.
-        }
-        catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             // Do nothing since the contact does not exist in the user's roster. (strange case!)
         }
     }
@@ -1131,8 +1097,7 @@ public class Roster implements Cacheable, Externalizable {
                 item = getRosterItem(user);
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, true);
-            }
-            catch (UserNotFoundException e) {
+            } catch (UserNotFoundException e) {
                 // Do nothing since the contact does not exist in the user's roster. (strange case!)
             }
         }
@@ -1152,7 +1117,7 @@ public class Roster implements Cacheable, Externalizable {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();
         sessionManager = SessionManager.getInstance();
-        rosterItemProvider =  RosterManager.getRosterItemProvider();
+        rosterItemProvider = RosterManager.getRosterItemProvider();
         routingTable = XMPPServer.getInstance().getRoutingTable();
 
         username = ExternalizableUtil.getInstance().readSafeUTF(in);

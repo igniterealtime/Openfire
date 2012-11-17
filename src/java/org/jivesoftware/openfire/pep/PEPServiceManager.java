@@ -52,7 +52,7 @@ public class PEPServiceManager {
 	 * Cache of PEP services. Table, Key: bare JID (String); Value: PEPService
 	 */
 	private final Cache<String, PEPService> pepServices = CacheFactory
-			.createCache("PEPServiceManager");
+			.createLocalCache("PEPServiceManager");
 
 	private PubSubEngine pubSubEngine = null;
 

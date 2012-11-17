@@ -5,7 +5,6 @@ import org.jivesoftware.openfire.pubsub.NodeAffiliate;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
 
 public class NewSubscriptionTask extends SubscriptionTask
 {

@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.pubsub.cluster.AffiliationTask;
 import org.jivesoftware.openfire.pubsub.cluster.CancelSubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.ModifySubscriptionTask;
 import org.jivesoftware.openfire.pubsub.cluster.NewSubscriptionTask;
@@ -364,6 +365,10 @@ public abstract class Node {
             // Add or update the affiliate in the database
             PubSubPersistenceManager.saveAffiliation(this, affiliate, created);
         }
+        
+        // Update the other members with the new affiliation
+        CacheFactory.doClusterTask(new AffiliationTask(this, jid, affiliation));
+
         return affiliate;
     }
 

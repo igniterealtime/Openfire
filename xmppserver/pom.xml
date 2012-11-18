@@ -17,7 +17,7 @@
 					<excludes>
 						<exclude>**/MINAStatCollector.java</exclude>
 						<exclude>**/org/jivesoftware/openfire/launcher/Launcher.java</exclude>
-						<exclude>**/org/jivesoftware/openfire/launcher/Uninstaller.java</exclude>						
+						<exclude>**/org/jivesoftware/openfire/launcher/Uninstaller.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -31,9 +31,13 @@
 						<exclude>**/TestUtils.java</exclude> <!-- Maven 2 thinks this is a unit-test. -->
 					</excludes>
 				</configuration>
-			</plugin>			
+			</plugin>
 		</plugins>
 	</build>
+    <properties>
+        <jetty.version>7.5.4.v20111024</jetty.version>
+        <mina.version>1.1.7</mina.version>
+    </properties>
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -48,17 +52,17 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>7.5.4.v20111024</version>
+			<version>${jetty.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-servlet</artifactId>
-			<version>7.5.4.v20111024</version>
+			<version>${jetty.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-webapp</artifactId>
-			<version>7.5.4.v20111024</version>
+			<version>${jetty.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mortbay.jetty</groupId>
@@ -68,17 +72,17 @@
 		<dependency>
 			<groupId>org.apache.mina</groupId>
 			<artifactId>mina-core</artifactId>
-			<version>1.1.7</version>
+			<version>${mina.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.mina</groupId>
 			<artifactId>mina-filter-ssl</artifactId>
-			<version>1.1.7</version>
+			<version>${mina.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.mina</groupId>
 			<artifactId>mina-filter-compression</artifactId>
-			<version>1.1.7</version>
+			<version>${mina.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-httpclient</groupId>
@@ -136,7 +140,7 @@
 			<version>1.0</version>
 		</dependency>
 		<dependency>
-			<groupId>jstl</groupId>
+			<groupId>javax.servlet</groupId>
 			<artifactId>jstl</artifactId>
 			<version>1.1.2</version>
 		</dependency>
@@ -165,7 +169,7 @@
 			<artifactId>atlassian-shaj</artifactId>
 			<version>0.5</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

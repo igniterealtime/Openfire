@@ -20,8 +20,7 @@
 
 package org.jivesoftware.openfire.pubsub.models;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -29,9 +28,6 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.roster.Roster;
-import org.jivesoftware.openfire.roster.RosterItem;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -50,48 +46,34 @@ public class RosterAccess extends AccessModel {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
-        // Let node owners and sysadmins always subcribe to the node
-        if (node.isAdmin(owner)) {
+	public boolean canSubscribe(Node node, JID subscriber, JID subJID) {
+        // Let node owners and sysadmins always subscribe to the node
+        if (node.isAdmin(subscriber)) {
             return true;
         }
-        XMPPServer server = XMPPServer.getInstance();
         for (JID nodeOwner : node.getOwners()) {
-            // Give access to the owner of the roster :)
-            if (nodeOwner.equals(owner.toBareJID())) {
+            if (nodeOwner.equals(subscriber)) {
                 return true;
             }
-	        // Check that the node owner is a local user
-	        if (server.isLocal(nodeOwner)) {
-	            try {
-	                Roster roster = server.getRosterManager().getRoster(nodeOwner.getNode());
-	                RosterItem item = roster.getRosterItem(owner);
-	                // Check that the subscriber is subscribed to the node owner's presence
-	                boolean isSubscribed = item != null && (
-	                        RosterItem.SUB_BOTH == item.getSubStatus() ||
-	                                RosterItem.SUB_FROM == item.getSubStatus());
-	                if (isSubscribed) {
-	                    // Get list of groups where the contact belongs
-	                    List<String> contactGroups = new ArrayList<String>(item.getGroups());
-	                    for (Group group : item.getSharedGroups()) {
-	                        contactGroups.add(group.getName());
-	                    }
-	                    for (Group group : item.getInvisibleSharedGroups()) {
-	                        contactGroups.add(group.getName());
-	                    }
-	                    // Check if subscriber is present in the allowed groups of the node
-	                    return contactGroups.removeAll(node.getRosterGroupsAllowed());
-	                }
-	            }
-	            catch (UserNotFoundException e) {
-	                // Do nothing
-	            }
-	        }
-	        else {
-	            // Owner of the node is a remote user. This should never happen.
-	            Log.warn("Node with access model Roster has a remote user as owner: " +
-	                    node.getNodeID());
-	        }
+        }
+        // Check that the subscriber is a local user
+        XMPPServer server = XMPPServer.getInstance();
+        if (server.isLocal(subscriber)) {
+        	Collection<String> nodeGroups = node.getRosterGroupsAllowed();
+        	for (Group group : server.getRosterManager().getSharedGroups(subscriber.getNode())) {
+        		if (nodeGroups.contains(group.getName())) {
+        			if (Log.isDebugEnabled()) {
+        				Log.debug("Subscriber (" + subscriber + 
+        						") is a member of node group " + group.getName());
+        			}
+        			return true;
+        		}
+        	}
+        }
+        else {
+            // Subscriber is a remote user. This should never happen.
+            Log.warn("Node with access model Roster has a remote user as subscriber: " +
+                    node.getNodeID());
         }
         return false;
     }

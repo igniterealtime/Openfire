@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("rawtypes")
 public class CacheFactory {
 
-	private static final Logger Log = LoggerFactory.getLogger(CacheFactory.class);
+	private static final Logger log = LoggerFactory.getLogger(CacheFactory.class);
 
     public static String LOCAL_CACHE_PROPERTY_NAME = "cache.clustering.local.class";
     public static String CLUSTERED_CACHE_PROPERTY_NAME = "cache.clustering.clustered.class";
@@ -299,7 +299,7 @@ public class CacheFactory {
                 return Long.parseLong(sizeProp);
             }
             catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value.");
+                log.warn("Unable to parse " + propName + " using default value.");
             }
         }
         // Check if there is a default size value for this cache
@@ -322,7 +322,7 @@ public class CacheFactory {
                 return true;
             }
             catch (NumberFormatException nfe) {
-                Log.warn("Unable to parse " + propName + " using default value.");
+                log.warn("Unable to parse " + propName + " using default value.");
             }
         }
         return false;
@@ -354,6 +354,8 @@ public class CacheFactory {
         }
         strategyLookup.put(name, cacheFactoryStrategy);
         cache = (T) cacheFactoryStrategy.createCache(name);
+        
+        log.info("Created default cache [" + clusteredCacheFactoryClass + "] for " + name);
 
         return wrapCache(cache, name);
     }
@@ -373,6 +375,8 @@ public class CacheFactory {
         strategyLookup.put(name, localCacheFactoryStrategy);
         cache = (T) localCacheFactoryStrategy.createCache(name);
 
+        log.info("Created local cache [" + localCacheFactoryClass + "] for " + name);
+        
         return wrapCache(cache, name);
     }
 
@@ -510,9 +514,9 @@ public class CacheFactory {
                     getClusteredCacheStrategyClassLoader()).newInstance();
             return cacheFactory.getMaxClusterNodes();
         } catch (ClassNotFoundException e) {
-            Log.warn("Clustering implementation class " + clusteredCacheFactoryClass + " not found");
+            log.warn("Clustering implementation class " + clusteredCacheFactoryClass + " not found");
         } catch (Exception e) {
-            Log.error("Error instantiating clustered cache factory", e);
+            log.error("Error instantiating clustered cache factory", e);
         }
         return 0;
     }
@@ -601,7 +605,7 @@ public class CacheFactory {
             return pluginLoader;
         }
         else {
-            Log.debug("CacheFactory - Unable to find a Plugin that provides clustering support.");
+            log.debug("CacheFactory - Unable to find a Plugin that provides clustering support.");
             return Thread.currentThread().getContextClassLoader();
         }
     }
@@ -614,7 +618,7 @@ public class CacheFactory {
             clusteringStarting = cacheFactoryStrategy.startCluster();
         }
         catch (Exception e) {
-            Log.error("Unable to start clustering - continuing in local mode", e);
+            log.error("Unable to start clustering - continuing in local mode", e);
         }
         if (!clusteringStarting) {
             // Revert to local cache factory if cluster fails to start
@@ -658,7 +662,7 @@ public class CacheFactory {
                                 cacheFactoryStrategy.updateCacheStats(caches);
                             }
                             catch (Exception e) {
-                                Log.error(e.getMessage(), e);
+                                log.error(e.getMessage(), e);
                             }
                             try {
                                 // Sleep 10 seconds.
@@ -669,7 +673,7 @@ public class CacheFactory {
                             }
                         }
                         statsThread = null;
-                        Log.debug("Cache stats thread terminated.");
+                        log.debug("Cache stats thread terminated.");
                     }
                 };
                 statsThread.setDaemon(true);
@@ -686,7 +690,7 @@ public class CacheFactory {
             cacheFactoryStrategy = localCacheFactoryStrategy;
         }
         catch (Exception e) {
-            Log.error("Unable to stop clustering - continuing in clustered mode", e);
+            log.error("Unable to stop clustering - continuing in clustered mode", e);
         }
     }
 
@@ -724,7 +728,7 @@ public class CacheFactory {
             	}
             }
         } catch (Exception e) {
-            Log.error("Error reverting caches to local caches", e);
+            log.error("Error reverting caches to local caches", e);
         }
     }
 }

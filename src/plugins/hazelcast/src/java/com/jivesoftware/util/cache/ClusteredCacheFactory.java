@@ -219,6 +219,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * task, as the task is run asynchronously across the cluster.
      */
     public void doClusterTask(final ClusterTask task) {
+    	if (cluster == null) { return; }
         Set<Member> members = new HashSet<Member>();
         Member current = cluster.getLocalMember();
         for(Member member : cluster.getMembers()) {
@@ -242,6 +243,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * task, as the task is run asynchronously across the cluster.
      */
     public boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
+    	if (cluster == null) { return false; }
     	Member target = null;
     	for(Member member: cluster.getMembers()) {
     		if (Arrays.equals(member.getUuid().getBytes(), nodeID)) {
@@ -266,6 +268,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * (seconds) until the task is run on all members.
      */
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
+        Collection<Object> result = Collections.emptyList();
+        if (cluster == null) { return result; }
         Set<Member> members = new HashSet<Member>();
         Member current = cluster.getLocalMember();
         for(Member member : cluster.getMembers()) {
@@ -273,7 +277,6 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		members.add(member);
         	}
         }
-        Collection<Object> result = Collections.emptyList();
         if (members.size() > 0) {
 	        // Asynchronously execute the task on the other cluster members
         	MultiTask<Object> multiTask = new MultiTask<Object>(
@@ -300,6 +303,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * (seconds) until the task is run on the given member.
      */
     public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
+    	if (cluster == null) { return null; }
     	Member target = null;
     	for(Member member: cluster.getMembers()) {
        		if (Arrays.equals(member.getUuid().getBytes(), nodeID)) {

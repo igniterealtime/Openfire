@@ -252,7 +252,7 @@
         for (ClientSession sess : sessions) {
         	try { // skip invalid sessions (OF-590)
         		if (!sess.validate()) continue;
-        	} catch (IllegalStateException ise) {
+        	} catch (Exception ex) {
         		continue;
         	}
             count++;

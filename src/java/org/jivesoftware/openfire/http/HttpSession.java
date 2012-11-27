@@ -807,9 +807,11 @@ public class HttpSession extends LocalClientSession {
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
-            deliver(connection, pendingElements);
-            lastRequestID = connection.getRequestId();
-            pendingElements.clear();
+        	synchronized(pendingElements) {
+	            deliver(connection, pendingElements);
+	            lastRequestID = connection.getRequestId();
+	            pendingElements.clear();
+        	}
             connectionQueue.add(connection);
             Collections.sort(connectionQueue, connectionComparator);
         }

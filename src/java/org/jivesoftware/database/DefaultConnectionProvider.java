@@ -337,8 +337,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         String maxCons = JiveGlobals.getXMLProperty("database.defaultProvider.maxConnections");
         String conTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.connectionTimeout");
         testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(driver));
-        testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", true);
-        testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", true);
+        testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", false);
+        testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", false);
 
         // See if we should use Unicode under MySQL
         mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));

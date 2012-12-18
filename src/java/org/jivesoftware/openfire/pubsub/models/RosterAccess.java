@@ -27,7 +27,10 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -46,27 +49,30 @@ public class RosterAccess extends AccessModel {
     }
 
     @Override
-	public boolean canSubscribe(Node node, JID subscriber, JID subJID) {
+	public boolean canSubscribe(Node node, JID owner, JID subscriber) {
         // Let node owners and sysadmins always subscribe to the node
-        if (node.isAdmin(subscriber)) {
+        if (node.isAdmin(owner)) {
             return true;
         }
         for (JID nodeOwner : node.getOwners()) {
-            if (nodeOwner.equals(subscriber)) {
+            if (nodeOwner.equals(owner)) {
                 return true;
             }
         }
         // Check that the subscriber is a local user
         XMPPServer server = XMPPServer.getInstance();
-        if (server.isLocal(subscriber)) {
+        if (server.isLocal(owner)) {
+            GroupManager gMgr = GroupManager.getInstance();
         	Collection<String> nodeGroups = node.getRosterGroupsAllowed();
-        	for (Group group : server.getRosterManager().getSharedGroups(subscriber.getNode())) {
-        		if (nodeGroups.contains(group.getName())) {
-        			if (Log.isDebugEnabled()) {
-        				Log.debug("Subscriber (" + subscriber + 
-        						") is a member of node group " + group.getName());
-        			}
-        			return true;
+        	for (String groupName : nodeGroups) {
+        		try {
+	        		Group group = gMgr.getGroup(groupName);
+	        		// access allowed if the node group is visible to the subscriber
+	        		if (server.getRosterManager().isGroupVisible(group, owner)) {
+	        			return true;
+	        		}
+        		} catch (GroupNotFoundException gnfe){ 
+        			// ignore
         		}
         	}
         }

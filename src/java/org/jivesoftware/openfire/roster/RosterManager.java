@@ -783,7 +783,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @param user the JID of the user to check if he may see the group.
      * @return true if a given group is visible to a given user.
      */
-    boolean isGroupVisible(Group group, JID user) {
+    public boolean isGroupVisible(Group group, JID user) {
         String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
         if ("everybody".equals(showInRoster)) {
             return true;

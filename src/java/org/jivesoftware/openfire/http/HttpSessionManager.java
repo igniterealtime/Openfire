@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -54,7 +55,7 @@ public class HttpSessionManager {
     private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>(
     		JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
-    private Executor sendPacketPool;
+    private ThreadPoolExecutor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
         public void connectionOpened(HttpSession session, HttpConnection connection) {
         }
@@ -73,11 +74,30 @@ public class HttpSessionManager {
     public HttpSessionManager() {
         this.sessionManager = SessionManager.getInstance();
 
-        // Set the executor to use for processing http requests
-        int eventThreads = JiveGlobals.getIntProperty("httpbind.client.processing.threads", 
-        		JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16));
-        sendPacketPool = new ThreadPoolExecutor(
-            eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>() );
+        // Configure a pooled executor to handle async routing for incoming packets
+        // with a default size of 16 threads ("xmpp.httpbind.worker.threads"); also
+        // uses an unbounded task queue and configurable keep-alive (default: 60 secs)
+        
+        // Note: server supports up to 254 client threads by default (@see HttpBindManager)
+        // BOSH installations expecting heavy loads may want to allocate additional threads 
+        // to this worker pool to ensure timely delivery of inbound packets
+        
+        int poolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", 
+				// use deprecated property as default (shared with ConnectionManagerImpl)
+				JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16));
+        int keepAlive = JiveGlobals.getIntProperty("xmpp.httpbind.worker.timeout", 60);
+
+        sendPacketPool = new ThreadPoolExecutor(poolSize, poolSize, keepAlive, TimeUnit.SECONDS, 
+			new LinkedBlockingQueue<Runnable>(), // unbounded task queue
+	        new ThreadFactory() { // custom thread factory for BOSH workers
+	            final AtomicInteger counter = new AtomicInteger(1);
+	            public Thread newThread(Runnable runnable) {
+	                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
+	                                    "httpbind-worker-" + counter.getAndIncrement());
+	                return thread;
+	            }
+	    	});
+        sendPacketPool.allowCoreThreadTimeOut(true);
     }
 
     /**
@@ -87,6 +107,7 @@ public class HttpSessionManager {
         inactivityTask = new HttpSessionReaper();
         TaskEngine.getInstance().schedule(inactivityTask, 30 * JiveConstants.SECOND,
                 30 * JiveConstants.SECOND);
+        sendPacketPool.prestartCoreThread();
     }
 
     /**
@@ -98,6 +119,7 @@ public class HttpSessionManager {
             session.close();
         }
         sessionMap.clear();
+        sendPacketPool.shutdown();
     }
 
     /**

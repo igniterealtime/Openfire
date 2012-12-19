@@ -95,7 +95,7 @@
     	This defines a distributed map with a local (near cache) component,
     	suitable for stable caches having frequent reads and relatively
 		few updates. The cluster-wide limit for items in the map is
-		10000, with up to 1000 items available in the local cache. Items 
+		100000, with up to 1000 items available in the local cache. Items 
 		in the distributed map will be evicted after an hour of idle time, 
 		and items in the local cache(s) will be evicted after 10 minutes
 		of idle time.
@@ -149,7 +149,7 @@
             Any integer between 0 and Integer.MAX_VALUE. 0 means
             Integer.MAX_VALUE. Default is 0.
         -->
-        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <max-size policy="cluster_wide_map_size">100000</max-size>
         <!--
             When max. size is reached, specified percentage of
             the map will be evicted. Any integer between 0 and 100.
@@ -295,14 +295,6 @@
         <async-backup-count>5</async-backup-count>
         <read-backup-data>true</read-backup-data>
     </map>
-    <map name="Published Items">
-        <backup-count>1</backup-count>
-        <async-backup-count>5</async-backup-count>
-        <read-backup-data>true</read-backup-data>
-        <max-size>10000</max-size>
-        <time-to-live-seconds>900</time-to-live-seconds>
-        <eviction-policy>LRU</eviction-policy>
-    </map>
     <!-- 
     	Partitioned Openfire caches; entries copied to a single backup node and
     	replicated as needed in each node using near-cache configuration.
@@ -317,7 +309,7 @@
         <max-size policy="cluster_wide_map_size">100000</max-size>
         <eviction-percentage>10</eviction-percentage>
         <near-cache>
-            <max-size>10000</max-size>
+            <max-size>1000</max-size>
             <max-idle-seconds>1800</max-idle-seconds>
             <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
@@ -328,11 +320,11 @@
         <read-backup-data>true</read-backup-data>
         <max-idle-seconds>1800</max-idle-seconds>
         <eviction-policy>LRU</eviction-policy>
-        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <max-size policy="cluster_wide_map_size">100000</max-size>
         <eviction-percentage>10</eviction-percentage>
         <near-cache>
             <max-size>1000</max-size>
-            <max-idle-seconds>600</max-idle-seconds>
+            <max-idle-seconds>300</max-idle-seconds>
             <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>
@@ -342,7 +334,7 @@
         <read-backup-data>true</read-backup-data>
         <max-idle-seconds>1800</max-idle-seconds>
         <eviction-policy>LRU</eviction-policy>
-        <max-size policy="cluster_wide_map_size">10000</max-size>
+        <max-size policy="cluster_wide_map_size">100000</max-size>
         <eviction-percentage>10</eviction-percentage>
         <near-cache>
             <max-size>1000</max-size>
@@ -355,12 +347,16 @@
         <backup-count>1</backup-count>
         <read-backup-data>true</read-backup-data>
         <max-idle-seconds>1800</max-idle-seconds>
+    </map>
+    <map name="Published Items">
+        <backup-count>1</backup-count>
+        <read-backup-data>true</read-backup-data>
+        <max-size>100000</max-size>
+        <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
-        <max-size policy="cluster_wide_map_size">10000</max-size>
-        <eviction-percentage>10</eviction-percentage>
         <near-cache>
             <max-size>1000</max-size>
-            <max-idle-seconds>600</max-idle-seconds>
+            <max-idle-seconds>60</max-idle-seconds>
             <eviction-policy>LRU</eviction-policy>
             <invalidate-on-change>true</invalidate-on-change>
         </near-cache>

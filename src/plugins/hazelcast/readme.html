@@ -57,11 +57,11 @@ servers together in a cluster.  By running Openfire in a cluster, you can
 distribute the connection load among several servers, while also providing
 failover in the event that one of your servers fails. This plugin is a
 drop-in replacement for the original Openfire clustering plugin, using the
-open source <a href="http://www.hazelcast.com">Hazelcast</a> data distribution 
+open source <a href="http://www.hazelcast.com">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 2.3.1.
+The current Hazelcast release is version 2.4.1.
 </p>
 <h2>Installation</h2>
 <p>
@@ -73,19 +73,19 @@ remove the clustering plugin before installing Hazelcast into your Openfire inst
 <p>
 To create an Openfire cluster, you will need at least two separate Openfire servers,
 and each server must have the Hazelcast plugin installed. By default, the servers
-will discover each other by exchanging UDP (multicast) packets via a configurable 
+will discover each other by exchanging UDP (multicast) packets via a configurable
 IP address and port, but other initialization options are available if your network
 does not support multicast communication (see "Configuration" below).
 </p>
 <p>
 In addition, you will need some form of load balancer to distribute the connection
 load among the members of your Openfire cluster. There are several commercial and
-open source alternatives for this, including the Apache web server (httpd) plus 
+open source alternatives for this, including the Apache web server (httpd) plus
 <a href="http://httpd.apache.org/docs/current/mod/mod_proxy_balancer.html">mod_proxy_balancer</a>
 (if you are using the HTTP/BOSH Openfire connector). Some popular solutions include the
 <a href="http://www.f5.com/products/big-ip/big-ip-local-traffic-manager/overview/">F5 LTM</a>
 (commercial) and <a href="http://haproxy.1wt.eu/">HAProxy</a> (open source), among
-<a href="http://en.wikipedia.org/wiki/Load_balancing_%28computing%29">many others</a>. 
+<a href="http://en.wikipedia.org/wiki/Load_balancing_%28computing%29">many others</a>.
 </p>
 <h2>Configuration</h2>
 <p>
@@ -110,7 +110,7 @@ directory, or in the classpath of your own custom plugin.</li>
 <p>
 The Hazelcast plugin uses the <a href="http://www.hazelcast.com/docs/2.3/manual/single_html/#Config">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
-By default the cluster members will attempt to discover each other via multicast at the 
+By default the cluster members will attempt to discover each other via multicast at the
 following location:
 <ul>
 <li>IP Address: 224.2.2.3</li>

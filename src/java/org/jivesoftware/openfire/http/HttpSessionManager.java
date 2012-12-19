@@ -97,7 +97,6 @@ public class HttpSessionManager {
 	                return thread;
 	            }
 	    	});
-        sendPacketPool.allowCoreThreadTimeOut(true);
     }
 
     /**

@@ -38,9 +38,9 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.AbstractReadOnlyGroupProvider;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -54,7 +54,7 @@ import org.xmpp.packet.JID;
  *
  * @author Matt Tucker, Greg Ferguson and Cameron Moore
  */
-public class LdapGroupProvider implements GroupProvider {
+public class LdapGroupProvider extends AbstractReadOnlyGroupProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
 
@@ -74,26 +74,6 @@ public class LdapGroupProvider implements GroupProvider {
         standardAttributes[0] = manager.getGroupNameField();
         standardAttributes[1] = manager.getGroupDescriptionField();
         standardAttributes[2] = manager.getGroupMemberField();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param name the name of the group to create.
-     * @throws UnsupportedOperationException when called.
-     */
-    public Group createGroup(String name) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param name the name of the group to delete
-     * @throws UnsupportedOperationException when called.
-     */
-    public void deleteGroup(String name) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
     }
 
     public Group getGroup(String groupName) throws GroupNotFoundException {
@@ -123,30 +103,6 @@ public class LdapGroupProvider implements GroupProvider {
         }
     }
 
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param oldName the current name of the group.
-     * @param newName the desired new name of the group.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void setName(String oldName, String newName) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param name the group name.
-     * @param description the group description.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void setDescription(String name, String description)
-            throws UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
     public int getGroupCount() {
         if (manager.isDebugEnabled()) {
             Log.debug("LdapGroupProvider: Trying to get the number of groups in the system.");
@@ -161,11 +117,6 @@ public class LdapGroupProvider implements GroupProvider {
         );
         this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
         return this.groupCount;
-    }
-
-    public Collection<String> getSharedGroupsNames() {
-        // Get the list of shared groups from the database
-        return Group.getSharedGroupsNames();
     }
 
     public Collection<String> getGroupNames() {
@@ -207,13 +158,17 @@ public class LdapGroupProvider implements GroupProvider {
         if (username == null || "".equals(username)) {
             return Collections.emptyList();
         }
+    	return search(manager.getGroupMemberField(), username);
+    }
+
+    public Collection<String> search(String key, String value) {
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
-        filter.append("(").append(manager.getGroupMemberField()).append("=").append(username);
+        filter.append("(").append(key).append("=").append(value);
         filter.append("))");
         if (Log.isDebugEnabled()) {
-            Log.debug("Trying to find group names for user: " + user + " using query: " + filter.toString());
+            Log.debug("Trying to find group names using query: " + filter.toString());
         }
         // Perform the LDAP query
         return manager.retrieveList(
@@ -223,53 +178,6 @@ public class LdapGroupProvider implements GroupProvider {
                 -1,
                 null
         );
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param groupName name of a group.
-     * @param user the JID of the user to add
-     * @param administrator true if is an administrator.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param groupName the naame of a group.
-     * @param user the JID of the user with new privileges
-     * @param administrator true if is an administrator.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void updateMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because LDAP groups are read-only.
-     *
-     * @param groupName the name of a group.
-     * @param user the JID of the user to delete.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Returns true because LDAP groups are read-only.
-     *
-     * @return true because all LDAP functions are read-only.
-     */
-    public boolean isReadOnly() {
-        return true;
     }
 
     public Collection<String> search(String query) {

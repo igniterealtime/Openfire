@@ -359,42 +359,25 @@ public class RosterItem implements Cacheable, Externalizable {
             }
 
             // Remove shared groups from the param
-            Collection<Group> existingGroups = GroupManager.getInstance().getSharedGroups();
             for (Iterator<String> it=groups.iterator(); it.hasNext();) {
                 String groupName = it.next();
                 try {
-                    // Optimistic approach for performance reasons. Assume first that the shared
-                    // group name is the same as the display name for the shared roster
-
-                    // Check if exists a shared group with this name
                     Group group = GroupManager.getInstance().getGroup(groupName);
-                    // Get the display name of the group
-                    String displayName = group.getProperties().get("sharedRoster.displayName");
-                    if (displayName != null && displayName.equals(groupName)) {
-                        // Remove the shared group from the list (since it exists)
-                        try {
-                            it.remove();
-                        }
-                        catch (IllegalStateException e) {
-                            // Do nothing
-                        }
-                    }
-                }
-                catch (GroupNotFoundException e) {
+                	if (RosterManager.isSharedGroup(group)) {
+                		it.remove();
+                	}
+                } catch (GroupNotFoundException e) {
                     // Check now if there is a group whose display name matches the requested group
-                    for (Group group : existingGroups) {
-                        // Get the display name of the group
-                        String displayName = group.getProperties().get("sharedRoster.displayName");
-                        if (displayName != null && displayName.equals(groupName)) {
-                            // Remove the shared group from the list (since it exists)
-                            try {
-                                it.remove();
-                            }
-                            catch (IllegalStateException ise) {
-                                // Do nothing
-                            }
-                        }
-                    }
+                	Collection<Group> groupsWithProp = GroupManager
+    						.getInstance()
+    						.search("sharedRoster.displayName", groupName);
+                	Iterator<Group> itr = groupsWithProp.iterator();
+                	while(itr.hasNext()) {
+                		Group group = itr.next();
+                    	if (RosterManager.isSharedGroup(group)) {
+                    		it.remove();
+                    	}
+                	}
                 }
             }
             this.groups = groups;

@@ -326,13 +326,18 @@ public class Roster implements Cacheable, Externalizable {
             throws UserAlreadyExistsException, SharedGroupException {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
-            Collection<Group> sharedGroups = GroupManager.getInstance().getSharedGroups();
-            for (String group : groups) {
-                for (Group sharedGroup : sharedGroups) {
-                    if (group.equals(sharedGroup.getProperties().get("sharedRoster.displayName"))) {
-                        throw new SharedGroupException("Cannot add an item to a shared group");
-                    }
-                }
+            for (String groupDisplayName : groups) {
+				Collection<Group> groupsWithProp = GroupManager
+						.getInstance()
+						.search("sharedRoster.displayName", groupDisplayName);
+				Iterator<Group> itr = groupsWithProp.iterator();
+            	while(itr.hasNext()) {
+            		Group group = itr.next();
+            		String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+            		if(showInRoster != null && !showInRoster.equals("nobody")) {
+            			throw new SharedGroupException("Cannot add an item to a shared group");
+            		}
+            	}
             }
         }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();

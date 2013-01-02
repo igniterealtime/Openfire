@@ -20,9 +20,10 @@
 
 package org.jivesoftware.openfire.group;
 
-import org.xmpp.packet.JID;
-
 import java.util.Collection;
+import java.util.Map;
+
+import org.xmpp.packet.JID;
 
 /**
  * Provider interface for groups. Users that wish to integrate with
@@ -37,6 +38,8 @@ import java.util.Collection;
  *     &lt;/group&gt;
  *   &lt;/provider&gt;</pre>
  *
+ * @see AbstractReadOnlyGroupProvider
+ * 
  * @author Matt Tucker
  */
 public interface GroupProvider {
@@ -113,12 +116,45 @@ public interface GroupProvider {
     Collection<String> getGroupNames();
 
     /**
+     * Returns true if this GroupProvider allows group sharing. Shared groups
+     * enable roster sharing.
+     *
+     * @return true if the group provider supports group sharing.
+     */
+    boolean isSharingSupported();
+
+    /**
      * Returns an unmodifiable Collection of all shared groups in the system.
      *
      * @return unmodifiable Collection of all shared groups in the system.
      */
-    Collection<String> getSharedGroupsNames();
-
+    Collection<String> getSharedGroupNames();
+    
+    /**
+     * Returns an unmodifiable Collection of all shared groups in the system for a given user.
+     * 
+     * @param JID The bare JID for the user (node@domain)
+     * @return unmodifiable Collection of all shared groups in the system for a given user.
+     */
+    Collection<String> getSharedGroupNames(JID user);
+    
+    /**
+     * Returns an unmodifiable Collection of all public shared groups in the system.
+     *
+     * @return unmodifiable Collection of all public shared groups in the system.
+     */
+    Collection<String> getPublicSharedGroupNames();
+    
+    /**
+     * Returns an unmodifiable Collection of groups that are visible
+     * to the members of the given group.
+     * 
+     * @param userGroup The given group
+     * @return unmodifiable Collection of group names that are visible
+     * to the given group.
+     */
+    Collection<String> getVisibleGroupNames(String userGroup);
+    
     /**
      * Returns the Collection of all groups in the system.
      *
@@ -210,9 +246,44 @@ public interface GroupProvider {
     Collection<String> search(String query, int startIndex, int numResults);
 
     /**
+     * Returns the names of groups that have a property matching the given
+     * key/value pair. This provides an simple extensible search mechanism
+     * for providers with differing property sets and storage models.
+     * 
+     * The semantics of the key/value matching (wildcard support, scoping, etc.) 
+     * are unspecified by the interface and may vary for each implementation.
+     * 
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param key The name of a group property (e.g. "sharedRoster.showInRoster")
+     * @param value The value to match for the given property
+     * @return unmodifiable Collection of group names that match the
+     * 			given key/value pair.
+     */
+    Collection<String> search(String key, String value);
+    
+    /**
      * Returns true if group searching is supported by the provider.
      *
      * @return true if searching is supported.
      */
     boolean isSearchSupported();
+    
+    /**
+     * Loads the group properties (if any) from the backend data store. If
+     * the properties can be changed, the provider implementation must ensure
+     * that updates to the resulting {@link Map} are persisted to the
+     * backend data store. Otherwise if a mutator method is called, the
+     * implementation should throw an {@link UnsupportedOperationException}.
+     * 
+     * If there are no corresponding properties for the given group, or if the
+     * provider does not support group properties, this method should return
+     * an empty Map rather than null.
+     * 
+     * @param group The target group
+     * @return The properties for the given group
+     */
+    Map<String,String> loadProperties(Group group);
+    
 }

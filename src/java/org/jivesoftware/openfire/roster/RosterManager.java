@@ -187,7 +187,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      */
     public Collection<Group> getSharedGroups(String username) {
         Collection<Group> answer = new HashSet<Group>();
-        Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
+        Collection<Group> groups = GroupManager.getInstance().getSharedGroups(username);
         for (Group group : groups) {
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
             if ("onlyGroup".equals(showInRoster)) {
@@ -219,16 +219,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return the list of shared groups whose visibility is public.
      */
     public Collection<Group> getPublicSharedGroups() {
-        Collection<Group> answer = new HashSet<Group>();
-        Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
-        for (Group group : groups) {
-            String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            if ("everybody".equals(showInRoster)) {
-                // Anyone can see this group so add the group to the answer
-                answer.add(group);
-            }
-        }
-        return answer;
+    	return GroupManager.getInstance().getPublicSharedGroups();
     }
 
     /**
@@ -753,26 +744,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     private Collection<Group> getVisibleGroups(Group groupToCheck) {
-        Collection<Group> answer = new HashSet<Group>();
-        Collection<Group> groups = GroupManager.getInstance().getSharedGroups();
-        for (Group group : groups) {
-            if (group.equals(groupToCheck)) {
-                continue;
-            }
-            String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            if ("onlyGroup".equals(showInRoster)) {
-                // Check if the user belongs to a group that may see this group
-                Collection<String> groupList =
-                        parseGroupNames(group.getProperties().get("sharedRoster.groupList"));
-                if (groupList.contains(groupToCheck.getName())) {
-                    answer.add(group);
-                }
-            }
-            else if ("everybody".equals(showInRoster)) {
-                answer.add(group);
-            }
-        }
-        return answer;
+    	return GroupManager.getInstance().getVisibleGroups(groupToCheck);
     }
 
     /**

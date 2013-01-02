@@ -24,22 +24,14 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -65,53 +57,14 @@ public class Group implements Cacheable, Externalizable {
 
 	private static final Logger Log = LoggerFactory.getLogger(Group.class);
 
-    private static final String LOAD_PROPERTIES =
-        "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
-    private static final String DELETE_PROPERTY =
-        "DELETE FROM ofGroupProp WHERE groupName=? AND name=?";
-    private static final String UPDATE_PROPERTY =
-        "UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?";
-    private static final String INSERT_PROPERTY =
-        "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
-    private static final String LOAD_SHARED_GROUPS =
-        "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
-        "AND propValue IS NOT NULL AND propValue <> 'nobody'";
-
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
+    private transient Map<String, String> properties;
 
     private String name;
     private String description;
-    private Map<String, String> properties;
     private Set<JID> members;
     private Set<JID> administrators;
-
-    /**
-     * Returns the name of the groups that are shared groups.
-     *
-     * @return the name of the groups that are shared groups.
-     */
-    public static Set<String> getSharedGroupsNames() {
-        Set<String> groupNames = new HashSet<String>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return groupNames;
-    }
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -161,38 +114,22 @@ public class Group implements Cacheable, Externalizable {
         this.members = new HashSet<JID>(members);
         this.administrators = new HashSet<JID>(administrators);
 
-        this.properties = new ConcurrentHashMap<String, String>();
-        // Load the properties that this groups has in the DB
-        loadProperties();
-
-        // Check if we have to create or update some properties
-        for (Map.Entry<String, String> property : properties.entrySet()) {
-            // If the DB contains this property
-            if (this.properties.containsKey(property.getKey())) {
-                // then check if we need to update it
+        this.properties = provider.loadProperties(this);
+        
+        if (!provider.isReadOnly()) {
+	        // Apply the given properties to the group
+	        for (Map.Entry<String, String> property : properties.entrySet()) {
                 if (!property.getValue().equals(this.properties.get(property.getKey()))) {
-                    // update the properties map
                     this.properties.put(property.getKey(), property.getValue());
-                    // and the DB
-                    updateProperty(property.getKey(), property.getValue());
                 }
-            } // else we need to add it
-            else {
-                // add to the properties map
-                this.properties.put(property.getKey(), property.getValue());
-                // and insert it to the DB
-                insertProperty(property.getKey(), property.getValue());
-            }
-        }
-
-        // Check if we have to delete some properties
-        for (String oldPropName : this.properties.keySet()) {
-            if (!properties.containsKey(oldPropName)) {
-                // delete it from the property map
-                this.properties.remove(oldPropName);
-                // delete it from the DB
-                deleteProperty(oldPropName);
-            }
+	        }
+	        // Remove obsolete properties
+	        Iterator<String> oldProps = this.properties.keySet().iterator();
+	        while (oldProps.hasNext()) {
+	            if (!properties.containsKey(oldProps.next())) {
+	            	oldProps.remove();
+	            }
+	        }
         }
     }
 
@@ -219,10 +156,8 @@ public class Group implements Cacheable, Externalizable {
         }
         try {
             String originalName = this.name;
-            provider.setName(this.name, name);
-            groupManager.groupCache.remove(this.name);
+            provider.setName(originalName, name);
             this.name = name;
-            groupManager.groupCache.put(name, this);
 
             // Fire event.
             Map<String, Object> params = new HashMap<String, Object>();
@@ -231,8 +166,8 @@ public class Group implements Cacheable, Externalizable {
             GroupEventDispatcher.dispatchEvent(this, GroupEventDispatcher.EventType.group_modified,
                     params);
         }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+        catch (GroupAlreadyExistsException e) {
+            Log.error("Failed to change group name; group already exists");
         }
     }
 
@@ -291,12 +226,11 @@ public class Group implements Cacheable, Externalizable {
     public Map<String,String> getProperties() {
         synchronized (this) {
             if (properties == null) {
-                properties = new ConcurrentHashMap<String, String>();
-                loadProperties();
+                properties = provider.loadProperties(this);
             }
         }
         // Return a wrapper that will intercept add and remove commands.
-        return new PropertiesMap();
+        return properties;
     }
 
     /**
@@ -513,186 +447,6 @@ public class Group implements Cacheable, Externalizable {
                 return true;
             }
             return false;
-        }
-    }
-
-    /**
-     * Map implementation that updates the database when properties are modified.
-     */
-    private class PropertiesMap extends AbstractMap {
-
-        @Override
-		public Object put(Object key, Object value) {
-            if (key == null || value == null) {
-                throw new NullPointerException();
-            }
-            Map<String, Object> eventParams = new HashMap<String, Object>();
-            Object answer;
-            String keyString = (String) key;
-            synchronized (keyString.intern()) {
-                if (properties.containsKey(keyString)) {
-                    String originalValue = properties.get(keyString);
-
-                    // if is the same value don't update it.
-                    if (originalValue != null && originalValue.equals(value)) {
-                        return value;
-                    }
-                    answer = properties.put(keyString, (String)value);
-                    updateProperty(keyString, (String)value);
-                    // Configure event.
-                    eventParams.put("type", "propertyModified");
-                    eventParams.put("propertyKey", key);
-                    eventParams.put("originalValue", originalValue);
-                }
-                else {
-                    answer = properties.put(keyString, (String)value);
-                    insertProperty(keyString, (String)value);
-                    // Configure event.
-                    eventParams.put("type", "propertyAdded");
-                    eventParams.put("propertyKey", key);
-                }
-            }
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(Group.this,
-                    GroupEventDispatcher.EventType.group_modified, eventParams);
-            return answer;
-        }
-
-        @Override
-		public Set<Entry> entrySet() {
-            return new PropertiesEntrySet();
-        }
-    }
-
-    /**
-     * Set implementation that updates the database when properties are deleted.
-     */
-    private class PropertiesEntrySet extends AbstractSet {
-
-        @Override
-		public int size() {
-            return properties.entrySet().size();
-        }
-
-        @Override
-		public Iterator iterator() {
-            return new Iterator() {
-
-                Iterator iter = properties.entrySet().iterator();
-                Map.Entry current = null;
-
-                public boolean hasNext() {
-                    return iter.hasNext();
-                }
-
-                public Object next() {
-                    current = (Map.Entry)iter.next();
-                    return current;
-                }
-
-                public void remove() {
-                    if (current == null) {
-                        throw new IllegalStateException();
-                    }
-                    String key = (String)current.getKey();
-                    deleteProperty(key);
-                    iter.remove();
-                    // Fire event.
-                    Map<String, Object> params = new HashMap<String, Object>();
-                    params.put("type", "propertyDeleted");
-                    params.put("propertyKey", key);
-                    GroupEventDispatcher.dispatchEvent(Group.this,
-                        GroupEventDispatcher.EventType.group_modified, params);
-                }
-            };
-        }
-    }
-
-    private void loadProperties() {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, name);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String key = rs.getString(1);
-                String value = rs.getString(2);
-                if (key != null) {
-                    if (value == null) {
-                        value = "";
-                        Log.warn("There is a group property whose value is null of Group: " + name);
-                    }
-                    properties.put(key, value);
-                }
-                else {
-                    Log.warn("There is a group property whose key is null of Group: " + name);
-                }
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    private void insertProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, name);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, propValue);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void updateProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, propValue);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, name);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    private void deleteProperty(String propName) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, name);
-            pstmt.setString(2, propName);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

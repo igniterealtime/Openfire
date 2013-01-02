@@ -51,7 +51,7 @@ public class GroupCollection extends AbstractCollection {
 
     @Override
 	public Iterator iterator() {
-        return new UserIterator();
+        return new GroupIterator();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class GroupCollection extends AbstractCollection {
         return elements.length;
     }
 
-    private class UserIterator implements Iterator {
+    private class GroupIterator implements Iterator {
 
         private int currentIndex = -1;
         private Object nextElement = null;

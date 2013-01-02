@@ -18,25 +18,31 @@
  */
 package org.jivesoftware.openfire.clearspace;
 
-import org.dom4j.Element;
-import org.dom4j.Node;
-import org.jivesoftware.openfire.XMPPServer;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.AbstractReadOnlyGroupProvider;
 import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
+import org.jivesoftware.openfire.group.GroupCollection;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
-
-import java.util.*;
 
 /**
  * @author Daniel Henninger
  */
-public class ClearspaceGroupProvider implements GroupProvider {
+public class ClearspaceGroupProvider extends AbstractReadOnlyGroupProvider {
     protected static final String URL_PREFIX = "socialGroupService/";
 
     private static final String TYPE_ID_OWNER = "0";
@@ -45,24 +51,8 @@ public class ClearspaceGroupProvider implements GroupProvider {
     public ClearspaceGroupProvider() {
     }
 
-    public Group createGroup(String name) throws UnsupportedOperationException, GroupAlreadyExistsException {
-        throw new UnsupportedOperationException("Could not create groups.");
-    }
-
-    public void deleteGroup(String name) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Could not delete groups.");
-    }
-
     public Group getGroup(String name) throws GroupNotFoundException {
         return translateGroup(getGroupByName(name));
-    }
-
-    public void setName(String oldName, String newName) throws UnsupportedOperationException, GroupAlreadyExistsException {
-        throw new UnsupportedOperationException("Could not modify groups.");
-    }
-
-    public void setDescription(String name, String description) throws GroupNotFoundException {
-        throw new UnsupportedOperationException("Could not modify groups.");
     }
 
     public int getGroupCount() {
@@ -76,12 +66,29 @@ public class ClearspaceGroupProvider implements GroupProvider {
         }
     }
 
-    public Collection<String> getSharedGroupsNames() {
+    public boolean isSharingSupported() {
+		return true;
+	}
+
+    public Collection<String> getSharedGroupNames() {
         // Return all social group names since every social group is a shared group
         return getGroupNames();
     }
 
-    public Collection<String> getGroupNames() {
+	public Collection<String> getSharedGroupNames(JID user) {
+		// TODO: is there a better way to get the shared Clearspace groups for a given user?
+		Collection<String> result = new ArrayList<String>();
+		Iterator<Group> sharedGroups = new GroupCollection(getGroupNames()).iterator();
+		while (sharedGroups.hasNext()) {
+			Group group = sharedGroups.next();
+			if (group.isUser(user)) {
+				result.add(group.getName());
+			}
+		}
+		return result;
+	}
+
+	public Collection<String> getGroupNames() {
         try {
             String path = URL_PREFIX + "socialGroupNames";
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
@@ -118,22 +125,6 @@ public class ClearspaceGroupProvider implements GroupProvider {
             // It is not supported exception, wrap it into an UnsupportedOperationException
             throw new UnsupportedOperationException("Unexpected error", e);
         }
-    }
-
-    public void addMember(String groupName, JID user, boolean administrator) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Could not modify groups.");
-    }
-
-    public void updateMember(String groupName, JID user, boolean administrator) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Could not modify groups.");
-    }
-
-    public void deleteMember(String groupName, JID user) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Could not modify groups.");
-    }
-
-    public boolean isReadOnly() {
-        return true;
     }
 
     public Collection<String> search(String query) {

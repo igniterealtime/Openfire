@@ -27,10 +27,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.Immutable;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +56,9 @@ import org.xmpp.packet.JID;
  * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
  * <li><tt>jdbcGroupProvider.groupCountSQL = SELECT count(*) FROM myGroups</tt></li>
+ * <li><tt>jdbcGroupProvider.groupPropsSQL = SELECT propName, propValue FROM myGroupProps WHERE groupName=?</tt></li>
  * <li><tt>jdbcGroupProvider.allGroupsSQL = SELECT groupName FROM myGroups</tt></li>
+ * <li><tt>jdbcGroupProvider.sharedGroupsSQL = SELECT groupName FROM myGroups WHERE shared='true'</tt></li>
  * <li><tt>jdbcGroupProvider.userGroupsSQL = SELECT groupName FORM myGroupUsers WHERE username=?</tt></li>
  * <li><tt>jdbcGroupProvider.descriptionSQL = SELECT groupDescription FROM myGroups WHERE groupName=?</tt></li>
  * <li><tt>jdbcGroupProvider.loadMembersSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'</tt></li>
@@ -69,7 +74,7 @@ import org.xmpp.packet.JID;
  *
  * @author David Snopek
  */
-public class JDBCGroupProvider implements GroupProvider {
+public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
@@ -77,7 +82,9 @@ public class JDBCGroupProvider implements GroupProvider {
 
     private String groupCountSQL;
     private String descriptionSQL;
+    private String groupPropsSQL;
     private String allGroupsSQL;
+    private String sharedGroupsSQL;
     private String userGroupsSQL;
     private String loadMembersSQL;
     private String loadAdminsSQL;
@@ -93,7 +100,9 @@ public class JDBCGroupProvider implements GroupProvider {
         JiveGlobals.migrateProperty("jdbcProvider.driver");
         JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcGroupProvider.groupCountSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.groupPropsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.allGroupsSQL");
+        JiveGlobals.migrateProperty("jdbcGroupProvider.sharedGroupsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.userGroupsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.descriptionSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadMembersSQL");
@@ -116,31 +125,13 @@ public class JDBCGroupProvider implements GroupProvider {
 
         // Load SQL statements
         groupCountSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupCountSQL");
+        groupPropsSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupPropsSQL");
         allGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.allGroupsSQL");
+        sharedGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.sharedGroupsSQL");
         userGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.userGroupsSQL");
         descriptionSQL = JiveGlobals.getProperty("jdbcGroupProvider.descriptionSQL");
         loadMembersSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadMembersSQL");
         loadAdminsSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadAdminsSQL");
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param name the name of the group to create.
-     * @throws UnsupportedOperationException when called.
-     */
-    public Group createGroup(String name) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param name the name of the group to delete
-     * @throws UnsupportedOperationException when called.
-     */
-    public void deleteGroup(String name) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
     }
 
     private Connection getConnection() throws SQLException {
@@ -220,29 +211,6 @@ public class JDBCGroupProvider implements GroupProvider {
         return members;
     }
 
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param oldName the current name of the group.
-     * @param newName the desired new name of the group.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void setName(String oldName, String newName) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param name the group name.
-     * @param description the group description.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void setDescription(String name, String description)
-            throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
     public int getGroupCount() {
         int count = 0;
         Connection con = null;
@@ -265,9 +233,29 @@ public class JDBCGroupProvider implements GroupProvider {
         return count;
     }
 
-    public Collection<String> getSharedGroupsNames() {
-        // Get the list of shared groups from the database
-        return Group.getSharedGroupsNames();
+    public Collection<String> getSharedGroupNames() {
+    	if (sharedGroupsSQL == null) {
+    		return Collections.emptyList();
+    	}
+    	List<String> groupNames = new ArrayList<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = getConnection();
+            pstmt = con.prepareStatement(sharedGroupsSQL);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                groupNames.add(rs.getString(1));
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return groupNames;
     }
 
     public Collection<String> getGroupNames() {
@@ -340,65 +328,28 @@ public class JDBCGroupProvider implements GroupProvider {
         return groupNames;
     }
 
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param groupName name of a group.
-     * @param user the JID of the user to add
-     * @param administrator true if is an administrator.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param groupName the naame of a group.
-     * @param user the JID of the user with new privileges
-     * @param administrator true if is an administrator.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void updateMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always throws an UnsupportedOperationException because JDBC groups are read-only.
-     *
-     * @param groupName the name of a group.
-     * @param user the JID of the user to delete.
-     * @throws UnsupportedOperationException when called.
-     */
-    public void deleteMember(String groupName, JID user)
-            throws UnsupportedOperationException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Always returns true because JDBC groups are read-only.
-     *
-     * @return true because all JDBC functions are read-only.
-     */
-    public boolean isReadOnly() {
-        return true;
-    }
-
-    public Collection<String> search(String query) {
-        return Collections.emptyList();
-    }
-
-    public Collection<String> search(String query, int startIndex, int numResults) {
-        return Collections.emptyList();
-    }
-
-    public boolean isSearchSupported() {
-        return false;
-    }
+	public Map<String, String> loadProperties(Group group) {
+		Map<String,String> properties = new HashMap<String,String>();
+    	if (groupPropsSQL != null) {
+	        Connection con = null;
+	        PreparedStatement pstmt = null;
+	        ResultSet rs = null;
+	        try {
+	            con = DbConnectionManager.getConnection();
+	            pstmt = con.prepareStatement(groupPropsSQL);
+	            pstmt.setString(1, group.getName());
+	            rs = pstmt.executeQuery();
+	            while (rs.next()) {
+	                properties.put(rs.getString(1), rs.getString(2));
+	            }
+	        }
+	        catch (SQLException sqle) {
+	            Log.error(sqle.getMessage(), sqle);
+	        }
+	        finally {
+	            DbConnectionManager.closeConnection(rs, pstmt, con);
+	        }
+    	}
+        return new Immutable.Map<String,String>(properties);
+	}
 }

@@ -381,7 +381,7 @@ public class CacheFactory {
      *
      * @param name the name of the cache to destroy.
      */
-    public static void destroyCache(String name) {
+    public static synchronized void destroyCache(String name) {
         Cache cache = caches.remove(name);
         if (cache != null) {
             if (localOnly.contains(name)) {
@@ -411,7 +411,11 @@ public class CacheFactory {
         if (localOnly.contains(cache.getName())) {
         	return localCacheFactoryStrategy.getLock(key, cache);
         } else {
-        	return cacheFactoryStrategy.getLock(key, cache);
+        	// synchronized here because the backing cache
+        	// will be swapped cluster startup/shutdown (OF-588)
+        	synchronized(cache) {
+        		return cacheFactoryStrategy.getLock(key, cache);
+        	}
         }
     }
 
@@ -686,10 +690,12 @@ public class CacheFactory {
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
             if (localOnly.contains(cache.getName())) continue;
-            cache.clear();
-            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-            cacheWrapper.setWrappedCache(clusteredCache);
+            synchronized (cache) {
+	            cache.clear();
+	            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+	            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+	            cacheWrapper.setWrappedCache(clusteredCache);
+            }
         }
         clusteringStarting = false;
         clusteringStarted = true;
@@ -708,10 +714,12 @@ public class CacheFactory {
             for (Cache cache : getAllCaches()) {
                 // skip local-only caches
                 if (localOnly.contains(cache.getName())) continue;
-                cache.clear();
-                CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-                cacheWrapper.setWrappedCache(standaloneCache);
+                synchronized (cache) {
+	                cache.clear();
+	                CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+	                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+	                cacheWrapper.setWrappedCache(standaloneCache);
+                }
         	}
         } catch (Exception e) {
             log.error("Error reverting caches to local caches", e);

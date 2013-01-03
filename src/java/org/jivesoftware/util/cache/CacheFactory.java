@@ -21,6 +21,7 @@ package org.jivesoftware.util.cache;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,12 +66,8 @@ public class CacheFactory {
      * Storage for all caches that get created.
      */
 	private static Map<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
+	private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
     
-    /**
-     * Maps the cache to the strategy that created it.
-     */
-    private static Map<String, CacheFactoryStrategy> strategyLookup = new ConcurrentHashMap<String, CacheFactoryStrategy>();
-
     private static String localCacheFactoryClass;
     private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy;
@@ -352,10 +349,9 @@ public class CacheFactory {
         if (cache != null) {
             return cache;
         }
-        strategyLookup.put(name, cacheFactoryStrategy);
         cache = (T) cacheFactoryStrategy.createCache(name);
         
-        log.info("Created default cache [" + clusteredCacheFactoryClass + "] for " + name);
+        log.info("Created cache [" + cacheFactoryStrategy.getClass().getName() + "] for " + name);
 
         return wrapCache(cache, name);
     }
@@ -372,10 +368,10 @@ public class CacheFactory {
         if (cache != null) {
             return cache;
         }
-        strategyLookup.put(name, localCacheFactoryStrategy);
         cache = (T) localCacheFactoryStrategy.createCache(name);
+        localOnly.add(name);
 
-        log.info("Created local cache [" + localCacheFactoryClass + "] for " + name);
+        log.info("Created local-only cache [" + localCacheFactoryClass + "] for " + name);
         
         return wrapCache(cache, name);
     }
@@ -388,7 +384,12 @@ public class CacheFactory {
     public static void destroyCache(String name) {
         Cache cache = caches.remove(name);
         if (cache != null) {
-        	strategyLookup.get(name).destroyCache(cache);
+            if (localOnly.contains(name)) {
+            	localOnly.remove(name);
+            	localCacheFactoryStrategy.destroyCache(cache);
+            } else {
+            	cacheFactoryStrategy.destroyCache(cache);
+            }
         }
     }
 
@@ -407,7 +408,11 @@ public class CacheFactory {
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
     public static Lock getLock(Object key, Cache cache) {
-        return strategyLookup.get(cache.getName()).getLock(key, cache);
+        if (localOnly.contains(cache.getName())) {
+        	return localCacheFactoryStrategy.getLock(key, cache);
+        } else {
+        	return cacheFactoryStrategy.getLock(key, cache);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -502,23 +507,13 @@ public class CacheFactory {
     }
 
     /**
-     * Returns the maximum number of cluster members allowed. A value of 0 or 1 will
+     * Returns the maximum number of cluster members allowed. A value of 0 will
      * be returned when clustering is not allowed.
      *
-     * @return the maximum number of cluster members allowed or 0 or 1 if clustering is not allowed.
+     * @return the maximum number of cluster members allowed or 0 if clustering is not allowed.
      */
     public static int getMaxClusterNodes() {
-        try {
-            CacheFactoryStrategy cacheFactory = (CacheFactoryStrategy) Class.forName(
-                    clusteredCacheFactoryClass, true,
-                    getClusteredCacheStrategyClassLoader()).newInstance();
-            return cacheFactory.getMaxClusterNodes();
-        } catch (ClassNotFoundException e) {
-            log.warn("Clustering implementation class " + clusteredCacheFactoryClass + " not found");
-        } catch (Exception e) {
-            log.error("Error instantiating clustered cache factory", e);
-        }
-        return 0;
+    	return cacheFactoryStrategy.getMaxClusterNodes();
     }
     /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
@@ -576,18 +571,11 @@ public class CacheFactory {
 
     public static synchronized void initialize() throws InitializationException {
         try {
-            cacheFactoryStrategy = (CacheFactoryStrategy) Class
-                        .forName(localCacheFactoryClass).newInstance();
-            localCacheFactoryStrategy = cacheFactoryStrategy;
-        }
-        catch (InstantiationException e) {
-             throw new InitializationException(e);
-        }
-        catch (IllegalAccessException e) {
-             throw new InitializationException(e);
-        }
-        catch (ClassNotFoundException e) {
-            throw new InitializationException(e);
+        	localCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
+            cacheFactoryStrategy = localCacheFactoryStrategy;
+        } catch (Exception e) {
+        	log.error("Failed to instantiate local cache factory strategy: " + localCacheFactoryClass, e);
+        	 throw new InitializationException(e);
         }
     }
 
@@ -683,15 +671,10 @@ public class CacheFactory {
     }
 
     public static void stopClustering() {
-        try {
-            // Stop the cluster
-            cacheFactoryStrategy.stopCluster();
-            // Set the strategy to local
-            cacheFactoryStrategy = localCacheFactoryStrategy;
-        }
-        catch (Exception e) {
-            log.error("Unable to stop clustering - continuing in clustered mode", e);
-        }
+        // Stop the cluster
+        cacheFactoryStrategy.stopCluster();
+        // Set the strategy to local
+        cacheFactoryStrategy = localCacheFactoryStrategy;
     }
 
     /**
@@ -699,8 +682,11 @@ public class CacheFactory {
      */
     @SuppressWarnings("unchecked")
 	public static void joinedCluster() {
-        // Loop through local caches and switch them to clustered cache (migrate content)
+        // Loop through local caches and switch them to clustered cache (purge content)
         for (Cache cache : getAllCaches()) {
+            // skip local-only caches
+            if (localOnly.contains(cache.getName())) continue;
+            cache.clear();
             CacheWrapper cacheWrapper = ((CacheWrapper) cache);
             Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             cacheWrapper.setWrappedCache(clusteredCache);
@@ -715,18 +701,18 @@ public class CacheFactory {
     @SuppressWarnings("unchecked")
 	public static void leftCluster() {
         clusteringStarted = false;
-        // Loop through clustered caches and change them to local caches (migrate content)
+        // Loop through clustered caches and change them to local caches (purge content)
         try {
             cacheFactoryStrategy = localCacheFactoryStrategy;
 
             for (Cache cache : getAllCaches()) {
-            	
-            	if (strategyLookup.get(cache.getName()) != localCacheFactoryStrategy) {
-                    CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-                    Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-                    cacheWrapper.setWrappedCache(standaloneCache);
-            	}
-            }
+                // skip local-only caches
+                if (localOnly.contains(cache.getName())) continue;
+                cache.clear();
+                CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                cacheWrapper.setWrappedCache(standaloneCache);
+        	}
         } catch (Exception e) {
             log.error("Error reverting caches to local caches", e);
         }

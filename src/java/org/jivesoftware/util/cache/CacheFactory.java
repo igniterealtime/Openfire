@@ -72,6 +72,7 @@ public class CacheFactory {
     private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy;
     private static CacheFactoryStrategy localCacheFactoryStrategy;
+    private static CacheFactoryStrategy clusteredCacheFactoryStrategy;
     private static Thread statsThread;
 
     public static final int DEFAULT_MAX_CACHE_SIZE = 1024 * 256;
@@ -407,15 +408,11 @@ public class CacheFactory {
      * @param cache the cache used for holding the lock.
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
-    public static Lock getLock(Object key, Cache cache) {
+    public static synchronized Lock getLock(Object key, Cache cache) {
         if (localOnly.contains(cache.getName())) {
         	return localCacheFactoryStrategy.getLock(key, cache);
         } else {
-        	// synchronized here because the backing cache
-        	// will be swapped cluster startup/shutdown (OF-588)
-        	synchronized(cache) {
-        		return cacheFactoryStrategy.getLock(key, cache);
-        	}
+        	return cacheFactoryStrategy.getLock(key, cache);
         }
     }
 
@@ -604,19 +601,13 @@ public class CacheFactory {
 
     public static void startClustering() {
         try {
-            cacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
-                    getClusteredCacheStrategyClassLoader())
-                    .newInstance();
-            clusteringStarting = cacheFactoryStrategy.startCluster();
+        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
+                    							getClusteredCacheStrategyClassLoader()).newInstance();
+            clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
+        } catch (Exception e) {
+        	log.error("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found", e);
         }
-        catch (Exception e) {
-            log.error("Unable to start clustering - continuing in local mode", e);
-        }
-        if (!clusteringStarting) {
-            // Revert to local cache factory if cluster fails to start
-        	cacheFactoryStrategy = localCacheFactoryStrategy;
-        }
-        else {
+        if (clusteringStarting) {
             if (statsThread == null) {
                 // Start a timing thread with 1 second of accuracy.
                 statsThread = new Thread("Cache Stats") {
@@ -676,7 +667,7 @@ public class CacheFactory {
 
     public static void stopClustering() {
         // Stop the cluster
-        cacheFactoryStrategy.stopCluster();
+    	clusteredCacheFactoryStrategy.stopCluster();
         // Set the strategy to local
         cacheFactoryStrategy = localCacheFactoryStrategy;
     }
@@ -685,44 +676,39 @@ public class CacheFactory {
      * Notification message indicating that this JVM has joined a cluster.
      */
     @SuppressWarnings("unchecked")
-	public static void joinedCluster() {
+	public static synchronized void joinedCluster() {
+        cacheFactoryStrategy = clusteredCacheFactoryStrategy;
         // Loop through local caches and switch them to clustered cache (purge content)
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
             if (localOnly.contains(cache.getName())) continue;
-            synchronized (cache) {
-	            cache.clear();
-	            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-	            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-	            cacheWrapper.setWrappedCache(clusteredCache);
-            }
+            cache.clear();
+            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+            Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+            cacheWrapper.setWrappedCache(clusteredCache);
         }
         clusteringStarting = false;
         clusteringStarted = true;
+        log.info("Clustering started; cache migration complete");
     }
 
     /**
      * Notification message indicating that this JVM has left the cluster.
      */
     @SuppressWarnings("unchecked")
-	public static void leftCluster() {
+	public static synchronized void leftCluster() {
         clusteringStarted = false;
-        // Loop through clustered caches and change them to local caches (purge content)
-        try {
-            cacheFactoryStrategy = localCacheFactoryStrategy;
+        cacheFactoryStrategy = localCacheFactoryStrategy;
 
-            for (Cache cache : getAllCaches()) {
-                // skip local-only caches
-                if (localOnly.contains(cache.getName())) continue;
-                synchronized (cache) {
-	                cache.clear();
-	                CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-	                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-	                cacheWrapper.setWrappedCache(standaloneCache);
-                }
-        	}
-        } catch (Exception e) {
-            log.error("Error reverting caches to local caches", e);
-        }
+        // Loop through clustered caches and change them to local caches (purge content)
+        for (Cache cache : getAllCaches()) {
+            // skip local-only caches
+            if (localOnly.contains(cache.getName())) continue;
+            cache.clear();
+            CacheWrapper cacheWrapper = ((CacheWrapper) cache);
+            Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+            cacheWrapper.setWrappedCache(standaloneCache);
+    	}
+        log.info("Clustering stopped; cache migration complete");
     }
 }

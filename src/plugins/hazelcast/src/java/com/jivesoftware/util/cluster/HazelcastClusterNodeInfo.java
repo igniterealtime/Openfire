@@ -22,6 +22,7 @@ package com.jivesoftware.util.cluster;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.util.StringUtils;
 
 import com.hazelcast.core.Member;
 
@@ -44,9 +45,9 @@ public class HazelcastClusterNodeInfo implements ClusterNodeInfo {
 
     public HazelcastClusterNodeInfo(Member member, Long joinedTime) {
         hostname = member.getInetSocketAddress().getHostName();
-        nodeID = NodeID.getInstance(member.getUuid().getBytes());
+        nodeID = NodeID.getInstance(StringUtils.getBytes(member.getUuid()));
         this.joinedTime = joinedTime;
-        seniorMember = ClusterManager.getSeniorClusterMember().equals(member.getUuid().getBytes());
+        seniorMember = ClusterManager.getSeniorClusterMember().equals(StringUtils.getBytes(member.getUuid()));
     }
 
     public String getHostName() {

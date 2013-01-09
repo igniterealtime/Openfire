@@ -792,13 +792,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             }
         }
     }
-
+    
+    @SuppressWarnings("unchecked")
     public void joinedCluster(byte[] nodeID) {
-        @SuppressWarnings("unchecked")
-        List<RoomInfo> result =
-                (List<RoomInfo>) CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
-        if (result != null) {
-            for (RoomInfo roomInfo : result) {
+        Object result = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
+        if (result instanceof List<?>) {
+            List<RoomInfo> rooms = (List<RoomInfo>) result;
+            for (RoomInfo roomInfo : rooms) {
                 LocalMUCRoom remoteRoom = roomInfo.getRoom();
                 MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
                 LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());

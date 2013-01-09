@@ -131,7 +131,8 @@ public class HazelcastPlugin extends TimerTask implements Plugin, PropertyEventL
     }
 
     public void destroyPlugin() {
-        ClusterManager.shutdown();
+        // Shutdown is initiated by XMPPServer before unloading plugins
+    	// ClusterManager.shutdown();
 
         // Set the old serialization strategy was using before clustering was loaded
         ExternalizableUtil.getInstance().setStrategy(serializationStrategy);

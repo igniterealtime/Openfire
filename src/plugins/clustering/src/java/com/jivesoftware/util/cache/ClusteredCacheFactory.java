@@ -332,12 +332,31 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
-	@Override
 	public String getPluginName() {
 		return "clustering";
 	}
 
-    private static Invocable buildInvocable(final ClusterTask task) {
+	public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
+        // Get members of the service
+        Set setMembers = taskService.getInfo().getServiceMembers();
+        Member member = null;
+        // Find the member matching the requested nodeID
+        for (Iterator it=setMembers.iterator(); it.hasNext();) {
+            member = (Member) it.next();
+            if (Arrays.equals(member.getUid().toByteArray(), nodeID)) {
+                break;
+            }
+        }
+
+        // Check that the requested member was found
+        if (member != null) {
+            return new CoherenceClusterNodeInfo(member);
+        } else {
+        	return null;
+        }
+	}
+
+	private static Invocable buildInvocable(final ClusterTask task) {
         return new AbstractInvocable() {
             public void run() {
                 task.run();

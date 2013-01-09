@@ -204,4 +204,9 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
             this.lock = lock;
         }
     }
+
+	public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
+		// not clustered
+		return null;
+	}
 }

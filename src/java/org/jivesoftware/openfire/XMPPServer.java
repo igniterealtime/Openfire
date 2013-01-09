@@ -47,6 +47,7 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.openfire.clearspace.ClearspaceManager;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -930,6 +931,7 @@ public class XMPPServer {
      */
     private void shutdownServer() {
         shuttingDown = true;
+        ClusterManager.shutdown();
         // Notify server listeners that the server is about to be stopped
         for (XMPPServerListener listener : listeners) {
             listener.serverStopping();

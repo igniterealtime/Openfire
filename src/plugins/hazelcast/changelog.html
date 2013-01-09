@@ -44,6 +44,19 @@
 Hazelcast Clustering Plugin Changelog
 </h1>
 
+<p><b>1.0.2</b> -- January 8, 2013</p>
+<p>This release addresses a number of issues and other feedback received via the 
+<a href="http://community.igniterealtime.org/message/224947#224947">Hazelcast announcement</a>
+posted in the Openfire community forum:</p>
+<ul>
+     <li>Fixed cluster serialization issues for null collection objects.</li>
+     <li>Improved error handling for remote sessions from invalid/offline cluster members.</li>
+     <li>Removed extraneous IllegalStateException thrown during certain cluster tasks.</li>
+     <li>Avoid encoding issues across cluster members by forcing UTF-8 for nodeID strings.</li>
+     <li>Added nodeID to the system clustering overview page in the admin console.</li>
+     <li>Updated cache configuration to prevent eviction for critical application components.</li>
+</ul>
+
 <p><b>1.0.1</b> -- December 14, 2012</p>
 
 <ul>

@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.cluster;
 
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
@@ -96,7 +97,7 @@ public class NodeID implements Externalizable {
     
     @Override
     public String toString() {
-    	return new String(nodeID);
+    	return StringUtils.getString(nodeID);
     }
 
     public byte[] toByteArray() {

@@ -188,4 +188,11 @@ public interface CacheFactoryStrategy {
      * @return the plugin name for this clustering implementation
      */
     String getPluginName();
+
+    /**
+     * Returns the node info for the given cluster node
+     * @param nodeID The target cluster node
+     * @return The info for the cluster node, or null if not found
+     */
+	ClusterNodeInfo getClusterNodeInfo(byte[] nodeID);
 }

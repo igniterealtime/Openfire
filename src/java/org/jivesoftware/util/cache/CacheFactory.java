@@ -565,6 +565,15 @@ public class CacheFactory {
     public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
+    
+    /**
+     * Returns the node info for the given cluster node
+     * @param nodeID The target cluster node 
+     * @return The info for the cluster node or null if not found
+     */
+    public static ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
+    	return cacheFactoryStrategy.getClusterNodeInfo(nodeID);
+    }
 
     public static String getPluginName() {
         return cacheFactoryStrategy.getPluginName();

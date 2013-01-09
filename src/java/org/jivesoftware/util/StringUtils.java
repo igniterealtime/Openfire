@@ -1113,8 +1113,7 @@ public class StringUtils {
 	 * &lt; &gt; &quot; ' % ; ) ( &amp; + -
 	 * </pre>
 	 * 
-	 * @param string
-	 *            input
+	 * @param input the string to be scrubbed
 	 * @return Input without certain characters;
 	 */
 	public static String removeXSSCharacters(String input) {
@@ -1124,5 +1123,38 @@ public class StringUtils {
 			input = input.replace(xss[i], "");
 		}
 		return input;
+	}
+	
+	/**
+	 * Returns the UTF-8 bytes for the given String, suppressing
+	 * UnsupportedEncodingException (in lieu of log message)
+	 * 
+	 * @param input The source string
+	 * @return The UTF-8 encoding for the given string
+	 */
+	public static byte[] getBytes(String input) {
+		try {
+			return input.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException uee) {
+			Log.warn("Unable to encode string using UTF-8: " + input);
+			return input.getBytes(); // default encoding
+		}
+	}
+	
+	/**
+	 * Returns the UTF-8 String for the given byte array, suppressing
+	 * UnsupportedEncodingException (in lieu of log message)
+	 * 
+	 * @param input The source byte array
+	 * @return The UTF-8 encoded String for the given byte array
+	 */
+	public static String getString(byte[] input) {
+		try {
+			return new String(input, "UTF-8");
+		} catch (UnsupportedEncodingException uee) {
+			String result = new String(input); // default encoding
+			Log.warn("Unable to decode byte array using UTF-8: " + result);
+			return result;
+		}
 	}
 }

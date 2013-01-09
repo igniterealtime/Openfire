@@ -43,6 +43,7 @@ import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheWrapper;
@@ -413,8 +414,8 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
     private class DirectedPresenceListener implements EntryListener {
 
         public void entryAdded(EntryEvent event) {
-			byte[] nodeID = event.getMember().getUuid().getBytes();
-            // Ignore events origintated from this JVM
+			byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
+            // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
                 RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
@@ -438,7 +439,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         }
 
         public void entryUpdated(EntryEvent event) {
-			byte[] nodeID = event.getMember().getUuid().getBytes();
+			byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
             // Ignore events originated from this JVM
             if (nodeID != null && !XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -471,7 +472,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
                 // Nothing to remove
                 return;
             }
-            byte[] nodeID = event.getMember().getUuid().getBytes();
+            byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 String sender = event.getKey().toString();
                 nodePresences.get(NodeID.getInstance(nodeID)).remove(sender);
@@ -564,8 +565,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         simulateCacheInserts(multiplexerSessionsCache);
         simulateCacheInserts(incomingServerSessionsCache);
         simulateCacheInserts(directedPresencesCache);
-        // Set the new ID of this cluster node
-        XMPPServer.getInstance().setNodeID(NodeID.getInstance(CacheFactory.getClusterMemberID()));
+
         // Trigger events
         ClusterManager.fireJoinedCluster(false);
         if (CacheFactory.isSeniorClusterMember()) {
@@ -612,17 +612,17 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         if (event.getMember().localMember()) { // We left and re-joined the cluster
             joinCluster();
         } else {
-            nodePresences.put(NodeID.getInstance(event.getMember().getUuid().getBytes()),
+            nodePresences.put(NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid())),
                     new ConcurrentHashMap<String, Collection<String>>());
             // Trigger event that a new node has joined the cluster
-            ClusterManager.fireJoinedCluster(event.getMember().getUuid().getBytes(), true);
+            ClusterManager.fireJoinedCluster(StringUtils.getBytes(event.getMember().getUuid()), true);
         }
         clusterNodesInfo.put(event.getMember().getUuid(), 
         		new HazelcastClusterNodeInfo(event.getMember(), cluster.getClusterTime()));
 	}
 
 	public void memberRemoved(MembershipEvent event) {
-        byte[] nodeID = event.getMember().getUuid().getBytes();
+        byte[] nodeID = StringUtils.getBytes(event.getMember().getUuid());
 
         if (event.getMember().localMember()) {
             logger.info("Leaving cluster: " + nodeID);

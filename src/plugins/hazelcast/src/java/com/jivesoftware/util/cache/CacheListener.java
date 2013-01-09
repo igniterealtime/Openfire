@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.util.StringUtils;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
@@ -63,7 +64,7 @@ class CacheListener implements EntryListener {
     }
 
     void handleMapEvent(EntryEvent event, boolean removal) {
-        NodeID nodeID = NodeID.getInstance(event.getMember().getUuid().getBytes());
+        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
         //ignore items which this node has added
         if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
             Set<String> sessionJIDS = clusterListener.lookupJIDList(nodeID, cacheName);

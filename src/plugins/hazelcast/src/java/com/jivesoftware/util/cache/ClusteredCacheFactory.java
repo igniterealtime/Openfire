@@ -38,6 +38,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
 import org.jivesoftware.util.cache.CacheWrapper;
@@ -53,6 +54,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MultiTask;
+import com.jivesoftware.util.cluster.HazelcastClusterNodeInfo;
 
 /**
  * CacheFactory implementation to use when using Hazelcast in cluster mode.
@@ -197,7 +199,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     public byte[] getSeniorClusterMemberID() {
         if (cluster != null && !cluster.getMembers().isEmpty()) {
         	Member oldest = cluster.getMembers().iterator().next();
-            return oldest.getUuid().getBytes();
+            return StringUtils.getBytes(oldest.getUuid());
         }
         else {
             return null;
@@ -206,7 +208,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     public byte[] getClusterMemberID() {
         if (cluster != null) {
-            return cluster.getLocalMember().getUuid().getBytes();
+            return StringUtils.getBytes(cluster.getLocalMember().getUuid());
         }
         else {
             return null;
@@ -233,7 +235,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 	        hazelcast.getExecutorService().execute(
         		new MultiTask<Object>(new CallableTask<Object>(task), members));
         } else {
-       		logger.debug("No cluster members selected for cluster task " + task.getClass().getName());
+       		logger.warn("No cluster members selected for cluster task " + task.getClass().getName());
         }
     }
 
@@ -244,22 +246,18 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      */
     public boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
     	if (cluster == null) { return false; }
-    	Member target = null;
-    	for(Member member: cluster.getMembers()) {
-    		if (Arrays.equals(member.getUuid().getBytes(), nodeID)) {
-    			target = member;
-    			break;
-    		}
-    	}
+    	Member member = getMember(nodeID);
         // Check that the requested member was found
-        if (target != null) {
+        if (member != null) {
             // Asynchronously execute the task on the target member
     		logger.debug("Executing asynchronous DistributedTask: " + task.getClass().getName());
 	        hazelcast.getExecutorService().execute(
-        		new DistributedTask<Object>(new CallableTask<Object>(task), target));
+        		new DistributedTask<Object>(new CallableTask<Object>(task), member));
             return true;
-        }
-        throw new IllegalStateException("Requested node " + nodeID + " not found in cluster");
+        } else {
+	        logger.warn("Requested node " + StringUtils.getString(nodeID) + " not found in cluster");
+        	return false;
+		}
     }
 
     /*
@@ -292,7 +290,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		logger.error("Failed to execute cluster task", e);
         	}
         } else {
-       		logger.debug("No cluster members selected for cluster task " + task.getClass().getName());
+       		logger.warn("No cluster members selected for cluster task " + task.getClass().getName());
         }
         return result;
     }
@@ -304,19 +302,13 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      */
     public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
     	if (cluster == null) { return null; }
-    	Member target = null;
-    	for(Member member: cluster.getMembers()) {
-       		if (Arrays.equals(member.getUuid().getBytes(), nodeID)) {
-    			target = member;
-    			break;
-    		}
-    	}
+    	Member member = getMember(nodeID);
     	Object result = null;
         // Check that the requested member was found
-        if (target != null) {
+        if (member != null) {
             // Asynchronously execute the task on the target member
         	DistributedTask<Object> distributedTask = new DistributedTask<Object>(
-        			new CallableTask<Object>(task), target);
+        			new CallableTask<Object>(task), member);
     		logger.debug("Executing DistributedTask: " + task.getClass().getName());
 	        hazelcast.getExecutorService().execute(distributedTask);
             try { 
@@ -328,9 +320,30 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		logger.error("Failed to execute cluster task", e);
         	}
         } else {
-        	throw new IllegalStateException("Requested node " + nodeID + " not found in cluster");
+        	logger.warn("Requested node " + StringUtils.getString(nodeID) + " not found in cluster");
         }
         return result;
+    }
+    
+    public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
+    	if (cluster == null) { return null; }
+    	ClusterNodeInfo result = null;
+    	Member member = getMember(nodeID);
+    	if (member != null) {
+    		result = new HazelcastClusterNodeInfo(member, cluster.getClusterTime());
+    	}
+    	return result;
+    }
+    
+    private Member getMember(byte[] nodeID) {
+    	Member result = null;
+    	for(Member member: cluster.getMembers()) {
+       		if (Arrays.equals(StringUtils.getBytes(member.getUuid()), nodeID)) {
+    			result = member;
+    			break;
+    		}
+    	}
+    	return result;
     }
 
     public void updateCacheStats(Map<String, Cache> caches) {

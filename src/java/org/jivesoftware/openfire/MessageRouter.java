@@ -20,6 +20,8 @@
 
 package org.jivesoftware.openfire;
 
+   import java.util.StringTokenizer;
+
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
@@ -27,12 +29,12 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-
-import java.util.StringTokenizer;
 
 /**
  * <p>Route message packets throughout the server.</p>
@@ -44,6 +46,8 @@ import java.util.StringTokenizer;
  * @author Iain Shigeoka
  */
 public class MessageRouter extends BasicModule {
+	
+	private static Logger log = LoggerFactory.getLogger(MessageRouter.class); 
 
     private OfflineMessageStrategy messageStrategy;
     private RoutingTable routingTable;
@@ -105,6 +109,7 @@ public class MessageRouter extends BasicModule {
                     routingTable.routePacket(recipientJID, packet, false);
                 }
                 catch (Exception e) {
+                	log.error("Failed to route packet: " + packet.toXML(), e);
                     routingFailed(recipientJID, packet);
                 }
             }

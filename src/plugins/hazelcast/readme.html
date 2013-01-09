@@ -103,8 +103,12 @@ between subsequent attempts to start the cluster.</li>
 when running a synchronous task across members of the cluster.</li>
 <li><i>hazelcast.config.xml.filename</i> (hazelcast-cache-config.xml): Name
 of the Hazelcast configuration file. By overriding this value you can easily
-install a custom cluster configuration file in the Hazelcast plugin /classes/
-directory, or in the classpath of your own custom plugin.</li>
+install a custom cache configuration file in the Hazelcast plugin /classes/
+directory, in the directory named via the <i>hazelcast.config.xml.directory</i> 
+property (described below), or in the classpath of your own custom plugin.</li>
+<li><i>hazelcast.config.xml.directory</i> ({OPENFIRE_HOME}/conf): Directory
+that will be added to the plugin's classpath. This allows a custom Hazelcast 
+configuration file to be located outside the Openfire home directory.</li>
 </ol>
 </p>
 <p>

@@ -300,7 +300,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		            routed = false;
 		        }
 		        else {
-		            if (server.getNodeID().equals(clientRoute.getNodeID())) {
+		            if (localRoutingTable.isLocalRoute(jid)) {
 		                // This is a route to a local user hosted in this node
 		                try {
 		                    localRoutingTable.getRoute(jid.toString()).process(packet);

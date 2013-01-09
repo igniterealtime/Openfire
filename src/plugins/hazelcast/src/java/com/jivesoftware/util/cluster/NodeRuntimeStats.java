@@ -38,6 +38,7 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
  */
 public class NodeRuntimeStats {
 
+	// This properties file is located in the Hazelcast JAR
     private static final ResourceBundle config = ResourceBundle.getBundle("hazelcast-runtime");
     
     public static String getProviderConfig(String key) {

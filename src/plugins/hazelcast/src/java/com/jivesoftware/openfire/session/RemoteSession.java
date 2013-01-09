@@ -24,6 +24,7 @@ import java.util.Date;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ClusterTask;
@@ -166,38 +167,32 @@ public abstract class RemoteSession implements Session {
      *
      * @param task        the ClusterTask object to be invoked on a given cluster member.
      * @return result of remote operation.
-     * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
     protected Object doSynchronousClusterTask(ClusterTask task) {
-        try {
-        	return CacheFactory.doSynchronousClusterTask(task, nodeID);
-        } catch (IllegalStateException ise) {
-        	if (task instanceof RemoteSessionTask) {
-	        	// clean up invalid session
-	        	SessionManager.getInstance().removeSession(null, 
-	        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
-        	}
-        	throw ise;
+    	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
+    	Object result = null;
+    	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
+        	SessionManager.getInstance().removeSession(null, 
+        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+    	} else {
+        	result = (info == null) ? null : CacheFactory.doSynchronousClusterTask(task, nodeID);
         }
+    	return result;
     }
 
     /**
      * Invokes a task on the remote cluster member in an asynchronous fashion.
      *
      * @param task the task to be invoked on the specified cluster member.
-     * @throws IllegalStateException if requested node was not found or not running in a cluster. 
      */
     protected void doClusterTask(ClusterTask task) {
-        try {
-        	CacheFactory.doClusterTask(task, nodeID);
-        } catch (IllegalStateException ise) {
-        	if (task instanceof RemoteSessionTask) {
-	        	// clean up invalid session
-	        	SessionManager.getInstance().removeSession(null, 
-	        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
-        	}
-        	throw ise;
-        }
+    	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
+    	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
+        	SessionManager.getInstance().removeSession(null, 
+        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+		} else {
+			CacheFactory.doClusterTask(task, nodeID);
+	    }
     }
 
     /**

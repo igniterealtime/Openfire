@@ -88,6 +88,7 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
      */
     public int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException {
     	Map<String, Set<String>> result = (Map<String, Set<String>>) SerializationHelper.readObject(in);
+    	if (result == null) return 0;
         map.putAll(result);
         return result.size();
     }
@@ -224,15 +225,17 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
     public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value,
                                             ClassLoader loader) throws IOException {
     	Collection<Externalizable> result = (Collection<Externalizable>) SerializationHelper.readObject(in);
-        ((Collection<Externalizable>)value).addAll(result);
-        return result.size();
+    	if (result == null) return 0;
+    	((Collection<Externalizable>)value).addAll(result);
+    	return result.size();
     }
 
     public int readSerializableCollection(DataInput in, Collection<? extends Serializable> value,
             ClassLoader loader) throws IOException {
     	Collection<Serializable> result = (Collection<Serializable>) SerializationHelper.readObject(in);
-        ((Collection<Serializable>)value).addAll(result);
-        return result.size();
+    	if (result == null) return 0;
+		((Collection<Serializable>)value).addAll(result);
+		return result.size();
 }
 
     public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
@@ -245,14 +248,16 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
     
     public int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader) throws IOException {
     	Map<String, Externalizable> result = (Map<String, Externalizable>) SerializationHelper.readObject(in);
-        ((Map<String, Externalizable>)map).putAll(result);
-        return result.size();
+    	if (result == null) return 0;
+		((Map<String, Externalizable>)map).putAll(result);
+		return result.size();
     }
 
     public int readSerializableMap(DataInput in, Map<? extends Serializable, ? extends Serializable> map, ClassLoader loader) throws IOException {
     	Map<String, Serializable> result = (Map<String, Serializable>) SerializationHelper.readObject(in);
-        ((Map<String, Serializable>)map).putAll(result);
-        return result.size();
+    	if (result == null) return 0;
+    	((Map<String, Serializable>)map).putAll(result);
+    	return result.size();
     }
     
     public void writeStrings(DataOutput out, Collection<String> collection) throws IOException {
@@ -261,9 +266,8 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
 
     public int readStrings(DataInput in, Collection<String> collection) throws IOException {
         Collection<String> result = (Collection<String>) SerializationHelper.readObject(in);
-        for (String string: result) {
-        	collection.add(string);
-        }
+        if (result == null) return 0;
+        collection.addAll(result);
         return result.size();
     }
 }

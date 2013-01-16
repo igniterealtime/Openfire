@@ -435,7 +435,16 @@ public class CacheFactory {
      * this JVM to join a cluster.
      */
     public static boolean isClusteringAvailable() {
-        return getMaxClusterNodes() > 1;
+    	if (clusteredCacheFactoryStrategy == null) {
+	        try {
+	        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(
+	        			clusteredCacheFactoryClass, true,
+	        			getClusteredCacheStrategyClassLoader()).newInstance();
+	        } catch (Exception e) {
+	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
+	        }
+    	}
+    	return (clusteredCacheFactoryStrategy != null);
     }
 
     /**
@@ -609,13 +618,9 @@ public class CacheFactory {
     }
 
     public static void startClustering() {
-        try {
-        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(clusteredCacheFactoryClass, true,
-                    							getClusteredCacheStrategyClassLoader()).newInstance();
-            clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
-        } catch (Exception e) {
-        	log.error("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found", e);
-        }
+    	if (isClusteringAvailable()) {
+    		clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
+    	}
         if (clusteringStarting) {
             if (statsThread == null) {
                 // Start a timing thread with 1 second of accuracy.
@@ -677,6 +682,7 @@ public class CacheFactory {
     public static void stopClustering() {
         // Stop the cluster
     	clusteredCacheFactoryStrategy.stopCluster();
+    	clusteredCacheFactoryStrategy = null;
         // Set the strategy to local
         cacheFactoryStrategy = localCacheFactoryStrategy;
     }
@@ -691,7 +697,6 @@ public class CacheFactory {
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
             if (localOnly.contains(cache.getName())) continue;
-            cache.clear();
             CacheWrapper cacheWrapper = ((CacheWrapper) cache);
             Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             cacheWrapper.setWrappedCache(clusteredCache);
@@ -713,7 +718,6 @@ public class CacheFactory {
         for (Cache cache : getAllCaches()) {
             // skip local-only caches
             if (localOnly.contains(cache.getName())) continue;
-            cache.clear();
             CacheWrapper cacheWrapper = ((CacheWrapper) cache);
             Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
             cacheWrapper.setWrappedCache(standaloneCache);

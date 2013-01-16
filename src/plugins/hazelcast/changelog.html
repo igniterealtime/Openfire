@@ -44,7 +44,16 @@
 Hazelcast Clustering Plugin Changelog
 </h1>
 
-<p><b>1.0.2</b> -- January 8, 2013</p>
+<p><b>1.0.3</b> -- January 15, 2013</p>
+<p>Minor improvements for plugin installation and upgrade:</p>
+<ul>
+     <li>Modify timing for cluster startup/shutdown operations to improve plugin installation and upgrade.</li>
+     <li>Defer initialization of cluster event dispatcher thread until cluster is actually enabled.</li>
+     <li>Improved <code>readme.html</code> to describe upgrade procedures, DNS round-robin configuration, etc.</li>
+     <li>Upgraded Hazelcast to version 2.5.</li>
+</ul>
+
+<p><b>1.0.2</b> -- January 9, 2013</p>
 <p>This release addresses a number of issues and other feedback received via the 
 <a href="http://community.igniterealtime.org/message/224947#224947">Hazelcast announcement</a>
 posted in the Openfire community forum:</p>

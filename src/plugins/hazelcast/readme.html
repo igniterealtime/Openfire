@@ -12,8 +12,12 @@
             font-size : 0.8em;
         }
         H2 {
-             font-size : 10pt;
+             font-size : 11pt;
              font-weight : bold;
+        }
+        H3 {
+             font-size : 10pt;
+             font-style : italic;
         }
         A:hover {
             text-decoration : none;
@@ -53,7 +57,7 @@
 <h2>Overview</h2>
 <p>
 The Hazelcast plugin adds support for running multiple redundant Openfire
-servers together in a cluster.  By running Openfire in a cluster, you can
+servers together in a cluster.  By running Openfire as a cluster, you can
 distribute the connection load among several servers, while also providing
 failover in the event that one of your servers fails. This plugin is a
 drop-in replacement for the original Openfire clustering plugin, using the
@@ -61,32 +65,98 @@ open source <a href="http://www.hazelcast.com">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 2.4.1.
+The current Hazelcast release is version 2.5.
 </p>
 <h2>Installation</h2>
 <p>
-To install Hazelcast, simply drop the hazelcast.jar into $OPENFIRE_HOME/plugins along
-with any other plugins you may have installed. Note that Hazelcast and the original
-Openfire clustering plugin (clustering.jar) are mutually exclusive. You will need to
-remove the clustering plugin before installing Hazelcast into your Openfire instance.
+To create an Openfire cluster, you should have at least two Openfire servers,
+and each server must have the Hazelcast plugin installed. To install Hazelcast, 
+simply drop the hazelcast.jar into $OPENFIRE_HOME/plugins along with any other 
+plugins you may have installed. You may also use the Plugins page from the 
+admin console to install the plugin. Note that all servers in a given cluster 
+must be configured to share a single external database (not the Embedded DB). 
 </p>
 <p>
-To create an Openfire cluster, you will need at least two separate Openfire servers,
-and each server must have the Hazelcast plugin installed. By default, the servers
+By default during the Openfire startup/initialization process, the servers
 will discover each other by exchanging UDP (multicast) packets via a configurable
-IP address and port, but other initialization options are available if your network
-does not support multicast communication (see "Configuration" below).
+IP address and port. However, be advised that many other initialization options 
+are available and may be used if your network does not support multicast 
+communication (see <a href="#config">Configuration</a> below).
+</p>
+<p>After the Hazelcast plugin has been deployed to each of the servers, use the 
+radio button controls located on the Clustering page in the admin console to 
+activate/enable the cluster. You only need to enable clustering once; the change 
+will be propagated to the other servers automatically. After refreshing the 
+Clustering page you will be able to see all the servers that have successfully 
+joined the cluster.
 </p>
 <p>
-In addition, you will need some form of load balancer to distribute the connection
-load among the members of your Openfire cluster. There are several commercial and
-open source alternatives for this, including the Apache web server (httpd) plus
-<a href="http://httpd.apache.org/docs/current/mod/mod_proxy_balancer.html">mod_proxy_balancer</a>
-(if you are using the HTTP/BOSH Openfire connector). Some popular solutions include the
+Note that Hazelcast and the earlier clustering plugins (clustering.jar and enterprise.jar) 
+are mutually exclusive. You will need to remove any existing older clustering plugin(s) 
+before installing Hazelcast into your Openfire server(s).
+</p>
+<p>
+With your cluster up and running, you will now want some form of load balancer to 
+distribute the connection load among the members of your Openfire cluster. There 
+are several commercial and open source alternatives for this. For example, 
+if you are using the HTTP/BOSH Openfire connector to connect to Openfire, 
+the Apache web server (httpd) plus the corresponding proxy balancer module
+(<a href="http://httpd.apache.org/docs/current/mod/mod_proxy_balancer.html">mod_proxy_balancer</a>)
+could provide a workable solution. Some other popular options include the
 <a href="http://www.f5.com/products/big-ip/big-ip-local-traffic-manager/overview/">F5 LTM</a>
 (commercial) and <a href="http://haproxy.1wt.eu/">HAProxy</a> (open source), among
-<a href="http://en.wikipedia.org/wiki/Load_balancing_%28computing%29">many others</a>.
+<a href="http://en.wikipedia.org/wiki/Load_balancing_%28computing%29">many more</a>.
+<p>
+A simple round-robin DNS configuration can help distribute XMPP connections across multiple
+Openfire servers in a cluster. While popular as a lightweight and low-cost way to provide
+basic scalability, note that this approach is not considered adequate for true load balancing 
+nor does it provide high availability (HA) from a client perspective. If you are evaluating 
+these options, you can <a href="http://en.wikipedia.org/wiki/Round-robin_DNS">read more here</a>. 
 </p>
+<h2>Upgrading the Hazelcast Plugin</h2>
+<p>
+The process of upgrading the Hazelcast plugin requires a few additional steps when
+compared with a traditional plugin due to the cross-server dependencies within a running
+cluster. Practically speaking, all the members of the cluster need to be running the
+same version of the plugin to prevent various errors and data synchronization issues.
+</p>
+<h3>Option 1: Offline</h3>
+<p><b>NOTE:</b> This upgrade procedure is neat and tidy, but will incur a brief service outage.
+</p>
+<ol>
+<li>Shut down Openfire on all servers in the cluster.</li>
+<li>For the first server in the cluster, perform the following steps:</li>
+<ol type="a">
+<li>Remove the existing <code>plugins/hazelcast.jar</code></li>
+<li>Remove (recursively) the <code>plugins/hazelcast</code> directory</li>
+<li>Copy the updated <code>hazelcast.jar</code> into the <code>plugins</code> directory</li>
+<li>Restart Openfire to unpack and install the updated plugin</li>
+</ol>
+<li>Repeat these steps for the remaining servers in the cluster.</li>
+</ol>
+<h3>Option 2: Online</h3> 
+<p><b>NOTE:</b> Using this approach you should be able to continue servicing
+XMPP connections during the upgrade.
+</p>
+<ol>
+<li>Shut down Openfire on all servers <b>except one</b>.</li>
+<li>Using the Plugins page from the online server, remove the existing Hazelcast plugin.</li>
+<li>Upload the new Hazelcast plugin and confirm it is installed (refresh the page if necessary)</li>
+<li>Use the "Offline" steps above to upgrade and restart the remaining servers.</li>
+</ol>
+<h3>Option 3: Split-Brain</h3> 
+<p><b>NOTE:</b> Use this approach if you only have access to the Openfire console.
+Note however that users may not be able to communicate with each other during the upgrade 
+(if they are connected to different servers).
+</p>
+<ol>
+<li>From the Clustering page in the Openfire admin console, disable clustering. This will disable
+clustering for all members of the cluster.</li>
+<li>For each server, update the Hazelcast plugin using the Plugins page.</li>
+<li>After upgrading the plugin on all servers, use the Clustering page to enable clustering.
+This will activate clustering for all members of the cluster.</li>
+</ol>
+<a name="config" />
 <h2>Configuration</h2>
 <p>
 There are several configuration options built into the Hazelcast plugin
@@ -112,7 +182,7 @@ configuration file to be located outside the Openfire home directory.</li>
 </ol>
 </p>
 <p>
-The Hazelcast plugin uses the <a href="http://www.hazelcast.com/docs/2.3/manual/single_html/#Config">
+The Hazelcast plugin uses the <a href="http://www.hazelcast.com/docs/2.5/manual/single_html/#Config">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
 By default the cluster members will attempt to discover each other via multicast at the
 following location:
@@ -137,7 +207,7 @@ following alternative:
 &lt;/join&gt;
 ...
 </pre>
-Please refer to the <a href="http://www.hazelcast.com/docs/2.3/manual/single_html/">
+Please refer to the <a href="http://www.hazelcast.com/docs/2.5/manual/single_html/">
 Hazelcast reference manual</a> for more information.
 </p>
 </body>

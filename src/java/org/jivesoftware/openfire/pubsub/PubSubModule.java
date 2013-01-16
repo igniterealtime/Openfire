@@ -34,8 +34,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.cluster.ClusterEventListener;
-import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -68,7 +66,7 @@ import org.xmpp.packet.Presence;
  * @author Matt Tucker
  */
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
-        DiscoItemsProvider, RoutableChannelHandler, PubSubService, ClusterEventListener, PropertyEventListener {
+        DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
 
 	private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
 
@@ -434,8 +432,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         else {
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
         }
-        // Listen to cluster events
-        ClusterManager.addListener(this);
     }
 
     @Override
@@ -501,24 +497,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      */
     public boolean isServiceEnabled() {
         return serviceEnabled;
-    }
-
-    public void joinedCluster() {
-        // Disable the service until we know that we are the senior cluster member
-		// enableService(false);
-    }
-
-    public void joinedCluster(byte[] nodeID) {
-        // Do nothing
-    }
-
-    public void leftCluster() {
-        // Offer the service when not running in a cluster
-		// enableService(true);
-    }
-
-    public void leftCluster(byte[] nodeID) {
-        // Do nothing
     }
 
     public void markedAsSeniorClusterMember() {

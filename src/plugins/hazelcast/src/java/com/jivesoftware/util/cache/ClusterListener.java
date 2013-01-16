@@ -585,8 +585,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         // Clean up all traces. This will set all remote sessions as unavailable
         List<NodeID> nodeIDs = new ArrayList<NodeID>(nodeSessions.keySet());
 
-        // Revert cluster caches to local caches
-        CacheFactory.leftCluster();
         // Trigger event. Wait until the listeners have processed the event. Caches will be populated
         // again with local content.
         ClusterManager.fireLeftCluster();

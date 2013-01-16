@@ -21,6 +21,7 @@
 package org.jivesoftware.openfire.cluster;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -29,6 +30,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,66 +49,95 @@ public class ClusterManager {
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
     private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>(10000);
+    private static Thread dispatcher;
 
     static {
-        Thread thread = new Thread("ClusterManager events dispatcher") {
-            @Override
-			public void run() {
-                for (; ;) {
-                    try {
-                        Event event = events.take();
-                        EventType eventType = event.getType();
-                        // Make sure that CacheFactory is getting this events first (to update cache structure)
-                        if (eventType == EventType.joined_cluster && event.getNodeID() == null) {
-                            // Replace standalone caches with clustered caches. Local cached data is not moved.
-                            CacheFactory.joinedCluster();
-                        }
-                        // Now notify rest of the listeners
-                        for (ClusterEventListener listener : listeners) {
-                            try {
-                                switch (eventType) {
-                                    case joined_cluster: {
-                                        if (event.getNodeID() == null) {
-                                            listener.joinedCluster();
-                                        }
-                                        else {
-                                            listener.joinedCluster(event.getNodeID());
-                                        }
-                                        break;
-                                    }
-                                    case left_cluster: {
-                                        if (event.getNodeID() == null) {
-                                            listener.leftCluster();
-                                        }
-                                        else {
-                                            listener.leftCluster(event.getNodeID());
-                                        }
-                                        break;
-                                    }
-                                    case marked_senior_cluster_member: {
-                                        listener.markedAsSeniorClusterMember();
-                                        break;
-                                    }
-                                    default:
-                                        break;
-                                }
-                            }
-                            catch (Exception e) {
-                                Log.error(e.getMessage(), e);
-                            }
-                        }
-                        // Mark event as processed
-                        event.setProcessed(true);
-                    } catch (InterruptedException e) {
-                        Log.warn(e.getMessage(), e);
-                    } catch (Exception e) {
-                        Log.error(e.getMessage(), e);
-                    }
-                }
-            }
-        };
-        thread.setDaemon(true);
-        thread.start();
+        // Listen for clustering property changes (e.g. enabled/disabled)
+        PropertyEventDispatcher.addListener(new PropertyEventListener() {
+			public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
+			public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			public void xmlPropertySet(String property, Map<String, Object> params) {
+		        if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
+		            if (Boolean.parseBoolean((String) params.get("value"))) {
+		                // Reload/sync all Jive properties
+		            	JiveProperties.getInstance().init();
+		            	ClusterManager.startup();
+		            } else {
+		            	ClusterManager.shutdown();
+		            }
+		        }
+			}
+        });
+    }
+    
+    /**
+     * Instantiate and start the cluster event dispatcher thread
+     */
+    private static void initEventDispatcher() {
+    	if (dispatcher == null || !dispatcher.isAlive()) {
+	        dispatcher = new Thread("ClusterManager events dispatcher") {
+	            @Override
+				public void run() {
+	            	// exit thread if/when clustering is disabled
+	                while (ClusterManager.isClusteringEnabled()) {
+	                    try {
+	                        Event event = events.take();
+	                        EventType eventType = event.getType();
+	                        // Make sure that CacheFactory is getting this events first (to update cache structure)
+	                        if (event.getNodeID() == null) {
+	                        	// Replace standalone caches with clustered caches and migrate data
+		                        if (eventType == EventType.joined_cluster) {
+		                            CacheFactory.joinedCluster();
+		                        } else if (eventType == EventType.left_cluster) {
+		                            CacheFactory.leftCluster();
+		                        }
+	                        }
+	                        // Now notify rest of the listeners
+	                        for (ClusterEventListener listener : listeners) {
+	                            try {
+	                                switch (eventType) {
+	                                    case joined_cluster: {
+	                                        if (event.getNodeID() == null) {
+	                                            listener.joinedCluster();
+	                                        }
+	                                        else {
+	                                            listener.joinedCluster(event.getNodeID());
+	                                        }
+	                                        break;
+	                                    }
+	                                    case left_cluster: {
+	                                        if (event.getNodeID() == null) {
+	                                            listener.leftCluster();
+	                                        }
+	                                        else {
+	                                            listener.leftCluster(event.getNodeID());
+	                                        }
+	                                        break;
+	                                    }
+	                                    case marked_senior_cluster_member: {
+	                                        listener.markedAsSeniorClusterMember();
+	                                        break;
+	                                    }
+	                                    default:
+	                                        break;
+	                                }
+	                            }
+	                            catch (Exception e) {
+	                                Log.error(e.getMessage(), e);
+	                            }
+	                        }
+	                        // Mark event as processed
+	                        event.setProcessed(true);
+	                    } catch (Exception e) {
+	                        Log.warn(e.getMessage(), e);
+	                    }
+	                }
+	            }
+	        };
+	        dispatcher.setDaemon(true);
+	        dispatcher.start();
+    	}
     }
 
     /**
@@ -195,14 +227,12 @@ public class ClusterManager {
      * met again then this JVM stopped being the senior member.
      */
     public static void fireLeftCluster() {
-        // Now notify rest of the listeners
-        for (ClusterEventListener listener : listeners) {
-            try {
-                listener.leftCluster();
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
+        try {
+            Event event = new Event(EventType.left_cluster, null);
+            events.put(event);
+        } catch (InterruptedException e) {
+            // Should never happen
+            Log.error(e.getMessage(), e);
         }
     }
 
@@ -248,45 +278,26 @@ public class ClusterManager {
     /**
      * Starts the cluster service if clustering is enabled. The process of starting clustering
      * will recreate caches as distributed caches.<p>
-     *
-     * Before starting a cluster the
-     * {@link XMPPServer#setRemoteSessionLocator(org.jivesoftware.openfire.session.RemoteSessionLocator)} and
-     * {@link org.jivesoftware.openfire.RoutingTable#setRemotePacketRouter(org.jivesoftware.openfire.RemotePacketRouter)}
-     * need to be properly configured.
      */
     public static synchronized void startup() {
-        if (isClusteringStarted()) {
-            return;
-        }
-        // See if clustering should be enabled.
-        if (isClusteringEnabled()) {
-            if (XMPPServer.getInstance().getRemoteSessionLocator() == null) {
-                throw new IllegalStateException("No RemoteSessionLocator was found.");
-            }
-            if (XMPPServer.getInstance().getRoutingTable().getRemotePacketRouter() == null) {
-                throw new IllegalStateException("No RemotePacketRouter was found.");
-            }
-            // Start up the cluster and reset caches
+        if (isClusteringEnabled() && !isClusteringStarted()) {
+            initEventDispatcher();
             CacheFactory.startClustering();
         }
     }
 
     /**
-     * Shuts down the clustering service. This method should be called when the Jive
-     * system is shutting down, and must not be called otherwise. Failing to call
+     * Shuts down the clustering service. This method should be called when the
+     * system is shutting down or clustering has been disabled. Failing to call
      * this method may temporarily impact cluster performance, as the system will
      * have to do extra work to recover from a non-clean shutdown.
      * If clustering is not enabled, this method will do nothing.
      */
     public static synchronized void shutdown() {
-        // Reset packet router to use to deliver packets to remote cluster nodes
-        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         if (isClusteringStarted()) {
             Log.debug("ClusterManager: Shutting down clustered cache service.");
             CacheFactory.stopClustering();
         }
-        // Reset the session locator to use
-        XMPPServer.getInstance().setRemoteSessionLocator(null);
     }
 
     /**
@@ -309,16 +320,8 @@ public class ClusterManager {
                 return;
             }
         }
+        // set the clustering property (listener will start/stop as needed)
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, Boolean.toString(enabled));
-        if (!enabled) {
-            shutdown();
-        }
-        else {
-            // Reload Jive properties. This will ensure that this nodes copy of the
-            // properties starts correct.
-           JiveProperties.getInstance().init();
-           startup();
-        }
     }
 
     /**

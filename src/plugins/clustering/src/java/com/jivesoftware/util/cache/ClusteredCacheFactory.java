@@ -19,8 +19,19 @@
 
 package com.jivesoftware.util.cache;
 
-import com.jivesoftware.util.cluster.CoherenceClusterNodeInfo;
-import com.tangosol.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
@@ -30,11 +41,17 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
 import org.jivesoftware.util.cache.CacheWrapper;
 import org.jivesoftware.util.cache.ClusterTask;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.jivesoftware.util.cache.ExternalizableUtilStrategy;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
+import com.jivesoftware.openfire.session.RemoteSessionLocator;
+import com.jivesoftware.util.cluster.CoherenceClusterNodeInfo;
+import com.jivesoftware.util.cluster.CoherencePacketRouter;
+import com.tangosol.net.AbstractInvocable;
+import com.tangosol.net.Cluster;
+import com.tangosol.net.Invocable;
+import com.tangosol.net.InvocationService;
+import com.tangosol.net.Member;
 
 /**
  * CacheFactory implementation to use when using Coherence in cluster mode.
@@ -42,6 +59,12 @@ import java.util.concurrent.locks.Lock;
  * @author Gaston Dombiak
  */
 public class ClusteredCacheFactory implements CacheFactoryStrategy {
+
+    /**
+     * Keep serialization strategy the server was using before we set our strategy. We will
+     * restore old strategy when plugin is unloaded.
+     */
+    private ExternalizableUtilStrategy serializationStrategy;
 
     /**
      * Storage for cache statistics
@@ -69,6 +92,14 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         ClassLoader oldLoader = null;
         // Set that we are starting up the cluster service
         state = State.starting;
+        // Set the serialization strategy to use for transmitting objects between node clusters
+        serializationStrategy = ExternalizableUtil.getInstance().getStrategy();
+        ExternalizableUtil.getInstance().setStrategy(new CoherenceExternalizableUtil());
+        // Set session locator to use when in a cluster
+        XMPPServer.getInstance().setRemoteSessionLocator(new RemoteSessionLocator());
+        // Set packet router to use to deliver packets to remote cluster nodes
+        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new CoherencePacketRouter());
+        // Initialize the Coherence cluster configuration
         try {
             // Store previous class loader (in case we change it)
             oldLoader = Thread.currentThread().getContextClassLoader();
@@ -158,6 +189,13 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
         // Reset the node ID
         XMPPServer.getInstance().setNodeID(null);
+
+        // Reset packet router to use to deliver packets to remote cluster nodes
+        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
+        // Reset the session locator to use
+        XMPPServer.getInstance().setRemoteSessionLocator(null);
+        // Set the old serialization strategy was using before clustering was loaded
+        ExternalizableUtil.getInstance().setStrategy(serializationStrategy);
     }
 
     public Cache createCache(String name) {

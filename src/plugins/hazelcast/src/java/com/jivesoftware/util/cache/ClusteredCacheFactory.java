@@ -43,6 +43,8 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactoryStrategy;
 import org.jivesoftware.util.cache.CacheWrapper;
 import org.jivesoftware.util.cache.ClusterTask;
+import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.jivesoftware.util.cache.ExternalizableUtilStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MultiTask;
+import com.jivesoftware.openfire.session.RemoteSessionLocator;
+import com.jivesoftware.util.cluster.ClusterPacketRouter;
 import com.jivesoftware.util.cluster.HazelcastClusterNodeInfo;
 
 /**
@@ -76,6 +80,12 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 	private static Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
 
     /**
+     * Keep serialization strategy the server was using before we set our strategy. We will
+     * restore old strategy when plugin is unloaded.
+     */
+    private ExternalizableUtilStrategy serializationStrategy;
+
+    /**
      * Storage for cache statistics
      */
     private static Map<String, Map<String, long[]>> cacheStats;
@@ -91,6 +101,15 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
     public boolean startCluster() {
         state = State.starting;
+        
+        // Set the serialization strategy to use for transmitting objects between node clusters
+        serializationStrategy = ExternalizableUtil.getInstance().getStrategy();
+        ExternalizableUtil.getInstance().setStrategy(new ClusterExternalizableUtil());
+        // Set session locator to use when in a cluster
+        XMPPServer.getInstance().setRemoteSessionLocator(new RemoteSessionLocator());
+        // Set packet router to use to deliver packets to remote cluster nodes
+        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new ClusterPacketRouter());
+
         ClassLoader oldLoader = null;
         // Store previous class loader (in case we change it)
         oldLoader = Thread.currentThread().getContextClassLoader();
@@ -152,6 +171,13 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
         // Reset the node ID
         XMPPServer.getInstance().setNodeID(null);
+
+        // Reset packet router to use to deliver packets to remote cluster nodes
+        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
+        // Reset the session locator to use
+        XMPPServer.getInstance().setRemoteSessionLocator(null);
+        // Set the old serialization strategy was using before clustering was loaded
+        ExternalizableUtil.getInstance().setStrategy(serializationStrategy);
     }
 
     public Cache createCache(String name) {

@@ -634,6 +634,13 @@ public class PluginManager {
         File pluginFile = pluginDirs.remove(plugin);
         PluginClassLoader pluginLoader = classloaders.remove(plugin);
 
+        // try to close the cached jar files from the plugin class loader
+        if (pluginLoader != null) {
+        	pluginLoader.unloadJarFiles();
+        } else {
+        	Log.warn("No plugin loader found for " + pluginName);
+        }
+
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
@@ -644,10 +651,9 @@ public class PluginManager {
             // Ask the system to clean up references.
             System.gc();
             int count = 0;
-            while (!deleteDir(dir) && count < 5) {
+            while (!deleteDir(dir) && count++ < 5) {
                 Log.warn("Error unloading plugin " + pluginName + ". " + "Will attempt again momentarily.");
                 Thread.sleep(8000);
-                count++;
                 // Ask the system to clean up references.
                 System.gc();
             }

@@ -280,12 +280,14 @@ public class PrivacyList implements Cacheable, Externalizable {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, userJID.toString());
+        ExternalizableUtil.getInstance().writeSafeUTF(out, name);
         ExternalizableUtil.getInstance().writeBoolean(out, isDefault);
         ExternalizableUtil.getInstance().writeSafeUTF(out, asElement().asXML());
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         userJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        name = ExternalizableUtil.getInstance().readSafeUTF(in);
         isDefault = ExternalizableUtil.getInstance().readBoolean(in);
         String xml = ExternalizableUtil.getInstance().readSafeUTF(in);
         try {

@@ -124,7 +124,7 @@ public class SaslServerPlainImpl implements SaslServer {
                     AuthorizeCallback acb = new AuthorizeCallback(principal,username);
                     cbh.handle(new Callback[]{acb});
                     if(acb.isAuthorized()) {
-                        username = acb.getAuthorizationID();
+                        username = acb.getAuthorizedID();
                         completed = true;
                     } else {
                         completed = true;

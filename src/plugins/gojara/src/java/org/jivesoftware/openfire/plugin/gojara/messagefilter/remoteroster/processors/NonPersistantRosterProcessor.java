@@ -15,7 +15,7 @@ import org.xmpp.packet.Presence;
  * {@link RemoteRosterInterceptor}. If the remote contacts should not be saved
  * permanently in the users roster this command will clean up the users roster.
  * If the remote contact went offline it will get removed from user's roster.
- * 
+ * ***
  * @author Holger Bergunde
  * 
  */

@@ -10,15 +10,18 @@ import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.proces
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.CleanUpRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.ClientToComponentUpdateProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.DiscoIQResigteredProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.NonPersistantRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.ReceiveComponentUpdatesProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.SendRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
 
 /**
  * This intercepter handles the main functionality described in the XEP-xxx
@@ -48,12 +51,12 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger,
 				_mySubdomain);
 		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQResigteredProcessor(_mySubdomain);
-		AbstractRemoteRosterProcessor cleanUp = new CleanUpRosterProcessor(rosterMananger, _mySubdomain);
+		AbstractRemoteRosterProcessor nonPersistant = new NonPersistantRosterProcessor(rosterMananger, _mySubdomain);
 		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor(_mySubdomain);
 		_packetProcessor.put("sendRoster", sendroster);
 		_packetProcessor.put("receiveChanges", receiveChanges);
 		_packetProcessor.put("sparkIQRegistered", iqRegistered);
-		_packetProcessor.put("handleCleanUp", cleanUp);
+		_packetProcessor.put("handleNonPersistant", nonPersistant);
 		_packetProcessor.put("clientToComponentUpdate", updateToComponent);
 	}
 
@@ -80,43 +83,51 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 					}
 					return;
 				}
+				
 				@SuppressWarnings("unused")
 				String to = myPacket.getTo().toString();
 				String from = myPacket.getFrom().toString();
-
-				if (myPacket.getType().equals(IQ.Type.get) && from.equals(_mySubdomain)) {
-					if (XpathHelper.findNodesInDocument(myPacket.getElement().getDocument(), "//roster:*").size() == 1) {
+				
+				if (from.equals(_mySubdomain)) {
+					if (myPacket.getType().equals(IQ.Type.get) 
+							&& XpathHelper.findNodesInDocument(myPacket.getElement().getDocument(), "//roster:*").size() == 1) {
 						// This Package is a roster request by remote component
 						_packetProcessor.get("sendRoster").process(packet);
-					}
-				} else if (myPacket.getType().equals(IQ.Type.set) && from.equals(_mySubdomain)) {
-					if (XpathHelper.findNodesInDocument(myPacket.getElement().getDocument(), "//roster:item").size() >= 1) {
+					} else if (myPacket.getType().equals(IQ.Type.set) 
+							&& XpathHelper.findNodesInDocument(myPacket.getElement().getDocument(), "//roster:item").size() >= 1) {
 						// Component sends roster update
 						_packetProcessor.get("receiveChanges").process(packet);
 					}
-				} else if (myPacket.getType().equals(IQ.Type.get)
-						&& myPacket.toString().contains("http://jabber.org/protocol/disco#info")
-						&& myPacket.getTo().toString().equals(_mySubdomain)) {
+				} else if (myPacket.getTo().toString().equals(_mySubdomain) 
+						&& myPacket.getType().equals(IQ.Type.get)
+						&& myPacket.toString().contains("http://jabber.org/protocol/disco#info")) {
 					/*
 					 * modify the disco#info for spark clients if enabled in
 					 * admin panel
 					 */
 					_packetProcessor.get("sparkIQRegistered").process(packet);
-				} else if (myPacket.getType().equals(IQ.Type.set) && myPacket.getTo().toString().equals(_mySubdomain)) {
-					System.out.println("war das ein remove an mich????");
-					_packetProcessor.get("handleCleanUp").process(packet);
+				} 
+			} else if (!JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)) {
+				if (packet instanceof Presence && packet.getFrom().toString().equals(_mySubdomain) 
+						&& !packet.getElement().getStringValue().equals("Connecting")){
+					System.out.println("Test for NonPersistant-Roster Cleanup!");
+					_packetProcessor.get("handleNonPersistant").process(packet);
 				}
 			}
-			// else if (packet instanceof Presence) {
-			// if (packet.getFrom().toString().equals(_mySubdomain)
-			// &&
-			// !JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent",
-			// false)) {
-			// System.out.println("MACH EIN CLEANUP!!!!!!");
-			// _packetProcessor.get("handleCleanUp").process(packet);
-			// }
-			// }
 		}
 	}
-
 }
+
+// currently we dont need this, and it didnt seem to occur often anyway. Will test it later.
+// could potentially save some traffic
+//else if (packet instanceof Presence){
+//	String to = packet.getTo().toString();
+//	if (!to.equals(_mySubdomain) && to.contains(_mySubdomain)){
+//		
+//		Presence myPacket = ((Presence) packet);
+//		if (myPacket.getType().equals(Presence.Type.unavailable) || myPacket.getType().equals(Presence.Type.probe) || 
+//				myPacket.getType().equals(null)){
+//			System.out.println("this presence would be wasted");
+//			throw new PacketRejectedException();
+//		}
+//	} 

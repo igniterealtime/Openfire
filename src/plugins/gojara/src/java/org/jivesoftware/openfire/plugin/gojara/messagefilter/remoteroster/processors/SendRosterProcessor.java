@@ -11,6 +11,7 @@ import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
@@ -42,30 +43,33 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 		Log.debug("Processing packet in SendRosterProcessor for " + _componentName);
 		IQ myPacket = (IQ) packet;
 
-		String from = myPacket.getFrom().toString();
-		String username = getUsernameFromJid(from);
+		String user = myPacket.getTo().toString();
+		String username = getUsernameFromJid(user);
 
 		Roster roster;
-		try {
-			roster = _rosterManager.getRoster(username);
-			Collection<RosterItem> items = roster.getRosterItems();
-			sendRosterToComponent(packet, items);
-		} catch (UserNotFoundException e) {
-			e.printStackTrace();
+		if(JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)){
+			try {
+				roster = _rosterManager.getRoster(username);
+				Collection<RosterItem> items = roster.getRosterItems();
+				sendRosterToComponent(myPacket, items);
+			} catch (UserNotFoundException e) {
+				e.printStackTrace();
+			}
+		} else {
+			sendEmptyRoster(myPacket);
 		}
 	}
 
-	private void sendRosterToComponent(Packet requestPacket, Collection<RosterItem> items) {
+	private void sendRosterToComponent(IQ requestPacket, Collection<RosterItem> items) {
 		Log.debug("Sending contacts from user " + requestPacket.getFrom().toString() + " to external Component");
-		IQ iq = (IQ) requestPacket;
-		IQ response = IQ.createResultIQ(iq);
+		IQ response = IQ.createResultIQ(requestPacket);
 		response.setTo(_componentName);
 		Element query = new DefaultElement("query");
 		for (RosterItem i : items) {
 			if (i.getJid().toString().contains(_componentName)) {
 				Log.debug("Roster exchange for external component " + _componentName + ". Sending user "
 						+ i.getJid().toString());
-				Element item = new DefaultElement("item");
+				Element item = new DefaultElement("item", null);
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
 				item.add(new DefaultAttribute("name", i.getNickname()));
 				item.add(new DefaultAttribute("subscription", "both"));
@@ -78,8 +82,20 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 			}
 		}
 		query.addNamespace("", "jabber:iq:roster");
+		
 		response.setChildElement(query);
 		dispatchPacket(response);
 	}
 
+	private void sendEmptyRoster(Packet requestPacket){
+		Log.debug("Sending nonpersistant-RemoteRosterResponse to external Component");
+		IQ iq = (IQ) requestPacket;
+		IQ response = IQ.createResultIQ(iq);
+		response.setTo(_componentName);
+		Element query = new DefaultElement("query");
+		query.addNamespace("", "jabber:iq:roster");
+		response.setChildElement(query);
+		dispatchPacket(response);
+	}
+	
 }

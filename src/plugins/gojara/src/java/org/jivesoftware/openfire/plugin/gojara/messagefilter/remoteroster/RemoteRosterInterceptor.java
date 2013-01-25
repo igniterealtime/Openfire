@@ -9,7 +9,7 @@ import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.AbstractRemoteRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.CleanUpRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.ClientToComponentUpdateProcessor;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.DiscoIQResigteredProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.DiscoIQRegisteredProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.NonPersistantRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.ReceiveComponentUpdatesProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.SendRosterProcessor;
@@ -50,7 +50,7 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 		AbstractRemoteRosterProcessor sendroster = new SendRosterProcessor(rosterMananger, _mySubdomain);
 		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger,
 				_mySubdomain);
-		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQResigteredProcessor(_mySubdomain);
+		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor(_mySubdomain);
 		AbstractRemoteRosterProcessor nonPersistant = new NonPersistantRosterProcessor(rosterMananger, _mySubdomain);
 		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor(_mySubdomain);
 		_packetProcessor.put("sendRoster", sendroster);
@@ -65,7 +65,7 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 			throws PacketRejectedException {
 		if (!processed && incoming) {
 			if (packet instanceof IQ) {
-				Log.debug("Incomping unprocessed package i might be interested in. Package: \n" + packet.toString()
+				Log.debug("Incoming unprocessed package i might be interested in. Package: \n" + packet.toString()
 						+ "\n");
 				IQ myPacket = (IQ) packet;
 				if (myPacket.getFrom() == null || myPacket.getTo() == null) {
@@ -85,8 +85,8 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 				}
 				
 				@SuppressWarnings("unused")
-				String to = myPacket.getTo().toString();
 				String from = myPacket.getFrom().toString();
+				String to = myPacket.getTo().toString();
 				
 				if (from.equals(_mySubdomain)) {
 					if (myPacket.getType().equals(IQ.Type.get) 
@@ -98,7 +98,7 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 						// Component sends roster update
 						_packetProcessor.get("receiveChanges").process(packet);
 					}
-				} else if (myPacket.getTo().toString().equals(_mySubdomain) 
+				} else if (to.equals(_mySubdomain) 
 						&& myPacket.getType().equals(IQ.Type.get)
 						&& myPacket.toString().contains("http://jabber.org/protocol/disco#info")) {
 					/*

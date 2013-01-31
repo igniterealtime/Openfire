@@ -68,6 +68,8 @@ public class DefaultGroupPropertyMap<K,V> extends HashMap<K,V> {
 		V originalValue = super.put(key, value);
 		// we only support persistence for <String, String>
 		if (persist && key instanceof String && value instanceof String) {
+			if (logger.isDebugEnabled())
+				logger.debug("Persisting group property [" + key + "]: " + value);
 			if (originalValue instanceof String) { // existing property		
 				updateProperty((String)key, (String)value, (String)originalValue);
 			} else {
@@ -471,8 +473,8 @@ public class DefaultGroupPropertyMap<K,V> extends HashMap<K,V> {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, key);
-            pstmt.setString(2, value);
+            pstmt.setString(1, value);
+            pstmt.setString(2, key);
             pstmt.setString(3, group.getName());
             pstmt.executeUpdate();
         }

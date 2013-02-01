@@ -21,11 +21,8 @@
 package org.jivesoftware.openfire.pep;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -57,8 +54,6 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.PresenceEventListener;
-import org.jivesoftware.openfire.user.RemotePresenceEventDispatcher;
-import org.jivesoftware.openfire.user.RemotePresenceEventListener;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -101,7 +96,7 @@ import org.xmpp.packet.Presence;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider, ServerFeaturesProvider,
-        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener, RemotePresenceEventListener,
+        UserIdentitiesProvider, UserItemsProvider, PresenceEventListener,
         RosterEventListener, UserEventListener {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
@@ -128,15 +123,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
 	// depend on database access (ideally, these should get dedicated resource
 	// pools too).
     private ExecutorService executor = null;
-    
-    /**
-     * A map of all known full JIDs that have sent presences from a remote server.
-     * table: key Bare JID (String); value Set of JIDs
-     *
-     * This map is convenient for sending notifications to the full JID of remote users
-     * that have sent available presences to the PEP service.
-     */
-    private Map<String, Set<JID>> knownRemotePresences = new ConcurrentHashMap<String, Set<JID>>();
 
     /**
      * Constructs a new {@link IQPEPHandler} instance.
@@ -189,8 +175,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         
         // Listen to presence events to manage PEP auto-subscriptions.
         PresenceEventDispatcher.addListener(this);
-        // Listen to remote presence events to manage the knownRemotePresences map.
-        RemotePresenceEventDispatcher.addListener(this);
         // Listen to roster events for PEP subscription cancelling on contact deletion.
         RosterEventDispatcher.addListener(this);
         // Listen to user events in order to destroy a PEP service when a user is deleted.
@@ -208,7 +192,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         
         // Remove listeners
         PresenceEventDispatcher.removeListener(this);
-        RemotePresenceEventDispatcher.removeListener(this);
         RosterEventDispatcher.removeListener(this);
         UserEventDispatcher.removeListener(this);        
         
@@ -440,15 +423,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         // Other error flows were handled in pubSubEngine.process(...)
         return null;
     }
-    
-    /**
-     * Returns the knownRemotePresences map.
-     *
-     * @return the knownRemotePresences map
-     */
-    public Map<String, Set<JID>> getKnownRemotePresences() {
-        return knownRemotePresences;
-    }
 
     /**
      * Generates and processes an IQ stanza that subscribes to a PEP service.
@@ -609,60 +583,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         executor.submit(task);
     }
 
-    public void remoteUserAvailable(Presence presence) {
-        // Do nothing if server is not enabled
-        if (!isEnabled()) {
-            return;
-        }
-        JID jidFrom = presence.getFrom();
-        JID jidTo = presence.getTo();
-
-        // Manage the cache of remote presence resources.
-        Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
-
-        if (jidFrom.getResource() != null) {
-            if (remotePresenceSet != null) {
-                remotePresenceSet.add(jidFrom);
-            }
-            else {
-                remotePresenceSet = new HashSet<JID>();
-                remotePresenceSet.add(jidFrom);
-                knownRemotePresences.put(jidTo.toBareJID(), remotePresenceSet);
-            }
-
-            // TODO Check the roster presence subscription to allow or ignore the received presence.
-            // TODO Directed presences should be ignored when no presence subscription exists
-
-            // Send the presence packet recipient's last published items to the remote user.
-            PEPService pepService = pepServiceManager.getPEPService(jidTo.toBareJID());
-            if (pepService != null) {
-                pepService.sendLastPublishedItems(jidFrom);
-            }
-        }
-    }
-
-    public void remoteUserUnavailable(Presence presence) {
-        // Do nothing if server is not enabled
-        if (!isEnabled()) {
-            return;
-        }
-        final JID jidFrom = presence.getFrom();
-        final JID jidTo = presence.getTo();
-
-        // Manage the cache of remote presence resources.
-        final Set<JID> remotePresenceSet = knownRemotePresences.get(jidTo.toBareJID());
-
-        if (remotePresenceSet != null) {
-            remotePresenceSet.remove(jidFrom);
-        }
-    }
-
     public void contactDeleted(Roster roster, RosterItem item) {
         JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
         JID deletedContact = item.getJid();
 
         cancelSubscriptionToPEPService(deletedContact, rosterOwner);
-
     }
 
     public void userDeleting(User user, Map<String, Object> params) {

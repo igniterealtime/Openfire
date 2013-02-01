@@ -348,17 +348,12 @@ public class PEPService implements PubSubService, Cacheable {
         else {
             // Since recipientJID is not local, try to get presence info from cached known remote
             // presences.
-			Map<String, Set<JID>> knownRemotePresences = XMPPServer.getInstance().getIQPEPHandler()
-					.getKnownRemotePresences();
 
-            Set<JID> remotePresenceSet = knownRemotePresences.get(getAddress().toBareJID());
-            if (remotePresenceSet != null) {
-                for (JID remotePresence : remotePresenceSet) {
-                    if (recipientJID.toBareJID().equals(remotePresence.toBareJID())) {
-                        recipientFullJIDs.add(remotePresence);
-                    }
-                }
-            }
+            // TODO: OF-605 the old code depends on a cache that would contain presence state on all (?!) JIDS on all (?!)
+            // remote domains. As we cannot depend on this information to be correct (even if we could ensure that this
+            // potentially unlimited amount of data would indeed be manageable in the first place), this code was removed.
+
+            recipientFullJIDs.add(recipientJID);
         }
 
         if (recipientFullJIDs.isEmpty()) {

@@ -36,8 +36,8 @@ import org.xmpp.packet.JID;
  * @author Gaston Dombiak
  */
 public class DestroyRoomRequest extends MUCRoomTask {
-    private JID alternateJID;
-    private String reason;
+    private JID alternateJID; // Is allowed to be null!
+    private String reason; // Is allowed to be null or empty!
 
     public DestroyRoomRequest() {
     }

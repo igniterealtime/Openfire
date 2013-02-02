@@ -122,8 +122,12 @@ public class IQOwnerHandler {
                     }
                 }
 
-				room.destroyRoom(new JID(destroyElement.attributeValue("jid")),
-						destroyElement.elementTextTrim("reason"));
+                JID alternateJID = null;
+                final String jid = destroyElement.attributeValue("jid");
+                if (jid != null) {
+                    alternateJID = new JID(jid);
+                }
+                room.destroyRoom(alternateJID, destroyElement.elementTextTrim("reason"));
             }
             else {
                 List<Element> itemsList = element.elements("item");

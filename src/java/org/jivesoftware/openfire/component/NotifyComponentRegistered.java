@@ -53,10 +53,10 @@ public class NotifyComponentRegistered implements ClusterTask {
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableUtil.getInstance().writeSafeUTF(out, componentJID.toString());
+        ExternalizableUtil.getInstance().writeSerializable(out, componentJID);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        componentJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        componentJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }
 }

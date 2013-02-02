@@ -94,12 +94,12 @@ public class ClientSessionTask extends RemoteSessionTask {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, address.toString());
+        ExternalizableUtil.getInstance().writeSerializable(out, address);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        address = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        address = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }
 
     public String toString() {

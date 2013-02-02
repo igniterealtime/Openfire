@@ -64,8 +64,8 @@ public abstract class SubscriptionTask extends NodeTask
 	{
 		super.writeExternal(out);
 		ExternalizableUtil.getInstance().writeSafeUTF(out, subId);
-		ExternalizableUtil.getInstance().writeSafeUTF(out, owner.toString());
-		ExternalizableUtil.getInstance().writeSafeUTF(out, subJid.toString());
+        ExternalizableUtil.getInstance().writeSerializable(out, owner);
+        ExternalizableUtil.getInstance().writeSerializable(out, subJid);
 		ExternalizableUtil.getInstance().writeSerializable(out, state);
 	}
 
@@ -74,8 +74,8 @@ public abstract class SubscriptionTask extends NodeTask
 	{
 		super.readExternal(in);
 		subId = ExternalizableUtil.getInstance().readSafeUTF(in);
-		owner = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
-		subJid = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+		owner = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+		subJid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
 		state = (State) ExternalizableUtil.getInstance().readSerializable(in);
 	}
 

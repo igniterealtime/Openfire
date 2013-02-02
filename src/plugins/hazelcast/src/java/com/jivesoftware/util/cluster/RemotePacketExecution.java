@@ -42,14 +42,14 @@ import org.xmpp.packet.Presence;
  */
 public class RemotePacketExecution implements ClusterTask {
 
-    private JID receipient;
+    private JID recipient;
     private Packet packet;
 
     public RemotePacketExecution() {
     }
 
-    public RemotePacketExecution(JID receipient, Packet packet) {
-        this.receipient = receipient;
+    public RemotePacketExecution(JID recipient, Packet packet) {
+        this.recipient = recipient;
         this.packet = packet;
     }
 
@@ -60,11 +60,11 @@ public class RemotePacketExecution implements ClusterTask {
     public void run() {
         // Route packet to entity hosted by this node. If delivery fails then the routing table
         // will inform the proper router of the failure and the router will handle the error reply logic
-        XMPPServer.getInstance().getRoutingTable().routePacket(receipient, packet, false);
+        XMPPServer.getInstance().getRoutingTable().routePacket(recipient, packet, false);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-    	ExternalizableUtil.getInstance().writeSafeUTF(out, receipient.toString());
+    	ExternalizableUtil.getInstance().writeSerializable(out, recipient);
         if (packet instanceof IQ) {
             ExternalizableUtil.getInstance().writeInt(out, 1);
         }
@@ -78,11 +78,7 @@ public class RemotePacketExecution implements ClusterTask {
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    	String jid = ExternalizableUtil.getInstance().readSafeUTF(in);
-        // Optimization that was avoiding the need to reparse and validate JIDs but cannot be done due
-        // to a change in the JID API. We need to bring this constructor back
-        //receipient = new JID(jid, true);
-        receipient = new JID(jid);
+        recipient = (JID) ExternalizableUtil.getInstance().readSerializable(in);
 
         int packetType = ExternalizableUtil.getInstance().readInt(in);
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
@@ -100,6 +96,6 @@ public class RemotePacketExecution implements ClusterTask {
     }
 
     public String toString() {
-        return super.toString() + " receipient: " + receipient + "packet: " + packet;
+        return super.toString() + " recipient: " + recipient + "packet: " + packet;
     }
 }

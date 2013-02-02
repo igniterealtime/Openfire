@@ -80,7 +80,7 @@ public class DestroyRoomRequest extends MUCRoomTask {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeBoolean(out, alternateJID != null);
         if (alternateJID != null) {
-            ExternalizableUtil.getInstance().writeSafeUTF(out, alternateJID.toFullJID());
+            ExternalizableUtil.getInstance().writeSerializable(out, alternateJID);
         }
         ExternalizableUtil.getInstance().writeBoolean(out, reason != null);
         if (reason != null) {
@@ -92,7 +92,7 @@ public class DestroyRoomRequest extends MUCRoomTask {
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
-            alternateJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+            alternateJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             reason = ExternalizableUtil.getInstance().readSafeUTF(in);

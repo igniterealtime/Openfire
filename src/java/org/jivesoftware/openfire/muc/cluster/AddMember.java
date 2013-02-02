@@ -77,14 +77,14 @@ public class AddMember extends MUCRoomTask {
     @Override
 	public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        ExternalizableUtil.getInstance().writeSafeUTF(out, bareJID.toFullJID());
+        ExternalizableUtil.getInstance().writeSerializable(out, bareJID);
         ExternalizableUtil.getInstance().writeSafeUTF(out, nickname);
     }
 
     @Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        bareJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+        bareJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
     }
 }

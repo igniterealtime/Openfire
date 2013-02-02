@@ -85,7 +85,7 @@ public class ProcessPacketTask implements ClusterTask {
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, address != null);
         if (address != null) {
-            ExternalizableUtil.getInstance().writeSafeUTF(out, address.toString());
+            ExternalizableUtil.getInstance().writeSerializable(out, address);
         }
         ExternalizableUtil.getInstance().writeBoolean(out, streamID != null);
         if (streamID != null) {
@@ -104,7 +104,7 @@ public class ProcessPacketTask implements ClusterTask {
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
-            address = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+            address = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             streamID = ExternalizableUtil.getInstance().readSafeUTF(in);

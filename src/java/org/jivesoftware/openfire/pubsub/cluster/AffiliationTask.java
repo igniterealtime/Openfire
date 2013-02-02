@@ -57,15 +57,15 @@ public class AffiliationTask extends NodeTask
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 		super.writeExternal(out);
-		ExternalizableUtil.getInstance().writeSafeUTF(out, jid.toString());
-		ExternalizableUtil.getInstance().writeSerializable(out, affiliation);
+        ExternalizableUtil.getInstance().writeSerializable(out, jid);
+        ExternalizableUtil.getInstance().writeSerializable(out, affiliation);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		super.readExternal(in);
-		jid = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+		jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
 		affiliation = (NodeAffiliate.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
 	}
 

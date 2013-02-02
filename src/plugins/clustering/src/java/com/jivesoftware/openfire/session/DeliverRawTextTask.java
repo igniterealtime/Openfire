@@ -85,7 +85,7 @@ public class DeliverRawTextTask implements ClusterTask {
         ExternalizableUtil.getInstance().writeInt(out, sessionType.ordinal());
         ExternalizableUtil.getInstance().writeBoolean(out, address != null);
         if (address != null) {
-            ExternalizableUtil.getInstance().writeSafeUTF(out, address.toString());
+            ExternalizableUtil.getInstance().writeSerializable(out, address);
         }
         ExternalizableUtil.getInstance().writeBoolean(out, streamID != null);
         if (streamID != null) {
@@ -97,7 +97,7 @@ public class DeliverRawTextTask implements ClusterTask {
         text = ExternalizableUtil.getInstance().readSafeUTF(in);
         sessionType = SessionType.values()[ExternalizableUtil.getInstance().readInt(in)];
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
-            address = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+            address = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             streamID = ExternalizableUtil.getInstance().readSafeUTF(in);

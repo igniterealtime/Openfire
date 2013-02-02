@@ -256,12 +256,12 @@ public class RemoteComponentSession extends RemoteSession implements ComponentSe
 
         public void writeExternal(ObjectOutput out) throws IOException {
             super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, componentJID.toString());
+            ExternalizableUtil.getInstance().writeSerializable(out, componentJID);
         }
 
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             super.readExternal(in);
-            componentJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in));
+            componentJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
     }
 }

@@ -368,7 +368,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
-        engine = new PubSubEngine(server.getPacketRouter());
+        engine = new PubSubEngine(router);
 
         // Load default configuration for leaf nodes
         leafDefaultConfiguration = PubSubPersistenceManager.loadDefaultConfiguration(this, true);

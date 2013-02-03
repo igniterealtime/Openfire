@@ -20,15 +20,19 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A type of node that contains nodes and/or other collections but no published
@@ -70,15 +74,17 @@ public class CollectionNode extends Node {
 
 
     @Override
-	void configure(FormField field) {
+	protected void configure(FormField field) throws NotAcceptableException {
         List<String> values;
-        if ("pubsub#leaf_node_association_policy".equals(field.getVariable())) {
+        if ("pubsub#leaf_node_association_policy".equals(field.getVariable()) ||
+            "pubsub#children_association_policy".equals(field.getVariable())) {
             values = field.getValues();
             if (values.size() > 0)  {
                 associationPolicy = LeafNodeAssociationPolicy.valueOf(values.get(0));
             }
         }
-        else if ("pubsub#leaf_node_association_whitelist".equals(field.getVariable())) {
+        else if ("pubsub#leaf_node_association_whitelist".equals(field.getVariable()) ||
+        		"pubsub#children_association_whitelist".equals(field.getVariable())) {
             // Get the new list of users that may add leaf nodes to this collection node
             associationTrusted = new ArrayList<JID>();
             for (String value : field.getValues()) {
@@ -90,9 +96,40 @@ public class CollectionNode extends Node {
                 }
             }
         }
-        else if ("pubsub#leaf_nodes_max".equals(field.getVariable())) {
+        else if ("pubsub#leaf_nodes_max".equals(field.getVariable()) ||
+        		"pubsub#children_max".equals(field.getVariable())) {
             values = field.getValues();
             maxLeafNodes = values.size() > 0 ? Integer.parseInt(values.get(0)) : -1;
+        }
+        else if ("pubsub#children".endsWith(field.getVariable())) {
+        	values = field.getValues();
+        	ArrayList<Node> childrenNodes = new ArrayList<Node>(values.size());
+        	
+        	// Check all nodes for their existence 
+        	for (String nodeId : values)
+			{
+            	Node childNode = service.getNode(nodeId);
+            	
+            	if (childNode == null)
+            	{
+            		throw new NotAcceptableException("Child node does not exist");
+            	}
+              	childrenNodes.add(childNode);
+			}
+        	// Remove any children not in the new list.
+        	ArrayList<Node> toRemove = new ArrayList<Node>(nodes.values());
+        	toRemove.removeAll(childrenNodes);
+        	
+        	for (Node node : toRemove)
+			{
+				removeChildNode(node);
+			}
+        	
+        	// Set the parent on the children.
+        	for (Node node : childrenNodes)
+			{
+        		node.changeParent(this);
+			}
         }
     }
 
@@ -105,22 +142,48 @@ public class CollectionNode extends Node {
 	protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
+        FormField typeField = form.getField("pubsub#node_type");
+        typeField.addValue("collection");
+        
+        // TODO: remove this field during an upgrade to pubsub version since it is replaced by children_association_policy
         FormField formField = form.addField();
         formField.setVariable("pubsub#leaf_node_association_policy");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_node_association"));
-            formField.addOption(null, LeafNodeAssociationPolicy.all.name());
-            formField.addOption(null, LeafNodeAssociationPolicy.owners.name());
-            formField.addOption(null, LeafNodeAssociationPolicy.whitelist.name());
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy"));
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all"), LeafNodeAssociationPolicy.all.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners"), LeafNodeAssociationPolicy.owners.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist"), LeafNodeAssociationPolicy.whitelist.name());
         }
         formField.addValue(associationPolicy.name());
 
         formField = form.addField();
+        formField.setVariable("pubsub#children_association_policy");
+        if (isEditing) {
+            formField.setType(FormField.Type.list_single);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy"));
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all"), LeafNodeAssociationPolicy.all.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners"), LeafNodeAssociationPolicy.owners.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist"), LeafNodeAssociationPolicy.whitelist.name());
+        }
+        formField.addValue(associationPolicy.name());
+
+        // TODO: remove this field during an upgrade to pubsub version since it is replaced by children_association_whitelist
+        formField = form.addField();
         formField.setVariable("pubsub#leaf_node_association_whitelist");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_node_whitelist"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist"));
+        }
+        for (JID contact : associationTrusted) {
+            formField.addValue(contact.toString());
+        }
+
+        formField = form.addField();
+        formField.setVariable("pubsub#children_association_whitelist");
+        if (isEditing) {
+            formField.setType(FormField.Type.jid_multi);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist"));
         }
         for (JID contact : associationTrusted) {
             formField.addValue(contact.toString());
@@ -130,9 +193,27 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#leaf_nodes_max");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_nodes_max"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max"));
         }
         formField.addValue(maxLeafNodes);
+
+        formField = form.addField();
+        formField.setVariable("pubsub#chilren_max");
+        if (isEditing) {
+            formField.setType(FormField.Type.text_single);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max"));
+        }
+        formField.addValue(maxLeafNodes);
+
+        formField = form.addField();
+        formField.setVariable("pubsub#children");
+        if (isEditing) {
+            formField.setType(FormField.Type.text_multi);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children"));
+        }
+        for (String nodeId : nodes.keySet()) {
+            formField.addValue(nodeId);
+        }
     }
 
     /**

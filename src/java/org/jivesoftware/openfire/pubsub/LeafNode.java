@@ -89,7 +89,7 @@ public class LeafNode extends Node {
     }
 
     @Override
-	void configure(FormField field) {
+	protected void configure(FormField field) throws NotAcceptableException {
         List<String> values;
         String booleanValue;
         if ("pubsub#persist_items".equals(field.getVariable())) {
@@ -128,6 +128,9 @@ public class LeafNode extends Node {
 	protected void addFormFields(DataForm form, boolean isEditing) {
         super.addFormFields(form, isEditing);
 
+        FormField typeField = form.getField("pubsub#node_type");
+        typeField.addValue("leaf");
+        
         FormField formField = form.addField();
         formField.setVariable("pubsub#send_item_subscribe");
         if (isEditing) {

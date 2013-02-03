@@ -56,8 +56,7 @@ import org.xmpp.packet.Message;
  * @author Matt Tucker
  */
 public abstract class Node {
-
-    public static final String PUBSUB_SVC_ID = XMPPServer.getInstance().getPubSubModule().getServiceID();
+	public static final String PUBSUB_SVC_ID = XMPPServer.getInstance().getPubSubModule().getServiceID();
 
     /**
      * Reference to the publish and subscribe service.
@@ -662,6 +661,18 @@ public abstract class Node {
                         }
                     }
                 }
+                else if ("pubsub#collection".equals(field.getVariable())) {
+                    // Set the parent collection node
+                    values = field.getValues();
+                    String newParent = values.size() > 0 ? values.get(0) : " ";
+                    Node newParentNode = service.getNode(newParent);
+
+                    if (!(newParentNode instanceof CollectionNode))
+                    {
+                    	throw new NotAcceptableException("Specified node in field pubsub#collection [" + newParent + "] " + ((newParentNode == null) ? "does not exist" : "is not a collection node"));
+                    }
+                    changeParent((CollectionNode) newParentNode);
+                }
                 else {
                     // Let subclasses be configured by specified fields
                     configure(field);
@@ -683,7 +694,7 @@ public abstract class Node {
                     addOwner(jid);
                 }
             }
-            // TODO Before removing owner or admin check if user was changed from admin to owner or vice versa. This way his susbcriptions are not going to be deleted.
+            // TODO Before removing owner or admin check if user was changed from admin to owner or vice versa. This way his subscriptions are not going to be deleted.
             // Set the new list of publishers
             FormField publisherField = completedForm.getField("pubsub#publisher");
             if (publisherField != null) {
@@ -742,8 +753,9 @@ public abstract class Node {
      * fields specific to the node type.
      *
      * @param field the form field specific to the node type.
+     * @throws NotAcceptableException if field cannot be configured because of invalid data.
      */
-    abstract void configure(FormField field);
+    protected abstract void configure(FormField field) throws NotAcceptableException;
 
     /**
      * Node configuration was changed based on the completed form. Subclasses may implement
@@ -870,6 +882,24 @@ public abstract class Node {
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.description"));
         }
         formField.addValue(description);
+
+        formField = form.addField();
+        formField.setVariable("pubsub#node_type");
+        if (isEditing) {
+            formField.setType(FormField.Type.text_single);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.node_type"));
+        }
+        
+        formField = form.addField();
+        formField.setVariable("pubsub#collection");
+        if (isEditing) {
+            formField.setType(FormField.Type.text_single);
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection"));
+        }
+
+        if (!parent.isRootCollectionNode()) {
+        	formField.addValue(parent.getNodeID());
+        }
 
         formField = form.addField();
         formField.setVariable("pubsub#subscribe");
@@ -1871,6 +1901,10 @@ public abstract class Node {
      * @param newParent the new parent node of this node.
      */
     protected void changeParent(CollectionNode newParent) {
+    	if (parent == newParent) {
+    		return;
+    	}
+    	
         if (parent != null) {
             // Remove this node from the current parent node
             parent.removeChildNode(this);
@@ -2259,4 +2293,27 @@ public abstract class Node {
          */
         publisher
     }
+
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + nodeID.hashCode();
+		result = prime * result + service.getServiceID().hashCode();
+		return result;
+	}
+
+    @Override
+	public boolean equals(Object obj) {
+    	if (obj == this)
+    		return true;
+    	
+    	if (getClass() != obj.getClass())
+    		return false;
+    	
+    	Node compareNode = (Node) obj;
+    	
+		return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
+	}
 }

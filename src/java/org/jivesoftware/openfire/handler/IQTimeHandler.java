@@ -25,15 +25,13 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.IQ;
 
 import java.text.DateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.TimeZone;
 
 /**
  * Implements the TYPE_IQ jabber:iq:time protocol (time info) as
@@ -59,10 +57,6 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
     // todo: Make display text match the locale of user (xml:lang support)
     private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
     private static final DateFormat TIME_FORMAT = DateFormat.getTimeInstance(DateFormat.LONG);
-    // UTC and not JEP-0082 time format is used as per the JEP-0090 specification.
-    private static final FastDateFormat UTC_FORMAT =
-            FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
-            TimeZone.getTimeZone("UTC"));
 
     private Element responseElement;
     private IQHandlerInfo info;
@@ -90,7 +84,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
     private Element buildResponse() {
         Element response = responseElement.createCopy();
         Date current = new Date();
-        response.element("utc").setText(UTC_FORMAT.format(current));
+        response.element("utc").setText(XMPPDateTimeFormat.formatOld(current));
         StringBuilder display = new StringBuilder(DATE_FORMAT.format(current));
         display.append(' ');
         display.append(TIME_FORMAT.format(current));

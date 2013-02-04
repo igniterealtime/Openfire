@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.DocumentHelper;
@@ -52,10 +51,9 @@ import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.Cacheable;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -72,11 +70,6 @@ import org.xmpp.packet.PacketExtension;
  * @author Armando Jagucki 
  */
 public class PEPService implements PubSubService, Cacheable {
-	
-    /**
-     * Date format to use for time stamps in delayed event notifications.
-     */
-    private static final FastDateFormat fastDateFormat;
 
     /**
      * The bare JID that this service is identified by.
@@ -134,10 +127,6 @@ public class PEPService implements PubSubService, Cacheable {
      * Used to handle filtered-notifications.
      */
     private EntityCapabilitiesManager entityCapsManager = EntityCapabilitiesManager.getInstance();
-
-    static {
-        fastDateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
-    }
 
     /**
      * Constructs a PEPService.
@@ -503,7 +492,7 @@ public class PEPService implements PubSubService, Cacheable {
                 notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
             }
             // Include date when published item was created
-            notification.getElement().addElement("delay", "urn:xmpp:delay").addAttribute("stamp", fastDateFormat.format(leafLastPublishedItem.getCreationDate()));
+            notification.getElement().addElement("delay", "urn:xmpp:delay").addAttribute("stamp", XMPPDateTimeFormat.format(leafLastPublishedItem.getCreationDate()));
             // Send the event notification to the subscriber
             this.sendNotification(subscription.getNode(), notification, subscription.getJID());
         }

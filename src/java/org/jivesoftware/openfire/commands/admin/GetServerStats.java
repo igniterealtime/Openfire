@@ -27,9 +27,8 @@ import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -46,7 +45,6 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class GetServerStats extends AdHocCommand {
-    final private FastDateFormat dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
     @Override
 	protected void addStageInformation(SessionData data, Element command) {
@@ -92,7 +90,7 @@ public class GetServerStats extends AdHocCommand {
         field = form.addField();
         field.setLabel(LocaleUtils.getLocalizedString("index.uptime"));
         field.setVariable("uptime");
-        field.addValue(dateFormat.format(XMPPServer.getInstance().getServerInfo().getLastStarted()));
+        field.addValue(XMPPDateTimeFormat.format(XMPPServer.getInstance().getServerInfo().getLastStarted()));
 
         DecimalFormat mbFormat = new DecimalFormat("#0.00");
         DecimalFormat percentFormat = new DecimalFormat("#0.0");

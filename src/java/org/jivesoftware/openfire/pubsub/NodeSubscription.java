@@ -21,18 +21,15 @@
 package org.jivesoftware.openfire.pubsub;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -67,8 +64,7 @@ public class NodeSubscription {
 
 	private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
 
-    private static final SimpleDateFormat dateFormat;
-    private static final FastDateFormat fastDateFormat;
+    private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
     /**
      * The node to which this subscription is interested in.
@@ -139,13 +135,6 @@ public class NodeSubscription {
      * Indicates if the subscription is present in the database.
      */
     private boolean savedToDB = false;
-
-    static {
-        dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        fastDateFormat = FastDateFormat
-                .getInstance(JiveConstants.XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
-    }
 
     /**
      * Creates a new subscription of the specified user with the node.
@@ -464,13 +453,10 @@ public class NodeSubscription {
             }
             else if ("pubsub#expire".equals(field.getVariable())) {
                 values = field.getValues();
-                synchronized (dateFormat) {
-                    try {
-                        expire = dateFormat.parse(values.get(0));
-                    }
-                    catch (ParseException e) {
-                        Log.error("Error parsing date", e);
-                    }
+                try {
+                    expire = xmppDateTime.parseString(values.get(0));
+                } catch (ParseException e) {
+                    Log.error("Error parsing date", e);
                 }
             }
             else if ("pubsub#include_body".equals(field.getVariable())) {
@@ -564,7 +550,7 @@ public class NodeSubscription {
         formField.setType(FormField.Type.text_single);
         formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.expire"));
         if (expire != null) {
-            formField.addValue(fastDateFormat.format(expire));
+            formField.addValue(XMPPDateTimeFormat.format(expire));
         }
 
         formField = form.addField();
@@ -829,7 +815,7 @@ public class NodeSubscription {
         }
         // Include date when published item was created
         notification.getElement().addElement("delay", "urn:xmpp:delay")
-                .addAttribute("stamp", fastDateFormat.format(publishedItem.getCreationDate()));
+                .addAttribute("stamp", XMPPDateTimeFormat.format(publishedItem.getCreationDate()));
         // Send the event notification to the subscriber
 		node.getService().sendNotification(node, notification, jid);
     }

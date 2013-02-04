@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -36,9 +35,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -61,8 +59,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 	private static final Logger Log = LoggerFactory.getLogger(PacketCopier.class);
 
     private final static PacketCopier instance = new PacketCopier();
-    private final static FastDateFormat dateFormat = FastDateFormat
-            .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
+
 
     private Map<String, Subscription> subscribers = new ConcurrentHashMap<String, Subscription>();
     private String serverName;
@@ -199,7 +196,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                                 "http://jabber.org/protocol/packet#event");
                         childElement.addAttribute("incoming", subscription.isIncoming() ? "true" : "false");
                         childElement.addAttribute("processed", subscription.isProcessed() ? "true" : "false");
-                        childElement.addAttribute("date", dateFormat.format(interceptedPacket.getCreationDate()));
+                        childElement.addAttribute("date", XMPPDateTimeFormat.formatOld(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
                         routingTable.routePacket(message.getTo(), message, true);

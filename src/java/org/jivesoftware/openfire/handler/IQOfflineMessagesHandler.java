@@ -21,13 +21,11 @@
 package org.jivesoftware.openfire.handler;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -45,7 +43,7 @@ import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -67,8 +65,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
     private static final String NAMESPACE = "http://jabber.org/protocol/offline";
 
-    final private SimpleDateFormat dateFormat =
-            new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
+    final private XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
     private IQDiscoItemsHandler itemsHandler;
@@ -80,7 +77,6 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     public IQOfflineMessagesHandler() {
         super("Flexible Offline Message Retrieval Handler");
         info = new IQHandlerInfo("offline", NAMESPACE);
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     @Override
@@ -105,13 +101,10 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
             for (Iterator it = offlineRequest.elementIterator("item"); it.hasNext();) {
                 Element item = (Element) it.next();
                 Date creationDate = null;
-                synchronized (dateFormat) {
-                    try {
-                        creationDate = dateFormat.parse(item.attributeValue("node"));
-                    }
-                    catch (ParseException e) {
-                        Log.error("Error parsing date", e);
-                    }
+                try {
+                    creationDate = xmppDateTime.parseString(item.attributeValue("node"));
+                } catch (ParseException e) {
+                    Log.error("Error parsing date", e);
                 }
                 if ("view".equals(item.attributeValue("action"))) {
                     // User requested to receive specific message
@@ -131,10 +124,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
     private void sendOfflineMessage(JID receipient, OfflineMessage offlineMessage) {
         Element offlineInfo = offlineMessage.addChildElement("offline", NAMESPACE);
-        synchronized (dateFormat) {
-            offlineInfo.addElement("item").addAttribute("node",
-                    dateFormat.format(offlineMessage.getCreationDate()));
-        }
+        offlineInfo.addElement("item").addAttribute("node",
+                XMPPDateTimeFormat.format(offlineMessage.getCreationDate()));
         routingTable.routePacket(receipient, offlineMessage, true);
     }
 
@@ -189,9 +180,8 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         stopOfflineFlooding(senderJID);
         List<DiscoItem> answer = new ArrayList<DiscoItem>();
         for (OfflineMessage offlineMessage : messageStore.getMessages(senderJID.getNode(), false)) {
-            synchronized (dateFormat) {
-                answer.add(new DiscoItem(new JID(senderJID.toBareJID()), offlineMessage.getFrom().toString(), dateFormat.format(offlineMessage.getCreationDate()), null));
-            }
+            answer.add(new DiscoItem(new JID(senderJID.toBareJID()), offlineMessage.getFrom().toString(),
+                    XMPPDateTimeFormat.format(offlineMessage.getCreationDate()), null));
         }
 
         return answer.iterator();

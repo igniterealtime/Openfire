@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,10 +59,9 @@ import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,11 +97,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
-
-    private static final FastDateFormat dateFormatter = FastDateFormat
-            .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
-
-
 
     /**
      * The time to elapse between clearing of idle chat users.
@@ -1340,7 +1333,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final FormField fieldDate = dataForm.addField();
                 fieldDate.setVariable("x-muc#roominfo_creationdate");
                 fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
-                fieldDate.addValue(dateFormatter.format(room.getCreationDate()));
+                fieldDate.addValue(XMPPDateTimeFormat.formatOld(room.getCreationDate()));
 
                 return dataForm;
             }

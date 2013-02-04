@@ -191,8 +191,8 @@ public class PubSubPersistenceManager {
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-    private static Timer flushTimer = new Timer("Pubsub item flush timer");
-    private static long flushTimerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.flush.timer", 120) * 1000;
+    private static Timer flushTimer;
+    private static long flushTimerDelay;
 
     private static Timer purgeTimer = new Timer("Pubsub purge stale items timer");
     private static long purgeTimerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.purge.timer", 300) * 1000;
@@ -228,18 +228,24 @@ public class PubSubPersistenceManager {
     private static final Cache<String, PublishedItem> itemCache = CacheFactory.createCache(ITEM_CACHE);
     
     static {
-        // Enforce a min of 20s
-        if (flushTimerDelay < 20000)
-        	flushTimerDelay = 20000;
+    	if (MAX_ITEMS_FLUSH > 0) {
+        	flushTimer = new Timer("Pubsub item flush timer");
+        	
+        	flushTimerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.flush.timer", 120) * 1000;
 
-		flushTimer.schedule(new TimerTask()
-		{
-			@Override
-			public void run()
-			{
-				flushPendingItems(false); // this member only
-			}
-		}, flushTimerDelay, flushTimerDelay);
+        	// Enforce a min of 20s
+            if (flushTimerDelay < 20000)
+            	flushTimerDelay = 20000;
+
+    		flushTimer.schedule(new TimerTask()
+    		{
+    			@Override
+    			public void run()
+    			{
+    				flushPendingItems(false); // this member only
+    			}
+    		}, flushTimerDelay, flushTimerDelay);
+    	}
 
 		// Enforce a min of 20s
 		if (purgeTimerDelay < 60000)

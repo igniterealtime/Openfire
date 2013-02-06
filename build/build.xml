@@ -60,8 +60,8 @@
     <!-- ======================================================================================= -->
 
     <property name="version.major" value="3"/>
-    <property name="version.minor" value="7"/>
-    <property name="version.revision" value="2"/>
+    <property name="version.minor" value="8"/>
+    <property name="version.revision" value="0"/>
     <property name="version.extra" value=""/>    <!-- For 'beta' or 'alpha' -->
     <property name="dist.prefix" value="openfire"/>
 

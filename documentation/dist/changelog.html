@@ -162,6 +162,95 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.8.0 -- <span style="font-weight: normal;">February 6, 2013</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-204'>OF-204</a>] - Add clustering support to Personal Eventing via Pubsub</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-205'>OF-205</a>] - Add clustering support to pub-sub</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-240'>OF-240</a>] - Show last history messages in room with a specified age</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-483'>OF-483</a>] - JDBCUserProvider hardcodes searchSQL</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-543'>OF-543</a>] - Support OpenJDK for Debian build</li>
+</ul>
+
+<h3>Openfire Improvements</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-197'>OF-197</a>] - Make openfire&#39;s plugin unloading -&gt; loading more robust</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-278'>OF-278</a>] - Do not load all the system user to memory for shared groups</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-342'>OF-342</a>] - Add CORS headers to HTTP-Binding/BOSH</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-448'>OF-448</a>] - Add support for Ant 1.8</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-481'>OF-481</a>] - Upgrade Jetty from 7.0.1 to 7.5.4</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-497'>OF-497</a>] - Properly determine size of Collections to be cached</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-506'>OF-506</a>] - Phase out JettyLog</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-507'>OF-507</a>] - Improve logging of failed roster updates</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-517'>OF-517</a>] - Openfire should ignore Othername formats it doesn&#39;t understand</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-524'>OF-524</a>] - When closing a session as a result of a problem, send a &lt;stream:error&gt; stanza.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-529'>OF-529</a>] - Allow users to get their own presence via presence plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-535'>OF-535</a>] - Fixed Lithuanian translation for the Search plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-537'>OF-537</a>] - Update Russian translation</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-561'>OF-561</a>] - Update Webchat for Jetty 7</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-566'>OF-566</a>] - Add RPM noarch build capability</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-575'>OF-575</a>] - Fix the installation guide (Custom Parameters)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-579'>OF-579</a>] - Allow configuration of hazelcast plugin from outside the plugin jar</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-581'>OF-581</a>] - Improve startup script for RedHat</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-582'>OF-582</a>] - Improve locking on user&#39;s properties</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-602'>OF-602</a>] - Hazelcast clustering plugin improvements</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-607'>OF-607</a>] - When serializing JID instances in a cluster, do not use the (expensive) JID constructor</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-39'>OF-39</a>] - The storage of items in memory in a persistent LeafNode is a memory leak</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-191'>OF-191</a>] - store offline messages with empty body for pubsub</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-270'>OF-270</a>] - Duplicate entry &#39;user xxx&#39; for key 1  -- Exposed during load testing.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-271'>OF-271</a>] - fix &quot;duplicate key violates unique constraint &quot;ofpresence_pk&quot;&quot;</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-419'>OF-419</a>] - FastPath Web Authentication Bug</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-439'>OF-439</a>] - Memory leak in PEP service</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-443'>OF-443</a>] - S2S doesn&#39;t work (dialback broken)</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-480'>OF-480</a>] - Logs directory is not created in the correct location on some systems</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-498'>OF-498</a>] - &quot;Supplied key (null) is not a RSAPrivateKey instance&quot; error in the Server Settings / Server Certificates screen</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-510'>OF-510</a>] - Buildfile fails if ran using Java 1.7</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-514'>OF-514</a>] - BOSH terminate stanza needs terminate attribute</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-516'>OF-516</a>] - user-roster-add.jsp has wrong name for groups textfield</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-518'>OF-518</a>] - Admin Console saving &#39;CHOOSE&#39; for a STUN address, which causes annoying traceback</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-522'>OF-522</a>] - Upgrade bundled JRE to 1.6u30</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-525'>OF-525</a>] - Creating chatroom on console yields &quot;room_already_exists&quot; error when it does not</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-526'>OF-526</a>] - Deleting room and specifying invalid alternate room JID causes trouble</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-527'>OF-527</a>] - muc-create-permission.jsp displays an immediate error without adding users</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-533'>OF-533</a>] - TLS filter applied to non-SSL connections does not use configurable algorithm</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-539'>OF-539</a>] - HybridUserProvider does not load tertiaryClass due to typo</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-540'>OF-540</a>] - Prevent NPE in LdapVcardProvider.java</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-542'>OF-542</a>] - Fix Deprecated use in Log.java</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-558'>OF-558</a>] - Improve BOSH robustness when connections drop for unknown reasons</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-564'>OF-564</a>] - User import/export plugin concatenates group names in export</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-567'>OF-567</a>] - zlib inflate synchronization issue</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-572'>OF-572</a>] - The node configuration form does not contain the parent, children or type on a configured node.</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-573'>OF-573</a>] - Thread synchronization issues with HttpSession/BOSH</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-584'>OF-584</a>] - Fix DNS SRV support</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-586'>OF-586</a>] - Deliver event notifications to all subscribed JIDs</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-588'>OF-588</a>] - PEPService fails to be added to a clustered Cache</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-589'>OF-589</a>] - improve JAVA_HOME detection in openfire.sh</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-590'>OF-590</a>] - Console error in session view when a cluster member goes offline</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-591'>OF-591</a>] - NullPointer exception thrown when deleting rooms via the Webinterface</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-598'>OF-598</a>] - database.defaultProvider.testAfterUse/testBeforeUse should default to false</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-601'>OF-601</a>] - NPE with Privacy Lists while in cluster mode</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-605'>OF-605</a>] - PEPHandler tries to cache presence for the entire world</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-606'>OF-606</a>] - MUC room destroy can fail when no alternate JID is supplied</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-608'>OF-608</a>] - ClassCastException: org.jivesoftware.openfire.component.InternalComponentManager$RoutableComponents cannot be cast to org.jivesoftware.openfire.session.OutgoingServerSession</li>
+</ul>
+
+<h3>Openfire Completed Tasks</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-352'>OF-352</a>] - Change license to Apache</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-467'>OF-467</a>] - Update build.xml to check for Java 7</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-511'>OF-511</a>] - Upgrade BouncyCastle from 1.45 to 1.46</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-534'>OF-534</a>] - Make the STUN implementation a plugin</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-98'>OF-98</a>] - Bug in xmlns for grantowner and grantadmin / not in sync with JEP-0045</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-495'>OF-495</a>] - A RosterItem could only be in one group</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-499'>OF-499</a>] - Update org/jivesoftware/util/log/util/JettyLog to the Jetty 7.6.0/8.0 API</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-603'>OF-603</a>] - Transport sends subscribe-Presence that can be denied</li>
+</ul>
+
 <h2>3.7.1 -- <span style="font-weight: normal;">October 1, 2011</span></h2>
                             
 <h3>Openfire Improvements</h3>

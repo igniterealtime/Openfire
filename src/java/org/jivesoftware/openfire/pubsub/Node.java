@@ -2279,6 +2279,28 @@ public abstract class Node {
         }
     }
 
+    @Override
+    public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + nodeID.hashCode();
+		result = prime * result + service.getServiceID().hashCode();
+		return result;
+	}
+
+    @Override
+	public boolean equals(Object obj) {
+    	if (obj == this)
+    		return true;
+    	
+    	if (getClass() != obj.getClass())
+    		return false;
+    	
+    	Node compareNode = (Node) obj;
+    	
+		return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
+	}
+
     /**
      * Policy that defines whether owners or publisher should receive replies to items.
      */
@@ -2292,26 +2314,5 @@ public abstract class Node {
          * Dynamically specify a replyto of the item publisher.
          */
         publisher
-    }
-
-	public int hashCode()
-	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + nodeID.hashCode();
-		result = prime * result + service.getServiceID().hashCode();
-		return result;
-	}
-
-	public boolean equals(Object obj) {
-    	if (obj == this)
-    		return true;
-    	
-    	if (getClass() != obj.getClass())
-    		return false;
-    	
-    	Node compareNode = (Node) obj;
-    	
-		return (service.getServiceID().equals(compareNode.service.getServiceID()) && nodeID.equals(compareNode.nodeID));
-	}
+    };
 }

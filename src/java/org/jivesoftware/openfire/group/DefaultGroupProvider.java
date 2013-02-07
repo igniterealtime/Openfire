@@ -27,10 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -43,7 +40,7 @@ import org.xmpp.packet.JID;
  *
  * @author Matt Tucker
  */
-public class DefaultGroupProvider implements GroupProvider {
+public class DefaultGroupProvider extends AbstractGroupProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(DefaultGroupProvider.class);
 
@@ -78,29 +75,12 @@ public class DefaultGroupProvider implements GroupProvider {
         "UPDATE ofGroupUser SET administrator=? WHERE groupName=? AND username=?";
     private static final String USER_GROUPS =
         "SELECT groupName FROM ofGroupUser WHERE username=?";
-    private static final String GROUPLIST_CONTAINERS =
-            "SELECT groupName from ofGroupProp " +
-            "where name='sharedRoster.groupList' " +
-            "AND propValue LIKE ?";
-    private static final String PUBLIC_GROUPS = 
-    		"SELECT groupName from ofGroupProp " +
-    		"WHERE name='sharedRoster.showInRoster' " +
-    		"AND propValue='everybody'";
-    private static final String GROUPS_FOR_PROP = 
-    		"SELECT groupName from ofGroupProp " +
-    		"WHERE name=? " +
-    		"AND propValue=?";
     private static final String ALL_GROUPS = "SELECT groupName FROM ofGroup ORDER BY groupName";
     private static final String SEARCH_GROUP_NAME = "SELECT groupName FROM ofGroup WHERE groupName LIKE ? ORDER BY groupName";
-    private static final String LOAD_SHARED_GROUPS =
-            "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
-            "AND propValue IS NOT NULL AND propValue <> 'nobody'";
-    private static final String LOAD_PROPERTIES =
-            "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";    	
 
     private XMPPServer server = XMPPServer.getInstance();
 
-    public Group createGroup(String name) throws GroupAlreadyExistsException {
+    public Group createGroup(String name) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -149,9 +129,7 @@ public class DefaultGroupProvider implements GroupProvider {
         return new Group(name, description, members, administrators);
     }
 
-    public void setDescription(String name, String description)
-            throws GroupNotFoundException
-    {
+    public void setDescription(String name, String description) throws GroupNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -170,8 +148,7 @@ public class DefaultGroupProvider implements GroupProvider {
         }
     }
 
-    public void setName(String oldName, String newName) throws UnsupportedOperationException,
-            GroupAlreadyExistsException
+    public void setName(String oldName, String newName) throws GroupAlreadyExistsException
     {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -259,113 +236,6 @@ public class DefaultGroupProvider implements GroupProvider {
         }
         return count;
     }
-
-    /**
-     * Returns the name of the groups that are shared groups.
-     *
-     * @return the name of the groups that are shared groups.
-     */
-    public Collection<String> getSharedGroupNames() {
-        Collection<String> groupNames = new HashSet<String>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return groupNames;
-    }
-
-    public Collection<String> getSharedGroupNames(JID user) {
-    	Set<String> answer = new HashSet<String>();
-    	Collection<String> userGroups = getGroupNames(user);
-    	answer.addAll(userGroups);
-    	for (String userGroup : userGroups) {
-    		answer.addAll(getVisibleGroupNames(userGroup));
-    	}
-        answer.addAll(getPublicSharedGroupNames());
-        return answer;
-    }
-
-	public Collection<String> getVisibleGroupNames(String userGroup) {
-		Set<String> groupNames = new HashSet<String>();
-        Connection con = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-		    con = DbConnectionManager.getConnection();
-		    pstmt = con.prepareStatement(GROUPLIST_CONTAINERS);
-		    pstmt.setString(1, "%" + userGroup + "%");
-		    rs = pstmt.executeQuery();
-		    while (rs.next()) {
-		        groupNames.add(rs.getString(1));
-		    }
-		}
-		catch (SQLException sqle) {
-		    Log.error(sqle.getMessage(), sqle);
-		}
-		finally {
-		    DbConnectionManager.closeConnection(rs, pstmt, con);
-		}
-		return groupNames;
-	}
-    
-	public Collection<String> search(String key, String value) {
-		Set<String> groupNames = new HashSet<String>();
-        Connection con = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-		    con = DbConnectionManager.getConnection();
-		    pstmt = con.prepareStatement(GROUPS_FOR_PROP);
-		    pstmt.setString(1, key);
-		    pstmt.setString(2, value);
-		    rs = pstmt.executeQuery();
-		    while (rs.next()) {
-		        groupNames.add(rs.getString(1));
-		    }
-		}
-		catch (SQLException sqle) {
-		    Log.error(sqle.getMessage(), sqle);
-		}
-		finally {
-		    DbConnectionManager.closeConnection(rs, pstmt, con);
-		}
-		return groupNames;
-	}
-
-	public Collection<String> getPublicSharedGroupNames() {
-		Set<String> groupNames = new HashSet<String>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(PUBLIC_GROUPS);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return groupNames;
-	}
 
     public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
@@ -596,50 +466,5 @@ public class DefaultGroupProvider implements GroupProvider {
         }
         return members;
     }
-    
-    /**
-     * Returns a custom {@link Map} that updates the database whenever
-     * a property value is added, changed, or deleted.
-     * 
-     * @param name The target group
-     * @return The properties for the given group
-     */
-    public Map<String,String> loadProperties(Group group) {
-    	// custom map implementation persists group property changes
-    	// whenever one of the standard mutator methods are called
-    	String name = group.getName();
-    	DefaultGroupPropertyMap<String,String> result = new DefaultGroupPropertyMap<String,String>(group);
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PROPERTIES);
-            pstmt.setString(1, name);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String key = rs.getString(1);
-                String value = rs.getString(2);
-                if (key != null) {
-                    if (value == null) {
-                        result.remove(key);
-                        Log.warn("Deleted null property " + key + " for group: " + name);
-                    } else {
-                    	result.put(key, value, false); // skip persistence during load
-                    }
-                }
-                else { // should not happen, but ...
-                    Log.warn("Ignoring null property key for group: " + name);
-                }
-            }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return result;
-    }
-	
+
 }

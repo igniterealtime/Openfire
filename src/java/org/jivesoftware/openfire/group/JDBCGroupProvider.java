@@ -26,14 +26,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.Immutable;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +52,7 @@ import org.xmpp.packet.JID;
  * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
  * <li><tt>jdbcGroupProvider.groupCountSQL = SELECT count(*) FROM myGroups</tt></li>
- * <li><tt>jdbcGroupProvider.groupPropsSQL = SELECT propName, propValue FROM myGroupProps WHERE groupName=?</tt></li>
  * <li><tt>jdbcGroupProvider.allGroupsSQL = SELECT groupName FROM myGroups</tt></li>
- * <li><tt>jdbcGroupProvider.sharedGroupsSQL = SELECT groupName FROM myGroups WHERE shared='true'</tt></li>
  * <li><tt>jdbcGroupProvider.userGroupsSQL = SELECT groupName FORM myGroupUsers WHERE username=?</tt></li>
  * <li><tt>jdbcGroupProvider.descriptionSQL = SELECT groupDescription FROM myGroups WHERE groupName=?</tt></li>
  * <li><tt>jdbcGroupProvider.loadMembersSQL = SELECT username FORM myGroupUsers WHERE groupName=? AND isAdmin='N'</tt></li>
@@ -74,7 +68,7 @@ import org.xmpp.packet.JID;
  *
  * @author David Snopek
  */
-public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
+public class JDBCGroupProvider extends AbstractGroupProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
@@ -82,9 +76,7 @@ public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
 
     private String groupCountSQL;
     private String descriptionSQL;
-    private String groupPropsSQL;
     private String allGroupsSQL;
-    private String sharedGroupsSQL;
     private String userGroupsSQL;
     private String loadMembersSQL;
     private String loadAdminsSQL;
@@ -100,9 +92,7 @@ public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
         JiveGlobals.migrateProperty("jdbcProvider.driver");
         JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcGroupProvider.groupCountSQL");
-        JiveGlobals.migrateProperty("jdbcGroupProvider.groupPropsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.allGroupsSQL");
-        JiveGlobals.migrateProperty("jdbcGroupProvider.sharedGroupsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.userGroupsSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.descriptionSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadMembersSQL");
@@ -125,9 +115,7 @@ public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
 
         // Load SQL statements
         groupCountSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupCountSQL");
-        groupPropsSQL = JiveGlobals.getProperty("jdbcGroupProvider.groupPropsSQL");
         allGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.allGroupsSQL");
-        sharedGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.sharedGroupsSQL");
         userGroupsSQL = JiveGlobals.getProperty("jdbcGroupProvider.userGroupsSQL");
         descriptionSQL = JiveGlobals.getProperty("jdbcGroupProvider.descriptionSQL");
         loadMembersSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadMembersSQL");
@@ -233,31 +221,6 @@ public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
         return count;
     }
 
-    public Collection<String> getSharedGroupNames() {
-    	if (sharedGroupsSQL == null) {
-    		return Collections.emptyList();
-    	}
-    	List<String> groupNames = new ArrayList<String>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = getConnection();
-            pstmt = con.prepareStatement(sharedGroupsSQL);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
-            }
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return groupNames;
-    }
-
     public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
@@ -327,29 +290,4 @@ public class JDBCGroupProvider extends AbstractReadOnlyGroupProvider {
         }
         return groupNames;
     }
-
-	public Map<String, String> loadProperties(Group group) {
-		Map<String,String> properties = new HashMap<String,String>();
-    	if (groupPropsSQL != null) {
-	        Connection con = null;
-	        PreparedStatement pstmt = null;
-	        ResultSet rs = null;
-	        try {
-	            con = DbConnectionManager.getConnection();
-	            pstmt = con.prepareStatement(groupPropsSQL);
-	            pstmt.setString(1, group.getName());
-	            rs = pstmt.executeQuery();
-	            while (rs.next()) {
-	                properties.put(rs.getString(1), rs.getString(2));
-	            }
-	        }
-	        catch (SQLException sqle) {
-	            Log.error(sqle.getMessage(), sqle);
-	        }
-	        finally {
-	            DbConnectionManager.closeConnection(rs, pstmt, con);
-	        }
-    	}
-        return new Immutable.Map<String,String>(properties);
-	}
 }

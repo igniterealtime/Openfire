@@ -38,7 +38,7 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.group.AbstractReadOnlyGroupProvider;
+import org.jivesoftware.openfire.group.AbstractGroupProvider;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -54,7 +54,7 @@ import org.xmpp.packet.JID;
  *
  * @author Matt Tucker, Greg Ferguson and Cameron Moore
  */
-public class LdapGroupProvider extends AbstractReadOnlyGroupProvider {
+public class LdapGroupProvider extends AbstractGroupProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
 

@@ -38,7 +38,7 @@ import org.xmpp.packet.JID;
  *     &lt;/group&gt;
  *   &lt;/provider&gt;</pre>
  *
- * @see AbstractReadOnlyGroupProvider
+ * @see AbstractGroupProvider
  * 
  * @author Matt Tucker
  */
@@ -57,8 +57,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    Group createGroup(String name) throws UnsupportedOperationException,
-            GroupAlreadyExistsException;
+    Group createGroup(String name) throws GroupAlreadyExistsException;
 
     /**
      * Deletes the group (optional operation).
@@ -67,7 +66,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void deleteGroup(String name) throws UnsupportedOperationException;
+    void deleteGroup(String name);
 
     /**
      * Returns a group based on it's name.
@@ -88,8 +87,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void setName(String oldName, String newName) throws UnsupportedOperationException,
-            GroupAlreadyExistsException;
+    void setName(String oldName, String newName) throws GroupAlreadyExistsException;
 
     /**
      * Updates the group's description.
@@ -98,8 +96,7 @@ public interface GroupProvider {
      * @param description the group description.
      * @throws GroupNotFoundException if no existing group could be found to update.
      */
-    void setDescription(String name, String description)
-            throws GroupNotFoundException;
+    void setDescription(String name, String description) throws GroupNotFoundException;
 
     /**
      * Returns the number of groups in the system.
@@ -182,8 +179,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void addMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException;
+    void addMember(String groupName, JID user, boolean administrator);
 
     /**
      * Updates the privileges of an entity in a group.
@@ -194,8 +190,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void updateMember(String groupName, JID user, boolean administrator)
-            throws UnsupportedOperationException;
+    void updateMember(String groupName, JID user, boolean administrator);
 
     /**
      * Deletes an entity from a group (optional operation).
@@ -205,7 +200,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void deleteMember(String groupName, JID user) throws UnsupportedOperationException;
+    void deleteMember(String groupName, JID user);
 
     /**
      * Returns true if this GroupProvider is read-only. When read-only,

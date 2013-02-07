@@ -116,20 +116,18 @@ public class Group implements Cacheable, Externalizable {
 
         this.properties = provider.loadProperties(this);
         
-        if (!provider.isReadOnly()) {
-	        // Apply the given properties to the group
-	        for (Map.Entry<String, String> property : properties.entrySet()) {
-                if (!property.getValue().equals(this.properties.get(property.getKey()))) {
-                    this.properties.put(property.getKey(), property.getValue());
-                }
-	        }
-	        // Remove obsolete properties
-	        Iterator<String> oldProps = this.properties.keySet().iterator();
-	        while (oldProps.hasNext()) {
-	            if (!properties.containsKey(oldProps.next())) {
-	            	oldProps.remove();
-	            }
-	        }
+        // Apply the given properties to the group
+        for (Map.Entry<String, String> property : properties.entrySet()) {
+            if (!property.getValue().equals(this.properties.get(property.getKey()))) {
+                this.properties.put(property.getKey(), property.getValue());
+            }
+        }
+        // Remove obsolete properties
+        Iterator<String> oldProps = this.properties.keySet().iterator();
+        while (oldProps.hasNext()) {
+            if (!properties.containsKey(oldProps.next())) {
+            	oldProps.remove();
+            }
         }
     }
 

@@ -32,7 +32,7 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.group.AbstractReadOnlyGroupProvider;
+import org.jivesoftware.openfire.group.AbstractGroupProvider;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupCollection;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -42,7 +42,7 @@ import org.xmpp.packet.JID;
 /**
  * @author Daniel Henninger
  */
-public class ClearspaceGroupProvider extends AbstractReadOnlyGroupProvider {
+public class ClearspaceGroupProvider extends AbstractGroupProvider {
     protected static final String URL_PREFIX = "socialGroupService/";
 
     private static final String TYPE_ID_OWNER = "0";
@@ -65,10 +65,6 @@ public class ClearspaceGroupProvider extends AbstractReadOnlyGroupProvider {
             throw new UnsupportedOperationException("Unexpected error", e);
         }
     }
-
-    public boolean isSharingSupported() {
-		return true;
-	}
 
     public Collection<String> getSharedGroupNames() {
         // Return all social group names since every social group is a shared group
@@ -127,20 +123,8 @@ public class ClearspaceGroupProvider extends AbstractReadOnlyGroupProvider {
         }
     }
 
-    public Collection<String> search(String query) {
-        throw new UnsupportedOperationException("Group search is not supported");
-    }
-
-    public Collection<String> search(String query, int startIndex, int numResults) {
-        throw new UnsupportedOperationException("Group search is not supported");
-    }
-
-    public boolean isSearchSupported() {
-        return false;
-    }
-
     /**
-     * Translate a XML respose of a group to a <code>Group</code>.
+     * Translate a XML response of a group to a <code>Group</code>.
      *
      * @param responseNode the XML representation of a CS group.
      * @return the group that corresponds to the XML.

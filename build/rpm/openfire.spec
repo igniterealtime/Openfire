@@ -18,6 +18,7 @@ URL: http://www.igniterealtime.org/
 %define homedir %{prefix}/openfire
 # couldn't find another way to disable the brp-java-repack-jars which was called in __os_install_post
 %define __os_install_post %{nil}
+%define  debug_package %{nil}
 
 %description
 Openfire is a leading Open Source, cross-platform IM server based on the

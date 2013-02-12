@@ -938,12 +938,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         historyStrategy.setContext(chatServiceName, "history");
         // Load the list of JIDs that are sysadmins of the MUC service
         String property = MUCPersistenceManager.getProperty(chatServiceName, "sysadmin.jid");
-        String[] jids;
+
         sysadmins.clear();
-        if (property != null) {
-            jids = property.split(",");
+        if (property != null && property.trim().length() > 0) {
+            final String[] jids = property.split(",");
             for (String jid : jids) {
-                sysadmins.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                if (jid == null || jid.trim().length() == 0) {
+                    continue;
+                }
+                try {
+                    sysadmins.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                } catch (IllegalArgumentException e) {
+                    Log.warn("The 'sysadmin.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
+                }
             }
         }
         allowToDiscoverLockedRooms =
@@ -953,10 +960,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Load the list of JIDs that are allowed to create a MUC room
         property = MUCPersistenceManager.getProperty(chatServiceName, "create.jid");
         allowedToCreate.clear();
-        if (property != null) {
-            jids = property.split(",");
+        if (property != null && property.trim().length() > 0) {
+            final String[] jids = property.split(",");
             for (String jid : jids) {
-            	allowedToCreate.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                if (jid == null || jid.trim().length() == 0) {
+                    continue;
+                }
+                try {
+            	    allowedToCreate.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                } catch (IllegalArgumentException e) {
+                    Log.warn("The 'create.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
+                }
             }
         }
         String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.timeout");

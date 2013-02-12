@@ -95,7 +95,7 @@ public class XMPPDateTimeFormat {
      * @return
      * @throws ParseException
      */
-    public synchronized Date parseString(String dateString) throws ParseException {
+    public Date parseString(String dateString) throws ParseException {
         Matcher xep82WoMillisMatcher = xep80DateTimePattern.matcher(dateString);
         Matcher xep82Matcher = xep80DateTimeWoMillisPattern.matcher(dateString);
 
@@ -115,13 +115,19 @@ public class XMPPDateTimeFormat {
             }
 
             if (xep82WoMillisMatcher.matches()) {
-                return dateTimeFormatWoMillies.parse(rfc822Date);
+                synchronized (dateTimeFormatWoMillies) {
+                    return dateTimeFormatWoMillies.parse(rfc822Date);
+                }
             } else {
-                return dateTimeFormat.parse(rfc822Date);
+                synchronized (dateTimeFormat) {
+                    return dateTimeFormat.parse(rfc822Date);
+                }
             }
         } else {
             // at last try with the legacy format
-            return dateTimeFormatOld.parse(dateString);
+            synchronized (dateTimeFormatOld) {
+                return dateTimeFormatOld.parse(dateString);
+            }
         }
     }
 
@@ -133,8 +139,10 @@ public class XMPPDateTimeFormat {
      * @return
      * @throws ParseException
      */
-    public synchronized Date parseOldDate(String dateStr) throws ParseException {
-        return dateTimeFormatOld.parse(dateStr);
+    public Date parseOldDate(String dateStr) throws ParseException {
+        synchronized (dateTimeFormatOld) {
+            return dateTimeFormatOld.parse(dateStr);
+        }
     }
 
     /**

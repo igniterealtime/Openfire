@@ -236,15 +236,14 @@
 
 				<%  } %>
 
-				<%  for (Object obj : mucService.getUsersAllowedToCreate()) {
-						String user = (String)obj;
+				<%  for (JID jid : mucService.getUsersAllowedToCreate()) {
 				%>
 					<tr>
 						<td width="99%">
-							<%= user %>
+							<%= jid.toString() %>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-create-permission.jsp?userJID=<%= user %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+							<a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="muc.create.permission.click_title" />"
 							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

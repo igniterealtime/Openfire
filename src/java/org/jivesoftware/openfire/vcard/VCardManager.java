@@ -147,8 +147,8 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      * other relevant user information.
      *
      * @param username     The username of the user to set his new vCard.
-     * @param vCardElement The DOM element sent by the user as his new vcard.
-     * @throws Exception if an error occured while storing the new vCard.
+     * @param vCardElement The DOM element sent by the user as his new vCard.
+     * @throws Exception if an error occurred while storing the new vCard.
      */
     public void setVCard(String username, Element vCardElement) throws Exception {
         boolean created = false;

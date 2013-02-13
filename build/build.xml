@@ -1622,6 +1622,7 @@
                     <property name="exception" refid="exception_ref" />
                     <property name="message" value="Error building plugin: @{plugin}. Exception:${line.separator}${exception}" />
                     <echo message="${message}" />
+                    <fail if="halt.on.plugin.error" message="${message}" />
                 </catch>
             </trycatch>
         </sequential>

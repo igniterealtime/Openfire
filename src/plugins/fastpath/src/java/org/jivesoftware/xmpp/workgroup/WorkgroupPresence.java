@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.xmpp.workgroup.interceptor.AgentInterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.InterceptorManager;
 import org.jivesoftware.xmpp.workgroup.interceptor.PacketRejectedException;
@@ -65,7 +66,7 @@ public class WorkgroupPresence {
 	private static final Logger Log = LoggerFactory.getLogger(WorkgroupPresence.class);
 	
     private static final FastDateFormat UTC_FORMAT = FastDateFormat
-            .getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
+            .getInstance(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
     private static final String LOAD_ROSTER =
             "SELECT jid FROM fpWorkgroupRoster WHERE workgroupID=?";

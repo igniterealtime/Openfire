@@ -35,7 +35,7 @@ CREATE TABLE ofMessageArchive (
    toJIDResource     VARCHAR(100)     NULL,
    sentDate          BIGINT           NOT NULL,
    body              TEXT,
-   INDEX gtmsMsgArchive_con_idx (conversationID)
+   INDEX ofMessageArchive_con_idx (conversationID)
 );
 
 CREATE TABLE ofRRDs (

@@ -78,7 +78,7 @@ import org.xmpp.packet.JID;
  *
  * @author Matt Tucker
  */
-@JiveID(600)
+@JiveID(50)
 public class Conversation implements Externalizable {
 
 	private static final Logger Log = LoggerFactory.getLogger(Conversation.class);

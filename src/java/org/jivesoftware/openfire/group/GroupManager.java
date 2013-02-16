@@ -123,6 +123,9 @@ public class GroupManager {
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
+
+                // Evict cached paginated group names
+                evictCachedPaginatedGroupNames();
             }
 
             public void groupModified(Group group, Map params) {

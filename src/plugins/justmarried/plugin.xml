@@ -5,8 +5,8 @@
    <name>Just married</name>
    <description>Allows admins to rename or copy users</description>
    <author>Holger Bergunde</author>
-   <version>1.0.1 </version>
-   <date>8/28/2012</date>
+   <version>1.0.3</version>
+   <date>2/16/2013</date>
    <minServerVersion>3.3.0</minServerVersion>
    
    <adminconsole>

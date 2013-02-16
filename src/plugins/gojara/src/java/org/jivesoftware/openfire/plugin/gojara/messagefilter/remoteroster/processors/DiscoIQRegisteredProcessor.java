@@ -51,7 +51,6 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 		final InterceptorManager interceptorManager = InterceptorManager.getInstance();
 		final PacketInterceptor interceptor = new PacketInterceptor() {
 
-			@Override
 			public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 					throws PacketRejectedException {
 				if (!processed && incoming) {

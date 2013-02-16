@@ -26,7 +26,6 @@ public class StatisticPackageInterceptor implements PacketInterceptor {
 		_db = DatabaseManager.getInstance();
 	}
 
-	@Override
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 			throws PacketRejectedException {
 		JID from = packet.getFrom();

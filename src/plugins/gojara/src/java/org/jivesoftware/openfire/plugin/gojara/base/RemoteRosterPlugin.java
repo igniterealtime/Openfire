@@ -68,7 +68,6 @@ public class RemoteRosterPlugin implements Plugin {
 			 * Check if the unregistered component contains to one of our
 			 * package interceptors
 			 */
-			@Override
 			public void componentUnregistered(JID componentJID) {
 				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
 				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
@@ -82,12 +81,10 @@ public class RemoteRosterPlugin implements Plugin {
 			 * If there is a new external Component, check if it is a gateway
 			 * and add create a package interceptor if it is enabled
 			 */
-			@Override
 			public void componentRegistered(JID componentJID) {
 				_waitingForIQResponse.add(componentJID.getDomain());
 			}
 
-			@Override
 			public void componentInfoReceived(IQ iq) {
 				String from = iq.getFrom().getDomain();
 				// Waiting for this external component sending an IQ response to

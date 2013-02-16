@@ -60,7 +60,6 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 		_packetProcessor.put("clientToComponentUpdate", updateToComponent);
 	}
 
-	@Override
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 			throws PacketRejectedException {
 		if (!processed && incoming) {

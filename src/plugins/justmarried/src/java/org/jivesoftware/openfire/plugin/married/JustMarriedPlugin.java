@@ -27,7 +27,6 @@ public class JustMarriedPlugin implements Plugin {
 
 	private static Logger Log = Logger.getLogger(JustMarriedPlugin.class);
 
-	@Override
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 	}
 
@@ -39,8 +38,8 @@ public class JustMarriedPlugin implements Plugin {
 			User currentUser = userManager.getUser(currentUserName);
 			// Old user found, create new one
 			String password = AuthFactory.getPassword(currentUserName);
-			String newName = (newRealName == null | newRealName.length() == 0) ? currentUser.getName() : newRealName;
-			String newMail = (newEmail == null | newEmail.length() == 0) ? currentUser.getEmail() : newEmail;
+			String newName = (newRealName == null || newRealName.length() == 0) ? currentUser.getName() : newRealName;
+			String newMail = (newEmail == null || newEmail.length() == 0) ? currentUser.getEmail() : newEmail;
 			User newUser = userManager.createUser(newUserName, password, currentUser.getName(), newMail);
 			newUser.setName(newName);
 			newUser.setNameVisible(currentUser.isNameVisible());
@@ -179,7 +178,6 @@ public class JustMarriedPlugin implements Plugin {
 		}
 	}
 
-	@Override
 	public void destroyPlugin() {
 	}
 

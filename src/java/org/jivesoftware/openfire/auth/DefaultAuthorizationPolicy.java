@@ -76,7 +76,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
     }
 
     /**
-     * Returns true if the principal is explicity authorized to the JID
+     * Returns true if the principal is explicitly authorized to the JID
      *
      * @param username  The username requested.
      * @param authenID The authenticated ID (principal) requesting the username.

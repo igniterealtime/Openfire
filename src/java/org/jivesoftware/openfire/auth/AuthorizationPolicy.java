@@ -44,7 +44,7 @@ package org.jivesoftware.openfire.auth;
 public interface AuthorizationPolicy {
 
     /**
-     * Returns true if the principal is explicity authorized to the JID
+     * Returns true if the principal is explicitly authorized to the JID
      *
      * @param username  The username requested.
      * @param principal The principal requesting the username.

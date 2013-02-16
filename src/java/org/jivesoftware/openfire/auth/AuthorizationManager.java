@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * <p/>
  * Overall description of the authentication and authorization process:
  * <p/>
- * After a client connects, and idicates a desire to use SASL, the
+ * After a client connects, and indicates a desire to use SASL, the
  * SASLAuthentication object decides which SASL mechanisms to advertise,
  * and then performs the authentication. If authentication is successful,
  * the XMPPCallbackHandler is asked to handle() an AuthorizeCallback.  The
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * the principal to the username.  If no classes authorize the principal,
  * false is returned, which traces all the way back to give the client an
  * unauthorized message. Its important to note that the message the client
- * recieves will give no indication if the principal authentiated successfully,
+ * receives will give no indication if the principal authenticated successfully,
  * you will need to check the server logs for that information.
  *
  * @author Jay Kline

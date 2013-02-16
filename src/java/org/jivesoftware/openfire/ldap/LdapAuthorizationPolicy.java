@@ -62,7 +62,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
     }
 
     /**
-     * Returns if the principal is explicity authorized to the JID, throws
+     * Returns if the principal is explicitly authorized to the JID, throws
      * an UnauthorizedException otherwise
      *
      * @param username  The username requested.import org.jivesoftware.openfire.ldap.*;

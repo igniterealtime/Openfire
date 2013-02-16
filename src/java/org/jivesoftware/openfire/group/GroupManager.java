@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.group;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -105,6 +106,9 @@ public class GroupManager {
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
+
+                // Evict cached paginated group names
+                evictCachedPaginatedGroupNames();
             }
 
             public void groupDeleting(Group group, Map params) {
@@ -367,7 +371,7 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
-        Integer count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+            Integer count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
         if (count == null) {
             synchronized(GROUP_COUNT_KEY.intern()) {
                 count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
@@ -640,6 +644,15 @@ public class GroupManager {
         }
         for (JID user : group.getMembers()) {
         	groupMetaCache.remove(user.getNode());
+        }
+    }
+
+    private void evictCachedPaginatedGroupNames() {
+        for(Map.Entry<String, Object> entry : groupMetaCache.entrySet())
+        {
+            if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
+                groupMetaCache.remove(entry.getKey());
+            }
         }
     }
 }

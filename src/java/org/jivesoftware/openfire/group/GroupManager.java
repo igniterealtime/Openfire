@@ -102,7 +102,6 @@ public class GroupManager {
                 groupMetaCache.remove(GROUP_COUNT_KEY);
                 groupMetaCache.remove(GROUP_NAMES_KEY);
                 groupMetaCache.remove(SHARED_GROUPS_KEY);
-                groupMetaCache.remove(PUBLIC_GROUPS);
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
@@ -117,7 +116,6 @@ public class GroupManager {
                 groupMetaCache.remove(GROUP_COUNT_KEY);
                 groupMetaCache.remove(GROUP_NAMES_KEY);
                 groupMetaCache.remove(SHARED_GROUPS_KEY);
-                groupMetaCache.remove(PUBLIC_GROUPS);
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);

@@ -95,7 +95,12 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 				try {
 					roster = _rosterManager.getRoster(username);
 					Log.debug("Removing contact " + username + " from contact list.");
-					roster.deleteRosterItem(new JID(jid), false);
+					//If the contact didnt exist in contact list it is likely the transport itself in which case
+					//we do not want to forward this msg to server...
+					RosterItem item = roster.deleteRosterItem(new JID(jid), false);
+					if (item == null) {
+						throw new PacketRejectedException(); 
+					}
 				} catch (UserNotFoundException e) {
 					Log.debug("Could not find user while cleaning up the roster in GoJara for user " + username, e);
 					response.setType(IQ.Type.error);

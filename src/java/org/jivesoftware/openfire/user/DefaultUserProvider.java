@@ -70,6 +70,8 @@ public class DefaultUserProvider implements UserProvider {
     private static final String INSERT_USER =
             "INSERT INTO ofUser (username,plainPassword,encryptedPassword,name,email,creationDate,modificationDate) " +
             "VALUES (?,?,?,?,?,?,?)";
+    private static final String DELETE_USER_FLAGS =
+            "DELETE FROM ofUserFlag WHERE username=?";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM ofUserProp WHERE username=?";
     private static final String DELETE_USER =
@@ -196,6 +198,11 @@ public class DefaultUserProvider implements UserProvider {
             // Delete all of the users's extended properties
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
+            pstmt.setString(1, username);
+            pstmt.execute();
+            DbConnectionManager.fastcloseStmt(pstmt);
+
+            pstmt = con.prepareStatement(DELETE_USER_FLAGS);
             pstmt.setString(1, username);
             pstmt.execute();
             DbConnectionManager.fastcloseStmt(pstmt);

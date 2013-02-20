@@ -146,10 +146,18 @@ public class GroupManager {
                 	if (type.equals("nameModified")) {
                 		String originalName = (String) params.get("originalValue");
                 		if (originalName != null) {
-                			groupMetaCache.remove(originalName);
+                			groupCache.remove(originalName);
                 		}
-                        // Evict cached information for affected users
+
+                        groupMetaCache.remove(GROUP_NAMES_KEY);
+                        groupMetaCache.remove(SHARED_GROUPS_KEY);
+                		
+                		// Evict cached information for affected users
                         evictCachedUsersForGroup(group);
+
+                        // Evict cached paginated group names
+                        evictCachedPaginatedGroupNames();
+                        
                 	}
                 }
                 // Set object again in cache. This is done so that other cluster nodes

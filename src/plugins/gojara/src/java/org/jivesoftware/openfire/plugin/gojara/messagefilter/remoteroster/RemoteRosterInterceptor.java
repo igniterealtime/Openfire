@@ -64,8 +64,8 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 			throws PacketRejectedException {
 		if (!processed && incoming) {
 			if (packet instanceof IQ) {
-				Log.debug("Incoming unprocessed package i might be interested in. Package: \n" + packet.toString()
-						+ "\n");
+				Log.debug("Incoming unprocessed package i might be interested in. I'm " + this.hashCode()+ " for subdomain " 
+			+ this._mySubdomain +  ". Package: \n" + packet.toString() + "\n");
 				IQ myPacket = (IQ) packet;
 				if (myPacket.getFrom() == null || myPacket.getTo() == null) {
 					/*

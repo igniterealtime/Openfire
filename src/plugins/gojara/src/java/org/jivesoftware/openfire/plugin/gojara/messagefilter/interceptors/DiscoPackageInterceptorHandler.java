@@ -27,13 +27,13 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 
 	private PermissionManager _permissions;
 	private String _subDomain;
-	private String _host;
+	private String _serverDomain;
 
 	public DiscoPackageInterceptorHandler(String subdomain) {
 		_permissions = new PermissionManager();
 		_subDomain = subdomain;
 		XMPPServer server = XMPPServer.getInstance();
-		_host = server.getServerInfo().getHostname();
+		_serverDomain = server.getServerInfo().getXMPPDomain();
 	}
 
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
@@ -48,7 +48,7 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 				String ns = root.getNamespaceURI();
 				if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
 					if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {
-						if (iqpacket.getFrom().toString().equals(_host)) {
+						if (iqpacket.getFrom().toString().equals(_serverDomain)) {
 							List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoitems:item");
 							for (Node node : nodes) {
 								if (node.valueOf("@jid").equals(_subDomain)) {

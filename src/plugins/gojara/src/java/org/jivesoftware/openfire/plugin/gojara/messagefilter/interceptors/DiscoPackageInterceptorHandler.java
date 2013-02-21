@@ -44,11 +44,11 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 				Element root = iqpacket.getChildElement();
 				if (root == null)
 					return; 
-				
-				String ns = root.getNamespaceURI();
-				if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
-					if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {
-						if (iqpacket.getFrom().toString().equals(_serverDomain)) {
+
+				if (iqpacket.getFrom().toString().equals(_serverDomain)) {
+					String ns = root.getNamespaceURI();
+					if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
+						if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {
 							List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoitems:item");
 							for (Node node : nodes) {
 								if (node.valueOf("@jid").equals(_subDomain)) {

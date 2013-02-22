@@ -1,12 +1,9 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import org.dom4j.Element;
 import org.dom4j.Node;
-import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;

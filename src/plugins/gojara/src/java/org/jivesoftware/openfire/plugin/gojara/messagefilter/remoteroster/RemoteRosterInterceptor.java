@@ -7,7 +7,6 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.AbstractRemoteRosterProcessor;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.CleanUpRosterProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.ClientToComponentUpdateProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.DiscoIQRegisteredProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.NonPersistantRosterProcessor;
@@ -83,7 +82,6 @@ public class RemoteRosterInterceptor implements PacketInterceptor {
 					return;
 				}
 				
-				@SuppressWarnings("unused")
 				String from = myPacket.getFrom().toString();
 				String to = myPacket.getTo().toString();
 				

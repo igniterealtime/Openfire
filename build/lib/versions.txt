@@ -59,7 +59,7 @@ sitemesh.jar                        | 2.2.1                                     
 slf4j-api                           | 1.5.8                                                        | http://www.slf4j.org/license.html
 slf4j-log4j12                       | 1.5.8                                                        | http://www.slf4j.org/license.html
 standard.jar                        | Jakarta standard taglib 1.1.2                                |
-tinder.jar                          | 1.2.3                                                        | Apache 2.0
+tinder.jar                          | 1.3.0-SNAPSHOT (Bamboo nightly build 960, SVN revision 13509)| Apache 2.0
 xmltask.jar                         | 1.11                                                         | Apache 1.1
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 

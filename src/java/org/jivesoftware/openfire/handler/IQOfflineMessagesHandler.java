@@ -180,7 +180,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         stopOfflineFlooding(senderJID);
         List<DiscoItem> answer = new ArrayList<DiscoItem>();
         for (OfflineMessage offlineMessage : messageStore.getMessages(senderJID.getNode(), false)) {
-            answer.add(new DiscoItem(new JID(senderJID.toBareJID()), offlineMessage.getFrom().toString(),
+            answer.add(new DiscoItem(senderJID.asBareJID(), offlineMessage.getFrom().toString(),
                     XMPPDateTimeFormat.format(offlineMessage.getCreationDate()), null));
         }
 

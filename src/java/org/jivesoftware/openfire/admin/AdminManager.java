@@ -187,7 +187,7 @@ public class AdminManager {
         if (adminList == null) {
             loadAdminList();
         }
-        JID bareJID = new JID(jid.toBareJID());
+        JID bareJID = jid.asBareJID();
         if (adminList.contains(bareJID)) {
             // Already have them.
             return;
@@ -228,7 +228,7 @@ public class AdminManager {
             loadAdminList();
         }
         
-        JID bareJID = new JID(jid.toBareJID());
+        JID bareJID = jid.asBareJID();
         if (!adminList.contains(bareJID)) {
             return;
         }
@@ -270,7 +270,7 @@ public class AdminManager {
         if (allowAdminIfEmpty && adminList.isEmpty()) {
             return "admin".equals(jid.getNode());
         }
-        JID bareJID = new JID(jid.toBareJID());
+        JID bareJID = jid.asBareJID();
         return adminList.contains(bareJID);
     }
 
@@ -325,7 +325,9 @@ public class AdminManager {
         List<JID> admins = new ArrayList<JID>();
         for (JID jid : jids)
 		{
-        	admins.add(new JID(jid.toBareJID()));
+            if (jid != null) {
+        	    admins.add(jid.asBareJID());
+            }
 		}
         adminList.addAll(admins);
         provider.setAdmins(admins);

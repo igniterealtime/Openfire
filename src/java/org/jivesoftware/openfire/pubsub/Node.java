@@ -1191,7 +1191,7 @@ public abstract class Node {
         }
         // Check if we should try again but using the bare JID
         if (user.getResource() != null) {
-            user = new JID(user.toBareJID());
+            user = user.asBareJID();
             return isAdmin(user);
         }
         return false;

@@ -475,7 +475,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public String getReservedNickname(JID jid) {
-    	final JID bareJID = new JID(jid.toBareJID());
+    	final JID bareJID = jid.asBareJID();
         String answer = members.get(bareJID);
         if (answer == null || answer.trim().length() == 0) {
             return null;
@@ -484,7 +484,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public MUCRole.Affiliation getAffiliation(JID jid) {
-    	final JID bareJID = new JID(jid.toBareJID());
+    	final JID bareJID = jid.asBareJID();
 
         if (owners.contains(bareJID)) {
             return MUCRole.Affiliation.owner;
@@ -519,7 +519,7 @@ public class LocalMUCRoom implements MUCRoom {
             if (isDestroyed || (getMaxUsers() > 0 && getOccupantsCount() >= getMaxUsers())) {
                 throw new ServiceUnavailableException();
             }
-            final JID bareJID = new JID(user.getAddress().toBareJID());
+            final JID bareJID = user.getAddress().asBareJID();
 			boolean isOwner = owners.contains(bareJID);
             // If the room is locked and this user is not an owner raise a RoomLocked exception
             if (isLocked()) {
@@ -737,7 +737,7 @@ public class LocalMUCRoom implements MUCRoom {
         // Add the new user as an occupant of this room
         occupants.put(event.getNickname().toLowerCase(), joinRole);
         // Update the tables of occupants based on the bare and full JID
-        JID bareJID = new JID(event.getUserAddress().toBareJID());
+        JID bareJID = event.getUserAddress().asBareJID();
 		List<MUCRole> list = occupantsByBareJID.get(bareJID);
         if (list == null) {
             list = new ArrayList<MUCRole>();
@@ -858,7 +858,7 @@ public class LocalMUCRoom implements MUCRoom {
         // Notify the user that he/she is no longer in the room
         leaveRole.destroy();
         // Update the tables of occupants based on the bare and full JID
-        JID bareJID = new JID(userAddress.toBareJID());
+        JID bareJID = userAddress.asBareJID();
 		List<MUCRole> list = occupantsByBareJID.get(bareJID);
         if (list != null) {
             list.remove(leaveRole);
@@ -1225,7 +1225,7 @@ public class LocalMUCRoom implements MUCRoom {
      * nothing if the given jid is not present in the room. If the user has joined the room from
      * several client resources, all his/her occupants' presences will be updated.
      *
-     * @param bareJID the bare jid of the user to update his/her role.
+     * @param jid the bare jid of the user to update his/her role.
      * @param newAffiliation the new affiliation for the JID.
      * @param newRole the new role for the JID.
      * @return the list of updated presences of all the client resources that the client used to
@@ -1237,7 +1237,7 @@ public class LocalMUCRoom implements MUCRoom {
             throws NotAllowedException {
         List<Presence> presences = new ArrayList<Presence>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
-        JID bareJID = new JID(jid.toBareJID());
+        JID bareJID = jid.asBareJID();
 		List<MUCRole> roles = occupantsByBareJID.get(bareJID);
         if (roles == null) {
             return presences;
@@ -1312,11 +1312,11 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public void addFirstOwner(JID bareJID) {
-        owners.add(new JID(bareJID.toBareJID()));
+        owners.add( bareJID.asBareJID() );
     }
 
     public List<Presence> addOwner(JID jid, MUCRole sendRole) throws ForbiddenException {
-        final JID bareJID = new JID(jid.toBareJID());
+        final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
@@ -1362,12 +1362,12 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     private boolean removeOwner(JID jid) {
-        return owners.remove(new JID(jid.toBareJID()));
+        return owners.remove(jid.asBareJID());
     }
 
     public List<Presence> addAdmin(JID jid, MUCRole sendRole) throws ForbiddenException,
             ConflictException {
-    	final JID bareJID = new JID(jid.toBareJID());
+    	final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
@@ -1417,12 +1417,12 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     private boolean removeAdmin(JID bareJID) {
-        return admins.remove(new JID(bareJID.toBareJID()));
+        return admins.remove( bareJID.asBareJID() );
     }
 
     public List<Presence> addMember(JID jid, String nickname, MUCRole sendRole)
             throws ForbiddenException, ConflictException {
-    	final JID bareJID = new JID(jid.toBareJID());
+    	final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
             MUCRole.Affiliation oldAffiliation = (members.containsKey(bareJID) ?
@@ -1489,7 +1489,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     private boolean removeMember(JID jid) {
-        final JID bareJID = new JID(jid.toBareJID());
+        final JID bareJID = jid.asBareJID();
 		boolean answer = members.containsKey(bareJID);
         members.remove(bareJID);
         return answer;
@@ -1497,7 +1497,7 @@ public class LocalMUCRoom implements MUCRoom {
 
     public List<Presence> addOutcast(JID jid, String reason, MUCRole senderRole)
             throws NotAllowedException, ForbiddenException, ConflictException {
-        final JID bareJID = new JID(jid.toBareJID());
+        final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
@@ -1566,12 +1566,12 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     private boolean removeOutcast(JID bareJID) {
-        return outcasts.remove(new JID(bareJID.toBareJID()));
+        return outcasts.remove( bareJID.asBareJID() );
     }
 
     public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException,
             ConflictException {
-    	final JID bareJID = new JID(jid.toBareJID());
+    	final JID bareJID = jid.asBareJID();
         List<Presence> updatedPresences = Collections.emptyList();
         boolean wasMember = false;
         lock.writeLock().lock();
@@ -2258,7 +2258,7 @@ public class LocalMUCRoom implements MUCRoom {
             throws ForbiddenException, ConflictException {
         List<Presence> answer = new ArrayList<Presence>(newAdmins.size());
         for (JID newAdmin : newAdmins) {
-        	final JID bareJID = new JID(newAdmin.toBareJID());
+        	final JID bareJID = newAdmin.asBareJID();
             if (!admins.contains(bareJID)) {
                 answer.addAll(addAdmin(bareJID, senderRole));
             }
@@ -2270,7 +2270,7 @@ public class LocalMUCRoom implements MUCRoom {
             throws ForbiddenException {
         List<Presence> answer = new ArrayList<Presence>(newOwners.size());
         for (JID newOwner : newOwners) {
-        	final JID bareJID = new JID(newOwner.toBareJID());
+        	final JID bareJID = newOwner.asBareJID();
             if (!owners.contains(newOwner)) {
                 answer.addAll(addOwner(bareJID, senderRole));
             }

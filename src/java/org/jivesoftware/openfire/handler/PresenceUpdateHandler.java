@@ -243,10 +243,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 for (RosterItem item : roster.getRosterItems()) {
                     if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
                         session.process(createSubscribePresence(item.getJid(),
-                                new JID(session.getAddress().toBareJID()), true));
+                                session.getAddress().asBareJID(), true));
                     } else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
                         session.process(createSubscribePresence(item.getJid(),
-                                new JID(session.getAddress().toBareJID()), false));
+                                session.getAddress().asBareJID(), false));
                     }
                     if (item.getSubStatus() == RosterItem.SUB_TO
                             || item.getSubStatus() == RosterItem.SUB_BOTH) {

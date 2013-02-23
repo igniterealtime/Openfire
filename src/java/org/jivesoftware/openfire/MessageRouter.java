@@ -188,16 +188,16 @@ public class MessageRouter extends BasicModule {
     }
 
     /**
-     * Notification message indicating that a packet has failed to be routed to the receipient.
+     * Notification message indicating that a packet has failed to be routed to the recipient.
      *
-     * @param receipient address of the entity that failed to receive the packet.
-     * @param packet Message packet that failed to be sent to the receipient.
+     * @param recipient address of the entity that failed to receive the packet.
+     * @param packet Message packet that failed to be sent to the recipient.
      */
-    public void routingFailed(JID receipient, Packet packet) {
+    public void routingFailed(JID recipient, Packet packet) {
         // If message was sent to an unavailable full JID of a user then retry using the bare JID
-        if (serverName.equals(receipient.getDomain()) && receipient.getResource() != null &&
-                userManager.isRegisteredUser(receipient.getNode())) {
-            routingTable.routePacket(new JID(receipient.toBareJID()), packet, false);
+        if (serverName.equals(recipient.getDomain()) && recipient.getResource() != null &&
+                userManager.isRegisteredUser(recipient.getNode())) {
+            routingTable.routePacket(recipient.asBareJID(), packet, false);
         } else {
             // Just store the message offline
             messageStrategy.storeOffline((Message) packet);

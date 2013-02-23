@@ -109,7 +109,7 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
         // Always allow an owner to join the room (especially since they need to join to configure the
         // room on initial creation).
         Collection<JID> owners = room.getOwners();
-        if (owners != null && owners.contains(new JID(userjid.toBareJID()))) {
+        if (owners != null && owners.contains(userjid.asBareJID())) {
             return true;
         }
 

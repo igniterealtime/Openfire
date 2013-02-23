@@ -116,7 +116,9 @@ public abstract class MUCEventDelegate {
             if (property != null) {
                 String jids[] = property.split(",");
                 for (String jid : jids) {
-                	room.addFirstOwner(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                    if (jid != null && jid.trim().length() != 0) {
+                	    room.addFirstOwner(new JID(jid.trim().toLowerCase()).asBareJID());
+                    }
                 }
             }
             

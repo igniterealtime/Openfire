@@ -289,7 +289,7 @@ public class PubSubEngine {
             // Process Messages of type error to identify possible subscribers that no longer exist
             if (message.getError().getType() == PacketError.Type.cancel) {
                 // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
-                JID owner = new JID(message.getFrom().toBareJID());
+                JID owner = message.getFrom().asBareJID();
                 // Terminate the subscription of the entity to all nodes hosted at the service
                cancelAllSubscriptions(service, owner);
             }
@@ -334,7 +334,7 @@ public class PubSubEngine {
 
         JID from = iq.getFrom();
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
-        JID owner = new JID(from.toBareJID());
+        JID owner = from.asBareJID();
         if (!node.getPublisherModel().canPublish(node, owner) && !service.isServiceAdmin(owner)) {
             // Entity does not have sufficient privileges to publish to node
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
@@ -518,7 +518,7 @@ public class PubSubEngine {
             return;
         }
         // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-        JID owner = new JID(subscriberJID.toBareJID());
+        JID owner = subscriberJID.asBareJID();
         // Check if the node's access model allows the subscription to proceed
         AccessModel accessModel = node.getAccessModel();
         if (!accessModel.canSubscribe(node, owner, subscriberJID)) {
@@ -869,7 +869,7 @@ public class PubSubEngine {
 
     private void getSubscriptions(PubSubService service, IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
-        JID owner = new JID(iq.getFrom().toBareJID());
+        JID owner = iq.getFrom().asBareJID();
         Element subscriptionsElement = childElement.element("subscriptions");
         
         String nodeID = subscriptionsElement.attributeValue("node");
@@ -913,7 +913,7 @@ public class PubSubEngine {
 
     private  void getAffiliations(PubSubService service, IQ iq, Element childElement) {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
-        JID owner = new JID(iq.getFrom().toBareJID());
+        JID owner = iq.getFrom().asBareJID();
         // Collect affiliations of owner for all nodes at the service
         Collection<NodeAffiliate> affiliations = new ArrayList<NodeAffiliate>();
         for (Node node : service.getNodes()) {
@@ -978,7 +978,7 @@ public class PubSubEngine {
         // Check if sender and subscriber JIDs match or if a valid "trusted proxy" is being used
         JID subscriberJID = iq.getFrom();
         // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-        JID owner = new JID(subscriberJID.toBareJID());
+        JID owner = subscriberJID.asBareJID();
         // Check if the node's access model allows the subscription to proceed
         AccessModel accessModel = node.getAccessModel();
         if (!accessModel.canAccessItems(node, owner, subscriberJID)) {
@@ -1193,7 +1193,7 @@ public class PubSubEngine {
         Node newNode = null;
         try {
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-            JID owner = new JID(from.toBareJID());
+            JID owner = from.asBareJID();
             synchronized (newNodeID.intern()) {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
@@ -1447,7 +1447,7 @@ public class PubSubEngine {
             Element entity = (Element) it.next();
             JID subscriber = new JID(entity.attributeValue("jid"));
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
-            JID owner = new JID(subscriber.toBareJID());
+            JID owner = subscriber.asBareJID();
             String subStatus = entity.attributeValue("subscription");
             String subID = entity.attributeValue("subid");
             // Process subscriptions changes

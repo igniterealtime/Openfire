@@ -43,13 +43,13 @@ public class AddMember extends MUCRoomTask {
 
     public AddMember(LocalMUCRoom room, JID bareJID, String nickname) {
         super(room);
-        this.bareJID = new JID(bareJID.toBareJID());
+        this.bareJID = bareJID.asBareJID();
         this.nickname = nickname;
     }
     
     public AddMember(LocalMUCRoom room, String bareJID, String nickname) {
         super(room);
-        this.bareJID = new JID(new JID(bareJID).toBareJID());
+        this.bareJID = new JID(bareJID).asBareJID();
         this.nickname = nickname;
     }
 

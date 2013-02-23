@@ -156,7 +156,7 @@ public class WebDAVLiteServlet extends HttpServlet {
             if (!username.contains("@")) {
                 throw new Exception("Not a valid JID.");
             }
-            final JID bareJID = new JID(new JID(username).toBareJID());
+            final JID bareJID = new JID(username).asBareJID();
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(service).getChatRoom(room).getOccupantsByBareJID(bareJID);
             return true;
         }

@@ -540,7 +540,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     else {
                         // The room does not exist so check for creation permissions
                         // Room creation is always allowed for sysadmin
-                        final JID bareJID = new JID(userjid.toBareJID());
+                        final JID bareJID = userjid.asBareJID();
 						if (isRoomCreationRestricted() && !sysadmins.contains(bareJID)) {
                             // The room creation is only allowed for certain JIDs
                             if (!allowedToCreate.contains(bareJID)) {
@@ -809,7 +809,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void addSysadmin(JID userJID) {
-    	final JID bareJID = new JID(userJID.toBareJID());
+    	final JID bareJID = userJID.asBareJID();
 
         sysadmins.add(bareJID);
 
@@ -827,7 +827,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void removeSysadmin(JID userJID) {
-    	final JID bareJID = new JID(userJID.toBareJID());
+    	final JID bareJID = userJID.asBareJID();
 
         sysadmins.remove(bareJID);
 
@@ -947,7 +947,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 try {
-                    sysadmins.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+                    sysadmins.add(new JID(jid.trim().toLowerCase()).asBareJID());
                 } catch (IllegalArgumentException e) {
                     Log.warn("The 'sysadmin.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }
@@ -967,7 +967,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 try {
-            	    allowedToCreate.add(new JID(new JID(jid.trim().toLowerCase()).toBareJID()));
+            	    allowedToCreate.add(new JID(jid.trim().toLowerCase()).asBareJID());
                 } catch (IllegalArgumentException e) {
                     Log.warn("The 'create.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }

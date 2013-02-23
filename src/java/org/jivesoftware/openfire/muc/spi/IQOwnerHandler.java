@@ -380,7 +380,9 @@ public class IQOwnerHandler {
         	for (String value : field.getValues()) {
         		// XEP-0045: "Affiliations are granted, revoked, and 
         		// maintained based on the user's bare JID, (...)"
-        		admins.add(new JID(new JID(value).toBareJID()));
+                if (value != null && value.trim().length() != 0) {
+                    admins.add(new JID(value.trim()).asBareJID());
+                }
         	}
         }
 
@@ -392,7 +394,9 @@ public class IQOwnerHandler {
         	for(String value : field.getValues()) {
         		// XEP-0045: "Affiliations are granted, revoked, and 
         		// maintained based on the user's bare JID, (...)"
-        		owners.add(new JID(new JID(value).toBareJID()));
+                if (value != null && value.trim().length() != 0) {
+        		    owners.add(new JID(value.trim()).asBareJID());
+                }
         	}
         }
 

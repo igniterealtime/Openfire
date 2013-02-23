@@ -260,7 +260,7 @@ public class Group implements Cacheable, Externalizable {
     public boolean isUser(JID user) {
         // Make sure that we are always checking bare JIDs 
         if (user != null && user.getResource() != null) {
-            user = new JID(user.toBareJID());
+            user = user.asBareJID();
         }
         return user != null && (members.contains(user) || administrators.contains(user));
     }

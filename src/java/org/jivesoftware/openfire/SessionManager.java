@@ -664,7 +664,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         }
 
         // Check presence's priority of other available resources
-        JID searchJID = new JID(session.getAddress().toBareJID());
+        JID searchJID = session.getAddress().asBareJID();
         for (JID address : routingTable.getRoutes(searchJID, null)) {
             if (address.equals(session.getAddress())) {
                 continue;

@@ -51,7 +51,7 @@
     JID bareJID = null;
     try {
         // do validation
-    	bareJID = new JID(new JID(userJID).toBareJID());
+    	bareJID = new JID(userJID).asBareJID();
     } catch (IllegalArgumentException e) {
         errors.put("userJID","userJID");
     }

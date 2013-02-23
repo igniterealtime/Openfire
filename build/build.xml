@@ -150,7 +150,7 @@
     <property name="license.file.path" value="${docs.dir}/dist"/>
 
     <!-- For auto-running and debugging -->
-    <property name="debug" value="false"/>
+    <property name="debug" value="true"/>
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->

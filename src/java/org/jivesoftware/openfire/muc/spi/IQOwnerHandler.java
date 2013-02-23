@@ -772,13 +772,16 @@ public class IQOwnerHandler {
         		LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick"),
         		Type.boolean_type);
 
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"));
+
         configurationForm.addField("x-muc#roomconfig_registration",
         		LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"),
         		Type.boolean_type);
- 
+
         configurationForm.addField(null, null, Type.fixed)
-        		.addValue(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"));
-        
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomadminsfixed"));
+
         configurationForm.addField("muc#roomconfig_roomadmins",
         		LocaleUtils.getLocalizedString("muc.form.conf.owner_roomadmins"),
         		Type.jid_multi);

@@ -72,7 +72,7 @@ public class PubSubPersistenceManager {
 	private static final String PURGE_FOR_SIZE_HSQLDB = "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id NOT IN "
 			+ "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC LIMIT ?)";
 
-	private static final String LOAD_NODE_BASE =
+	private static final String LOAD_NODES =
             "SELECT nodeID, leaf, creationDate, modificationDate, parent, deliverPayloads, " +
             "maxPayloadSize, persistItems, maxItems, notifyConfigChanges, notifyDelete, " +
             "notifyRetract, presenceBased, sendItemSubscribe, publisherModel, " +
@@ -81,9 +81,7 @@ public class PubSubPersistenceManager {
             "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
  "WHERE serviceID=?";
 
-	private static final String LOAD_NODES = LOAD_NODE_BASE + " AND leaf=? ORDER BY nodeID";
-
-	private static final String LOAD_NODE = LOAD_NODE_BASE + " AND nodeID=?";
+	private static final String LOAD_NODE = LOAD_NODES + " AND nodeID=?";
 
     private static final String UPDATE_NODE =
             "UPDATE ofPubsubNode SET modificationDate=?, parent=?, deliverPayloads=?, " +
@@ -547,25 +545,32 @@ public class PubSubPersistenceManager {
             // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
 			pstmt = con.prepareStatement(LOAD_NODES);
             pstmt.setString(1, service.getServiceID());
-			pstmt.setInt(2, 0);
             rs = pstmt.executeQuery();
+            
+            Map<String, String> parentMappings = new HashMap<String, String>();
+            
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
-                loadNode(service, nodes, rs);
+                loadNode(service, nodes, parentMappings, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
-            // Get all leaf nodes (remaining unloaded nodes)
-			pstmt = con.prepareStatement(LOAD_NODES);
-            pstmt.setString(1, service.getServiceID());
-			pstmt.setInt(2, 1);
-            rs = pstmt.executeQuery();
-            // Rebuild loaded leaf nodes
-            while(rs.next()) {
-                loadNode(service, nodes, rs);
+            if (nodes.size() == 0) {
+            	log.info("No nodes found in pubsub");
+            	return;
             }
-            DbConnectionManager.fastcloseStmt(rs, pstmt);
-
+            
+            for (Map.Entry<String, String> entry : parentMappings.entrySet()) {
+            	Node child = nodes.get(entry.getKey());
+            	CollectionNode parent = (CollectionNode) nodes.get(entry.getValue());
+            	
+            	if (parent == null) {
+            		log.error("Could not find parent node " + entry.getValue() + " for node " + entry.getKey());
+            	}
+            	else {
+            		child.changeParent(parent);
+            	}
+            }
             // Get JIDs associated with all nodes
             pstmt = con.prepareStatement(LOAD_NODES_JIDS);
             pstmt.setString(1, service.getServiceID());
@@ -644,14 +649,27 @@ public class PubSubPersistenceManager {
 			pstmt.setString(1, service.getServiceID());
 			pstmt.setString(2, nodeId);
 			rs = pstmt.executeQuery();
-
+			Map<String, String> parentMapping = new HashMap<String, String>();
+			
 			// Rebuild loaded non-leaf nodes
 			if (rs.next())
 			{
-				loadNode(service, nodes, rs);
+				loadNode(service, nodes, parentMapping, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
-
+			String parentId = parentMapping.get(nodeId);
+			
+			if (parentId != null) {
+				CollectionNode parent = (CollectionNode) service.getNode(parentId);
+				
+				if (parent == null) {
+            		log.error("Could not find parent node " + parentId + " for node " + nodeId);
+				}
+				else {
+					nodes.get(nodeId).changeParent(parent);
+				}
+			}
+				
 			// Get JIDs associated with all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_JIDS);
 			pstmt.setString(1, service.getServiceID());
@@ -722,36 +740,25 @@ public class PubSubPersistenceManager {
 		}
 	}
 
-    private static void loadNode(PubSubService service, Map<String, Node> loadedNodes, ResultSet rs) {
+    private static void loadNode(PubSubService service, Map<String, Node> loadedNodes, Map<String, String> parentMappings, ResultSet rs) {
         Node node;
         try {
             String nodeID = decodeNodeID(rs.getString(1));
             boolean leaf = rs.getInt(2) == 1;
             String parent = decodeNodeID(rs.getString(5));
             JID creator = new JID(rs.getString(22));
-            CollectionNode parentNode = null;
+            
             if (parent != null) {
-                // Check if the parent has already been loaded
-                parentNode = (CollectionNode) loadedNodes.get(parent);
-                if (parentNode == null) {
-					parentNode = (CollectionNode) service.getNode(parent);
-
-					if (parentNode == null)
-					{
-						// Parent is not in memory so try to load it
-						log.warn("Node not loaded due to missing parent. NodeID: " + nodeID);
-						return;
-					}
-                }
+            	parentMappings.put(nodeID, parent);
             }
 
             if (leaf) {
                 // Retrieving a leaf node
-                node = new LeafNode(service, parentNode, nodeID, creator);
+                node = new LeafNode(service, null, nodeID, creator);
             }
             else {
                 // Retrieving a collection node
-                node = new CollectionNode(service, parentNode, nodeID, creator);
+                node = new CollectionNode(service, null, nodeID, creator);
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));

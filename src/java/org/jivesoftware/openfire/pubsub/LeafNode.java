@@ -30,8 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -46,7 +44,6 @@ import org.xmpp.packet.Message;
  */
 public class LeafNode extends Node {
 
-	private static final Logger Log = LoggerFactory.getLogger(LeafNode.class);
 	private static final String genIdSeed = UUID.randomUUID().toString();
 	private static final AtomicLong sequenceCounter = new AtomicLong();
 
@@ -362,6 +359,9 @@ public class LeafNode extends Node {
 
     @Override
 	public synchronized PublishedItem getLastPublishedItem() {
+    	if (lastPublished == null){
+    		lastPublished = PubSubPersistenceManager.getLastPublishedItem(this);
+    	}
     	return lastPublished;
     }
 

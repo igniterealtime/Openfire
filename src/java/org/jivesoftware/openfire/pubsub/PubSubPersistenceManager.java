@@ -160,8 +160,8 @@ public class PubSubPersistenceManager {
             "SELECT jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String LOAD_LAST_ITEM =
-            "SELECT jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? AND creationDate IN (select MAX(creationDate) FROM ofPubsubItem GROUP BY serviceId,nodeId)";
+            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
@@ -1537,6 +1537,8 @@ public class PubSubPersistenceManager {
             con = DbConnectionManager.getConnection();
             // Get published items of the specified node
             pstmt = con.prepareStatement(LOAD_LAST_ITEM);
+            pstmt.setFetchSize(1);
+            pstmt.setMaxRows(1);
             pstmt.setString(1, node.getService().getServiceID());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             rs = pstmt.executeQuery();

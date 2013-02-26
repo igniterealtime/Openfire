@@ -206,6 +206,9 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      *         hash of the original caps packet.
      */
     private boolean isValid(IQ packet) {
+        if (packet.getType() != IQ.Type.result)
+            return false;
+
         final EntityCapabilities original = verAttributes.get(packet.getID());
         if (original == null) {
         	return false;

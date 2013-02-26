@@ -1,0 +1,158 @@
+@CHARSET "ISO-8859-1";
+
+.suggest_link {
+	background-color: #FFFFFF;
+	padding: 2px 6px 2px 6px;
+}
+
+.suggest_link_over {
+	background-color: #3366CC;
+	padding: 2px 6px 2px 6px;
+}
+
+.grouptable {
+	border-spacing:0px;
+}
+
+#search_suggest {
+	position: absolute;
+	background-color: #FFFFFF;
+	text-align: left;
+	border: 1px solid #000000;
+	display: none;
+}
+
+.slider {
+	margin-left: 48px;
+	padding-top: 0px;
+	background-color: rgb(230, 230, 230);
+	border-color: #CCCCCC rgb(204, 204, 204);
+	color: white;
+	width: 550px;
+	border-style: solid;
+	border-width: 1px;
+	border-top: none;
+	display: none;
+}
+
+.sildeHeader {
+	background-color: #D4D2D2;
+	color: #000000;
+	padding-left: 5px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	border-bottom-color: gray;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	font-weight: bold;
+}
+
+.logtable {
+	border-left:6px;
+	width: 550px;
+	height: 100%;
+	border-spacing: 0px;
+	
+}
+
+#loghead{
+	background-color:#DEDCDC;
+	font-weight: bold;
+	color:#404040;
+}
+
+#logodd {
+	background-color:#F0F0F0;
+}
+
+#logeven {
+	background-color:#E9E9E9;
+}
+
+#logfoot {
+	background-color:#DEDCDC;
+}
+
+div.graph {
+	width: 300px;
+	height: 100px;
+	float: right;
+}
+
+.gatewayHeader {
+	width: 600px;
+	background-color: #EEEEEE;
+	border-color: #CCCCCC rgb(204, 204, 204);
+	border-style: solid solid solid;
+	border-width: 1px 1px 1px;
+}
+
+.gatewayName {
+	padding-left: 10px;
+}
+
+.gatewayIcon {
+	border-left: 1px;
+}
+
+.gatewayCheckbox {
+	width: 20px;
+}
+
+.configTable {
+	width: 100%;
+	border-spacing:0px;
+
+}
+
+.configTable1Column {
+	width: 50%;
+}
+
+.gatewayIcons img {
+	float: right;
+	padding: 4px;
+}
+/* 	
+#permissions {
+	margin-left: 1%;
+	padding-top: 0px;
+	background-color: rgb(230, 230, 230);
+	border-color: #CCCCCC rgb(204, 204, 204);
+	color: white;
+	width: 58%;
+	border-style: solid;
+	border-width: 1px;
+	border-top: none;
+	display: none;
+} */
+
+.permissionTableColumn {
+	width: 50%;
+}
+
+.ajaxloading {
+	padding-left: 4px;
+	padding-top: 3px;
+}
+
+.permissionTitle {
+	color: black;
+	size: +2;
+}
+
+dt {
+	width: 50px;
+}
+
+.hbg-bar {
+	padding-left: 5px;
+	background-color: #369;
+	color: #fff;
+	font-weight: bold;
+}
+
+.hbg-title {
+	text-align: center;
+	font-weight: bold;
+}

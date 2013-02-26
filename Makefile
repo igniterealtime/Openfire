@@ -1,4 +1,4 @@
-.PHONY: all clean eclipse
+.PHONY: all clean dbkg eclipse
 
 all: build-openfire
 
@@ -9,6 +9,9 @@ build-openfire:
 
 clean:
 	cd build && ant clean
+
+dbkg:
+	cd build && ant installer.debian
 
 eclipse: .settings .classpath .project
 

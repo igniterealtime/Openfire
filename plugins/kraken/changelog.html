@@ -1,0 +1,268 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>IM Gateway Changelog</title>
+<style type="text/css">
+/* global font and body settings */
+body {
+	font-size : 100%;
+	background-color : #547B3B;
+	padding: 0;
+	margin: 0 0 30px 0;
+}
+body, td, th {
+	font-family : arial, helvetica, sans-serif;
+	font-size : 10pt;
+}
+pre, tt, code {
+	font-family : courier new, monospace;
+	font-size : 9pt;
+}
+#pageContainer {
+	display: block;
+	position: relative;
+	clear: both;
+	background-color: #fff;
+	border: 1px solid #999;
+	padding: 40px;
+	margin: 30px;
+}
+#pageHeader {
+	display: block;
+	position: relative;
+	height: 80px;
+	background-color: #547B3B;
+	border: 1px solid #cccccc;
+	border-bottom: none;
+	margin: 10px 0 0 0;
+}
+#pageBody {
+	margin: 0 18px 0 20px;
+}
+
+
+
+/* anchors */
+a:link {
+	color: #1B8712;
+}
+a:visited {
+	color: #3EAF34;
+}
+a:hover {
+	color: #7a1d42;
+	text-decoration : underline;
+}
+a:active {
+	color: #1B8712;
+}
+
+
+
+/* headings */
+h1 {
+	display: block;
+	position: relative;
+	font-size : 1.7em;
+	font-weight : bold;
+	color: #ffffff;
+	padding: 0;
+	margin: 30px 0 0 20px;
+}
+h2 {
+	font-size : 1.3em;
+	font-weight : bold;
+	margin: 40px 0 6px 0;
+	padding: 0;
+	color: #000000;
+}
+h3 {
+	font-size : 1.0em;
+	font-weight : bold;
+	margin: 25px 0 3px 0;
+	padding: 0;
+	color: #000000;
+}
+
+
+
+/* general elements */
+p {
+	margin: 0 0 15px 0;
+}
+
+ul {
+	margin: 5px 0 15px 35px;
+}
+li {
+	padding-bottom : 4px;
+}
+tt {
+	font-family : courier new, monospace;
+	font-weight : bold;
+	color : #060;
+}
+hr {
+	display: block;
+	height: 1px;
+	background-color: #999999;
+	border: none;
+	margin: 40px 0 20px 0;
+}
+
+.footer {
+	font-size : 8pt;
+	color : #666;
+	text-align : center;
+	margin-top : 2em;
+	padding-top : 0.5em;
+	border-top : 1px #CCC solid;
+}
+</style>
+</head>
+<body>
+
+<div id="pageContainer">
+
+	<div id="pageHeader">
+		<h1>Kraken Changelog</h1>
+	</div>
+
+	<div id="pageBody">
+
+    
+<h2>Major Known Issues</h2>
+<ul>
+<li>SIMPLE support is only tested with OpenSER, may work with others</li>
+<li>No buddy icon support for Yahoo.</li>
+<li>Yahoo support does not function especially well at all.</li>
+<li>QQ is broken due to too many protocol changes.</li>
+<li>MySpaceIM logins do not work.  Something is wrong with the hash.</li>
+</ul>
+
+
+<h2>1.1.3 -- <span style="font-weight: normal;">September 23, 2011</span></h2>
+    
+<strong>Bug Fixes</strong>
+<ul>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-7'>KR-7</a>] -         Error while removing OSCAR contacts fixed</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-10'>KR-10</a>] -         Illegal XML coming when speaking with smarterchild AIM bot fixed</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-68'>KR-68</a>] -         MSN Transport - Memleak in JML (DisplayPictureDuelManager)fixed</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-105'>KR-105</a>] -         Yahoo Status of Contacts were get jumbled up with each other</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-107'>KR-107</a>] -         Reconnect on disconnect was broken</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-137'>KR-137</a>] -         &quot;Your authorization has been removed!&quot; was showing up after reconnect</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-138'>KR-138</a>] -         XMPP server connection was dropping when joining an IRC room.</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-139'>KR-139</a>] -         Disconnection was occurring on message XML parsing error</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-144'>KR-144</a>] -         Facebook buddy list was not showing up</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-145'>KR-145</a>] -         Yahoo users could not log in</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-146'>KR-146</a>] -         Empty &quot;RootItem&quot; causesd exception upon logging in, preventing login altogether</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-148'>KR-148</a>] -         Yahoo Buddy List was having a Synchronization Problem</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-149'>KR-149</a>] -         AIM support was failing under Trillian, fixed</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-155'>KR-155</a>] -         QQ Transport was not coming online</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-156'>KR-156</a>] -         Gtalk was not getting presence on login</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-157'>KR-157</a>] -         Registration Menu did not allow some valid IMs for AIM</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-161'>KR-161</a>] -         Could not see people online if they are already online when I sign in</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-163'>KR-163</a>] -         Offline messages from MSN -while online- were not working</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-181'>KR-181</a>] -         Facebook XMPP switched style of contacts which had broken Kraken</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-183'>KR-183</a>] -         XMPP transports were not reporting bad credentials properly</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-184'>KR-184</a>] -         Facebook XMPP was connecting &quot;sort of&quot; and then failing</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-187'>KR-187</a>] -         Cyrillic text was broken in messages to ICQ7 clients</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-190'>KR-190</a>] -         Wrong transfer of Polish letters fixed</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-191'>KR-191</a>] -         GaduGadu was not properly storing (or retrieving?) contact list</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-193'>KR-193</a>] -         Chat History option was changing in Gtalk</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-196'>KR-196</a>] -         Buddies in contact lists were showing up as 'none' instead of 'to'</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-204'>KR-204</a>] -         ICQ login servers changed, updated accordingly</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-210'>KR-210</a>] -         Kraken now compatible with Openfire 3.7.0 logging</li>
+</ul>
+        
+<strong>New Features/Improvements</strong>
+<ul>
+   <li>Facebook Platform auth support (pass {PLATFORM} as username and access token piece as password)</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-27'>KR-27</a>] -         Legacy accounts are now verified before registration is considered a success.</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-74'>KR-74</a>] -         Added ability to kill a gateway session</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-135'>KR-135</a>] -         Replaced old jabber icon with the new XMPP icon</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-159'>KR-159</a>] -         Added support for retrieval of all registrations from xmlrpc</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-162'>KR-162</a>] -         Registrations for anonymous users are now deleted on session destruction</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-174'>KR-174</a>] -         Switched Facebook to be XMPP based</li>
+   <li>[<a href='http://issues.igniterealtime.org/browse/KR-195'>KR-195</a>] -         XMPP based transports promoted to Stable status</li>
+</ul>
+
+<h2>1.1.2 -- <span style="font-weight: normal;">September 3, 2009</span></h2>
+
+<strong>Issues Resolved</strong>
+<ul>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2849285&group_id=244775&atid=1126068'>2849285</a> - java6 packing of java5 bytecode</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2843526&group_id=244775&atid=1126068'>2843526</a> - Can't change contact alias</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2843403&group_id=244775&atid=1126068'>2843403</a> - failed logins during jabber:iq:register should return error</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2839490&group_id=244775&atid=1126068'>2839490</a> - MSN nickname not update to current.</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2833421&group_id=244775&atid=1126068'>2833421</a> - Chat notification (xep-0085 vs xep-0022)</li>
+</ul>
+
+<h2>1.1.1 -- <span style="font-weight: normal;">September 1, 2009</span></h2>
+
+<strong>Issues Resolved</strong>
+<ul>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2848127&group_id=244775&atid=1126068'>2848127</a> - Duplicate messages received from Yahoo (sometimes)</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2848125&group_id=244775&atid=1126068'>2848125</a> - Facebook transport stopped working</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2844097&group_id=244775&atid=1126068'>2844097</a> - Cannot subscribe to a Yahoo account presence</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2831758&group_id=244775&atid=1126068'>2831758</a> - Handle "susbcribe" and "subscribed" requests from/to Yahoo</li>
+	<li><a href='https://sourceforge.net/tracker/?func=detail&aid=2620590&group_id=244775&atid=1126068'>2831758</a> - Gateway returns malformed message stanzas on registration er</li>
+</ul>
+
+<h2>1.1.0 -- <span style="font-weight: normal;">August 2, 2009</span></h2>
+
+<strong>Issues Resolved</strong>
+<ul>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2826177&group_id=244775&atid=1126068'>2826177</a> - Facebook transport causing cpu usage overload</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2580754&group_id=244775&atid=1126068'>2580754</a> - XML-RPC Interface</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2819012&group_id=244775&atid=1126068'>2819012</a> - Can't log on</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2809576&group_id=244775&atid=1126068'>2809576</a> - MSN setting of XMPP avatar not working</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2809577&group_id=244775&atid=1126068'>2809577</a> - GTalk statuses not syncing properly</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2724131&group_id=244775&atid=1126068'>2724131</a> - Problem sending messages to other domains (eg. rocketmail)</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2684526&group_id=244775&atid=1126068'>2684526</a> - incorrect links in kraken-registrations.jsp</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2505876&group_id=244775&atid=1126068'>2505876</a> - Personal Message of MSN should be unescaped according to html</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2317907&group_id=244775&atid=1126068'>2317907</a> - Can not authenticate to jabber.org</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2317879&group_id=244775&atid=1126068'>2317879</a> - MSN disconnecting after 20 minutes</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2316446&group_id=244775&atid=1126068'>2316446</a> - Status icon does not change properly</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2316417&group_id=244775&atid=1126068'>2316417</a> - Avatar loading timeout with gateway contacts</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2814933&group_id=244775&atid=1126068'>2814933</a> - Compile broken</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2813271&group_id=244775&atid=1126068'>2813271</a> - Contacts' status is always offline</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2810485&group_id=244775&atid=1126068'>2810485</a> - Building failure</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2805974&group_id=244775&atid=1126068'>2805974</a> - Building failure</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2787891&group_id=244775&atid=1126068'>2787891</a> - /plugins/kraken/xml-rpc</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2740016&group_id=244775&atid=1126068'>2740016</a> - "Update available" when using a different translation</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2671590&group_id=244775&atid=1126068'>2671590</a> - Error when paging msn registrations</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2657400&group_id=244775&atid=1126068'>2657400</a> - Connection Timeout</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2655458&group_id=244775&atid=1126068'>2655458</a> - XMPP transport</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2636608&group_id=244775&atid=1126068'>2636608</a> - GaduGadu: encoding problems</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2543459&group_id=244775&atid=1126068'>2543459</a> - MSN constantly disconnecting</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2317906&group_id=244775&atid=1126068'>2317906</a> - Sometimes folk can send messages but not receive</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2317831&group_id=244775&atid=1126068'>2317831</a> - Some folk are having connection issues with MSN</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2603935&group_id=244775&atid=1126068'>2603935</a> - Facebook Transport</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2368670&group_id=244775&atid=1126068'>2368670</a> - MySpaceIM transport</li>
+    <li><a href='https://sourceforge.net/tracker/?func=detail&aid=2316441&group_id=244775&atid=1126068'>2316441</a> - Sametime Transport</li>
+</ul>
+
+<h2>1.0.0 -- <span style="font-weight: normal;">February 8, 2009</span> -- Initial release</h2>
+
+<strong>Issues Fixed Since IM Gateway 1.2.4d</strong>
+<ul>
+	<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2531221&group_id=244775&atid=1126068">2531221</a> - Russian ICQ users can not connect</li>
+	<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2317818&group_id=244775&atid=1126068">2317818</a> - MSN transport seems to be leaving a lot of session listeners</li>
+	<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2317915&group_id=244775&atid=1126068">2317915</a> - XmppConnections are left behind</li>
+	<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2317739&group_id=244775&atid=1126068">2317739</a> - vCard PHOTO element has empty namespace?</li>
+	<li><a href="https://sourceforge.net/tracker/?func=detail&aid=2317862&group_id=244775&atid=1126068">2317862</a> - MSN Transport is stop working after ~ 1 day</li>
+</ul>
+
+
+    <div class="footer">
+    Copyright &copy; Daniel Henninger, 2008-2009
+    </div>
+
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>com.jivesoftware.openfire.ClusteringPlugin</class>
+    <name>${plugin.name}</name>
+    <description>${plugin.description}</description>
+    <author>Jive Software</author>
+    <version>1.2.3</version>
+    <date>01/09/2013</date>
+    <minServerVersion>3.7.2</minServerVersion>
+	
+</plugin>

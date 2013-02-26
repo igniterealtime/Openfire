@@ -1,0 +1,6 @@
+Name                                |  Version                                        | License
+---------------------------------------------------------------------------------------------------------------------
+json.jar                            | 50c3afb2166798c5de0896b90659d8a2b2f8fcec        | http://www.json.org/license.html
+
+Notes:
+json.jar has been compiled using the code that is made available at https://github.com/douglascrockford/JSON-java

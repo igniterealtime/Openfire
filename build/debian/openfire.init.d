@@ -20,17 +20,22 @@
 ### END INIT INFO 
 
 
-# Attempt to locate JAVA_HOME, code borrowed from jabref package
-if [ -z $JAVA_HOME ]
-then
-	t=/usr/lib/jvm/default-java && test -d $t && JAVA_HOME=$t
-	t=/usr/lib/jvm/java-7-sun && test -d $t && JAVA_HOME=$t
-	t=/usr/lib/jvm/java-6-sun && test -d $t && JAVA_HOME=$t
-	t=/usr/lib/jvm/java-1.5.0-sun && test -d $t && JAVA_HOME=$t
-    t=/usr/lib/jvm/java-7-openjdk-amd64 && test -d $t && JAVA_HOME=$t
-    t=/usr/lib/jvm/java-7-openjdk && test -d $t && JAVA_HOME=$t
-    t=/usr/lib/jvm/java-6-openjdk-amd64 && test -d $t && JAVA_HOME=$t
-    t=/usr/lib/jvm/java-6-openjdk && test -d $t && JAVA_HOME=$t
+# Attempt to locate JAVA_HOME
+if [ -z $JAVA_HOME ]; then
+    JAVA_HOMES="/usr/lib/jvm/default-java \
+		/usr/lib/jvm/java-7-sun \
+		/usr/lib/jvm/java-6-sun \
+		/usr/lib/jvm/java-1.5.0-sun \
+		/usr/lib/jvm/java-7-openjdk-amd64 \
+		/usr/lib/jvm/java-7-openjdk \
+		/usr/lib/jvm/java-6-openjdk-amd64 \
+		/usr/lib/jvm/java-6-openjdk"
+    for t in $JAVA_HOMES ; do
+	if [ -d $t ] ; then
+	    JAVA_HOME=$t
+	    break;
+	fi
+    done
 fi
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:${JAVA_HOME}/bin

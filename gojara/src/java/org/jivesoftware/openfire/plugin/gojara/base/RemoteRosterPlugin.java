@@ -15,6 +15,7 @@ import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.AbstractInterceptorHandler;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.GatewayInterceptorHandler;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
@@ -46,15 +47,21 @@ public class RemoteRosterPlugin implements Plugin {
 	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
 	private static PluginManager pluginManager;
 	private final SessionManager _sessionManager = SessionManager.getInstance();
-	private Map<String, AbstractInterceptorHandler> _interceptors = new HashMap<String, AbstractInterceptorHandler>();
+//	private Map<String, AbstractInterceptorHandler> _interceptors = new HashMap<String, AbstractInterceptorHandler>();
 	private Set<String> _waitingForIQResponse = new HashSet<String>();
 	private PropertyEventListener _settingsObserver;
-
+	private MainInterceptor mainInterceptor = new MainInterceptor();
+	private InterceptorManager iManager = InterceptorManager.getInstance();
+	
+	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		Log.debug("Starting RemoteRoster Plugin");
 		pluginManager = manager;
+		iManager.addInterceptor(mainInterceptor);
 		manageExternalComponents();
 		listenToSettings();
+		Log.debug("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
+		
 	}
 
 	/*
@@ -68,23 +75,26 @@ public class RemoteRosterPlugin implements Plugin {
 			 * Check if the unregistered component contains to one of our
 			 * package interceptors
 			 */
+			@Override
 			public void componentUnregistered(JID componentJID) {
-				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
-				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
-					String initialSubdomain = session.getExternalComponent().getInitialSubdomain();
+//				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
+//				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
+//					String initialSubdomain = session.getExternalComponent().getInitialSubdomain();
 					// Remove it from Map & ComponentManager
-					removeInterceptor(initialSubdomain);
-				}
+					removeInterceptor(componentJID.toString());
+//				}
 			}
 
 			/*
 			 * If there is a new external Component, check if it is a gateway
 			 * and add create a package interceptor if it is enabled
 			 */
+			@Override
 			public void componentRegistered(JID componentJID) {
 				_waitingForIQResponse.add(componentJID.getDomain());
 			}
 
+			@Override
 			public void componentInfoReceived(IQ iq) {
 				String from = iq.getFrom().getDomain();
 				// Waiting for this external component sending an IQ response to
@@ -95,7 +105,8 @@ public class RemoteRosterPlugin implements Plugin {
 					List<Node> nodes = XpathHelper.findNodesInDocument(doc, "//disco:identity[@category='gateway']");
 					// Is this external component a gateway and there is no
 					// package interceptor for it?
-					if (nodes.size() > 0 && !_interceptors.containsKey(from)) {
+//					if (nodes.size() > 0 && !_interceptors.containsKey(from)) {
+					if (nodes.size() > 0) {
 						updateInterceptors(from);
 					}
 
@@ -122,9 +133,10 @@ public class RemoteRosterPlugin implements Plugin {
 	}
 
 	public void destroyPlugin() {
-		for (String key : _interceptors.keySet()) {
-			_interceptors.get(key).stop();
-		}
+//		for (String key : _interceptors.keySet()) {
+//			_interceptors.get(key).stop();
+//		}
+		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		pluginManager = null;
 	}
@@ -132,13 +144,15 @@ public class RemoteRosterPlugin implements Plugin {
 	private void updateInterceptors(String componentJID) {
 		boolean allowed = JiveGlobals.getBooleanProperty("plugin.remoteroster.jids." + componentJID, false);
 		if (allowed) {
-			if (!_interceptors.containsKey(componentJID)) {
-				createNewPackageIntercetor(componentJID);
-			}
+//			if (!_interceptors.containsKey(componentJID)) {
+//				createNewPackageIntercetor(componentJID);
+//			}
+			mainInterceptor.addTransport(componentJID);
 		} else {
-			if (_interceptors.containsKey(componentJID)) {
-				removeInterceptor(componentJID);
-			}
+//			if (_interceptors.containsKey(componentJID)) {
+//				removeInterceptor(componentJID);
+//			}
+			mainInterceptor.removeTransport(componentJID);
 		}
 	}
 
@@ -152,11 +166,12 @@ public class RemoteRosterPlugin implements Plugin {
 	}
 
 	private void removeInterceptor(String initialSubdomain) {
-		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
-		if (interceptor != null) {
-			_interceptors.remove(initialSubdomain);
-			interceptor.stop();
-		}
+		mainInterceptor.removeTransport(initialSubdomain);
+//		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
+//		if (interceptor != null) {
+//			_interceptors.remove(initialSubdomain);
+//			interceptor.stop();
+//		}
 	}
 
 	/*
@@ -165,9 +180,10 @@ public class RemoteRosterPlugin implements Plugin {
 	 * specified gateway
 	 */
 	private void createNewPackageIntercetor(String initialSubdomain) {
-		AbstractInterceptorHandler interceptor = new GatewayInterceptorHandler(initialSubdomain);
-		_interceptors.put(initialSubdomain, interceptor);
-		interceptor.start();
+		mainInterceptor.addTransport(initialSubdomain);
+//		AbstractInterceptorHandler interceptor = new GatewayInterceptorHandler(initialSubdomain);
+//		_interceptors.put(initialSubdomain, interceptor);
+//		interceptor.start();
 	}
 
 }

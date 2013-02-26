@@ -12,8 +12,11 @@ import org.xmpp.packet.Presence;
 
 /**
  * This class is a part of the command pattern used in
- * {@link RemoteRosterInterceptor}. If the remote contacts should not be saved
- * permanently in the users roster this command will clean up the users roster.
+ * {@link RemoteRosterInterceptor}. If the remote contacts should not be 
+ * saved permanently in the users Roster, this command will delete
+ * contacts to the corresponding Transport upon receiving unavailable presence
+ * from transport. This way the Users Roster will not get modified by the automated
+ * unsubscribe presences triggered by deleting RosterItem in OF-Roster
  * 
  * @author Holger Bergunde
  * 
@@ -21,17 +24,17 @@ import org.xmpp.packet.Presence;
 public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor {
 
 	private RosterManager _rosterManager;
-	private String _subDomain;
+//	private String _subDomain;
 
-	public NonPersistantRosterProcessor(RosterManager rostermananger, String subdomain) {
-		Log.debug("Created NonPersistantProcessor for " + subdomain);
+	public NonPersistantRosterProcessor(RosterManager rostermananger) {
+		Log.debug("Created NonPersistantProcessor");
 		_rosterManager = rostermananger;
-		_subDomain = subdomain;
+//		_subDomain = subdomain;
 	}
 
 	@Override
-	public void process(Packet packet) throws PacketRejectedException {
-		Log.debug("Processing packet in NonPersistantRosterProcessor for " + _subDomain);
+	public void process(Packet packet, String subdomain) throws PacketRejectedException {
+		Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain);
 		Presence myPacket = (Presence) packet;
 		String to = myPacket.getTo().toString();
 		String username = getUsernameFromJid(to);
@@ -41,7 +44,7 @@ public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor 
 				Collection<RosterItem> items = roster.getRosterItems();
 				for (RosterItem item : items) {
 					String itemName = item.getJid().toString();
-					if (itemName.contains(_subDomain) && !itemName.equals(_subDomain)) {
+					if (itemName.contains(subdomain) && !itemName.equals(subdomain)) {
 						Log.debug("Removing contact " + item.getJid().toString() + " from contact list.");
 						roster.deleteRosterItem(item.getJid(), false);
 					}

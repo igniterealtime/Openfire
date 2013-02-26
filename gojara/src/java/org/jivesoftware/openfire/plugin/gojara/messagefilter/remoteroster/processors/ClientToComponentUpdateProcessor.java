@@ -21,16 +21,16 @@ import org.xmpp.packet.Packet;
  */
 public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProcessor {
 
-	private String _myDomain;
+//	private String _myDomain;
 
-	public ClientToComponentUpdateProcessor(String mySubdomain) {
-		Log.debug("Created ClientToComponentUpdateProcessor for " + mySubdomain);
-		_myDomain = mySubdomain;
+	public ClientToComponentUpdateProcessor() {
+		Log.debug("Created ClientToComponentUpdateProcessor");
+//		_myDomain = mySubdomain;
 	}
 
 	@Override
-	public void process(Packet packet) throws PacketRejectedException {
-		Log.debug("Processing packet in ClientToComponentUpdateProcessor for " + _myDomain);
+	public void process(Packet packet, String subdomain) throws PacketRejectedException {
+		Log.debug("Processing packet in ClientToComponentUpdateProcessor for " + subdomain);
 		Element query = ((IQ) packet).getChildElement();
 		if (query != null && query.getNamespaceURI().equals("jabber:iq:roster")) {
 			if (findNodesInDocument(query.getDocument(), "//roster:item").size() > 0) {
@@ -39,10 +39,10 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 					// TODO: We ignore remove iq packets for now. There might be
 					// conflicts
 					// when we remove our legacy network registration.
-					if (jid.contains("@" + _myDomain) && !n.valueOf("@subscription").equals("remove")) {
-						Log.debug("Mirroring packet from local network to legacy component " + _myDomain);
+					if (jid.contains("@" + subdomain) && !n.valueOf("@subscription").equals("remove")) {
+						Log.debug("Mirroring packet from local network to legacy component " + subdomain);
 						IQ forward = (IQ) packet.createCopy();
-						forward.setTo(_myDomain);
+						forward.setTo(subdomain);
 						dispatchPacket(forward);
 					}
 				}

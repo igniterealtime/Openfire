@@ -30,17 +30,17 @@ import org.xmpp.packet.Packet;
 public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 
 	private RosterManager _rosterManager;
-	private String _componentName;
+//	private String _componentName;
 
-	public SendRosterProcessor(RosterManager rosterMananger, String componentName) {
-		Log.debug("Created SendRosterProcessor for " + componentName);
+	public SendRosterProcessor(RosterManager rosterMananger) {
+		Log.debug("Created SendRosterProcessor");
 		_rosterManager = rosterMananger;
-		_componentName = componentName;
+//		_componentName = componentName;
 	}
 
 	@Override
-	public void process(Packet packet) throws PacketRejectedException {
-		Log.debug("Processing packet in SendRosterProcessor for " + _componentName);
+	public void process(Packet packet, String subdomain) throws PacketRejectedException {
+		Log.debug("Processing packet in SendRosterProcessor for " + subdomain);
 		IQ myPacket = (IQ) packet;
 
 		String user = myPacket.getTo().toString();
@@ -51,23 +51,23 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 			try {
 				roster = _rosterManager.getRoster(username);
 				Collection<RosterItem> items = roster.getRosterItems();
-				sendRosterToComponent(myPacket, items);
+				sendRosterToComponent(myPacket, items, subdomain);
 			} catch (UserNotFoundException e) {
 				e.printStackTrace();
 			}
 		} else {
-			sendEmptyRoster(myPacket);
+			sendEmptyRoster(myPacket, subdomain);
 		}
 	}
 
-	private void sendRosterToComponent(IQ requestPacket, Collection<RosterItem> items) {
+	private void sendRosterToComponent(IQ requestPacket, Collection<RosterItem> items, String subdomain) {
 		Log.debug("Sending contacts from user " + requestPacket.getFrom().toString() + " to external Component");
 		IQ response = IQ.createResultIQ(requestPacket);
-		response.setTo(_componentName);
+		response.setTo(subdomain);
 		Element query = new DefaultElement("query");
 		for (RosterItem i : items) {
-			if (i.getJid().toString().contains(_componentName)) {
-				Log.debug("Roster exchange for external component " + _componentName + ". Sending user "
+			if (i.getJid().toString().contains(subdomain)) {
+				Log.debug("Roster exchange for external component " + subdomain + ". Sending user "
 						+ i.getJid().toString());
 				Element item = new DefaultElement("item", null);
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
@@ -87,11 +87,11 @@ public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
 		dispatchPacket(response);
 	}
 
-	private void sendEmptyRoster(Packet requestPacket){
+	private void sendEmptyRoster(Packet requestPacket, String subdomain){
 		Log.debug("Sending nonpersistant-RemoteRosterResponse to external Component");
 		IQ iq = (IQ) requestPacket;
 		IQ response = IQ.createResultIQ(iq);
-		response.setTo(_componentName);
+		response.setTo(subdomain);
 		Element query = new DefaultElement("query");
 		query.addNamespace("", "jabber:iq:roster");
 		response.setChildElement(query);

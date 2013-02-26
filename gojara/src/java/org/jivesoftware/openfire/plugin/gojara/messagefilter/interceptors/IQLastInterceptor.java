@@ -33,6 +33,7 @@ public class IQLastInterceptor implements PacketInterceptor {
 		_subDomain = subdomain;
 	}
 
+	@Override
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 			throws PacketRejectedException {
 

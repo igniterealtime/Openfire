@@ -1,9 +1,12 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import org.dom4j.Element;
 import org.dom4j.Node;
+import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;
@@ -32,17 +35,17 @@ import org.xmpp.packet.Packet;
 public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProcessor {
 
 	private RosterManager _rosterManager;
-	private String _mySubdomain;
+//	private String _mySubdomain;
 
-	public ReceiveComponentUpdatesProcessor(RosterManager rosterManager, String subdomain) {
-		_mySubdomain = subdomain;
-		Log.debug("Created ReceiveComponentUpdatesProcessor for " + _mySubdomain);
+	public ReceiveComponentUpdatesProcessor(RosterManager rosterManager) {
+//		_mySubdomain = subdomain;
+		Log.debug("Created ReceiveComponentUpdatesProcessor");
 		_rosterManager = rosterManager;
 	}
 
 	@Override
-	public void process(Packet packet) throws PacketRejectedException {
-		Log.debug("Processing packet in ClientToComponentUpdateProcessor for " + _mySubdomain);
+	public void process(Packet packet, String subdomain) throws PacketRejectedException {
+		Log.debug("Processing packet in ClientToComponentUpdateProcessor for " + subdomain);
 		IQ myPacket = (IQ) packet;
 		IQ response = IQ.createResultIQ(myPacket);
 		
@@ -90,14 +93,13 @@ public class ReceiveComponentUpdatesProcessor extends AbstractRemoteRosterProces
 				}
 			} else if (subvalue.equals("remove")){
 				try {
-					roster = _rosterManager.getRoster(username);
-					Log.debug("Removing contact " + username + " from contact list.");
-					//If the contact didnt exist in contact list it is likely the transport itself in which case
-					//we do not want to forward this msg to server...
-					RosterItem item = roster.deleteRosterItem(new JID(jid), false);
-					if (item == null) {
-						throw new PacketRejectedException(); 
+					if (jid.equals(myPacket.getFrom().toString())) {
+						// Do not Try to Remove component itself as its not added.
+						break;
 					}
+					roster = _rosterManager.getRoster(username);
+					roster.deleteRosterItem(new JID(jid), false);
+					Log.debug("Removed contact " + jid + " from contact list of " + username);
 				} catch (UserNotFoundException e) {
 					Log.debug("Could not find user while cleaning up the roster in GoJara for user " + username, e);
 					response.setType(IQ.Type.error);

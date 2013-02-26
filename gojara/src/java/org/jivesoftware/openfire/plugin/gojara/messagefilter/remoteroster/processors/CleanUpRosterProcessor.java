@@ -33,7 +33,7 @@ public class CleanUpRosterProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	@Override
-	public void process(Packet packet) throws PacketRejectedException {
+	public void process(Packet packet, String subdomain) throws PacketRejectedException {
 		if (packet instanceof IQ) {
 			IQ iqPacket = (IQ) packet;
 

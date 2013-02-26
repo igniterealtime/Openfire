@@ -27,15 +27,16 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 
 	private PermissionManager _permissions;
 	private String _subDomain;
-	private String _serverDomain;
+	private String _host;
 
 	public DiscoPackageInterceptorHandler(String subdomain) {
 		_permissions = new PermissionManager();
 		_subDomain = subdomain;
 		XMPPServer server = XMPPServer.getInstance();
-		_serverDomain = server.getServerInfo().getXMPPDomain();
+		_host = server.getServerInfo().getHostname();
 	}
 
+	@Override
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 			throws PacketRejectedException {
 		if (_permissions.isGatewayLimited(_subDomain)) {
@@ -44,11 +45,11 @@ public class DiscoPackageInterceptorHandler implements PacketInterceptor {
 				Element root = iqpacket.getChildElement();
 				if (root == null)
 					return; 
-
-				if (iqpacket.getFrom() == null || iqpacket.getFrom().toString().equals(_serverDomain)) {
-					String ns = root.getNamespaceURI();
-					if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
-						if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {
+				
+				String ns = root.getNamespaceURI();
+				if (ns.equals("http://jabber.org/protocol/disco#items") && iqpacket.getType().equals(IQ.Type.result)) {
+					if (!_permissions.allowedForUser(_subDomain, iqpacket.getTo())) {
+						if (iqpacket.getFrom().toString().equals(_host)) {
 							List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoitems:item");
 							for (Node node : nodes) {
 								if (node.valueOf("@jid").equals(_subDomain)) {

@@ -310,7 +310,9 @@ public class IQRouter extends BasicModule {
                         iqResultListener.receivedAnswer(packet);
                     }
                     catch (Exception e) {
-                        Log.error("Error processing answer of remote entity", e);
+                        Log.error(
+                                "Error processing answer of remote entity. Answer: "
+                                        + packet.toXML(), e);
                     }
                     return;
                 }

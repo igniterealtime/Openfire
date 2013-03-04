@@ -148,28 +148,32 @@ public class FlashCrossDomainHandler extends BasicModule {
     }
     
     /**
-     * Safely read a string from the reader until a zero character or a newline is received o
-r the 200 character is reached.
-     *
+     * Safely read a string from the reader until a zero character or a newline
+     * is received, more then 100 invalid code points where read or the 200
+     * character is reached.
+     * 
      * @return the string read from the reader.
      */
     protected String read(BufferedReader in) {
         StringBuffer buffer = new StringBuffer();
         int codePoint;
-        boolean zeroByteRead = false;
-        
+        boolean stopReading = false;
+        int invalidCodePoints = 0;
+
         try {
             do {
                 codePoint = in.read();
 
-                if (codePoint == 0 || codePoint == '\n') {
-                    zeroByteRead = true;
+                if (codePoint == 0 || codePoint == '\n' || codePoint == -1) {
+                    stopReading = true;
                 }
                 else if (Character.isValidCodePoint(codePoint)) {
                     buffer.appendCodePoint(codePoint);
+                } else {
+                    invalidCodePoints++;
                 }
-            }
-            while (!zeroByteRead && buffer.length() < 200);
+            } while (!stopReading && buffer.length() < 200
+                    && invalidCodePoints < 100);
         }
         catch (Exception e) {
             Log.debug("Exception (read): " + e.getMessage());
@@ -177,5 +181,5 @@ r the 200 character is reached.
         
         return buffer.toString();
     }
-    
+
 }

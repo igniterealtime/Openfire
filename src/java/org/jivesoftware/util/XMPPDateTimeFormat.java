@@ -96,8 +96,8 @@ public class XMPPDateTimeFormat {
      * @throws ParseException
      */
     public Date parseString(String dateString) throws ParseException {
-        Matcher xep82WoMillisMatcher = xep80DateTimePattern.matcher(dateString);
-        Matcher xep82Matcher = xep80DateTimeWoMillisPattern.matcher(dateString);
+        Matcher xep82WoMillisMatcher = xep80DateTimeWoMillisPattern.matcher(dateString);
+        Matcher xep82Matcher = xep80DateTimePattern.matcher(dateString);
 
         if (xep82WoMillisMatcher.matches() || xep82Matcher.matches()) {
             String rfc822Date;

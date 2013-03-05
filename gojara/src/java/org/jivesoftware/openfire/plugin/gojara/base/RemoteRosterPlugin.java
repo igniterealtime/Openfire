@@ -1,25 +1,26 @@
 package org.jivesoftware.openfire.plugin.gojara.base;
 
 import java.io.File;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+//import java.util.Map;
 import java.util.Set;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.jivesoftware.openfire.SessionManager;
+//import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.AbstractInterceptorHandler;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.GatewayInterceptorHandler;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.MainInterceptor;
+//import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.AbstractInterceptorHandler;
+//import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.GatewayInterceptorHandler;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
-import org.jivesoftware.openfire.session.ComponentSession;
+//import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -46,7 +47,7 @@ public class RemoteRosterPlugin implements Plugin {
 
 	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
 	private static PluginManager pluginManager;
-	private final SessionManager _sessionManager = SessionManager.getInstance();
+//	private final SessionManager _sessionManager = SessionManager.getInstance();
 //	private Map<String, AbstractInterceptorHandler> _interceptors = new HashMap<String, AbstractInterceptorHandler>();
 	private Set<String> _waitingForIQResponse = new HashSet<String>();
 	private PropertyEventListener _settingsObserver;
@@ -75,13 +76,13 @@ public class RemoteRosterPlugin implements Plugin {
 			 * Check if the unregistered component contains to one of our
 			 * package interceptors
 			 */
-			@Override
+			
 			public void componentUnregistered(JID componentJID) {
 //				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
 //				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
 //					String initialSubdomain = session.getExternalComponent().getInitialSubdomain();
 					// Remove it from Map & ComponentManager
-					removeInterceptor(componentJID.toString());
+					mainInterceptor.removeTransport(componentJID.toString());
 //				}
 			}
 
@@ -89,12 +90,12 @@ public class RemoteRosterPlugin implements Plugin {
 			 * If there is a new external Component, check if it is a gateway
 			 * and add create a package interceptor if it is enabled
 			 */
-			@Override
+			
 			public void componentRegistered(JID componentJID) {
 				_waitingForIQResponse.add(componentJID.getDomain());
 			}
 
-			@Override
+			
 			public void componentInfoReceived(IQ iq) {
 				String from = iq.getFrom().getDomain();
 				// Waiting for this external component sending an IQ response to
@@ -165,25 +166,25 @@ public class RemoteRosterPlugin implements Plugin {
 		return pluginManager;
 	}
 
-	private void removeInterceptor(String initialSubdomain) {
-		mainInterceptor.removeTransport(initialSubdomain);
-//		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
-//		if (interceptor != null) {
-//			_interceptors.remove(initialSubdomain);
-//			interceptor.stop();
-//		}
-	}
-
-	/*
-	 * We are handling all our gateways in a Map with subdomain, like
-	 * icq.myserver.com, to ensure that there is only one interceptor for a
-	 * specified gateway
-	 */
-	private void createNewPackageIntercetor(String initialSubdomain) {
-		mainInterceptor.addTransport(initialSubdomain);
-//		AbstractInterceptorHandler interceptor = new GatewayInterceptorHandler(initialSubdomain);
-//		_interceptors.put(initialSubdomain, interceptor);
-//		interceptor.start();
-	}
+//	private void removeInterceptor(String initialSubdomain) {
+//		mainInterceptor.removeTransport(initialSubdomain);
+////		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
+////		if (interceptor != null) {
+////			_interceptors.remove(initialSubdomain);
+////			interceptor.stop();
+////		}
+//	}
+//
+//	/*
+//	 * We are handling all our gateways in a Map with subdomain, like
+//	 * icq.myserver.com, to ensure that there is only one interceptor for a
+//	 * specified gateway
+//	 */
+//	private void createNewPackageIntercetor(String initialSubdomain) {
+//		mainInterceptor.addTransport(initialSubdomain);
+////		AbstractInterceptorHandler interceptor = new GatewayInterceptorHandler(initialSubdomain);
+////		_interceptors.put(initialSubdomain, interceptor);
+////		interceptor.start();
+//	}
 
 }

@@ -40,7 +40,7 @@ abstract public class AbstractRemoteRosterProcessor {
 	 * @param packet
 	 * @throws PacketRejectedException
 	 */
-	abstract public void process(Packet packet, String subdomain) throws PacketRejectedException;
+	abstract public void process(Packet packet) throws PacketRejectedException;
 
 	/**
 	 * Use this method if you want to send your own packets through openfire

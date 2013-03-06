@@ -182,7 +182,7 @@ public class HistoryRequest {
                     try {
                         // Get the date when the historic message was sent
                         Date delayedDate = xmppDateTime.parseString(delayInformation.attributeValue("stamp"));
-                        if (getSince() != null && delayedDate.before(getSince())) {
+                        if (getSince() != null && delayedDate != null && delayedDate.before(getSince())) {
                             // Stop collecting history since we have exceded a limit
                             break;
                         }

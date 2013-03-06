@@ -91,8 +91,11 @@ public class XMPPDateTimeFormat {
      * XEP-0082: CCYY-MM-DDThh:mm:ss[.sss]TZD
      * legacy: CCYYMMDDThh:mm:ss
      * 
-     * @param dateStr
-     * @return
+     * This method either returns a Date instance as result or it will return null or throw a ParseException
+     * in case the String couldn't be parsed.
+     * 
+     * @param dateStr the String that should be parsed
+     * @return the parsed date or null if the String could not be parsed
      * @throws ParseException
      */
     public Date parseString(String dateString) throws ParseException {
@@ -135,8 +138,11 @@ public class XMPPDateTimeFormat {
      * Tries to convert a given string to a Date object.
      * This method only supports the legacy XMPP time format: CCYYMMDDThh:mm:ss
      * 
+     * This method either returns a Date instance as result or it will return null or throw a ParseException
+     * in case the String couldn't be parsed.
+     * 
      * @param dateStr
-     * @return
+     * @return the parsed date or null if the String could not be parsed
      * @throws ParseException
      */
     public Date parseOldDate(String dateStr) throws ParseException {

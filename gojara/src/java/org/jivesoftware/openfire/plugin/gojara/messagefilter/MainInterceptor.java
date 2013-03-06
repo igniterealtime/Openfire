@@ -7,7 +7,7 @@ import java.util.Set;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.*;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
@@ -25,6 +25,8 @@ public class MainInterceptor implements PacketInterceptor {
 	private Map<String, AbstractRemoteRosterProcessor> packetProcessors = new HashMap<String, AbstractRemoteRosterProcessor>();
 	private String serverDomain;
 
+	private Boolean frozen;
+
 
 
 	public MainInterceptor() {
@@ -33,16 +35,23 @@ public class MainInterceptor implements PacketInterceptor {
 		serverDomain = server.getServerInfo().getXMPPDomain();
 		//Now we need to add the PacketProcessors.
 		RosterManager rosterMananger = server.getRosterManager();
-		AbstractRemoteRosterProcessor sendroster = new SendRosterProcessor(rosterMananger);
-		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger);
-		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor();
-		AbstractRemoteRosterProcessor nonPersistant = new NonPersistantRosterProcessor(rosterMananger);
 		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor();
-		packetProcessors.put("sendRoster", sendroster);
-		packetProcessors.put("receiveChanges", receiveChanges);
-		packetProcessors.put("sparkIQRegistered", iqRegistered);
-		packetProcessors.put("handleNonPersistant", nonPersistant);
+		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor();
+		AbstractRemoteRosterProcessor iqRosterPayload = new IQRosterPayloadProcessor(rosterMananger);
+		AbstractRemoteRosterProcessor nonPersistant = new NonPersistantRosterProcessor(rosterMananger);
+		// Check if we need rostermanager for these....
+		AbstractRemoteRosterProcessor statisticsProcessor = new StatisticsProcessor();
+		AbstractRemoteRosterProcessor iqLastProcessor = new IQLastProcessor();
+		AbstractRemoteRosterProcessor whitelistProcessor = new WhitelistProcessor();
 		packetProcessors.put("clientToComponentUpdate", updateToComponent);
+		packetProcessors.put("sparkIQRegistered", iqRegistered);
+		packetProcessors.put("iqRosterPayload", iqRosterPayload);
+		packetProcessors.put("handleNonPersistant", nonPersistant);
+		packetProcessors.put("statisticsProcessor", statisticsProcessor);
+		packetProcessors.put("iqLastProcessor", iqLastProcessor);
+		packetProcessors.put("whitelistProcessor", whitelistProcessor);
+
+		frozen = false;
 	}
 
 	//These get called from our RemoteRosterPlugin
@@ -61,16 +70,31 @@ public class MainInterceptor implements PacketInterceptor {
 		//		return false;
 	}
 
-	//evtl noch auf bool refactoren wenni ch merke das ich das für nichts brauche(siehe to)
+	//idk if this "smells" but as we still dont know why OF is not correctly shutting down our Interceptor
+	//better safe then sorry
+	public void freeze(){
+		frozen = true;		
+	}
+	/*
+	As our Set of Subdomains is a Hash of Strings like icq.domain.tld, if we 
+	want to check if a jid CONTAINS a watched subdomain we need to iterate over the set.
+	We also return the subdomain as a string so we can use it if we find it.
+	 * 
+	 */
 	private String searchJIDforSubdomain(String jid) {
-		//As our Set of Subdomains is a Hash of Strings like icq.domain.tld, if we 
-		//want to check if a jid CONTAINS a watched subdomain we need to iterate over the set.
-		// We also return the subdomain as a string so we can use it if we find it.
 		for (String subdomain : activeTransports) {
 			if (subdomain.contains(jid))
 				return subdomain;
 		}
 		return "";
+	}
+	
+	private  String generateSubdomainString() {
+		String subdomainstring = "";
+		for (String subdomain : activeTransports) {
+			subdomainstring += subdomain + "#";
+		}
+		return subdomainstring;
 	}
 	/*
 	 * This Interceptor tests if GoJara needs to process this package. We decided to do one global Interceptor
@@ -80,8 +104,9 @@ public class MainInterceptor implements PacketInterceptor {
 	 */
 	public void interceptPacket(Packet packet, Session session,	boolean incoming, boolean processed)
 			throws PacketRejectedException {
-		//eventually we will have to test for incoming stuff here....
-
+		if (frozen)
+			return;
+		
 		//We have to watch out for null else this will throw Exceptions
 		String from,to;
 		try {
@@ -94,10 +119,10 @@ public class MainInterceptor implements PacketInterceptor {
 		//We dont want this to get too packed, so here we test only for stuff we can test on PACKET
 
 		if (incoming && processed) {
-
+			Log.debug("Incoming processed Package i might be interested in. I'm "+ this.hashCode() + "\n Package: \n " + packet.toString() + "\n");
 			//if to is Empty, this might be a Client to Component Update we have to forward.
 			if (to.isEmpty()) 
-				packetProcessors.get("clientToComponentUpdate").process(packet);
+				packetProcessors.get("clientToComponentUpdate").process(packet, generateSubdomainString());
 			//This might be a Disco IQ from the SERVER itself, so we have to check for Acess-Restriction
 			else if (activeTransports.contains(to) && packet instanceof IQ)
 				packetProcessors.get("sparkIQRegistered").process(packet,to);
@@ -116,18 +141,20 @@ public class MainInterceptor implements PacketInterceptor {
 			String to_s = searchJIDforSubdomain(to);
 			String subdomain = from_s.isEmpty() ? to_s : from_s;
 			if (!from.equals(to) &&  !subdomain.isEmpty())
-				packetProcessors.get("StatisticsProcessor").process(packet,subdomain);
+				packetProcessors.get("statisticsProcessor").process(packet,subdomain);
 
 		}
 		else if (incoming && !processed) {
+			Log.debug("Incoming unprocessed Package i might be interested in. I'm "+ this.hashCode() + "\n Package: \n " + packet.toString() + "\n");
 			// if to is EQUAL to the subdomain or a string containing a subdomain
 			String to_s = searchJIDforSubdomain(to);
 			if (!to_s.isEmpty())
-				packetProcessors.get("IQLastProcessor").process(packet,to_s);
+				packetProcessors.get("iqLastProcessor").process(packet,to_s);
 		}
 		else if(!incoming && processed) {
+			Log.debug("Outgoing processed Package i might be interested in. I'm "+ this.hashCode() + "\n Package: \n " + packet.toString() + "\n");
 			if (from.isEmpty() || from.equals(serverDomain)) 
-				packetProcessors.get("WhiteListProcessor").process(packet);
+				packetProcessors.get("whiteListProcessor").process(packet);
 			//If we want the StatisticsProcessor to diff between Outgoing and Incoming, it would go here
 		}
 	}

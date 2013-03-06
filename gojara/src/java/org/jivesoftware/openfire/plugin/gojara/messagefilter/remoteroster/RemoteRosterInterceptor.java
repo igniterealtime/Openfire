@@ -7,6 +7,10 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.database.DatabaseManager;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.AbstractRemoteRosterProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.ClientToComponentUpdateProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.DiscoIQRegisteredProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.IQRosterPayloadProcessor;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors.*;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
@@ -45,7 +49,7 @@ public class RemoteRosterInterceptor {
 		Log.debug("Starting Package Interceptor for " + initialSubdomain);
 		XMPPServer server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
-		AbstractRemoteRosterProcessor sendroster = new SendRosterProcessor(
+		AbstractRemoteRosterProcessor sendroster = new IQRosterPayloadProcessor(
 				rosterMananger);
 		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger);
 		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor();
@@ -64,7 +68,7 @@ public class RemoteRosterInterceptor {
 		Log.debug("Starting RemoteRosterInterceptor - BINGO");
 		XMPPServer server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
-		AbstractRemoteRosterProcessor sendroster = new SendRosterProcessor(
+		AbstractRemoteRosterProcessor sendroster = new IQRosterPayloadProcessor(
 				rosterMananger);
 		AbstractRemoteRosterProcessor receiveChanges = new ReceiveComponentUpdatesProcessor(rosterMananger);
 		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor();

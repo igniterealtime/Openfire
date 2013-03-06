@@ -1,4 +1,4 @@
-package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
+package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ abstract public class AbstractRemoteRosterProcessor {
 	 * @param packet
 	 * @throws PacketRejectedException
 	 */
-	abstract public void process(Packet packet) throws PacketRejectedException;
+	abstract public void process(Packet packet,String subdomain) throws PacketRejectedException;
 
 	/**
 	 * Use this method if you want to send your own packets through openfire

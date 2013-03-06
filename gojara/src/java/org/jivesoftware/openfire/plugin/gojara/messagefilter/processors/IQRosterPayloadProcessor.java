@@ -1,4 +1,4 @@
-package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
+package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
 import java.util.Collection;
 
@@ -27,15 +27,13 @@ import org.xmpp.packet.Packet;
  * @author Holger Bergunde
  * 
  */
-public class SendRosterProcessor extends AbstractRemoteRosterProcessor {
+public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 
 	private RosterManager _rosterManager;
-//	private String _componentName;
 
-	public SendRosterProcessor(RosterManager rosterMananger) {
+	public IQRosterPayloadProcessor(RosterManager rosterMananger) {
 		Log.debug("Created SendRosterProcessor");
 		_rosterManager = rosterMananger;
-//		_componentName = componentName;
 	}
 
 	@Override

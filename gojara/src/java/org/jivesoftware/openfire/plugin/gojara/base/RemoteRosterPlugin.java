@@ -137,9 +137,11 @@ public class RemoteRosterPlugin implements Plugin {
 //		for (String key : _interceptors.keySet()) {
 //			_interceptors.get(key).stop();
 //		}
+		mainInterceptor.freeze();
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		pluginManager = null;
+		mainInterceptor = null;
 	}
 
 	private void updateInterceptors(String componentJID) {

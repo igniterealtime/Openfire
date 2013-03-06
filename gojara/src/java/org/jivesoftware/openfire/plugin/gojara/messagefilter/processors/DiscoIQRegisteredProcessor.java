@@ -1,4 +1,4 @@
-package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
+package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -27,18 +27,15 @@ import org.xmpp.packet.Packet;
  * 
  */
 public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
-
 	private boolean _isRegistered = false;
-//	private String _mySubdoman;
 
 	public DiscoIQRegisteredProcessor() {
 		Log.debug("Created DiscoIQResigteredProcessor");
-//		_mySubdoman = subdomain;
 	}
 
 	@Override
 	public void process(Packet packet, final String subdomain) throws PacketRejectedException {
-		Log.debug("Processing packet in DiscoIQResigteredProcessor for " + subdomain);
+		Log.debug("Processing packet in DiscoIQRegisteredProcessor for " + subdomain);
 		// Check if the jabber:iq:register is enabled in admin panel
 		boolean isFeatureEnabled = JiveGlobals.getBooleanProperty("plugin.remoteroster.sparkDiscoInfo", false);
 		if (!isFeatureEnabled) {
@@ -51,7 +48,6 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 		final InterceptorManager interceptorManager = InterceptorManager.getInstance();
 		final PacketInterceptor interceptor = new PacketInterceptor() {
 
-			@Override
 			public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
 					throws PacketRejectedException {
 				if (!processed && incoming) {

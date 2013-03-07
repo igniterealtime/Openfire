@@ -10,7 +10,6 @@ import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
@@ -34,7 +33,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	@Override
-	public void process(Packet packet, final String subdomain) throws PacketRejectedException {
+	public void process(Packet packet, final String subdomain, String to, String from) throws PacketRejectedException {
 		Log.debug("Processing packet in DiscoIQRegisteredProcessor for " + subdomain);
 		// Check if the jabber:iq:register is enabled in admin panel
 		boolean isFeatureEnabled = JiveGlobals.getBooleanProperty("plugin.remoteroster.sparkDiscoInfo", false);
@@ -43,8 +42,6 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 			return;
 		}
 
-		String from = packet.getFrom().toString();
-		String to = packet.getTo().toString();
 		final InterceptorManager interceptorManager = InterceptorManager.getInstance();
 		final PacketInterceptor interceptor = new PacketInterceptor() {
 

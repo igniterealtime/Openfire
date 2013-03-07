@@ -1,10 +1,8 @@
-package org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.processors;
+package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
 import java.util.Collection;
 
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.AbstractRemoteRosterProcessor;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.remoteroster.RemoteRosterInterceptor;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
@@ -12,34 +10,29 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
- * This class is a part of the command pattern used in
- * {@link RemoteRosterInterceptor}. If the remote contacts should not be 
- * saved permanently in the users Roster, this command will delete
- * contacts to the corresponding Transport upon receiving unavailable presence
- * from transport. This way the Users Roster will not get modified by the automated
- * unsubscribe presences triggered by deleting RosterItem in OF-Roster
- * 
+ * When this Processor gets called, it deletes all Contacts of a given User that contain a specific subdomain.
+ * We use this to clean up all Contacts of a Users Gateway registration as soon as he  logs out. In this case
+ * the Transport sends a Unavailable Presence without subtext "Connecting" to the user.
  * @author Holger Bergunde
+ * @author axel.frederik.brand
  * 
  */
 public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor {
 
 	private RosterManager _rosterManager;
-//	private String _subDomain;
 
 	public NonPersistantRosterProcessor(RosterManager rostermananger) {
 		Log.debug("Created NonPersistantProcessor");
 		_rosterManager = rostermananger;
-//		_subDomain = subdomain;
 	}
 
 	@Override
-	public void process(Packet packet, String subdomain) throws PacketRejectedException {
-		Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain);
+	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
 		Presence myPacket = (Presence) packet;
-		String to = myPacket.getTo().toString();
-		String username = getUsernameFromJid(to);
-		if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable)) {
+		if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable) && !myPacket.getElement().getStringValue().equals("Connecting")) {
+			String username = getUsernameFromJid(to);
+			Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain + "and user " + username);
+			
 			try {
 				Roster roster = _rosterManager.getRoster(username);
 				Collection<RosterItem> items = roster.getRosterItems();
@@ -50,12 +43,12 @@ public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor 
 						roster.deleteRosterItem(item.getJid(), false);
 					}
 				}
-				
+
 			} catch (Exception e) {
 				Log.debug("Execption occured when cleaning up the Roster.", e);
 				e.printStackTrace();
 			} 
-
 		}
 	}
+
 }

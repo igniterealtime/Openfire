@@ -31,6 +31,7 @@ import org.xmpp.packet.JID;
 
 /**
  * @author Holger Bergunde
+ * @author axel.frederik.brand
  * 
  *         This class is the basic reprasentation for the GoJara plugin. It is
  *         the entry point for openfire to start or stop this plugin.
@@ -47,8 +48,6 @@ public class RemoteRosterPlugin implements Plugin {
 
 	private static final Logger Log = LoggerFactory.getLogger(RemoteRosterPlugin.class);
 	private static PluginManager pluginManager;
-//	private final SessionManager _sessionManager = SessionManager.getInstance();
-//	private Map<String, AbstractInterceptorHandler> _interceptors = new HashMap<String, AbstractInterceptorHandler>();
 	private Set<String> _waitingForIQResponse = new HashSet<String>();
 	private PropertyEventListener _settingsObserver;
 	private MainInterceptor mainInterceptor = new MainInterceptor();
@@ -62,7 +61,6 @@ public class RemoteRosterPlugin implements Plugin {
 		manageExternalComponents();
 		listenToSettings();
 		Log.debug("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
-		
 	}
 
 	/*
@@ -134,9 +132,7 @@ public class RemoteRosterPlugin implements Plugin {
 	}
 
 	public void destroyPlugin() {
-//		for (String key : _interceptors.keySet()) {
-//			_interceptors.get(key).stop();
-//		}
+		
 		mainInterceptor.freeze();
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
@@ -147,14 +143,8 @@ public class RemoteRosterPlugin implements Plugin {
 	private void updateInterceptors(String componentJID) {
 		boolean allowed = JiveGlobals.getBooleanProperty("plugin.remoteroster.jids." + componentJID, false);
 		if (allowed) {
-//			if (!_interceptors.containsKey(componentJID)) {
-//				createNewPackageIntercetor(componentJID);
-//			}
 			mainInterceptor.addTransport(componentJID);
 		} else {
-//			if (_interceptors.containsKey(componentJID)) {
-//				removeInterceptor(componentJID);
-//			}
 			mainInterceptor.removeTransport(componentJID);
 		}
 	}
@@ -167,26 +157,5 @@ public class RemoteRosterPlugin implements Plugin {
 	public static PluginManager getPluginManager() {
 		return pluginManager;
 	}
-
-//	private void removeInterceptor(String initialSubdomain) {
-//		mainInterceptor.removeTransport(initialSubdomain);
-////		AbstractInterceptorHandler interceptor = _interceptors.get(initialSubdomain);
-////		if (interceptor != null) {
-////			_interceptors.remove(initialSubdomain);
-////			interceptor.stop();
-////		}
-//	}
-//
-//	/*
-//	 * We are handling all our gateways in a Map with subdomain, like
-//	 * icq.myserver.com, to ensure that there is only one interceptor for a
-//	 * specified gateway
-//	 */
-//	private void createNewPackageIntercetor(String initialSubdomain) {
-//		mainInterceptor.addTransport(initialSubdomain);
-////		AbstractInterceptorHandler interceptor = new GatewayInterceptorHandler(initialSubdomain);
-////		_interceptors.put(initialSubdomain, interceptor);
-////		interceptor.start();
-//	}
 
 }

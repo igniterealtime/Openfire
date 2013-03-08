@@ -100,14 +100,20 @@ public class MainInterceptor implements PacketInterceptor {
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
 		if (frozen)
 			return;
-
-		String from, to;
-		try {
-			from = (packet.getFrom() != null) ? packet.getFrom().toString() : "";
-			to = (packet.getTo() != null) ? packet.getTo().toString() : "";
-		} catch (IllegalArgumentException e) {
-			Log.warn("There was an illegal JID while intercepting Message for GoJara. Not Intercepting it! " + e.getMessage());
-			return;
+		//Generating from and to Only when the package may be of relevance
+		String from = "";
+		String to = "";
+		if (incoming || (!incoming && processed)) {
+			try {
+				if (packet.getFrom() != null)
+					from = packet.getFrom().toString();
+				if (packet.getTo() != null)
+					to = packet.getTo().toString();
+			} catch (IllegalArgumentException e) {
+				Log.warn("There was an illegal JID while intercepting Message for GoJara. Not Intercepting it! " + e.getMessage());
+				return;
+			}
+			
 		}
 
 		if (incoming && processed) {

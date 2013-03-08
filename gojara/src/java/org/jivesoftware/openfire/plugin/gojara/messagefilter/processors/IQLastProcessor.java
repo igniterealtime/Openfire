@@ -1,6 +1,5 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
-import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
@@ -36,12 +35,8 @@ public class IQLastProcessor extends AbstractRemoteRosterProcessor{
 			throws PacketRejectedException {
 		
 		IQ iqpacket = (IQ) packet;
-		Element root = iqpacket.getChildElement();
-		if (root == null)
-			return;
 		
-		String ns = root.getNamespaceURI();
-		if (ns.equals("jabber:iq:last") && iqpacket.getType().equals(IQ.Type.get)) {
+		if (iqpacket.getType().equals(IQ.Type.get)) {
 			Log.debug("Processing IQLast Packet for " + subdomain);
 			IQ answer = IQ.createResultIQ(iqpacket);
 			answer.setType(IQ.Type.error);
@@ -59,8 +54,6 @@ public class IQLastProcessor extends AbstractRemoteRosterProcessor{
 			PacketRouter router = _server.getPacketRouter();
 			router.route(answer);
 			
-			//There is no need for the Server to process this Package if  S2 doesn't support it.
-			throw new PacketRejectedException();
 		}
 	}
 

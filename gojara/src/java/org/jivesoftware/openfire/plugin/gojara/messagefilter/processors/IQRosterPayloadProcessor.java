@@ -49,24 +49,21 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		String username = getUsernameFromJid(to);
 		if (query != null && query.getNamespaceURI().equals("jabber:iq:roster")) {
 			if (myPacket.getType().equals(IQ.Type.get)) {
-				handleIQget(myPacket,subdomain,username);
-			}
-			else if (myPacket.getType().equals(IQ.Type.set)) {
-				handleIQset(myPacket,subdomain,username);
+				handleIQget(myPacket, subdomain, username);
+			} else if (myPacket.getType().equals(IQ.Type.set)) {
+				handleIQset(myPacket, subdomain, username);
 			}
 		}
 
-
 	}
 
-
-	private void handleIQget(IQ myPacket, String subdomain, String username){		
-		if(JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)){
+	private void handleIQget(IQ myPacket, String subdomain, String username) {
+		if (JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)) {
 			Roster roster;
 			try {
 				roster = _rosterManager.getRoster(username);
 				Collection<RosterItem> items = roster.getRosterItems();
-				Log.debug("Sending contacts with subdomain " + subdomain + " from user " +username + " to external Component");
+				Log.debug("Sending contacts with subdomain " + subdomain + " from user " + username + " to external Component");
 				sendRosterToComponent(myPacket, items, subdomain);
 			} catch (UserNotFoundException e) {
 				e.printStackTrace();
@@ -74,7 +71,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		} else {
 			Log.debug("Sending nonpersistant-RemoteRosterResponse to external Component  for User: " + username);
 			sendEmptyRoster(myPacket, subdomain);
-		}		
+		}
 	}
 
 	private void sendRosterToComponent(IQ requestPacket, Collection<RosterItem> items, String subdomain) {
@@ -84,8 +81,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		Element query = new DefaultElement("query");
 		for (RosterItem i : items) {
 			if (i.getJid().toString().contains(subdomain)) {
-				Log.debug("Roster exchange for external component " + subdomain + ". Sending user "
-						+ i.getJid().toString());
+				Log.debug("Roster exchange for external component " + subdomain + ". Sending user " + i.getJid().toString());
 				Element item = new DefaultElement("item", null);
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
 				item.add(new DefaultAttribute("name", i.getNickname()));
@@ -104,7 +100,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		dispatchPacket(response);
 	}
 
-	private void sendEmptyRoster(Packet requestPacket, String subdomain){
+	private void sendEmptyRoster(Packet requestPacket, String subdomain) {
 		IQ iq = (IQ) requestPacket;
 		IQ response = IQ.createResultIQ(iq);
 		response.setTo(subdomain);
@@ -124,11 +120,11 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 			String jid = n.valueOf("@jid");
 			String name = n.valueOf("@name");
 			String subvalue = n.valueOf("@subscription");
-			//We dont want to add or delete the subdomain itself 
-			if (jid.equals(subdomain)) 
+			// We dont want to add or delete the subdomain itself
+			if (jid.equals(subdomain))
 				continue;
 
-			if(subvalue.equals("both")){
+			if (subvalue.equals("both")) {
 				try {
 					roster = _rosterManager.getRoster(username);
 					List<String> grouplist = new ArrayList<String>();
@@ -143,10 +139,10 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 						RosterItem item = roster.getRosterItem(new JID(jid));
 						item.setGroups(grouplist);
 						roster.updateRosterItem(item);
-						//dont send iq-result if just updating user
+						// dont send iq-result if just updating user
 						continue;
 					} catch (UserNotFoundException exc) {
-						//Then we should add him! 
+						// Then we should add him!
 					}
 					RosterItem item = roster.createRosterItem(new JID(jid), name, grouplist, false, rosterPersistent);
 					item.setSubStatus(RosterItem.SUB_BOTH);
@@ -155,7 +151,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 					Log.debug("Could not add user to Roster although no entry should exist..." + username, e);
 					e.printStackTrace();
 				}
-			} else if (subvalue.equals("remove")){
+			} else if (subvalue.equals("remove")) {
 				try {
 					roster = _rosterManager.getRoster(username);
 					roster.deleteRosterItem(new JID(jid), false);

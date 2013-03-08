@@ -29,7 +29,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 	private boolean _isRegistered = false;
 
 	public DiscoIQRegisteredProcessor() {
-		Log.debug("Created DiscoIQResigteredProcessor");
+		Log.debug("Created DiscoIQRegisteredProcessor");
 	}
 
 	@Override

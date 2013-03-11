@@ -137,7 +137,6 @@ public class RemoteRosterPlugin implements Plugin {
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		pluginManager = null;
-		mainInterceptor = null;
 	}
 
 	private void updateInterceptors(String componentJID) {

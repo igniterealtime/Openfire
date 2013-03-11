@@ -69,8 +69,6 @@ public class MainInterceptor implements PacketInterceptor {
 	// shutting down our Interceptor better safe then sorry
 	public void freeze() {
 		frozen = true;
-		activeTransports = null;
-		packetProcessors = null;
 	}
 
 	/**
@@ -100,10 +98,11 @@ public class MainInterceptor implements PacketInterceptor {
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
 		if (frozen)
 			return;
-		//Generating from and to Only when the package may be of relevance
+
 		String from = "";
 		String to = "";
-		if (incoming || (!incoming && processed)) {
+		if (!processed || (incoming && processed)){
+
 			try {
 				if (packet.getFrom() != null)
 					from = packet.getFrom().toString();
@@ -113,13 +112,13 @@ public class MainInterceptor implements PacketInterceptor {
 				Log.warn("There was an illegal JID while intercepting Message for GoJara. Not Intercepting it! " + e.getMessage());
 				return;
 			}
-			
 		}
 
-		if (incoming && processed) {
+
+		if (incoming && !processed) {
 			// We ignore Pings from S2 to S2 itself. We test for Log first so
 			// that we can return in case
-			// The packet doesnt have any watched namespace.
+			// The packet doesnt have any watched namespace, but we still may want to log it.
 			String from_s = searchJIDforSubdomain(from);
 			String to_s = searchJIDforSubdomain(to);
 			String subdomain = from_s.isEmpty() ? to_s : from_s;
@@ -154,7 +153,7 @@ public class MainInterceptor implements PacketInterceptor {
 					packetProcessors.get("handleNonPersistant").process(packet, from, to, from);
 			}
 
-		} else if (incoming && !processed && JiveGlobals.getBooleanProperty("plugin.remoteroster.iqLastFilter", false)) {
+		} else if (incoming && processed && JiveGlobals.getBooleanProperty("plugin.remoteroster.iqLastFilter", false)) {
 			// JABBER:IQ:LAST
 			if (packet instanceof IQ) {
 				IQ myPacket = (IQ) packet;
@@ -168,7 +167,7 @@ public class MainInterceptor implements PacketInterceptor {
 					}
 				}
 			}
-		} else if (!incoming && processed) {
+		} else if (!incoming && !processed) {
 
 			// DISCO#ITEMS - Whitelisting Feature
 			if (packet instanceof IQ) {

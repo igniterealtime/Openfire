@@ -45,14 +45,12 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		Log.debug("Processing packet in SendRosterProcessor for " + subdomain);
 
 		IQ myPacket = (IQ) packet;
-		Element query = myPacket.getChildElement();
 		String username = getUsernameFromJid(to);
-		if (query != null && query.getNamespaceURI().equals("jabber:iq:roster")) {
-			if (myPacket.getType().equals(IQ.Type.get)) {
-				handleIQget(myPacket, subdomain, username);
-			} else if (myPacket.getType().equals(IQ.Type.set)) {
-				handleIQset(myPacket, subdomain, username);
-			}
+		
+		if (myPacket.getType().equals(IQ.Type.get)) {
+			handleIQget(myPacket, subdomain, username);
+		} else if (myPacket.getType().equals(IQ.Type.set)) {
+			handleIQset(myPacket, subdomain, username);
 		}
 
 	}

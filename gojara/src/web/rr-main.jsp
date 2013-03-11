@@ -27,6 +27,9 @@
 	String iqLastFilterPram = request.getParameter("iqLastFilter");
 	boolean iqLastFilter = iqLastFilterPram == null ? false : iqLastFilterPram.equals("true");
 	
+	String mucBlockParam = request.getParameter("mucBlock");
+	boolean mucBlock = mucBlockParam == null ? false : mucBlockParam.equals("true");
+	
 	String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
 	PermissionManager _pmanager = new PermissionManager();
 	DatabaseManager _db;
@@ -48,6 +51,7 @@
 		JiveGlobals.setProperty("plugin.remoteroster.persistent", (persistentRoster ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.iqLastFilter", (iqLastFilter ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.mucBlock", (mucBlock ? "true" : "false"));
 		response.sendRedirect("rr-main.jsp?success=true");
 		return;
 	}
@@ -348,6 +352,20 @@
 										<td align="left" style="font-size: -3; color: grey">Some clients try to check how long a contact is already offline.
 										 This feature is not supported by spectrum so it won't response to this IQ stanza. To prevent the client from waiting
 										 for a response we could answer with a service-unavailable message as described in XEP-12.</td>
+									</tr>
+									<tr>
+										<td><input type="checkbox" name="mucBlock" id="SDI3" value="true"
+											<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.mucBlock", false) ? "checked=\"checked\""
+					: ""%> />
+
+										</td>
+										<td><label for="SDI">Only allow internal Jabber Conferences</label></td>
+									</tr>
+									<tr>
+										<td />
+										<td align="left" style="font-size: -3; color: grey">Spectrum might add MUC(Multi User Chat) to supported features
+										 of some Transports. If this should not be allowed, because only internal Jabber Conferences should be used, GoJara
+										 can remove these.</td>
 									</tr>
 								</tbody>
 							</table>

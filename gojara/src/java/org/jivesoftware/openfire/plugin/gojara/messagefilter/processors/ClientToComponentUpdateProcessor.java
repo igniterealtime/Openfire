@@ -27,7 +27,7 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 
 	public ClientToComponentUpdateProcessor(Set<String> activeTransports) {
 		watchedSubdomains = activeTransports;
-		Log.debug("Created ClientToComponentUpdateProcessor");
+		Log.info("Created ClientToComponentUpdateProcessor");
 	}
 
 	private String searchJIDforSubdomain(String jid) {

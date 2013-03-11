@@ -18,7 +18,7 @@ public class StatisticsProcessor extends AbstractRemoteRosterProcessor{
 	private DatabaseManager _db;
 	
 	public StatisticsProcessor() {
-		Log.debug("Created StatisticsProcessor");
+		Log.info("Created StatisticsProcessor");
 		_db = DatabaseManager.getInstance();
 	}
 
@@ -26,6 +26,7 @@ public class StatisticsProcessor extends AbstractRemoteRosterProcessor{
 	 * At this Point we Already know:
 	 * neither of both JIDS is malformed (Package wouldn't have been intercepted)
 	 * Package is incoming & processed
+	 * 
 	 * Either From or To contains the watched,passed subdomain
 	 * From does not Equal To (This way we exclude PING sent by spectrum To spectrum
 	 * From AND To are NOT empty (null), this way we exclude packets sent to server itself...change Maininterceptor if we want to change this

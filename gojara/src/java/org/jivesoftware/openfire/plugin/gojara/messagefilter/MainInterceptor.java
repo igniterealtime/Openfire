@@ -27,7 +27,7 @@ public class MainInterceptor implements PacketInterceptor {
 	private Boolean frozen;
 
 	public MainInterceptor() {
-		Log.debug("Started MainInterceptor for GoJara Plugin.");
+		Log.info("Started MainInterceptor for GoJara Plugin.");
 		XMPPServer server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
 
@@ -38,6 +38,8 @@ public class MainInterceptor implements PacketInterceptor {
 		AbstractRemoteRosterProcessor iqLastProcessor = new IQLastProcessor();
 		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor(activeTransports);
 		AbstractRemoteRosterProcessor whitelistProcessor = new WhitelistProcessor(activeTransports);
+		// AbstractRemoteRosterProcessor mucblockProcessor = new
+		// MUCBlockProcessor();
 		packetProcessors.put("sparkIQRegistered", iqRegistered);
 		packetProcessors.put("iqRosterPayload", iqRosterPayload);
 		packetProcessors.put("handleNonPersistant", nonPersistant);
@@ -45,18 +47,19 @@ public class MainInterceptor implements PacketInterceptor {
 		packetProcessors.put("iqLastProcessor", iqLastProcessor);
 		packetProcessors.put("clientToComponentUpdate", updateToComponent);
 		packetProcessors.put("whitelistProcessor", whitelistProcessor);
+		// packetProcessors.put("mucblockProcessor", mucblockProcessor);
 
 		frozen = false;
 	}
 
 	// These get called from our RemoteRosterPlugin
 	public boolean addTransport(String subDomain) {
-		Log.debug("Trying to add " + subDomain + "to Set of watched Transports.");
+		Log.info("Trying to add " + subDomain + " to Set of watched Transports.");
 		return this.activeTransports.add(subDomain);
 	}
 
 	public boolean removeTransport(String subDomain) {
-		Log.debug("Trying to remove " + subDomain + " from Set of watched Transports.");
+		Log.info("Trying to remove " + subDomain + " from Set of watched Transports.");
 		return this.activeTransports.remove(subDomain);
 		// if (this.activeTransports.contains(subDomain)) {
 		// this.activeTransports.remove(subDomain);
@@ -65,9 +68,8 @@ public class MainInterceptor implements PacketInterceptor {
 		// return false;
 	}
 
-	// idk if this "smells" but as we still dont know why OF is not correctly
-	// shutting down our Interceptor better safe then sorry
 	public void freeze() {
+		Log.info("Freezing GoJara Maininterceptor.");
 		frozen = true;
 	}
 
@@ -78,9 +80,11 @@ public class MainInterceptor implements PacketInterceptor {
 	 * if we find it.
 	 */
 	private String searchJIDforSubdomain(String jid) {
-		for (String subdomain : activeTransports) {
-			if (subdomain.contains(jid))
-				return subdomain;
+		if (!jid.isEmpty()) {
+			for (String subdomain : activeTransports) {
+				if (subdomain.contains(jid))
+					return subdomain;
+			}
 		}
 		return "";
 	}
@@ -101,7 +105,7 @@ public class MainInterceptor implements PacketInterceptor {
 
 		String from = "";
 		String to = "";
-		if (!processed || (incoming && processed)){
+		if (!processed || (incoming && processed)) {
 
 			try {
 				if (packet.getFrom() != null)
@@ -114,74 +118,72 @@ public class MainInterceptor implements PacketInterceptor {
 			}
 		}
 
-
 		if (incoming && !processed) {
-			// We ignore Pings from S2 to S2 itself. We test for Log first so
-			// that we can return in case
-			// The packet doesnt have any watched namespace, but we still may want to log it.
-			String from_s = searchJIDforSubdomain(from);
-			String to_s = searchJIDforSubdomain(to);
-			String subdomain = from_s.isEmpty() ? to_s : from_s;
-			if (!from.equals(to) && !subdomain.isEmpty() && !(from.isEmpty() && to.isEmpty()))
-				packetProcessors.get("statisticsProcessor").process(packet, subdomain, to, from);
 
 			if (packet instanceof IQ) {
-				IQ myPacket = (IQ) packet;
-				Element query = myPacket.getChildElement();
+				IQ iqPacket = (IQ) packet;
+				Element query = iqPacket.getChildElement();
 				if (query == null)
 					return;
-				// Jabber:IQ:roster Indicates Client to Component update or Rosterpush
+				// Jabber:IQ:roster Indicates Client to Component update or
+				// Rosterpush
 				else if (query.getNamespaceURI().equals("jabber:iq:roster")) {
-					Log.debug("Incoming RosterPackage i might be interested in. I'm " + this.hashCode() + "\n Package: \n "
-							+ packet.toString() + "\n");
-					if (to.isEmpty())
+					if (to.isEmpty() && iqPacket.getType().equals(IQ.Type.set))
 						packetProcessors.get("clientToComponentUpdate").process(packet, "", to, from);
 					else if (!from.isEmpty() && activeTransports.contains(from))
 						packetProcessors.get("iqRosterPayload").process(packet, from, to, from);
 				}
 				// Disco#Info - check for register processing
-				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !to.isEmpty()
-						&& activeTransports.contains(to)) {
-					Log.debug("Incoming Disco#info might be interested in. I'm " + this.hashCode() + "\n Package: \n " + packet.toString()
-							+ "\n");
+				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !to.isEmpty() && activeTransports.contains(to)
+						&& iqPacket.getType().equals(IQ.Type.get)) {
 					packetProcessors.get("sparkIQRegistered").process(packet, to, to, from);
 				}
 
 				// Check for Rostercleanup in Nonpersistant-mode
-			} else if (packet instanceof Presence && !JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)) {
+			} else if (!JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false) && packet instanceof Presence) {
 				if (activeTransports.contains(from))
 					packetProcessors.get("handleNonPersistant").process(packet, from, to, from);
 			}
 
-		} else if (incoming && processed && JiveGlobals.getBooleanProperty("plugin.remoteroster.iqLastFilter", false)) {
-			// JABBER:IQ:LAST
-			if (packet instanceof IQ) {
-				IQ myPacket = (IQ) packet;
-				Element query = myPacket.getChildElement();
-				if (query != null && query.getNamespaceURI().equals("jabber:iq:last")) {
-					String subdomain = searchJIDforSubdomain(to);
-					if (!subdomain.isEmpty()) {
-						Log.debug("Incoming unprocessed Package i might be interested in. I'm " + this.hashCode() + "\n Package: \n "
-								+ packet.toString() + "\n");
-						packetProcessors.get("iqLastProcessor").process(packet, subdomain, to, from);
-					}
-				}
+		} else if (incoming && processed) {
+			// We ignore Pings from S2 to S2 itself. We test for Log first so
+			// that we can return in case
+			// The packet doesnt have any watched namespace, but we still may
+			// want to log it.
+			String from_s = searchJIDforSubdomain(from);
+			String to_s = searchJIDforSubdomain(to);
+			String subdomain = from_s.isEmpty() ? to_s : from_s;
+			if (!from.equals(to) && !subdomain.isEmpty())
+				packetProcessors.get("statisticsProcessor").process(packet, subdomain, to, from);
+
+			// JABBER:IQ:LAST - Autoresponse Feature
+			if (JiveGlobals.getBooleanProperty("plugin.remoteroster.iqLastFilter", false) && packet instanceof IQ) {
+				IQ iqPacket = (IQ) packet;
+				Element query = iqPacket.getChildElement();
+				if (query != null && query.getNamespaceURI().equals("jabber:iq:last") && !to_s.isEmpty())
+					packetProcessors.get("iqLastProcessor").process(packet, to_s, to, from);
 			}
 		} else if (!incoming && !processed) {
 
-			// DISCO#ITEMS - Whitelisting Feature
 			if (packet instanceof IQ) {
-				IQ myPacket = (IQ) packet;
-				Element query = myPacket.getChildElement();
-				if (query != null && query.getNamespaceURI().equals("http://jabber.org/protocol/disco#items")) {
-					Log.debug("Outgoing processed Package i might be interested in. I'm " + this.hashCode() + " Package: \n "
-							+ packet.toString() + "\n");
-					packetProcessors.get("whiteListProcessor").process(packet, "", to, from);
-				}
-			}
+				IQ iqPacket = (IQ) packet;
+				Element query = iqPacket.getChildElement();
+				if (query == null)
+					return;
 
-			// If we want the StatisticsProcessor to diff between Outgoing and
-			// Incoming, it would go here
+				// DISCO#ITEMS - Whitelisting Feature
+				if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#items"))
+					packetProcessors.get("whitelistProcessor").process(packet, "", to, from);
+				// DISCO#INFO - MUC-block-Feature
+				// else if
+				// (JiveGlobals.getBooleanProperty("plugin.remoteroster.mucBlock",
+				// false)
+				// &&
+				// query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info")
+				// && !from.isEmpty() && activeTransports.contains(from))
+				// packetProcessors.get("mucblockProcessor").process(packet,
+				// from, to, from);
+			}
 		}
 	}
 }

@@ -24,7 +24,7 @@ public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor 
 	private RosterManager _rosterManager;
 
 	public NonPersistantRosterProcessor(RosterManager rostermananger) {
-		Log.debug("Created NonPersistantProcessor");
+		Log.info("Created NonPersistantProcessor");
 		_rosterManager = rostermananger;
 	}
 

@@ -52,6 +52,7 @@ GoJara Plugin Changelog
 	<li>We completely ignore Packets with malformed JIDs now, this should cause less Warnings/Errors</li>
 	<li>Freezing the Interceptor on Destroy of the Plugin should make GoJara properly shutdown and not cause trouble on reload/update</li>
 	<li>Optimized Processors have better performance</li>
+	<li>Reject iq:roster packets with item jid=subdomain as they will throw errors on register:remove</li>
 </ul>
 	
 

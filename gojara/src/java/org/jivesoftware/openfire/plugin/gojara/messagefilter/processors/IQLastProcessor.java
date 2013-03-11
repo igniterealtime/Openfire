@@ -20,7 +20,7 @@ import org.xmpp.packet.Packet;
 public class IQLastProcessor extends AbstractRemoteRosterProcessor{
 
 	public IQLastProcessor() {
-		Log.debug("Created IQLastProcessor");
+		Log.info("Created IQLastProcessor");
 	}
 	
 	/**

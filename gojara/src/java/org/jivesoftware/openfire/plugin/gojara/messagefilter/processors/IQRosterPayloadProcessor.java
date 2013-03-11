@@ -36,7 +36,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 	private RosterManager _rosterManager;
 
 	public IQRosterPayloadProcessor(RosterManager rosterMananger) {
-		Log.debug("Created IQRosterPayloadProcessor");
+		Log.info("Created IQRosterPayloadProcessor");
 		_rosterManager = rosterMananger;
 	}
 
@@ -108,7 +108,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		dispatchPacket(response);
 	}
 
-	private void handleIQset(IQ myPacket, String subdomain, String username) {
+	private void handleIQset(IQ myPacket, String subdomain, String username) throws PacketRejectedException {
 		IQ response = IQ.createResultIQ(myPacket);
 
 		List<Node> nodes = findNodesInDocument(myPacket.getElement().getDocument(), "//roster:item");
@@ -118,9 +118,10 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 			String jid = n.valueOf("@jid");
 			String name = n.valueOf("@name");
 			String subvalue = n.valueOf("@subscription");
-			// We dont want to add or delete the subdomain itself
+			// We dont want to add or delete the subdomain itself, so we have to reject that packet, it seems openfire itself
+			// can interpret the iq:roster remove stanzas in some way, this was causing trouble on register:remove
 			if (jid.equals(subdomain))
-				continue;
+				throw new PacketRejectedException();
 
 			if (subvalue.equals("both")) {
 				try {
@@ -132,7 +133,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 						grouplist.add(groupName);
 					}
 					boolean rosterPersistent = JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", true);
-					Log.debug("Adding/Updating Contact " + jid + " to roster of" + username);
+					Log.debug("Adding/Updating Contact " + jid + " to roster of " + username);
 					try {
 						RosterItem item = roster.getRosterItem(new JID(jid));
 						item.setGroups(grouplist);

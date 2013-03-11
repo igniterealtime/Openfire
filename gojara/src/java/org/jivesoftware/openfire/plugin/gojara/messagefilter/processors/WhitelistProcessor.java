@@ -28,7 +28,7 @@ public class WhitelistProcessor extends AbstractRemoteRosterProcessor {
 	public WhitelistProcessor(Set<String> activeTransports) {
 		_permissions = new PermissionManager();
 		watchedSubdomains = activeTransports;
-		Log.debug("Created WhitelistProcessor");
+		Log.info("Created WhitelistProcessor");
 	}
 
 	/**

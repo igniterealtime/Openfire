@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.handler.IQRegisterHandler;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.EmailService;
 import org.jivesoftware.util.JiveGlobals;
@@ -168,32 +169,23 @@ public class RegistrationPlugin implements Plugin {
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
         AuthCheckFilter.addExclude(URL);
+
+        // Replace the registered IQBindHandler with our own.
+        XMPPServer.getInstance().getIQRouter().addHandler(new IQExtendedRegisterHandler());
     }
 
     public void destroyPlugin() {
+
+        // Replace the our own IQBindHandler with the one that ships with Openfire.
+        XMPPServer.getInstance().getIQRouter().addHandler(new IQRegisterHandler());
+
         AuthCheckFilter.removeExclude(URL);
         UserEventDispatcher.removeListener(listener);
         serverAddress = null;
         listener = null;
         router = null;
     }
-    
-    public void setIMNotificationEnabled(boolean enable) {
-        JiveGlobals.setProperty(IM_NOTIFICATION_ENABLED, enable ? "true" : "false");
-    }
-    
-    public boolean imNotificationEnabled() {
-        return JiveGlobals.getBooleanProperty(IM_NOTIFICATION_ENABLED, false);
-    }
-    
-    public void setEmailNotificationEnabled(boolean enable) {
-        JiveGlobals.setProperty(EMAIL_NOTIFICATION_ENABLED, enable ? "true" : "false");
-    }
-    
-    public boolean emailNotificationEnabled() {
-        return JiveGlobals.getBooleanProperty(EMAIL_NOTIFICATION_ENABLED, false);
-    }
-    
+
     public Collection<String> getIMContacts() {
         Collections.sort(imContacts);
         return imContacts;
@@ -237,89 +229,105 @@ public class RegistrationPlugin implements Plugin {
             JiveGlobals.setProperty(EMAIL_CONTACTS, propPrep(emailContacts));
         }
     }
-    
-    public void setWelcomeEnabled(boolean enable) {
+
+    public static void setIMNotificationEnabled(boolean enable) {
+        JiveGlobals.setProperty(IM_NOTIFICATION_ENABLED, enable ? "true" : "false");
+    }
+
+    public static boolean imNotificationEnabled() {
+        return JiveGlobals.getBooleanProperty(IM_NOTIFICATION_ENABLED, false);
+    }
+
+    public static void setEmailNotificationEnabled(boolean enable) {
+        JiveGlobals.setProperty(EMAIL_NOTIFICATION_ENABLED, enable ? "true" : "false");
+    }
+
+    public static boolean emailNotificationEnabled() {
+        return JiveGlobals.getBooleanProperty(EMAIL_NOTIFICATION_ENABLED, false);
+    }
+
+    public static void setWelcomeEnabled(boolean enable) {
         JiveGlobals.setProperty(WELCOME_ENABLED, enable ? "true" : "false");
     }
    
-    public boolean welcomeEnabled() {
+    public static boolean welcomeEnabled() {
         return JiveGlobals.getBooleanProperty(WELCOME_ENABLED, false);
     }
 
-    public void setWelcomeMessage(String message) {
+    public static void setWelcomeMessage(String message) {
         JiveGlobals.setProperty(WELCOME_MSG, message);
     }
 
-    public String getWelcomeMessage() {
+    public static String getWelcomeMessage() {
         return JiveGlobals.getProperty(WELCOME_MSG, "Welcome to Openfire!");
     }
     
-    public void setGroupEnabled(boolean enable) {
+    public static void setGroupEnabled(boolean enable) {
         JiveGlobals.setProperty(GROUP_ENABLED, enable ? "true" : "false");
     }
     
-    public boolean groupEnabled() {
+    public static boolean groupEnabled() {
         return JiveGlobals.getBooleanProperty(GROUP_ENABLED, false);
     }
     
-    public void setWebEnabled(boolean enable) {
+    public static void setWebEnabled(boolean enable) {
         JiveGlobals.setProperty(WEB_ENABLED, enable ? "true" : "false");
     }
    
-    public boolean webEnabled() {
+    public static boolean webEnabled() {
         return JiveGlobals.getBooleanProperty(WEB_ENABLED, false);
     }
     
-    public String webRegistrationAddress() {
+    public static String webRegistrationAddress() {
         return  "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":"
             + JiveGlobals.getXMLProperty("adminConsole.port") + "/plugins/" + URL;
     }
     
-    public void setReCaptchaEnabled(boolean enable) {
+    public static void setReCaptchaEnabled(boolean enable) {
         JiveGlobals.setProperty(RECAPTCHA_ENABLED, enable ? "true" : "false");
     }
     
-    public boolean reCaptchaEnabled() {
+    public static boolean reCaptchaEnabled() {
         return JiveGlobals.getBooleanProperty(RECAPTCHA_ENABLED, false);
     }
     
-    public void setReCaptchaNoScript(boolean enable) {
+    public static void setReCaptchaNoScript(boolean enable) {
         JiveGlobals.setProperty(RECAPTCHA_NOSCRIPT, enable ? "true" : "false");
     }
     
-    public boolean reCaptchaNoScript() {
+    public static boolean reCaptchaNoScript() {
         return JiveGlobals.getBooleanProperty(RECAPTCHA_NOSCRIPT, true);
     }
     
-    public void setReCaptchaPublicKey(String publicKey) {
+    public static void setReCaptchaPublicKey(String publicKey) {
         JiveGlobals.setProperty(RECAPTCHA_PUBLIC_KEY, publicKey);
     }
     
-    public String getReCaptchaPublicKey() {
+    public static String getReCaptchaPublicKey() {
         return JiveGlobals.getProperty(RECAPTCHA_PUBLIC_KEY);
     }
     
-    public void setReCaptchaPrivateKey(String privateKey) {
+    public static void setReCaptchaPrivateKey(String privateKey) {
         JiveGlobals.setProperty(RECAPTCHA_PRIVATE_KEY, privateKey);
     }
     
-    public String getReCaptchaPrivateKey() {
+    public static String getReCaptchaPrivateKey() {
         return JiveGlobals.getProperty(RECAPTCHA_PRIVATE_KEY);
     }
     
-    public void setGroup(String group) {
+    public static void setGroup(String group) {
         JiveGlobals.setProperty(REGISTRAION_GROUP, group);
     }
     
-    public String getGroup() {
+    public static String getGroup() {
         return JiveGlobals.getProperty(REGISTRAION_GROUP);
     }
     
-    public void setHeader(String message) {
+    public static void setHeader(String message) {
         JiveGlobals.setProperty(HEADER, message);
     }
 
-    public String getHeader() {
+    public static String getHeader() {
         return JiveGlobals.getProperty(HEADER, "Web Sign-In");
     }
     
@@ -401,7 +409,7 @@ public class RegistrationPlugin implements Plugin {
         }
     }
     
-    private String propPrep(Collection<String> props) {
+    private static String propPrep(Collection<String> props) {
         StringBuilder buf = new StringBuilder();
         Iterator<String> iter = props.iterator();
         while (iter.hasNext()) {
@@ -415,7 +423,7 @@ public class RegistrationPlugin implements Plugin {
         return buf.toString();
     }
     
-    public boolean isValidAddress(String address) {
+    public static boolean isValidAddress(String address) {
         if (address == null) {
             return false;
         }

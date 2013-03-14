@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.http.ssl.SslContextFactory;
+import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -73,6 +74,16 @@ public final class HttpBindManager {
 
     public static final int HTTP_BIND_THREADS_DEFAULT = 254;
     
+	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
+    
+	private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
+    
+	private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
+    
+	private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
+	
+	private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
+    
     // http binding CORS default properties
     
     public static final String HTTP_BIND_CORS_ENABLED = "httpbind.CORS.enabled";
@@ -88,7 +99,7 @@ public final class HttpBindManager {
     public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Overwrite, Destination, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control";
     
     public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
-    
+
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
 
     private static HttpBindManager instance = new HttpBindManager();
@@ -174,6 +185,7 @@ public final class HttpBindManager {
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
             connector.setPort(port);
+            configureProxiedConnector(connector);
             httpConnector = connector;
         }
     }
@@ -211,7 +223,7 @@ public final class HttpBindManager {
                 final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
-                
+                configureProxiedConnector(sslConnector);
                 httpsConnector = sslConnector;
             }
         }
@@ -219,6 +231,34 @@ public final class HttpBindManager {
             Log.error("Error creating SSL connector for Http bind", e);
         }
     }
+    
+    private void configureProxiedConnector(AbstractConnector connector) {
+        // Check to see if we are deployed behind a proxy
+        // Refer to http://docs.codehaus.org/display/JETTY/Configuring+Connectors
+        if (isXFFEnabled()) {
+        	connector.setForwarded(true);
+        	// default: "X-Forwarded-For"
+        	String forwardedForHeader = getXFFHeader();
+        	if (forwardedForHeader != null) {
+        		connector.setForwardedForHeader(forwardedForHeader);
+        	}
+        	// default: "X-Forwarded-Server"
+        	String forwardedServerHeader = getXFFServerHeader();
+        	if (forwardedServerHeader != null) {
+        		connector.setForwardedServerHeader(forwardedServerHeader);
+        	}
+        	// default: "X-Forwarded-Host"
+        	String forwardedHostHeader = getXFFHostHeader();
+        	if (forwardedHostHeader != null) {
+        		connector.setForwardedHostHeader(forwardedHostHeader);
+        	}
+        	// default: none
+        	String hostName = getXFFHostName();
+        	if (hostName != null) {
+        		connector.setHostHeader(hostName);
+        	}
+        }
+   }
 
     private String getBindInterface() {
         String interfaceName = JiveGlobals.getXMLProperty("network.interface");
@@ -323,6 +363,62 @@ public final class HttpBindManager {
     
     // http binding CORS support end
 
+    public boolean isXFFEnabled() {
+        return JiveGlobals.getBooleanProperty(HTTP_BIND_FORWARDED, false);
+    }
+    
+    public void setXFFEnabled(boolean enabled) {
+        JiveGlobals.setProperty(HTTP_BIND_FORWARDED, String.valueOf(enabled));
+    }
+    
+    public String getXFFHeader() {
+        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_FOR);
+    }
+    
+    public void setXFFHeader(String header) {
+    	if (header == null || header.trim().length() == 0) {
+    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
+    	} else {
+    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
+    	}
+    }
+    
+    public String getXFFServerHeader() {
+        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_SERVER);
+    }
+    
+    public void setXFFServerHeader(String header) {
+    	if (header == null || header.trim().length() == 0) {
+    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
+    	} else {
+    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
+    	}
+    }
+    
+    public String getXFFHostHeader() {
+        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST);
+    }
+    
+    public void setXFFHostHeader(String header) {
+    	if (header == null || header.trim().length() == 0) {
+    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
+    	} else {
+    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
+    	}
+    }
+    
+    public String getXFFHostName() {
+        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+    }
+    
+    public void setXFFHostName(String name) {
+    	if (name == null || name.trim().length() == 0) {
+    		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+    	} else {
+    		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
+    	}
+    }
+    
     public void setHttpBindEnabled(boolean isEnabled) {
         JiveGlobals.setProperty(HTTP_BIND_ENABLED, String.valueOf(isEnabled));
     }
@@ -591,7 +687,7 @@ public final class HttpBindManager {
             }
             else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
                 setSecureHttpBindPort(HTTP_BIND_SECURE_PORT_DEFAULT);
-            }
+            }        
         }
 
         public void xmlPropertySet(String property, Map<String, Object> params) {

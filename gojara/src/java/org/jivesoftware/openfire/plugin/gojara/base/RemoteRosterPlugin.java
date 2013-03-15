@@ -1,26 +1,20 @@
 package org.jivesoftware.openfire.plugin.gojara.base;
 
 import java.io.File;
-//import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-//import java.util.Map;
 import java.util.Set;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
-//import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.MainInterceptor;
-//import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.AbstractInterceptorHandler;
-//import org.jivesoftware.openfire.plugin.gojara.messagefilter.handler.GatewayInterceptorHandler;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
-//import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -55,12 +49,12 @@ public class RemoteRosterPlugin implements Plugin {
 	
 	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
-		Log.debug("Starting RemoteRoster Plugin");
+		Log.info("Starting RemoteRoster Plugin");
 		pluginManager = manager;
 		iManager.addInterceptor(mainInterceptor);
 		manageExternalComponents();
 		listenToSettings();
-		Log.debug("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
+		Log.info("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
 	}
 
 	/*
@@ -132,11 +126,12 @@ public class RemoteRosterPlugin implements Plugin {
 	}
 
 	public void destroyPlugin() {
-		
+		Log.info("Destroying GoJara");
 		mainInterceptor.freeze();
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		pluginManager = null;
+		mainInterceptor = null;
 	}
 
 	private void updateInterceptors(String componentJID) {

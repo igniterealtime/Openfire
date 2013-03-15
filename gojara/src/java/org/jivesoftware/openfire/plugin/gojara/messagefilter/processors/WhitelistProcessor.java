@@ -43,7 +43,8 @@ public class WhitelistProcessor extends AbstractRemoteRosterProcessor {
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
 		IQ myPacket = (IQ) packet;
 		if (myPacket.getType().equals(IQ.Type.result) && (from.isEmpty() || from.equals(_server.getServerInfo().getXMPPDomain()))) {
-			Log.debug("Processing packet in Whitelistprocessor for " + to);
+
+			Log.debug("Processing packet in Whitelistprocessor for " + to + "Packet: " + packet.toString());
 			Element root = myPacket.getChildElement();
 
 			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoitems:item");

@@ -34,7 +34,8 @@ public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor 
 		if (myPacket.getType() != null && myPacket.getType().equals(Presence.Type.unavailable)
 				&& !myPacket.getElement().getStringValue().equals("Connecting")) {
 			String username = getUsernameFromJid(to);
-			Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain + "and user " + username);
+			Log.debug("Processing packet in NonPersistantRosterProcessor for " + subdomain + "and user " + username + " Packet: "
+					+ packet.toString());
 
 			try {
 				Roster roster = _rosterManager.getRoster(username);

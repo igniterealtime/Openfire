@@ -40,7 +40,7 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 
 	@Override
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
-		Log.debug("Processing packet in ClientToComponentUpdateProcessor");
+		Log.debug("Processing packet in ClientToComponentUpdateProcessor: " + packet.toString());
 
 		Element query = ((IQ) packet).getChildElement();
 

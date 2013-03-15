@@ -45,8 +45,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 		final InterceptorManager interceptorManager = InterceptorManager.getInstance();
 		final PacketInterceptor interceptor = new PacketInterceptor() {
 
-			public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
-					throws PacketRejectedException {
+			public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
 				if (!processed && incoming) {
 					if (packet instanceof IQ) {
 						IQ iqPacket = (IQ) packet;
@@ -59,8 +58,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 							// Check if we are already registered
 							setRegistered(iqPacket.toString().contains("<registered/>"));
 							throw new PacketRejectedException();
-						} else if (iqPacket.getType().equals(IQ.Type.result)
-								&& ns.equals("http://jabber.org/protocol/disco#info")
+						} else if (iqPacket.getType().equals(IQ.Type.result) && ns.equals("http://jabber.org/protocol/disco#info")
 								&& iqPacket.getFrom().toString().equals(subdomain)) {
 
 							/*

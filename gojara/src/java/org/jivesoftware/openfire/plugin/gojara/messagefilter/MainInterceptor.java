@@ -8,15 +8,22 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.AbstractRemoteRosterProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.ClientToComponentUpdateProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.DiscoIQRegisteredProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.IQLastProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.IQRosterPayloadProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.NonPersistantRosterProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.StatisticsProcessor;
+import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.WhitelistProcessor;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 public class MainInterceptor implements PacketInterceptor {
@@ -27,25 +34,25 @@ public class MainInterceptor implements PacketInterceptor {
 	private Boolean frozen;
 
 	public MainInterceptor() {
-		Log.info("Started MainInterceptor for GoJara Plugin.");
+		Log.info("Created MainInterceptor for GoJara Plugin.");
 		XMPPServer server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
 
-		AbstractRemoteRosterProcessor iqRegistered = new DiscoIQRegisteredProcessor();
-		AbstractRemoteRosterProcessor iqRosterPayload = new IQRosterPayloadProcessor(rosterMananger);
-		AbstractRemoteRosterProcessor nonPersistant = new NonPersistantRosterProcessor(rosterMananger);
+		AbstractRemoteRosterProcessor iqRegisteredProcessor = new DiscoIQRegisteredProcessor();
+		AbstractRemoteRosterProcessor iqRosterPayloadProcessor = new IQRosterPayloadProcessor(rosterMananger);
+		AbstractRemoteRosterProcessor nonPersistantProcessor = new NonPersistantRosterProcessor(rosterMananger);
 		AbstractRemoteRosterProcessor statisticsProcessor = new StatisticsProcessor();
 		AbstractRemoteRosterProcessor iqLastProcessor = new IQLastProcessor();
-		AbstractRemoteRosterProcessor updateToComponent = new ClientToComponentUpdateProcessor(activeTransports);
+		AbstractRemoteRosterProcessor updateToComponentProcessor = new ClientToComponentUpdateProcessor(activeTransports);
 		AbstractRemoteRosterProcessor whitelistProcessor = new WhitelistProcessor(activeTransports);
 		// AbstractRemoteRosterProcessor mucblockProcessor = new
-		// MUCBlockProcessor();
-		packetProcessors.put("sparkIQRegistered", iqRegistered);
-		packetProcessors.put("iqRosterPayload", iqRosterPayload);
-		packetProcessors.put("handleNonPersistant", nonPersistant);
+		// MucBlockProcessor();
+		packetProcessors.put("sparkIQRegistered", iqRegisteredProcessor);
+		packetProcessors.put("iqRosterPayload", iqRosterPayloadProcessor);
+		packetProcessors.put("handleNonPersistant", nonPersistantProcessor);
 		packetProcessors.put("statisticsProcessor", statisticsProcessor);
 		packetProcessors.put("iqLastProcessor", iqLastProcessor);
-		packetProcessors.put("clientToComponentUpdate", updateToComponent);
+		packetProcessors.put("clientToComponentUpdate", updateToComponentProcessor);
 		packetProcessors.put("whitelistProcessor", whitelistProcessor);
 		// packetProcessors.put("mucblockProcessor", mucblockProcessor);
 
@@ -82,7 +89,7 @@ public class MainInterceptor implements PacketInterceptor {
 	private String searchJIDforSubdomain(String jid) {
 		if (!jid.isEmpty()) {
 			for (String subdomain : activeTransports) {
-				if (subdomain.contains(jid))
+				if (jid.contains(subdomain))
 					return subdomain;
 			}
 		}
@@ -134,8 +141,8 @@ public class MainInterceptor implements PacketInterceptor {
 						packetProcessors.get("iqRosterPayload").process(packet, from, to, from);
 				}
 				// Disco#Info - check for register processing
-				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !to.isEmpty() && activeTransports.contains(to)
-						&& iqPacket.getType().equals(IQ.Type.get)) {
+				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !to.isEmpty()
+						&& activeTransports.contains(to) && iqPacket.getType().equals(IQ.Type.get)) {
 					packetProcessors.get("sparkIQRegistered").process(packet, to, to, from);
 				}
 
@@ -183,6 +190,13 @@ public class MainInterceptor implements PacketInterceptor {
 				// && !from.isEmpty() && activeTransports.contains(from))
 				// packetProcessors.get("mucblockProcessor").process(packet,
 				// from, to, from);
+			} else if (packet instanceof Presence) {
+				// We block Presences to users of a subdomain so OF/S2 wont log you
+				// in automatically if you have a
+				// subdomain user in your roster
+				String to_s = searchJIDforSubdomain(to);
+				if (!to_s.isEmpty() && !activeTransports.contains(to))
+					throw new PacketRejectedException();
 			}
 		}
 	}

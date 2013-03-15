@@ -37,7 +37,7 @@ public class IQLastProcessor extends AbstractRemoteRosterProcessor{
 		IQ iqpacket = (IQ) packet;
 		
 		if (iqpacket.getType().equals(IQ.Type.get)) {
-			Log.debug("Processing IQLast Packet for " + subdomain);
+			Log.debug("Processing IQLast Packet for " + subdomain + " : " + packet.toString());
 			IQ answer = IQ.createResultIQ(iqpacket);
 			answer.setType(IQ.Type.error);
 			

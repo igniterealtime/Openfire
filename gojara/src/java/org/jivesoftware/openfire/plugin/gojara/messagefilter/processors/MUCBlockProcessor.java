@@ -12,36 +12,34 @@ import org.xmpp.packet.Packet;
 /**
  * 
  * @author axel.frederik.brand
- *
+ * 
  */
 public class MUCBlockProcessor extends AbstractRemoteRosterProcessor {
-	
+
 	public MUCBlockProcessor() {
 		Log.info("Created MUCBlockProcessor");
 	}
-	
+
 	/**
-	 * At this Point we know:
-	 * MucBlock = true,
-	 * !incoming, !processed
-	 * Package is IQ with Namespace disco#info,
-	 * from equals the watched subdomain given through subdomain
+	 * At this Point we know: MucBlock = true, !incoming, !processed Package is
+	 * IQ with Namespace disco#info, from equals the watched subdomain given
+	 * through subdomain
 	 */
 	@Override
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
 		IQ iqPacket = (IQ) packet;
-		
+
 		if (iqPacket.getType().equals(IQ.Type.result) && !to.isEmpty()) {
-			
+
 			Element root = iqPacket.getChildElement();
-			
+
 			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoinfo:feature");
 			for (Node node : nodes) {
 				String var = node.valueOf("@var");
 				if (var.equals("http://jabber.org/protocol/muc"))
 					root.remove(node);
 			}
-			
+
 		}
 	}
 

@@ -42,11 +42,11 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 
 	@Override
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
-		Log.debug("Processing packet in SendRosterProcessor for " + subdomain);
+		Log.debug("Processing packet in IQRosterPayloadProcessor for " + subdomain + " : " + packet.toString());
 
 		IQ myPacket = (IQ) packet;
 		String username = getUsernameFromJid(to);
-		
+
 		if (myPacket.getType().equals(IQ.Type.get)) {
 			handleIQget(myPacket, subdomain, username);
 		} else if (myPacket.getType().equals(IQ.Type.set)) {
@@ -118,8 +118,10 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 			String jid = n.valueOf("@jid");
 			String name = n.valueOf("@name");
 			String subvalue = n.valueOf("@subscription");
-			// We dont want to add or delete the subdomain itself, so we have to reject that packet, it seems openfire itself
-			// can interpret the iq:roster remove stanzas in some way, this was causing trouble on register:remove
+			// We dont want to add or delete the subdomain itself, so we have to
+			// reject that packet, it seems openfire itself
+			// can interpret the iq:roster remove stanzas in some way, this was
+			// causing trouble on register:remove
 			if (jid.equals(subdomain))
 				throw new PacketRejectedException();
 

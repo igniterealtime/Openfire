@@ -44,8 +44,10 @@ public class RemoteRosterPlugin implements Plugin {
 	private static PluginManager pluginManager;
 	private Set<String> _waitingForIQResponse = new HashSet<String>();
 	private PropertyEventListener _settingsObserver;
+	private ComponentEventListener _componentObserver;
 	private MainInterceptor mainInterceptor = new MainInterceptor();
 	private InterceptorManager iManager = InterceptorManager.getInstance();
+	private InternalComponentManager compManager = InternalComponentManager.getInstance();
 	
 	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
@@ -62,8 +64,7 @@ public class RemoteRosterPlugin implements Plugin {
 	 * external component is maybe a gateway and interesting for us
 	 */
 	private void manageExternalComponents() {
-		InternalComponentManager compManager = InternalComponentManager.getInstance();
-		compManager.addListener(new ComponentEventListener() {
+		_componentObserver = new ComponentEventListener() {
 			/*
 			 * Check if the unregistered component contains to one of our
 			 * package interceptors
@@ -96,9 +97,6 @@ public class RemoteRosterPlugin implements Plugin {
 					Element packet = iq.getChildElement();
 					Document doc = packet.getDocument();
 					List<Node> nodes = XpathHelper.findNodesInDocument(doc, "//disco:identity[@category='gateway']");
-					// Is this external component a gateway and there is no
-					// package interceptor for it?
-//					if (nodes.size() > 0 && !_interceptors.containsKey(from)) {
 					if (nodes.size() > 0) {
 						updateInterceptors(from);
 					}
@@ -108,7 +106,8 @@ public class RemoteRosterPlugin implements Plugin {
 					_waitingForIQResponse.remove(from);
 				}
 			}
-		});
+		};
+		compManager.addListener(_componentObserver);
 	}
 
 	/*
@@ -130,8 +129,10 @@ public class RemoteRosterPlugin implements Plugin {
 		mainInterceptor.freeze();
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
+		compManager.removeListener(_componentObserver);
 		pluginManager = null;
 		mainInterceptor = null;
+		compManager = null;
 	}
 
 	private void updateInterceptors(String componentJID) {

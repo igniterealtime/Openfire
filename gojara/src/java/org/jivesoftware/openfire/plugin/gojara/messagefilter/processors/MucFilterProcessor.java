@@ -10,14 +10,12 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 /**
- * 
  * @author axel.frederik.brand
- * 
  */
-public class MUCBlockProcessor extends AbstractRemoteRosterProcessor {
+public class MucFilterProcessor extends AbstractRemoteRosterProcessor {
 
-	public MUCBlockProcessor() {
-		Log.info("Created MUCBlockProcessor");
+	public MucFilterProcessor() {
+		Log.info("Created MucFilterProcessor");
 	}
 
 	/**
@@ -30,10 +28,9 @@ public class MUCBlockProcessor extends AbstractRemoteRosterProcessor {
 		IQ iqPacket = (IQ) packet;
 
 		if (iqPacket.getType().equals(IQ.Type.result) && !to.isEmpty()) {
-
 			Element root = iqPacket.getChildElement();
 
-			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//discoinfo:feature");
+			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//disco:feature");
 			for (Node node : nodes) {
 				String var = node.valueOf("@var");
 				if (var.equals("http://jabber.org/protocol/muc"))
@@ -42,5 +39,4 @@ public class MUCBlockProcessor extends AbstractRemoteRosterProcessor {
 
 		}
 	}
-
 }

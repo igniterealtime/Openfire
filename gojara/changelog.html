@@ -47,14 +47,16 @@ GoJara Plugin Changelog
 <p><b>2.0.0</b> -- Mar 07, 2013</p>
 
 <ul>
-	<li>Major refactoring of the Interceptor- and Processor-Structure used by GoJara</li>
-	<li>One-Interceptor structure should allow easier Debugging & control of Features</li>
-	<li>We completely ignore Packets with malformed JIDs now, this should cause less Warnings/Errors</li>
-	<li>Freezing the Interceptor on Destroy of the Plugin should make GoJara properly shutdown and not cause trouble on reload/update</li>
-	<li>Optimized Processors to have better performance</li>
-	<li>Reject iq:roster packets with item jid=subdomain as they will throw errors on register:remove</li>
-	<li>Stopped OF from sending Presence Packets to users of legacy roster, this was leading to OF automatically logging you into S2 if you were registered,
-	 even if you did not check "Autologin" (only when persistant = true).</li>
+	<li>Major refactoring of the Interceptor- and Processor-Structure used by GoJara.</li>
+	<li>One-Interceptor structure should allow easier Debugging & control of Features.</li>
+	<li>We completely ignore Packets with malformed JIDs now, this should cause less Warnings/Errors.</li>
+	<li>Freezing the Interceptor on Destroy of the Plugin should make GoJara properly shutdown and not cause trouble on reload/update.</li>
+	<li>Optimized Processors to have better performance.</li>
+	<li>Reject iq:roster packets with item jid=subdomain as they will throw errors on register:remove.</li>
+	<li>Fixed auto-connecting to transports in Persistant-mode by blocking Presence forwarding to legacy-roster items.</li>
+	<li>New Feature: MUC-Filter allows to filter MUC from disco#info of transports if only internal conference service should be allowed.</li>
+	<li>Persistent Roster has its place in GoJara Options view back.</li>
+	<li>Fixed Errors thrown after unloading GoJara by unloading ComponentEventListener properly</li>
 </ul>
 	
 

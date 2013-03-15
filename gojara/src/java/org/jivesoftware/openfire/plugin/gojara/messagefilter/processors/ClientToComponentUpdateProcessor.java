@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
+import java.util.List;
 import java.util.Set;
 
 import org.dom4j.Element;
@@ -32,7 +33,7 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 
 	private String searchJIDforSubdomain(String jid) {
 		for (String subdomain : watchedSubdomains) {
-			if (subdomain.contains(jid))
+			if (jid.contains(subdomain))
 				return subdomain;
 		}
 		return "";
@@ -43,11 +44,11 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 		Log.debug("Processing packet in ClientToComponentUpdateProcessor: " + packet.toString());
 
 		Element query = ((IQ) packet).getChildElement();
-
-		if (findNodesInDocument(query.getDocument(), "//roster:item").size() > 0) {
+		List<Node> nodes = findNodesInDocument(query.getDocument(), "//roster:item");
+		if (nodes.size() > 0) {
 			// We now know we have to check the JID of the to be added User
 			// against our valid subdomains.
-			for (Node n : findNodesInDocument(query.getDocument(), "//roster:item")) {
+			for (Node n : nodes) {
 				String jid = n.valueOf("@jid");
 				// TODO: We ignore remove iq packets for now. There might be
 				// conflicts

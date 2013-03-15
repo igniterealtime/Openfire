@@ -96,13 +96,13 @@ public class HttpBindServlet extends HttpServlet {
         sessionManager.stop();
     }
 
-    @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        // Use HttpServlet's implementation to add basic headers ('Allow').
-        super.doOptions(request, response);
+	@Override
+	protected void service(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		// add CORS headers for all HTTP responses (errors, etc.)
         addCORSHeaders(request, response);
-    }
+		super.service(request, response);
+	}
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -379,8 +379,6 @@ public class HttpBindServlet extends HttpServlet {
             content = "_BOSH_(\"" + StringEscapeUtils.escapeJavaScript(content) + "\")";
         }
         
-        addCORSHeaders(request, response);
-
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
             System.out.println(new Date()+": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
@@ -390,8 +388,7 @@ public class HttpBindServlet extends HttpServlet {
         response.getOutputStream().close();
     }
 
-    private void addCORSHeaders(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    private void addCORSHeaders(HttpServletRequest request, HttpServletResponse response) {
         // add CORS headers
         if (boshManager.isCORSEnabled()) {
             if (boshManager.isAllOriginsAllowed())

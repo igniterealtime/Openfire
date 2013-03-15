@@ -1000,10 +1000,8 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void closeSession() {
-    	synchronized (this) {
-	        if (isClosed) { return; }
-	        isClosed = true;
-    	}
+        if (isClosed) { return; }
+        isClosed = true;
 
         // close connection(s) and deliver pending elements (if any)
         synchronized (connectionQueue) {

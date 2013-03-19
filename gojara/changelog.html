@@ -44,7 +44,7 @@
 GoJara Plugin Changelog
 </h1>
 
-<p><b>2.0.0</b> -- Mar 07, 2013</p>
+<p><b>2.0.0</b> -- Mar 19, 2013</p>
 
 <ul>
 	<li>Major refactoring of the Interceptor- and Processor-Structure used by GoJara.</li>
@@ -56,7 +56,8 @@ GoJara Plugin Changelog
 	<li>Fixed auto-connecting to transports in Persistant-mode by blocking Presence forwarding to legacy-roster items.</li>
 	<li>New Feature: MUC-Filter allows to filter MUC from disco#info of transports if only internal conference service should be allowed.</li>
 	<li>Persistent Roster has its place in GoJara Options view back.</li>
-	<li>Fixed Errors thrown after unloading GoJara by unloading ComponentEventListener properly</li>
+	<li>Fixed Errors thrown after unloading GoJara by unloading ComponentEventListener properly.</li>
+	<li>Reject IQ:Last Packets when Filter activated instead of responding to them, as S2 is responding too.</li>
 </ul>
 	
 

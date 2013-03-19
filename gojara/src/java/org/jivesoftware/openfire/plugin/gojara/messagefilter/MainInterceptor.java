@@ -106,7 +106,7 @@ public class MainInterceptor implements PacketInterceptor {
 				if (packet.getTo() != null)
 					to = packet.getTo().toString();
 			} catch (IllegalArgumentException e) {
-				Log.warn("There was an illegal JID while intercepting Message for GoJara. Not Intercepting it! " + e.getMessage());
+				Log.debug("There was an illegal JID while intercepting Message for GoJara. Not Intercepting it! " + e.getMessage());
 				return;
 			}
 		}

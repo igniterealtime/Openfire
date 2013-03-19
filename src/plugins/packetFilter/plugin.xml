@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>org.jivesoftware.openfire.plugin.PacketFilterPlugin</class>
+
+
+    <name>Packet Filter</name>
+    <description>Rules to enforce ethical communication</description>
+    <author>Nate Putnam</author>
+    <version>3.0.1</version>
+    <date>5/7/2011</date>
+    <minServerVersion>3.7.0</minServerVersion>
+    <databaseKey>packetfilter</databaseKey>
+    <databaseVersion>2</databaseVersion>
+
+    <!-- Admin console entries -->
+
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="sidebar-server-settings">
+                <item id="packetFilter" name="${pf.summary.title}"
+                    url="pf-main.jsp"
+                    description="${pf.summary.title}" />
+            </sidebar>
+         </tab>
+    </adminconsole>
+</plugin>

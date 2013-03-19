@@ -1,0 +1,51 @@
+strong.erroritem {
+	color: #6E1F1F;
+	}
+
+
+
+/* general page elements */
+table.settingsTable {
+    display: block;
+    border: 1px solid #BBBBBB;
+    margin: 5px 0px 15px 0px;
+}
+table.settingsTable thead th {
+    background-color: #eeeeee;
+    border-bottom: 1px solid #BBBBBB;
+    padding: 3px 8px 3px 12px;
+    font-weight: bold;
+    text-align: left;
+}
+table.settingsTable tbody tr td {
+    padding: 5px 10px 5px 15px;
+}
+table.settingsTable tbody tr td p {
+    padding: 10px 0px 5px 0px;
+}
+table.settingsTable tr {
+    padding: 0px 0px 10px 0px;
+}
+
+fieldset {
+	display: block;
+	position: relative;
+	-moz-border-radius: 3px;
+	border: 1px solid #CCCCCC;
+	padding: 2px 0px 0px 0px;
+	margin: 0px 0px 0px 0px;
+	}
+fieldset legend {
+	color: #000000;
+	margin-left: 15px;
+	}
+
+  .horizontalrule {
+    display: block;
+    height: 1px;
+    background-color: #DCDCDC;
+    margin-top: 2px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    clear: both;
+  }

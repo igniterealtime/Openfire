@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Registration Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size : 100%;
+        }
+        BODY, TD, TH {
+            font-family : tahoma, verdana, arial, helvetica, sans-serif;
+            font-size : 0.8em;
+        }
+        H2 {
+             font-size : 10pt;
+             font-weight : bold;
+        }
+        A:hover {
+            text-decoration : none;
+        }
+        H1 {
+            font-family : tahoma, arial, helvetica, sans-serif;
+            font-size : 1.4em;
+            font-weight: bold;
+            border-bottom : 1px #ccc solid;
+            padding-bottom : 2px;
+        }
+
+        TT {
+            font-family : courier new;
+            font-weight : bold;
+            color : #060;
+        }
+        PRE {
+            font-family : courier new;
+            font-size : 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+Registration Plugin Readme
+</h1>
+
+<h2>Overview</h2>
+<p>
+The registration plugin allows admins to configure various actions whenever a new user creates an account.
+</p>
+
+<h2>Installation</h2>
+<p>
+Copy the registration.jar into the plugins directory of your Openfire installation. The plugin will
+then be automatically deployed. To upgrade to a new version, copy the new registration.jar file over 
+the existing file.
+</p>
+
+<h2>Configuration</h2>
+<p>
+The registration plugin is configured via the "Registration Properties" sidebar item located in the
+"Users" sidebar item under the "Users/Groups" tab in the Openfire Admin Console. By default,
+after the registration plugin has been deployed all of its features are disabled. To enable a feature 
+of the plugin select the checkbox next to the feature and then click on the "Save Settings" button. 
+The registration plugin has three items that can be configured:
+</p>
+<li>Registration Notification - Contacts can be configured to receive an instant message and/or email to 
+notify them whenever a new user registers.</li>
+<li>Welcome Message - A message that will be sent to a user when they first register.</li>
+<li>Default Group - A group that all users will be added to when they first register.</li>
+<li>Web Page Registration - Allows users to create accounts via a web page.
+
+<h2>Using the Plugin</h2>
+<p>
+Presently, after the registration plugin has been configured nothing else needs to be done to use it.
+</p>
+
+</body>
+</html>

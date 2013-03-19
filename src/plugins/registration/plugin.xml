@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.RegistrationPlugin</class>
+    <name>Registration</name>
+    <description>Performs various actions whenever a new user account is created.</description>
+    <author>Ryan Graham</author>
+    <version>1.5.0</version>
+    <date>12/2/2009</date>
+    <minServerVersion>3.7.0</minServerVersion>
+	
+	<adminconsole>
+		<tab id="tab-users">
+			<sidebar id="sidebar-users">
+				<item id="registration-props-form" name="Registration Properties"
+						url="registration-props-form.jsp"
+						description="User Registration" />
+			</sidebar>
+        </tab>
+    </adminconsole>
+</plugin>

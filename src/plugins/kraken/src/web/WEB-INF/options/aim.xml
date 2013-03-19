@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<optionsconfig>
+    <leftpanel>
+        <item type="toggle" sysprop="plugin.gateway.aim.avatars" var="avatars" desckey="gateway.web.transports.buddyicons" default="true"/>
+        <item type="toggle" sysprop="plugin.gateway.aim.reconnect" var="autoreconnect" desckey="gateway.web.transports.autoreconnect" default="true">
+            <item type="text" sysprop="plugin.gateway.aim.reconnectattempts" var="autoreconnectattempts" desckey="gateway.web.transports.autoreconnectattempts" default="3" size="5" maxlength="5"/>
+        </item>
+    </leftpanel>
+    <rightpanel>
+        <item type="text" sysprop="plugin.gateway.aim.connecthost" var="host" desckey="gateway.web.transports.host" default="login.oscar.aol.com"/>
+        <item type="text" sysprop="plugin.gateway.aim.connectport" var="port" desckey="gateway.web.transports.port" default="5190"/>
+        <item type="toggle" sysprop="plugin.gateway.aim.mailnotifications" var="mailnotifications" desckey="gateway.web.transports.mailnotifications" default="true"/>
+        <item type="toggle" sysprop="plugin.gateway.aim.crosschat" var="crosschat" desckey="gateway.oscar.crosschat" default="true"/>
+    </rightpanel>
+</optionsconfig>

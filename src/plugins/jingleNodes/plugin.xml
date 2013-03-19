@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jinglenodes.JingleNodesPlugin</class>
+    <name>Jingle Nodes Plugin</name>
+    <description>Provides support for Jingle Nodes</description>
+    <author>Jingle Nodes (Rodrigo Martins)</author>
+    <version>0.0.3</version>
+    <date>14/11/2010</date>
+    <minServerVersion>3.7.0</minServerVersion>
+
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="siderbar-jn" name="${admin.item.jn}">
+                <item id="jingle-nodes" name="${admin.item.jn.settings.name}"
+                      description="${admin.item.sipark.settings.description}" url="jingle-nodes.jsp"/>
+            </sidebar>
+
+        </tab>
+    </adminconsole>
+
+</plugin>

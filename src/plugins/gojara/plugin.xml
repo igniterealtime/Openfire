@@ -6,9 +6,9 @@
 
     <name>GoJara</name>
     <description>ProtoXEP-xxxx: Remote Roster Management support</description>
-    <author>Holger Bergunde and Daniel Henninger</author>
-    <version>1.2.5</version>
-    <date>02/22/2013</date>
+    <author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
+    <version>2.0.0</version>
+    <date>03/19/2013</date>
 	<databaseKey>gojara</databaseKey>
     <databaseVersion>0</databaseVersion>
     <minServerVersion>3.7.0</minServerVersion>

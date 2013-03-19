@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<optionsconfig>
-    <mainpanel>
-        <item type="toggle" sysprop="plugin.gateway.globsl.messageeventing" var="messageeventing" desckey="gateway.web.settings.messageeventing" default="true"/>
-    </mainpanel>
-</optionsconfig>

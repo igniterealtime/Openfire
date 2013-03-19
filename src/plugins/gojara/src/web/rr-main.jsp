@@ -19,13 +19,17 @@
 	webManager.init(request, response, session, application, out);
 	boolean save = request.getParameter("save") != null;
 	boolean success = request.getParameter("success") != null;
-	//boolean persistentRoster = ParamUtils.getBooleanAttribute(request, "persistentEnabled");
-	boolean persistentRoster = true;
+	String persistentRosterParam = request.getParameter("persistentEnabled");
+	boolean persistentRoster = persistentRosterParam == null? false : persistentRosterParam.equals("true");
+
 	String sparkdiscoParam = request.getParameter("sparkDiscoInfo");
 	boolean sparkDiscoInfo = sparkdiscoParam == null ? false : sparkdiscoParam.equals("true");
 	
 	String iqLastFilterPram = request.getParameter("iqLastFilter");
 	boolean iqLastFilter = iqLastFilterPram == null ? false : iqLastFilterPram.equals("true");
+	
+	String mucFilterParam = request.getParameter("mucFilter");
+	boolean mucFilter = mucFilterParam == null ? false : mucFilterParam.equals("true");
 	
 	String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
 	PermissionManager _pmanager = new PermissionManager();
@@ -48,6 +52,7 @@
 		JiveGlobals.setProperty("plugin.remoteroster.persistent", (persistentRoster ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.iqLastFilter", (iqLastFilter ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.mucFilter", (mucFilter ? "true" : "false"));
 		response.sendRedirect("rr-main.jsp?success=true");
 		return;
 	}
@@ -273,31 +278,41 @@
 				}
 			%>
 		</div>
-		<!--  DISABLED PERSISTENT ROSTER UNTIL SPECTRUM SUPPORTS IT
 		
-<div class="jive-contentBoxHeader">Options</div>
+		
+<div class="jive-contentBoxHeader">General Options</div>
 <div class="jive-contentBox">
    <table cellpadding="3" cellspacing="0" border="0" width="100%">
    <tbody>
    <tr valign="top">
-       <td width="1%" nowrap class="c1">
-           Persistent Roster:
-       </td>
-       <td width="99%">
+       <td width="100%">
            <table cellpadding="0" cellspacing="0" border="0">
            <tbody>
-               <tr>
-                   <td>
-                       <input type="radio" name="persistentEnabled" value="true" checked id="PER01">
-                   </td>
-                   <td><label for="PER01">Enabled (remote rosters are saved into the user's stored roster)</label></td>
-               </tr>
-               <tr>
-                   <td>
-                       <input type="radio" name="persistentEnabled" value="false" id="PER02">
-                   </td>
-                   <td><label for="PER02">Disabled (remote rosters exist only in memory)</label></td>
-               </tr>
+				<tr>
+					<td><input type="checkbox" name="persistentEnabled" id="GO1" value="true"
+						<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false) ? "checked=\"checked\"" : ""%> />
+
+					</td>
+					<td><label for="GO1">Enable persistent Roster</label></td>
+				</tr>
+				<tr>
+					<td />
+					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, no contacts will be deleted
+					by GoJara automatically.<br>					
+					When Persistent-Roster is disabled, GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout. </td>
+				</tr>
+				<tr>
+					<td><input type="checkbox" name="mucFilter" id="GO2" value="true"
+						<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.mucFilter", false) ? "checked=\"checked\"" : ""%> />
+					</td>
+					<td><label for="GO2">Only allow internal Jabber Conferences</label></td>
+				</tr>
+				<tr>
+					<td />
+					<td align="left" style="font-size: -3; color: grey">Spectrum might add MUC(Multi User Chat) to supported features
+					 of some Transports. If this should not be allowed, because only internal Jabber Conferences should be used, GoJara
+					 can remove these.</td>
+				</tr>
            </tbody>
            </table>
        </td>
@@ -305,10 +320,6 @@
    </tbody>
    </table>
 </div>
-
- -->
-
-
 
 		<br /> <br />
 		<div class="jive-contentBoxHeader">Client specific options</div>

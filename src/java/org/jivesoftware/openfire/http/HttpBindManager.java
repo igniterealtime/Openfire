@@ -514,7 +514,7 @@ public final class HttpBindManager {
     private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
-        context.addServlet(new ServletHolder(new HttpBindServlet()),"/crossdomain.xml");
+        context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"/crossdomain.xml");
     }
 
     private void loadStaticDirectory(ContextHandlerCollection contexts) {

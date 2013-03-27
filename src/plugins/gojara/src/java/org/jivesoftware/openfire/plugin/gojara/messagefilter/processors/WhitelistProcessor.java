@@ -42,7 +42,7 @@ public class WhitelistProcessor extends AbstractRemoteRosterProcessor {
 	@Override
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
 		IQ myPacket = (IQ) packet;
-		if (myPacket.getType().equals(IQ.Type.result) && (from.isEmpty() || from.equals(_server.getServerInfo().getXMPPDomain()))) {
+		if (myPacket.getType().equals(IQ.Type.result) && (from.length() == 0 || from.equals(_server.getServerInfo().getXMPPDomain()))) {
 
 			Log.debug("Processing packet in Whitelistprocessor for " + to + "Packet: " + packet.toString());
 			Element root = myPacket.getChildElement();

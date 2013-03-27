@@ -54,7 +54,7 @@ public class ClientToComponentUpdateProcessor extends AbstractRemoteRosterProces
 				// conflicts
 				// when we remove our legacy network registration.
 				String found_subdomain = searchJIDforSubdomain(jid);
-				if (!found_subdomain.isEmpty() && !n.valueOf("@subscription").equals("remove")) {
+				if (found_subdomain.length() > 0 && !n.valueOf("@subscription").equals("remove")) {
 
 					Log.debug("Mirroring packet from local network to legacy component " + found_subdomain);
 					IQ forward = (IQ) packet.createCopy();

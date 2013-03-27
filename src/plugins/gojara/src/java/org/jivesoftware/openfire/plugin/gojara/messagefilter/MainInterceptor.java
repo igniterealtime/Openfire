@@ -75,7 +75,7 @@ public class MainInterceptor implements PacketInterceptor {
 	 * we find it.
 	 */
 	private String searchJIDforSubdomain(String jid) {
-		if (!jid.isEmpty()) {
+		if (jid.length() > 0) {
 			for (String subdomain : activeTransports) {
 				if (jid.contains(subdomain))
 					return subdomain;
@@ -120,14 +120,14 @@ public class MainInterceptor implements PacketInterceptor {
 					return;
 				// Jabber:IQ:roster Indicates Client to Component update or Rosterpush
 				else if (query.getNamespaceURI().equals("jabber:iq:roster")) {
-					if (to.isEmpty() && iqPacket.getType().equals(IQ.Type.set))
+					if (to.length() == 0 && iqPacket.getType().equals(IQ.Type.set))
 						packetProcessors.get("clientToComponentUpdate").process(packet, "", to, from);
-					else if (!from.isEmpty() && activeTransports.contains(from))
+					else if (from.length() > 0 && activeTransports.contains(from))
 						packetProcessors.get("iqRosterPayload").process(packet, from, to, from);
 				}
 				// SPARK IQ REGISTERED Feature
-				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !to.isEmpty()
-						&& activeTransports.contains(to) && iqPacket.getType().equals(IQ.Type.get)) {
+				else if (query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && to.length() > 0	&& 
+						activeTransports.contains(to) && iqPacket.getType().equals(IQ.Type.get)) {
 					packetProcessors.get("sparkIQRegistered").process(packet, to, to, from);
 				}
 				// JABBER:IQ:LAST - Autoresponse Feature
@@ -135,7 +135,7 @@ public class MainInterceptor implements PacketInterceptor {
 						&& query.getNamespaceURI().equals("jabber:iq:last")) {
 					
 					String to_s = searchJIDforSubdomain(to);
-					if (!to_s.isEmpty() && iqPacket.getType().equals(IQ.Type.get))
+					if (to_s.length() > 0 && iqPacket.getType().equals(IQ.Type.get))
 						throw new PacketRejectedException();
 				}
 				// NONPERSISTANT Feature
@@ -149,8 +149,8 @@ public class MainInterceptor implements PacketInterceptor {
 			// STATISTICS - Feature
 			String from_s = searchJIDforSubdomain(from);
 			String to_s = searchJIDforSubdomain(to);
-			String subdomain = from_s.isEmpty() ? to_s : from_s;
-			if (!from.equals(to) && !subdomain.isEmpty())
+			String subdomain = from_s.length() == 0 ? to_s : from_s;
+			if (!from.equals(to) && subdomain.length() > 0)
 				packetProcessors.get("statisticsProcessor").process(packet, subdomain, to, from);
 
 		} else if (!incoming && !processed) {
@@ -166,14 +166,14 @@ public class MainInterceptor implements PacketInterceptor {
 					packetProcessors.get("whitelistProcessor").process(packet, "", to, from);
 				// DISCO#INFO - MUC-Filter-Feature
 				else if (JiveGlobals.getBooleanProperty("plugin.remoteroster.mucFilter", false)
-						&& query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && !from.isEmpty()
+						&& query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && from.length() > 0
 						&& activeTransports.contains(from))
 					packetProcessors.get("mucfilterProcessor").process(packet, from, to, from);
 			} else if (packet instanceof Presence) {
 				// We block Presences to users of a subdomain so OF/S2 wont log you in automatically if you have a
 				// subdomain user in your roster
 				String to_s = searchJIDforSubdomain(to);
-				if (!to_s.isEmpty() && !activeTransports.contains(to))
+				if (to_s.length() > 0 && !activeTransports.contains(to))
 					throw new PacketRejectedException();
 			}
 		}

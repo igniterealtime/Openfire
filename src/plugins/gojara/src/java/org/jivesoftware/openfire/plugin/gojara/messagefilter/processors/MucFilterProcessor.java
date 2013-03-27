@@ -27,7 +27,7 @@ public class MucFilterProcessor extends AbstractRemoteRosterProcessor {
 	public void process(Packet packet, String subdomain, String to, String from) throws PacketRejectedException {
 		IQ iqPacket = (IQ) packet;
 
-		if (iqPacket.getType().equals(IQ.Type.result) && !to.isEmpty()) {
+		if (iqPacket.getType().equals(IQ.Type.result) && to.length() > 0) {
 			Element root = iqPacket.getChildElement();
 
 			List<Node> nodes = XpathHelper.findNodesInDocument(root.getDocument(), "//disco:feature");

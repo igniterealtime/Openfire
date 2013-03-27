@@ -21,9 +21,11 @@
 package org.jivesoftware.openfire.spi;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -38,21 +40,32 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.ExecutorThreadModel;
+import org.apache.mina.common.IoHandler;
+import org.apache.mina.common.IoService;
+import org.apache.mina.common.IoServiceConfig;
+import org.apache.mina.common.IoServiceListener;
+import org.apache.mina.common.IoSession;
 import org.apache.mina.common.SimpleByteBufferAllocator;
 import org.apache.mina.common.ThreadModel;
 import org.apache.mina.filter.SSLFilter;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.executor.ExecutorFilter;
+import org.apache.mina.integration.jmx.IoServiceManager;
+import org.apache.mina.integration.jmx.IoSessionManager;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
 import org.apache.mina.transport.socket.nio.SocketSessionConfig;
 import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
@@ -217,7 +230,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start multiplexers socket unless it's been disabled.
         if (isConnectionManagerListenerEnabled()) {
             // Create SocketAcceptor with correct number of processors
-            multiplexerSocketAcceptor = buildSocketAcceptor();
+            multiplexerSocketAcceptor = buildSocketAcceptor("multiplexer");
             // Customize Executor that will be used by processors to process incoming stanzas
             ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("connectionManager");
             int eventThreads = JiveGlobals.getIntProperty("xmpp.multiplex.processing.threads", 16);
@@ -280,7 +293,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled() && componentAcceptor == null) {
             // Create SocketAcceptor with correct number of processors
-            componentAcceptor = buildSocketAcceptor();
+            componentAcceptor = buildSocketAcceptor("component");
             // Customize Executor that will be used by processors to process incoming stanzas
             ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("component");
             int eventThreads = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
@@ -344,7 +357,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients plain socket unless it's been disabled.
         if (isClientListenerEnabled()) {
             // Create SocketAcceptor with correct number of processors
-            socketAcceptor = buildSocketAcceptor();
+            socketAcceptor = buildSocketAcceptor("client");
             // Customize Executor that will be used by processors to process incoming stanzas
             ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("client");
             int eventThreads = JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16);
@@ -412,7 +425,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
             try {
                 // Create SocketAcceptor with correct number of processors
-                sslSocketAcceptor = buildSocketAcceptor();
+                sslSocketAcceptor = buildSocketAcceptor("client_ssl");
                 // Customize Executor that will be used by processors to process incoming stanzas
                 int eventThreads = JiveGlobals.getIntProperty("xmpp.client_ssl.processing.threads", 16);
                 ExecutorFilter executorFilter = new ExecutorFilter();
@@ -810,7 +823,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         restartClientSSLListeners();
     }
 
-    private SocketAcceptor buildSocketAcceptor() {
+    private SocketAcceptor buildSocketAcceptor(String name) {
         SocketAcceptor socketAcceptor;
         // Create SocketAcceptor with correct number of processors
         int ioThreads = JiveGlobals.getIntProperty("xmpp.processor.count", Runtime.getRuntime().availableProcessors());
@@ -842,9 +855,53 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
         socketSessionConfig.setTcpNoDelay(
                 JiveGlobals.getBooleanProperty("xmpp.socket.tcp-nodelay", socketSessionConfig.isTcpNoDelay()));
+        if (JMXManager.isEnabled()) {
+        	configureJMX(socketAcceptor, name);
+        }
         return socketAcceptor;
     }
 
+    private void configureJMX(SocketAcceptor acceptor, String suffix) {
+    	final String prefix = IoServiceManager.class.getPackage().getName();
+		// monitor the IoService
+    	try {
+        	IoServiceManager mbean = new IoServiceManager(acceptor);
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
+            ObjectName name = new ObjectName(prefix + ":type=SocketAcceptor,name=" + suffix);
+            mbs.registerMBean( mbean, name );
+        	mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
+    	} catch (JMException ex) {
+    		Log.warn("Failed to register MINA acceptor mbean (JMX): " + ex);
+    	}
+    	// optionally register IoSession mbeans (one per session)
+    	if (JiveGlobals.getBooleanProperty("xmpp.socket.jmx.sessions", false)) {
+	    	acceptor.addListener(new IoServiceListener() {
+	    	    public void sessionCreated(IoSession session) {
+	    	        try {
+	    	            IoSessionManager mbean = new IoSessionManager(session);
+	    	            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
+	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
+	    	            					session.getRemoteAddress().toString().replace(':', '/'));
+	    	            mbs.registerMBean(mbean, name);
+	    	        } catch(JMException ex) {
+	    	            Log.warn("Failed to register MINA session mbean (JMX): " + ex);
+	    	        }      
+	    	    }
+	    	    public void sessionDestroyed(IoSession session) {
+	    	        try {
+	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
+	    	            					session.getRemoteAddress().toString().replace(':', '/'));
+	    	            ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
+	    	        } catch(JMException ex) {
+	    	            Log.warn("Failed to unregister MINA session mbean (JMX): " + ex);
+	    	        }      
+	    	    }
+	    	    public void serviceActivated(IoService is, SocketAddress sa, IoHandler ih, IoServiceConfig isc) { }
+	    	    public void serviceDeactivated(IoService is, SocketAddress sa, IoHandler ih, IoServiceConfig isc) { }
+	    	});
+    	}
+    }
+    
     // #####################################################################
     // Module management
     // #####################################################################

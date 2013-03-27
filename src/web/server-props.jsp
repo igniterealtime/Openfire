@@ -21,6 +21,7 @@
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.JMXManager,
                  java.net.InetAddress,
                  java.util.HashMap"
 %>
@@ -45,6 +46,9 @@
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled");
     int componentPort = ParamUtils.getIntParameter(request, "componentPort", -1);
     int serverPort = ParamUtils.getIntParameter(request, "serverPort", -1);
+    boolean jmxEnabled = ParamUtils.getBooleanParameter(request, "jmxEnabled");
+    boolean jmxSecure = ParamUtils.getBooleanParameter(request, "jmxSecure");
+    int jmxPort = ParamUtils.getIntParameter(request, "jmxPort", -1);
     boolean save = request.getParameter("save") != null;
     boolean defaults = request.getParameter("defaults") != null;
     boolean cancel = request.getParameter("cancel") != null;
@@ -63,6 +67,9 @@
         embeddedPort = 9090;
         embeddedSecurePort = 9091;
         sslEnabled = true;
+        jmxEnabled = false;
+        jmxSecure = true;
+        jmxPort = JMXManager.DEFAULT_PORT;
         save = true;
     }
 
@@ -106,6 +113,9 @@
                 errors.put("portsEqual", "");
             }
         }
+        if (jmxPort < 1 && jmxEnabled) {
+            errors.put("jmxPort", "");
+        }
         if (errors.size() == 0) {
             boolean needRestart = false;
             if (!serverName.equals(server.getServerInfo().getXMPPDomain())) {
@@ -125,6 +135,10 @@
                 JiveGlobals.setXMLProperty("adminConsole.securePort", String.valueOf(embeddedSecurePort));
                 needRestart = true;
             }
+            JMXManager.setEnabled(jmxEnabled);
+            JMXManager.setSecure(jmxSecure);
+            JMXManager.setPort(jmxPort);
+
             // Log the event
             webManager.logEvent("edit server properties", "serverName = "+serverName+"\nport = "+port+"\nsslPort = "+sslPort+"\ncomponentPort = "+componentPort+"\nserverPort = "+serverPort+"\nembeddedPort = "+embeddedPort+"\nembeddedSecurePort = "+embeddedSecurePort);
             if (needRestart) {
@@ -149,6 +163,9 @@
             embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort"));
         } catch (Exception ignored) {
         }
+        jmxEnabled = JMXManager.isEnabled();
+        jmxSecure = JMXManager.isSecure();
+        jmxPort = JMXManager.getPort();
     }
 %>
 
@@ -356,6 +373,73 @@
         </td>
     </tr>
 <% } %>
+    <tr>
+        <td class="c1">
+              <fmt:message key="server.props.jmx_enabled" />
+        </td>
+        <td class="c2">
+            <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="radio" name="jmxEnabled" value="true" <%= (jmxEnabled ? "checked" : "") %>
+                         id="JMX01">
+                    </td>
+                    <td><label for="JMX01"><fmt:message key="server.props.enable" /></label></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" name="jmxEnabled" value="false" <%= (!jmxEnabled ? "checked" : "") %>
+                         id="JMX02">
+                    </td>
+                    <td><label for="JMX02"><fmt:message key="server.props.disable" /></label></td>
+                </tr>
+            </tbody>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+              <fmt:message key="server.props.jmx_secure" />
+        </td>
+        <td class="c2">
+            <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+                <tr>
+                    <td>
+                        <input type="radio" name="jmxSecure" value="true" <%= (jmxSecure ? "checked" : "") %>
+                         id="JMX03">
+                    </td>
+                    <td><label for="JMX03"><fmt:message key="server.props.enable" /></label></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="radio" name="jmxSecure" value="false" <%= (!jmxSecure ? "checked" : "") %>
+                         id="JMX04">
+                    </td>
+                    <td><label for="JMX04"><fmt:message key="server.props.disable" /></label></td>
+                </tr>
+            </tbody>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+             <fmt:message key="server.props.jmx_port" />
+        </td>
+        <td class="c2">
+            <input type="text" name="jmxPort" value="<%= (jmxPort > 0 ? String.valueOf(jmxPort) : "") %>"
+             size="5" maxlength="5">
+            <%  if (errors.containsKey("jmxPort")) { %>
+                <br>
+                <span class="jive-error-text">
+                <fmt:message key="server.props.jmx_valid" />
+                <a href="#" onclick="document.editform.jmxPort.value='<%=java.rmi.registry.Registry.REGISTRY_PORT%>';"
+                 ><fmt:message key="server.props.jmx_valid1" /></a>.
+                </span>
+            <%  } %>
+        </td>
+    </tr>
 </tbody>
 <tfoot>
     <tr>

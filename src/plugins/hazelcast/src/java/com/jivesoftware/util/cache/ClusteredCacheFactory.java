@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -76,6 +77,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     		JiveGlobals.getLongProperty("hazelcast.startup.retry.count", 1);
     private static final String HAZELCAST_CONFIG_FILE = 
     		JiveGlobals.getProperty("hazelcast.config.xml.filename", "hazelcast-cache-config.xml");
+    private static final boolean HAZELCAST_JMX_ENABLED = 
+    		JiveGlobals.getBooleanProperty("hazelcast.config.jmx.enabled", false);
 
 	private static Logger logger = LoggerFactory.getLogger(ClusteredCacheFactory.class);
 
@@ -120,6 +123,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
             try {
 	            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
 	            config.setInstanceName("openfire");
+	            if (JMXManager.isEnabled() && HAZELCAST_JMX_ENABLED) {
+	            	config.setProperty("hazelcast.jmx", "true");
+	            	config.setProperty("hazelcast.jmx.detailed", "true");
+	            }
 	        	hazelcast = Hazelcast.newHazelcastInstance(config);
 	            cluster = hazelcast.getCluster();
 	

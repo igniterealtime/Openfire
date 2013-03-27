@@ -20,11 +20,22 @@
 package org.jivesoftware.openfire.container;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.management.remote.JMXAuthenticator;
+import javax.management.remote.JMXPrincipal;
+import javax.management.remote.JMXServiceURL;
+import javax.security.auth.Subject;
 
 import org.eclipse.jetty.http.ssl.SslContextFactory;
+import org.eclipse.jetty.jmx.ConnectorServer;
+import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -36,7 +47,10 @@ import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -95,6 +109,11 @@ public class AdminConsolePlugin implements Plugin {
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
         adminServer = new Server();
+        if (JMXManager.isEnabled()) {
+        	JMXManager jmx = JMXManager.getInstance();
+        	adminServer.getContainer().addEventListener(jmx.getContainer());
+        	adminServer.addBean(jmx.getContainer());
+        }
         final QueuedThreadPool tp = new QueuedThreadPool(254);
         tp.setName("Jetty-QTP-AdminConsole");
         adminServer.setThreadPool(tp);
@@ -109,6 +128,7 @@ public class AdminConsolePlugin implements Plugin {
             String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
             httpConnector.setPort(adminPort);
+            httpConnector.setStatsOn(JMXManager.isEnabled());
             adminServer.addConnector(httpConnector);
         }
 
@@ -135,7 +155,7 @@ public class AdminConsolePlugin implements Plugin {
                 String bindInterface = getBindInterface();
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
-
+                httpsConnector.setStatsOn(JMXManager.isEnabled());
                 adminServer.addConnector(httpsConnector);
 
                 sslEnabled = true;
@@ -168,7 +188,7 @@ public class AdminConsolePlugin implements Plugin {
         logAdminConsolePorts();
     }
 
-    /**
+	/**
      * Shuts down the Jetty server.
      * */
     public void shutdown() {

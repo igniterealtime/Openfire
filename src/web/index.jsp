@@ -454,7 +454,7 @@
         <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain()) || LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
         <% } %>
         <% } catch (Exception e) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
@@ -474,7 +474,7 @@
     <tr>
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
         <td><fmt:message key="ports.client_to_server" /></td>
         <td><fmt:message key="ports.client_to_server.desc_old_ssl">
             <fmt:param value="<a href='ssl-settings.jsp'>" />
@@ -490,7 +490,7 @@
         <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : serverPort.getIPAddress() %></td>
         <td><%= serverPort.getPort() %></td>
         <% if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
         <% } else { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } %>
@@ -514,7 +514,7 @@
         <% if (LocalConnectionMultiplexerSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
         <% } %>
         <td><fmt:message key="ports.connection_manager" /></td>
         <td><fmt:message key="ports.connection_manager.desc">
@@ -552,7 +552,7 @@
     <tr>
         <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
         <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
         <td><fmt:message key="ports.admin_console" /></td>
         <td><fmt:message key="ports.admin_console.desc_secured" /></td>
     </tr>
@@ -588,7 +588,7 @@
         <tr>
             <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
             <td><%= httpBindManager.getHttpBindSecurePort() %></td>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt=""/></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
             <td><fmt:message key="ports.http_bind" /></td>
             <td><fmt:message key="ports.http_bind.desc_secured" /></td>
         </tr>
@@ -612,6 +612,21 @@
         <td><fmt:message key="ports.flash_cross_domain" /></td>
         <td><fmt:message key="ports.flash_cross_domain.desc" /></td>
     </tr>
+    <%
+        if (JMXManager.isEnabled()) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= JMXManager.getPort() %></td>
+        <td><% if (JMXManager.isSecure()) {
+            %><img src="images/user.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.jmx_console.alt" />" title="<fmt:message key="ports.jmx_console.alt" />"/><%
+        } else {
+            %><img src="images/blank.gif" width="1" height="1" alt=""><% }
+        %></td>
+        <td><fmt:message key="ports.jmx_console" /></td>
+        <td><fmt:message key="ports.jmx_console.desc" /></td>
+    </tr>
+    <% } %>
 </tbody>
 </table>
 </div>

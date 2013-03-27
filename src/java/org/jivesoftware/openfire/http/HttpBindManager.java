@@ -41,6 +41,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
@@ -118,7 +119,7 @@ public final class HttpBindManager {
     private HttpSessionManager httpSessionManager;
 
     private ContextHandlerCollection contexts;
-
+    
     // is all orgin allowed flag
     private boolean allowAllOrigins;
     
@@ -258,6 +259,7 @@ public final class HttpBindManager {
         		connector.setHostHeader(hostName);
         	}
         }
+        connector.setStatsOn(JMXManager.isEnabled());
    }
 
     private String getBindInterface() {
@@ -478,6 +480,11 @@ public final class HttpBindManager {
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
         httpBindServer = new Server();
+        if (JMXManager.isEnabled()) {
+        	JMXManager jmx = JMXManager.getInstance();
+        	httpBindServer.getContainer().addEventListener(jmx.getContainer());
+        	httpBindServer.addBean(jmx.getContainer());
+        }
         final QueuedThreadPool tp = new QueuedThreadPool(
         		JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
         tp.setName("Jetty-QTP-BOSH");

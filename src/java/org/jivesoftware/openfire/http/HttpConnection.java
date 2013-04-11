@@ -35,8 +35,8 @@ import java.security.cert.X509Certificate;
  */
 public class HttpConnection {
 	
+    private static final String RESPONSE_BODY = "response-body";
     private static final String CONNECTION_CLOSED = "connection closed";
-    private static final String SUSPENDED = "org.eclipse.jetty.continuation.Suspended";
 
     private final long requestId;
     private final X509Certificate[] sslCertificates;
@@ -46,7 +46,6 @@ public class HttpConnection {
     private HttpSession session;
     private Continuation continuation;
     private boolean isClosed;
-    private boolean isDelivered = false;
 
     /**
      * Constructs an HTTP Connection.
@@ -96,10 +95,6 @@ public class HttpConnection {
         return isSecure;
     }
 
-    public boolean isDelivered() {
-        return isDelivered;
-    }
-
     /**
      * Delivers content to the client. The content should be valid XMPP wrapped inside of a body.
      * A <i>null</i> value for body indicates that the connection should be closed and the client
@@ -124,8 +119,8 @@ public class HttpConnection {
         if (body == null) {
             body = CONNECTION_CLOSED;
         }
-        if (continuation != null && continuation.isSuspended()) {
-            continuation.setAttribute("response-body", body);
+        if (isSuspended()) {
+            continuation.setAttribute(RESPONSE_BODY, body);
             continuation.resume();
             session.incrementServerPacketCount();
         }
@@ -200,21 +195,25 @@ public class HttpConnection {
     void setContinuation(Continuation continuation) {
         this.continuation = continuation;
     }
+    
+    public boolean isSuspended() {
+    	return continuation != null && continuation.isSuspended();
+    }
+    
+    public boolean isExpired() {
+    	return continuation != null && continuation.isExpired();
+    }
 
     private String waitForResponse() throws HttpBindTimeoutException {
         // we enter this method when we have no messages pending delivery
 		// when we resume a suspended continuation, or when we time out
-		if (!Boolean.TRUE.equals(continuation.getAttribute(SUSPENDED))) {
+		if (continuation.isInitial()) {
 		    continuation.setTimeout(session.getWait() * JiveConstants.SECOND);
             continuation.suspend();
-            continuation.setAttribute(SUSPENDED, Boolean.TRUE);
             continuation.undispatch();
-        }
-
-        if (continuation.isResumed()) {
-            String deliverable = (String) continuation.getAttribute("response-body");
+        } else if (continuation.isResumed()) {
             // This will occur when the hold attribute of a session has been exceeded.
-            this.isDelivered = true;
+            String deliverable = (String) continuation.getAttribute(RESPONSE_BODY);
             if (deliverable == null) {
                 throw new HttpBindTimeoutException();
             }
@@ -224,8 +223,13 @@ public class HttpConnection {
             return deliverable;
         }
 
-        this.isDelivered = true;
         throw new HttpBindTimeoutException("Request " + requestId + " exceeded response time from " +
                 "server of " + session.getWait() + " seconds.");
     }
+
+	@Override
+	public String toString() {
+		return (session != null ? session.toString() : "[Anonymous]")
+				+ " rid: " + this.getRequestId();
+	}
 }

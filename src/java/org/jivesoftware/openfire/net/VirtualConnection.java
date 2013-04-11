@@ -177,12 +177,12 @@ public abstract class VirtualConnection implements Connection {
                         session.setStatus(Session.STATUS_CLOSED);
                     }
                     closeVirtualConnection();
-                    closed = true;
                 }
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.close")
                             + "\n" + this.toString(), e);
                 }
+                closed = true;
                 wasClosed = true;
             }
         }

@@ -34,6 +34,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.eclipse.jetty.util.log.Log;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -391,7 +392,11 @@ public class HttpSessionManager {
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
                 long lastActive = currentTime - session.getLastActivity();
+                if (Log.isDebugEnabled()) {
+                	Log.debug("Session was last active " + lastActive + " ms ago: " + session.getAddress());
+                }
                 if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
+                	Log.info("Closing idle session: " + session.getAddress());
                     session.close();
                 }
             }

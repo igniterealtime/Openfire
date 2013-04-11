@@ -463,7 +463,7 @@ public class HttpSession extends LocalClientSession {
         	synchronized (connectionQueue) {
 	            for (HttpConnection connection : connectionQueue) {
 	                // The session is currently active, set the last activity to the current time.
-	                if (!connection.isClosed()) {
+	                if (!(connection.isClosed() || connection.isExpired())) {
 	                    lastActivity = System.currentTimeMillis();
 	                    break;
 	                }
@@ -571,31 +571,8 @@ public class HttpSession extends LocalClientSession {
 		this.lastResponseEmpty = lastResponseEmpty;
 	}
 
-	/**
-	 * @deprecated Doesn't make sense if we have multiple connections with the same rid in the queue.
-	 * 	Use {@link #consumeResponse(HttpConnection)} instead
-	 */
-    public String getResponse(long requestID) throws HttpBindException {
-    	synchronized (connectionQueue) {
-	        for (HttpConnection connection : connectionQueue) {
-	            if (connection.getRequestId() == requestID) {
-	                String response = getResponse(connection);
-	
-	                // connection needs to be removed after response is returned to maintain idempotence
-	                // otherwise if this method is called again, after 'waiting', the InternalError
-	                // will be thrown because the connection is no longer in the queue.
-	                connectionQueue.remove(connection);
-	                fireConnectionClosed(connection);
-	                return response;
-	            }
-	        }
-    	}
-        throw new InternalError("Could not locate connection: " + requestID);
-    }
-    
     /**
-     * Similar to {@link #getResponse(long)} but returns the response for a specific connection instance
-     * rather than looking up on the request id. This is because it is possible for there to be multiple
+     * Returns the response for a specific connection instance. It is possible for there to be multiple
      * connections in the queue for the same rid so we need to be careful that we are accessing the correct
      * connection.
      * <p><b>Note that this method also removes the connection from the internal connection queue.</b>
@@ -1003,38 +980,40 @@ public class HttpSession extends LocalClientSession {
         if (isClosed) { return; }
         isClosed = true;
 
-        // close connection(s) and deliver pending elements (if any)
-        synchronized (connectionQueue) {
-	        for (HttpConnection toClose : connectionQueue) {
-	            try {
-	            	if (!toClose.isClosed()) {
-	            		if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
-	            			synchronized(pendingElements) {
-		            			deliver(toClose, pendingElements);
-				                lastRequestID = toClose.getRequestId();
-				                pendingElements.clear();
+        try {
+	        // close connection(s) and deliver pending elements (if any)
+	        synchronized (connectionQueue) {
+		        for (HttpConnection toClose : connectionQueue) {
+		            try {
+		            	if (!toClose.isClosed()) {
+		            		if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
+		            			synchronized(pendingElements) {
+			            			deliver(toClose, pendingElements);
+					                lastRequestID = toClose.getRequestId();
+					                pendingElements.clear();
+		            			}
+	            			} else {
+	            				toClose.deliverBody(null);
 	            			}
-            			} else {
-            				toClose.deliverBody(null);
-            			}
-	            	}
-	            } catch (HttpConnectionClosedException e) {
-	            	/* ignore ... already closed */
-	            }
+		            	}
+		            } catch (HttpConnectionClosedException e) {
+		            	/* ignore ... already closed */
+		            }
+		        }
 	        }
-        }
-
-    	synchronized (pendingElements) {
-	        for (Deliverable deliverable : pendingElements) {
-	            failDelivery(deliverable.getPackets());
+	
+	    	synchronized (pendingElements) {
+		        for (Deliverable deliverable : pendingElements) {
+		            failDelivery(deliverable.getPackets());
+		        }
+		        pendingElements.clear();
 	        }
-	        pendingElements.clear();
+        } finally { // ensure the session is removed from the session map
+	        for (SessionListener listener : listeners) {
+	            listener.sessionClosed(this);
+	        }
+	        this.listeners.clear();
         }
-
-        for (SessionListener listener : listeners) {
-            listener.sessionClosed(this);
-        }
-        this.listeners.clear();
     }
 
     private void failDelivery(final Collection<Packet> packets) {

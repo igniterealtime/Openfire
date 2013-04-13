@@ -225,6 +225,7 @@
         %>
         </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
+        <th nowrap><fmt:message key="session.details.node" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
         <th nowrap><fmt:message key="session.details.priority" /></th>
@@ -237,7 +238,7 @@
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="10">
+            <td colspan="11">
 
                 <fmt:message key="session.summary.not_session" />
 

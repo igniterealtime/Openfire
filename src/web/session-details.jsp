@@ -20,6 +20,7 @@
 <%@ page import="org.jivesoftware.openfire.PresenceManager,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ClientSession,
+                 org.jivesoftware.openfire.session.LocalClientSession,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals,
@@ -132,6 +133,18 @@
                 - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.node" />
+        </td>
+        <td>
+            <% if (currentSess instanceof LocalClientSession) { %>
+             <fmt:message key="session.details.local" />
+            <% } else { %>
+             <fmt:message key="session.details.remote" />
+            <% } %>
         </td>
     </tr>
     <tr>

@@ -4,6 +4,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.session.Session,
+                 org.jivesoftware.openfire.session.LocalClientSession,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
@@ -39,6 +40,13 @@
     </td>
     <td width="15%" nowrap>
         <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>
+    </td>
+    <td nowrap>
+            <% if (sess instanceof LocalClientSession) { %>
+             <fmt:message key="session.details.local" />
+            <% } else { %>
+             <fmt:message key="session.details.remote" />
+            <% } %>
     </td>
     <td>
         <%  int _status = sess.getStatus();

@@ -20,11 +20,15 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.dom4j.Element;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
-
-import java.util.*;
 
 /**
  * A NodeAffiliate keeps information about the affiliation of an entity with a node. Possible
@@ -228,7 +232,7 @@ public class NodeAffiliate {
             	for(NodeSubscription subscription: notifySubscriptions) {
             		JID sub = subscription.getJID();
             		if (!subs.contains(sub)) {
-            			node.sendEventNotification(subscription.getJID(), notification, null);
+            			node.sendEventNotification(sub, notification, null);
             			subs.add(sub);
             		}
             	}

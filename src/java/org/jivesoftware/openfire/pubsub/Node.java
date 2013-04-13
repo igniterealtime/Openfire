@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.pubsub.cluster.AffiliationTask;
@@ -224,17 +225,10 @@ public abstract class Node {
      */
     public NodeAffiliate addOwner(JID jid) {
         NodeAffiliate nodeAffiliate = addAffiliation(jid, NodeAffiliate.Affiliation.owner);
-        Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
-        if (subscriptions.isEmpty()) {
-            // User does not have a subscription with the node so create a default one
-            createSubscription(null, jid, jid, false, null);
-        }
-        else {
-            // Approve any pending subscription
-            for (NodeSubscription subscription : getSubscriptions(jid)) {
-                if (subscription.isAuthorizationPending()) {
-                    subscription.approved();
-                }
+        // Approve any pending subscription
+        for (NodeSubscription subscription : getSubscriptions(jid)) {
+            if (subscription.isAuthorizationPending()) {
+                subscription.approved();
             }
         }
         return nodeAffiliate;
@@ -268,21 +262,7 @@ public abstract class Node {
      * @return the newly created or modified affiliation to the node.
      */
     public NodeAffiliate addPublisher(JID jid) {
-        NodeAffiliate nodeAffiliate = addAffiliation(jid, NodeAffiliate.Affiliation.publisher);
-        Collection<NodeSubscription> subscriptions = getSubscriptions(jid);
-        if (subscriptions.isEmpty()) {
-            // User does not have a subscription with the node so create a default one
-            createSubscription(null, jid, jid, false, null);
-        }
-        else {
-            // Approve any pending subscription
-            for (NodeSubscription subscription : getSubscriptions(jid)) {
-                if (subscription.isAuthorizationPending()) {
-                    subscription.approved();
-                }
-            }
-        }
-        return nodeAffiliate;
+        return addAffiliation(jid, NodeAffiliate.Affiliation.publisher);
     }
 
     /**
@@ -2040,8 +2020,15 @@ public abstract class Node {
                 header.setText(subID);
             }
         }
-
-        service.sendNotification(this, notification, subscriberJID);
+		// Verify that the subscriber JID is currently available to receive
+		// notification messages. This is needed because the message router 
+        // delivers packets via the bare JID if a session for the full JID 
+        // is not available. This check will prevent inadvertent delivery of 
+        // multiple copies of the same notification to the user. (OF-14)
+		if (subscriberJID.getResource() == null ||
+			SessionManager.getInstance().getSession(subscriberJID) != null) {
+	        service.sendNotification(this, notification, subscriberJID);
+		}
 
         if (headers != null) {
             // Remove the added child element that includes subscription IDs information

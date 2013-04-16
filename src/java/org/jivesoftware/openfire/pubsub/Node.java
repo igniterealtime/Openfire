@@ -2020,14 +2020,26 @@ public abstract class Node {
                 header.setText(subID);
             }
         }
-		// Verify that the subscriber JID is currently available to receive
-		// notification messages. This is needed because the message router 
-        // delivers packets via the bare JID if a session for the full JID 
-        // is not available. This check will prevent inadvertent delivery of 
-        // multiple copies of the same notification to the user. (OF-14)
-		if (subscriberJID.getResource() == null ||
-			SessionManager.getInstance().getSession(subscriberJID) != null) {
-	        service.sendNotification(this, notification, subscriberJID);
+        
+		// Verify that the subscriber JID is currently available to receive notification 
+        // messages. This is required because the message router will deliver packets via 
+        // the bare JID if a session for the full JID is not available. The "isActiveRoute"
+        // condition below will prevent inadvertent delivery of multiple copies of each
+        // event notification to the user, possibly multiple times (e.g. route.all-resources). 
+        // (Refer to http://issues.igniterealtime.org/browse/OF-14 for more info.)
+        //
+        // This approach is informed by the following XEP-0060 implementation guidelines:
+        //   12.2 "Intended Recipients for Notifications" - only deliver to subscriber JID
+        //   12.4 "Not Routing Events to Offline Storage" - no offline storage for notifications
+        //
+        // Note however that this may be somewhat in conflict with the following:
+        //   12.3 "Presence-Based Delivery of Events" - automatically detect user's presence
+        //
+        String username = subscriberJID.getNode();
+        String resource = subscriberJID.getResource();
+		if (resource == null ||
+			SessionManager.getInstance().isActiveRoute(username, resource)) {
+			service.sendNotification(this, notification, subscriberJID);
 		}
 
         if (headers != null) {

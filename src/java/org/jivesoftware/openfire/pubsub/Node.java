@@ -2035,10 +2035,8 @@ public abstract class Node {
         // Note however that this may be somewhat in conflict with the following:
         //   12.3 "Presence-Based Delivery of Events" - automatically detect user's presence
         //
-        String username = subscriberJID.getNode();
-        String resource = subscriberJID.getResource();
-		if (resource == null ||
-			SessionManager.getInstance().isActiveRoute(username, resource)) {
+		if (subscriberJID.getResource() == null ||
+			SessionManager.getInstance().getSession(subscriberJID) != null) {
 			service.sendNotification(this, notification, subscriberJID);
 		}
 

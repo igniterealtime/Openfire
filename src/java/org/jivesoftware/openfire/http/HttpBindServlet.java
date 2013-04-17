@@ -40,10 +40,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
+import org.eclipse.jetty.continuation.ContinuationSupport;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.util.JiveGlobals;
-import org.eclipse.jetty.continuation.ContinuationSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -100,7 +100,7 @@ public class HttpBindServlet extends HttpServlet {
 	protected void service(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		// add CORS headers for all HTTP responses (errors, etc.)
-        addCORSHeaders(request, response);
+        setCORSHeaders(request, response);
 		super.service(request, response);
 	}
 
@@ -388,23 +388,23 @@ public class HttpBindServlet extends HttpServlet {
         response.getOutputStream().close();
     }
 
-    private void addCORSHeaders(HttpServletRequest request, HttpServletResponse response) {
-        // add CORS headers
+    private void setCORSHeaders(HttpServletRequest request, HttpServletResponse response) {
+        // set CORS headers
         if (boshManager.isCORSEnabled()) {
             if (boshManager.isAllOriginsAllowed())
                 // set the Access-Control-Allow-Origin header to * to allow all Origin to do the CORS  
-                response.addHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
+                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
             else {
                 // get the Origin header from the request and check if it is in the allowed Origin Map.
                 // if it is allowed write it back to the Access-Control-Allow-Origin header of the respond. 
                 String origin = request.getHeader("Origin");
                 if (boshManager.isThisOriginAllowed(origin)) {
-                    response.addHeader("Access-Control-Allow-Origin", origin);
+                    response.setHeader("Access-Control-Allow-Origin", origin);
                 }
             }
-            response.addHeader("Access-Control-Allow-Methods", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT);
-            response.addHeader("Access-Control-Allow-Headers", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT);
-            response.addHeader("Access-Control-Max-Age", HttpBindManager.HTTP_BIND_CORS_MAX_AGE_DEFAULT);
+            response.setHeader("Access-Control-Allow-Methods", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT);
+            response.setHeader("Access-Control-Allow-Headers", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT);
+            response.setHeader("Access-Control-Max-Age", HttpBindManager.HTTP_BIND_CORS_MAX_AGE_DEFAULT);
         }
     }
 

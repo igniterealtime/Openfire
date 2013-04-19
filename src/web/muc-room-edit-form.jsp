@@ -260,13 +260,7 @@
             }
             dataForm.addField(field);
 
-            // Create an IQ packet and set the dataform as the main fragment
-            IQ iq = new IQ(IQ.Type.set);
-            Element element = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
-            element.add(dataForm.asXMLElement());
-            // Send the IQ packet that will modify the room's configuration
-            room.getIQOwnerHandler().handleIQ(iq, room.getRole());
-
+            // update subject before sending IQ (to include subject with cluster update)
             if (roomSubject != null) {
                 // Change the subject of the room by sending a new message
                 Message message = new Message();
@@ -274,8 +268,16 @@
                 message.setSubject(roomSubject);
                 message.setFrom(room.getRole().getRoleAddress());
                 message.setTo(room.getRole().getRoleAddress());
+                message.setID("local-only");
                 room.changeSubject(message, room.getRole());
             }
+
+            // Create an IQ packet and set the dataform as the main fragment
+            IQ iq = new IQ(IQ.Type.set);
+            Element element = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
+            element.add(dataForm.asXMLElement());
+            // Send the IQ packet that will modify the room's configuration
+            room.getIQOwnerHandler().handleIQ(iq, room.getRole());
 
             // Changes good, so redirect
             String params;

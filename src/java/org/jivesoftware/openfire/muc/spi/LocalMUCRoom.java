@@ -64,6 +64,7 @@ import org.jivesoftware.openfire.muc.cluster.ChangeNickname;
 import org.jivesoftware.openfire.muc.cluster.DestroyRoomRequest;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.OccupantLeftEvent;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.openfire.muc.cluster.UpdateOccupant;
 import org.jivesoftware.openfire.muc.cluster.UpdateOccupantRequest;
 import org.jivesoftware.openfire.muc.cluster.UpdatePresence;
@@ -1777,6 +1778,11 @@ public class LocalMUCRoom implements MUCRoom {
 
             // Fire event signifying that the room's subject has changed.
             MUCEventDispatcher.roomSubjectChanged(getJID(), role.getUserAddress(), subject);
+
+            if (!"local-only".equals(packet.getID())) {
+	            // Let other cluster nodes that the room has been updated
+	            CacheFactory.doClusterTask(new RoomUpdatedEvent(this));
+            }
         }
         else {
             throw new ForbiddenException();

@@ -53,7 +53,7 @@ public class CrowdProperties {
 			try {
 				props.load(new FileInputStream(file));
 			} catch (IOException ioe) {
-				throw new IOException("Unable to load crowd.properties file", ioe);
+				throw new IOException("Unable to load crowd.properties file");
 			}
 		}
 		

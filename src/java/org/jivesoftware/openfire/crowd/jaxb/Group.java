@@ -15,11 +15,13 @@
  */
 package org.jivesoftware.openfire.crowd.jaxb;
 
+import java.io.Serializable;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="group")
-public class Group {
+public class Group implements Serializable {
 	@XmlAttribute
 	public String name;
 	

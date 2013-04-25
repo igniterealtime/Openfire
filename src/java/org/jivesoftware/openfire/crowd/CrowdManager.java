@@ -28,6 +28,7 @@ import javax.xml.bind.JAXB;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -136,6 +137,7 @@ public class CrowdManager {
 	 * @throws UnsupportedEncodingException 
 	 */
 	public void authenticate(String username, String password) throws RemoteException {
+		username = JID.unescapeNode(username);
 		if (LOG.isDebugEnabled()) LOG.debug("authenticate '" + String.valueOf(username) + "'");
 		
 		PostMethod post = new PostMethod(crowdServer.resolve("authentication?username=" + urlEncode(username)).toString());
@@ -157,6 +159,8 @@ public class CrowdManager {
 		} finally {
 			post.releaseConnection();
 		}
+		
+		LOG.info("authenticated user:" + username);
 	}
 	
 	
@@ -192,6 +196,7 @@ public class CrowdManager {
 				
 				if (users != null && users.user != null) {
 					for (User user : users.user) {
+						user.name = JID.escapeNode(user.name);
 						results.add(user);
 					}
 					
@@ -273,6 +278,7 @@ public class CrowdManager {
 	 * @throws RemoteException
 	 */
 	public List<String> getUserGroups(String username) throws RemoteException {
+		username = JID.unescapeNode(username);
 		if (LOG.isDebugEnabled()) LOG.debug("fetch all crowd groups for user:" + username);
 		
 		int maxResults = 100;
@@ -383,7 +389,7 @@ public class CrowdManager {
 				
 				if (users != null && users.user != null) {
 					for (org.jivesoftware.openfire.crowd.jaxb.User user : users.user) {
-						results.add(user.name);
+						results.add(JID.escapeNode(user.name));
 					}
 					
 					if (users.user.size() != maxResults) {

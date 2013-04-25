@@ -81,8 +81,8 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		userMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 		
 		Cache<String, org.jivesoftware.openfire.crowd.jaxb.Group> groupCache = CacheFactory.createLocalCache(GROUP_CACHE_NAME);
-		userMembershipCache.setMaxCacheSize(-1);
-		userMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
+		groupCache.setMaxCacheSize(-1);
+		groupCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 	}
 
 	public Group getGroup(String name) throws GroupNotFoundException {
@@ -116,7 +116,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 			Collection<JID> results = new ArrayList<JID>();
 			
 			for (String username : users) {
-				results.add(server.createJID(JID.escapeNode(username), null));
+				results.add(server.createJID(username, null));
 			}
 			
 			groupMembershipCache.put(groupName, results);

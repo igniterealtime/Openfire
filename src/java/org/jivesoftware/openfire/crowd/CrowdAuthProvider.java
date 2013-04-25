@@ -86,12 +86,8 @@ public class CrowdAuthProvider implements AuthProvider {
             }
         }
 
-        // Un-escape username.
-        username = JID.unescapeNode(username);
-		
         try {
 			manager.authenticate(username, password);
-			LOG.info("authenticated user:" + username);
 		} catch (RemoteException re) {
 			throw new UnauthorizedException();
 		}

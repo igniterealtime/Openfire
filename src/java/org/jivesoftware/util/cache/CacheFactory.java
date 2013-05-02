@@ -525,6 +525,23 @@ public class CacheFactory {
     public static int getMaxClusterNodes() {
     	return cacheFactoryStrategy.getMaxClusterNodes();
     }
+    
+    /**
+     * Gets the pseudo-synchronized time from the cluster. While the cluster members may
+     * have varying system times, this method is expected to return a timestamp that is
+     * synchronized (or nearly so; best effort) across the cluster.
+     * 
+     * @return Synchronized time for all cluster members
+     */
+    public static long getClusterTime() {
+    	// use try/catch here for backward compatibility with older plugin(s)
+    	try { return cacheFactoryStrategy.getClusterTime(); }
+    	catch (AbstractMethodError ame) {
+    		log.warn("Cluster time not available; check for update to hazelcast/clustering plugin");
+    		return localCacheFactoryStrategy.getClusterTime();
+    	}
+    }
+    
     /**
      * Invokes a task on other cluster members in an asynchronous fashion. The task will not be
      * executed on the local cluster member. If clustering is not enabled, this method

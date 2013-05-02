@@ -87,6 +87,10 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return new byte[0];
     }
 
+    public long getClusterTime() {
+    	return System.currentTimeMillis();
+    }
+
     public void doClusterTask(final ClusterTask task) {
     }
 

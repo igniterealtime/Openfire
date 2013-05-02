@@ -248,6 +248,17 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
+    /**
+     * Gets the pseudo-synchronized time from the cluster. While the cluster members may
+     * have varying system times, this method is expected to return a timestamp that is
+     * synchronized (or nearly so; best effort) across the cluster.
+     * 
+     * @return Synchronized time for all cluster members
+     */
+    public long getClusterTime() {
+    	return cluster == null ? System.currentTimeMillis() : cluster.getClusterTime();
+    }
+
     /*
      * Execute the given task on the other (non-local) cluster members.
      * Note that this method does not provide the result set for the given

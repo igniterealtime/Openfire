@@ -5,7 +5,7 @@
     <name>${plugin.name}</name>
     <description>${plugin.description}</description>
     <author>Tom Evans</author>
-    <version>1.0.5</version>
-    <date>03/26/2013</date>
+    <version>1.0.6</version>
+    <date>05/01/2013</date>
     <minServerVersion>3.8.2</minServerVersion>
 </plugin>

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -240,7 +241,7 @@ public class LeafNode extends Node {
                 }
 
                 // Create a new published item
-                newItem = new PublishedItem(this, publisher, itemID, new Date());
+                newItem = new PublishedItem(this, publisher, itemID, new Date(CacheFactory.getClusterTime()));
                 newItem.setPayload(payload);
                 // Add the new item to the list of published items
                 newPublishedItems.add(newItem);

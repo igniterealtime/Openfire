@@ -268,7 +268,11 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
-    public void doClusterTask(final ClusterTask task) {
+	public long getClusterTime() {
+		return (cluster == null) ? System.currentTimeMillis() : cluster.getTimeMillis();
+	}
+
+	public void doClusterTask(final ClusterTask task) {
         if (taskService != null) {
             Member current = taskService.getCluster().getLocalMember();
             Set setMembers = taskService.getInfo().getServiceMembers();

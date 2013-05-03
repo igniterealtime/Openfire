@@ -57,6 +57,7 @@ import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.RegistrationRequiredException;
 import org.jivesoftware.openfire.muc.RoomLockedException;
 import org.jivesoftware.openfire.muc.ServiceUnavailableException;
+import org.jivesoftware.openfire.muc.cluster.AddAffiliation;
 import org.jivesoftware.openfire.muc.cluster.AddMember;
 import org.jivesoftware.openfire.muc.cluster.BroadcastMessageRequest;
 import org.jivesoftware.openfire.muc.cluster.BroadcastPresenceRequest;
@@ -1351,6 +1352,8 @@ public class LocalMUCRoom implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
+        // Update other cluster nodes with new affiliation
+        CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.owner));
         // Update the presence with the new affiliation and inform all occupants
         try {
             return changeOccupantAffiliation(jid, MUCRole.Affiliation.owner,
@@ -1406,6 +1409,8 @@ public class LocalMUCRoom implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
+        // Update other cluster nodes with new affiliation
+        CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.admin));
         // Update the presence with the new affiliation and inform all occupants
         try {
             return changeOccupantAffiliation(jid, MUCRole.Affiliation.admin,
@@ -1490,10 +1495,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     private boolean removeMember(JID jid) {
-        final JID bareJID = jid.asBareJID();
-		boolean answer = members.containsKey(bareJID);
-        members.remove(bareJID);
-        return answer;
+        return members.remove(jid.asBareJID()) != null;
     }
 
     public List<Presence> addOutcast(JID jid, String reason, MUCRole senderRole)
@@ -1539,6 +1541,8 @@ public class LocalMUCRoom implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
+        // Update other cluster nodes with new affiliation
+        CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.outcast));
         // Update the presence with the new affiliation and inform all occupants
         // actorJID will be null if the room itself (ie. via admin console) made the request
         JID actorJID = senderRole.getUserAddress();
@@ -1606,6 +1610,8 @@ public class LocalMUCRoom implements MUCRoom {
         finally {
             lock.writeLock().unlock();
         }
+        // Update other cluster nodes with new affiliation
+        CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.none));
         // Update the presence with the new affiliation and inform all occupants
         try {
             MUCRole.Role newRole;
@@ -1726,8 +1732,43 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public void memberAdded(AddMember addMember) {
+    	JID bareJID = addMember.getBareJID();
+    	removeOwner(bareJID);
+    	removeAdmin(bareJID);
+    	removeOutcast(bareJID);
         // Associate the reserved nickname with the bareJID
         members.put(addMember.getBareJID(), addMember.getNickname());
+    }
+
+    public void affiliationAdded(AddAffiliation affiliation) {
+    	JID bareJID = affiliation.getBareJID();
+        switch(affiliation.getAffiliation()) {
+	        case owner:
+	        	removeMember(bareJID);
+	        	removeAdmin(bareJID);
+	        	removeOutcast(bareJID);
+	        	owners.add(bareJID);
+	        	break;
+	        case admin:
+	        	removeMember(bareJID);
+	        	removeOwner(bareJID);
+	        	removeOutcast(bareJID);
+	        	admins.add(bareJID);
+	        	break;
+	        case outcast:
+	        	removeMember(bareJID);
+	        	removeAdmin(bareJID);
+	        	removeOwner(bareJID);
+	        	outcasts.add(bareJID);
+	        	break;
+	        case none:
+	        default:
+	        	removeMember(bareJID);
+	        	removeAdmin(bareJID);
+	        	removeOwner(bareJID);
+	        	removeOutcast(bareJID);
+	        	break;
+        }
     }
 
     public void nicknameChanged(MUCRole occupantRole, Presence newPresence, String oldNick, String newNick) {

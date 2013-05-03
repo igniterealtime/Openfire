@@ -58,25 +58,48 @@ public class LinkedListNode {
     public long timestamp;
 
     /**
+     * Constructs an self-referencing node. This node acts as a start/end
+     * sentinel when traversing nodes in a LinkedList.
+     */
+    public LinkedListNode(Object object) {
+    	previous = next = this;
+    	this.object = object;
+    }
+
+    /**
      * Constructs a new linked list node.
      *
      * @param object   the Object that the node represents.
      * @param next     a reference to the next LinkedListNode in the list.
      * @param previous a reference to the previous LinkedListNode in the list.
      */
-    public LinkedListNode(Object object, LinkedListNode next,
-                          LinkedListNode previous) {
+    public LinkedListNode(Object object, LinkedListNode next, LinkedListNode previous) {
+    	if (next != null && previous != null) {
+    		this.insert(next, previous);
+    	}
         this.object = object;
-        this.next = next;
-        this.previous = previous;
     }
 
     /**
-     * Removes this node from the linked list that it is a part of.
+     * Removes this node from the linked list that it was a part of.
+     * @return This node; next and previous references dropped
      */
-    public void remove() {
+    public LinkedListNode remove() {
         previous.next = next;
         next.previous = previous;
+        previous = next = null;
+        return this;
+    }
+    
+    /**
+     * Inserts this node into the linked list that it will be a part of.
+     * @return This node, updated to reflect previous/next changes
+     */
+    public LinkedListNode insert(LinkedListNode next, LinkedListNode previous) {
+        this.next = next;
+        this.previous = previous;
+        this.previous.next = this.next.previous = this;
+        return this;
     }
 
     /**

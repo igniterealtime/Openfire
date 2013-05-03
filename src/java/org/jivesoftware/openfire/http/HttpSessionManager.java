@@ -95,6 +95,7 @@ public class HttpSessionManager {
 	            public Thread newThread(Runnable runnable) {
 	                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
 	                                    "httpbind-worker-" + counter.getAndIncrement());
+	                thread.setDaemon(true);
 	                return thread;
 	            }
 	    	});

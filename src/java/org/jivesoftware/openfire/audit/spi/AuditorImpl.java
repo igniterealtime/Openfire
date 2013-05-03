@@ -35,7 +35,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -49,6 +48,7 @@ import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -113,7 +113,6 @@ public class AuditorImpl implements Auditor {
     /**
      * Timer to save queued logs to the XML file.
      */
-    private Timer timer = new Timer("Auditor");
     private SaveQueuedPacketsTask saveQueuedPacketsTask;
     private FastDateFormat dateFormat;
     private static FastDateFormat auditFormat;
@@ -137,7 +136,7 @@ public class AuditorImpl implements Auditor {
         }
         // Create a new task and schedule it with the new timeout
         saveQueuedPacketsTask = new SaveQueuedPacketsTask();
-        timer.schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
+        TaskEngine.getInstance().schedule(saveQueuedPacketsTask, logTimeout, logTimeout);
 
     }
 
@@ -185,8 +184,6 @@ public class AuditorImpl implements Auditor {
     public void stop() {
         // Stop queuing packets since we are being stopped
         closed = true;
-        // Stop the scheduled task for saving queued packets to the XML file
-        timer.cancel();
         // Save all remaining queued packets to the XML file
         saveQueuedPackets();
         close();

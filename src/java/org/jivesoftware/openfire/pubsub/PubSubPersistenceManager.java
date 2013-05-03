@@ -32,8 +32,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.StringTokenizer;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 
@@ -47,6 +47,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedList;
 import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -62,6 +63,9 @@ public class PubSubPersistenceManager {
 
     private static final Logger log = LoggerFactory.getLogger(PubSubPersistenceManager.class);
 
+    private static final String PERSISTENT_NODES = "SELECT serviceID, nodeID, maxItems " +
+    		"FROM ofPubsubNode WHERE leaf=1 AND persistItems=1 AND maxItems > 0";
+    
     private static final String PURGE_FOR_SIZE =
     		"DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
 			"(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
@@ -189,16 +193,40 @@ public class PubSubPersistenceManager {
             "accessModel, language, replyPolicy, associationPolicy, maxLeafNodes) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-    private static Timer flushTimer;
-    private static long flushTimerDelay;
+    /**
+     * Pseudo-random number generator is used to offset timing for scheduled tasks
+     * within a cluster (so they don't run at the same time on all members).
+     */
+    private static Random prng = new Random();
+    
+    /**
+     * Flush timer delay is configurable, but not less than 20 seconds (default: 2 mins)
+     */
+    private static long flushTimerDelay = Math.max(20000, 
+    		JiveGlobals.getIntProperty("xmpp.pubsub.flush.timer", 120)*1000);
 
-    private static Timer purgeTimer = new Timer("Pubsub purge stale items timer");
-    private static long purgeTimerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.purge.timer", 300) * 1000;
+    /**
+     * Purge timer delay is configurable, but not less than 60 seconds (default: 5 mins)
+     */
+    private static long purgeTimerDelay = Math.max(60000, 
+    		JiveGlobals.getIntProperty("xmpp.pubsub.purge.timer", 300)*1000);
 
+    /**
+     * Maximum number of published items allowed in the write cache
+     * before being flushed to the database.
+     */
 	private static final int MAX_ITEMS_FLUSH = JiveGlobals.getIntProperty("xmpp.pubsub.flush.max", 1000);
 
+    /**
+     * Maximum number of rows that will be fetched from the published items table.
+     */
     private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty("xmpp.pubsub.fetch.max", 2000);
 
+    /**
+     * Number of retry attempts we will make trying to write an item to the DB
+     */
+	private static final int MAX_ITEM_RETRY = JiveGlobals.getIntProperty("xmpp.pubsub.item.retry", 1);
+    
     /**
      * Queue that holds the items that need to be added to the database.
      */
@@ -226,37 +254,26 @@ public class PubSubPersistenceManager {
     private static final Cache<String, PublishedItem> itemCache = CacheFactory.createCache(ITEM_CACHE);
     
     static {
-    	if (MAX_ITEMS_FLUSH > 0) {
-        	flushTimer = new Timer("Pubsub item flush timer");
-        	
-        	flushTimerDelay = JiveGlobals.getIntProperty("xmpp.pubsub.flush.timer", 120) * 1000;
+    	try {
+        	if (MAX_ITEMS_FLUSH > 0) {
+        		TaskEngine.getInstance().schedule(new TimerTask() {
+        			public void run() { flushPendingItems(false); } // this member only
+        		}, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
+        	}
 
-        	// Enforce a min of 20s
-            if (flushTimerDelay < 20000)
-            	flushTimerDelay = 20000;
-
-    		flushTimer.schedule(new TimerTask()
-    		{
-    			@Override
-    			public void run()
-    			{
-    				flushPendingItems(false); // this member only
-    			}
-    		}, flushTimerDelay, flushTimerDelay);
+    		// increase the timer delay when running in cluster mode
+    		// because other members are also running the purge task
+    		if (ClusterManager.isClusteringEnabled()) {
+    			purgeTimerDelay = purgeTimerDelay*2;
+    		}
+    		TaskEngine.getInstance().schedule(new TimerTask() {
+    			public void run() { purgeItems(); }
+    		}, Math.abs(prng.nextLong())%purgeTimerDelay, purgeTimerDelay);
+    		
+    	} catch (Exception ex) {
+    		log.error("Failed to initialize pubsub maintentence tasks", ex);
     	}
-
-		// Enforce a min of 20s
-		if (purgeTimerDelay < 60000)
-			purgeTimerDelay = 60000;
-
-		purgeTimer.schedule(new TimerTask()
-		{
-			@Override
-			public void run()
-			{
-				purgeItems();
-			}
-		}, purgeTimerDelay, purgeTimerDelay);
+		
     }
 
     /**
@@ -1108,12 +1125,26 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Creates and stores the published item in the database.
-     * Duplicate item (if found) is removed before storing the item.
-     *
+     * Creates and stores the published item in the database. Note that the
+     * item will be cached temporarily before being flushed asynchronously 
+     * to the database. The write cache can be tuned using the following
+     * two properties:
+     * <pre>
+     *   "xmpp.pubsub.flush.max" - maximum items in the cache (-1 to disable cache)
+     *   "xmpp.pubsub.flush.timer" - number of seconds between cache flushes
+     * </pre>
      * @param item The published item to save.
      */
     public static void savePublishedItem(PublishedItem item) {
+    	savePublishedItem(item, false);
+    }
+
+    /**
+     * Creates and stores the published item in the database. 
+     * @param item The published item to save.
+     * @param isRetry True if this pass is for an item persistence retry
+     */
+    private static void savePublishedItem(PublishedItem item, boolean isRetry) {
 		String itemKey = item.getItemKey();
 		itemCache.put(itemKey, item);
 		log.debug("Added new (inbound) item to cache");
@@ -1122,17 +1153,19 @@ public class PubSubPersistenceManager {
     		if (itemToReplace != null) {
     			itemToReplace.remove(); // remove duplicate from itemsToAdd linked list
     		}
-    		itemsToDelete.addLast(item); // delete stored duplicate (if any)
-    		LinkedListNode listNode = itemsToAdd.addLast(item);
+    		LinkedListNode listNode = isRetry ? itemsToAdd.addFirst(item) : itemsToAdd.addLast(item);
     		itemsPending.put(itemKey, listNode);
         }
-		if (itemsPending.size() > MAX_ITEMS_FLUSH) {
-			flushPendingItems();
+        // don't flush pending items immediately if this is a retry attempt
+		if (!isRetry && itemsPending.size() > MAX_ITEMS_FLUSH) {
+			TaskEngine.getInstance().submit(new Runnable() {
+				public void run() { flushPendingItems(false); }
+			});
 		}
     }
 
     /**
-     * Flush the cache of items to be persisted and deleted.
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
      */
 	public static void flushPendingItems()
     {
@@ -1140,44 +1173,22 @@ public class PubSubPersistenceManager {
     }
 
     /**
-     * Flush the cache of items to be persisted and deleted.
+     * Flush the cache(s) of items to be persisted (itemsToAdd) and deleted (itemsToDelete).
      * @param sendToCluster If true, delegate to cluster members, otherwise local only
      */
     public static void flushPendingItems(boolean sendToCluster)
     {
-		Connection con = null;
-		boolean rollback = false;
-
-		try
-		{
-			con = DbConnectionManager.getTransactionConnection();
-			flushPendingItems(sendToCluster, con);
-		}
-		catch (Exception e)
-		{
-			log.error("Failed to flush pending items", e);
-			rollback = true;
-		}
-		finally
-		{
-			DbConnectionManager.closeTransactionConnection(con, rollback);
-		}
-	}
-
-	private static void flushPendingItems(boolean sendToCluster, Connection con) throws SQLException
-	{
-        if (sendToCluster) {
+		// forward to other cluster members and wait for response
+		if (sendToCluster) {
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
 
-        if (itemsToAdd.getFirst() == null && itemsToDelete.getFirst() == null) {
+		if (itemsToAdd.getFirst() == null && itemsToDelete.getFirst() == null) {
         	return;	 // nothing to do for this cluster member
         }
         
-    	if (log.isDebugEnabled()) {
-    		log.debug("Flush " + itemsPending.size() + " pending items to database");
-    	}
-
+		Connection con = null;
+		boolean rollback = false;
     	LinkedList addList = null;
     	LinkedList delList = null;
 
@@ -1191,8 +1202,8 @@ public class PubSubPersistenceManager {
     		itemsToAdd = new LinkedList();
     		itemsToDelete = new LinkedList();
     		
-    		// Ensure pending items are available via the item cache;
-    		// this allows the item(s) to be fetched by other thread(s) 
+    		// Ensure pending items are available via the item read cache;
+    		// this allows the item(s) to be fetched by other request threads
     		// while being written to the DB from this thread
     		int copied = 0;
     		for (String key : itemsPending.keySet()) {
@@ -1207,19 +1218,66 @@ public class PubSubPersistenceManager {
     		itemsPending.clear();
     	}
 
+    	// Note that we now make multiple attempts to write cached items to the DB:
+    	//   1) insert all pending items in a single batch
+    	//   2) if the batch insert fails, retry by inserting each item separately
+    	//   3) if a given item cannot be written, return it to the pending write cache
+    	// By default step 3 will be tried once per item, but this can be configured
+    	// (or disabled) using the "xmpp.pubsub.item.retry" property. In the event of
+    	// a transaction rollback, items that could not be written to the database
+    	// will be returned to the pending item write cache.
+    	try {
+			con = DbConnectionManager.getTransactionConnection();
+			writePendingItems(con, addList, delList);
+		} catch (SQLException se) {
+			log.error("Failed to flush pending items; initiating rollback", se);
+			// return new items to the write cache
+	        LinkedListNode node = addList.getLast();
+	        while (node != null) {
+	            savePublishedItem((PublishedItem)node.object, true);
+	            node.remove();
+	            node = addList.getLast();
+	        }
+			rollback = true;
+		} finally {
+			DbConnectionManager.closeTransactionConnection(con, rollback);
+		}
+	}
+
+    /**
+     * Loop through the lists of added and deleted items and write to the database
+     * @param con
+     * @param addList
+     * @param delList
+     * @throws SQLException
+     */
+	private static void writePendingItems(Connection con, LinkedList addList, LinkedList delList) throws SQLException
+	{
         LinkedListNode addItem = addList.getFirst();
         LinkedListNode delItem = delList.getFirst();
+        
+        // is there anything to do?
+        if ((addItem == null) && (delItem == null)) { return; }
+        
+    	if (log.isDebugEnabled()) {
+    		log.debug("Flush " + itemsPending.size() + " pending items to database");
+    	}
 
-        // Check to see if there is anything to actually do.
-        if ((addItem == null) && (delItem == null))
-        	return;
-
-        PreparedStatement pstmt = null;
+        // ensure there are no duplicates by deleting before adding
+        if (addItem != null) {
+        	LinkedListNode addHead = addItem.previous;
+        	while (addItem != addHead) {
+        		delList.addLast(addItem.object);
+        		addItem = addItem.next;
+        	}
+        }
 
         // delete first (to remove possible duplicates), then add new items
+        delItem = delList.getFirst();
         if (delItem != null) {
+            PreparedStatement pstmt = null;
 			try {
-                LinkedListNode delHead = delList.getLast().next;
+                LinkedListNode delHead = delItem.previous;
 				pstmt = con.prepareStatement(DELETE_ITEM);
 
                 while (delItem != delHead)
@@ -1233,39 +1291,73 @@ public class PubSubPersistenceManager {
                     delItem = delItem.next;
                 }
 				pstmt.executeBatch();
-            }
-			finally
-			{
+			} catch (SQLException ex) {
+				log.error("Failed to delete published item(s) from DB", ex);
+				// do not re-throw here; continue with insert operation if possible
+			} finally {
 				DbConnectionManager.closeStatement(pstmt);
 	        }
         }
 		
-        if (addItem != null) {
-    		try {
-                LinkedListNode addHead = addList.getLast().next;
-				pstmt = con.prepareStatement(ADD_ITEM);
-
-                while (addItem != addHead)
-                {
-                	PublishedItem item = (PublishedItem) addItem.object;
-                    pstmt.setString(1, item.getNode().getService().getServiceID());
-                    pstmt.setString(2, encodeNodeID(item.getNodeID()));
-                    pstmt.setString(3, item.getID());
-                    pstmt.setString(4, item.getPublisher().toString());
-                    pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
-                    pstmt.setString(6, item.getPayloadXML());
-					pstmt.addBatch();
-
-                    addItem = addItem.next;
-                }
-				pstmt.executeBatch();
-            }
-			finally
-			{
-				DbConnectionManager.closeStatement(pstmt);
-	        }
+        try { 
+            // first try to add the pending items as a batch
+        	writePendingItems(con, addList.getFirst(), true);
+        } catch (SQLException ex) {
+        	// retry each item individually rather than rolling back
+        	writePendingItems(con, addList.getFirst(), false);       	
         }
     }
+	
+	/**
+	 * Execute JDBC calls (optionally via batch) to persist the given published items
+	 * @param con
+	 * @param addItem
+	 * @param batch
+	 * @throws SQLException
+	 */
+	private static void writePendingItems(Connection con, LinkedListNode addItem, boolean batch)  throws SQLException 
+	{	
+		if (addItem == null) { return; }
+        LinkedListNode addHead = addItem.previous;
+        PreparedStatement pstmt = null;
+        PublishedItem item = null;       
+    	try {
+			pstmt = con.prepareStatement(ADD_ITEM);
+            while (addItem != addHead)
+            {
+            	item = (PublishedItem) addItem.object;
+                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(2, encodeNodeID(item.getNodeID()));
+                pstmt.setString(3, item.getID());
+                pstmt.setString(4, item.getPublisher().toString());
+                pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
+                pstmt.setString(6, item.getPayloadXML());
+                if (batch) { pstmt.addBatch(); }
+                else { 
+                	try { pstmt.execute(); }
+                	catch (SQLException se) {
+        	    		// individual item could not be persisted; retry (up to MAX_ITEM_RETRY attempts)
+        	    		String itemKey = item.getItemKey();
+        	    		if (item.getRetryCount() < MAX_ITEM_RETRY) {
+        	        		log.warn("Failed to persist published item (will retry): " + itemKey);
+        	                savePublishedItem(item, true);
+        	    		} else {
+        	    			// all hope is lost ... item will be dropped
+        	    			log.error("Published item could not be written to database: " + itemKey + "\n" + item.getPayloadXML(), se);
+        	    		}
+                	}
+                }
+                addItem = addItem.next;
+            }
+            if (batch) { pstmt.executeBatch(); }			
+    	} catch (SQLException se) {
+			log.error("Failed to persist published items as batch; will retry individually", se);
+			// caught by caller; should not cause a transaction rollback
+			throw se;
+    	} finally {
+    		DbConnectionManager.closeStatement(pstmt);
+    	}
+	}
 
     /**
      * Removes the specified published item from the DB.
@@ -1663,7 +1755,7 @@ public class PubSubPersistenceManager {
 
 	private static void purgeNode(LeafNode leafNode, Connection con) throws SQLException
 	{
-		flushPendingItems(ClusterManager.isClusteringEnabled(), con);
+		flushPendingItems();
         // Remove published items of the node being deleted
         PreparedStatement pstmt = null;
 
@@ -1740,9 +1832,6 @@ public class PubSubPersistenceManager {
      */
     private static void purgeItems()
     {
-    	String persistentNodeQuery = "SELECT serviceID, nodeID, maxItems FROM ofPubsubNode WHERE "
-    			+ "leaf=1 AND persistItems=1 AND maxItems > 0";
-
 		boolean abortTransaction = false;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -1752,7 +1841,7 @@ public class PubSubPersistenceManager {
         try
         {
             con = DbConnectionManager.getTransactionConnection();
-			nodeConfig = con.prepareStatement(persistentNodeQuery);
+			nodeConfig = con.prepareStatement(PERSISTENT_NODES);
             rs = nodeConfig.executeQuery();
 			PreparedStatement purgeNode = con
 					.prepareStatement(getPurgeStatement(DbConnectionManager.getDatabaseType()));
@@ -1819,7 +1908,11 @@ public class PubSubPersistenceManager {
 
     public static void shutdown()
     {
-		flushPendingItems();
-		purgeItems();
+		flushPendingItems(false); // local member only
+		
+		// node cleanup (skip when running as a cluster)
+		if (!ClusterManager.isClusteringEnabled()) {
+			purgeItems();
+		}
     }
 }

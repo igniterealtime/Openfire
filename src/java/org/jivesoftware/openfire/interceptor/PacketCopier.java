@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,6 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     /**
      * Timer to save queued logs to the XML file.
      */
-    private Timer timer = new Timer("PacketActivityNotifier");
     private ProcessPacketsTask packetsTask;
 
     /**
@@ -99,7 +99,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
         // Create a new task and schedule it with the new timeout
         packetsTask = new ProcessPacketsTask();
-        timer.schedule(packetsTask, 5000, 5000);
+        TaskEngine.getInstance().schedule(packetsTask, 5000, 5000);
     }
 
     /**

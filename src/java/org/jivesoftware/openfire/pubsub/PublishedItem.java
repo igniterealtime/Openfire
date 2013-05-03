@@ -101,7 +101,18 @@ public class PublishedItem implements Serializable {
      * XML representation of the payload (for serialization)
      */
     private String payloadXML;
-
+    /**
+     * Persistence retry counter
+     */
+    private volatile transient int retryCount = 0;
+    
+    /**
+     * Creates a published item
+     * @param node
+     * @param publisher
+     * @param id
+     * @param creationDate
+     */
     PublishedItem(LeafNode node, JID publisher, String id, Date creationDate) {
         this.node = node;
         this.nodeId = node.getNodeID();
@@ -282,6 +293,14 @@ public class PublishedItem implements Serializable {
     }
 
     /**
+     * Returns (and increments) the item persistence retry counter
+     * @return Number of attempts made to persist this item to the DB
+     */
+	public int getRetryCount() {
+		return retryCount++;
+	}
+
+	/**
      * Returns a string that uniquely identifies this published item
      * in the following format: <i>nodeId:itemId</i>
      * @param node Node for the published item

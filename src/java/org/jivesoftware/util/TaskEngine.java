@@ -57,7 +57,7 @@ public class TaskEngine {
      * Constructs a new task engine.
      */
     private TaskEngine() {
-        timer = new Timer("timer-openfire", true);
+        timer = new Timer("TaskEngine-timer", true);
         executor = Executors.newCachedThreadPool(new ThreadFactory() {
 
             final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -65,7 +65,7 @@ public class TaskEngine {
             public Thread newThread(Runnable runnable) {
                 // Use our own naming scheme for the threads.
                 Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "pool-openfire" + threadNumber.getAndIncrement(), 0);
+                                      "TaskEngine-pool-" + threadNumber.getAndIncrement(), 0);
                 // Make workers daemon threads.
                 thread.setDaemon(true);
                 if (thread.getPriority() != Thread.NORM_PRIORITY) {

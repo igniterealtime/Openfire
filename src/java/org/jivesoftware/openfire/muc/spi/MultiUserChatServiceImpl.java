@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -61,6 +60,7 @@ import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -165,12 +165,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * The total time all agents took to chat *
      */
     public long totalChatTime;
-
-    /**
-     * Timer to monitor chatroom participants. If they've been idle for too long, probe for
-     * presence.
-     */
-    private Timer timer = new Timer("MUC cleanup");
 
     /**
      * Flag that indicates if the service should provide information about locked rooms when
@@ -745,7 +739,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         this.user_timeout = timeout;
         // Create a new task and schedule it with the new timeout
         userTimeoutTask = new UserTimeoutTask();
-        timer.schedule(userTimeoutTask, user_timeout, user_timeout);
+        TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Integer.toString(timeout));
     }
@@ -778,7 +772,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         this.log_timeout = timeout;
         // Create a new task and schedule it with the new timeout
         logConversationTask = new LogConversationTask();
-        timer.schedule(logConversationTask, log_timeout, log_timeout);
+        TaskEngine.getInstance().schedule(logConversationTask, log_timeout, log_timeout);
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.timeout", Integer.toString(timeout));
     }
@@ -1029,14 +1023,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         userTimeoutTask = new UserTimeoutTask();
-        timer.schedule(userTimeoutTask, user_timeout, user_timeout);
+        TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
         // Log the room conversations every 5 minutes after a 5 minutes server startup delay
         // (default values)
         logConversationTask = new LogConversationTask();
-        timer.schedule(logConversationTask, log_timeout, log_timeout);
+        TaskEngine.getInstance().schedule(logConversationTask, log_timeout, log_timeout);
         // Remove unused rooms from memory
         cleanupTask = new CleanupTask();
-        timer.schedule(cleanupTask, CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
+        TaskEngine.getInstance().schedule(cleanupTask, CLEANUP_FREQUENCY, CLEANUP_FREQUENCY);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
@@ -1059,7 +1053,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         XMPPServer.getInstance().getServerItemsProviders().remove(this);
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
-        timer.cancel();
         logAllConversation();
 
     }

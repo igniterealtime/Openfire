@@ -34,13 +34,13 @@ public class LinkedList {
      * The root of the list keeps a reference to both the first and last
      * elements of the list.
      */
-    private LinkedListNode head = new LinkedListNode("head", null, null);
+    private LinkedListNode head;
 
     /**
      * Creates a new linked list.
      */
     public LinkedList() {
-        head.next = head.previous = head;
+    	head = new LinkedListNode("head");
     }
 
     /**
@@ -75,11 +75,7 @@ public class LinkedList {
      * @param node the node to add to the beginning of the list.
      */
     public LinkedListNode addFirst(LinkedListNode node) {
-        node.next = head.next;
-        node.previous = head;
-        node.previous.next = node;
-        node.next.previous = node;
-        return node;
+    	return node.insert(head.next, head);
     }
 
     /**
@@ -90,10 +86,16 @@ public class LinkedList {
      * @return the node created to wrap the object.
      */
     public LinkedListNode addFirst(Object object) {
-        LinkedListNode node = new LinkedListNode(object, head.next, head);
-        node.previous.next = node;
-        node.next.previous = node;
-        return node;
+        return new LinkedListNode(object, head.next, head);
+    }
+
+    /**
+     * Adds a node to the end of the list.
+     *
+     * @param node the node to add to the beginning of the list.
+     */
+    public LinkedListNode addLast(LinkedListNode node) {
+    	return node.insert(head, head.previous);
     }
 
     /**
@@ -104,10 +106,7 @@ public class LinkedList {
      * @return the node created to wrap the object.
      */
     public LinkedListNode addLast(Object object) {
-        LinkedListNode node = new LinkedListNode(object, head, head.previous);
-        node.previous.next = node;
-        node.next.previous = node;
-        return node;
+        return new LinkedListNode(object, head, head.previous);
     }
 
     /**

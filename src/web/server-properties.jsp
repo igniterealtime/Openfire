@@ -345,7 +345,7 @@ function dodelete(propName) {
             <fmt:message key="server.properties.value" />:
         </td>
         <td>
-            <textarea cols="45" rows="5" name="propValue" wrap="virtual"><%= (propValue != null ? StringUtils.escapeHTMLTags(propValue) : "") %></textarea>
+            <textarea cols="45" rows="5" name="propValue" wrap="virtual"><%= (propValue != null ? StringUtils.escapeHTMLTags(propValue, false) : "") %></textarea>
 
             <%  if (errors.containsKey("propValue")) { %>
 

@@ -31,6 +31,7 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.text.ParseException" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -172,7 +173,7 @@
             <%= event.getSummary() %>
             <% if (event.getDetails() != null) { %>
             &nbsp; <a href="" onclick="if (document.getElementById('details<%= event.getMsgID() %>').style.display == 'none') { document.getElementById('details<%= event.getMsgID() %>').style.display = 'block'; document.getElementById('label<%= event.getMsgID() %>').innerHTML = '<%= LocaleUtils.getLocalizedString("security.audit.viewer.hide_details")%>'; return false;} else { document.getElementById('details<%= event.getMsgID() %>').style.display = 'none'; document.getElementById('label<%= event.getMsgID() %>').innerHTML = '<%= LocaleUtils.getLocalizedString("security.audit.viewer.show_details")%>'; return false;}" id="label<%= event.getMsgID() %>"><fmt:message key="security.audit.viewer.show_details" /></a><br/>
-            <pre id="details<%= event.getMsgID() %>" style="display:none; margin: 0px; padding: 1px;"><%= event.getDetails() %></pre>
+            <pre id="details<%= event.getMsgID() %>" style="display:none; margin: 0px; padding: 1px;"><%= StringUtils.escapeHTMLTags(event.getDetails()) %></pre>
             <% } %>
         </td>
         <td width="15%">

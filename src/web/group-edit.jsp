@@ -29,6 +29,7 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
@@ -338,10 +339,10 @@
         <% } %>
 
         <h3>
-			<%= group.getName() %>
+			<%= StringUtils.escapeHTMLTags(group.getName()) %>
 		</h3>
 		<p>
-			<%= group.getDescription() != null ? group.getDescription() : "" %>
+			<%= group.getDescription() != null ? StringUtils.escapeHTMLTags(group.getDescription()) : "" %>
 		</p>
     </div>
 	<!-- END group name and description -->
@@ -443,7 +444,7 @@
 
 											<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
 											 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
-											 ><%= g.getName() %></option>
+											 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
 
 										<%  } %>
 

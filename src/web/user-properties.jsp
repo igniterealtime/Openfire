@@ -289,7 +289,7 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        out.print(group.getName());
+                        out.print(StringUtils.escapeHTMLTags(group.getName()));
                         count++;
                     }
                 }

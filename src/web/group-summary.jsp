@@ -178,11 +178,11 @@ document.searchForm.search.focus();
             <%= i %>
         </td>
         <td width="60%">
-            <a href="group-edit.jsp?group=<%= groupName %>"><%= group.getName() %></a>
+            <a href="group-edit.jsp?group=<%= groupName %>"><%= StringUtils.escapeHTMLTags(group.getName()) %></a>
             <% if (group.getDescription() != null) { %>
             <br>
                 <span class="jive-description">
-                <%= group.getDescription() %>
+                <%= StringUtils.escapeHTMLTags(group.getDescription()) %>
                 </span>
              <% } %>
         </td>

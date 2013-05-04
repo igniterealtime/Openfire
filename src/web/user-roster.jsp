@@ -25,6 +25,7 @@
 <%@ page import="org.jivesoftware.openfire.roster.Roster" %>
 <%@ page import="org.jivesoftware.openfire.roster.RosterItem" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="org.xmpp.packet.JID" %>
@@ -308,7 +309,7 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        out.print(group);
+                        out.print(StringUtils.escapeHTMLTags(group));
                         count++;
                     }
                 }
@@ -320,7 +321,7 @@
                                 out.print(", ");
                             }
                             out.print("<a style='text-decoration: underline' href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
-                            out.print(group.getName());
+                            out.print(StringUtils.escapeHTMLTags(group.getName()));
                             out.print("</a>");
                             count++;
                         }

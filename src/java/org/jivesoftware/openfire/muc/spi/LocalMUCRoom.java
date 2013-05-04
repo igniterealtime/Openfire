@@ -2018,6 +2018,9 @@ public class LocalMUCRoom implements MUCRoom {
 
             // Effectively kick the occupant from the room
             kickPresence(updatedPresence, actorJID);
+            
+            //Inform the other occupants that user has been kicked
+            broadcastPresence(updatedPresence);
         }
         return updatedPresence;
     }

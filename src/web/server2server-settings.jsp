@@ -46,6 +46,10 @@
     boolean serverAllowed = request.getParameter("serverAllowed") != null;
     boolean serverBlocked = request.getParameter("serverBlocked") != null;
     String domain = ParamUtils.getParameter(request,"domain");
+    // OF-671
+    if (domain != null) {
+    	domain = StringUtils.removeXSSCharacters(domain);
+    }
     String remotePort = ParamUtils.getParameter(request,"remotePort");
     boolean updateSucess = false;
     boolean allowSuccess = false;

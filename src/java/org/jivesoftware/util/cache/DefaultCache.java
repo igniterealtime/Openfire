@@ -70,13 +70,13 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      * Linked list to maintain order that cache objects are accessed
      * in, most used to least used.
      */
-    protected org.jivesoftware.util.LinkedList lastAccessedList;
+    protected org.jivesoftware.util.LinkedList<K> lastAccessedList;
 
     /**
      * Linked list to maintain time that cache objects were initially added
      * to the cache, most recently added to oldest added.
      */
-    protected org.jivesoftware.util.LinkedList ageList;
+    protected org.jivesoftware.util.LinkedList<K> ageList;
 
     /**
      * Maximum size in bytes that the cache can grow to.
@@ -127,8 +127,8 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // is too small in almost all cases, so we set it bigger.
         map = new HashMap<K, CacheObject<V>>(103);
 
-        lastAccessedList = new org.jivesoftware.util.LinkedList();
-        ageList = new org.jivesoftware.util.LinkedList();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
+        ageList = new org.jivesoftware.util.LinkedList<K>();
     }
 
     public synchronized V put(K key, V value) {
@@ -153,12 +153,12 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<V>(value, objectSize);
         map.put(key, cacheObject);
         // Make an entry into the cache order list.
-        LinkedListNode lastAccessedNode = lastAccessedList.addFirst(key);
+        LinkedListNode<K> lastAccessedNode = lastAccessedList.addFirst(key);
         // Store the cache order list entry so that we can get back to it
         // during later lookups.
         cacheObject.lastAccessedListNode = lastAccessedNode;
         // Add the object to the age list
-        LinkedListNode ageNode = ageList.addFirst(key);
+        LinkedListNode<K> ageNode = ageList.addFirst(key);
         // We make an explicit call to currentTimeMillis() so that total accuracy
         // of lifetime calculations is better than one second.
         ageNode.timestamp = System.currentTimeMillis();
@@ -191,7 +191,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // Remove the object from it's current place in the cache order list,
         // and re-insert it at the front of the list.
         cacheObject.lastAccessedListNode.remove();
-        lastAccessedList.addFirst(cacheObject.lastAccessedListNode);
+        lastAccessedList.addFirst((LinkedListNode<K>) cacheObject.lastAccessedListNode);
 
         return cacheObject.object;
     }
@@ -224,9 +224,9 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // Now, reset all containers.
         map.clear();
         lastAccessedList.clear();
-        lastAccessedList = new org.jivesoftware.util.LinkedList();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
         ageList.clear();
-        ageList = new org.jivesoftware.util.LinkedList();
+        ageList = new org.jivesoftware.util.LinkedList<K>();
 
         cacheSize = 0;
         cacheHits = 0;
@@ -558,7 +558,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // of the linked list until they are no longer too old. We get to avoid
         // any hash lookups or looking at any more objects than is strictly
         // neccessary.
-        LinkedListNode node = ageList.getLast();
+        LinkedListNode<K> node = ageList.getLast();
         // If there are no entries in the age list, return.
         if (node == null) {
             return;
@@ -639,14 +639,14 @@ public class DefaultCache<K, V> implements Cache<K, V> {
          * accessed, the node is removed from its current spot in the list and
          * moved to the front.
          */
-        public LinkedListNode lastAccessedListNode;
+        public LinkedListNode<?> lastAccessedListNode;
 
         /**
          * A reference to the node in the age order list. We keep the reference
          * here to avoid linear scans of the list. The reference is used if the
          * object has to be deleted from the list.
          */
-        public LinkedListNode ageListNode;
+        public LinkedListNode<?> ageListNode;
 
         /**
          * A count of the number of times the object has been read from cache.

@@ -42,6 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
+import org.eclipse.jetty.util.log.Log;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
@@ -361,6 +362,7 @@ public class XMPPServer {
         }
 
         if (isStandAlone()) {
+        	Log.info("Registering shutdown hook (standalone mode)");
             Runtime.getRuntime().addShutdownHook(new ShutdownHookThread());
         }
 
@@ -682,6 +684,7 @@ public class XMPPServer {
      * inside of another server.
      */
     public void stop() {
+    	Log.info("Initiating shutdown ...");
         // Only do a system exit if we're running standalone
         if (isStandAlone()) {
             // if we're in a wrapper, we have to tell the wrapper to shut us down
@@ -934,24 +937,42 @@ public class XMPPServer {
         ClusterManager.shutdown();
         // Notify server listeners that the server is about to be stopped
         for (XMPPServerListener listener : listeners) {
-            listener.serverStopping();
+        	try {
+        		listener.serverStopping();
+        	} catch (Exception ex) {
+        		Log.error("Exception during listener shutdown", ex);
+        	}
         }
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
         }
+    	Log.info("Shutting down " + modules.size() + " modules ...");
         // Get all modules and stop and destroy them
         for (Module module : modules.values()) {
-            module.stop();
-            module.destroy();
+        	try {
+	            module.stop();
+	            module.destroy();
+        	} catch (Exception ex) {
+        		Log.error("Exception during module shutdown", ex);
+        	}
         }
         // Stop all plugins
+    	Log.info("Shutting down plugins ...");
         if (pluginManager != null) {
-            pluginManager.shutdown();
+        	try {
+        		pluginManager.shutdown();
+        	} catch (Exception ex) {
+        		Log.error("Exception during plugin shutdown", ex);
+        	}
         }
         modules.clear();
         // Stop the Db connection manager.
-        DbConnectionManager.destroyConnectionProvider();
+        try {	
+        	DbConnectionManager.destroyConnectionProvider();
+        } catch (Exception ex) {
+    		Log.error("Exception during DB shutdown", ex);
+        }
 
         // Shutdown the task engine.
         TaskEngine.getInstance().shutdown();

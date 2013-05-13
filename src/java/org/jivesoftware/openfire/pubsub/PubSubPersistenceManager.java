@@ -228,20 +228,21 @@ public class PubSubPersistenceManager {
 	private static final int MAX_ITEM_RETRY = JiveGlobals.getIntProperty("xmpp.pubsub.item.retry", 1);
     
     /**
-     * Queue that holds the items that need to be added to the database.
+     * Queue that holds the (wrapped) items that need to be added to the database.
      */
-    private static LinkedList itemsToAdd = new LinkedList();
+    private static LinkedList<RetryWrapper> itemsToAdd = new LinkedList<RetryWrapper>();
 
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
-    private static LinkedList itemsToDelete = new LinkedList();
+    private static LinkedList<PublishedItem> itemsToDelete = new LinkedList<PublishedItem>();
 
     /**
-     * Keeps reference to published items that haven't been persisted yet so they can be removed
-     * before being deleted.
+     * Keeps reference to published items that haven't been persisted yet so they 
+     * can be removed before being deleted. Note these items are wrapped via the 
+     * RetryWrapper to allow multiple persistence attempts when needed.
      */
-    private static final HashMap<String, LinkedListNode> itemsPending = new HashMap<String, LinkedListNode>();
+    private static final HashMap<String, LinkedListNode<RetryWrapper>> itemsPending = new HashMap<String, LinkedListNode<RetryWrapper>>();
     
     /**
      * Cache name for recently accessed published items.
@@ -1136,32 +1137,48 @@ public class PubSubPersistenceManager {
      * @param item The published item to save.
      */
     public static void savePublishedItem(PublishedItem item) {
-    	savePublishedItem(item, false);
+    	savePublishedItem(new RetryWrapper(item));
     }
 
     /**
      * Creates and stores the published item in the database. 
-     * @param item The published item to save.
-     * @param isRetry True if this pass is for an item persistence retry
+     * @param wrapper The published item, wrapped for retry
      */
-    private static void savePublishedItem(PublishedItem item, boolean isRetry) {
+    private static void savePublishedItem(RetryWrapper wrapper) {
+    	boolean firstPass = (wrapper.getRetryCount() == 0);
+    	PublishedItem item = wrapper.get();
 		String itemKey = item.getItemKey();
 		itemCache.put(itemKey, item);
 		log.debug("Added new (inbound) item to cache");
         synchronized (itemsPending) {
-    		LinkedListNode itemToReplace = itemsPending.remove(itemKey);
+    		LinkedListNode<RetryWrapper> itemToReplace = itemsPending.remove(itemKey);
     		if (itemToReplace != null) {
     			itemToReplace.remove(); // remove duplicate from itemsToAdd linked list
     		}
-    		LinkedListNode listNode = isRetry ? itemsToAdd.addFirst(item) : itemsToAdd.addLast(item);
+    		LinkedListNode<RetryWrapper> listNode = firstPass ? 
+    							itemsToAdd.addLast(wrapper) : 
+    							itemsToAdd.addFirst(wrapper);
     		itemsPending.put(itemKey, listNode);
         }
-        // don't flush pending items immediately if this is a retry attempt
-		if (!isRetry && itemsPending.size() > MAX_ITEMS_FLUSH) {
+        // skip the flush step if this is a retry attempt
+		if (firstPass && itemsPending.size() > MAX_ITEMS_FLUSH) {
 			TaskEngine.getInstance().submit(new Runnable() {
 				public void run() { flushPendingItems(false); }
 			});
 		}
+    }
+    
+    /**
+     * This class is used internally to wrap PublishedItems. It adds
+     * a retry counter for the persistence exception handling logic.
+     */
+    private static class RetryWrapper {
+    	private PublishedItem item;
+        private volatile transient int retryCount = 0;
+    	public RetryWrapper(PublishedItem item) { this.item = item; }
+    	public PublishedItem get() { return item; }
+    	public int getRetryCount() { return retryCount; }
+    	public int nextRetry() { return ++retryCount; }
     }
 
     /**
@@ -1189,8 +1206,8 @@ public class PubSubPersistenceManager {
         
 		Connection con = null;
 		boolean rollback = false;
-    	LinkedList addList = null;
-    	LinkedList delList = null;
+    	LinkedList<RetryWrapper> addList = null;
+    	LinkedList<PublishedItem> delList = null;
 
     	// Swap pending items so we can parse and save the contents from this point in time
     	// while not blocking new entries from being cached.
@@ -1199,8 +1216,8 @@ public class PubSubPersistenceManager {
     		addList = itemsToAdd;
     		delList = itemsToDelete;
 
-    		itemsToAdd = new LinkedList();
-    		itemsToDelete = new LinkedList();
+    		itemsToAdd = new LinkedList<RetryWrapper>();
+    		itemsToDelete = new LinkedList<PublishedItem>();
     		
     		// Ensure pending items are available via the item read cache;
     		// this allows the item(s) to be fetched by other request threads
@@ -1208,7 +1225,7 @@ public class PubSubPersistenceManager {
     		int copied = 0;
     		for (String key : itemsPending.keySet()) {
     			if (!itemCache.containsKey(key)) {
-    				itemCache.put(key, (PublishedItem) itemsPending.get(key).object);
+    				itemCache.put(key, (((RetryWrapper)itemsPending.get(key).object)).get());
     				copied++;
     			}
     		}
@@ -1232,9 +1249,9 @@ public class PubSubPersistenceManager {
 		} catch (SQLException se) {
 			log.error("Failed to flush pending items; initiating rollback", se);
 			// return new items to the write cache
-	        LinkedListNode node = addList.getLast();
+	        LinkedListNode<RetryWrapper> node = addList.getLast();
 	        while (node != null) {
-	            savePublishedItem((PublishedItem)node.object, true);
+	            savePublishedItem(node.object);
 	            node.remove();
 	            node = addList.getLast();
 	        }
@@ -1251,10 +1268,10 @@ public class PubSubPersistenceManager {
      * @param delList
      * @throws SQLException
      */
-	private static void writePendingItems(Connection con, LinkedList addList, LinkedList delList) throws SQLException
+	private static void writePendingItems(Connection con, LinkedList<RetryWrapper> addList, LinkedList<PublishedItem> delList) throws SQLException
 	{
-        LinkedListNode addItem = addList.getFirst();
-        LinkedListNode delItem = delList.getFirst();
+        LinkedListNode<RetryWrapper> addItem = addList.getFirst();
+        LinkedListNode<PublishedItem> delItem = delList.getFirst();
         
         // is there anything to do?
         if ((addItem == null) && (delItem == null)) { return; }
@@ -1265,9 +1282,9 @@ public class PubSubPersistenceManager {
 
         // ensure there are no duplicates by deleting before adding
         if (addItem != null) {
-        	LinkedListNode addHead = addItem.previous;
+        	LinkedListNode<RetryWrapper> addHead = addItem.previous;
         	while (addItem != addHead) {
-        		delList.addLast(addItem.object);
+        		delList.addLast(addItem.object.get());
         		addItem = addItem.next;
         	}
         }
@@ -1277,12 +1294,12 @@ public class PubSubPersistenceManager {
         if (delItem != null) {
             PreparedStatement pstmt = null;
 			try {
-                LinkedListNode delHead = delItem.previous;
+                LinkedListNode<PublishedItem> delHead = delItem.previous;
 				pstmt = con.prepareStatement(DELETE_ITEM);
 
                 while (delItem != delHead)
                 {
-                	PublishedItem item = (PublishedItem) delItem.object;
+                	PublishedItem item = delItem.object;
                     pstmt.setString(1, item.getNode().getService().getServiceID());
                     pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
                     pstmt.setString(3, item.getID());
@@ -1315,17 +1332,19 @@ public class PubSubPersistenceManager {
 	 * @param batch
 	 * @throws SQLException
 	 */
-	private static void writePendingItems(Connection con, LinkedListNode addItem, boolean batch)  throws SQLException 
+	private static void writePendingItems(Connection con, LinkedListNode<RetryWrapper> addItem, boolean batch)  throws SQLException 
 	{	
 		if (addItem == null) { return; }
-        LinkedListNode addHead = addItem.previous;
+        LinkedListNode<RetryWrapper> addHead = addItem.previous;
         PreparedStatement pstmt = null;
+        RetryWrapper wrappedItem = null;
         PublishedItem item = null;       
     	try {
 			pstmt = con.prepareStatement(ADD_ITEM);
             while (addItem != addHead)
             {
-            	item = (PublishedItem) addItem.object;
+            	wrappedItem = addItem.object;
+            	item = wrappedItem.get();
                 pstmt.setString(1, item.getNode().getService().getServiceID());
                 pstmt.setString(2, encodeNodeID(item.getNodeID()));
                 pstmt.setString(3, item.getID());
@@ -1338,9 +1357,9 @@ public class PubSubPersistenceManager {
                 	catch (SQLException se) {
         	    		// individual item could not be persisted; retry (up to MAX_ITEM_RETRY attempts)
         	    		String itemKey = item.getItemKey();
-        	    		if (item.getRetryCount() < MAX_ITEM_RETRY) {
+        	    		if (wrappedItem.nextRetry() < MAX_ITEM_RETRY) {
         	        		log.warn("Failed to persist published item (will retry): " + itemKey);
-        	                savePublishedItem(item, true);
+        	                savePublishedItem(wrappedItem);
         	    		} else {
         	    			// all hope is lost ... item will be dropped
         	    			log.error("Published item could not be written to database: " + itemKey + "\n" + item.getPayloadXML(), se);
@@ -1370,7 +1389,7 @@ public class PubSubPersistenceManager {
         synchronized (itemsPending)
     	{
     		itemsToDelete.addLast(item);
-			LinkedListNode itemToAdd = itemsPending.remove(itemKey);
+			LinkedListNode<RetryWrapper> itemToAdd = itemsPending.remove(itemKey);
 			if (itemToAdd != null)
 				itemToAdd.remove();  // drop from itemsToAdd linked list
 		}
@@ -1728,13 +1747,13 @@ public class PubSubPersistenceManager {
 			// that match this node.
 			synchronized (itemsPending)
 			{
-				Iterator<Map.Entry<String, LinkedListNode>> pendingIt = itemsPending.entrySet().iterator();
+				Iterator<Map.Entry<String, LinkedListNode<RetryWrapper>>> pendingIt = itemsPending.entrySet().iterator();
 
 				while (pendingIt.hasNext())
 				{
-					LinkedListNode itemNode = pendingIt.next().getValue();
+					LinkedListNode<RetryWrapper> itemNode = pendingIt.next().getValue();
 
-					if (((PublishedItem) itemNode.object).getNodeID().equals(leafNode.getNodeID()))
+					if (itemNode.object.get().getNodeID().equals(leafNode.getNodeID()))
 					{
 						itemNode.remove();
 						pendingIt.remove();
@@ -1908,6 +1927,7 @@ public class PubSubPersistenceManager {
 
     public static void shutdown()
     {
+    	log.info("Flushing write cache to database");
 		flushPendingItems(false); // local member only
 		
 		// node cleanup (skip when running as a cluster)

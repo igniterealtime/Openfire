@@ -38,11 +38,11 @@ package org.jivesoftware.util;
  * @author Jive Software
  * @see org.jivesoftware.util.LinkedList
  */
-public class LinkedListNode {
+public class LinkedListNode<E> {
 
-    public LinkedListNode previous;
-    public LinkedListNode next;
-    public Object object;
+    public LinkedListNode<E> previous;
+    public LinkedListNode<E> next;
+    public E object;
 
     /**
      * This class is further customized for the CoolServlets cache system. It
@@ -61,9 +61,8 @@ public class LinkedListNode {
      * Constructs an self-referencing node. This node acts as a start/end
      * sentinel when traversing nodes in a LinkedList.
      */
-    public LinkedListNode(Object object) {
+    public LinkedListNode() {
     	previous = next = this;
-    	this.object = object;
     }
 
     /**
@@ -73,7 +72,7 @@ public class LinkedListNode {
      * @param next     a reference to the next LinkedListNode in the list.
      * @param previous a reference to the previous LinkedListNode in the list.
      */
-    public LinkedListNode(Object object, LinkedListNode next, LinkedListNode previous) {
+    public LinkedListNode(E object, LinkedListNode<E> next, LinkedListNode<E> previous) {
     	if (next != null && previous != null) {
     		this.insert(next, previous);
     	}
@@ -84,7 +83,7 @@ public class LinkedListNode {
      * Removes this node from the linked list that it was a part of.
      * @return This node; next and previous references dropped
      */
-    public LinkedListNode remove() {
+    public LinkedListNode<E> remove() {
         previous.next = next;
         next.previous = previous;
         previous = next = null;
@@ -95,7 +94,7 @@ public class LinkedListNode {
      * Inserts this node into the linked list that it will be a part of.
      * @return This node, updated to reflect previous/next changes
      */
-    public LinkedListNode insert(LinkedListNode next, LinkedListNode previous) {
+    public LinkedListNode<E> insert(LinkedListNode<E> next, LinkedListNode<E> previous) {
         this.next = next;
         this.previous = previous;
         this.previous.next = this.next.previous = this;

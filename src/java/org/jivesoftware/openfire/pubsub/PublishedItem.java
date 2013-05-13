@@ -101,10 +101,6 @@ public class PublishedItem implements Serializable {
      * XML representation of the payload (for serialization)
      */
     private String payloadXML;
-    /**
-     * Persistence retry counter
-     */
-    private volatile transient int retryCount = 0;
     
     /**
      * Creates a published item
@@ -291,14 +287,6 @@ public class PublishedItem implements Serializable {
     public String getItemKey() {
     	return getItemKey(nodeId,id);
     }
-
-    /**
-     * Returns (and increments) the item persistence retry counter
-     * @return Number of attempts made to persist this item to the DB
-     */
-	public int getRetryCount() {
-		return retryCount++;
-	}
 
 	/**
      * Returns a string that uniquely identifies this published item

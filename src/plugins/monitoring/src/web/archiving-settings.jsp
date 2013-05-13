@@ -163,6 +163,10 @@
     boolean roomArchiving = conversationManager.isRoomArchivingEnabled();
     int idleTime = ParamUtils.getIntParameter(request, "idleTime", conversationManager.getIdleTime());
     int maxTime = ParamUtils.getIntParameter(request, "maxTime", conversationManager.getMaxTime());
+    
+    int maxAge = ParamUtils.getIntParameter(request, "maxAge", conversationManager.getMaxAge());
+    int maxRetrievable = ParamUtils.getIntParameter(request, "maxRetrievable", conversationManager.getMaxRetrievable());
+    
     boolean rebuildIndex = request.getParameter("rebuild") != null;
 
     if (request.getParameter("cancel") != null) {
@@ -197,6 +201,14 @@
             errors.put("roomsArchived", "");
             errorMessage = "Only name of local rooms should be specified.";
         }
+        if (maxAge < 0) {
+            errors.put("maxAge", "");
+            errorMessage = "Max Age must be greater than or equal to 0.";
+        }
+        if (maxRetrievable < 1) {
+            errors.put("maxRetrievable", "");
+            errorMessage = "Max Retrievable must be greater than or equal to 0.";
+        }
         // If no errors, continue:
         if (errors.size() == 0) {
             conversationManager.setMetadataArchivingEnabled(metadataArchiving);
@@ -205,6 +217,9 @@
             conversationManager.setRoomsArchived(StringUtils.stringToCollection(roomsArchived));
             conversationManager.setIdleTime(idleTime);
             conversationManager.setMaxTime(maxTime);
+            
+            conversationManager.setMaxAge(maxAge);
+            conversationManager.setMaxRetrievable(maxRetrievable);
 
 %>
 <div class="success">
@@ -285,6 +300,21 @@
                 <td><input type="text" name="maxTime" size="10" maxlength="10" value="<%= conversationManager.getMaxTime()%>" /></td>
                 <td></td>
             </tr>
+            
+            <tr>
+                <td><label class="jive-label"><fmt:message key="archive.settings.max.age"/>:</label><br>
+                <fmt:message key="archive.settings.max.age.description"/><br><br></td>
+                <td><input type="text" name="maxAge" size="10" maxlength="10" value="<%= conversationManager.getMaxAge()%>" /></td>
+                <td></td>
+            </tr>
+            
+            <tr>
+                <td><label class="jive-label"><fmt:message key="archive.settings.max.retrievable"/>:</label><br>
+                <fmt:message key="archive.settings.max.retrievable.description"/><br><br></td>
+                <td><input type="text" name="maxRetrievable" size="10" maxlength="10" value="<%= conversationManager.getMaxRetrievable()%>" /></td>
+                <td></td>
+            </tr>
+            
         </tbody>
     </table>
 

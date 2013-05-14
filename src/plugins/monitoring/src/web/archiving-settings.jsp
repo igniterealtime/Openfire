@@ -205,7 +205,7 @@
             errors.put("maxAge", "");
             errorMessage = "Max Age must be greater than or equal to 0.";
         }
-        if (maxRetrievable < 1) {
+        if (maxRetrievable < 0) {
             errors.put("maxRetrievable", "");
             errorMessage = "Max Retrievable must be greater than or equal to 0.";
         }
@@ -303,7 +303,8 @@
             
             <tr>
                 <td><label class="jive-label"><fmt:message key="archive.settings.max.age"/>:</label><br>
-                <fmt:message key="archive.settings.max.age.description"/><br><br></td>
+                <fmt:message key="archive.settings.max.age.description"/><br><br>
+                <font color="FF0000"><fmt:message key="archive.settings.max.age.warning"/></font><br><br></td>
                 <td><input type="text" name="maxAge" size="10" maxlength="10" value="<%= conversationManager.getMaxAge()%>" /></td>
                 <td></td>
             </tr>

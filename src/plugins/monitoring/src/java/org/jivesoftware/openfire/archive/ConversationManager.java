@@ -48,6 +48,7 @@ import org.jivesoftware.openfire.archive.cluster.GetConversationsTask;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.ComponentEventListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 import org.jivesoftware.openfire.reporting.util.TaskEngine;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
@@ -88,6 +89,9 @@ public class ConversationManager implements Startable, ComponentEventListener {
 			+ "VALUES (?,?,?,?,?,?,?)";
 	private static final String CONVERSATION_COUNT = "SELECT COUNT(*) FROM ofConversation";
 	private static final String MESSAGE_COUNT = "SELECT COUNT(*) FROM ofMessageArchive";
+	private static final String DELETE_CONVERSATION_1 = "DELETE FROM ofMessageArchive WHERE conversationID=?";
+	private static final String DELETE_CONVERSATION_2 = "DELETE FROM ofConparticipant WHERE conversationID=?";
+	private static final String DELETE_CONVERSATION_3 = "DELETE FROM ofConversation WHERE conversationID=?";
 
 	private static final int DEFAULT_IDLE_TIME = 10;
 	private static final int DEFAULT_MAX_TIME = 60;
@@ -206,11 +210,50 @@ public class ConversationManager implements Startable, ComponentEventListener {
 		maxAgeTask = new TimerTask() {
 			@Override
 			public void run() {
-				// Delete conversations older than maxAge days
-				// TODO
+				if (maxAge > 0) {
+					// Delete conversations older than maxAge days
+					Connection con = null;
+					PreparedStatement pstmt1 = null;
+					PreparedStatement pstmt2 = null;
+					PreparedStatement pstmt3 = null;
+					try {
+						con = DbConnectionManager.getConnection();
+						pstmt1 = con.prepareStatement(DELETE_CONVERSATION_1);
+						pstmt2 = con.prepareStatement(DELETE_CONVERSATION_2);
+						pstmt3 = con.prepareStatement(DELETE_CONVERSATION_3);
+						Date now = new Date();
+						Date maxAgeDate = new Date(now.getTime() - maxAge);
+						ArchiveSearch search = new ArchiveSearch();
+						search.setDateRangeMax(maxAgeDate);
+						MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(MonitoringConstants.NAME);
+						ArchiveSearcher archiveSearcher = (ArchiveSearcher) plugin.getModule(ArchiveSearcher.class);
+						Collection<Conversation> conversations = archiveSearcher.search(search);
+						int conversationDeleted = 0;
+						for (Conversation conversation : conversations) {
+							Log.debug("Deleting: " + conversation.getConversationID() + " with date: " + conversation.getStartDate()
+									+ " older than: " + maxAgeDate);
+							pstmt1.setLong(1, conversation.getConversationID());
+							pstmt1.execute();
+							pstmt2.setLong(1, conversation.getConversationID());
+							pstmt2.execute();
+							pstmt3.setLong(1, conversation.getConversationID());
+							pstmt3.execute();
+							conversationDeleted++;
+						}
+						if (conversationDeleted > 0) {
+							Log.info("Deleted " + conversationDeleted + " conversations with date older than: " + maxAgeDate);
+						}
+					} catch (Exception e) {
+						Log.error(e.getMessage(), e);
+					} finally {
+						DbConnectionManager.closeConnection(pstmt1, con);
+						DbConnectionManager.closeConnection(pstmt2, con);
+						DbConnectionManager.closeConnection(pstmt3, con);
+					}
+				}
 			}
 		};
-		taskEngine.scheduleAtFixedRate(maxAgeTask, JiveConstants.MINUTE, JiveConstants.DAY);
+		taskEngine.scheduleAtFixedRate(maxAgeTask, JiveConstants.MINUTE, JiveConstants.MINUTE);
 
 		// Register a statistic.
 		Statistic conversationStat = new Statistic() {

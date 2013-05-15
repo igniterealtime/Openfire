@@ -894,8 +894,8 @@ public class XMPPServer {
      * via the launcher, especially in Windows.
      */
     private class Terminator extends TimerTask {
+    	private BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
     	public void run() {
-            BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         	try { 
         		if (stdin.ready()) {
             		if (EXIT.equalsIgnoreCase(stdin.readLine())) {

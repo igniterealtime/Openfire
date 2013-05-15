@@ -20,23 +20,54 @@
 
 package org.jivesoftware.openfire.launcher;
 
-import org.jdesktop.jdic.tray.SystemTray;
-import org.jdesktop.jdic.tray.TrayIcon;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URL;
+
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.UIManager;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.jdesktop.jdic.tray.SystemTray;
+import org.jdesktop.jdic.tray.TrayIcon;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Graphical launcher for Openfire.
@@ -472,8 +503,31 @@ public class Launcher {
     private synchronized void stopApplication() {
         if (openfired != null) {
             try {
-                openfired.destroy();
-                openfired.waitFor();
+            	// attempt to perform a graceful shutdown by sending
+            	// an "exit" command to the process (via stdin)
+            	Writer out = new OutputStreamWriter(
+            			new BufferedOutputStream(openfired.getOutputStream()));
+            	out.write("exit\n");
+            	out.close();
+            	final Thread waiting = Thread.currentThread();
+            	Thread waiter = new Thread() {
+            		public void run() {
+                        try {
+                        	// wait for the openfire server to stop
+                        	openfired.waitFor();
+                        	waiting.interrupt();
+                        }
+                        catch (InterruptedException ie) { /* ignore */ }
+            		}
+            	};
+            	waiter.start();
+            	try { 
+            		// wait for a maximum of ten seconds
+            		Thread.sleep(10000);
+            		waiter.interrupt();
+            		openfired.destroy();
+            	}
+            	catch (InterruptedException ie) { /* ignore */ }
                 cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {

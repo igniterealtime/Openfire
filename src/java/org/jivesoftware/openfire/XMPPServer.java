@@ -20,10 +20,12 @@
 
 package org.jivesoftware.openfire;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -31,18 +33,17 @@ import java.security.KeyStore;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
-import org.eclipse.jetty.util.log.Log;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
@@ -158,6 +159,8 @@ public class XMPPServer {
     private boolean started = false;
     private NodeID nodeID;
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance(new byte[0]);
+
+    public static final String EXIT = "exit";
 
     /**
      * All modules loaded by this server
@@ -364,6 +367,7 @@ public class XMPPServer {
         if (isStandAlone()) {
         	Log.info("Registering shutdown hook (standalone mode)");
             Runtime.getRuntime().addShutdownHook(new ShutdownHookThread());
+            TaskEngine.getInstance().schedule(new Terminator(), 1000, 1000);
         }
 
         loader = Thread.currentThread().getContextClassLoader();
@@ -883,6 +887,27 @@ public class XMPPServer {
         }
     }
 
+    /**
+     * This timer task is used to monitor the System input stream
+     * for a "terminate" command from the launcher (or the console). 
+     * This allows for a graceful shutdown when Openfire is started 
+     * via the launcher, especially in Windows.
+     */
+    private class Terminator extends TimerTask {
+    	public void run() {
+            BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+        	try { 
+        		if (stdin.ready()) {
+            		if (EXIT.equalsIgnoreCase(stdin.readLine())) {
+            			System.exit(0); // invokes shutdown hook(s)
+            		}
+        		}
+        	} catch (IOException ioe) {
+        		Log.error("Error reading console input", ioe);
+        	}
+    	}
+    }
+    
     /**
      * <p>A thread to ensure the server shuts down no matter what.</p>
      * <p>Spawned when stop() is called in standalone mode, we wait a few

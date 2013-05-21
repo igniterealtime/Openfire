@@ -253,6 +253,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      */
     private static LocalOutgoingServerSession createOutgoingSession(String domain, String hostname,
             int port) {
+
+        String localDomainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         boolean useTLS = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
         RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
         if (configuration != null) {
@@ -309,6 +311,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
+            openingStream.append(" from=\"").append(localDomainName).append("\""); // OF-673
             openingStream.append(" to=\"").append(hostname).append("\"");
             openingStream.append(" version=\"1.0\">");
             connection.deliverRawText(openingStream.toString());

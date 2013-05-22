@@ -57,7 +57,7 @@ User Service Plugin Readme
 <h2>Overview</h2>
 
 <p>
-The User Service Plugin provides the ability to add,edit,delete users by sending an http request to the server.
+The User Service Plugin provides the ability to add,edit,delete users and manage their rosters by sending an http request to the server.
 It is intended to be used by applications automating the user administration process. 
 This plugin's functionality is useful for applications that need to administer users outside of the Openfire admin console.
 An example of such an application might be a live sports reporting application that uses XMPP as its transport, and
@@ -89,13 +89,13 @@ if your server name is "example.com", the URL is http://example.com/plugins/user
 The following parameters can be passed into the request:<p>
 
 <div id="datatable">
-<table cellpadding="3" cellspacing="1" border="0" width="700">
+<table cellpadding="3" cellspacing="1" border="0" width="900">
 <tr>
     <th colspan=2>Name</th><th>Description</th>
 </tr>
 <tr>
     <td class="name">type</td><td>Required</td><td>The admin service required. 
-    Possible values are add, delete, update, enable, disable</td>
+    Possible values are 'add', 'delete', 'update', 'enable', 'disable', 'add_roster', 'update_roster', 'delete_roster'.</td>
 </tr>
 <tr>
     <td class="name">secret</td><td>Required</td>
@@ -103,15 +103,15 @@ The following parameters can be passed into the request:<p>
 </tr>
 <tr>
     <td class="name">username</td><td>Required</td>
-    <td>The username of the user to add, update, delete, enable, or disable. ie the part before the @ symbol.</td>
+    <td>The username of the user to 'add', 'delete', 'update', 'enable', 'disable', 'add_roster', 'update_roster', 'delete_roster'. ie the part before the @ symbol.</td>
 </tr>
 <tr>
-    <td class="name">password</td><td>Required for add operation</td>
+    <td class="name">password</td><td>Required for 'add' operation</td>
     <td>The password of the new user or the user being updated.</td>
 </tr>
 <tr>
     <td class="name">name</td><td>Optional</td>
-    <td>The display name of the new user or the user being updated.</td>
+    <td>The display name of the new user or the user being updated. For 'add_roster', 'update_roster' operations specifies the nickname of the roster item.</td>
 </tr>
 <tr>
     <td class="name">email</td><td>Optional</td>
@@ -120,6 +120,14 @@ The following parameters can be passed into the request:<p>
 <tr>
     <td class="name">groups</td><td>Optional</td>
     <td>List of groups where the user is a member. Values are comma delimited.</td>
+</tr>
+<tr>
+    <td class="name">item_jid</td><td>Required for 'add_roster', 'update_roster', 'delete_roster' operations.</td>
+    <td>The JID of the roster item</td>
+</tr>
+<tr>
+    <td class="name">subscription</td><td>Optional</td>
+    <td>Type of subscription for 'add_roster', 'update_roster' operations. Possible numeric values are: -1(remove), 0(none), 1(to), 2(from), 3(both).</td>
 </tr>
 
 
@@ -169,12 +177,42 @@ http://example.com:9090/plugins/userService/userservice?type=enable&secret=bigse
 </ul>
 
 
-This example updates a user
+The following example updates a user
 
 <ul>
 <form>
 <textarea cols=65 rows=3 wrap=virtual>
 http://example.com:9090/plugins/userService/userservice?type=update&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=beetle@kafka.com
+</textarea>
+</form>
+</ul>
+
+The following example adds new roster item with subscription 'both' for user 'kafka'
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=add_roster&secret=bigsecret&username=kafka&item_jid=franz@example.com&name=franz&subscription=3
+</textarea>
+</form>
+</ul>
+
+The following example updates existing roster item to subscription 'none' for user 'kafka'
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=update_roster&secret=bigsecret&username=kafka&item_jid=franz@example.com&name=franz&subscription=0
+</textarea>
+</form>
+</ul>
+
+The following example deletes roster item 'franz@kafka.com' for user 'kafka'
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=delete_roster&secret=bigsecret&username=kafka&item_jid=franz@example.com
 </textarea>
 </form>
 </ul>
@@ -195,7 +233,7 @@ If the request was unsuccessful, the return will be an "error" element with a te
 
 
 <div id="datatable">
-<table cellpadding="3" cellspacing="1" border="0" width="700">
+<table cellpadding="3" cellspacing="1" border="0" width="900">
 <tr>
     <th >Error String</th><th>Description</th>
 </tr>
@@ -205,12 +243,11 @@ If the request was unsuccessful, the return will be an "error" element with a te
 </tr>
 <tr>
     <td class="name">UserNotFoundException</td>
-    <td>No user of the name specified, for a delete or update operation, exists on this server.</td>
+    <td>No user of the name specified, for a delete or update operation, exists on this server. For 'update_roster' operation, roster item to be updated was not found.</td>
 </tr>
 <tr>
     <td class="name">UserAlreadyExistsException</td>
-    <td>A user with the same name as the user about to be added, already exists. 
-    </td>
+    <td>A user with the same name as the user about to be added, already exists. For 'add_roster' operation, roster item with the same JID already exists.</td>
 </tr>
 <tr>
     <td class="name">RequestNotAuthorised</td>
@@ -220,7 +257,10 @@ If the request was unsuccessful, the return will be an "error" element with a te
     <td class="name">UserServiceDisabled</td>
     <td>The User Service is currently set to disabled in the Admin Console.</td>
 </tr>
-
+<tr>
+    <td class="name">SharedGroupException</td>
+    <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
+</tr>
 
 </table><p>
 

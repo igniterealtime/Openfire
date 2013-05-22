@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jivesoftware.admin.AuthCheckFilter;
+import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.plugin.UserServicePlugin;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
@@ -99,6 +100,8 @@ public class UserServiceServlet extends HttpServlet {
         String type = request.getParameter("type");
         String secret = request.getParameter("secret");
         String groupNames = request.getParameter("groups");
+        String item_jid = request.getParameter("item_jid");
+        String sub = request.getParameter("subscription");
         //No defaults, add, delete, update only
         //type = type == null ? "image" : type;
        
@@ -122,6 +125,12 @@ public class UserServiceServlet extends HttpServlet {
             return;
         }
 
+        if ((type.equals("add_roster") || type.equals("update_roster") || type.equals("delete_roster")) &&
+        	(item_jid == null || !(sub == null || sub.equals("-1") || sub.equals("0") ||
+        	sub.equals("1") || sub.equals("2") || sub.equals("3")))) {
+            replyError("IllegalArgumentException",response, out);
+            return;
+        }
 
         // Check the request type and process accordingly
         try {
@@ -151,6 +160,18 @@ public class UserServiceServlet extends HttpServlet {
                 replyMessage("ok",response,out);
                 //xmlProvider.sendInfo(request, response, presence);
             }
+            else if ("add_roster".equals(type)) {
+                plugin.addRosterItem(username, item_jid, name, sub, groupNames);
+                replyMessage("ok",response, out);
+            }
+            else if ("update_roster".equals(type)) {
+                plugin.updateRosterItem(username, item_jid, name, sub, groupNames);
+                replyMessage("ok",response, out);
+            }
+            else if ("delete_roster".equals(type)) {
+                plugin.deleteRosterItem(username, item_jid);
+                replyMessage("ok",response, out);
+            }
             else {
                 Log.warn("The userService servlet received an invalid request of type: " + type);
                 // TODO Do something
@@ -165,6 +186,10 @@ public class UserServiceServlet extends HttpServlet {
         catch (IllegalArgumentException e) {
             
             replyError("IllegalArgumentException",response, out);
+        }
+        catch (SharedGroupException e) {
+        	
+        	replyError("SharedGroupException",response, out);
         }
         catch (Exception e) {
             replyError(e.toString(),response, out);

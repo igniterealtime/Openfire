@@ -162,6 +162,47 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.8.2 -- <span style="font-weight: normal;">May 28, 2013</span></h2>
+
+<h3>Openfire Improvements</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-342'>OF-342</a>] - Add CORS headers to HTTP-Binding/BOSH</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-393'>OF-393</a>] - Group names with &lt;&gt; should be properly HTML escaped</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-650'>OF-650</a>] - Add support for X-Forwarded-For (XFF) headers from proxied BOSH clients</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-655'>OF-655</a>] - Add configurable JMX support</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-657'>OF-657</a>] - Merge Atlassian Crowd provider into Openfire core</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-660'>OF-660</a>] - Enhance the sessions pages (summary/detail) in the admin console</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-674'>OF-674</a>] - Add roster management capabilities to userservice plugin</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-14'>OF-14</a>] - Subscriptions to pubsub node should be based on the JID as supplied, not the bare JID</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-108'>OF-108</a>] - Admin Console is adding BR tags when editing system property containing string with newlines</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-453'>OF-453</a>] - Ensure HttpSession is terminated properly by session reaper</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-465'>OF-465</a>] - Kicking MUC occupant on server is not propagated to clients</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-476'>OF-476</a>] - FlashCrossDomainHandler causes infinite loop under some circumstances</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-477'>OF-477</a>] - SASL server in OF creates digest-uri based on xmpp.fqdn but it sends xmpp.domain to the client</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-595'>OF-595</a>] - Security audit logviewer is not escaping tags</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-646'>OF-646</a>] - XmppDateTimeFormat is unable to parse date Strings</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-653'>OF-653</a>] - BOSH deadlock</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-656'>OF-656</a>] - Fix crossdomain.xml for BOSH</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-659'>OF-659</a>] - JDBCUserProvider returns all users for a paginated search</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-661'>OF-661</a>] - MUC Topic/Subject change not propagated to other cluster nodes</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-664'>OF-664</a>] - Monitoring archive shows null in room chat logs</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-665'>OF-665</a>] - MUC changes/activities do not propagate across cluster nodes</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-666'>OF-666</a>] - Pubsub items should be created using cluster time rather than local time</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-667'>OF-667</a>] - Monitoring plugin bad SQL for upgrade</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-668'>OF-668</a>] - Pubsub items (persistent) may be dropped in certain cases</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-671'>OF-671</a>] - XSS in server2server.jsp</li>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-673'>OF-673</a>] - Should include a &#39;to&#39; attribute in initiating s2s streams</li>
+</ul>
+
+<h3>Openfire New Features</h3>
+<ul>
+    <li>[<a href='http://issues.igniterealtime.org/browse/OF-651'>OF-651</a>] - Monitoring plugin should have an option to purge and restrict</li>
+</ul>
+
 <h2>3.8.1 -- <span style="font-weight: normal;">March 3, 2013</span></h2>
 
 <h3>Openfire Improvements</h3>

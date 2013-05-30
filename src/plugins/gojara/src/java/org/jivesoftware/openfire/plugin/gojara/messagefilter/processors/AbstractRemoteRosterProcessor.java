@@ -15,7 +15,7 @@ import org.xmpp.packet.Packet;
 /**
  * This packet and sub packet implements the command pattern. Every processor
  * that extends this class have to implement the process function. The
- * {@link RemoteRosterInterceptor} will register different implementations of
+ * {@link MainInterceptor} will register different implementations of
  * this processor and redirect packages according to their functionality
  * 
  * @author Holger Bergunde
@@ -38,7 +38,7 @@ abstract public class AbstractRemoteRosterProcessor {
 	 * the package should not be processed by openfire.
 	 * See actual classes for info about their implementation.
 	 * @param packet Packet itself
-	 * @param subdomain String with subdomain contained in either from or to, or string with several watched subdomains that needs to be splitted (see Maininterceptor)
+	 * @param subdomain String with subdomain contained in either from or to, may be ""
 	 * @param to String with recipient of packet, may be ""
 	 * @param from String with sender of packet, may be ""
 	 * @throws PacketRejectedException

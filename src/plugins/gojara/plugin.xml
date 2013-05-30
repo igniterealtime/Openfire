@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
-    <!-- Main plugin class -->
-    <class>org.jivesoftware.openfire.plugin.gojara.base.RemoteRosterPlugin</class>
+	<!-- Main plugin class -->
+	<class>org.jivesoftware.openfire.plugin.gojara.base.RemoteRosterPlugin
+	</class>
 
 
-    <name>GoJara</name>
-    <description>ProtoXEP-xxxx: Remote Roster Management support</description>
-    <author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
-    <version>2.0.0</version>
-    <date>03/19/2013</date>
+	<name>GoJara</name>
+	<description>ProtoXEP-xxxx: Remote Roster Management support
+	</description>
+	<author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
+	<version>2.1.0</version>
+	<date>03/19/2013</date>
 	<databaseKey>gojara</databaseKey>
-    <databaseVersion>0</databaseVersion>
-    <minServerVersion>3.7.0</minServerVersion>
+	<databaseVersion>1</databaseVersion>
+	<minServerVersion>3.7.0</minServerVersion>
 
-    <!-- Admin console entries -->
+	<!-- Admin console entries -->
 
-    <adminconsole>
-        <tab id="tab-server">
-            <sidebar id="sidebar-server-settings">
-                <item id="remoteRoster" name="${rr.summary.title}"
-                    url="rr-main.jsp"
-                    description="${rr.summary.title}" />
-            </sidebar>
-         </tab>
-    </adminconsole>
+	<adminconsole>
+		<tab id="tab-server">
+			<sidebar id="sidebar-server-settings">
+				<item id="remoteRoster" name="${rr.summary.title}" url="rr-main.jsp"
+					description="${rr.summary.title}" />
+			</sidebar>
+		</tab>
+		<tab id="tab-session">
+			<sidebar id="sidebar-session">
+				<item id="gojaraSessions" name="Gateway Sessions" url="gojara-activeSessions.jsp"
+					description="Click to manage Gateway sessions"></item>
+			</sidebar>
+			<sidebar id="sidebar-tools">
+				<item id="gojaraRegistrationAdministration" name="Gateway Registration Overview"
+					url="gojara-RegistrationsOverview.jsp" description="Manage existing Spectrum2 registrations"></item>
+			</sidebar>
+		</tab>
+	</adminconsole>
 </plugin>

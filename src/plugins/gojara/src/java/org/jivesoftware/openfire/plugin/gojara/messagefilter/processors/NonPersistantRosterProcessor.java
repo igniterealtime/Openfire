@@ -45,6 +45,7 @@ public class NonPersistantRosterProcessor extends AbstractRemoteRosterProcessor 
 					if (itemName.contains(subdomain) && !itemName.equals(subdomain)) {
 						Log.debug("Removing contact " + item.getJid().toString() + " from contact list.");
 						roster.deleteRosterItem(item.getJid(), false);
+						
 					}
 				}
 

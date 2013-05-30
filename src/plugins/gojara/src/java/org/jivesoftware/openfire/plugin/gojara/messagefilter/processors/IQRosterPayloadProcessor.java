@@ -29,6 +29,7 @@ import org.xmpp.packet.Packet;
  * >Here</a>
  * 
  * @author Holger Bergunde
+ * @author axel.frederik.brand
  * 
  */
 public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {

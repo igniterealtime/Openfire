@@ -297,9 +297,10 @@
 				</tr>
 				<tr>
 					<td />
-					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, no contacts will be deleted
-					by GoJara automatically.<br>					
-					When Persistent-Roster is disabled, GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout. </td>
+					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, contacts will be saved to database and
+					no contacts will be deleted	by GoJara automatically.<br>					
+					When Persistent-Roster is disabled, contacts will not be saved to databse and 
+					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout. </td>
 				</tr>
 				<tr>
 					<td><input type="checkbox" name="mucFilter" id="GO2" value="true"

@@ -16,14 +16,16 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
- * @author Holger Bergunde This class is used to store logs in the database. A
- *         log entry is representated by {@link LogEntry}
+ * @author Holger Bergunde, Axel-Frederik Brand
+ * 	 This class is used to store logs in the database. A
+ *   log entry is representated by {@link LogEntry}
  */
 public class DatabaseManager {
 
 	private static Logger Log = Logger.getLogger(DatabaseManager.class);
 
 	private static volatile DatabaseManager _myself;
+	//Logging
 	private static final String COUNT_LOG_ENTRIES = "SELECT count(*) FROM ofGojaraStatistics";
 	private static final String COUNT_PACKAGES_ODLER = "SELECT count(*) FROM ofGojaraStatistics WHERE messageType like ? AND component = ? AND messageDate > ?";
 	private static final String GET_ALL_LOGS = "SELECT * FROM ofGojaraStatistics ORDER BY logID desc LIMIT 100";
@@ -33,7 +35,11 @@ public class DatabaseManager {
 	private static final String CLEAN_OLD_DATA = "DELETE FROM ofGojaraStatistics WHERE messageDate < ?";
 	private static final String GET_LOGS_DATE_LIMIT_COMPONENT = "SELECT * FROM ofGojaraStatistics WHERE messageDate > ? AND component = ? ORDER BY messageDate DESC LIMIT ?";
 	private final int _dbCleanMinutes;
-
+	//Session
+	private static final String ADD_SESSION_ENTRY = "INSERT INTO ofGojaraSessions(username, transport, lastActivity) VALUES (?,?,?)";
+	private static final String UPDATE_SESSION_ENTRY = "UPDATE ofGojaraSessions SET lastActivity = ? WHERE username = ? AND transport = ?";
+	private static final String GET_SESSION_ENTRIES_FOR_USERNAME = "SELECT * FROM ofGojaraSessions WHERE username = ? ORDER BY lastActivity DESC";
+	private static final String DELETE_SESSION_ENTRY = "DELETE FROM ofGojaraSessions WHERE username = ? AND transport = ?";
 	private DatabaseManager() {
 
 		/*
@@ -280,5 +286,116 @@ public class DatabaseManager {
 		}
 		return -1;
 	}
+	
+	/**
+	 * Trys to update SessionEntry for given user/transport combination. If update does not
+	 * work due to no record being there, it inserts record.
+	 */
+	public void insertOrUpdateSession(String transport, String user, long time) {
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		try {
+			con = DbConnectionManager.getConnection();
 
+			pstmt = con.prepareStatement(UPDATE_SESSION_ENTRY);
+			pstmt.setLong(1, time);
+			pstmt.setString(2, user);
+			pstmt.setString(3, transport);
+			if (pstmt.executeUpdate() == 0) {
+				pstmt.close();
+				pstmt = con.prepareStatement(ADD_SESSION_ENTRY);
+				pstmt.setString(1, user);
+				pstmt.setString(2, transport);
+				pstmt.setLong(3, time);
+				pstmt.executeUpdate();
+				Log.info("I have inserted " + user + " with " + transport + " at " + time);
+			} else
+				Log.info("I have updated " + user + " with " + transport + " at " + time);
+		} catch (SQLException sqle) {
+			Log.error(sqle);
+		} finally {
+			DbConnectionManager.closeConnection(pstmt, con);
+		}
+	}
+	
+	public int removeSessionEntry(String transport, String user) {
+		int result = 0;
+		Log.info("I would now hit the DB and remove " + transport + " " + user);
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(DELETE_SESSION_ENTRY);
+			pstmt.setString(1, user);
+			pstmt.setString(2, transport);
+			result = pstmt.executeUpdate();
+		} catch (SQLException sqle) {
+			Log.error(sqle);
+		} finally {
+			DbConnectionManager.closeConnection(pstmt, con);
+		}
+		return result;
+	}
+	
+	public ArrayList<SessionEntry> getSessionEntriesFor(String username) {
+		ArrayList<SessionEntry> result = new ArrayList<SessionEntry>();
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(GET_SESSION_ENTRIES_FOR_USERNAME);
+			pstmt.setString(1, username);
+			ResultSet rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				String user = rs.getString(1);
+				String transport = rs.getString(2);
+				long lastActivity = rs.getLong(3);
+				SessionEntry res = new SessionEntry(user,transport,lastActivity);
+				result.add(res);
+			}
+
+			pstmt.close();
+		} catch (SQLException sqle) {
+			Log.error(sqle);
+		} finally {
+			DbConnectionManager.closeConnection(pstmt, con);
+		}
+		return result;
+	}
+	
+	public ArrayList<SessionEntry> getAllSessionEntries(String orderAttr, String order) {
+		String allowedAttr = "username transport lastActivity";
+		String allowedOrder = "ASC DESC";
+		if ((orderAttr == null || order == null) 
+				|| (!allowedAttr.contains(orderAttr) || !allowedOrder.contains(order))) {
+			//Use default case if sorting attributes are not correct.
+			orderAttr = "username";
+			order = "DESC";
+		} 
+
+		ArrayList<SessionEntry> result = new ArrayList<SessionEntry>();
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		try {
+			con = DbConnectionManager.getConnection();
+			String sql = "SELECT * FROM ofGojaraSessions ORDER BY " + orderAttr + " " + order + ";";
+			pstmt = con.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				String user = rs.getString(1);
+				String transport = rs.getString(2);
+				long lastActivity = rs.getLong(3);
+				SessionEntry res = new SessionEntry(user,transport,lastActivity);
+				result.add(res);
+			}
+			pstmt.close();
+		} catch (SQLException sqle) {
+			Log.error(sqle);
+		} finally {
+			DbConnectionManager.closeConnection(pstmt, con);
+		}
+		return result;
+	}
 }

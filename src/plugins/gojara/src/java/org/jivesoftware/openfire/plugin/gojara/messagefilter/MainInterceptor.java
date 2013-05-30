@@ -3,12 +3,14 @@ package org.jivesoftware.openfire.plugin.gojara.messagefilter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.Iterator;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
+import org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
@@ -24,6 +26,7 @@ public class MainInterceptor implements PacketInterceptor {
 	private static final Logger Log = LoggerFactory.getLogger(MainInterceptor.class);
 	private Set<String> activeTransports = new ConcurrentHashSet<String>();
 	private Map<String, AbstractRemoteRosterProcessor> packetProcessors = new HashMap<String, AbstractRemoteRosterProcessor>();
+	private TransportSessionManager tSessionManager = TransportSessionManager.getInstance();
 	private Boolean frozen;
 
 	public MainInterceptor() {
@@ -51,17 +54,17 @@ public class MainInterceptor implements PacketInterceptor {
 
 	public boolean addTransport(String subDomain) {
 		Log.info("Trying to add " + subDomain + " to Set of watched Transports.");
-		return this.activeTransports.add(subDomain);
+		boolean retval = this.activeTransports.add(subDomain);
+		if (retval)
+			tSessionManager.addTransport(subDomain);
+	
+		return retval;
 	}
 
 	public boolean removeTransport(String subDomain) {
 		Log.info("Trying to remove " + subDomain + " from Set of watched Transports.");
+		tSessionManager.removeTransport(subDomain);
 		return this.activeTransports.remove(subDomain);
-		// if (this.activeTransports.contains(subDomain)) {
-		// this.activeTransports.remove(subDomain);
-		// return true;
-		// }
-		// return false;
 	}
 
 	public void freeze() {
@@ -152,6 +155,28 @@ public class MainInterceptor implements PacketInterceptor {
 			String subdomain = from_s.length() == 0 ? to_s : from_s;
 			if (!from.equals(to) && subdomain.length() > 0)
 				packetProcessors.get("statisticsProcessor").process(packet, subdomain, to, from);
+			// TransportSession Feature
+			if (packet instanceof Presence && activeTransports.contains(from)){
+				Presence presence_packet = (Presence) packet;
+				if (presence_packet.getType() == null) {
+					tSessionManager.connectUserTo(from, packet.getTo().getNode().toString());
+				}
+				else if (presence_packet.getType() != null && presence_packet.getType().equals(Presence.Type.unavailable)) {
+					tSessionManager.disconnectUserFrom(from, packet.getTo().getNode().toString());
+				} 
+			} else if (packet instanceof IQ && activeTransports.contains(to)) {
+				IQ iqPacket = (IQ) packet;
+				Element query = iqPacket.getChildElement();
+				if (query == null)
+					return;
+				if (query.getNamespaceURI().equals("jabber:iq:register")) {
+					if (query.nodeCount() > 1)  
+						tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString()); 
+					 else 
+						 tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
+				}
+				
+			}
 
 		} else if (!incoming && !processed) {
 

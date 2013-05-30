@@ -14,6 +14,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.MainInterceptor;
+import org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -48,7 +49,6 @@ public class RemoteRosterPlugin implements Plugin {
 	private MainInterceptor mainInterceptor = new MainInterceptor();
 	private InterceptorManager iManager = InterceptorManager.getInstance();
 	private InternalComponentManager compManager = InternalComponentManager.getInstance();
-	
 	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		Log.info("Starting RemoteRoster Plugin");

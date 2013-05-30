@@ -20,7 +20,7 @@ import org.xmpp.packet.Packet;
  * disco#info package send from external component for a <registered> tag.
  * Because spectrum does not support this feature we have to modify the disco
  * package from spectrum with the registered tag if the user is registered with
- * this gateway. Part of command pattern used in {@link RemoteRosterInterceptor}
+ * this gateway. Part of command pattern used in {@link MainInterceptor}
  * 
  * @author Holger Bergunde
  * 
@@ -53,6 +53,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 						if (packetElement == null)
 							return;
 						String ns = iqPacket.getChildElement().getNamespace().getURI();
+						
 						if (iqPacket.getType().equals(IQ.Type.result) && ns.equals("jabber:iq:register")
 								&& iqPacket.getFrom().toString().equals(subdomain)) {
 							// Check if we are already registered

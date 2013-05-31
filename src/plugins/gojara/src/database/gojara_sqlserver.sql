@@ -10,4 +10,4 @@ CREATE TABLE ofGojaraStatistics (
   PRIMARY KEY (logID)
 );
 
-INSERT INTO ofVersion (name, version) VALUES ('gojara', 0);
+INSERT INTO ofVersion (name, version) VALUES ('gojara', 1);

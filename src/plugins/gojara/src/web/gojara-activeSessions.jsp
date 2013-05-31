@@ -1,9 +1,21 @@
 <%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager"%>
+<%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.GatewaySession"%>
+<%@ page import="org.jivesoftware.openfire.plugin.gojara.utils.JspColumnSortingHelper"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
+	//Helper object for generation of sorting links, column restriction is done in DatabaseManager
+	Map<String, String> sortParams = new HashMap<String, String>();
+	if (request.getParameter("sortby") != null && request.getParameter("sortorder") != null) {
+		sortParams.put("sortby", request.getParameter("sortby") );
+		sortParams.put("sortorder", request.getParameter("sortorder"));
+	} else {
+		sortParams.put("sortby", "transport");
+		sortParams.put("sortorder", "ASC");
+	}
 %>
 <html>
 <head>
@@ -37,26 +49,21 @@
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
 				<tr>
-					<th nowrap>User Name</th>
-					<th nowrap>Resource</th>
-					<th nowrap>Login Time</th>
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperSessions("username", sortParams) %></th>
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperSessions("transport", sortParams) %></th>
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperSessions("loginTime", sortParams)%></th>
 				</tr>
 			</thead>
 			<tbody>
 				<%
-					for (String transport : sessions.keySet()) {
+					for (GatewaySession gwsession : transportManager.getSessionArrayList()) {
 				%>
-				<%
-					for (String user : sessions.get(transport).keySet()) {
-				%>
+
 				<tr class="jive-odd">
-					<td><a href="gojara-sessionDetails.jsp?username=<%=user%>"><%=user%></a></td>
-					<td><%=transport%></td>
-					<td><%=sessions.get(transport).get(user)%></td>
+					<td><a href="gojara-sessionDetails.jsp?username=<%=gwsession.getUsername()%>"><%=gwsession.getUsername()%></a></td>
+					<td><%=gwsession.getTransport()%></td>
+					<td><%=gwsession.getLastActivity()%></td>
 				</tr>
-				<%
-					}
-				%>
 				<%
 					}
 				%>

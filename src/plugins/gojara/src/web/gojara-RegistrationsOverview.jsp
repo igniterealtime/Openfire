@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager"%>
 <%@ page import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry" %>
+<%@ page import="org.jivesoftware.openfire.plugin.gojara.utils.JspColumnSortingHelper"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Set"%>
@@ -10,18 +11,11 @@
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
 	int current_page;
 	int current_limit;
-	//Helper object for restraining sorting to existing colums and nice generation of sorting links
+	//Helper object for generation of sorting links, column restriction is done in DatabaseManager
 	Map<String, String> sortParams = new HashMap<String, String>();
 	if (request.getParameter("sortby") != null && request.getParameter("sortorder") != null) {
-		// prüfen wenn ok, nehmen wir die, ansonsten
-		String allowedAttr = "username transport lastActivity";
-		String allowedOrder = "ASC DESC";
-		String sortAttr = request.getParameter("sortby");
-		String sortOrder = request.getParameter("sortorder");
-		if (allowedAttr.contains(sortAttr) && allowedOrder.contains(sortOrder)) {
-			sortParams.put("sortby", sortAttr);
-			sortParams.put("sortorder", sortOrder);
-		}
+		sortParams.put("sortby", request.getParameter("sortby") );
+		sortParams.put("sortorder", request.getParameter("sortorder"));
 	} else {
 		sortParams.put("sortby", "username");
 		sortParams.put("sortorder", "ASC");
@@ -48,27 +42,7 @@
 		}
 	}
 	%>
-<%! 
-	public String sortingHelper(String column, Map<String, String> sortParams) {
-		String image_asc = "<img alt=\"sorted ASC\" src=\"/images/sort_ascending.gif\">";
-		String image_desc = "<img alt=\"sorted DESC\" src=\"/images/sort_descending.gif\">";
-		String link_beginning = "<a href=\"gojara-RegistrationsOverview.jsp?sortby=";
-		String ending = (column.equals("username") ? "User Name:" : column.equals("transport") ? "Resource:" : "Last Login was at:") + "</a>";
-		
-		String sortinglink = "";
-		if (sortParams.containsValue(column)) {
-			if (sortParams.containsValue("ASC")) {
-				sortinglink = image_asc + link_beginning + column + "&sortorder=DESC\">" + ending;
-			} else if (sortParams.containsValue("DESC")) {
-				sortinglink = image_desc + link_beginning + column + "&sortorder=ASC\">" + ending;
-			}
-		} else {
-			// This is not the currently sorted colum so we want to sort with it, Ascending.
-			sortinglink = link_beginning + column + "&sortorder=ASC\">" + ending;
-		}
-		return sortinglink;
- 	}
-%>
+
  <html>
    <head>
        <title>Overview of existing Registrations</title>
@@ -97,16 +71,16 @@
 	<c:forEach var="i" begin="1" end="20" step="1" varStatus ="status">
 	<c:out value="${i}" /> 
 	</c:forEach>
-	<h6>Logintime 1970 means User did only register but never logged in, propably because of invalid credentials.</h6>
+	<h5>Logintime 1970 means User did only register but never logged in, propably because of invalid credentials.</h5><br>
 	<form name="unregister-form" id="gojara-RegOverviewUnregister"method="POST">
 	<div class="jive-table">
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
-				<tr>
-					<th nowrap><%= sortingHelper("username",sortParams) %></th>
-					<th nowrap><%= sortingHelper("transport",sortParams) %></th>
+				<tr>	
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperRegistrations("username", sortParams) %></th>
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperRegistrations("transport", sortParams) %></th>
 					<th nowrap>Resource active?</th>
-					<th nowrap><%= sortingHelper("lastActivity",sortParams) %></th>
+					<th nowrap><%= JspColumnSortingHelper.sortingHelperRegistrations("lastActivity", sortParams)%></th>
 					<th nowrap>Unregister?</th>
 				</tr>
 			</thead>

@@ -92,7 +92,17 @@ public class TransportSessionManager {
 	public final Map<String, Map<String, Date>> getSessions() {
 		return transportSessions;
 	}
-
+	
+	public ArrayList<GatewaySession> getSessionArrayList(){
+		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>();
+		for (String key : transportSessions.keySet()) {
+			for (String user : transportSessions.get(key).keySet()) {
+				result.add(new GatewaySession(user, key, transportSessions.get(key).get(user)));
+			}
+		}
+		return  result;
+	}
+	
 	public int getNumberOfActiveSessions() {
 		int result = 0;
 		for (String key : transportSessions.keySet()) {

@@ -704,7 +704,10 @@ public class ConversationManager implements Startable, ComponentEventListener {
 				conversationQueue.add(conversation);
 			}
 			if (messageArchivingEnabled) {
-				messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, receiver, date, body, false));
+				if (body != null) {
+					/* OF-677 - Workaround to prevent null messages being archived */
+					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, receiver, date, body, false));
+				}
 			}
 			// Notify listeners of the conversation update.
 			for (ConversationListener listener : conversationListeners) {
@@ -763,7 +766,10 @@ public class ConversationManager implements Startable, ComponentEventListener {
 			}
 			if (roomArchivingEnabled && (roomsArchived.isEmpty() || roomsArchived.contains(roomJID.getNode()))) {
 				JID jid = new JID(roomJID + "/" + nickname);
-				messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, false));
+				if (body != null) {
+					/* OF-677 - Workaround to prevent null messages being archived */
+					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, false));
+				}
 			}
 			// Notify listeners of the conversation update.
 			for (ConversationListener listener : conversationListeners) {

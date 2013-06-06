@@ -168,7 +168,7 @@
                 rule.setDestType(Rule.SourceDestType.Any);
             } else if (destination.equals(Rule.SourceDestType.Other.toString())) {
                 destJID = ParamUtils.getParameter(request, "destOtherJID");
-                if (destJID == null || !(sourceJID.length() > 0)) {
+                if (destJID == null || !(destJID.length() > 0)) {
                     destJID = "";
                     errors.put("destOther", "");
                 }
@@ -196,7 +196,7 @@
             rule.setOrder(new Integer(order));
             if (errors.isEmpty()) {
                if (rule.getSourceType() == Rule.SourceDestType.User ||
-                       rule.getDestType() == Rule.SourceDestType.Other) {
+                       rule.getSourceType() == Rule.SourceDestType.Other) {
                     rule.setSource(rule.getSource().toLowerCase());
                }
                else {

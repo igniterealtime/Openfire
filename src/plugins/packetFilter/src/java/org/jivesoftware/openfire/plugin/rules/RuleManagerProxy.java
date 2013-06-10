@@ -20,7 +20,7 @@ public class RuleManagerProxy implements RuleManager {
     }
 
     public void addRule(Rule rule, Integer order) {
-         
+    	dbRuleManager.addRule(rule, order);
     }
 
     public void addRule(Rule rule) {

@@ -64,6 +64,16 @@ of the 1.0 version so I fixed it. The old format of the rules was unworkable wit
 a good way to convert from the old format, sorry. 
 </p>
 
+<h2>Group Rule Auto Creation</h2>
+<p>
+By default the packet filter plugin will auto-create rules on Shared Group changes ensuring groups can always communicate with each other.
+<br/>
+To disable this behaviour set the following Openfire System Property to false:
+</p>
+<ul>
+		<li>packetfilter.autocreate.grouprules - true/false</li>
+</ul>
+
 <h2>Installation</h2>
 
 <p>Copy packetFilter.jar into the plugins directory of your Openfire installation. The
@@ -150,7 +160,7 @@ packetFilter.jar file over the existing file.</p>
         </li>
         <li>
             Group - All groups defined on your server. The source will match if the sender is a member of the specified
-            group.
+            group or if Any Group is selected will match members in any group.
         </li>
         <li>
             Other - This will let you specify a free form JID. (test@example.com). One wild card can be specified to do

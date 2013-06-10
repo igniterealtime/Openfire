@@ -1,3 +1,4 @@
+<%@page import="org.jivesoftware.openfire.plugin.PacketFilterConstants"%>
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.group.Group"
         %>
@@ -17,7 +18,6 @@
 <%
     webManager.init(request, response, session, application, out);
     Collection<Group> groups = webManager.getGroupManager().getGroups();
-
 
     ComponentList cList = ComponentList.getInstance();
     RuleManager rm = new RuleManagerProxy();
@@ -278,6 +278,10 @@
                     ><%=group.getName()%>
             </option>
             <%}%>
+            <option value="<%=PacketFilterConstants.ANY_GROUP%>" <%if (sourceJID != null && sourceJID.equals(PacketFilterConstants.ANY_GROUP)) {%>
+                    selected<%}%>
+                    ><fmt:message key="pf.anygroup" />
+            </option>
         </select>
     </td>
 </tr>
@@ -411,6 +415,10 @@
                     ><%=group.getName()%>
             </option>
             <%}%>
+            <option value="<%=PacketFilterConstants.ANY_GROUP%>" <%if (sourceJID != null && sourceJID.equals(PacketFilterConstants.ANY_GROUP)) {%>
+                    selected<%}%>
+                    ><fmt:message key="pf.anygroup" />
+            </option>
         </select>
     </td>
 </tr>

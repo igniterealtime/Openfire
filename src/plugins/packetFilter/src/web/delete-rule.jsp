@@ -1,4 +1,5 @@
 
+<%@page import="org.jivesoftware.openfire.plugin.PacketFilterUtil"%>
 <%@ page import="org.jivesoftware.util.*"%>
 <%@ page import="org.jivesoftware.openfire.plugin.rules.RuleManagerProxy" %>
 <%@ page import="org.jivesoftware.openfire.plugin.rules.Rule" %>
@@ -36,7 +37,7 @@
     </head>
     <body>
 
-    You have choosen to delete the rule form <%=rule.getSource()%> to <%=rule.getDestination()%>. Are you sure?
+    You have choosen to delete the rule form <%=PacketFilterUtil.formatRuleSourceDest(rule.getSource())%> to <%=rule.getDestination()%>. Are you sure?
 
     <br>
     <br>

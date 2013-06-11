@@ -6,7 +6,8 @@
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.util.ArrayList" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jstl/core" %>
+<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
+
 <%  
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
 	int current_page;
@@ -68,9 +69,6 @@
    <%= current_page %>
    <%= current_limit %>
    <h1>For Loop in JSTL</h1>
-	<c:forEach var="i" begin="1" end="20" step="1" varStatus ="status">
-	<c:out value="${i}" /> 
-	</c:forEach>
 	<h5>Logintime 1970 means User did only register but never logged in, propably because of invalid credentials.</h5><br>
 	<form name="unregister-form" id="gojara-RegOverviewUnregister"method="POST">
 	<div class="jive-table">

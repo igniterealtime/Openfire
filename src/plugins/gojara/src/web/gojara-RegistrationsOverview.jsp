@@ -1,5 +1,5 @@
 <%@ page
-	import="org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager"%>
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
 <%@ page
@@ -13,6 +13,7 @@
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
+
 	//Helper object for generation of sorting links, column restriction is done in DatabaseManager
 	Map<String, String> sortParams = new HashMap<String, String>();
 	if (request.getParameter("sortby") != null && request.getParameter("sortorder") != null) {
@@ -22,6 +23,7 @@
 		sortParams.put("sortby", "username");
 		sortParams.put("sortorder", "ASC");
 	}
+	//pagination
 	int current_page = 1;
 %>
 
@@ -46,7 +48,7 @@
 		<%=transportManager.removeRegistrationOfUser(transport, key.toString())%>
 	</ul>
 	<%
-		}
+				}
 			}
 		}
 	%>
@@ -79,6 +81,7 @@
 		if (next_items > numOfSessions)
 			next_items = numOfSessions;
 	%>
+	
 	<p>
 		Pages: [
 		<%
@@ -138,7 +141,7 @@
 			<%
 			for (int i = 1; i <= numOfPages; i++) {
 		%>
-			<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
+			<%="<a href=\"gojara-RegistrationsOverview?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
 			<%

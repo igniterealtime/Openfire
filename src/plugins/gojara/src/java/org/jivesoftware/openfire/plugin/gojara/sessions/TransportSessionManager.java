@@ -1,9 +1,9 @@
-package org.jivesoftware.openfire.plugin.gojara.permissions;
+package org.jivesoftware.openfire.plugin.gojara.sessions;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,6 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+/**
+ * @author axel.frederik.brand
+ *	This is the central point for doing anything Gojara GatewaySession Related
+ */
 public class TransportSessionManager {
 	private static TransportSessionManager myself;
 	private DatabaseManager db;
@@ -93,16 +97,38 @@ public class TransportSessionManager {
 		return transportSessions;
 	}
 	
-	public ArrayList<GatewaySession> getSessionArrayList(){
+	
+	/**
+	 * Puts all Sessions into an ArrayList of GatewaySession Objects, and sorts it according to specified sorting attributes.
+	 * @param sortby username, transport or LoginTime
+	 * @param sortorder ASC or DESC
+	 * @return Sorted/Unsorted ArrayList of GatewaySession Objects
+	 */
+	public ArrayList<GatewaySession> getSessionsSorted(String sortby, String sortorder){
 		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>();
 		for (String key : transportSessions.keySet()) {
 			for (String user : transportSessions.get(key).keySet()) {
 				result.add(new GatewaySession(user, key, transportSessions.get(key).get(user)));
 			}
 		}
+		
+		if (sortby.equals("username")) {
+			Collections.sort(result, new SortUserName());
+		} else if (sortby.equals("transport")) {
+			Collections.sort(result, new SortTransport());
+		} else if (sortby.equals("loginTime")) {
+			Collections.sort(result, new SortLastActivity());
+		}
+		if (sortorder.equals("DESC")){
+			Collections.reverse(result);
+		}
 		return  result;
 	}
+
 	
+	/**
+	 * @return  count of recognized active Sessions
+	 */
 	public int getNumberOfActiveSessions() {
 		int result = 0;
 		for (String key : transportSessions.keySet()) {
@@ -110,20 +136,28 @@ public class TransportSessionManager {
 		}
 		return result;
 	}
-
-	public final Map<String, Date> getConnectionsFor(String username) {
-		// Maybe i do too much with hashes
-		Map<String, Date> userconnections = null;
+	
+	/**
+	 * Searches for Sessions with given Username and returns them as ArrList
+	 * @param username
+	 * @return
+	 */
+	public ArrayList<GatewaySession> getConnectionsFor(String username) {
+		ArrayList<GatewaySession> userconnections = null;
 		for (String transport : transportSessions.keySet()) {
 			if (transportSessions.get(transport).containsKey(username)) {
 				if (userconnections == null)
-					userconnections = new HashMap<String, Date>();
-				userconnections.put(transport, transportSessions.get(transport).get(username));
+					userconnections = new ArrayList<GatewaySession>();
+				userconnections.add(new GatewaySession(username, transport, transportSessions.get(transport).get(username)));
 			}
 		}
 		return userconnections;
 	}
-
+	/**
+	 * Returns Registrations associated with Username
+	 * @param username
+	 * @return ArrayList of SessionEntries
+	 */
 	public ArrayList<SessionEntry> getRegistrationsFor(String username) {
 		return db.getSessionEntriesFor(username);
 	}

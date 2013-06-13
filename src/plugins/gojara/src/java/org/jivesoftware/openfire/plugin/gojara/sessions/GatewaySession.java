@@ -1,4 +1,4 @@
-package org.jivesoftware.openfire.plugin.gojara.permissions;
+package org.jivesoftware.openfire.plugin.gojara.sessions;
 
 import java.util.Date;
 
@@ -27,6 +27,11 @@ public class GatewaySession {
 
 	public Date getLastActivity() {
 		return lastActivity;
+	}
+
+	@Override
+	public String toString() {
+		return "GatewaySession [username=" + username + ", transport=" + transport + ", lastActivity=" + lastActivity + "]";
 	}
 	
 

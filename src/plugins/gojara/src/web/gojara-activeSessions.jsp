@@ -1,7 +1,7 @@
 <%@ page
-	import="org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager"%>
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
 <%@ page
-	import="org.jivesoftware.openfire.plugin.gojara.permissions.GatewaySession"%>
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.utils.JspColumnSortingHelper"%>
 <%@ page import="java.util.Map"%>
@@ -12,6 +12,7 @@
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
+
 	//Helper object for generation of sorting links, column restriction is done in DatabaseManager
 	Map<String, String> sortParams = new HashMap<String, String>();
 	if (request.getParameter("sortby") != null && request.getParameter("sortorder") != null) {
@@ -22,6 +23,7 @@
 		sortParams.put("sortorder", "ASC");
 	}
 
+	//pagination
 	int current_page = 1;
 %>
 <html>
@@ -34,15 +36,14 @@
 	<center>Please be aware that currently only users that connect
 		AFTER GoJara has been started are considered for these Sessions. This
 		affects Plugin-restarts.</center>
-	<%
-		Map<String, Map<String, Date>> sessions = transportManager.getSessions();
-	%><br>
+	<br>
 	<h4>
 		Current number of active Gateway Sessions: &emsp;
 		<%=transportManager.getNumberOfActiveSessions()%>
 	</h4>
 	<br>
 	<%
+		Map<String, Map<String, Date>> sessions = transportManager.getSessions();
 		for (String transport : sessions.keySet()) {
 	%>
 	<%=transport.substring(0, 10)%>... :
@@ -53,7 +54,7 @@
 	<br>
 	<br>
 	<%
-		ArrayList<GatewaySession> gwSessions = transportManager.getSessionArrayList();
+		ArrayList<GatewaySession> gwSessions = transportManager.getSessionsSorted(sortParams.get("sortby"), sortParams.get("sortorder"));
 		int numOfSessions = gwSessions.size();
 		int numOfPages = numOfSessions / 100;
 		if (request.getParameter("page") != null) {
@@ -76,7 +77,7 @@
 		Pages: [
 		<%
 		for (int i = 1; i <= numOfPages; i++) {
-		%>
+	%>
 		<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
@@ -115,7 +116,7 @@
 		Pages: [
 		<%
 		for (int i = 1; i <= numOfPages; i++) {
-		%>
+	%>
 		<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>

@@ -1,13 +1,17 @@
-<%@ page import="org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager"%>
-<%@ page import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry" %>
+<%@page
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession"%>
+<%@ page
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
+<%@ page
+	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
-<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.ArrayList"%>
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
 	String username = request.getParameter("username");
-	%>
+%>
 <html>
 <head>
 <title>GatewaySession Details for: &emsp; <%=username%></title>
@@ -23,28 +27,37 @@
 </script>
 </head>
 <body>
-	<% 	
-	if (request.getParameter(username) != null) {
-			String[] unregister = request.getParameterValues(username);	
-	%>
-	<br><br>
 	<%
-		for (String key : unregister) { 
+		if (request.getParameter(username) != null) {
+			String[] unregister = request.getParameterValues(username);
 	%>
-				
-			<%=transportManager.removeRegistrationOfUser(key, username) %><br>
-	<% } %>
-	<br> <br>
+	<br>
+	<br>
 	<%
-	} 
-	Map<String, Date> userconnections = transportManager.getConnectionsFor(username);
-	if (userconnections == null) {
+		for (String key : unregister) {
 	%>
-	<h2><center>User has no active sessions</center></h2>
+
+	<%=transportManager.removeRegistrationOfUser(key, username)%><br>
+	<%
+		}
+	%>
+	<br>
+	<br>
+	<%
+		}
+		ArrayList<GatewaySession> userconnections = transportManager.getConnectionsFor(username);
+		if (userconnections == null) {
+	%>
+	<h2>
+		<center>User has no active sessions</center>
+	</h2>
 	<%
 		} else {
 	%>
-	<center><h1>Active Sessions:</h1></center><br>
+	<center>
+		<h1>Active Sessions:</h1>
+	</center>
+	<br>
 	<div class="jive-table">
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
@@ -54,12 +67,16 @@
 				</tr>
 			</thead>
 			<tbody>
-				<% for (String transport : userconnections.keySet()) { %>
+				<%
+					for (GatewaySession gws : userconnections) {
+				%>
 				<tr class="jive-odd">
-					<td><%= transport%></td>
-					<td><%=userconnections.get(transport)%></td>
+					<td><%=gws.getTransport()%></td>
+					<td><%=gws.getLastActivity()%></td>
 				</tr>
-				<% } %>
+				<%
+					}
+				%>
 			</tbody>
 		</table>
 	</div>
@@ -68,42 +85,67 @@
 		}
 	%>
 
-	<br><hr> 
-	<center><h1>Associated Registrations:</h1></center><br>
-	<form name="unregister-form" id="gojara-sessDetailsUnregister"method="POST">
-	<div class="jive-table">
-		<table cellpadding="0" cellspacing="0" border="0" width="100%">
-			<thead>
-				<tr>
-					<th nowrap>User Name:</th>
-					<th nowrap>Resource:</th>
-					<th nowrap>Resource active?</th>
-					<th nowrap>Last login was at:</th>
-					<th nowrap>Unregister?</th>
-				</tr>
-			</thead>
-			<tbody>
-				<% ArrayList<SessionEntry> registrations = transportManager.getRegistrationsFor(username); %>
-				<% for (SessionEntry registration : registrations) { %>
-				<tr class="jive-odd">
-					<td><a href="/user-properties.jsp?username=<%=registration.getUsername()%>"><%= registration.getUsername()%></a></td>
-					<td><%= registration.getTransport()%></td>
-					<td><% if (transportManager.isTransportActive(registration.getTransport())) { %>
-						<img alt="Yes" src="/images/success-16x16.gif">
-						<% } else { %>
-						<img alt="No" src="/images/error-16x16.gif">
-						<% } %></td>
-					<td><%= registration.getLast_activityAsDate()%></td>
-					<td><input type="checkbox" name="<%= registration.getUsername() %>" value="<%= registration.getTransport() %>"></td>
-				</tr>
-				<% } %>
-			</tbody>
-		</table>
-	</div>
 	<br>
-	<center><input type="button" value="check/uncheck all" onclick='checkedAll();'></center>
+	<hr>
+	<center>
+		<h1>Associated Registrations:</h1>
+	</center>
 	<br>
-	<center><input type="submit" value="Unregister"></center>
+	<form name="unregister-form" id="gojara-sessDetailsUnregister"
+		method="POST">
+		<div class="jive-table">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<thead>
+					<tr>
+						<th nowrap>User Name:</th>
+						<th nowrap>Resource:</th>
+						<th nowrap>Resource active?</th>
+						<th nowrap>Last login was at:</th>
+						<th nowrap>Unregister?</th>
+					</tr>
+				</thead>
+				<tbody>
+					<%
+						ArrayList<SessionEntry> registrations = transportManager.getRegistrationsFor(username);
+					%>
+					<%
+						for (SessionEntry registration : registrations) {
+					%>
+					<tr class="jive-odd">
+						<td><a
+							href="/user-properties.jsp?username=<%=registration.getUsername()%>"><%=registration.getUsername()%></a></td>
+						<td><%=registration.getTransport()%></td>
+						<td>
+							<%
+								if (transportManager.isTransportActive(registration.getTransport())) {
+							%>
+							<img alt="Yes" src="/images/success-16x16.gif"> <%
+ 	} else {
+ %>
+							<img alt="No" src="/images/error-16x16.gif"> <%
+ 	}
+ %>
+						</td>
+						<td><%=registration.getLast_activityAsDate()%></td>
+						<td><input type="checkbox"
+							name="<%=registration.getUsername()%>"
+							value="<%=registration.getTransport()%>"></td>
+					</tr>
+					<%
+						}
+					%>
+				</tbody>
+			</table>
+		</div>
+		<br>
+		<center>
+			<input type="button" value="check/uncheck all"
+				onclick='checkedAll();'>
+		</center>
+		<br>
+		<center>
+			<input type="submit" value="Unregister">
+		</center>
 	</form>
 </body>
 </html>

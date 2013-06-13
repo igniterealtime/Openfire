@@ -14,7 +14,6 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.MainInterceptor;
-import org.jivesoftware.openfire.plugin.gojara.permissions.TransportSessionManager;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;

@@ -1,0 +1,10 @@
+package org.jivesoftware.openfire.plugin.gojara.sessions;
+
+import java.util.Comparator;
+
+public class SortUserName implements Comparator<GatewaySession>{
+	
+	public int compare(GatewaySession gw1, GatewaySession gw2) {
+		return gw1.getUsername().compareTo(gw2.getUsername());
+	}
+}

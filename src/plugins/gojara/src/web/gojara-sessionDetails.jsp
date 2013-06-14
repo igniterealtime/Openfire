@@ -4,10 +4,13 @@
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
+<%@ page
+	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.util.ArrayList"%>
+
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
 	String username = request.getParameter("username");
@@ -72,7 +75,7 @@
 				%>
 				<tr class="jive-odd">
 					<td><%=gws.getTransport()%></td>
-					<td><%=gws.getLastActivity()%></td>
+					<td title="<%=JspHelper.dateDifferenceHelper(gws.getLastActivity()) %>"><%=gws.getLastActivity()%></td>
 				</tr>
 				<%
 					}
@@ -118,15 +121,14 @@
 						<td>
 							<%
 								if (transportManager.isTransportActive(registration.getTransport())) {
-							%>
-							<img alt="Yes" src="/images/success-16x16.gif"> <%
+							%> <img alt="Yes" src="/images/success-16x16.gif"> <%
  	} else {
- %>
-							<img alt="No" src="/images/error-16x16.gif"> <%
+ %> <img alt="No" src="/images/error-16x16.gif"> <%
  	}
  %>
 						</td>
-						<td><%=registration.getLast_activityAsDate()%></td>
+						<td
+							title="<%=JspHelper.dateDifferenceHelper(registration.getLast_activityAsDate())%>"><%=registration.getLast_activityAsDate()%></td>
 						<td><input type="checkbox"
 							name="<%=registration.getUsername()%>"
 							value="<%=registration.getTransport()%>"></td>

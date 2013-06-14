@@ -3,7 +3,7 @@
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession"%>
 <%@ page
-	import="org.jivesoftware.openfire.plugin.gojara.utils.JspColumnSortingHelper"%>
+	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Set"%>
@@ -54,7 +54,8 @@
 	<br>
 	<br>
 	<%
-		ArrayList<GatewaySession> gwSessions = transportManager.getSessionsSorted(sortParams.get("sortby"), sortParams.get("sortorder"));
+		ArrayList<GatewaySession> gwSessions = transportManager
+				.getSessionsSorted(sortParams.get("sortby"), sortParams.get("sortorder"));
 		int numOfSessions = gwSessions.size();
 		int numOfPages = numOfSessions / 100;
 		if (request.getParameter("page") != null) {
@@ -90,9 +91,9 @@
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
 				<tr>
-					<th nowrap><%=JspColumnSortingHelper.sortingHelperSessions("username", sortParams)%></th>
-					<th nowrap><%=JspColumnSortingHelper.sortingHelperSessions("transport", sortParams)%></th>
-					<th nowrap><%=JspColumnSortingHelper.sortingHelperSessions("loginTime", sortParams)%></th>
+					<th nowrap><%=JspHelper.sortingHelperSessions("username", sortParams)%></th>
+					<th nowrap><%=JspHelper.sortingHelperSessions("transport", sortParams)%></th>
+					<th nowrap><%=JspHelper.sortingHelperSessions("loginTime", sortParams)%></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -101,9 +102,11 @@
 				%>
 				<tr class="jive-odd">
 					<td><a
-						href="gojara-sessionDetails.jsp?username=<%=gwsession.getUsername()%>"><%=gwsession.getUsername()%></a></td>
+						href="gojara-sessionDetails.jsp?username=<%=gwsession.getUsername()%>"
+						title="Session Details for <%=gwsession.getUsername()%>"><%=gwsession.getUsername()%></a></td>
 					<td><%=gwsession.getTransport()%></td>
-					<td><%=gwsession.getLastActivity()%></td>
+					<td
+						title="<%=JspHelper.dateDifferenceHelper(gwsession.getLastActivity())%>"><%=gwsession.getLastActivity()%></td>
 				</tr>
 				<%
 					}

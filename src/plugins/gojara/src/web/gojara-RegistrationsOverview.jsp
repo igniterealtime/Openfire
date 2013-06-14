@@ -3,7 +3,7 @@
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
 <%@ page
-	import="org.jivesoftware.openfire.plugin.gojara.utils.JspColumnSortingHelper"%>
+	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Set"%>
@@ -48,15 +48,15 @@
 		<%=transportManager.removeRegistrationOfUser(transport, key.toString())%>
 	</ul>
 	<%
-				}
+		}
 			}
 		}
 	%>
 
 
 	<center>
-		<h5>Logintime 1970 means User did only register but never logged
-			in, propably because of invalid credentials.</h5>
+		<h5>Logintime 1970 means User did register but never logged in,
+			propably because of invalid credentials.</h5>
 	</center>
 	<br>
 	<%
@@ -81,12 +81,12 @@
 		if (next_items > numOfSessions)
 			next_items = numOfSessions;
 	%>
-	
 	<p>
-		Pages: [
+		Registrations total: <b><%=transportManager.getNumberOfRegistrations()%></b><br>
+		<br> Pages: [
 		<%
-		for (int i = 1; i <= numOfPages; i++) {
-	%>
+			for (int i = 1; i <= numOfPages; i++) {
+		%>
 		<%="<a href=\"gojara-RegistrationsOverview.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
@@ -101,10 +101,10 @@
 			<table cellpadding="0" cellspacing="0" border="0" width="100%">
 				<thead>
 					<tr>
-						<th nowrap><%=JspColumnSortingHelper.sortingHelperRegistrations("username", sortParams)%></th>
-						<th nowrap><%=JspColumnSortingHelper.sortingHelperRegistrations("transport", sortParams)%></th>
+						<th nowrap><%=JspHelper.sortingHelperRegistrations("username", sortParams)%></th>
+						<th nowrap><%=JspHelper.sortingHelperRegistrations("transport", sortParams)%></th>
 						<th nowrap>Resource active?</th>
-						<th nowrap><%=JspColumnSortingHelper.sortingHelperRegistrations("lastActivity", sortParams)%></th>
+						<th nowrap><%=JspHelper.sortingHelperRegistrations("lastActivity", sortParams)%></th>
 						<th nowrap>Unregister?</th>
 					</tr>
 				</thead>
@@ -114,7 +114,8 @@
 					%>
 					<tr class="jive-odd">
 						<td><a
-							href="gojara-sessionDetails.jsp?username=<%=registration.getUsername()%>"><%=registration.getUsername()%></a></td>
+							href="gojara-sessionDetails.jsp?username=<%=registration.getUsername()%>"
+							title="Session Details for <%=registration.getUsername()%>"><%=registration.getUsername()%></a></td>
 						<td><%=registration.getTransport()%></td>
 						<td>
 							<%
@@ -125,7 +126,8 @@
  	}
  %>
 						</td>
-						<td><%=registration.getLast_activityAsDate()%></td>
+						<td
+							title="<%=JspHelper.dateDifferenceHelper(registration.getLast_activityAsDate())%>"><%=registration.getLast_activityAsDate()%></td>
 						<td><input type="checkbox"
 							name="<%=registration.getUsername()%>"
 							value="<%=registration.getTransport()%>"></td>
@@ -141,7 +143,7 @@
 			<%
 			for (int i = 1; i <= numOfPages; i++) {
 		%>
-			<%="<a href=\"gojara-RegistrationsOverview?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
+			<%="<a href=\"gojara-RegistrationsOverview.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
 			<%

@@ -169,5 +169,8 @@ public class TransportSessionManager {
 	public ArrayList<SessionEntry> getAllRegistrations(String orderAttr, String order) {
 		return db.getAllSessionEntries(orderAttr, order);
 	}
-
+	
+	public int getNumberOfRegistrations() {
+		return db.getNumberOfRegistrations();
+	}
 }

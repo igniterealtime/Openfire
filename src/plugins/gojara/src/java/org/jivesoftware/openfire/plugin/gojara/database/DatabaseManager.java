@@ -40,6 +40,7 @@ public class DatabaseManager {
 	private static final String UPDATE_SESSION_ENTRY = "UPDATE ofGojaraSessions SET lastActivity = ? WHERE username = ? AND transport = ?";
 	private static final String GET_SESSION_ENTRIES_FOR_USERNAME = "SELECT * FROM ofGojaraSessions WHERE username = ? ORDER BY lastActivity DESC";
 	private static final String DELETE_SESSION_ENTRY = "DELETE FROM ofGojaraSessions WHERE username = ? AND transport = ?";
+	private static final String GET_SESSION_COUNT = "SELECT count(*) FROM ofGojaraSessions";
 	private DatabaseManager() {
 
 		/*
@@ -391,6 +392,24 @@ public class DatabaseManager {
 				result.add(res);
 			}
 			pstmt.close();
+		} catch (SQLException sqle) {
+			Log.error(sqle);
+		} finally {
+			DbConnectionManager.closeConnection(pstmt, con);
+		}
+		return result;
+	}
+	
+	public int getNumberOfRegistrations() {
+		int result = 0;
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(GET_SESSION_COUNT);
+			ResultSet rs = pstmt.executeQuery();
+			rs.next();
+			result = rs.getInt(1);
 		} catch (SQLException sqle) {
 			Log.error(sqle);
 		} finally {

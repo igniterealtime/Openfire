@@ -1,12 +1,14 @@
 package org.jivesoftware.openfire.plugin.gojara.utils;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Map;
 
 /**
  * @author axel.frederik.brand
  *	Helper for generating specificly linked helper columns. 
  */
-public class JspColumnSortingHelper {
+public class JspHelper {
 	
 	/**
 	 * @param column
@@ -52,5 +54,23 @@ public class JspColumnSortingHelper {
 			sortinglink = link_beginning + column + "&sortorder=ASC\">" + ending;
 		}
 		return sortinglink;
+	}
+	
+	/**
+	 * Compares specified date to current date and returns String explaining how much Minutes / Hours / Days has passed since then
+	 * @param oldDate
+	 * @return
+	 */
+	public static String dateDifferenceHelper(Date oldDate) {
+		Timestamp stamp = new Timestamp(System.currentTimeMillis());
+		Date currentDate = new Date(stamp.getTime());
+		long diff = currentDate.getTime() - oldDate.getTime();
+		
+		long diffSeconds = diff / 1000 % 60;
+		long diffMinutes = diff / (60 * 1000) % 60;
+		long diffHours = diff / (60 * 60 * 1000) % 24;
+		long diffDays = diff / (24 * 60 * 60 * 1000);
+		
+		return "" + diffSeconds + " Seconds " + diffMinutes + " Minutes " + diffHours + " Hours " + diffDays + " Days ago";
 	}
 }

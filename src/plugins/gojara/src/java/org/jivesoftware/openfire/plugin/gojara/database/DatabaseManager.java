@@ -16,16 +16,15 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
- * @author Holger Bergunde, Axel-Frederik Brand
- * 	 This class is used to store logs in the database. A
- *   log entry is representated by {@link LogEntry}
+ * @author Holger Bergunde, Axel-Frederik Brand This class is used to store logs in the database. A log entry is
+ *         representated by {@link LogEntry}
  */
 public class DatabaseManager {
 
 	private static Logger Log = Logger.getLogger(DatabaseManager.class);
 
 	private static volatile DatabaseManager _myself;
-	//Logging
+	// Logging
 	private static final String COUNT_LOG_ENTRIES = "SELECT count(*) FROM ofGojaraStatistics";
 	private static final String COUNT_PACKAGES_ODLER = "SELECT count(*) FROM ofGojaraStatistics WHERE messageType like ? AND component = ? AND messageDate > ?";
 	private static final String GET_ALL_LOGS = "SELECT * FROM ofGojaraStatistics ORDER BY logID desc LIMIT 100";
@@ -35,17 +34,18 @@ public class DatabaseManager {
 	private static final String CLEAN_OLD_DATA = "DELETE FROM ofGojaraStatistics WHERE messageDate < ?";
 	private static final String GET_LOGS_DATE_LIMIT_COMPONENT = "SELECT * FROM ofGojaraStatistics WHERE messageDate > ? AND component = ? ORDER BY messageDate DESC LIMIT ?";
 	private final int _dbCleanMinutes;
-	//Session
+	// Session
 	private static final String ADD_SESSION_ENTRY = "INSERT INTO ofGojaraSessions(username, transport, lastActivity) VALUES (?,?,?)";
 	private static final String UPDATE_SESSION_ENTRY = "UPDATE ofGojaraSessions SET lastActivity = ? WHERE username = ? AND transport = ?";
 	private static final String GET_SESSION_ENTRIES_FOR_USERNAME = "SELECT * FROM ofGojaraSessions WHERE username = ? ORDER BY lastActivity DESC";
 	private static final String DELETE_SESSION_ENTRY = "DELETE FROM ofGojaraSessions WHERE username = ? AND transport = ?";
 	private static final String GET_SESSION_COUNT = "SELECT count(*) FROM ofGojaraSessions";
+
 	private DatabaseManager() {
 
 		/*
-		 * Load time from globals if it is set. It represents the minutes the
-		 * log entries stay in database until they will get deleted
+		 * Load time from globals if it is set. It represents the minutes the log entries stay in database until they
+		 * will get deleted
 		 */
 		// TODO: Use PropertyEventListener to check if cleaner.minutes have
 		// changed
@@ -125,8 +125,7 @@ public class DatabaseManager {
 	}
 
 	/*
-	 * Cleans log entries older than 60 minutes if
-	 * plugin.remoteroster.log.cleaner.minutes is not set
+	 * Cleans log entries older than 60 minutes if plugin.remoteroster.log.cleaner.minutes is not set
 	 */
 	private void cleanOldLogEntries() {
 		Connection con = null;
@@ -149,16 +148,13 @@ public class DatabaseManager {
 	 * Adds new log entry for specified component.
 	 * 
 	 * @param component
-	 *            subdomain of the external component. e.g.
-	 *            icq.myjabberserver.com
+	 *            subdomain of the external component. e.g. icq.myjabberserver.com
 	 * @param type
-	 *            string representation of the class. normaly it is like
-	 *            {@link org.xmpp.packet}
+	 *            string representation of the class. normaly it is like {@link org.xmpp.packet}
 	 * @param from
 	 *            full qualified JID of user or component this packet was from
 	 * @param to
-	 *            full qualified JID of user or component this packet was
-	 *            adressed to
+	 *            full qualified JID of user or component this packet was adressed to
 	 */
 	public void addNewLogEntry(String component, String type, String from, String to) {
 		Connection con = null;
@@ -182,8 +178,7 @@ public class DatabaseManager {
 	}
 
 	/**
-	 * This method return the last 100 log entries. Every entry is one string
-	 * and added to a ArrayList
+	 * This method return the last 100 log entries. Every entry is one string and added to a ArrayList
 	 * 
 	 * @return each log as string in a list
 	 * */
@@ -203,8 +198,8 @@ public class DatabaseManager {
 				String type = rs.getString(3);
 				String component = rs.getString(6);
 				Timestamp date = rs.getTimestamp(2);
-				String res = "From: " + from + " To: " + to + " Type: " + type + " Timestamp: " + date.toString()
-						+ "Component: " + component;
+				String res = "From: " + from + " To: " + to + " Type: " + type + " Timestamp: " + date.toString() + "Component: "
+						+ component;
 				_result.add(res);
 			}
 		}
@@ -254,16 +249,14 @@ public class DatabaseManager {
 	}
 
 	/**
-	 * Counts the number of log entries in the databse that are older than
-	 * specified value
+	 * Counts the number of log entries in the databse that are older than specified value
 	 * 
 	 * @param component
 	 *            subdomain of the component the packages were flown by
 	 * @param packetClass
 	 *            the class the packet was instance of
 	 * @param minutes
-	 *            the log entry should not be older than (timestamp should be
-	 *            smaller than currentTime - minutes)
+	 *            the log entry should not be older than (timestamp should be smaller than currentTime - minutes)
 	 * @return number of rows found in database or -1 if there was an error
 	 */
 	public int getPacketCountOlderThan(String component, @SuppressWarnings("rawtypes") Class packetClass, int minutes) {
@@ -287,10 +280,10 @@ public class DatabaseManager {
 		}
 		return -1;
 	}
-	
+
 	/**
-	 * Trys to update SessionEntry for given user/transport combination. If update does not
-	 * work due to no record being there, it inserts record.
+	 * Trys to update SessionEntry for given user/transport combination. If update does not work due to no record being
+	 * there, it inserts record.
 	 */
 	public void insertOrUpdateSession(String transport, String user, long time) {
 		Connection con = null;
@@ -318,13 +311,13 @@ public class DatabaseManager {
 			DbConnectionManager.closeConnection(pstmt, con);
 		}
 	}
-	
+
 	public int removeSessionEntry(String transport, String user) {
 		int result = 0;
 		Log.info("I would now hit the DB and remove " + transport + " " + user);
 		Connection con = null;
 		PreparedStatement pstmt = null;
-		
+
 		try {
 			con = DbConnectionManager.getConnection();
 			pstmt = con.prepareStatement(DELETE_SESSION_ENTRY);
@@ -338,7 +331,7 @@ public class DatabaseManager {
 		}
 		return result;
 	}
-	
+
 	public ArrayList<SessionEntry> getSessionEntriesFor(String username) {
 		ArrayList<SessionEntry> result = new ArrayList<SessionEntry>();
 		Connection con = null;
@@ -353,7 +346,7 @@ public class DatabaseManager {
 				String user = rs.getString(1);
 				String transport = rs.getString(2);
 				long lastActivity = rs.getLong(3);
-				SessionEntry res = new SessionEntry(user,transport,lastActivity);
+				SessionEntry res = new SessionEntry(user, transport, lastActivity);
 				result.add(res);
 			}
 
@@ -365,16 +358,15 @@ public class DatabaseManager {
 		}
 		return result;
 	}
-	
+
 	public ArrayList<SessionEntry> getAllSessionEntries(String orderAttr, String order) {
 		String allowedAttr = "username transport lastActivity";
 		String allowedOrder = "ASC DESC";
-		if ((orderAttr == null || order == null) 
-				|| (!allowedAttr.contains(orderAttr) || !allowedOrder.contains(order))) {
-			//Use default case if sorting attributes are not correct.
+		if ((orderAttr == null || order == null) || (!allowedAttr.contains(orderAttr) || !allowedOrder.contains(order))) {
+			// Use default case if sorting attributes are not correct.
 			orderAttr = "username";
 			order = "DESC";
-		} 
+		}
 
 		ArrayList<SessionEntry> result = new ArrayList<SessionEntry>();
 		Connection con = null;
@@ -388,7 +380,7 @@ public class DatabaseManager {
 				String user = rs.getString(1);
 				String transport = rs.getString(2);
 				long lastActivity = rs.getLong(3);
-				SessionEntry res = new SessionEntry(user,transport,lastActivity);
+				SessionEntry res = new SessionEntry(user, transport, lastActivity);
 				result.add(res);
 			}
 			pstmt.close();
@@ -399,7 +391,7 @@ public class DatabaseManager {
 		}
 		return result;
 	}
-	
+
 	public int getNumberOfRegistrations() {
 		int result = 0;
 		Connection con = null;

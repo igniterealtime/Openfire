@@ -13,8 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
+ * This is the central point for doing anything Gojara GatewaySession related, we can add component session, add
+ * gatewaysession etc
+ * 
  * @author axel.frederik.brand
- *	This is the central point for doing anything Gojara GatewaySession Related
  */
 public class TransportSessionManager {
 	private static TransportSessionManager myself;
@@ -38,11 +40,21 @@ public class TransportSessionManager {
 		return myself;
 	}
 
+	/**
+	 * adds a subdomain to watched transports
+	 * 
+	 * @param subdomain
+	 */
 	public void addTransport(String subdomain) {
 		transportSessions.put(subdomain, new ConcurrentHashMap<String, Date>());
 		Log.info("Added key to transportSessionMap: " + subdomain);
 	}
 
+	/**
+	 * removes subdomain from watched transports
+	 * 
+	 * @param subdomain
+	 */
 	public void removeTransport(String subdomain) {
 		Map<String, Date> disconnectedUsers = transportSessions.remove(subdomain);
 		Log.info("Removed " + subdomain + "from TransportSessionMap " + disconnectedUsers.toString());
@@ -52,11 +64,25 @@ public class TransportSessionManager {
 	public boolean isTransportActive(String subdomain) {
 		return transportSessions.containsKey(subdomain) ? true : false;
 	}
+
+	/**
+	 * register is seperate because a user may register to transport but not connect to it, e.g. with wrong credentials.
+	 * we still want to keep track of those registrations so we know they happened and we can reset them
+	 * 
+	 * @param transport
+	 * @param user
+	 */
 	public void registerUserTo(String transport, String user) {
-		//This ofc is not a session yet, so we just keep the registration in db to track eventual unsuccessful registers
 		db.insertOrUpdateSession(transport, user, 0);
 	}
-	
+
+	/**
+	 * Add the session of user that connected to gateway and update or create timestamp for session
+	 * 
+	 * @param transport
+	 * @param user
+	 * @return
+	 */
 	public boolean connectUserTo(String transport, String user) {
 		if (transportSessions.get(transport) != null) {
 			long millis = System.currentTimeMillis();
@@ -82,6 +108,14 @@ public class TransportSessionManager {
 		return transportSessions.get(transport).containsKey(user);
 	}
 
+	/**
+	 * Removing a registration will cause a unregister msg being sent to Spectrum2 for this specific User/Gateway
+	 * combination Also it will be removed from our db.
+	 * 
+	 * @param transport
+	 * @param user
+	 * @return
+	 */
 	public String removeRegistrationOfUser(String transport, String user) {
 		int result = db.removeSessionEntry(transport, user);
 		if (result == 0) {
@@ -96,22 +130,25 @@ public class TransportSessionManager {
 	public final Map<String, Map<String, Date>> getSessions() {
 		return transportSessions;
 	}
-	
-	
+
 	/**
-	 * Puts all Sessions into an ArrayList of GatewaySession Objects, and sorts it according to specified sorting attributes.
-	 * @param sortby username, transport or LoginTime
-	 * @param sortorder ASC or DESC
+	 * Puts all Sessions into an ArrayList of GatewaySession Objects, and sorts it according to specified sorting
+	 * attributes.
+	 * 
+	 * @param sortby
+	 *            username, transport or LoginTime
+	 * @param sortorder
+	 *            ASC or DESC
 	 * @return Sorted/Unsorted ArrayList of GatewaySession Objects
 	 */
-	public ArrayList<GatewaySession> getSessionsSorted(String sortby, String sortorder){
+	public ArrayList<GatewaySession> getSessionsSorted(String sortby, String sortorder) {
 		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>();
 		for (String key : transportSessions.keySet()) {
 			for (String user : transportSessions.get(key).keySet()) {
 				result.add(new GatewaySession(user, key, transportSessions.get(key).get(user)));
 			}
 		}
-		
+
 		if (sortby.equals("username")) {
 			Collections.sort(result, new SortUserName());
 		} else if (sortby.equals("transport")) {
@@ -119,15 +156,14 @@ public class TransportSessionManager {
 		} else if (sortby.equals("loginTime")) {
 			Collections.sort(result, new SortLastActivity());
 		}
-		if (sortorder.equals("DESC")){
+		if (sortorder.equals("DESC")) {
 			Collections.reverse(result);
 		}
-		return  result;
+		return result;
 	}
 
-	
 	/**
-	 * @return  count of recognized active Sessions
+	 * @return count of recognized active Sessions
 	 */
 	public int getNumberOfActiveSessions() {
 		int result = 0;
@@ -136,9 +172,10 @@ public class TransportSessionManager {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Searches for Sessions with given Username and returns them as ArrList
+	 * 
 	 * @param username
 	 * @return
 	 */
@@ -153,8 +190,10 @@ public class TransportSessionManager {
 		}
 		return userconnections;
 	}
+
 	/**
 	 * Returns Registrations associated with Username
+	 * 
 	 * @param username
 	 * @return ArrayList of SessionEntries
 	 */
@@ -163,13 +202,13 @@ public class TransportSessionManager {
 	}
 
 	/**
-	 * Validation for correctness of attributes is done in DB Manager, returns default sorting: username ASC when not
-	 * correct
+	 * Get all registrations sorted by attribute and order. Validation for correctness of attributes is done in DB
+	 * Manager, returns default sorting: username ASC when not valid
 	 */
 	public ArrayList<SessionEntry> getAllRegistrations(String orderAttr, String order) {
 		return db.getAllSessionEntries(orderAttr, order);
 	}
-	
+
 	public int getNumberOfRegistrations() {
 		return db.getNumberOfRegistrations();
 	}

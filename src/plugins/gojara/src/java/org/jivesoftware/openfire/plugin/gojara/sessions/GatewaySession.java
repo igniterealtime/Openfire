@@ -3,14 +3,15 @@ package org.jivesoftware.openfire.plugin.gojara.sessions;
 import java.util.Date;
 
 /**
- * @author axel.frederik.brand
  * Class for storing Gateway Session Objects for Iteration for JSP
+ * 
+ * @author axel.frederik.brand
  */
 public class GatewaySession {
 	private String username;
 	private String transport;
 	private Date lastActivity;
-	
+
 	public GatewaySession(String username, String transport, Date lastActivity) {
 		this.username = username;
 		this.transport = transport;
@@ -33,6 +34,5 @@ public class GatewaySession {
 	public String toString() {
 		return "GatewaySession [username=" + username + ", transport=" + transport + ", lastActivity=" + lastActivity + "]";
 	}
-	
 
 }

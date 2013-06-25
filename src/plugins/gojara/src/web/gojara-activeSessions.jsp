@@ -39,7 +39,7 @@
 	</h4>
 	<br>
 	<%
-		Map<String, Map<String, Date>> sessions = transportManager.getSessions();
+		Map<String, Map<String, Long>> sessions = transportManager.getSessions();
 		for (String transport : sessions.keySet()) {
 	%>
 	<%=transport.substring(0, 10)%>... :

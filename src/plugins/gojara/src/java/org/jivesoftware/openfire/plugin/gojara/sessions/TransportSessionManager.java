@@ -22,7 +22,7 @@ public class TransportSessionManager {
 	private static TransportSessionManager myself;
 	private DatabaseManager db;
 	private GojaraAdminManager adminManager;
-	private Map<String, Map<String, Date>> transportSessions = new ConcurrentHashMap<String, Map<String, Date>>();
+	private Map<String, Map<String, Long>> transportSessions = new ConcurrentHashMap<String, Map<String, Long>>();
 	private static final Logger Log = LoggerFactory.getLogger(TransportSessionManager.class);
 
 	private TransportSessionManager() {
@@ -47,7 +47,7 @@ public class TransportSessionManager {
 	 * @param subdomain
 	 */
 	public void addTransport(String subdomain) {
-		transportSessions.put(subdomain, new ConcurrentHashMap<String, Date>());
+		transportSessions.put(subdomain, new ConcurrentHashMap<String, Long>());
 		Log.info("Added key to transportSessionMap: " + subdomain);
 	}
 
@@ -57,7 +57,7 @@ public class TransportSessionManager {
 	 * @param subdomain
 	 */
 	public void removeTransport(String subdomain) {
-		Map<String, Date> disconnectedUsers = transportSessions.remove(subdomain);
+		Map<String, Long> disconnectedUsers = transportSessions.remove(subdomain);
 		Log.info("Removed " + subdomain + "from TransportSessionMap " + disconnectedUsers.toString());
 
 	}
@@ -87,9 +87,7 @@ public class TransportSessionManager {
 	public boolean connectUserTo(String transport, String user) {
 		if (transportSessions.get(transport) != null) {
 			long millis = System.currentTimeMillis();
-			Timestamp stamp = new Timestamp(millis);
-			Date date = new Date(stamp.getTime());
-			transportSessions.get(transport).put(user, date);
+			transportSessions.get(transport).put(user, millis);
 			db.insertOrUpdateSession(transport, user, millis);
 			return true;
 		}
@@ -112,8 +110,7 @@ public class TransportSessionManager {
 	/**
 	 * 
 	 * Removing a registration will cause a unregister msg being sent to Spectrum2 for this specific User/Gateway
-	 * combination Also it will be removed from our db.
-	 * For this to happen the transport has to be active.
+	 * combination Also it will be removed from our db. For this to happen the transport has to be active.
 	 * 
 	 * @param transport
 	 * @param user
@@ -133,7 +130,7 @@ public class TransportSessionManager {
 		} else {
 			return "Cannot Unregister user " + user + " from " + transport + " when it's inactive.";
 		}
-		
+
 	}
 
 	/**
@@ -147,7 +144,7 @@ public class TransportSessionManager {
 		}
 	}
 
-	public final Map<String, Map<String, Date>> getSessions() {
+	public final Map<String, Map<String, Long>> getSessions() {
 		return transportSessions;
 	}
 
@@ -165,7 +162,9 @@ public class TransportSessionManager {
 		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>();
 		for (String key : transportSessions.keySet()) {
 			for (String user : transportSessions.get(key).keySet()) {
-				result.add(new GatewaySession(user, key, transportSessions.get(key).get(user)));
+				Timestamp stamp = new Timestamp(transportSessions.get(key).get(user));
+				Date date = new Date(stamp.getTime());
+				result.add(new GatewaySession(user, key, date));
 			}
 		}
 
@@ -205,7 +204,9 @@ public class TransportSessionManager {
 			if (transportSessions.get(transport).containsKey(username)) {
 				if (userconnections == null)
 					userconnections = new ArrayList<GatewaySession>();
-				userconnections.add(new GatewaySession(username, transport, transportSessions.get(transport).get(username)));
+				Timestamp stamp = new Timestamp(transportSessions.get(transport).get(username));
+				Date date = new Date(stamp.getTime());
+				userconnections.add(new GatewaySession(username, transport, date));
 			}
 		}
 		return userconnections;

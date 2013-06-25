@@ -14,6 +14,8 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.MainInterceptor;
+import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
+import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -48,6 +50,8 @@ public class RemoteRosterPlugin implements Plugin {
 	private MainInterceptor mainInterceptor = new MainInterceptor();
 	private InterceptorManager iManager = InterceptorManager.getInstance();
 	private InternalComponentManager compManager = InternalComponentManager.getInstance();
+	private TransportSessionManager transportSessionManager = TransportSessionManager.getInstance();
+	private GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
 	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		Log.info("Starting RemoteRoster Plugin");
@@ -55,10 +59,11 @@ public class RemoteRosterPlugin implements Plugin {
 		iManager.addInterceptor(mainInterceptor);
 		manageExternalComponents();
 		listenToSettings();
+		transportSessionManager.initializeSessions();
 		Log.info("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
 	}
 
-	/*
+	/**
 	 * Handles external components that connect to openfire. We check if the
 	 * external component is maybe a gateway and interesting for us
 	 */
@@ -70,12 +75,7 @@ public class RemoteRosterPlugin implements Plugin {
 			 */
 			
 			public void componentUnregistered(JID componentJID) {
-//				ComponentSession session = _sessionManager.getComponentSession(componentJID.getDomain());
-//				if (session != null && _interceptors.containsKey(session.getExternalComponent().getInitialSubdomain())) {
-//					String initialSubdomain = session.getExternalComponent().getInitialSubdomain();
-					// Remove it from Map & ComponentManager
 					mainInterceptor.removeTransport(componentJID.toString());
-//				}
 			}
 
 			/*
@@ -109,7 +109,7 @@ public class RemoteRosterPlugin implements Plugin {
 		compManager.addListener(_componentObserver);
 	}
 
-	/*
+	/**
 	 * Registers a listener for JiveGlobals. We might restart our service, if
 	 * there were some changes for our gateways
 	 */
@@ -129,6 +129,7 @@ public class RemoteRosterPlugin implements Plugin {
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		compManager.removeListener(_componentObserver);
+		gojaraAdminManager.removeAdminUser();
 		pluginManager = null;
 		mainInterceptor = null;
 		compManager = null;

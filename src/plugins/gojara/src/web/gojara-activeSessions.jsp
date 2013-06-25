@@ -33,10 +33,6 @@
 <meta name="pageID" content="gojaraSessions" />
 </head>
 <body>
-	<center>Please be aware that currently only users that connect
-		AFTER GoJara has been started are considered for these Sessions. This
-		affects Plugin-restarts.</center>
-	<br>
 	<h4>
 		Current number of active Gateway Sessions: &emsp;
 		<%=transportManager.getNumberOfActiveSessions()%>

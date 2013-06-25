@@ -13,21 +13,22 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
- * This is the central point for doing anything Gojara GatewaySession related, we can add component session, add
- * gatewaysession etc
+ * This is the central point for doing anything Gojara GatewaySession related. We keep track of Users connected to
+ * Transports, stats about these and provide some methods for Presentation in JSP Pages.
  * 
  * @author axel.frederik.brand
  */
 public class TransportSessionManager {
 	private static TransportSessionManager myself;
 	private DatabaseManager db;
+	private GojaraAdminManager adminManager;
 	private Map<String, Map<String, Date>> transportSessions = new ConcurrentHashMap<String, Map<String, Date>>();
 	private static final Logger Log = LoggerFactory.getLogger(TransportSessionManager.class);
 
 	private TransportSessionManager() {
 		db = DatabaseManager.getInstance();
+		adminManager = GojaraAdminManager.getInstance();
 		Log.info(" Created TransportSessionManager");
-
 	}
 
 	public static TransportSessionManager getInstance() {
@@ -109,21 +110,40 @@ public class TransportSessionManager {
 	}
 
 	/**
+	 * 
 	 * Removing a registration will cause a unregister msg being sent to Spectrum2 for this specific User/Gateway
 	 * combination Also it will be removed from our db.
+	 * For this to happen the transport has to be active.
 	 * 
 	 * @param transport
 	 * @param user
-	 * @return
+	 * @return String that describes what happened.
 	 */
 	public String removeRegistrationOfUser(String transport, String user) {
-		int result = db.removeSessionEntry(transport, user);
-		if (result == 0) {
-			return "Did not remove entry for user: " + user + " and transport: " + transport + "\n";
-		} else if (result == 1) {
-			return "Successfully removed entry for user: " + user + " and transport: " + transport + " \n";
+		if (transportSessions.containsKey(transport)) {
+			adminManager.unregisterUserFrom(transport, user);
+			int result = db.removeSessionEntry(transport, user);
+			if (result == 0) {
+				return "Did not remove entry for user: " + user + " and transport: " + transport + "\n";
+			} else if (result == 1) {
+				return "Successfully removed entry for user: " + user + " and transport: " + transport + " \n";
+			} else {
+				return "What is happening ???: " + result;
+			}
 		} else {
-			return "What is happening ???: " + result;
+			return "Cannot Unregister user " + user + " from " + transport + " when it's inactive.";
+		}
+		
+	}
+
+	/**
+	 * Initializes Sessions, ofc needs to be called at a point where there are Transports registered in
+	 * transportSessions
+	 */
+	public void initializeSessions() {
+		Log.info("initializing Sessions.");
+		for (String transport : transportSessions.keySet()) {
+			adminManager.getOnlineUsersOf(transport);
 		}
 	}
 

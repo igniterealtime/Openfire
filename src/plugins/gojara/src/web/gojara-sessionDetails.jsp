@@ -33,23 +33,29 @@
 </script>
 </head>
 <body>
+	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
+		<center><h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center>
+	 <% } %>
+	
 	<%
 		if (request.getParameter(username) != null) {
 			String[] unregister = request.getParameterValues(username);
 	%>
-	<br>
-	<br>
-	<%
-		for (String key : unregister) {
-	%>
-
-	<%=transportManager.removeRegistrationOfUser(key, username)%><br>
-	<%
-		}
-	%>
-	<br>
-	<br>
-	<%
+		<br>
+		<br>
+		<%
+			for (String key : unregister) {
+		%>
+	
+		<%=transportManager.removeRegistrationOfUser(key, username)%><br>
+		<%
+			}
+		%>
+		<br>
+		<br>
+	
+		<%
 		}
 		ArrayList<GatewaySession> userconnections = transportManager.getConnectionsFor(username);
 		if (userconnections == null) {

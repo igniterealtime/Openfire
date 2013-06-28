@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.plugin.gojara.sessions;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,6 +74,8 @@ public class GojaraAdminManager {
 	 */
 	public void testAdminConfiguration(String gateway) {
 		unconfiguredGateways.add(gateway);
+		// we add these here and not in confirmGateway so its more clear that these are not being gathered when viewing
+		// Spectrum2 Stats jsp
 		getGatewayStatisticsMap().put(gateway, new HashMap<String, Integer>());
 
 		Message message = new Message();
@@ -183,6 +186,7 @@ public class GojaraAdminManager {
 
 		refreshCooldown = System.currentTimeMillis();
 
+		Log.info("Gathering Gateway-Statistics!");
 		for (String gateway : configuredGateways) {
 			uptime(gateway);
 			messagesFrom(gateway);
@@ -191,29 +195,68 @@ public class GojaraAdminManager {
 			averageMemoryOfUser(gateway);
 		}
 	}
+
 	private void uptime(String transport) {
 		Message message = generateCommand(transport, "uptime");
 		router.route(message);
 	}
-	
+
 	private void messagesFrom(String transport) {
 		Message message = generateCommand(transport, "messages_from_xmpp");
 		router.route(message);
 	}
-	
+
 	private void messagesTo(String transport) {
 		Message message = generateCommand(transport, "messages_to_xmpp");
 		router.route(message);
 	}
-	
+
 	private void usedMemoryOf(String transport) {
 		Message message = generateCommand(transport, "used_memory");
 		router.route(message);
 	}
-	
+
 	private void averageMemoryOfUser(String transport) {
 		Message message = generateCommand(transport, "average_memory_per_user");
 		router.route(message);
 	}
-
+	
+	/**
+	 * Preps the specified stat for nicer output which is used in tables.
+	 * @param gateway
+	 * @param stat
+	 * @return
+	 */
+	public String getStatisticsPresentationString(String gateway, String stat) {
+		if (gatewayStatisticsMap.containsKey(gateway)) {
+			if (stat.equals("uptime")) {
+				if (gatewayStatisticsMap.get(gateway).get("uptime") != null) {
+					int time = gatewayStatisticsMap.get(gateway).get("uptime");
+					long diffSeconds = time % 60;
+					long diffMinutes = time / 60 % 60;
+					long diffHours = time / (60 * 60) % 24;
+					long diffDays = time / (24 * 60 * 60);
+					return "" + diffSeconds+ " Sec " + diffMinutes + " Min " + diffHours + " Hours " + diffDays + " Days";
+				}
+			} else if (stat.equals("messages_from_xmpp")) {
+				if (gatewayStatisticsMap.get(gateway).get("messages_from_xmpp") != null)
+					return "" + gatewayStatisticsMap.get(gateway).get("messages_from_xmpp");
+			} else if (stat.equals("messages_to_xmpp")) {
+				if (gatewayStatisticsMap.get(gateway).get("messages_to_xmpp") != null)
+					return "" + gatewayStatisticsMap.get(gateway).get("messages_to_xmpp");
+			} else if (stat.equals("used_memory")) {
+				if (gatewayStatisticsMap.get(gateway).get("used_memory") != null) {
+					DecimalFormat f = new DecimalFormat("#0.00");
+					double mb = gatewayStatisticsMap.get(gateway).get("used_memory") / 1024.0;
+					
+					return ""  + f.format(mb) + " MB";
+				}
+			} else if (stat.equals("average_memory_per_user")) {
+				if (gatewayStatisticsMap.get(gateway).get("average_memory_per_user") != null) {
+					return "" + gatewayStatisticsMap.get(gateway).get("average_memory_per_user") + " KB";
+				}
+			}
+		}
+		return "-";
+	}
 }

@@ -200,6 +200,17 @@ public class TransportSessionManager {
 		}
 		return result;
 	}
+	
+	/**
+	 * Returns number of active Sessions for specified transport or 0 if not valid transport.
+	 * @param transport
+	 * @return
+	 */
+	public int getNumberOfActiveSessionsFor(String transport) {
+		if (transportSessions.containsKey(transport))
+			return transportSessions.get(transport).size();
+		return 0;
+	}
 
 	/**
 	 * Searches for Sessions with given Username and returns them as ArrList
@@ -241,5 +252,12 @@ public class TransportSessionManager {
 
 	public int getNumberOfRegistrations() {
 		return db.getNumberOfRegistrations();
+	}
+	
+	public int getNumberOfRegistrationsForTransport(String transport) {
+		if (transportSessions.containsKey(transport)) {
+			return db.getNumberOfRegistrationsForTransport(transport);
+		}
+		return 0;
 	}
 }

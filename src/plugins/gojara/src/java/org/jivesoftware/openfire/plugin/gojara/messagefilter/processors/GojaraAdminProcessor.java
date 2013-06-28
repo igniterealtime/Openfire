@@ -38,12 +38,12 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 			handleStatistic(message, subdomain, "uptime");
 		} else if (command.equals("messages_from_xmpp")) {
 			handleStatistic(message, subdomain, "messages_from_xmpp");
-		} else if (command.equals("messags_to_xmpp")) {
+		} else if (command.equals("messages_to_xmpp")) {
 			handleStatistic(message, subdomain, "messages_to_xmpp");
 		} else if (command.equals("used_memory")) {
 			handleStatistic(message, subdomain, "used_memory");
-		} else if (command.equals("used_memory_per_user")) {
-			handleStatistic(message, subdomain, "used_memory_per_user");
+		} else if (command.equals("average_memory_per_user")) {
+			handleStatistic(message, subdomain, "average_memory_per_user");
 		}
 	}
 

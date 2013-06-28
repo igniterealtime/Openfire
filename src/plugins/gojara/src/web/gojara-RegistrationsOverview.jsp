@@ -58,6 +58,10 @@
 
 
 	<center>
+	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
+		<h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2>
+	 <% } %>
 		<h5>Logintime 1970 means User did register but never logged in,
 			propably because of invalid credentials.</h5>
 	</center>

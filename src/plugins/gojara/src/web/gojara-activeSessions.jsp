@@ -1,6 +1,9 @@
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
 <%@ page
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager"%>
+
+<%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
@@ -12,7 +15,7 @@
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
-
+	GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
 	//Helper object for generation of sorting links, column restriction is done in DatabaseManager
 	Map<String, String> sortParams = new HashMap<String, String>();
 	if (request.getParameter("sortby") != null && request.getParameter("sortorder") != null) {
@@ -33,6 +36,11 @@
 <meta name="pageID" content="gojaraSessions" />
 </head>
 <body>
+	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
+		<center><h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means session details may be inaccurate or not logged at all.<br/>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center>
+	 <% } %>
+	 
 	<h4>
 		Current number of active Gateway Sessions: &emsp;
 		<%=transportManager.getNumberOfActiveSessions()%>

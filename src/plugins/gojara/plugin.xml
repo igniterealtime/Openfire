@@ -24,6 +24,12 @@
 					description="${rr.summary.title}" />
 			</sidebar>
 		</tab>
+		<tab id="tab-server">
+			<sidebar id="sidebar-server-manager">
+				<item id="gojaraGatewayStatistics" name="Spectrum2 Stats"
+					url="gojara-gatewayStatistics.jsp" description="Click to see Stats of Spectrum2 Components"></item>
+			</sidebar>
+		</tab>
 		<tab id="tab-session">
 			<sidebar id="sidebar-session">
 				<item id="gojaraSessions" name="Gateway Sessions" url="gojara-activeSessions.jsp"

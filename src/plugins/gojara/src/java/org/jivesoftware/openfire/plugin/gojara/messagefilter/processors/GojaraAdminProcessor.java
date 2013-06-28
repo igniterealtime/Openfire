@@ -38,12 +38,14 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	private void handleOnlineUsers(Message message, String subdomain) {
+		Log.info("Found online_users command!");
+		if (message.getBody().equals("0"))
+			return;
 		String[] content = message.getBody().split("\\r?\\n");
 		for (String user : content) {
 			JID userjid = new JID(user);
 			transportSessionManager.connectUserTo(subdomain, userjid.getNode());
 		}
-		Log.info("Found online_users command!");
 	}
 
 	private void handleUnregister(Message message) {

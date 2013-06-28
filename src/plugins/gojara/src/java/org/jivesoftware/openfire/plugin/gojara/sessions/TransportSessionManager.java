@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.plugin.gojara.database.*;
@@ -134,7 +135,7 @@ public class TransportSessionManager {
 	}
 
 	/**
-	 * Initializes Sessions, ofc needs to be called at a point where there are Transports registered in
+	 * Initializes Sessions through adminmanager, ofc needs to be called at a point where there are Transports registered in
 	 * transportSessions
 	 */
 	public void initializeSessions() {
@@ -143,7 +144,14 @@ public class TransportSessionManager {
 			adminManager.getOnlineUsersOf(transport);
 		}
 	}
-
+	
+	/**
+	 * @return Set of currently active Gateways
+	 */
+	public final Set<String>getActiveGateways() {
+		return transportSessions.keySet();
+	}
+	
 	public final Map<String, Map<String, Long>> getSessions() {
 		return transportSessions;
 	}

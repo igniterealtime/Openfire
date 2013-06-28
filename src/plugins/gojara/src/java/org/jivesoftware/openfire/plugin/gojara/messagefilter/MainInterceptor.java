@@ -8,6 +8,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
+import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
 import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
@@ -35,6 +36,7 @@ public class MainInterceptor implements PacketInterceptor {
 	private Set<String> activeTransports = new ConcurrentHashSet<String>();
 	private Map<String, AbstractRemoteRosterProcessor> packetProcessors = new HashMap<String, AbstractRemoteRosterProcessor>();
 	private TransportSessionManager tSessionManager = TransportSessionManager.getInstance();
+	private GojaraAdminManager gojaraAdminmanager = GojaraAdminManager.getInstance();
 	private Boolean frozen;
 
 	public MainInterceptor() {
@@ -65,8 +67,10 @@ public class MainInterceptor implements PacketInterceptor {
 	public boolean addTransport(String subDomain) {
 		Log.info("Trying to add " + subDomain + " to Set of watched Transports.");
 		boolean retval = this.activeTransports.add(subDomain);
-		if (retval)
+		if (retval) {
 			tSessionManager.addTransport(subDomain);
+			 gojaraAdminmanager.testAdminConfiguration(subDomain);
+		}
 
 		return retval;
 	}
@@ -74,6 +78,7 @@ public class MainInterceptor implements PacketInterceptor {
 	public boolean removeTransport(String subDomain) {
 		Log.info("Trying to remove " + subDomain + " from Set of watched Transports.");
 		tSessionManager.removeTransport(subDomain);
+		 gojaraAdminmanager.gatewayUnregistered(subDomain);
 		return this.activeTransports.remove(subDomain);
 	}
 
@@ -151,10 +156,18 @@ public class MainInterceptor implements PacketInterceptor {
 					if (to_s.length() > 0 && iqPacket.getType().equals(IQ.Type.get))
 						throw new PacketRejectedException();
 				}
-				// NONPERSISTANT Feature
-			} else if (!JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)) {
-				if (packet instanceof Presence && activeTransports.contains(from))
-					packetProcessors.get("handleNonPersistant").process(packet, from, to, from);
+
+			}
+			// Gojara Admin Manager Feature - Intercept responses to ADHOC commands sent via AdminManager
+			else if (packet instanceof Message && activeTransports.contains(from) && to.contains("gojaraadmin")) {
+				packetProcessors.get("gojaraAdminProcessor").process(packet, from, to, from);
+			}
+			// NONPERSISTANT Feature
+			else {
+				if (!JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false)) {
+					if (packet instanceof Presence && activeTransports.contains(from))
+						packetProcessors.get("handleNonPersistant").process(packet, from, to, from);
+				}
 			}
 
 		} else if (incoming && processed) {
@@ -187,10 +200,6 @@ public class MainInterceptor implements PacketInterceptor {
 						tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
 				}
 
-			}
-			// Gojara Admin Manager Feature - Intercept responses to ADHOC commands sent via AdminManager
-			else if (packet instanceof Message && activeTransports.contains(from) && to.contains("gojaraadmin")) {
-				packetProcessors.get("gojaraAdminProcessor").process(packet, from, to, from);
 			}
 
 		} else if (!incoming && !processed) {

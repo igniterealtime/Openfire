@@ -28,12 +28,22 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 		// handle different commands
 		Log.info("Intercepted something: " + message.toString());
 		String command = packet.getID();
-		if (command.equals("online_users")){
+		if (command.equals("online_users")) {
 			handleOnlineUsers(message, subdomain);
 		} else if (command.equals("unregister")) {
 			handleUnregister(message);
 		} else if (command.equals("config_check")) {
 			handleConfigCheck(subdomain);
+		} else if (command.equals("uptime")) {
+			handleStatistic(message, subdomain, "uptime");
+		} else if (command.equals("messages_from_xmpp")) {
+			handleStatistic(message, subdomain, "messages_from_xmpp");
+		} else if (command.equals("messags_to_xmpp")) {
+			handleStatistic(message, subdomain, "messages_to_xmpp");
+		} else if (command.equals("used_memory")) {
+			handleStatistic(message, subdomain, "used_memory");
+		} else if (command.equals("used_memory_per_user")) {
+			handleStatistic(message, subdomain, "used_memory_per_user");
 		}
 	}
 
@@ -51,9 +61,21 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 	private void handleUnregister(Message message) {
 		Log.info("Found unregister command! ");
 	}
-	
+
 	private void handleConfigCheck(String subdomain) {
 		gojaraAdminManager.confirmGatewayConfig(subdomain);
 		Log.info("Confirm config_check for " + subdomain);
+	}
+
+	private void handleStatistic(Message message, String subdomain, String statistic) {
+		int result;
+		try {
+			result = Integer.parseInt(message.getBody());
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = 0;
+		}
+
+		gojaraAdminManager.getGatewayStatisticsMap().get(subdomain).put(statistic, result);
 	}
 }

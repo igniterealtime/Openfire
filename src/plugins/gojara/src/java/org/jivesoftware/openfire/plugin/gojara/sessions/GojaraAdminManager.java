@@ -1,6 +1,8 @@
 package org.jivesoftware.openfire.plugin.gojara.sessions;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.jivesoftware.openfire.PacketRouter;
@@ -29,7 +31,9 @@ public class GojaraAdminManager {
 	private XMPPServer _server;
 	private Set<String> unconfiguredGateways;
 	private Set<String> configuredGateways;
-	private boolean areGatewaysConfigured = true;
+
+	private Map<String, Map<String, Integer>> gatewayStatisticsMap;
+	private long refreshCooldown = 0;
 
 	private GojaraAdminManager() {
 		_server = XMPPServer.getInstance();
@@ -44,6 +48,7 @@ public class GojaraAdminManager {
 		adminUser = _server.createJID("gojaraadmin", null);
 		unconfiguredGateways = new HashSet<String>();
 		configuredGateways = new HashSet<String>();
+		setGatewayStatisticsMap(new HashMap<String, Map<String, Integer>>());
 	}
 
 	public static GojaraAdminManager getInstance() {
@@ -67,8 +72,9 @@ public class GojaraAdminManager {
 	 * 
 	 */
 	public void testAdminConfiguration(String gateway) {
-		areGatewaysConfigured = false;
 		unconfiguredGateways.add(gateway);
+		getGatewayStatisticsMap().put(gateway, new HashMap<String, Integer>());
+
 		Message message = new Message();
 		message.setFrom(adminUser);
 		message.setTo(gateway);
@@ -76,7 +82,7 @@ public class GojaraAdminManager {
 		message.setBody("status");
 		message.setType(Type.chat);
 		router.route(message);
-		Log.info("Sent config_check Packet!" + message.toString());
+		Log.info("Sent config_check Packet!");
 	}
 
 	/**
@@ -87,8 +93,6 @@ public class GojaraAdminManager {
 	public void confirmGatewayConfig(String gateway) {
 		unconfiguredGateways.remove(gateway);
 		configuredGateways.add(gateway);
-		if (unconfiguredGateways.isEmpty())
-			areGatewaysConfigured = true;
 	}
 
 	/**
@@ -96,18 +100,35 @@ public class GojaraAdminManager {
 	 * areGatewaysConfigured.
 	 */
 	public void gatewayUnregistered(String gateway) {
-			unconfiguredGateways.remove(gateway);
-			configuredGateways.remove(gateway);
-			if (unconfiguredGateways.isEmpty())
-				areGatewaysConfigured = true;
+		unconfiguredGateways.remove(gateway);
+		configuredGateways.remove(gateway);
+		getGatewayStatisticsMap().remove(gateway);
 	}
 
 	public boolean areGatewaysConfigured() {
-		return areGatewaysConfigured;
+		return unconfiguredGateways.isEmpty();
 	}
-	
+
 	public boolean isGatewayConfigured(String gateway) {
 		return configuredGateways.contains(gateway);
+	}
+
+	/**
+	 * Generates a basic ad-hoc command with From,To, Type, ID & Body configured. Body might need to be reconfigured
+	 * when additional info has to be specified, like unregister
+	 * 
+	 * @param transport
+	 * @param command
+	 * @return
+	 */
+	private Message generateCommand(String transport, String command) {
+		Message message = new Message();
+		message.setFrom(adminUser);
+		message.setTo(transport);
+		message.setID(command);
+		message.setBody(command);
+		message.setType(Type.chat);
+		return message;
 	}
 
 	/**
@@ -121,12 +142,7 @@ public class GojaraAdminManager {
 		if (unconfiguredGateways.contains(transport))
 			return;
 
-		Message message = new Message();
-		message.setFrom(adminUser);
-		message.setTo(transport);
-		message.setID("online_users");
-		message.setBody("online_users");
-		message.setType(Type.chat);
+		Message message = generateCommand(transport, "online_users");
 		router.route(message);
 		Log.info("Sent online_users Packet!" + message.toString());
 	}
@@ -141,14 +157,63 @@ public class GojaraAdminManager {
 		if (unconfiguredGateways.contains(transport))
 			return;
 
-		Message message = new Message();
-		message.setFrom(adminUser);
-		message.setTo(transport);
-		message.setID("unregister");
+		Message message = generateCommand(transport, "unregister");
 		message.setBody("unregister " + _server.createJID(user, null).toString());
-		message.setType(Type.chat);
 		router.route(message);
 		Log.info("Sent Unregister Packet!" + message.toString());
 
 	}
+
+	public Map<String, Map<String, Integer>> getGatewayStatisticsMap() {
+		return gatewayStatisticsMap;
+	}
+
+	public void setGatewayStatisticsMap(Map<String, Map<String, Integer>> gatewayStatisticsMap) {
+		this.gatewayStatisticsMap = gatewayStatisticsMap;
+	}
+
+	public void gatherGatewayStatistics() {
+		if (refreshCooldown == 0) {
+			refreshCooldown = System.currentTimeMillis();
+		} else {
+			// once a minute max
+			if ((System.currentTimeMillis() - refreshCooldown) < 60000)
+				return;
+		}
+
+		refreshCooldown = System.currentTimeMillis();
+
+		for (String gateway : configuredGateways) {
+			uptime(gateway);
+			messagesFrom(gateway);
+			messagesTo(gateway);
+			usedMemoryOf(gateway);
+			averageMemoryOfUser(gateway);
+		}
+	}
+	private void uptime(String transport) {
+		Message message = generateCommand(transport, "uptime");
+		router.route(message);
+	}
+	
+	private void messagesFrom(String transport) {
+		Message message = generateCommand(transport, "messages_from_xmpp");
+		router.route(message);
+	}
+	
+	private void messagesTo(String transport) {
+		Message message = generateCommand(transport, "messages_to_xmpp");
+		router.route(message);
+	}
+	
+	private void usedMemoryOf(String transport) {
+		Message message = generateCommand(transport, "used_memory");
+		router.route(message);
+	}
+	
+	private void averageMemoryOfUser(String transport) {
+		Message message = generateCommand(transport, "average_memory_per_user");
+		router.route(message);
+	}
+
 }

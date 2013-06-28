@@ -86,7 +86,8 @@ public class TransportSessionManager {
 	 * @return
 	 */
 	public boolean connectUserTo(String transport, String user) {
-		if (transportSessions.get(transport) != null) {
+		//dont update if user is already present, else lots of away to online changes might be spammed
+		if (transportSessions.get(transport) != null && transportSessions.get(transport).get(user) == null) {
 			long millis = System.currentTimeMillis();
 			transportSessions.get(transport).put(user, millis);
 			db.insertOrUpdateSession(transport, user, millis);

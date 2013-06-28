@@ -60,6 +60,7 @@ public class RemoteRosterPlugin implements Plugin {
 		manageExternalComponents();
 		listenToSettings();
 		transportSessionManager.initializeSessions();
+		gojaraAdminManager.gatherGatewayStatistics();
 		Log.info("Started Gojara successfully. Currently running interceptors: "+iManager.getInterceptors().size());
 	}
 

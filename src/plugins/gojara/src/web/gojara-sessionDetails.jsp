@@ -3,6 +3,8 @@
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager"%>
 <%@ page
+	import="org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager"%>
+<%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
@@ -13,6 +15,7 @@
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
+	GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
 	String username = request.getParameter("username");
 %>
 <html>
@@ -122,10 +125,17 @@
 							<%
 								if (transportManager.isTransportActive(registration.getTransport())) {
 							%> <img alt="Yes" src="/images/success-16x16.gif"> <%
- 	} else {
- %> <img alt="No" src="/images/error-16x16.gif"> <%
- 	}
- %>
+							 	} else {
+							 %> <img alt="No" src="/images/error-16x16.gif" title="Sending unregister to inactive transport will result in NOT UNREGISTERING the registration."> <%
+							 	}
+							 %>
+						</td>
+						<td>
+						<% if (gojaraAdminManager.isGatewayConfigured(registration.getTransport())) { %>
+						<img alt="Yes" src="/images/success-16x16.gif"> 
+						<% 	} else { %>
+						 <img alt="No" src="/images/error-16x16.gif" title="Sending unregister to unconfigured transport will result in NOT UNREGISTERING the registration.">
+						  <% }%>
 						</td>
 						<td
 							title="<%=JspHelper.dateDifferenceHelper(registration.getLast_activityAsDate())%>"><%=registration.getLast_activityAsDate()%></td>

@@ -27,7 +27,8 @@ public class GojaraAdminManager {
 	private static final Logger Log = LoggerFactory.getLogger(GojaraAdminManager.class);
 	private JID adminUser;
 	private XMPPServer _server;
-	private Set<String> testGateways;
+	private Set<String> unconfiguredGateways;
+	private Set<String> configuredGateways;
 	private boolean areGatewaysConfigured = true;
 
 	private GojaraAdminManager() {
@@ -41,7 +42,8 @@ public class GojaraAdminManager {
 			Log.info("gojaraAdmin User already created.");
 		}
 		adminUser = _server.createJID("gojaraadmin", null);
-		testGateways = new HashSet<String>();
+		unconfiguredGateways = new HashSet<String>();
+		configuredGateways = new HashSet<String>();
 	}
 
 	public static GojaraAdminManager getInstance() {
@@ -66,7 +68,7 @@ public class GojaraAdminManager {
 	 */
 	public void testAdminConfiguration(String gateway) {
 		areGatewaysConfigured = false;
-		testGateways.add(gateway);
+		unconfiguredGateways.add(gateway);
 		Message message = new Message();
 		message.setFrom(adminUser);
 		message.setTo(gateway);
@@ -79,34 +81,46 @@ public class GojaraAdminManager {
 
 	/**
 	 * Gets called from Interceptor to confirm that a Gateway responded to our config_check message.
+	 * 
 	 * @param gateway
 	 */
 	public void confirmGatewayConfig(String gateway) {
-		testGateways.remove(gateway);
-		if (testGateways.isEmpty())
+		unconfiguredGateways.remove(gateway);
+		configuredGateways.add(gateway);
+		if (unconfiguredGateways.isEmpty())
 			areGatewaysConfigured = true;
 	}
+
 	/**
-	 * If a gateway disconnects we have to check if it was not configured as we may want to alter boolean areGatewaysConfigured.
+	 * If a gateway disconnects we have to check if it was not configured as we may want to alter boolean
+	 * areGatewaysConfigured.
 	 */
 	public void gatewayUnregistered(String gateway) {
-		if (testGateways.contains(gateway)) {
-			testGateways.remove(gateway);
-			if (testGateways.isEmpty())
+			unconfiguredGateways.remove(gateway);
+			configuredGateways.remove(gateway);
+			if (unconfiguredGateways.isEmpty())
 				areGatewaysConfigured = true;
-		}
 	}
+
 	public boolean areGatewaysConfigured() {
 		return areGatewaysConfigured;
+	}
+	
+	public boolean isGatewayConfigured(String gateway) {
+		return configuredGateways.contains(gateway);
 	}
 
 	/**
 	 * Sends the command online_users to specified Spectrum2 transport. We set the ID specific to the command so we can
-	 * identify the response.
+	 * identify the response. Transport has to be configured for admin_jid = gojaraadmin@domain
 	 * 
 	 * @param transport
 	 */
 	public void getOnlineUsersOf(String transport) {
+		// no use in sending the message if not configured for gojaraadmin
+		if (unconfiguredGateways.contains(transport))
+			return;
+
 		Message message = new Message();
 		message.setFrom(adminUser);
 		message.setTo(transport);
@@ -119,11 +133,14 @@ public class GojaraAdminManager {
 
 	/**
 	 * Sends the unregister <bare_jid> command to specified Spectrum2 transport. We set the ID specific to the command
-	 * so we can identify the response.
+	 * so we can identify the response. Transport has to be configured for admin_jid = gojaraadmin@domain
 	 * 
 	 * @param transport
 	 */
 	public void unregisterUserFrom(String transport, String user) {
+		if (unconfiguredGateways.contains(transport))
+			return;
+
 		Message message = new Message();
 		message.setFrom(adminUser);
 		message.setTo(transport);

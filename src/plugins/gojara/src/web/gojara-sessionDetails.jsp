@@ -58,7 +58,7 @@
 		<%
 		}
 		ArrayList<GatewaySession> userconnections = transportManager.getConnectionsFor(username);
-		if (userconnections == null) {
+		if (userconnections.isEmpty()) {
 	%>
 	<h2>
 		<center>User has no active sessions</center>
@@ -111,7 +111,8 @@
 					<tr>
 						<th nowrap>User Name:</th>
 						<th nowrap>Resource:</th>
-						<th nowrap>Resource active?</th>
+						<th nowrap>Active?</th>
+						<th nowrap>Admin Configured?</th>
 						<th nowrap>Last login was at:</th>
 						<th nowrap>Unregister?</th>
 					</tr>

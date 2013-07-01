@@ -30,6 +30,7 @@
 	<%
 		}
 	%>
+
 	<br/><br/>
 	<div class="jive-table">
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">

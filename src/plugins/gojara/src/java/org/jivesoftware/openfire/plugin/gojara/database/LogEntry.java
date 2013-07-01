@@ -11,6 +11,7 @@ public class LogEntry {
 	private String _to;
 	private String _type;
 	private long _date;
+	private String _component;
 
 	/**
 	 * Constructs a log entry
@@ -24,11 +25,12 @@ public class LogEntry {
 	 * @param date
 	 *            date of the packet in unixtimestamp miliseconds
 	 */
-	public LogEntry(String from, String to, String type, long date) {
+	public LogEntry(String from, String to, String type, long date, String component) {
 		_from = from;
 		_to = to;
 		_type = type;
 		_date = date;
+		_component = component;
 	}
 
 	/**
@@ -67,4 +69,7 @@ public class LogEntry {
 		return _date;
 	}
 
+	public String getComponent() {
+		return _component;
+	}
 }

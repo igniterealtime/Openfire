@@ -23,7 +23,7 @@ public class TransportSessionManager {
 	private static TransportSessionManager myself;
 	private DatabaseManager db;
 	private GojaraAdminManager adminManager;
-	private Map<String, Map<String, Long>> transportSessions = new ConcurrentHashMap<String, Map<String, Long>>();
+	private Map<String, Map<String, Long>> transportSessions = new ConcurrentHashMap<String, Map<String, Long>>(16, 0.75f, 1);
 	private static final Logger Log = LoggerFactory.getLogger(TransportSessionManager.class);
 
 	private TransportSessionManager() {
@@ -32,12 +32,9 @@ public class TransportSessionManager {
 		Log.info(" Created TransportSessionManager");
 	}
 
-	public static TransportSessionManager getInstance() {
+	public static synchronized TransportSessionManager getInstance() {
 		if (myself == null) {
-			synchronized (TransportSessionManager.class) {
-				if (myself == null)
-					myself = new TransportSessionManager();
-			}
+			myself = new TransportSessionManager();
 		}
 		return myself;
 	}
@@ -48,7 +45,7 @@ public class TransportSessionManager {
 	 * @param subdomain
 	 */
 	public void addTransport(String subdomain) {
-		transportSessions.put(subdomain, new ConcurrentHashMap<String, Long>());
+		transportSessions.put(subdomain, new ConcurrentHashMap<String, Long>(64, 0.75f, 1));
 		Log.info("Added key to transportSessionMap: " + subdomain);
 	}
 
@@ -168,12 +165,12 @@ public class TransportSessionManager {
 	 * @return Sorted/Unsorted ArrayList of GatewaySession Objects
 	 */
 	public ArrayList<GatewaySession> getSessionsSorted(String sortby, String sortorder) {
-		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>();
-		for (String key : transportSessions.keySet()) {
-			for (String user : transportSessions.get(key).keySet()) {
-				Timestamp stamp = new Timestamp(transportSessions.get(key).get(user));
+		ArrayList<GatewaySession> result = new ArrayList<GatewaySession>(getNumberOfActiveSessions());
+		for (Map.Entry<String, Map<String,Long>> gateway : transportSessions.entrySet()) {
+			for (Map.Entry<String, Long> entry : gateway.getValue().entrySet()) {
+				Timestamp stamp = new Timestamp(entry.getValue());
 				Date date = new Date(stamp.getTime());
-				result.add(new GatewaySession(user, key, date));
+				result.add(new GatewaySession(entry.getKey(), gateway.getKey(), date));
 			}
 		}
 
@@ -195,8 +192,8 @@ public class TransportSessionManager {
 	 */
 	public int getNumberOfActiveSessions() {
 		int result = 0;
-		for (String key : transportSessions.keySet()) {
-			result += transportSessions.get(key).size();
+		for (Map.Entry<String, Map<String,Long>> gateway : transportSessions.entrySet()) {
+			result += gateway.getValue().size();
 		}
 		return result;
 	}
@@ -219,14 +216,12 @@ public class TransportSessionManager {
 	 * @return
 	 */
 	public ArrayList<GatewaySession> getConnectionsFor(String username) {
-		ArrayList<GatewaySession> userconnections = null;
-		for (String transport : transportSessions.keySet()) {
-			if (transportSessions.get(transport).containsKey(username)) {
-				if (userconnections == null)
-					userconnections = new ArrayList<GatewaySession>();
-				Timestamp stamp = new Timestamp(transportSessions.get(transport).get(username));
+		ArrayList<GatewaySession> userconnections = new ArrayList<GatewaySession>();
+		for (Map.Entry<String, Map<String, Long>> transport : transportSessions.entrySet()) {
+			if (transport.getValue().containsKey(username)) {
+				Timestamp stamp = new Timestamp(transport.getValue().get(username));
 				Date date = new Date(stamp.getTime());
-				userconnections.add(new GatewaySession(username, transport, date));
+				userconnections.add(new GatewaySession(username, transport.getKey(), date));
 			}
 		}
 		return userconnections;

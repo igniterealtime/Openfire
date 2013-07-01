@@ -38,7 +38,7 @@
 <body>
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
 		<center><h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means session details may be inaccurate or not logged at all.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center><br/>
 	 <% } %>
 	 
 	<h4>

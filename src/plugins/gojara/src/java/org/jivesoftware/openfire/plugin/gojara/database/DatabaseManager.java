@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,6 +23,7 @@ import org.jivesoftware.util.JiveGlobals;
 public class DatabaseManager {
 
 	private static Logger Log = Logger.getLogger(DatabaseManager.class);
+	private List<LogEntry> logbuffer;
 
 	private static volatile DatabaseManager _myself;
 	// Logging
@@ -51,7 +53,7 @@ public class DatabaseManager {
 		// TODO: Use PropertyEventListener to check if cleaner.minutes have
 		// changed
 		_dbCleanMinutes = JiveGlobals.getIntProperty("plugin.remoteroster.log.cleaner.minutes", 60);
-
+		logbuffer = Collections.synchronizedList(new ArrayList<LogEntry>(20));
 		startDatabaseCleanLoop();
 	}
 
@@ -112,7 +114,7 @@ public class DatabaseManager {
 				String to = rs.getString(5);
 				String type = rs.getString(3);
 				long date = rs.getLong(2);
-				LogEntry res = new LogEntry(from, to, type, date);
+				LogEntry res = new LogEntry(from, to, type, date, component);
 				result.add(res);
 			}
 
@@ -146,7 +148,7 @@ public class DatabaseManager {
 	}
 
 	/**
-	 * Adds new log entry for specified component.
+	 * Adds new log entry for specified component. Buffers upto 20 Logs, then writes in batch.
 	 * 
 	 * @param component
 	 *            subdomain of the external component. e.g. icq.myjabberserver.com
@@ -158,23 +160,31 @@ public class DatabaseManager {
 	 *            full qualified JID of user or component this packet was adressed to
 	 */
 	public void addNewLogEntry(String component, String type, String from, String to) {
-		Connection con = null;
-		PreparedStatement pstmt = null;
-		try {
-			con = DbConnectionManager.getConnection();
-
-			pstmt = con.prepareStatement(ADD_NEW_LOG);
-			pstmt.setLong(1, System.currentTimeMillis());
-			pstmt.setString(2, type);
-			pstmt.setString(3, from);
-			pstmt.setString(4, to);
-			pstmt.setString(5, component);
-			pstmt.executeUpdate();
-			pstmt.close();
-		} catch (SQLException sqle) {
-			Log.error(sqle);
-		} finally {
-			DbConnectionManager.closeConnection(pstmt, con);
+		if (logbuffer.size() < 20)
+			logbuffer.add(new LogEntry(from, to, type, System.currentTimeMillis(), component));
+		else {
+			synchronized (logbuffer) {
+			Connection con = null;
+			PreparedStatement pstmt = null;
+			try {
+				con = DbConnectionManager.getConnection();
+					for (LogEntry log : logbuffer) {
+						pstmt = con.prepareStatement(ADD_NEW_LOG);
+						pstmt.setLong(1, log.getDate());
+						pstmt.setString(2, log.getType());
+						pstmt.setString(3, log.getFrom());
+						pstmt.setString(4, log.getTo());
+						pstmt.setString(5, log.getComponent());
+						pstmt.addBatch();
+					}
+					pstmt.executeBatch();
+			} catch (SQLException sqle) {
+				Log.error(sqle);
+			} finally {
+				DbConnectionManager.closeConnection(pstmt, con);
+				logbuffer.clear();
+			}
+		}
 		}
 	}
 
@@ -410,7 +420,7 @@ public class DatabaseManager {
 		}
 		return result;
 	}
-	
+
 	public int getNumberOfRegistrationsForTransport(String transport) {
 		int result = 0;
 		Connection con = null;

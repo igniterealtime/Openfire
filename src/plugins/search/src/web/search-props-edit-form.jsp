@@ -13,7 +13,8 @@
     boolean success = request.getParameter("success") != null;
     String searchName = ParamUtils.getParameter(request, "searchname");
     boolean searchEnabled = ParamUtils.getBooleanParameter(request, "searchEnabled");
-
+	boolean groupOnly = ParamUtils.getBooleanParameter(request, "groupOnly");
+    
     SearchPlugin plugin = (SearchPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("search");
 
     // Handle a save
@@ -34,7 +35,7 @@
                     }
                 }
                 plugin.setExcludedFields(excludedFields);
-
+				plugin.setGroupOnly(groupOnly);
                 response.sendRedirect("search-props-edit-form.jsp?success=true");
                 return;
             }
@@ -50,6 +51,7 @@
     
     searchEnabled = plugin.getServiceEnabled();
     Collection<String> searchableFields = plugin.getFilteredSearchFields();
+    groupOnly = plugin.isGroupOnly();
 %>
 
 <html>
@@ -168,6 +170,38 @@
 </div>
 
 <br>
+
+<div class="jive-contentBoxHeader"><fmt:message key="search.props.edit.form.search_scope" /></div>
+<div class="jive-contentBox">
+    <p>
+    <fmt:message key="search.props.edit.form.search_scope_directions" />
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="groupOnly" value="false" id="rb-grouponly-01"
+             <%= ((!groupOnly) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb-grouponly-01"><b><fmt:message key="search.props.edit.form.search_scope_anyone" /></b></label> - <fmt:message key="search.props.edit.form.search_scope_anyone_details" />
+            </td>
+        </tr>
+        <tr>
+            <td width="1%">
+            <input type="radio" name="groupOnly" value="true" id="rb-grouponly-02"
+             <%= ((groupOnly) ? "checked" : "") %>>
+            </td>
+            <td width="99%">
+                <label for="rb-grouponly-02"><b><fmt:message key="search.props.edit.form.search_scope_groups" /></b></label> - <fmt:message key="search.props.edit.form.search_scope_groups_details" />
+            </td>
+        </tr>
+    </tbody>
+    </table>
+</div>
+
+<br>
+
 
 <input type="submit" value="<fmt:message key="search.props.edit.form.save_properties" />">
 </form>

@@ -96,6 +96,7 @@ public class GojaraAdminManager {
 	public void confirmGatewayConfig(String gateway) {
 		unconfiguredGateways.remove(gateway);
 		configuredGateways.add(gateway);
+		gatherGatewayStatistics(gateway);
 	}
 
 	/**
@@ -175,6 +176,9 @@ public class GojaraAdminManager {
 		this.gatewayStatisticsMap = gatewayStatisticsMap;
 	}
 
+	/**
+	 * For JSP usage, dont refresh statistics more than once a minute
+	 */
 	public void gatherGatewayStatistics() {
 		if (refreshCooldown == 0) {
 			refreshCooldown = System.currentTimeMillis();
@@ -186,16 +190,24 @@ public class GojaraAdminManager {
 
 		refreshCooldown = System.currentTimeMillis();
 
-		Log.info("Gathering Gateway-Statistics!");
 		for (String gateway : configuredGateways) {
+			gatherGatewayStatistics(gateway);
+		}
+	}
+	
+	/**
+	 * Used for single transport, called after we have configured it so we dont have to wait.  
+	 * @param gateway
+	 */
+	public void gatherGatewayStatistics(String gateway) {
 			uptime(gateway);
 			messagesFrom(gateway);
 			messagesTo(gateway);
 			usedMemoryOf(gateway);
 			averageMemoryOfUser(gateway);
-		}
+//			Log.info("Gathering Gateway-Statistics for " + gateway);
 	}
-
+	
 	private void uptime(String transport) {
 		Message message = generateCommand(transport, "uptime");
 		router.route(message);

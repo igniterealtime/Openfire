@@ -45,14 +45,17 @@
 	%>
 		<br>
 		<br>
+		<div align="center">
+		<ul style="list-style: none;padding:0;margin:0;">
 		<%
 			for (String key : unregister) {
 		%>
 	
-		<div align="center"><%=transportManager.removeRegistrationOfUser(key, username)%></div><br>
+			<li><%=transportManager.removeRegistrationOfUser(key, username)%></li>
 		<%
 			}
 		%>
+		</ul></div>
 		<br>
 		<br>
 	

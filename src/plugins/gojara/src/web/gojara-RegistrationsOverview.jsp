@@ -36,6 +36,8 @@
 <meta name="pageID" content="gojaraRegistrationAdministration" />
 </head>
 <body>
+	<div align="center">
+	<ul style="list-style: none;padding:0;margin:0;">
 	<%
 		//do unregisters if supplied
 		if (request.getParameterMap() != null) {
@@ -47,14 +49,14 @@
 				String[] uservalues = request.getParameterValues(key.toString());
 				for (String transport : uservalues) {
 	%>
-	<ul>
-		<%=transportManager.removeRegistrationOfUser(transport, key.toString())%>
-	</ul>
+	<li><%=transportManager.removeRegistrationOfUser(transport, key.toString())%></li>
 	<%
 		}
 			}
 		}
 	%>
+	</ul>
+	</div>
 
 
 	<div align="center">

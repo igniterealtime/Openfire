@@ -116,7 +116,6 @@ public class TransportSessionManager {
 	 * @return String that describes what happened.
 	 */
 	public String removeRegistrationOfUser(String transport, String user) {
-		if (transportSessions.containsKey(transport)) {
 			adminManager.unregisterUserFrom(transport, user);
 			int result = db.removeSessionEntry(transport, user);
 			if (result == 0) {
@@ -126,10 +125,6 @@ public class TransportSessionManager {
 			} else {
 				return "What is happening ???: " + result;
 			}
-		} else {
-			return "Cannot Unregister user " + user + " from " + transport + " when it's inactive.";
-		}
-
 	}
 
 	/**

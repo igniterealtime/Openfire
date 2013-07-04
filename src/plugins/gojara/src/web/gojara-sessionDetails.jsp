@@ -33,9 +33,10 @@
 </script>
 </head>
 <body>
+	
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
-		<center><h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center>
+		<h2 align="center"><a href="gojara-gatewayStatistics.jsp">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</a></h2>
 	 <% } %>
 	
 	<%
@@ -48,7 +49,7 @@
 			for (String key : unregister) {
 		%>
 	
-		<%=transportManager.removeRegistrationOfUser(key, username)%><br>
+		<div align="center"><%=transportManager.removeRegistrationOfUser(key, username)%></div><br>
 		<%
 			}
 		%>
@@ -60,15 +61,11 @@
 		ArrayList<GatewaySession> userconnections = transportManager.getConnectionsFor(username);
 		if (userconnections.isEmpty()) {
 	%>
-	<h2>
-		<center>User has no active sessions</center>
-	</h2>
+	<h2 align="center">User has no active sessions</h2>
 	<%
 		} else {
 	%>
-	<center>
-		<h1>Active Sessions:</h1>
-	</center>
+		<h1 align="center">Active Sessions:</h1>
 	<br>
 	<div class="jive-table">
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -99,9 +96,7 @@
 
 	<br>
 	<hr>
-	<center>
-		<h1>Associated Registrations:</h1>
-	</center>
+		<h1 align="center">Associated Registrations:</h1>
 	<br>
 	<form name="unregister-form" id="gojara-sessDetailsUnregister"
 		method="POST">
@@ -156,15 +151,11 @@
 				</tbody>
 			</table>
 		</div>
+		<div align="center"><br>
+			<input type="button" value="check/uncheck all" onclick='checkedAll();'>
 		<br>
-		<center>
-			<input type="button" value="check/uncheck all"
-				onclick='checkedAll();'>
-		</center>
-		<br>
-		<center>
 			<input type="submit" value="Unregister">
-		</center>
+		</div>
 	</form>
 </body>
 </html>

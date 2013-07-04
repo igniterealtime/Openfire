@@ -19,13 +19,11 @@
 	<%
 		if (!gojaraAdminManager.areGatewaysConfigured()) {
 	%>
-	<center>
-		<h2 style="color: red">
+		<h2 style="color: red" align="center">
 			Warning: Not all Gateways are configured for admin usage. Affected
-			gateways will not show any data.<br /> Please configure admin_jid =
+			gateways will not show spectrum2 data.<br /> Please configure admin_jid =
 			gojaraadmin@yourdomain in Spectrum2 transport configuration.
 		</h2>
-	</center>
 	<hr />
 	<%
 		}
@@ -37,13 +35,14 @@
 			<thead>
 				<tr>
 					<th nowrap>Name</th>
+					<th nowrap>Admin Configured?</th>
 					<th nowrap># Online Users</th>
 					<th nowrap># Registrations</th>
 					<th nowrap>Uptime</th>
 					<th nowrap># Messages received</th>
 					<th nowrap># Messages sent</th>
 					<th nowrap>Used Memory</th>
-					<th nowrap>Avg. Memory per User</th>
+					<th nowrap>Avg. Mem. per User</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -53,8 +52,15 @@
 				%>	
 					<tr class="jive-odd">
 					<td><%=gateway %></td>
-					<td><%=transportSessionManager.getNumberOfActiveSessionsFor(gateway)%></td>
-					<td><%=transportSessionManager.getNumberOfRegistrationsForTransport(gateway)%></td>
+					<td>
+						<% if (gojaraAdminManager.isGatewayConfigured(gateway)) { %>
+						<img alt="Yes" src="/images/success-16x16.gif"> 
+						<% 	} else { %>
+						 <img alt="No" src="/images/error-16x16.gif" title="Will probably not show correct # of online users and not do unregister properly.">
+						  <% }%>
+						</td>
+					<td><div style="font-size:140%"><%=transportSessionManager.getNumberOfActiveSessionsFor(gateway)%></div></td>
+					<td><div style="font-size:140%"><%=transportSessionManager.getNumberOfRegistrationsForTransport(gateway)%></div></td>
 					<td><%=gojaraAdminManager.getStatisticsPresentationString(gateway, "uptime")%></td>
 					<td><%=gojaraAdminManager.getStatisticsPresentationString(gateway, "messages_from_xmpp")%></td>
 					<td><%=gojaraAdminManager.getStatisticsPresentationString(gateway, "messages_to_xmpp") %></td>

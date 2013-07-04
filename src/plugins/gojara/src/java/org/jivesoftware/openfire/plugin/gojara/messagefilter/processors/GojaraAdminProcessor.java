@@ -26,7 +26,7 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 		Message message = (Message) packet;
 
 		// handle different commands
-		Log.info("Intercepted something: " + message.toString());
+		Log.debug("Intercepted spectrum message: " + message.toString());
 		String command = packet.getID();
 		if (command.equals("online_users")) {
 			handleOnlineUsers(message, subdomain);
@@ -48,7 +48,7 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	private void handleOnlineUsers(Message message, String subdomain) {
-		Log.info("Found online_users command!");
+		Log.debug("Found online_users command!");
 		if (message.getBody().equals("0"))
 			return;
 		String[] content = message.getBody().split("\\r?\\n");
@@ -59,7 +59,7 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	private void handleUnregister(Message message) {
-		Log.info("Found unregister command! ");
+		Log.debug("Found unregister command! ");
 	}
 
 	private void handleConfigCheck(String subdomain) {

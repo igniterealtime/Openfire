@@ -85,7 +85,7 @@ public class GojaraAdminManager {
 		message.setBody("status");
 		message.setType(Type.chat);
 		router.route(message);
-		Log.info("Sent config_check Packet!");
+		Log.info("Checking for admin configuration on " + gateway);
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class GojaraAdminManager {
 	public boolean areGatewaysConfigured() {
 		return unconfiguredGateways.isEmpty();
 	}
-
+	
 	public boolean isGatewayConfigured(String gateway) {
 		return configuredGateways.contains(gateway);
 	}
@@ -147,7 +147,7 @@ public class GojaraAdminManager {
 
 		Message message = generateCommand(transport, "online_users");
 		router.route(message);
-		Log.info("Sent online_users Packet!" + message.toString());
+		Log.debug("Sent online_users Packet!" + message.toString());
 	}
 
 	/**
@@ -163,7 +163,7 @@ public class GojaraAdminManager {
 		Message message = generateCommand(transport, "unregister");
 		message.setBody("unregister " + _server.createJID(user, null).toString());
 		router.route(message);
-		Log.info("Sent Unregister Packet!" + message.toString());
+		Log.debug("Sent Unregister Packet!" + message.toString());
 
 	}
 

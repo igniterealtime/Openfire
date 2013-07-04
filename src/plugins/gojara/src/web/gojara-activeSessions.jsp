@@ -36,14 +36,14 @@
 <meta name="pageID" content="gojaraSessions" />
 </head>
 <body>
+	 <div align="center">
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
-		<center><h2 style="color:red">Warning: Not all Gateways are configured for admin usage. This means session details may be inaccurate or not logged at all.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</h2></center><br/>
+		<h2><a href="gojara-gatewayStatistics.jsp">Warning: Not all Gateways are configured for admin usage. This means session details may be inaccurate or not logged at all.<br/>
+		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</a></h2><br/>
 	 <% } %>
-	 
 	<h4>
 		Current number of active Gateway Sessions: &emsp;
-		<%=transportManager.getNumberOfActiveSessions()%>
+		<b style="font-size:150%"><%= transportManager.getNumberOfActiveSessions() %></b>
 	</h4>
 	<br>
 	<%
@@ -51,10 +51,10 @@
 		for (String transport : sessions.keySet()) {
 	%>
 	<%=transport.substring(0, 10)%>... :
-	<b><%=sessions.get(transport).size()%></b> &emsp;
+	<b style="font-size:150%"><%=sessions.get(transport).size()%></b> &emsp;
 	<%
 		}
-	%>
+	%></div>
 	<br>
 	<br>
 	<%

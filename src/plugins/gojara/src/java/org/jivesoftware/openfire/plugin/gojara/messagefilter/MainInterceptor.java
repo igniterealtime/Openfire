@@ -65,7 +65,7 @@ public class MainInterceptor implements PacketInterceptor {
 	}
 
 	public boolean addTransport(String subDomain) {
-		Log.info("Trying to add " + subDomain + " to Set of watched Transports.");
+		Log.info("Adding " + subDomain + " to watched Transports.");
 		boolean retval = this.activeTransports.add(subDomain);
 		if (retval) {
 			tSessionManager.addTransport(subDomain);
@@ -76,7 +76,7 @@ public class MainInterceptor implements PacketInterceptor {
 	}
 
 	public boolean removeTransport(String subDomain) {
-		Log.info("Trying to remove " + subDomain + " from Set of watched Transports.");
+		Log.info("Removing " + subDomain + " from watched Transports.");
 		tSessionManager.removeTransport(subDomain);
 		 gojaraAdminmanager.gatewayUnregistered(subDomain);
 		return this.activeTransports.remove(subDomain);

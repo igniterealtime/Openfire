@@ -313,9 +313,10 @@ public class DatabaseManager {
 				pstmt.setString(2, transport);
 				pstmt.setLong(3, time);
 				pstmt.executeUpdate();
-				Log.info("I have inserted " + user + " with " + transport + " at " + time);
-			} else
-				Log.info("I have updated " + user + " with " + transport + " at " + time);
+				Log.debug("I have inserted " + user + " with " + transport + " at " + time);
+			} else {
+				Log.debug("I have updated " + user + " with " + transport + " at " + time);
+			}
 		} catch (SQLException sqle) {
 			Log.error(sqle);
 		} finally {

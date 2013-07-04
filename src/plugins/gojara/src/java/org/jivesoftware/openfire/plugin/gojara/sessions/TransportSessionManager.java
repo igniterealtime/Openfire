@@ -46,7 +46,7 @@ public class TransportSessionManager {
 	 */
 	public void addTransport(String subdomain) {
 		transportSessions.put(subdomain, new ConcurrentHashMap<String, Long>(64, 0.75f, 1));
-		Log.info("Added key to transportSessionMap: " + subdomain);
+		Log.debug("Added key to transportSessionMap: " + subdomain);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class TransportSessionManager {
 	 */
 	public void removeTransport(String subdomain) {
 		Map<String, Long> disconnectedUsers = transportSessions.remove(subdomain);
-		Log.info("Removed " + subdomain + "from TransportSessionMap " + disconnectedUsers.toString());
+		Log.debug("Removed " + subdomain + "from TransportSessionMap " + disconnectedUsers.toString());
 
 	}
 
@@ -94,7 +94,7 @@ public class TransportSessionManager {
 	}
 
 	public boolean disconnectUserFrom(String transport, String user) {
-		Log.info("Trying to remove User " + JID.nodeprep(user) + " from Session for Transport " + transport);
+//		Log.debug("Trying to remove User " + JID.nodeprep(user) + " from Session for Transport " + transport);
 		if (isUserConnectedTo(transport, user)) {
 			transportSessions.get(transport).remove(user);
 			return true;
@@ -137,7 +137,7 @@ public class TransportSessionManager {
 	 * transportSessions
 	 */
 	public void initializeSessions() {
-		Log.info("initializing Sessions.");
+		Log.info("Initializing Sessions.");
 		for (String transport : transportSessions.keySet()) {
 			adminManager.getOnlineUsersOf(transport);
 		}

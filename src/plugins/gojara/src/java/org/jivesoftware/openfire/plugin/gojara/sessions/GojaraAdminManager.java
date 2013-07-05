@@ -78,12 +78,8 @@ public class GojaraAdminManager {
 		// Spectrum2 Stats jsp
 		getGatewayStatisticsMap().put(gateway, new HashMap<String, Integer>());
 
-		Message message = new Message();
-		message.setFrom(adminUser);
-		message.setTo(gateway);
-		message.setID("config_check");
+		Message message = generateCommand(gateway, "config_check");
 		message.setBody("status");
-		message.setType(Type.chat);
 		router.route(message);
 		Log.info("Checking for admin configuration on " + gateway);
 	}
@@ -196,7 +192,7 @@ public class GojaraAdminManager {
 	}
 	
 	/**
-	 * Used for single transport, called after we have configured it so we dont have to wait.  
+	 * gathers Gatewaystatistics for specific gateway
 	 * @param gateway
 	 */
 	public void gatherGatewayStatistics(String gateway) {

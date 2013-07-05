@@ -68,17 +68,21 @@ This is especially useful so that a user does not get flooded with
 subscription requests upon registration.  This plugin also implements
 a few minor extensions that Kraken used to implement for Spark, though
 those are optional.
+You can also use it for viewing gateway sessions, managing existing gateway-registrations
+and looking into basic Spectrum2 related Statistics 
 </p>
 
 <h2>Installation</h2>
 
-<p>Copy remoteRoster.jar into the plugins directory of your Openfire installation. The
+<p>Copy gojara.jar into the plugins directory of your Openfire installation. The
 plugin will then be automatically deployed. To upgrade to a new version, copy the new
-remoteRoster.jar file over the existing file.</p>
+gojara.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
 <p>The GoJara plugin can be configured under "Server"-"Server Settings"-"GoJara".</p>
-
+<p>For Spectrum2 Statistics to work you need to additionaly configure spectrum2 transports to
+include admin_jid = gojaraadmin@domain. This way we can gather info like used Memory and unregister
+Users from Openfire Console</p>
 </body>
 </html>

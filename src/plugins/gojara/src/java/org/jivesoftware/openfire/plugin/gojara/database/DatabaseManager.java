@@ -14,6 +14,7 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
@@ -326,7 +327,7 @@ public class DatabaseManager {
 
 	public int removeSessionEntry(String transport, String user) {
 		int result = 0;
-		Log.info("I would now hit the DB and remove " + transport + " " + user);
+		Log.info("Removing registration for: " + user + " from gateway: " + transport);
 		Connection con = null;
 		PreparedStatement pstmt = null;
 

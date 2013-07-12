@@ -54,8 +54,8 @@ public class TransportSessionManager {
 	 * @param subdomain
 	 */
 	public void removeTransport(String subdomain) {
-		Map<String, Long> disconnectedUsers = transportSessions.remove(subdomain);
-		Log.debug("Removed " + subdomain + "from TransportSessionMap " + disconnectedUsers.toString());
+		transportSessions.remove(subdomain);
+		Log.debug("Removed " + subdomain + "from TransportSessionMap ");
 
 	}
 

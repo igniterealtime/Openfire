@@ -12,6 +12,7 @@
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.util.ArrayList"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();
@@ -39,7 +40,7 @@
 	 <div align="center">
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
 		<h2><a href="gojara-gatewayStatistics.jsp">Warning: Not all Gateways are configured for admin usage. This means session details may be inaccurate or not logged at all.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</a></h2><br/>
+		 Please configure admin_jid = gojaraadmin@<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %> in Spectrum2 transport configuration.</a></h2><br/>
 	 <% } %>
 	<h4>
 		Current number of active Gateway Sessions: &emsp;

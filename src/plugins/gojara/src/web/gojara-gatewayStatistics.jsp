@@ -4,10 +4,12 @@
 	import="org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.Set"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%
 	TransportSessionManager transportSessionManager = TransportSessionManager.getInstance();
 	GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
 	gojaraAdminManager.gatherGatewayStatistics();
+	String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 %>
 <html>
 <head>
@@ -22,7 +24,7 @@
 		<h2 style="color: red" align="center">
 			Warning: Not all Gateways are configured for admin usage. Affected
 			gateways will not show spectrum2 data.<br /> Please configure admin_jid =
-			gojaraadmin@yourdomain in Spectrum2 transport configuration.
+			gojaraadmin@<%=domain %> in Spectrum2 transport configuration.
 		</h2>
 	<hr />
 	<%
@@ -51,7 +53,11 @@
 				for (String gateway : gateways) {
 				%>	
 					<tr class="jive-odd">
-					<td><%=gateway %></td>
+					<td><%=gateway %> <% if (!gateway.contains(domain)) { %>
+						<img alt="gateway configuration info" src="/images/header-help_new.gif" title="Component name does not include server name: <%=domain%>. 
+						It should be configured like this: transport.server-name, e.g.: icq.<%=gateway%>">
+					<% } %> 
+					</td>
 					<td>
 						<% if (gojaraAdminManager.isGatewayConfigured(gateway)) { %>
 						<img alt="Yes" src="/images/success-16x16.gif"> 

@@ -11,6 +11,7 @@
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
 <%@ page import="java.util.ArrayList"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 
 <%
@@ -62,7 +63,7 @@
 	<div align="center">
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
 		<h2><a href="gojara-gatewayStatistics.jsp">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</a></h2>
+		 Please configure admin_jid = gojaraadmin@<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>  in Spectrum2 transport configuration.</a></h2>
 	 <% } %>
 		<h5>Logintime 1970 means User did register but never logged in,
 			propably because of invalid credentials.</h5>

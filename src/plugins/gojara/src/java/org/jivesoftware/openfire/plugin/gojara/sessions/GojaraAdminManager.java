@@ -108,7 +108,7 @@ public class GojaraAdminManager {
 	public boolean areGatewaysConfigured() {
 		return unconfiguredGateways.isEmpty();
 	}
-	
+
 	public boolean isGatewayConfigured(String gateway) {
 		return configuredGateways.contains(gateway);
 	}
@@ -190,20 +190,21 @@ public class GojaraAdminManager {
 			gatherGatewayStatistics(gateway);
 		}
 	}
-	
+
 	/**
 	 * gathers Gatewaystatistics for specific gateway
+	 * 
 	 * @param gateway
 	 */
 	public void gatherGatewayStatistics(String gateway) {
-			uptime(gateway);
-			messagesFrom(gateway);
-			messagesTo(gateway);
-			usedMemoryOf(gateway);
-			averageMemoryOfUser(gateway);
-//			Log.info("Gathering Gateway-Statistics for " + gateway);
+		uptime(gateway);
+		messagesFrom(gateway);
+		messagesTo(gateway);
+		usedMemoryOf(gateway);
+		averageMemoryOfUser(gateway);
+		// Log.info("Gathering Gateway-Statistics for " + gateway);
 	}
-	
+
 	private void uptime(String transport) {
 		Message message = generateCommand(transport, "uptime");
 		router.route(message);
@@ -228,9 +229,10 @@ public class GojaraAdminManager {
 		Message message = generateCommand(transport, "average_memory_per_user");
 		router.route(message);
 	}
-	
+
 	/**
 	 * Preps the specified stat for nicer output which is used in tables.
+	 * 
 	 * @param gateway
 	 * @param stat
 	 * @return
@@ -244,7 +246,7 @@ public class GojaraAdminManager {
 					long diffMinutes = time / 60 % 60;
 					long diffHours = time / (60 * 60) % 24;
 					long diffDays = time / (24 * 60 * 60);
-					return "" + diffSeconds+ " Sec " + diffMinutes + " Min " + diffHours + " Hours " + diffDays + " Days";
+					return "" + diffSeconds + " Sec " + diffMinutes + " Min " + diffHours + " Hours " + diffDays + " Days";
 				}
 			} else if (stat.equals("messages_from_xmpp")) {
 				if (gatewayStatisticsMap.get(gateway).get("messages_from_xmpp") != null)
@@ -256,8 +258,8 @@ public class GojaraAdminManager {
 				if (gatewayStatisticsMap.get(gateway).get("used_memory") != null) {
 					DecimalFormat f = new DecimalFormat("#0.00");
 					double mb = gatewayStatisticsMap.get(gateway).get("used_memory") / 1024.0;
-					
-					return ""  + f.format(mb) + " MB";
+
+					return "" + f.format(mb) + " MB";
 				}
 			} else if (stat.equals("average_memory_per_user")) {
 				if (gatewayStatisticsMap.get(gateway).get("average_memory_per_user") != null) {

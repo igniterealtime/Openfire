@@ -8,6 +8,7 @@
 	import="org.jivesoftware.openfire.plugin.gojara.database.SessionEntry"%>
 <%@ page
 	import="org.jivesoftware.openfire.plugin.gojara.utils.JspHelper"%>
+	<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.Set"%>
 <%@ page import="java.util.Date"%>
@@ -36,7 +37,7 @@
 	
 	<% if (!gojaraAdminManager.areGatewaysConfigured()) {%>
 		<h2 align="center"><a href="gojara-gatewayStatistics.jsp">Warning: Not all Gateways are configured for admin usage. This means unregistrations will not be properly executed.<br/>
-		 Please configure admin_jid = gojaraadmin@yourdomain in Spectrum2 transport configuration.</a></h2>
+		 Please configure admin_jid = gojaraadmin@<%= XMPPServer.getInstance().getServerInfo().getXMPPDomain() %>  in Spectrum2 transport configuration.</a></h2>
 	 <% } %>
 	
 	<%

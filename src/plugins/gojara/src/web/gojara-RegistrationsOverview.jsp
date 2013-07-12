@@ -90,7 +90,10 @@
 		// we now know current_page is in valid range, so set it for computation
 		current_page -= 1;
 		numOfPages += 1;
-		int next_items = (current_page * 100) + 99;
+		// this will be our sublist starting index, 0, 100, 200 ... 
+		int current_index = current_page * 100;
+		//ending index, 99, 199 etc, when next items > numOfSessions we have reached last page, set proper index so we have no out of bounds
+		int next_items = current_index + 100;
 		if (next_items > numOfSessions)
 			next_items = numOfSessions;
 	%>
@@ -123,7 +126,8 @@
 				</thead>
 				<tbody>
 					<%
-						for (SessionEntry registration : registrations) {
+						// sublist TOindex has to be +1, so 0,100 is item 0 - 99
+						for (SessionEntry registration : registrations.subList(0 , next_items)) {
 					%>
 					<tr class="jive-odd">
 						<td><a

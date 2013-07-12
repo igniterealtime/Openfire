@@ -75,7 +75,8 @@
 		// we now know current_page is in valid range, so set it for computation
 		current_page -= 1;
 		numOfPages += 1;
-		int next_items = (current_page * 100) + 99;
+		int current_index = (current_page * 100);
+		int next_items=  current_index + 100;
 		if (next_items > numOfSessions)
 			next_items = numOfSessions;
 	%>
@@ -103,7 +104,7 @@
 			</thead>
 			<tbody>
 				<%
-					for (GatewaySession gwsession : gwSessions.subList(current_page * 100, next_items)) {
+					for (GatewaySession gwsession : gwSessions.subList(current_index, next_items)) {
 				%>
 				<tr class="jive-odd">
 					<td><a

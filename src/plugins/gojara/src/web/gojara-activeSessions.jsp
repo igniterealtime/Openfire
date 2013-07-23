@@ -84,7 +84,7 @@
 		Pages: [
 		<%
 		for (int i = 1; i <= numOfPages; i++) {
-	%>
+		%>
 		<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
 						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
@@ -103,7 +103,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				<%
+				<% if (numOfSessions == 0) { %>
+				<tr><td colspan="3">No active Sessions</td></tr>
+				<% } else {
 					for (GatewaySession gwsession : gwSessions.subList(current_index, next_items)) {
 				%>
 				<tr class="jive-odd">
@@ -115,7 +117,7 @@
 						title="<%=JspHelper.dateDifferenceHelper(gwsession.getLastActivity())%>"><%=gwsession.getLastActivity()%></td>
 				</tr>
 				<%
-					}
+					}}
 				%>
 			</tbody>
 		</table>

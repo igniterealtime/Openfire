@@ -1,10 +1,10 @@
 package org.jivesoftware.openfire.plugin.gojara.sessions;
 
 import java.text.DecimalFormat;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -49,7 +49,7 @@ public class GojaraAdminManager {
 		adminUser = _server.createJID("gojaraadmin", null);
 		unconfiguredGateways = new HashSet<String>();
 		configuredGateways = new HashSet<String>();
-		setGatewayStatisticsMap(new HashMap<String, Map<String, Integer>>());
+		gatewayStatisticsMap = new ConcurrentHashMap<String, Map<String, Integer>>(16, 0.75f, 1);
 	}
 
 	public static GojaraAdminManager getInstance() {
@@ -74,10 +74,6 @@ public class GojaraAdminManager {
 	 */
 	public void testAdminConfiguration(String gateway) {
 		unconfiguredGateways.add(gateway);
-		// we add these here and not in confirmGateway so its more clear that these are not being gathered when viewing
-		// Spectrum2 Stats jsp
-		getGatewayStatisticsMap().put(gateway, new HashMap<String, Integer>());
-
 		Message message = generateCommand(gateway, "config_check");
 		message.setBody("status");
 		router.route(message);
@@ -92,6 +88,7 @@ public class GojaraAdminManager {
 	public void confirmGatewayConfig(String gateway) {
 		unconfiguredGateways.remove(gateway);
 		configuredGateways.add(gateway);
+		gatewayStatisticsMap.put(gateway, new ConcurrentHashMap<String, Integer>(16, 0.75f, 1));
 		gatherGatewayStatistics(gateway);
 	}
 
@@ -102,7 +99,7 @@ public class GojaraAdminManager {
 	public void gatewayUnregistered(String gateway) {
 		unconfiguredGateways.remove(gateway);
 		configuredGateways.remove(gateway);
-		getGatewayStatisticsMap().remove(gateway);
+		gatewayStatisticsMap.remove(gateway);
 	}
 
 	public boolean areGatewaysConfigured() {
@@ -164,12 +161,8 @@ public class GojaraAdminManager {
 
 	}
 
-	public Map<String, Map<String, Integer>> getGatewayStatisticsMap() {
-		return gatewayStatisticsMap;
-	}
-
-	public void setGatewayStatisticsMap(Map<String, Map<String, Integer>> gatewayStatisticsMap) {
-		this.gatewayStatisticsMap = gatewayStatisticsMap;
+	public void putStatisticValue(String subdomain, String statistic, int value) {
+		gatewayStatisticsMap.get(subdomain).put(statistic, value);
 	}
 
 	/**
@@ -269,4 +262,5 @@ public class GojaraAdminManager {
 		}
 		return "-";
 	}
+
 }

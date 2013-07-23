@@ -49,7 +49,8 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 
 	private void handleOnlineUsers(Message message, String subdomain) {
 		Log.debug("Found online_users command!");
-		if (message.getBody().equals("0"))
+		String body = message.getBody();
+		if (body.equals("0") || body.startsWith("Unknown command."))
 			return;
 		String[] content = message.getBody().split("\\r?\\n");
 		for (String user : content) {
@@ -68,14 +69,19 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 	}
 
 	private void handleStatistic(Message message, String subdomain, String statistic) {
-		int result;
+		String body = message.getBody();
+		// we dont catch this with exception so we can see what might go wrong. Sometimes S2 responded not knowing the
+		// command but i dont really know why
+		if (body.startsWith("Unknown command."))
+			return;
+
+		int value;
 		try {
-			result = Integer.parseInt(message.getBody());
+			value = Integer.parseInt(body);
+			gojaraAdminManager.putStatisticValue(subdomain, statistic, value);
 		} catch (Exception e) {
 			e.printStackTrace();
-			result = 0;
 		}
 
-		gojaraAdminManager.getGatewayStatisticsMap().get(subdomain).put(statistic, result);
 	}
 }

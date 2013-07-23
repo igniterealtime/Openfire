@@ -49,13 +49,13 @@
 			</thead>
 			<tbody>
 				<%
-				Set<String> gateways = gojaraAdminManager.getGatewayStatisticsMap().keySet();
+				Set<String> gateways = transportSessionManager.getActiveGateways();
 				for (String gateway : gateways) {
 				%>	
 					<tr class="jive-odd">
 					<td><%=gateway %> <% if (!gateway.contains(domain)) { %>
 						<img alt="gateway configuration info" src="/images/header-help_new.gif" title="Component name does not include server name: <%=domain%>. 
-						It should be configured like this: transport.server-name, e.g.: icq.<%=gateway%>">
+						It should be configured like this: transport.server-name, e.g.: icq.<%=domain%>">
 					<% } %> 
 					</td>
 					<td>

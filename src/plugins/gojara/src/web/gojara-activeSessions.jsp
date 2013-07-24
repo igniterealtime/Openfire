@@ -26,9 +26,6 @@
 		sortParams.put("sortby", "transport");
 		sortParams.put("sortorder", "ASC");
 	}
-
-	//pagination
-	int current_page = 1;
 %>
 <html>
 <head>
@@ -59,24 +56,30 @@
 	<br>
 	<br>
 	<%
+		//pagination logic
+		//get all records, we limit these later as we have to sort them first
 		ArrayList<GatewaySession> gwSessions = transportManager
 				.getSessionsSorted(sortParams.get("sortby"), sortParams.get("sortorder"));
+		
 		int numOfSessions = gwSessions.size();
-		int numOfPages = numOfSessions / 100;
+		// 100 entries is exactly 1 page, 101 entries is 2 pages
+		int numOfPages = numOfSessions % 100 == 0 ? (numOfSessions / 100) : (1 + (numOfSessions / 100));
+		//lets check for validity if page parameter is supplied, set it to 1 if not in valid range 
+		int current_page = 1;
 		if (request.getParameter("page") != null) {
-			//lets check for validity
 			try {
 				current_page = Integer.parseInt(request.getParameter("page"));
-				if (current_page < 1 || current_page > (numOfPages))
+				if (current_page < 1 || current_page > numOfPages)
 					current_page = 1;
 			} catch (Exception e) {
 			}
 		}
-		// we now know current_page is in valid range, so set it for computation
-		current_page -= 1;
-		numOfPages += 1;
-		int current_index = (current_page * 100);
-		int next_items=  current_index + 100;
+		// we now know current_page is in valid range from supplied parameter or standard.
+		// this will be our sublist starting index, 0, 100, 200 ... 
+		int current_index = (current_page -1)* 100;
+		//ending index, 100, 200 etc, when next items > numOfSessions we have reached last page, set proper index so we have no out of bounds
+		//ending index is excluded, so 0-100 is 0-99, e.g. item 1-100
+		int next_items = current_index + 100;
 		if (next_items > numOfSessions)
 			next_items = numOfSessions;
 	%>
@@ -86,7 +89,7 @@
 		for (int i = 1; i <= numOfPages; i++) {
 		%>
 		<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
-						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
+						+ sortParams.get("sortorder") + "\" class=\"" + (current_page == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
 		<%
 			}
@@ -129,7 +132,7 @@
 		for (int i = 1; i <= numOfPages; i++) {
 	%>
 		<%="<a href=\"gojara-activeSessions.jsp?page=" + i + "&sortby=" + sortParams.get("sortby") + "&sortorder="
-						+ sortParams.get("sortorder") + "\" class=\"" + ((current_page + 1) == i ? "jive-current" : "") + "\">" + i
+						+ sortParams.get("sortorder") + "\" class=\"" + (current_page == i ? "jive-current" : "") + "\">" + i
 						+ "</a>"%>
 		<%
 			}

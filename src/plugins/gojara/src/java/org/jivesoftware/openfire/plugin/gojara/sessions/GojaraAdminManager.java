@@ -171,10 +171,9 @@ public class GojaraAdminManager {
 	public void gatherGatewayStatistics() {
 		if (refreshCooldown == 0) {
 			refreshCooldown = System.currentTimeMillis();
-		} else {
+		} else if ((System.currentTimeMillis() - refreshCooldown) < 60000) {
 			// once a minute max
-			if ((System.currentTimeMillis() - refreshCooldown) < 60000)
-				return;
+			return;
 		}
 
 		refreshCooldown = System.currentTimeMillis();

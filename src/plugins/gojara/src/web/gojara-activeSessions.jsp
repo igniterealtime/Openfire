@@ -100,6 +100,7 @@
 		<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
 				<tr>
+					<th nowrap>#</th>
 					<th nowrap><%=JspHelper.sortingHelperSessions("username", sortParams)%></th>
 					<th nowrap><%=JspHelper.sortingHelperSessions("transport", sortParams)%></th>
 					<th nowrap><%=JspHelper.sortingHelperSessions("loginTime", sortParams)%></th>
@@ -107,11 +108,13 @@
 			</thead>
 			<tbody>
 				<% if (numOfSessions == 0) { %>
-				<tr><td colspan="3">No active Sessions</td></tr>
+				<tr><td colspan="4">No active Sessions</td></tr>
 				<% } else {
+					int show_number = 1 + current_index;
 					for (GatewaySession gwsession : gwSessions.subList(current_index, next_items)) {
 				%>
 				<tr class="jive-odd">
+					<td><%= show_number%></td>
 					<td><a
 						href="gojara-sessionDetails.jsp?username=<%=gwsession.getUsername()%>"
 						title="Session Details for <%=gwsession.getUsername()%>"><%=gwsession.getUsername()%></a></td>
@@ -120,6 +123,7 @@
 						title="<%=JspHelper.dateDifferenceHelper(gwsession.getLastActivity())%>"><%=gwsession.getLastActivity()%></td>
 				</tr>
 				<%
+					show_number++;
 					}}
 				%>
 			</tbody>

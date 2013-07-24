@@ -118,6 +118,7 @@
 			<table cellpadding="0" cellspacing="0" border="0" width="100%">
 				<thead>
 					<tr>
+						<th nowrap>#</th>
 						<th nowrap><%=JspHelper.sortingHelperRegistrations("username", sortParams)%></th>
 						<th nowrap><%=JspHelper.sortingHelperRegistrations("transport", sortParams)%></th>
 						<th nowrap>Active?</th>
@@ -127,10 +128,12 @@
 					</tr>
 				</thead>
 				<tbody>
-					<%
+					<%	
+						int show_number = 1 + current_index;
 						for (SessionEntry registration : registrations.subList(current_index, next_items)) {
 					%>
 					<tr class="jive-odd">
+						<td><%= show_number%></td>
 						<td><a
 							href="gojara-sessionDetails.jsp?username=<%=registration.getUsername()%>"
 							title="Session Details for <%=registration.getUsername()%>"><%=registration.getUsername()%></a></td>
@@ -158,6 +161,7 @@
 							value="<%=registration.getTransport()%>"></td>
 					</tr>
 					<%
+						show_number++;
 						}
 					%>
 				</tbody>

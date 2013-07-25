@@ -130,7 +130,6 @@ public class RemoteRosterPlugin implements Plugin {
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);
 		compManager.removeListener(_componentObserver);
-		gojaraAdminManager.removeAdminUser();
 		pluginManager = null;
 		mainInterceptor = null;
 		compManager = null;

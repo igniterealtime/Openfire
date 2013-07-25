@@ -8,9 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -39,14 +36,10 @@ public class GojaraAdminManager {
 	private GojaraAdminManager() {
 		_server = XMPPServer.getInstance();
 		router = _server.getPacketRouter();
-		UserManager userManager = UserManager.getInstance();
-		try {
-			userManager.createUser("gojaraadmin", "iAmTheLawgiver", "gojaraadmin", null);
-			Log.info("gojaraAdmin User created.");
-		} catch (UserAlreadyExistsException e) {
-			Log.info("gojaraAdmin User already created.");
-		}
+
+		// we dont actually need to CREATE the user, it's sufficient to create the jid. The message gets intercepted before its processed.
 		adminUser = _server.createJID("gojaraadmin", null);
+
 		unconfiguredGateways = new HashSet<String>();
 		configuredGateways = new HashSet<String>();
 		gatewayStatisticsMap = new ConcurrentHashMap<String, Map<String, Integer>>(16, 0.75f, 1);
@@ -58,16 +51,7 @@ public class GojaraAdminManager {
 		}
 		return myself;
 	}
-
-	public void removeAdminUser() {
-		UserManager userManager = UserManager.getInstance();
-		try {
-			userManager.deleteUser(userManager.getUser("gojaraadmin"));
-		} catch (UserNotFoundException e) {
-			Log.info("Couldn't remove adminUser.");
-		}
-	}
-
+	
 	/**
 	 * Sends a testmessage to specified gateway and schedules a task to check if there was a response.
 	 * 

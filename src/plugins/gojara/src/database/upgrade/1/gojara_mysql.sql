@@ -3,7 +3,7 @@ CREATE TABLE ofGojaraSessions (
   username			text NOT NULL,
   transport			text NOT NULL,
   lastActivity		bigint(20) NOT NULL,
-  PRIMARY KEY (username, transport)
+  PRIMARY KEY (username(255), transport(255))
 );
 CREATE INDEX ofGojara_lastActivity_idx  ON ofGojaraSessions(lastActivity);
 

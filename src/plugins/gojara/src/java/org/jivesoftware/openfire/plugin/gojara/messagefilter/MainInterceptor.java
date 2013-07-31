@@ -1,15 +1,18 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
 import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
 import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
+import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
@@ -69,7 +72,7 @@ public class MainInterceptor implements PacketInterceptor {
 		boolean retval = this.activeTransports.add(subDomain);
 		if (retval) {
 			tSessionManager.addTransport(subDomain);
-			 gojaraAdminmanager.testAdminConfiguration(subDomain);
+			gojaraAdminmanager.testAdminConfiguration(subDomain);
 		}
 
 		return retval;
@@ -78,7 +81,7 @@ public class MainInterceptor implements PacketInterceptor {
 	public boolean removeTransport(String subDomain) {
 		Log.info("Removing " + subDomain + " from watched Transports.");
 		tSessionManager.removeTransport(subDomain);
-		 gojaraAdminmanager.gatewayUnregistered(subDomain);
+		gojaraAdminmanager.gatewayUnregistered(subDomain);
 		return this.activeTransports.remove(subDomain);
 	}
 
@@ -193,13 +196,14 @@ public class MainInterceptor implements PacketInterceptor {
 				Element query = iqPacket.getChildElement();
 				if (query == null)
 					return;
-				if (query.getNamespaceURI().equals("jabber:iq:register")) {
-					if (query.nodeCount() > 1)
-						tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
-					else
+				// Check if our jabber:iq:register packet is unregister packet, else it will be a register. If this doesnt work
+				// like its supposed to, we might need to intercept the iq OF sends to Spectrum instead of the IQ the client sends to OF
+				if (query.getNamespaceURI().equals("jabber:iq:register") && iqPacket.getType().equals(IQ.Type.set)) {
+					if (query.element("remove") != null)
 						tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
-				}
-
+					else
+						tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
+				} 
 			}
 
 		} else if (!incoming && !processed) {

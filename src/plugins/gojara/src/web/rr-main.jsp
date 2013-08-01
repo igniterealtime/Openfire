@@ -67,7 +67,7 @@
 
 <html>
 <head>
-<title><fmt:message key="rr.summary.title" /></title>
+<title>Gojara Settings</title>
 <link href="./css/rr.css" rel="stylesheet" type="text/css">
 <script src="./js/http.js" type="text/javascript"></script>
 <script src="./js/jquery.js" type="text/javascript"></script>

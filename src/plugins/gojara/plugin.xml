@@ -20,8 +20,8 @@
 	<adminconsole>
 		<tab id="tab-server">
 			<sidebar id="sidebar-server-settings">
-				<item id="remoteRoster" name="${rr.summary.title}" url="rr-main.jsp"
-					description="${rr.summary.title}" />
+				<item id="remoteRoster" name="Gojara Settings" url="rr-main.jsp"
+					description="Manage GoJara Settings" />
 			</sidebar>
 		</tab>
 		<tab id="tab-server">

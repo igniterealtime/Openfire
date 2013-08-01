@@ -74,7 +74,13 @@ public class JspHelper {
 		long diffMinutes = diff / (60 * 1000) % 60;
 		long diffHours = diff / (60 * 60 * 1000) % 24;
 		long diffDays = diff / (24 * 60 * 60 * 1000);
+		
+		String seconds = diffSeconds == 0 ? "" : (diffSeconds + " Sec");
+		String minutes = diffMinutes == 0 ? "" : (diffMinutes + " Min ");
+		String hours = diffHours == 0 ? "" : (diffHours + " Hours ");
+		String days = diffDays == 0 ? "" : (diffDays + " Days ");
+		
+		return days + hours + minutes + seconds + " ago";
 
-		return "" + diffSeconds + " Seconds " + diffMinutes + " Minutes " + diffHours + " Hours " + diffDays + " Days ago";
 	}
 }

@@ -222,7 +222,13 @@ public class GojaraAdminManager {
 					long diffMinutes = time / 60 % 60;
 					long diffHours = time / (60 * 60) % 24;
 					long diffDays = time / (24 * 60 * 60);
-					return "" + diffSeconds + " Sec " + diffMinutes + " Min " + diffHours + " Hours " + diffDays + " Days";
+					
+					String seconds = diffSeconds == 0 ? "" : (diffSeconds + " Sec");
+					String minutes = diffMinutes == 0 ? "" : (diffMinutes + " Min ");
+					String hours = diffHours == 0 ? "" : (diffHours + " Hours ");
+					String days = diffDays == 0 ? "" : (diffDays + " Days ");
+					
+					return days + hours + minutes + seconds;
 				}
 			} else if (stat.equals("messages_from_xmpp")) {
 				if (gatewayStatisticsMap.get(gateway).get("messages_from_xmpp") != null)

@@ -5,14 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.dom4j.Element;
-import org.dom4j.Node;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
 import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
 import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
-import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
@@ -190,20 +188,45 @@ public class MainInterceptor implements PacketInterceptor {
 					tSessionManager.disconnectUserFrom(from, packet.getTo().getNode().toString());
 				}
 			}
-			// TransportSession Feature - track Registrations so we can reset unsuccesfull ones
+			// TransportSession Feature - track Registrations and unregistrations so we can reset unsuccesfull ones
 			else if (packet instanceof IQ && activeTransports.contains(to)) {
 				IQ iqPacket = (IQ) packet;
 				Element query = iqPacket.getChildElement();
 				if (query == null)
 					return;
-				// Check if our jabber:iq:register packet is unregister packet, else it will be a register. If this doesnt work
-				// like its supposed to, we might need to intercept the iq OF sends to Spectrum instead of the IQ the client sends to OF
+				// Okay, so now we have a IQ Packet with a query xmlns: jabber:iq:register
+				// Spark sends registrations and unregistrations in such a query, register has a x xmls
+				// jabber:iq:gateway:register, unregister is just a <remove/> element
+				// Gajim sends the whole form with x xmlns jabber:x:data type="submit", where a field var=unregister
+				// value of 0 is a registration, and unregister = 1 is unregistration
 				if (query.getNamespaceURI().equals("jabber:iq:register") && iqPacket.getType().equals(IQ.Type.set)) {
+					// spark unregister
 					if (query.element("remove") != null)
 						tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
-					else
-						tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
-				} 
+					else if (query.element("x") != null) {
+						String namespace = query.element("x").getNamespaceURI();
+						// spark register
+						if (namespace.equals("jabber:iq:gateway:register"))
+							tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
+						// Gajim packet
+						else if (namespace.equals("jabber:x:data")) {
+							// .... not really nice, but i dont know xpath so idk how to do this else
+							@SuppressWarnings("rawtypes")
+							List list = query.element("x").elements("field");
+							for (Object ele : list) {
+								Element e = (Element) ele;
+								if (e.attributeValue("var").equals("unregister")) {
+									// register form
+									if (e.elementText("value").equals("0"))
+										tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
+									// unregister form
+									else if (e.elementText("value").equals("1"))
+										tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
+								}
+							}
+						}
+					}
+				}
 			}
 
 		} else if (!incoming && !processed) {

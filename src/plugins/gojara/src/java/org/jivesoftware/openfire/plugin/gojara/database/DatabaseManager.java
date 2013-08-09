@@ -14,12 +14,13 @@ import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.plugin.gojara.sessions.GatewaySession;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
- * @author Holger Bergunde, Axel-Frederik Brand This class is used to store logs in the database. A log entry is
- *         representated by {@link LogEntry}
+ * @author Holger Bergunde
+ * @author Axel-Frederik Brand
+ * 
+ *         This class is used to store logs in the database. A log entry is representated by {@link LogEntry}
  */
 public class DatabaseManager {
 
@@ -165,10 +166,10 @@ public class DatabaseManager {
 			logbuffer.add(new LogEntry(from, to, type, System.currentTimeMillis(), component));
 		else {
 			synchronized (logbuffer) {
-			Connection con = null;
-			PreparedStatement pstmt = null;
-			try {
-				con = DbConnectionManager.getConnection();
+				Connection con = null;
+				PreparedStatement pstmt = null;
+				try {
+					con = DbConnectionManager.getConnection();
 					for (LogEntry log : logbuffer) {
 						pstmt = con.prepareStatement(ADD_NEW_LOG);
 						pstmt.setLong(1, log.getDate());
@@ -179,13 +180,13 @@ public class DatabaseManager {
 						pstmt.addBatch();
 					}
 					pstmt.executeBatch();
-			} catch (SQLException sqle) {
-				Log.error(sqle);
-			} finally {
-				DbConnectionManager.closeConnection(pstmt, con);
-				logbuffer.clear();
+				} catch (SQLException sqle) {
+					Log.error(sqle);
+				} finally {
+					DbConnectionManager.closeConnection(pstmt, con);
+					logbuffer.clear();
+				}
 			}
-		}
 		}
 	}
 

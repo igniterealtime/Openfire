@@ -53,7 +53,7 @@ public class GojaraAdminManager {
 	}
 	
 	/**
-	 * Sends a testmessage to specified gateway and schedules a task to check if there was a response.
+	 * Sends a testmessage to specified gateway, when a response gets intercepted we consider gateway configured
 	 * 
 	 */
 	public void testAdminConfiguration(String gateway) {

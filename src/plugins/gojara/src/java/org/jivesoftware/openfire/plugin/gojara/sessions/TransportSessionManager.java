@@ -64,7 +64,7 @@ public class TransportSessionManager {
 	}
 
 	/**
-	 * register is seperate because a user may register to transport but not connect to it, e.g. with wrong credentials.
+	 * register is seperate to connect because a user may register to transport but not connect to it, e.g. with wrong credentials.
 	 * we still want to keep track of those registrations so we know they happened and we can reset them
 	 * 
 	 * @param transport

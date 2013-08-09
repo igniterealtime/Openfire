@@ -40,7 +40,7 @@ import  org.jivesoftware.util.Log;
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property <tt>openfire.lib.directory</tt> is specified
+ * Note: if the enviroment property <tt>openfire.lib.dir</tt> is specified
  * ServerStarter will attempt to use this value as the value for openfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *

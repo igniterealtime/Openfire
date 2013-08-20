@@ -4,13 +4,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.dom4j.Element;
+import org.dom4j.Node;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.messagefilter.processors.*;
 import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
 import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
+import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.ConcurrentHashSet;
@@ -18,6 +24,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
@@ -35,14 +42,18 @@ public class MainInterceptor implements PacketInterceptor {
 
 	private static final Logger Log = LoggerFactory.getLogger(MainInterceptor.class);
 	private Set<String> activeTransports = new ConcurrentHashSet<String>();
+	/**
+	 * For referencing the abstract remote Processors
+	 */
 	private Map<String, AbstractRemoteRosterProcessor> packetProcessors = new HashMap<String, AbstractRemoteRosterProcessor>();
 	private TransportSessionManager tSessionManager = TransportSessionManager.getInstance();
 	private GojaraAdminManager gojaraAdminmanager = GojaraAdminManager.getInstance();
+	private XMPPServer server;
 	private Boolean frozen;
 
 	public MainInterceptor() {
 		Log.info("Created MainInterceptor for GoJara Plugin.");
-		XMPPServer server = XMPPServer.getInstance();
+		server = XMPPServer.getInstance();
 		RosterManager rosterMananger = server.getRosterManager();
 
 		AbstractRemoteRosterProcessor iqRegisteredProcessor = new DiscoIQRegisteredProcessor();
@@ -194,36 +205,26 @@ public class MainInterceptor implements PacketInterceptor {
 				Element query = iqPacket.getChildElement();
 				if (query == null)
 					return;
-				// Okay, so now we have a IQ Packet with a query xmlns: jabber:iq:register
-				// Spark sends registrations and unregistrations in such a query, register has a x xmls
-				// jabber:iq:gateway:register, unregister is just a <remove/> element
-				// Gajim sends the whole form with x xmlns jabber:x:data type="submit", where a field var=unregister
-				// value of 0 is a registration, and unregister = 1 is unregistration
+				/*
+				 * Okay, so now we have a IQ Packet with a query xmlns: jabber:iq:register Spark sends registrations and
+				 * unregistrations in such a query, register has a x xmls jabber:iq:gateway:register, unregister is just
+				 * a <remove/> element Gajim sends the whole form with x xmlns jabber:x:data type="submit", where a
+				 * field var=unregister value of 0 is a registration, and unregister = 1 is unregistration
+				 */
 				if (query.getNamespaceURI().equals("jabber:iq:register") && iqPacket.getType().equals(IQ.Type.set)) {
-					// spark unregister
+					// spark + gajim unregister
 					if (query.element("remove") != null)
 						tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
 					else if (query.element("x") != null) {
-						String namespace = query.element("x").getNamespaceURI();
+						Element xElem = query.element("x");
+						String xNamespace = xElem.getNamespaceURI();
 						// spark register
-						if (namespace.equals("jabber:iq:gateway:register"))
+						if (xNamespace.equals("jabber:iq:gateway:register"))
 							tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
-						// Gajim packet
-						else if (namespace.equals("jabber:x:data")) {
-							// .... not really nice, but i dont know xpath so idk how to do this else
-							@SuppressWarnings("rawtypes")
-							List list = query.element("x").elements("field");
-							for (Object ele : list) {
-								Element e = (Element) ele;
-								if (e.attributeValue("var").equals("unregister")) {
-									// register form
-									if (e.elementText("value").equals("0"))
-										tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
-									// unregister form
-									else if (e.elementText("value").equals("1"))
-										tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
-								}
-							}
+						// Gajim register + presence push
+						else if (xNamespace.equals("jabber:x:data") && xElem.attribute("type").getText().equals("submit")) {
+							tSessionManager.registerUserTo(to, iqPacket.getFrom().getNode().toString());
+							presencePush(packet.getTo(), packet.getFrom(), 150);
 						}
 					}
 				}
@@ -245,13 +246,63 @@ public class MainInterceptor implements PacketInterceptor {
 						&& query.getNamespaceURI().equals("http://jabber.org/protocol/disco#info") && from.length() > 0
 						&& activeTransports.contains(from))
 					packetProcessors.get("mucfilterProcessor").process(packet, from, to, from);
+
+				// GAJIM presence push when connecting... probably doesnt really belong here but by now we would have
+				// 50processors for every edge case we handle...
+				// If roster is persistent and we dont block presences no need to do this since presences are being
+				// pushed by OF anyways
+				else if (JiveGlobals.getBooleanProperty("plugin.remoteroster.gajimBroadcast", false)) {
+					if (to.contains("Gajim") && query.getNamespaceURI().equals("jabber:iq:roster") && iqPacket.getType().equals(IQ.Type.result)) {
+						List<Node> nodes = XpathHelper.findNodesInDocument(iqPacket.getElement().getDocument(), "//roster:item");
+						for (Node n : nodes) {
+							String jid = n.valueOf("@jid");
+							if (activeTransports.contains(jid)) {
+								JID pushTo = new JID(jid);
+								presencePush(pushTo, iqPacket.getTo(), 3000);
+							}
+						}
+					}
+				}
+
 			} else if (packet instanceof Presence) {
-				// We block Presences to users of a subdomain so OF/S2 wont log you in automatically if you have a
-				// subdomain user in your roster
+				/*
+				 * We block Presences to users of a subdomain (except transport itself) so OF/S2 wont log you in
+				 * automatically if you have a subdomain user in your roster. This prevents some clients from logging
+				 * automatically, as the clients dont send a specific presence to the transport. We could do a presence
+				 * push if we see them come online, but that would do the same as just not intercepting these presences,
+				 * as the problem is really the client
+				 */
 				String to_s = searchJIDforSubdomain(to);
 				if (to_s.length() > 0 && !activeTransports.contains(to))
 					throw new PacketRejectedException();
 			}
 		}
+	}
+
+	/**
+	 * Just pushes a available presence, we need this for GAJIM Client as it does not push available presence after
+	 * registering We also wait a little so after register transport is on users roster. Really didnt wanted this here
+	 * but doesnt really belong anywhere else
+	 * 
+	 * @param to
+	 * @param from
+	 * @param delay MS until the job should be done
+	 */
+	private void presencePush(final JID to, final JID from, int delay) {
+		TimerTask pushPresenceTask = new TimerTask() {
+
+			@Override
+			public void run() {
+				PacketRouter router = server.getPacketRouter();
+				Packet presence = new Presence();
+				presence.setTo(to);
+				presence.setFrom(from);
+				router.route(presence);
+			}
+		};
+
+		Timer timer = new Timer();
+		timer.schedule(pushPresenceTask, delay);
+
 	}
 }

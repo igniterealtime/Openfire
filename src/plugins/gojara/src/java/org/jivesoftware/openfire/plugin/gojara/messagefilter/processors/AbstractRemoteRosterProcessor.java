@@ -30,6 +30,7 @@ abstract public class AbstractRemoteRosterProcessor {
 
 	public AbstractRemoteRosterProcessor() {
 		_server = XMPPServer.getInstance();
+		_router = _server.getPacketRouter();
 
 	}
 
@@ -51,8 +52,7 @@ abstract public class AbstractRemoteRosterProcessor {
 	 */
 	protected void dispatchPacket(Packet packet) {
 		Log.debug("Sending package to PacketRouter: \n" + packet.toString() + "\n");
-		PacketRouter router = _server.getPacketRouter();
-		router.route(packet);
+		_router.route(packet);
 	}
 
 	/**

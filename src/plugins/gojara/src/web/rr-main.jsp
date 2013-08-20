@@ -31,6 +31,9 @@
 	String mucFilterParam = request.getParameter("mucFilter");
 	boolean mucFilter = mucFilterParam == null ? false : mucFilterParam.equals("true");
 	
+	String gajimBroadcastParam = request.getParameter("gajimBroadcast");
+	boolean gajimBroadcast = gajimBroadcastParam == null ? false : gajimBroadcastParam.equals("true");
+	
 	String[] componentsEnabled = request.getParameterValues("enabledComponents[]");
 	PermissionManager _pmanager = new PermissionManager();
 	DatabaseManager _db;
@@ -53,6 +56,7 @@
 		JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.iqLastFilter", (iqLastFilter ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.mucFilter", (mucFilter ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.gajimBroadcast", (gajimBroadcast ? "true" : "false"));
 		response.sendRedirect("rr-main.jsp?success=true");
 		return;
 	}
@@ -264,8 +268,6 @@
 			</div>
 
 
-
-
 			<%
 				++i;
 				}
@@ -299,7 +301,7 @@
 					<td />
 					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, contacts will be saved to database and
 					no contacts will be deleted	by GoJara automatically.<br>					
-					When Persistent-Roster is disabled, contacts will not be saved to databse and 
+					When Persistent-Roster is disabled, contacts will not be saved to database and 
 					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout. </td>
 				</tr>
 				<tr>
@@ -314,6 +316,7 @@
 					 of some Transports. If this should not be allowed, because only internal Jabber Conferences should be used, GoJara
 					 can remove these.</td>
 				</tr>
+
            </tbody>
            </table>
        </td>
@@ -360,6 +363,28 @@
 										<td align="left" style="font-size: -3; color: grey">Some clients try to check how long a contact is already offline.
 										 This feature is not supported by spectrum so it won't response to this IQ stanza. To prevent the client from waiting
 										 for a response we could answer with a service-unavailable message as described in XEP-12.</td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+					<tr valign="top">
+						<td width="1%" nowrap class="c1">Gajim:</td>
+						<td width="99%">
+							<table cellpadding="0" cellspacing="0" border="0">
+								<tbody>
+									<tr>
+										<td><input type="checkbox" name="gajimBroadcast" id="gajimBroadcast" value="true"
+											<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.gajimBroadcast", false) ? "checked=\"checked\""
+					: ""%> />
+										</td>
+										<td><label for="gajimBroadcast">Push available presence on startup</label></td>
+									</tr>
+									<tr>
+										<td />
+										<td align="left" style="font-size: -3; color: grey">Enable this if Gojara should push available presences to
+										transports from your roster on startup. If disabled, you have to manually send an available presence to the specific 
+										transport to connect to it.</td>
 									</tr>
 								</tbody>
 							</table>

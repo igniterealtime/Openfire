@@ -45,7 +45,7 @@ log4j.jar                           | 1.2.15                                    
 mail.jar                            | 1.4.1 (JavaMail)                                             |
 mina-core.jar                       | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
 mina-filter-compression.jar         | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
-mina-filter-ssl.jar                 | 1.1.8 (https://svn.apache.org/repos/asf/mina/branches/1.1)   | Apache 2.0
+mina-filter-ssl.jar                 | 1.1.8-SNAPSHOT (see note #2)                                 | Apache 2.0
 mysql.jar                           | 5.0.8                                                        | GPL
 objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
 pack200task.jar                     | August 5, 2004                                               | LGPL
@@ -67,3 +67,4 @@ xpp3.jar                            | XPP_3 1.1.4c                              
 Notes
 -----
 1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn
+2) mina-filter-ssl - applied patch to resize buffers OF-496 DIRMINA-914. Source code used: https://git-wip-us.apache.org/repos/asf?p=mina.git;a=commit;h=dd6395befe672d7bdb210b28b1b81592a3dc5e64

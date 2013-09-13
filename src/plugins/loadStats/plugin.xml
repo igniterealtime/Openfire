@@ -5,7 +5,7 @@
     <name>Load Statistic</name>
     <description>Logs load statistics to a file</description>
     <author>Jive Software</author>
-    <version>1.1.0</version>
-    <date>4/12/2007</date>
-    <minServerVersion>3.3.0</minServerVersion>
+    <version>1.2.0</version>
+    <date>9/13/2013</date>
+    <minServerVersion>3.9.0</minServerVersion>
 </plugin>

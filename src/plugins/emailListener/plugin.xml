@@ -8,10 +8,10 @@
     <name>Email Listener</name>
     <description>Listens for emails and sends alerts to specific users.</description>
     <author>Jive Software</author>
-    <version>1.0.2</version>
-    <date>2/1/2010</date>
+    <version>1.1.0</version>
+    <date>9/13/2013</date>
     <url>http://www.igniterealtime.org</url>
-    <minServerVersion>3.5.0</minServerVersion>
+    <minServerVersion>3.9.0</minServerVersion>
 
     <adminconsole>
         <tab id="tab-server">

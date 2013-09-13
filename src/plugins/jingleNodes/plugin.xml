@@ -5,9 +5,9 @@
     <name>Jingle Nodes Plugin</name>
     <description>Provides support for Jingle Nodes</description>
     <author>Jingle Nodes (Rodrigo Martins)</author>
-    <version>0.0.3</version>
-    <date>14/11/2010</date>
-    <minServerVersion>3.7.0</minServerVersion>
+    <version>0.1.0</version>
+    <date>09/13/2013</date>
+    <minServerVersion>3.9.0</minServerVersion>
 
     <adminconsole>
         <tab id="tab-server">

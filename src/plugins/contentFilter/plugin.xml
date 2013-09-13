@@ -8,9 +8,9 @@
     <name>Content Filter</name>
     <description>Scans message packets for defined patterns</description>
     <author>Conor Hayes</author>
-    <version>1.6.1</version>
-    <date>12/1/2009</date>
-    <minServerVersion>3.7.0</minServerVersion>
+    <version>1.7.0</version>
+    <date>9/13/2013</date>
+    <minServerVersion>3.9.0</minServerVersion>
     
     <!-- UI extension -->
     <adminconsole>		

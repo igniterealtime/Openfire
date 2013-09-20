@@ -570,8 +570,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * from the server. Therefore, an unavailable session remains invisible to other clients.
      *
      * @param session the session that receieved an available presence.
+     * @param presence the presence for the session.
      */
-    public void sessionAvailable(LocalClientSession session) {
+    public void sessionAvailable(LocalClientSession session, Presence presence) {
         if (session.getAuthToken().isAnonymous()) {
             // Anonymous session always have resources so we only need to add one route. That is
             // the route to the anonymous session
@@ -583,6 +584,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             routingTable.addClientRoute(session.getAddress(), session);
             // Broadcast presence between the user's resources
             broadcastPresenceOfOtherResource(session);
+            broadcastPresenceToOtherResources(session.getAddress(), presence);
         }
     }
 

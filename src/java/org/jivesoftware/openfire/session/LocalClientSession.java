@@ -748,7 +748,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
         else if (!oldPresence.isAvailable() && this.presence.isAvailable()) {
             // The client is available
-            sessionManager.sessionAvailable(this);
+            sessionManager.sessionAvailable(this, presence);
             wasAvailable = true;
             // Notify listeners that the session is now available
             PresenceEventDispatcher.availableSession(this, presence);

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.ifsoft.rayo.RayoPlugin</class>
+    <name>Rayo Plugin</name>
+    <description>Provides support for XEP-0327</description>
+    <author>Ignite Realtime Community</author>
+    <version>0.0.1</version>
+    <date>2/6/2013</date>
+    <minServerVersion>3.8.1</minServerVersion>
+
+    <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="siderbar-rayo" name="${admin.item.rayo}">
+                <item id="rayo" name="${admin.item.rayo.settings.name}"
+                      description="${admin.item.rayo.settings.description}" url="rayo.jsp"/>
+            </sidebar>
+
+        </tab>
+    </adminconsole>
+
+</plugin>

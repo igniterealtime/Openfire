@@ -38,6 +38,7 @@ import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.jivesoftware.util.PersistableMap; 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -59,7 +60,7 @@ public class Group implements Cacheable, Externalizable {
 
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
-    private transient Map<String, String> properties;
+    private transient PersistableMap<String, String> properties;
 
     private String name;
     private String description;
@@ -221,7 +222,7 @@ public class Group implements Cacheable, Externalizable {
      *
      * @return the extended properties.
      */
-    public Map<String,String> getProperties() {
+    public PersistableMap<String,String> getProperties() {
         synchronized (this) {
             if (properties == null) {
                 properties = provider.loadProperties(this);
@@ -321,7 +322,7 @@ public class Group implements Cacheable, Externalizable {
      * Collection implementation that notifies the GroupProvider of any
      * changes to the collection.
      */
-    private class MemberCollection extends AbstractCollection {
+    private class MemberCollection extends AbstractCollection<JID> {
 
         private Collection<JID> users;
         private boolean adminCollection;
@@ -383,12 +384,11 @@ public class Group implements Cacheable, Externalizable {
         }
 
         @Override
-		public boolean add(Object member) {
+		public boolean add(JID user) {
             // Do nothing if the provider is read-only.
             if (provider.isReadOnly()) {
                 return false;
             }
-            JID user = (JID) member;
             // Find out if the user was already a group user.
             boolean alreadyGroupUser;
             if (adminCollection) {

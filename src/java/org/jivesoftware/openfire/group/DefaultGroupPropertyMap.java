@@ -14,6 +14,7 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.Immutable;
+import org.jivesoftware.util.PersistableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * @param <V> Property value
  */
 
-public class DefaultGroupPropertyMap<K,V> extends HashMap<K,V> {
+public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
 	private static final long serialVersionUID = 3128889631577167040L;
     private static final Logger logger = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);

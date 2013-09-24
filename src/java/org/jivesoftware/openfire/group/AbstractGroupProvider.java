@@ -13,6 +13,7 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.jivesoftware.util.PersistableMap;
 import org.xmpp.packet.JID;
 
 /**
@@ -255,11 +256,11 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * @param name The target group
      * @return The properties for the given group
      */
-    public Map<String,String> loadProperties(Group group) {
+    public PersistableMap<String,String> loadProperties(Group group) {
     	// custom map implementation persists group property changes
     	// whenever one of the standard mutator methods are called
     	String name = group.getName();
-    	DefaultGroupPropertyMap<String,String> result = new DefaultGroupPropertyMap<String,String>(group);
+    	PersistableMap<String,String> result = new DefaultGroupPropertyMap<String,String>(group);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

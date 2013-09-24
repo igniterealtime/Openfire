@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.group;
 import java.util.Collection;
 import java.util.Map;
 
+import org.jivesoftware.util.PersistableMap;
 import org.xmpp.packet.JID;
 
 /**
@@ -279,6 +280,6 @@ public interface GroupProvider {
      * @param group The target group
      * @return The properties for the given group
      */
-    Map<String,String> loadProperties(Group group);
+    PersistableMap<String,String> loadProperties(Group group);
     
 }

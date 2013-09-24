@@ -598,6 +598,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return room;
     }
 
+    public void refreshChatRoom(String roomName) {
+        rooms.remove(roomName);
+        getChatRoom(roomName);
+    }
+
     public LocalMUCRoom getLocalChatRoom(String roomName) {
         return rooms.get(roomName);
     }

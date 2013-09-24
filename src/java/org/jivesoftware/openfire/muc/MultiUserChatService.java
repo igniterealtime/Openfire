@@ -228,7 +228,14 @@ public interface MultiUserChatService extends Component {
      * @return The chatroom for the given name or null if the room does not exists.
      */
     MUCRoom getChatRoom(String roomName);
-
+    
+    /**
+    * Forces a re-read of the room. Useful when a change occurs externally.
+    * 
+    * @param roomName Name of the room to refresh.
+    */
+    void refreshChatRoom(String roomName);
+    
     /**
      * Retuns a list with a snapshot of all the rooms in the server (i.e. persistent or not,
      * in memory or not).

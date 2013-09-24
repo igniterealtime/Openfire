@@ -7,7 +7,7 @@
     <author>Ignite Realtime Community</author>
     <version>0.0.1</version>
     <date>2/6/2013</date>
-    <minServerVersion>3.8.1</minServerVersion>
+    <minServerVersion>3.9.0</minServerVersion>
 
     <adminconsole>
         <tab id="tab-server">

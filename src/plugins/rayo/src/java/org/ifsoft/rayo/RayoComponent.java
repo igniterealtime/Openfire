@@ -2,8 +2,6 @@
  * $Revision $
  * $Date $
  *
- * Copyright (C) 2005-2010 Jive Software. All rights reserved.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -346,6 +344,81 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleDialCommand " + iq.getFrom());
 
+		Map<String, String> headers = command.getHeaders();
+		String bridged = headers.get("voicebridge");
+
+		if (bridged == null)
+			return handleHandsetDialCommand(command, iq);
+		else
+			return handleBridgedDialCommand(command, iq);
+	}
+
+
+	private IQ handleHandsetDialCommand(DialCommand command, IQ iq)
+	{
+		Log.info("RayoComponent handleHandsetDialCommand " + iq.getFrom());
+
+        final IQ reply = IQ.createResultIQ(iq);
+
+		Map<String, String> headers = command.getHeaders();
+		String from = command.getFrom().toString();
+		String to = command.getTo().toString();
+
+		boolean toPhone = to.indexOf("sip:") == 0 || to.indexOf("tel:") == 0;
+		boolean toXmpp = to.indexOf("xmpp:") == 0;
+
+		String codec = headers.get("caller-id");
+		String mixer = "rayo-mixer-" + System.currentTimeMillis();
+
+		String callerId = headers.get("caller-id");
+		String calledId = headers.get("called-id");
+		String callerName = headers.get("caller-name");
+		String calledName = headers.get("called-name");
+
+		JoinCommand join = command.getJoin();
+
+        if (join != null && join.getTo() != null)
+        {
+        	if (join.getType() == JoinDestinationType.CALL) {
+        		// TODO join.getTo()
+        	} else {
+        		  mixer = join.getTo();
+        	}
+        }
+
+		if (callerId == null) callerId =  "rayo-caller-" + System.currentTimeMillis();
+		if (calledId == null) calledId =  "rayo-called-" + System.currentTimeMillis();
+
+		CallParticipant cp = new CallParticipant();
+		cp.setVoiceDetection(true);
+		cp.setCallOwner(iq.getFrom().toString());
+
+		if (toPhone)
+		{
+			cp.setMediaPreference("PCMU/8000/1");
+			cp.setProtocol("SIP");
+			cp.setCallId(calledId);
+			cp.setPhoneNumber(to.substring(4));
+			cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
+
+			mixer = mixer == null ? cp.getPhoneNumber() : mixer;
+			cp.setConferenceId(mixer);
+
+			doPhoneAndPcCall(iq.getFrom(), cp, reply, mixer);
+
+		} else if (toXmpp){
+
+		} else {
+			reply.setError(PacketError.Condition.feature_not_implemented);
+		}
+
+		return reply;
+	}
+
+	private IQ handleBridgedDialCommand(DialCommand command, IQ iq)
+	{
+		Log.info("RayoComponent handleBridgedDialCommand " + iq.getFrom());
+
         final IQ reply = IQ.createResultIQ(iq);
 
 		Map<String, String> headers = command.getHeaders();
@@ -374,19 +447,18 @@ public class RayoComponent 	extends 	AbstractComponent
         	}
         }
 
-		if (callerId == null) callerId =  "ray-caller-" + System.currentTimeMillis();
-		if (calledId == null) calledId =  "ray-called-" + System.currentTimeMillis();
+		if (callerId == null) callerId =  "rayo-caller-" + System.currentTimeMillis();
+		if (calledId == null) calledId =  "rayo-called-" + System.currentTimeMillis();
 
 
 		CallParticipant cp = new CallParticipant();
-		cp.setConferenceId(mixer);
-		cp.setMediaPreference("PCMU/8000/1");
-		cp.setProtocol("SIP");
 		cp.setVoiceDetection(true);
 		cp.setCallOwner(iq.getFrom().toString());
 
 		if (fromPhone && toPhone)				// Phone to Phone
 		{
+			cp.setMediaPreference("PCMU/8000/1");
+			cp.setProtocol("SIP");
 			cp.setCallId(calledId);
 			cp.setPhoneNumber(to.substring(4));
 			cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
@@ -402,6 +474,9 @@ public class RayoComponent 	extends 	AbstractComponent
 
 			} else {													// TwoParty, use a mixer
 
+				if (mixer == null) mixer = cp.getPhoneNumber();
+				cp.setConferenceId(mixer);
+
 				TwoPartyCallHandler callHandler = new TwoPartyCallHandler(this, cp);
 				callHandler.start();
 			}
@@ -413,13 +488,18 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		} else if (fromPhone && !toPhone)	{							// Phone to PC
 
+			cp.setMediaPreference("PCMU/8000/1");
+			cp.setProtocol("SIP");
 			cp.setCallId(callerId);
 			cp.setPhoneNumber(from.substring(4));
 			cp.setName(callerName == null ? cp.getPhoneNumber() : callerName);
 
+			if (mixer == null) mixer = cp.getPhoneNumber();
+			cp.setConferenceId(mixer);
+
 			if (toHandset)												// (no offer)
 			{
-				doPhonePcCall(new JID(to.substring(8)), cp, reply, mixer);
+				doPhoneAndPcCall(new JID(to.substring(8)), cp, reply, mixer);
 
 			} else {													// (offer)
 
@@ -428,13 +508,18 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		} else if (!fromPhone && toPhone)	{							// PC to Phone
 
+			cp.setMediaPreference("PCMU/8000/1");
+			cp.setProtocol("SIP");
 			cp.setCallId(calledId);
 			cp.setPhoneNumber(to.substring(4));
 			cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
 
+			if (mixer == null) mixer = cp.getPhoneNumber();
+			cp.setConferenceId(mixer);
+
 			if (fromHandset)											// (no offer)
 			{
-				doPhonePcCall(new JID(from.substring(8)), cp, reply, mixer);
+				doPhoneAndPcCall(new JID(from.substring(8)), cp, reply, mixer);
 
 			} else {													// (offer)
 
@@ -459,28 +544,20 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-	private void doPhonePcCall(JID handsetJid, CallParticipant cp, IQ reply, String mixer)
+	private void doPhoneAndPcCall(JID handsetJid, CallParticipant cp, IQ reply, String mixer)
 	{
-		Log.info("RayoComponent doPhonePcCall " + handsetJid + " " + mixer);
+		Log.info("RayoComponent doPhoneAndPcCall " + handsetJid + " " + mixer);
 
 		RelayChannel channel = plugin.getRelayChannel(handsetJid.getNode());
 
 		if (channel != null)
 		{
-			Handset handset = channel.getHandset();
+			try {
+				setMixer(mixer, channel, reply);
+				IncomingCallHandler.transferCall(channel.getAttachment(), mixer);
 
-			if (mixer == null)			// no join request, use handset mixer
-			{
-				cp.setConferenceId(handset.mixer);
-
-			} else {					// explicit mixer, transfer handset to mixer
-
-				try {
-					IncomingCallHandler.transferCall(channel.getAttachment(), mixer);
-
-				} catch (Exception e) {
-					reply.setError(PacketError.Condition.internal_server_error);
-				}
+			} catch (Exception e) {
+				reply.setError(PacketError.Condition.internal_server_error);
 			}
 
 			OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
@@ -490,6 +567,22 @@ public class RayoComponent 	extends 	AbstractComponent
 			reply.setError(PacketError.Condition.item_not_found);
 		}
 	}
+
+    private void setMixer(String mixer, RelayChannel channel, IQ reply)
+    {
+		ConferenceManager conferenceManager = ConferenceManager.getConference(	mixer,
+																				channel.getMediaPreference(),
+																				channel.getFrom().getNode(), false);
+		try {
+			if (conferenceManager.getMemberList().size() == 0) {
+				conferenceManager.recordConference(true, mixer + "-" + System.currentTimeMillis() + ".au", "au");
+			}
+
+		} catch (ParseException e1) {
+			reply.setError(PacketError.Condition.internal_server_error);
+		}
+    }
+
 
 	private IQ handleHandset(Handset handset, IQ iq)
 	{
@@ -559,7 +652,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				CallParticipant cp = new CallParticipant();
 				cp.setCallId(channel.getAttachment());
 				cp.setProtocol("WebRtc");
-				cp.setConferenceId(handset.mixer);
+				cp.setConferenceId(defaultIncomingConferenceId);
 				cp.setMediaPreference(mediaPreference);
 				cp.setRelayChannel(channel);
 				cp.setDisplayName(channel.getAttachment());
@@ -741,6 +834,18 @@ public class RayoComponent 	extends 	AbstractComponent
 
 						sendPacket(presence);
 					}
+				}
+
+				try {
+					ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
+
+					if (conferenceManager.getMemberList().size() == 0) {
+						conferenceManager.recordConference(false, null, null);
+						conferenceManager.endConference(conferenceEvent.getConferenceId());
+					}
+
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 

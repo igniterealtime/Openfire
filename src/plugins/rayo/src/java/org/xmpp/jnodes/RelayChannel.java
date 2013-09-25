@@ -1,3 +1,19 @@
+/**
+ * $Revision $
+ * $Date $
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.xmpp.jnodes;
 
 import org.slf4j.Logger;
@@ -270,7 +286,7 @@ public class RelayChannel {
             remoteCryptoKey = BitAssistant.subArray(remoteCryptoByte, Integer.valueOf(0), Integer.valueOf(16));
 			remoteCryptoSalt = BitAssistant.subArray(remoteCryptoByte, Integer.valueOf(16), Integer.valueOf(14));
 
-			Log.info("Crypto Suite " + handset.cryptoSuite + " " + handset.localCrypto + " "  + handset.remoteCrypto + " " + handset.mixer + " " + handset.codec + " " + handset.stereo);
+			Log.info("Crypto Suite " + handset.cryptoSuite + " " + handset.localCrypto + " "  + handset.remoteCrypto + " " + " " + handset.codec + " " + handset.stereo);
 
 			try {
 				encryptor = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), localCryptoKey, localCryptoSalt, remoteCryptoKey, remoteCryptoSalt);
@@ -289,30 +305,26 @@ public class RelayChannel {
             	if (decoder == 0) Log.error( "Opus decoder creation error ");
 				if (encoder == 0) Log.error( "Opus encoder creation error ");
 
-				String mediaPreference = "PCMU/8000/1";
-
-				if (handset.codec == null || "OPUS".equals(handset.codec))
-					mediaPreference = "PCM/48000/2";
-
 				if (decoder == 0 || encoder == 0)
 				{
-					mediaPreference = "PCMU/8000/1";
 					handset.codec = "PCMU";
 					Log.warn( "Opus encoder/decoder creation failure, PCMU will be used in default");
-				}
-
-				ConferenceManager.createConference(handset.mixer, mediaPreference, getAttachment());
-
-				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(handset.mixer);
-
-				if (conferenceManager.getMemberList().size() == 0) {
-					conferenceManager.recordConference(true, handset.mixer + "-" + System.currentTimeMillis() + ".au", "au");
 				}
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
+	}
+
+    public String getMediaPreference()
+    {
+		String mediaPreference = "PCMU/8000/1";
+
+		if (handset.codec == null || "OPUS".equals(handset.codec))
+			mediaPreference = "PCM/48000/2";
+
+		return mediaPreference;
 	}
 
     public void close() {
@@ -338,19 +350,6 @@ public class RelayChannel {
         }
 
         if (callHandler != null) callHandler.cancelRequest("Channel closing..");
-
-        try {
-            ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(handset.mixer);
-
-	    	if (conferenceManager.getMemberList().size() == 0) {
-        		conferenceManager.recordConference(false, null, null);
-				conferenceManager.endConference(handset.mixer);
-			}
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
 
         if (decoder != 0)
         {
@@ -520,7 +519,7 @@ public class RelayChannel {
 					decoded = true;
 					//Log.info("Decoded media " + " " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
 
-					if (packet2.getPayloadType() == 0 && handset.mixer != null)		// PCMU (uLaw), mix audio
+					if (packet2.getPayloadType() == 0)		// PCMU (uLaw), mix audio
 					{
 						packet = encryptor.decryptRTP(data);
 
@@ -547,7 +546,7 @@ public class RelayChannel {
 							}
 						} else Log.warn("cannot decode packet " + packet2.getPayloadType() + " " + packet2.getSequenceNumber() + " " + packet2.getTimestamp());
 
-					} else if (packet2.getPayloadType() == 111 && handset.mixer != null)	{	// OPUS, decode and mix audio
+					} else if (packet2.getPayloadType() == 111)	{	// OPUS, decode and mix audio
 
 						packet = encryptor.decryptRTP(data);
 

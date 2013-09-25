@@ -1,3 +1,19 @@
+/**
+ * $Revision $
+ * $Date $
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.rayo.core.verb;
 
 import javax.validation.Valid;
@@ -24,21 +40,17 @@ public class Handset extends BaseVerb {
     @NotNull(message=Handset.MISSING_REMOTE_CRYPTO)
     public String remoteCrypto;
 
-    @NotNull(message=Handset.MISSING_MIXER)
-    public String mixer;
-
     @NotNull(message=Handset.MISSING_CODEC)
     public String codec;
 
     @NotNull(message=Handset.MISSING_STEREO)
     public String stereo;
 
-	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String mixer, String codec, String stereo)
+	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo)
 	{
 		this.cryptoSuite = cryptoSuite;
 		this.localCrypto = localCrypto;
 		this.remoteCrypto = remoteCrypto;
-		this.mixer = mixer;
 		this.codec = codec;
 		this.stereo = stereo;
 	}
@@ -52,7 +64,6 @@ public class Handset extends BaseVerb {
     		.append("cryptoSuite",cryptoSuite)
     		.append("localCrypto",localCrypto)
     		.append("remoteCrypto",remoteCrypto)
-    		.append("mixer",mixer)
     		.append("codec",codec)
     		.append("stereo",stereo)
     		.toString();

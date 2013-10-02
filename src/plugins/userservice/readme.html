@@ -58,7 +58,7 @@ User Service Plugin Readme
 
 <p>
 The User Service Plugin provides the ability to add,edit,delete users and manage their rosters by sending an http request to the server.
-It is intended to be used by applications automating the user administration process. 
+It is intended to be used by applications automating the user administration process.
 This plugin's functionality is useful for applications that need to administer users outside of the Openfire admin console.
 An example of such an application might be a live sports reporting application that uses XMPP as its transport, and
 creates/deletes users according to the receipt, or non receipt, of a subscription fee.
@@ -73,16 +73,16 @@ userservice.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
-Access to the service is restricted with a "secret" that can be viewed and 
+Access to the service is restricted with a "secret" that can be viewed and
 set from the User Service page in the Openfire admin console.  This page is
 located on the admin console under "Server" and then "Server Settings".
 This should really only be considered weak security. The plugin was initially written with the assumption that http access to the Openfire service was
-only available to trusted machines. In the case of the plugin's author, a web application running on the same server as 
+only available to trusted machines. In the case of the plugin's author, a web application running on the same server as
 Openfire makes the request.
 
 <h2>Using the Plugin</h2>
 
-To administer users, submit HTTP requests to the userservice service. 
+To administer users, submit HTTP requests to the userservice service.
 The service address is [hostname]plugins/userService/userservice. For example,
 if your server name is "example.com", the URL is http://example.com/plugins/userService/userservice<p>
 
@@ -94,7 +94,7 @@ The following parameters can be passed into the request:<p>
     <th colspan=2>Name</th><th>Description</th>
 </tr>
 <tr>
-    <td class="name">type</td><td>Required</td><td>The admin service required. 
+    <td class="name">type</td><td>Required</td><td>The admin service required.
     Possible values are 'add', 'delete', 'update', 'enable', 'disable', 'add_roster', 'update_roster', 'delete_roster'.</td>
 </tr>
 <tr>
@@ -119,7 +119,10 @@ The following parameters can be passed into the request:<p>
 </tr>
 <tr>
     <td class="name">groups</td><td>Optional</td>
-    <td>List of groups where the user is a member. Values are comma delimited.</td>
+    <td>
+    	List of groups where the user is a member. Values are comma delimited. When used with types "add" or "update", it adds the user to shared groups and auto-creates new groups.<br/>
+    	When used with 'add_roster' and 'update_roster', it adds the user to roster groups provided the group name does not clash with an existing shared group.
+    </td>
 </tr>
 <tr>
     <td class="name">item_jid</td><td>Required for 'add_roster', 'update_roster', 'delete_roster' operations.</td>
@@ -142,6 +145,16 @@ The following example adds a user
 <form>
 <textarea cols=65 rows=3 wrap=virtual>
 http://example.com:9090/plugins/userService/userservice?type=add&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=franz@kafka.com
+</textarea>
+</form>
+</ul>
+
+The following example adds a user, adds two shared groups (if not existing) and adds the user to both groups.
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=add&secret=bigsecret&username=kafka&password=drowssap&name=franz&email=franz@kafka.com&groups=support,finance
 </textarea>
 </form>
 </ul>
@@ -197,6 +210,16 @@ http://example.com:9090/plugins/userService/userservice?type=add_roster&secret=b
 </form>
 </ul>
 
+The following example adds new roster item with subscription 'both' for user 'kafka' and adds kafka to roster groups 'family' and 'friends'
+
+<ul>
+<form>
+<textarea cols=65 rows=3 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=add_roster&secret=bigsecret&username=kafka&item_jid=franz@example.com&name=franz&subscription=3&groups=family,friends
+</textarea>
+</form>
+</ul>
+
 The following example updates existing roster item to subscription 'none' for user 'kafka'
 
 <ul>
@@ -218,15 +241,15 @@ http://example.com:9090/plugins/userService/userservice?type=delete_roster&secre
 </ul>
 
 <br><br>
-* When sending double characters (Chinese/Japanese/Korean etc) you should URLEncode the string as utf8.<br> 
-In Java this is done like this<br> 
+* When sending double characters (Chinese/Japanese/Korean etc) you should URLEncode the string as utf8.<br>
+In Java this is done like this<br>
 URLEncoder.encode(username, "UTF-8"));
 <br>If the strings are encoded incorrectly, double byte characters will look garbeled in the Admin Console.
 
 
 <h2>Server Reply</h2>
 
-The server will reply to all User Service requests with an XML result page. 
+The server will reply to all User Service requests with an XML result page.
 If the request was processed successfully the return will be a "result" element with a text body of "OK".
 If the request was unsuccessful, the return will be an "error" element with a text body of one of the following error strings.
 <p>

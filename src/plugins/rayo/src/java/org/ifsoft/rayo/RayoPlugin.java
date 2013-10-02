@@ -53,6 +53,9 @@ import com.rayo.core.verb.*;
 
 import org.voicebridge.*;
 
+import com.sun.voip.server.*;
+import com.sun.voip.*;
+
 
 
 public class RayoPlugin implements Plugin, SessionEventListener  {
@@ -331,6 +334,8 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 	public void anonymousSessionDestroyed(Session session)
 	{
 		Log.debug("RayoPlugin anonymousSessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
+
+		CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
 	}
 
 	public void resourceBound(Session session)
@@ -347,5 +352,6 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 	{
 		Log.debug("RayoPlugin sessionDestroyed "+ session.getAddress().toString() + "\n" + ((ClientSession) session).getPresence().toXML());
 
+		CallHandler.hangupOwner(session.getAddress().toString(), "User has ended session");
 	}
 }

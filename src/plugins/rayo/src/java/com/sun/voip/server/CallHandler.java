@@ -338,11 +338,11 @@ public abstract class CallHandler extends Thread {
 	    }
 
 	    if (otherCall != null) {
-		Logger.println("Call " + cp + " forwarding dtmf key "
-		    + dtmfKeys + " to " + otherCall);
-
-		otherCall.getMemberSender().setDtmfKeyToSend(dtmfKeys);
-	    }
+			Logger.println("Call " + cp + " forwarding dtmf key "  + dtmfKeys + " to " + otherCall);
+			otherCall.getMemberSender().setDtmfKeyToSend(dtmfKeys);
+	    } else {
+			getMemberSender().setDtmfKeyToSend(dtmfKeys);
+		}
 	} else {
 	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
 	        Logger.println(cp + " Call not established, ignoring dtmf");
@@ -641,6 +641,30 @@ public abstract class CallHandler extends Thread {
 
 	cancel(callsToCancel, reason, false);
     }
+
+    public static void hangupOwner(String ownerId, String reason) {
+		Vector callsToCancel = new Vector();
+
+		synchronized(activeCalls) {
+			/*
+			 * Make a list of all the calls we want to cancel, then cancel them.
+			 * We have to cancel them while not synchronized or
+			 * we could deadlock.
+			 */
+	    	for (int i = 0; i < activeCalls.size(); i++) {
+                CallHandler call = (CallHandler)activeCalls.elementAt(i);
+
+				CallParticipant cp = call.getCallParticipant();
+
+	        	if (cp.getCallOwner().equals(ownerId)) {
+		    		callsToCancel.add(call);
+				}
+	    	}
+		}
+
+		cancel(callsToCancel, reason, false);
+    }
+
 
     public static void suspendBridge() {
 	cancel(activeCalls, "bridge suspended", true);

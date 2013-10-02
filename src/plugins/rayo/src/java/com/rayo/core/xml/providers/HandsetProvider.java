@@ -43,10 +43,7 @@ public class HandsetProvider extends BaseProvider {
     @Override
     protected Object processElement(Element element) throws Exception
     {
-        if (element.getName().equals("handset")) {
-            return buildHandset(element);
-
-        } else if (ONHOOK_QNAME.equals(element.getQName())) {
+        if (ONHOOK_QNAME.equals(element.getQName())) {
             return buildOnHookCommand(element);
 
         } else if (OFFHOOK_QNAME.equals(element.getQName())) {
@@ -69,22 +66,24 @@ public class HandsetProvider extends BaseProvider {
         return complete;
     }
 
-    private Object buildHandset(Element element) throws URISyntaxException
-    {
-        Handset handset = new  Handset(	element.attributeValue("cryptoSuite"),
-        								element.attributeValue("localCrypto"),
-        								element.attributeValue("remoteCrypto"),
+
+    private Object buildOffHookCommand(Element element) throws URISyntaxException {
+
+        Handset handset = new  Handset(	element.attributeValue("cryptosuite"),
+        								element.attributeValue("localcrypto"),
+        								element.attributeValue("remotecrypto"),
         								element.attributeValue("codec"),
-        								element.attributeValue("stereo"));
-        return handset;
+        								element.attributeValue("stereo"),
+        								element.attributeValue("mixer"));
+
+		OffHookCommand command = new OffHookCommand();
+		command.setHandset(handset);
+
+        return command;
     }
 
     private Object buildOnHookCommand(Element element) throws URISyntaxException {
         return new OnHookCommand();
-    }
-
-    private Object buildOffHookCommand(Element element) throws URISyntaxException {
-        return new OffHookCommand();
     }
 
     // Object -> XML
@@ -93,10 +92,7 @@ public class HandsetProvider extends BaseProvider {
     @Override
     protected void generateDocument(Object object, Document document) throws Exception {
 
-        if (object instanceof Handset) {
-            createHandset((Handset) object, document);
-
-        } else if (object instanceof OnHookCommand) {
+		if (object instanceof OnHookCommand) {
             createOnHookCommand((OnHookCommand) object, document);
 
         } else if (object instanceof OffHookCommand) {
@@ -107,22 +103,21 @@ public class HandsetProvider extends BaseProvider {
         }
     }
 
-    private void createHandset(Handset handset, Document document) throws Exception {
-        Element root = document.addElement(new QName("handset", NAMESPACE));
+    private void createOffHookCommand(OffHookCommand command, Document document) throws Exception {
+		Handset handset = command.getHandset();
 
+        Element root = document.addElement(new QName("offhook", NAMESPACE));
 		root.addAttribute("cryptoSuite", handset.cryptoSuite);
 		root.addAttribute("localCrypto", handset.localCrypto);
 		root.addAttribute("remoteCrypto", handset.cryptoSuite);
 		root.addAttribute("codec", handset.codec);
 		root.addAttribute("stereo", handset.stereo);
+		root.addAttribute("mixer", handset.mixer);
     }
+
 
     private void createOnHookCommand(OnHookCommand command, Document document) throws Exception {
         document.addElement(new QName("onhook", NAMESPACE));
-    }
-
-    private void createOffHookCommand(OffHookCommand command, Document document) throws Exception {
-        document.addElement(new QName("offhook", NAMESPACE));
     }
 
     private void createHandsetCompleteEvent(SayCompleteEvent event, Document document) throws Exception {

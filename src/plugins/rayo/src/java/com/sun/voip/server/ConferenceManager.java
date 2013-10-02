@@ -684,7 +684,7 @@ public class ConferenceManager {
 
 	leave(member, true);		   // leave the temporary conference
 
-	member.reinitialize(newConferenceManager);
+	member.reinitialize(newConferenceManager, false);
 
 	newConferenceManager.joinConference(member); // join the new conference
     }

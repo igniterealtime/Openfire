@@ -99,127 +99,204 @@ public class RayoComponent 	extends 	AbstractComponent
         final Element element = iq.getChildElement();
         final String namespace = element.getNamespaceURI();
 
-        if ("urn:xmpp:rayo:handset:1".equals(namespace)) {
-        	IQ reply = null;
+        try {
 
-            Object object = handsetProvider.fromXML(element);
+			if ("urn:xmpp:rayo:handset:1".equals(namespace)) {
+				IQ reply = null;
 
-			if (object instanceof Handset) {
-				reply = handleHandset((Handset) object, iq);
+				Object object = handsetProvider.fromXML(element);
 
-			} else if (object instanceof OnHookCommand) {
-				reply = handleOnOffHookCommand((Handset) object, true, iq);
+				if (object instanceof OnHookCommand) {
+					reply = handleOnOffHookCommand((OnHookCommand) object, iq);
 
-			} else if (object instanceof OffHookCommand) {
-				reply = handleOnOffHookCommand((Handset) object, false, iq);
-			}
-		}
-
-        if ("urn:xmpp:tropo:say:1".equals(namespace)) {
-        	IQ reply = null;
-
-            Object object = sayProvider.fromXML(element);
-
-			if (object instanceof Say) {
-				reply = handleSay((Say) object, iq);
-
-			} else if (object instanceof PauseCommand) {
-				reply = handlePauseCommand(true, iq);
-
-			} else if (object instanceof ResumeCommand) {
-				reply = handlePauseCommand(false, iq);
-			}
-		}
-
-        if ("urn:xmpp:rayo:1".equals(namespace)) {
-        	IQ reply = null;
-
-            Object object = rayoProvider.fromXML(element);
-
-			if (object instanceof ConnectCommand) {
-
-			} else if (object instanceof AcceptCommand) {
-
-			} else if (object instanceof HoldCommand) {
-
-			} else if (object instanceof UnholdCommand) {
-
-			} else if (object instanceof MuteCommand) {
-
-			} else if (object instanceof UnmuteCommand) {
-
-			} else if (object instanceof JoinCommand) {
-				reply = handleJoinCommand((JoinCommand) object, iq);
-
-			} else if (object instanceof UnjoinCommand) {
-				reply = handleUnjoinCommand((UnjoinCommand) object, iq);
-
-
-			} else if (object instanceof AnswerCommand) {
-
-			} else if (object instanceof HangupCommand) {
-				reply = handleHangupCommand(iq);
-
-			} else if (object instanceof RejectCommand) {
-
-			} else if (object instanceof RedirectCommand) {
-
-			} else if (object instanceof DialCommand) {
-				reply = handleDialCommand((DialCommand) object, iq);
-
-			} else if (object instanceof StopCommand) {
-
-			} else if (object instanceof DtmfCommand) {
-				reply = handleDtmfCommand((DtmfCommand) object, iq);
-
-			} else if (object instanceof DestroyMixerCommand) {
-
+				} else if (object instanceof OffHookCommand) {
+					reply = handleOnOffHookCommand((OffHookCommand) object, iq);
+				}
+				return reply;
 			}
 
- 			return reply;
+			if ("urn:xmpp:tropo:say:1".equals(namespace)) {
+				IQ reply = null;
+
+				Object object = sayProvider.fromXML(element);
+
+				if (object instanceof Say) {
+					reply = handleSay((Say) object, iq);
+
+				} else if (object instanceof PauseCommand) {
+					reply = handlePauseCommand(true, iq);
+
+				} else if (object instanceof ResumeCommand) {
+					reply = handlePauseCommand(false, iq);
+				}
+				return reply;
+			}
+
+			if ("urn:xmpp:rayo:1".equals(namespace)) {
+				IQ reply = null;
+
+				Object object = rayoProvider.fromXML(element);
+
+				if (object instanceof ConnectCommand) {
+
+				} else if (object instanceof AcceptCommand) {
+
+				} else if (object instanceof HoldCommand) {
+
+				} else if (object instanceof UnholdCommand) {
+
+				} else if (object instanceof MuteCommand) {
+
+				} else if (object instanceof UnmuteCommand) {
+
+				} else if (object instanceof JoinCommand) {
+					reply = handleJoinCommand((JoinCommand) object, iq);
+
+				} else if (object instanceof UnjoinCommand) {
+					reply = handleUnjoinCommand((UnjoinCommand) object, iq);
+
+
+				} else if (object instanceof AnswerCommand) {
+
+				} else if (object instanceof HangupCommand) {
+					reply = handleHangupCommand(iq);
+
+				} else if (object instanceof RejectCommand) {
+
+				} else if (object instanceof RedirectCommand) {
+
+				} else if (object instanceof DialCommand) {
+					reply = handleDialCommand((DialCommand) object, iq);
+
+				} else if (object instanceof StopCommand) {
+
+				} else if (object instanceof DtmfCommand) {
+					reply = handleDtmfCommand((DtmfCommand) object, iq);
+
+				} else if (object instanceof DestroyMixerCommand) {
+
+				}
+
+				return reply;
+			}
+			return null; // feature not implemented.
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            final IQ reply = IQ.createResultIQ(iq);
+            reply.setError(PacketError.Condition.internal_server_error);
+            return reply;
         }
-        return null; // feature not implemented.
     }
 
 
-	private IQ handlePauseCommand(boolean flag, IQ iq)
+	private IQ handleOnOffHookCommand(Object object, IQ iq)
 	{
-		Log.info("RayoComponent handlePauseCommand " + iq.getFrom());
+		Log.info("RayoComponent handleOnOffHookCommand");
 
-		final IQ reply = IQ.createResultIQ(iq);
-		final String entityId = iq.getTo().getNode();
-		final String treatmentId = iq.getTo().getResource();
+		IQ reply = IQ.createResultIQ(iq);
 
-		try {
-			CallHandler callHandler = CallHandler.findCall(entityId);
+		if (object instanceof OnHookCommand)
+		{
+			String key = iq.getTo().getNode();
 
-			try {
-				callHandler.getMember().pauseTreatment(treatmentId, flag);
+			if (key != null)
+			{
+				RelayChannel channel = plugin.getRelayChannel(iq.getTo().getNode());
 
-			} catch (Exception e1) {
-				reply.setError(PacketError.Condition.internal_server_error);
-			}
+				if (channel != null)
+				{
+					handleOnOffHook(object, channel);
 
-		} catch (NoSuchElementException e) {	// not call, lets try mixer
+				} else {
+					reply.setError(PacketError.Condition.item_not_found);
+				}
 
-			try {
-				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(entityId);
-				conferenceManager.getWGManager().pauseConferenceTreatment(treatmentId, flag);
-
-			} catch (ParseException e1) {
+			} else {
 
 				reply.setError(PacketError.Condition.item_not_found);
+			}
+
+		} else {
+
+			final Handset handset = ((OffHookCommand) object).getHandset();
+			final RelayChannel channel = plugin.createRelayChannel(iq.getFrom(), handset);
+
+			if (channel != null)		// rayo handset component can have only one call
+			{
+				final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
+
+				childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
+				childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
+				childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
+				childElement.addAttribute(ID, channel.getAttachment());
+				childElement.addAttribute(URI, "handset:" + channel.getAttachment() + "@rayo." + getDomain() + "/" + iq.getFrom().getNode());
+
+				Log.debug("Created handset channel {}:{}, {}:{}, {}:{}", new Object[]{HOST, LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT, Integer.toString(channel.getPortB())});
+
+				handleOnOffHook(object, channel);
+
+			} else {
+				reply.setError(PacketError.Condition.internal_server_error);
 			}
 		}
 
 		return reply;
 	}
 
+
+    private void handleOnOffHook(Object object, RelayChannel channel)
+    {
+		final boolean flag = object instanceof OnHookCommand;
+
+		Log.info("RayoComponent handleOnOffHook " + flag);
+
+        try {
+			OutgoingCallHandler callHandler = channel.getCallHandler();
+
+			if (callHandler != null)
+			{
+				callHandler.cancelRequest("Reseting handset to " + (flag ? "on" : "off") + "hook");
+				callHandler = null;
+			}
+
+			if (!flag)		// offhook
+			{
+				Handset handset = ((OffHookCommand) object).getHandset();
+
+				String mediaPreference = "PCMU/8000/1";
+
+				if (handset.codec == null || "OPUS".equals(handset.codec))
+					mediaPreference = "PCM/48000/2";
+
+				CallParticipant cp = new CallParticipant();
+				cp.setCallId(channel.getAttachment());
+				cp.setProtocol("WebRtc");
+				cp.setConferenceId(handset.mixer);
+				cp.setMediaPreference(mediaPreference);
+				cp.setRelayChannel(channel);
+				cp.setDisplayName(channel.getAttachment());
+				cp.setVoiceDetection(true);
+				cp.setCallOwner(channel.getFrom().toString());
+
+				callHandler = new OutgoingCallHandler(this, cp);
+				callHandler.start();
+
+				channel.setCallHandler(callHandler);
+			}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+	}
+
 	private IQ handleSay(Say command, IQ iq)
 	{
 		Log.info("RayoComponent handleSay " + iq.getFrom());
 
-		final IQ reply = IQ.createResultIQ(iq);
+		IQ reply = IQ.createResultIQ(iq);
 		final String entityId = iq.getTo().getNode();
 		final String treatmentId = command.getPrompt().getText();
 
@@ -260,11 +337,45 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
+	private IQ handlePauseCommand(boolean flag, IQ iq)
+	{
+		Log.info("RayoComponent handlePauseCommand " + iq.getFrom());
+
+		IQ reply = IQ.createResultIQ(iq);
+		final String entityId = iq.getTo().getNode();
+		final String treatmentId = iq.getTo().getResource();
+
+		try {
+			CallHandler callHandler = CallHandler.findCall(entityId);
+
+			try {
+				callHandler.getMember().pauseTreatment(treatmentId, flag);
+
+			} catch (Exception e1) {
+				reply.setError(PacketError.Condition.internal_server_error);
+			}
+
+		} catch (NoSuchElementException e) {	// not call, lets try mixer
+
+			try {
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(entityId);
+				conferenceManager.getWGManager().pauseConferenceTreatment(treatmentId, flag);
+
+			} catch (ParseException e1) {
+
+				reply.setError(PacketError.Condition.item_not_found);
+			}
+		}
+
+		return reply;
+	}
+
+
 	private IQ handleHangupCommand(IQ iq)
 	{
 		Log.info("RayoComponent handleHangupCommand " + iq.getFrom());
 
-		final IQ reply = IQ.createResultIQ(iq);
+		IQ reply = IQ.createResultIQ(iq);
 
 		try {
 			CallHandler callHandler = CallHandler.findCall(iq.getTo().getNode());
@@ -281,7 +392,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleDtmfCommand " + iq.getFrom());
 
-		final IQ reply = IQ.createResultIQ(iq);
+		IQ reply = IQ.createResultIQ(iq);
 
 		try {
 			CallHandler callHandler = CallHandler.findCall(iq.getTo().getNode());
@@ -298,7 +409,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleJoinCommand " + iq.getFrom());
 
-        final IQ reply = IQ.createResultIQ(iq);
+        IQ reply = IQ.createResultIQ(iq);
 
 		String mixer = null;
 
@@ -328,7 +439,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleUnjoinCommand " + iq.getFrom());
 
-        final IQ reply = IQ.createResultIQ(iq);
+        IQ reply = IQ.createResultIQ(iq);
 
 		try {
 			IncomingCallHandler.transferCall(iq.getTo().getNode(), defaultIncomingConferenceId);
@@ -358,7 +469,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleHandsetDialCommand " + iq.getFrom());
 
-        final IQ reply = IQ.createResultIQ(iq);
+        IQ reply = IQ.createResultIQ(iq);
 
 		Map<String, String> headers = command.getHeaders();
 		String from = command.getFrom().toString();
@@ -368,10 +479,10 @@ public class RayoComponent 	extends 	AbstractComponent
 		boolean toXmpp = to.indexOf("xmpp:") == 0;
 
 		String codec = headers.get("caller-id");
-		String mixer = "rayo-mixer-" + System.currentTimeMillis();
+		String handsetId = headers.get("handset");
+		String mixer = null;
 
-		String callerId = headers.get("caller-id");
-		String calledId = headers.get("called-id");
+		String callId = headers.get("call-id");
 		String callerName = headers.get("caller-name");
 		String calledName = headers.get("called-name");
 
@@ -386,27 +497,32 @@ public class RayoComponent 	extends 	AbstractComponent
         	}
         }
 
-		if (callerId == null) callerId =  "rayo-caller-" + System.currentTimeMillis();
-		if (calledId == null) calledId =  "rayo-called-" + System.currentTimeMillis();
-
-		CallParticipant cp = new CallParticipant();
-		cp.setVoiceDetection(true);
-		cp.setCallOwner(iq.getFrom().toString());
-
-		if (toPhone)
+		if (mixer != null)
 		{
-			cp.setMediaPreference("PCMU/8000/1");
-			cp.setProtocol("SIP");
-			cp.setCallId(calledId);
-			cp.setPhoneNumber(to.substring(4));
-			cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
+			if (callId == null) callId =  "rayo-call-" + System.currentTimeMillis();
+			if (callerName == null) callerName =  iq.getFrom().toString();
 
-			mixer = mixer == null ? cp.getPhoneNumber() : mixer;
-			cp.setConferenceId(mixer);
+			CallParticipant cp = new CallParticipant();
+			cp.setVoiceDetection(true);
+			cp.setCallOwner(iq.getFrom().toString());
 
-			doPhoneAndPcCall(iq.getFrom(), cp, reply, mixer);
+			if (toPhone)
+			{
+				cp.setMediaPreference("PCMU/8000/1");
+				cp.setProtocol("SIP");
+				cp.setCallId(callId);
+				cp.setDisplayName(callerName);
+				cp.setPhoneNumber(to);
+				cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
+				cp.setConferenceId(mixer);
 
-		} else if (toXmpp){
+				reply = doPhoneAndPcCall(handsetId, cp, reply);
+
+			} else if (toXmpp){
+
+			} else {
+				reply.setError(PacketError.Condition.feature_not_implemented);
+			}
 
 		} else {
 			reply.setError(PacketError.Condition.feature_not_implemented);
@@ -419,7 +535,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent handleBridgedDialCommand " + iq.getFrom());
 
-        final IQ reply = IQ.createResultIQ(iq);
+        IQ reply = IQ.createResultIQ(iq);
 
 		Map<String, String> headers = command.getHeaders();
 		String from = command.getFrom().toString();
@@ -499,7 +615,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 			if (toHandset)												// (no offer)
 			{
-				doPhoneAndPcCall(new JID(to.substring(8)), cp, reply, mixer);
+				//doPhoneAndPcCall(new JID(to.substring(8)), cp, reply, mixer);
 
 			} else {													// (offer)
 
@@ -519,7 +635,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 			if (fromHandset)											// (no offer)
 			{
-				doPhoneAndPcCall(new JID(from.substring(8)), cp, reply, mixer);
+				//doPhoneAndPcCall(new JID(from.substring(8)), cp, reply, mixer);
 
 			} else {													// (offer)
 
@@ -544,28 +660,40 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-	private void doPhoneAndPcCall(JID handsetJid, CallParticipant cp, IQ reply, String mixer)
+	private IQ doPhoneAndPcCall(String handsetId, CallParticipant cp, IQ reply)
 	{
-		Log.info("RayoComponent doPhoneAndPcCall " + handsetJid + " " + mixer);
+		String mixer = cp.getConferenceId();
 
-		RelayChannel channel = plugin.getRelayChannel(handsetJid.getNode());
+		Log.info("RayoComponent doPhoneAndPcCall " + handsetId + " " + mixer);
+
+		RelayChannel channel = plugin.getRelayChannel(handsetId);
 
 		if (channel != null)
 		{
 			try {
 				setMixer(mixer, channel, reply);
-				IncomingCallHandler.transferCall(channel.getAttachment(), mixer);
+
+				OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
+
+	    		//OutgoingCallHandler handsetHandler = channel.getCallHandler();
+	    		//outgoingCallHandler.setOtherCall(handsetHandler);
+	   			//handsetHandler.setOtherCall(outgoingCallHandler);
+
+				outgoingCallHandler.start();
+
+				final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
+				childElement.addAttribute(URI, (String) "xmpp:" + cp.getCallId() + "@rayo." + getDomain());
+				childElement.addAttribute(ID, (String)  cp.getCallId());
 
 			} catch (Exception e) {
+				e.printStackTrace();
 				reply.setError(PacketError.Condition.internal_server_error);
 			}
-
-			OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
-			outgoingCallHandler.start();
 
 		} else {
 			reply.setError(PacketError.Condition.item_not_found);
 		}
+		return reply;
 	}
 
     private void setMixer(String mixer, RelayChannel channel, IQ reply)
@@ -583,91 +711,6 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
     }
 
-
-	private IQ handleHandset(Handset handset, IQ iq)
-	{
-		Log.info("RayoComponent handleHandset " + iq.getFrom());
-
-        final IQ reply = IQ.createResultIQ(iq);
-		final RelayChannel channel = plugin.createRelayChannel(iq.getFrom(), handset);
-
-		if (channel != null)		// rayo handset component can have only one call
-		{
-			final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
-
-			childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
-			childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
-			childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
-			childElement.addAttribute(ID, channel.getAttachment());
-			childElement.addAttribute(URI, "handset:" + channel.getAttachment() + "@rayo." + getDomain() + "/" + iq.getFrom().getNode());
-
-			Log.debug("Created handset channel {}:{}, {}:{}, {}:{}", new Object[]{HOST, LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT, Integer.toString(channel.getPortB())});
-
-		} else {
-			reply.setError(PacketError.Condition.internal_server_error);
-		}
-
-		return reply;
-	}
-
-	private IQ handleOnOffHookCommand(Handset handset, boolean flag, IQ iq)
-	{
-		Log.info("RayoComponent handleOnOffHookCommand " + flag);
-
-		final IQ reply = IQ.createResultIQ(iq);
-
-		RelayChannel channel = plugin.getRelayChannel(iq.getTo().getNode());
-
-		if (channel != null)
-		{
-			handleOnOffHook(flag, channel, handset);
-
-		} else {
-			reply.setError(PacketError.Condition.item_not_found);
-		}
-		return reply;
-	}
-
-
-    private void handleOnOffHook(boolean flag, RelayChannel channel, Handset handset)
-    {
-		Log.info("RayoComponent handleOnOffHook " + flag);
-
-        try {
-			OutgoingCallHandler callHandler = channel.getCallHandler();
-
-			if (callHandler != null)
-			{
-				callHandler.cancelRequest("Reseting handset to " + (flag ? "on" : "off") + "hook");
-				callHandler = null;
-			}
-
-			if (!flag)		// offhook
-			{
-				String mediaPreference = "PCMU/8000/1";
-
-				if (handset.codec == null || "OPUS".equals(handset.codec))
-					mediaPreference = "PCM/48000/2";
-
-				CallParticipant cp = new CallParticipant();
-				cp.setCallId(channel.getAttachment());
-				cp.setProtocol("WebRtc");
-				cp.setConferenceId(defaultIncomingConferenceId);
-				cp.setMediaPreference(mediaPreference);
-				cp.setRelayChannel(channel);
-				cp.setDisplayName(channel.getAttachment());
-				cp.setVoiceDetection(true);
-				cp.setCallOwner(channel.getFrom().toString());
-
-				callHandler = new OutgoingCallHandler(this, cp);
-				callHandler.start();
-			}
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-	}
 
     @Override
     public String getDomain() {
@@ -687,7 +730,7 @@ public class RayoComponent 	extends 	AbstractComponent
     public void callEventNotification(com.sun.voip.CallEvent callEvent)
     {
 		Log.info("RayoComponent callEventNotification " + callEvent);
-		JID from = new JID(callEvent.getInfo());
+		JID from = new JID(callEvent.getCallInfo());
 
 		if (from != null)
 		{
@@ -695,13 +738,13 @@ public class RayoComponent 	extends 	AbstractComponent
 			String callState = callEvent.getCallState().toString();
 
 			Map<String, String> headers = new HashMap<String, String>();
-			headers.put("info", callEvent.getInfo() == null ? "" : callEvent.getInfo());
-			headers.put("callId", callEvent.getCallId() == null ? "" : callEvent.getCallId());
+			headers.put("callId", callEvent.getCallId());
+			headers.put("info", callEvent.getCallInfo() == null ? "" : callEvent.getCallInfo());
 			headers.put("mixer", callEvent.getConferenceId() == null ? "" : callEvent.getConferenceId());
 			headers.put("callInfo", callEvent.getCallInfo() == null ? "" : callEvent.getCallInfo());
 
 			Presence presence = new Presence();
-			presence.setFrom("rayo." + getDomain());
+			presence.setFrom(callEvent.getCallId() + "@rayo." + getDomain());
 			presence.setTo(from);
 
 			if ("001 STATE CHANGED".equals(myEvent)) {
@@ -845,7 +888,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					}
 
 				} catch (Exception e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 

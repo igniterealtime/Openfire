@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
@@ -66,14 +67,14 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         server = XMPPServer.getInstance();
         userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
-        
+
         secret = JiveGlobals.getProperty("plugin.userservice.secret", "");
         // If no secret key has been assigned to the user service yet, assign a random one.
         if (secret.equals("")){
             secret = StringUtils.randomString(8);
             setSecret(secret);
         }
-        
+
         // See if the service is enabled or not.
         enabled = JiveGlobals.getBooleanProperty("plugin.userservice.enabled", false);
 
@@ -91,26 +92,39 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
     }
 
     public void createUser(String username, String password, String name, String email, String groupNames)
-            throws UserAlreadyExistsException
+            throws UserAlreadyExistsException, GroupAlreadyExistsException, UserNotFoundException, GroupNotFoundException
     {
         userManager.createUser(username, password, name, email);
+        userManager.getUser(username);
 
         if (groupNames != null) {
             Collection<Group> groups = new ArrayList<Group>();
             StringTokenizer tkn = new StringTokenizer(groupNames, ",");
-            while (tkn.hasMoreTokens()) {
+
+            while (tkn.hasMoreTokens())
+            {
+				String groupName = tkn.nextToken();
+				Group group = null;
+
                 try {
-                    groups.add(GroupManager.getInstance().getGroup(tkn.nextToken()));
+                    GroupManager.getInstance().getGroup(groupName);
                 } catch (GroupNotFoundException e) {
-                    // Ignore this group
+                    // Create this group                    ;
+					GroupManager.getInstance().createGroup(groupName);
                 }
+				group = GroupManager.getInstance().getGroup(groupName);
+				group.getProperties().put("sharedRoster.showInRoster", "onlyGroup");
+				group.getProperties().put("sharedRoster.displayName", groupName);
+				group.getProperties().put("sharedRoster.groupList", "");
+
+                groups.add(group);
             }
             for (Group group : groups) {
                 group.getMembers().add(server.createJID(username, null));
             }
         }
     }
-    
+
     public void deleteUser(String username) throws UserNotFoundException{
         User user = getUser(username);
         userManager.deleteUser(user);
@@ -141,9 +155,9 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         User user = getUser(username);
         LockOutManager.getInstance().enableAccount(username);
     }
-    
+
     public void updateUser(String username, String password, String name, String email, String groupNames)
-            throws UserNotFoundException
+            throws UserNotFoundException, GroupAlreadyExistsException
     {
         User user = getUser(username);
         if (password != null) user.setPassword(password);
@@ -153,12 +167,23 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         if (groupNames != null) {
             Collection<Group> newGroups = new ArrayList<Group>();
             StringTokenizer tkn = new StringTokenizer(groupNames, ",");
-            while (tkn.hasMoreTokens()) {
+
+            while (tkn.hasMoreTokens())
+            {
+				String groupName = tkn.nextToken();
+				Group group = null;
+
                 try {
-                    newGroups.add(GroupManager.getInstance().getGroup(tkn.nextToken()));
+                    group = GroupManager.getInstance().getGroup(groupName);
                 } catch (GroupNotFoundException e) {
-                    // Ignore this group
+                    // Create this group                    ;
+					group = GroupManager.getInstance().createGroup(groupName);
+                	group.getProperties().put("sharedRoster.showInRoster", "onlyGroup");
+                	group.getProperties().put("sharedRoster.displayName", groupName);
+                	group.getProperties().put("sharedRoster.groupList", "");
                 }
+
+                newGroups.add(group);
             }
 
             Collection<Group> existingGroups = GroupManager.getInstance().getGroups(user);
@@ -182,7 +207,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 
     /**
      * Add new roster item for specified user
-     * 
+     *
      * @param username the username of the local user to add roster item to.
      * @param itemJID the JID of the roster item to be added.
      * @param itemName the nickname of the roster item.
@@ -198,7 +223,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         getUser(username);
         Roster r = rosterManager.getRoster(username);
         JID j = new JID(itemJID);
-        
+
         try {
             r.getRosterItem(j);
             throw new UserAlreadyExistsException(j.toBareJID());
@@ -206,7 +231,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         catch (UserNotFoundException e) {
             //Roster item does not exist. Try to add it.
         }
-            
+
         if (r != null) {
             List<String> groups = new ArrayList<String>();
             if (groupNames != null) {
@@ -226,7 +251,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 
     /**
      * Update roster item for specified user
-     * 
+     *
      * @param username the username of the local user to update roster item for.
      * @param itemJID the JID of the roster item to be updated.
      * @param itemName the nickname of the roster item.
@@ -241,7 +266,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         getUser(username);
         Roster r = rosterManager.getRoster(username);
         JID j = new JID(itemJID);
-        
+
         RosterItem ri = r.getRosterItem(j);
 
         List<String> groups = new ArrayList<String>();
@@ -251,10 +276,10 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
                 groups.add(tkn.nextToken());
             }
         }
-        
+
         ri.setGroups(groups);
         ri.setNickname(itemName);
-        
+
         if (subscription == null) {
             subscription = "0";
         }
@@ -264,7 +289,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 
     /**
      * Delete roster item for specified user. No error returns if nothing to delete.
-     * 
+     *
      * @param username the username of the local user to add roster item to.
      * @param itemJID the JID of the roster item to be deleted.
      * @throws UserNotFoundException if the user does not exist in the local server.
@@ -276,10 +301,10 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         getUser(username);
         Roster r = rosterManager.getRoster(username);
         JID j = new JID(itemJID);
-        
+
         // No roster item is found. Uncomment the following line to throw UserNotFoundException.
         //r.getRosterItem(j);
-        
+
         r.deleteRosterItem(j, true);
     }
 
@@ -301,7 +326,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         }
         return userManager.getUser(targetJID.getNode());
     }
-    
+
     /**
      * Returns the secret key that only valid requests should know.
      *

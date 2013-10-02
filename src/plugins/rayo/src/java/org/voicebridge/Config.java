@@ -297,6 +297,33 @@ public class Config implements MUCEventListener {
 		}
 	}
 
+    public static void recordCall(String username, String addressFrom, String addressTo, long datetime, int duration, String calltype)  {
+
+        String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
+
+        Connection con = null;
+        PreparedStatement psmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+            psmt = con.prepareStatement(sql);
+            psmt.setString(1, username);
+            psmt.setString(2, addressFrom);
+            psmt.setString(3, addressTo);
+            psmt.setLong(4, datetime);
+            psmt.setInt(5, duration);
+            psmt.setString(6, calltype);
+
+            psmt.executeUpdate();
+
+        } catch (SQLException e) {
+            Log.debug(e.getMessage(), e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, psmt, con);
+        }
+
+    }
 
     public ProxyCredentials getProxyCredentialsByUser(String username)
     {

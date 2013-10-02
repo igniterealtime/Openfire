@@ -584,6 +584,11 @@ public class ConferenceMember implements TreatmentDoneListener,
     }
 
     public void reinitialize(ConferenceManager conferenceManager) {
+
+		reinitialize(conferenceManager, true);
+	}
+
+    public void reinitialize(ConferenceManager conferenceManager, boolean initialize) {
 	synchronized (conferenceManager) {
 	    Logger.println("Call " + this + " Reinitializing");
 
@@ -615,10 +620,11 @@ public class ConferenceMember implements TreatmentDoneListener,
 	         * When the call is transferred to the actual conference,
 	         * the conference parameters may be different.
 	         */
-                initialize(callHandler, memberSender.getSendAddress(),
-	            memberSender.getMediaInfo().getPayload(),
-	            memberReceiver.getMediaInfo().getPayload(),
-		    (byte) memberReceiver.getTelephoneEventPayload(), rtcpAddress);
+
+	       	if (initialize)
+	        {
+                initialize(callHandler, memberSender.getSendAddress(), memberSender.getMediaInfo().getPayload(), memberReceiver.getMediaInfo().getPayload(), (byte) memberReceiver.getTelephoneEventPayload(), rtcpAddress);
+	   		}
 	    }
 	}
 	conferenceManager.joinDistributedConference(this);

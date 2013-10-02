@@ -46,13 +46,17 @@ public class Handset extends BaseVerb {
     @NotNull(message=Handset.MISSING_STEREO)
     public String stereo;
 
-	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo)
+    @NotNull(message=Handset.MISSING_MIXER)
+    public String mixer;
+
+	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo, String mixer)
 	{
 		this.cryptoSuite = cryptoSuite;
 		this.localCrypto = localCrypto;
 		this.remoteCrypto = remoteCrypto;
 		this.codec = codec;
 		this.stereo = stereo;
+		this.mixer = mixer;
 	}
 
 	@Override
@@ -66,6 +70,7 @@ public class Handset extends BaseVerb {
     		.append("remoteCrypto",remoteCrypto)
     		.append("codec",codec)
     		.append("stereo",stereo)
+    		.append("stereo",mixer)
     		.toString();
     }
 }

@@ -515,7 +515,7 @@ public class IncomingCallHandler extends CallHandler
 	return ((IncomingCallHandler)callHandler).transferCall(conferenceId);
     }
 
-    private static ConferenceManager transferCall(CallHandler callHandler, String conferenceId) throws IOException
+    public static ConferenceManager transferCall(CallHandler callHandler, String conferenceId) throws IOException
     {
 	/*
 	 * Get current conference manager and member.

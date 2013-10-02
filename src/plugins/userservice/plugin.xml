@@ -5,7 +5,7 @@
     <name>User Service</name>
     <description>Allows administration of users via HTTP requests.</description>
     <author>Justin Hunt</author>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
     <date>09/13/2013</date>
     <minServerVersion>3.9.0</minServerVersion>
     

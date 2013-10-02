@@ -249,6 +249,10 @@ public class RelayChannel {
         return  callHandler;
     }
 
+    public void setCallHandler(OutgoingCallHandler callHandler) {
+        this.callHandler = callHandler;
+    }
+
     public Handset getHandset() {
         return handset;
     }

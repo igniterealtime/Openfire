@@ -95,7 +95,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LdapManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
 
     private static LdapManager instance;
     static {
@@ -161,6 +161,7 @@ public class LdapManager {
 
     private Collection<String> hosts = new ArrayList<String>();
     private int port;
+    private int connTimeout = -1;
     private int readTimeout = -1;
     private String usernameField;
     private String usernameSuffix;
@@ -189,7 +190,7 @@ public class LdapManager {
     private boolean posixMode = false;
     private String groupSearchFilter = null;
 
-    private Map<String, String> properties;
+    private final Map<String, String> properties;
 
     /**
      * Provides singleton access to an instance of the LdapManager class.
@@ -258,6 +259,15 @@ public class LdapManager {
         if (portStr != null) {
             try {
                 this.port = Integer.parseInt(portStr);
+            }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe.getMessage(), nfe);
+            }
+        }
+        String cTimeout = properties.get("ldap.connectionTimeout");
+        if (cTimeout != null) {
+            try {
+                this.connTimeout = Integer.parseInt(cTimeout);
             }
             catch (NumberFormatException nfe) {
                 Log.error(nfe.getMessage(), nfe);
@@ -471,8 +481,9 @@ public class LdapManager {
         boolean debug = Log.isDebugEnabled();
         if (debug) {
             Log.debug("LdapManager: Creating a DirContext in LdapManager.getContext()...");
-        	if (!sslEnabled && !startTlsEnabled)
-        		Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+            if (!sslEnabled && !startTlsEnabled) {
+                Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+            }
         }
 
         // Set up the environment for creating the initial context
@@ -486,18 +497,18 @@ public class LdapManager {
                     "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
-        
+
         // Use simple authentication to connect as the admin.
         if (adminDN != null) {
             /* If startTLS is requested we MUST NOT bind() before
              * the secure connection has been established. */
-			if (!(startTlsEnabled && !sslEnabled)) {
-				env.put(Context.SECURITY_AUTHENTICATION, "simple");
-				env.put(Context.SECURITY_PRINCIPAL, adminDN);
-				if (adminPassword != null) {
-					env.put(Context.SECURITY_CREDENTIALS, adminPassword);
-				}
-			}
+            if (!(startTlsEnabled && !sslEnabled)) {
+                env.put(Context.SECURITY_AUTHENTICATION, "simple");
+                env.put(Context.SECURITY_PRINCIPAL, adminDN);
+                if (adminPassword != null) {
+                    env.put(Context.SECURITY_CREDENTIALS, adminPassword);
+                }
+            }
         }
         // No login information so attempt to use anonymous login.
         else {
@@ -507,19 +518,20 @@ public class LdapManager {
         if (ldapDebugEnabled) {
             env.put("com.sun.jndi.ldap.trace.ber", System.err);
         }
-        if (connectionPoolEnabled) { 
-        	if (!startTlsEnabled)
-        		env.put("com.sun.jndi.ldap.connect.pool", "true");
-        	else { 
-        		if (debug) {
-        			// See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
-        			// "When Not to Use Pooling" 
-        			Log.debug("LdapManager: connection pooling was requested but has been disabled because of StartTLS.");
-        		}
-        		env.put("com.sun.jndi.ldap.connect.pool", "false");
-        	}
-        } else
-        	env.put("com.sun.jndi.ldap.connect.pool", "false");
+        if (connectionPoolEnabled) {
+            if (!startTlsEnabled) {
+                env.put("com.sun.jndi.ldap.connect.pool", "true");
+            } else {
+                if (debug) {
+                    // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
+                    // "When Not to Use Pooling"
+                    Log.debug("LdapManager: connection pooling was requested but has been disabled because of StartTLS.");
+                }
+                env.put("com.sun.jndi.ldap.connect.pool", "false");
+            }
+        } else {
+            env.put("com.sun.jndi.ldap.connect.pool", "false");
+        }
 
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
@@ -533,55 +545,57 @@ public class LdapManager {
         }
         // Create new initial context
         JiveInitialLdapContext context = new JiveInitialLdapContext(env, null);
-        
+
         // TLS http://www.ietf.org/rfc/rfc2830.txt ("1.3.6.1.4.1.1466.20037")
-		if (startTlsEnabled && !sslEnabled) {
-			if (debug) {
-				Log.debug("LdapManager: ... StartTlsRequest");
-			}
-			if (followReferrals)
-				Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
+        if (startTlsEnabled && !sslEnabled) {
+            if (debug) {
+                Log.debug("LdapManager: ... StartTlsRequest");
+            }
+            if (followReferrals) {
+                Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
+            }
 
-			// Perform a StartTLS extended operation
-			StartTlsResponse tls = (StartTlsResponse) 
-				context.extendedOperation(new StartTlsRequest());
-			
+            // Perform a StartTLS extended operation
+            StartTlsResponse tls = (StartTlsResponse)
+                context.extendedOperation(new StartTlsRequest());
 
-			/* Open a TLS connection (over the existing LDAP association) and
-			   get details of the negotiated TLS session: cipher suite, 
-			   peer certificate, etc. */
-			try {
-				SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
-				
-				context.setTlsResponse(tls);
-				context.setSslSession(session);
-				
-				if (debug) {
-					Log.debug("LdapManager: ... peer host: " 
-							+ session.getPeerHost() 
-							+ ", CipherSuite: " + session.getCipherSuite());
-				}
-				
-				/* Set login credentials only if SSL session has been
-				 * negotiated successfully - otherwise user/password
-				 * could be transmitted in clear text. */
-				if (adminDN != null) {
-					context.addToEnvironment(
-							Context.SECURITY_AUTHENTICATION,
-							"simple");
-					context.addToEnvironment(
-							Context.SECURITY_PRINCIPAL,
-							adminDN);
-					if (adminPassword != null)
-						context.addToEnvironment(
-								Context.SECURITY_CREDENTIALS,
-								adminPassword);
-				}
-			} catch (java.io.IOException ex) {
-				Log.error(ex.getMessage(), ex);
-			}
-		}
-        
+
+            /* Open a TLS connection (over the existing LDAP association) and
+               get details of the negotiated TLS session: cipher suite,
+               peer certificate, etc. */
+            try {
+                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
+
+                context.setTlsResponse(tls);
+                context.setSslSession(session);
+
+                if (debug) {
+                    Log.debug("LdapManager: ... peer host: "
+                            + session.getPeerHost()
+                            + ", CipherSuite: " + session.getCipherSuite());
+                }
+
+                /* Set login credentials only if SSL session has been
+                 * negotiated successfully - otherwise user/password
+                 * could be transmitted in clear text. */
+                if (adminDN != null) {
+                    context.addToEnvironment(
+                            Context.SECURITY_AUTHENTICATION,
+                            "simple");
+                    context.addToEnvironment(
+                            Context.SECURITY_PRINCIPAL,
+                            adminDN);
+                    if (adminPassword != null) {
+                        context.addToEnvironment(
+                                Context.SECURITY_CREDENTIALS,
+                                adminPassword);
+                    }
+                }
+            } catch (java.io.IOException ex) {
+                Log.error(ex.getMessage(), ex);
+            }
+        }
+
         if (debug) {
             Log.debug("LdapManager: ... context created successfully, returning.");
         }
@@ -602,8 +616,9 @@ public class LdapManager {
         if (debug) {
             Log.debug("LdapManager: In LdapManager.checkAuthentication(userDN, password), userDN is: " + userDN + "...");
 
-           	if (!sslEnabled && !startTlsEnabled)
-           		Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+            if (!sslEnabled && !startTlsEnabled) {
+                Log.debug("LdapManager: Warning: Using unencrypted connection to LDAP service!");
+            }
         }
 
         JiveInitialLdapContext ctx = null;
@@ -621,18 +636,22 @@ public class LdapManager {
             /* If startTLS is requested we MUST NOT bind() before
              * the secure connection has been established. */
             if (!(startTlsEnabled && !sslEnabled)) {
-				env.put(Context.SECURITY_AUTHENTICATION, "simple");
-				env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
-				env.put(Context.SECURITY_CREDENTIALS, password);
-			} else {
-				if (followReferrals)
-					Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
-			}
+                env.put(Context.SECURITY_AUTHENTICATION, "simple");
+                env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
+                env.put(Context.SECURITY_CREDENTIALS, password);
+            } else {
+                if (followReferrals) {
+                    Log.warn("\tConnections to referrals are unencrypted! If you do not want this, please turn off ldap.autoFollowReferrals");
+                }
+            }
 
-			// Specify timeout to be 10 seconds, only on non SSL since SSL connections
-            // break with a timeout.
+            // Set only on non SSL since SSL connections break with a timeout.
             if (!sslEnabled) {
-                env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                if (connTimeout > 0) {
+                    env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+                } else {
+                    env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+                }
             }
             if (readTimeout > 0) {
                 env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
@@ -651,48 +670,48 @@ public class LdapManager {
                 Log.debug("LdapManager: Created context values, attempting to create context...");
             }
             ctx = new JiveInitialLdapContext(env, null);
-            
+
             if (startTlsEnabled && !sslEnabled) {
-            	
-    			if (debug) {
-    				Log.debug("LdapManager: ... StartTlsRequest");
-    			}
 
-    			// Perform a StartTLS extended operation
-    			StartTlsResponse tls = (StartTlsResponse) 
-    				ctx.extendedOperation(new StartTlsRequest());
+                if (debug) {
+                    Log.debug("LdapManager: ... StartTlsRequest");
+                }
 
-    			/* Open a TLS connection (over the existing LDAP association) and
-    			   get details of the negotiated TLS session: cipher suite, 
-    			   peer certificate, etc. */
-    			try {
-    				SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
-    				
-    				ctx.setTlsResponse(tls);
-    				ctx.setSslSession(session);
-    				
-    				if (debug) {
-    					Log.debug("LdapManager: ... peer host: " 
-    							+ session.getPeerHost() 
-    							+ ", CipherSuite: " + session.getCipherSuite());
-    				}
+                // Perform a StartTLS extended operation
+                StartTlsResponse tls = (StartTlsResponse)
+                    ctx.extendedOperation(new StartTlsRequest());
 
-    				ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-    				ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, 
-    						userDN + "," + baseDN);
-    				ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
-    			
-    			} catch (java.io.IOException ex) {
-    				Log.error(ex.getMessage(), ex);
-    			}
+                /* Open a TLS connection (over the existing LDAP association) and
+                   get details of the negotiated TLS session: cipher suite,
+                   peer certificate, etc. */
+                try {
+                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
-				// make at least one lookup to check authorization
-				lookupExistence(
-						ctx, 
-						userDN + "," + baseDN,
-						new String[] {usernameField});
+                    ctx.setTlsResponse(tls);
+                    ctx.setSslSession(session);
+
+                    if (debug) {
+                        Log.debug("LdapManager: ... peer host: "
+                                + session.getPeerHost()
+                                + ", CipherSuite: " + session.getCipherSuite());
+                    }
+
+                    ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
+                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL,
+                            userDN + "," + baseDN);
+                    ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
+
+                } catch (java.io.IOException ex) {
+                    Log.error(ex.getMessage(), ex);
+                }
+
+                // make at least one lookup to check authorization
+                lookupExistence(
+                        ctx,
+                        userDN + "," + baseDN,
+                        new String[] {usernameField});
             }
-            
+
             if (debug) {
                 Log.debug("LdapManager: ... context created successfully, returning.");
             }
@@ -718,13 +737,13 @@ public class LdapManager {
                         env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
-                    
+
                     /* If startTLS is requested we MUST NOT bind() before
                      * the secure connection has been established. */
                     if (!(startTlsEnabled && !sslEnabled)) {
-                    	env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                    	env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
-                    	env.put(Context.SECURITY_CREDENTIALS, password);
+                        env.put(Context.SECURITY_AUTHENTICATION, "simple");
+                        env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
+                        env.put(Context.SECURITY_CREDENTIALS, password);
                     }
                     // Specify timeout to be 10 seconds, only on non SSL since SSL connections
                     // break with a timemout.
@@ -744,46 +763,46 @@ public class LdapManager {
                         Log.debug("LdapManager: Created context values, attempting to create context...");
                     }
                     ctx = new JiveInitialLdapContext(env, null);
-                    
+
                     if (startTlsEnabled && !sslEnabled) {
-                    	
-            			if (debug) {
-            				Log.debug("LdapManager: ... StartTlsRequest");
-            			}
 
-            			// Perform a StartTLS extended operation
-            			StartTlsResponse tls = (StartTlsResponse) 
-            				ctx.extendedOperation(new StartTlsRequest());
+                        if (debug) {
+                            Log.debug("LdapManager: ... StartTlsRequest");
+                        }
 
-            			/* Open a TLS connection (over the existing LDAP association) and
-            			   get details of the negotiated TLS session: cipher suite, 
-            			   peer certificate, etc. */
-            			try {
-            				SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
-            				
-            				ctx.setTlsResponse(tls);
-            				ctx.setSslSession(session);
-            				
-            				if (debug) {
-            					Log.debug("LdapManager: ... peer host: " 
-            							+ session.getPeerHost() 
-            							+ ", CipherSuite: " + session.getCipherSuite());
-            				}
+                        // Perform a StartTLS extended operation
+                        StartTlsResponse tls = (StartTlsResponse)
+                            ctx.extendedOperation(new StartTlsRequest());
 
-            				ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-            				ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, 
-            						userDN + "," + alternateBaseDN);
-            				ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
-            			
-            			} catch (java.io.IOException ex) {
-            				Log.error(ex.getMessage(), ex);
-            			}
-        				
-        				// make at least one lookup to check user authorization
-        				lookupExistence(
-        						ctx, 
-        						userDN + "," + alternateBaseDN,
-        						new String[] {usernameField});
+                        /* Open a TLS connection (over the existing LDAP association) and
+                           get details of the negotiated TLS session: cipher suite,
+                           peer certificate, etc. */
+                        try {
+                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
+
+                            ctx.setTlsResponse(tls);
+                            ctx.setSslSession(session);
+
+                            if (debug) {
+                                Log.debug("LdapManager: ... peer host: "
+                                        + session.getPeerHost()
+                                        + ", CipherSuite: " + session.getCipherSuite());
+                            }
+
+                            ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
+                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL,
+                                    userDN + "," + alternateBaseDN);
+                            ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
+
+                        } catch (java.io.IOException ex) {
+                            Log.error(ex.getMessage(), ex);
+                        }
+
+                        // make at least one lookup to check user authorization
+                        lookupExistence(
+                                ctx,
+                                userDN + "," + alternateBaseDN,
+                                new String[] {usernameField});
                     }
                 }
                 catch (NamingException e) {
@@ -813,55 +832,55 @@ public class LdapManager {
         return true;
     }
 
-    /** 
+    /**
      * Looks up an LDAP object by its DN and returns <tt>true</tt> if
      * the search was successful.
-     * 
+     *
      * @param ctx the Context to use for the lookup.
      * @param dn the object's dn to lookup.
      * @return true if the lookup was successful.
      * @throws NamingException if login credentials were wrong.
      */
     private Boolean lookupExistence(InitialDirContext ctx, String dn, String[] returnattrs) throws NamingException {
-    	boolean debug = Log.isDebugEnabled();
-    	
+        boolean debug = Log.isDebugEnabled();
+
         if (debug) {
-            Log.debug("LdapManager: In lookupExistence(ctx, dn, returnattrs), searchdn is: " + dn); 
+            Log.debug("LdapManager: In lookupExistence(ctx, dn, returnattrs), searchdn is: " + dn);
         }
-        
+
         // Bind to the object's DN
         ctx.addToEnvironment(Context.PROVIDER_URL, getProviderURL(dn));
 
-    	String filter = "(&(objectClass=*))";
-		SearchControls srcnt = new SearchControls();
-		srcnt.setSearchScope(SearchControls.OBJECT_SCOPE);
-		srcnt.setReturningAttributes(returnattrs);
-		
-		NamingEnumeration<SearchResult> answer = null;
-		
-		try {
-			answer = ctx.search(
-					"",
-					filter,
-					srcnt);
-		} catch (javax.naming.NameNotFoundException nex) {
-			// DN not found
-		} catch (NamingException ex){
-			throw ex;
-		}
-    	
-		if (answer == null || !answer.hasMoreElements())
-		{
+        String filter = "(&(objectClass=*))";
+        SearchControls srcnt = new SearchControls();
+        srcnt.setSearchScope(SearchControls.OBJECT_SCOPE);
+        srcnt.setReturningAttributes(returnattrs);
+
+        NamingEnumeration<SearchResult> answer = null;
+
+        try {
+            answer = ctx.search(
+                    "",
+                    filter,
+                    srcnt);
+        } catch (javax.naming.NameNotFoundException nex) {
+            // DN not found
+        } catch (NamingException ex){
+            throw ex;
+        }
+
+        if (answer == null || !answer.hasMoreElements())
+        {
             Log.debug("LdapManager: .... lookupExistence: DN not found.");
-			return false;
-		}
-		else
-		{
-			Log.debug("LdapManager: .... lookupExistence: DN found.");
-			return true;
-		}
+            return false;
+        }
+        else
+        {
+            Log.debug("LdapManager: .... lookupExistence: DN found.");
+            return true;
+        }
     }
-    
+
     /**
      * Finds a user's dn using their username. Normally, this search will
      * be performed using the field "uid", but this can be changed by setting
@@ -1296,7 +1315,7 @@ public class LdapManager {
         properties.put("ldap.startTlsEnabled", Boolean.toString(startTlsEnabled));
     }
 
-    
+
     /**
      * Returns the LDAP field name that the username lookup will be performed
      * on. By default this is "uid".
@@ -1412,10 +1431,11 @@ public class LdapManager {
      * @return the starting DN used for performing searches.
      */
     public String getBaseDN() {
-        if (encloseDNs)
+        if (encloseDNs) {
             return getEnclosedDN(baseDN);
-        else
+        } else {
             return baseDN;
+        }
     }
 
     /**
@@ -1517,10 +1537,11 @@ public class LdapManager {
      * @return the starting DN used for performing searches.
      */
     public String getAdminDN() {
-        if (encloseDNs)
+        if (encloseDNs) {
             return getEnclosedDN(adminDN);
-        else
+        } else {
             return adminDN;
+        }
     }
 
     /**
@@ -1782,21 +1803,21 @@ public class LdapManager {
         this.groupSearchFilter = groupSearchFilter;
         properties.put("ldap.groupSearchFilter", groupSearchFilter);
     }
-    
+
     public boolean isEnclosingDNs() {
         String encloseStr = properties.get("ldap.encloseDNs");
         if (encloseStr != null) {
             encloseDNs = Boolean.valueOf(encloseStr);
         } else {
-        	encloseDNs = true;
+            encloseDNs = true;
         }
-        
+
         return encloseDNs;
     }
-    
+
     public void setIsEnclosingDNs(boolean enable) {
-    	this.encloseDNs = enable;
-    	properties.put("ldap.encloseDNs", Boolean.toString(enable));
+        this.encloseDNs = enable;
+        properties.put("ldap.encloseDNs", Boolean.toString(enable));
     }
 
     /**
@@ -1831,7 +1852,9 @@ public class LdapManager {
         }
         Boolean clientSideSort = false;
         String clientSideSortStr = properties.get("ldap.clientSideSorting");
-        if (clientSideSortStr != null) clientSideSort = Boolean.valueOf(clientSideSortStr);
+        if (clientSideSortStr != null) {
+            clientSideSort = Boolean.valueOf(clientSideSortStr);
+        }
         LdapContext ctx = null;
         LdapContext ctx2 = null;
         try {

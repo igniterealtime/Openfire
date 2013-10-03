@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import org.voicebridge.*;
 import org.xmpp.jnodes.RelayChannel;
 
+import java.util.*;
 
 /**
  * A Class to represent a call participant - a party in a call.
@@ -90,6 +91,9 @@ public class CallParticipant {
     private ProxyCredentials proxyCredentials = null;
     private RelayChannel relayChannel = null;
     private boolean autoAnswer = true;
+    private long startTimestamp = 0;
+    private long endTimestamp = 0;
+    private Map<String, String> headers = new HashMap<String, String>();
 
     /*
      * Second party in a two party call or target of migration
@@ -123,9 +127,7 @@ public class CallParticipant {
 		this.proxyCredentials = proxyCredentials;
     }
 
-    /**
-     * Get/Set proxy credentials
-     */
+
     public RelayChannel getRelayChannel()
     {
 		return relayChannel;
@@ -136,6 +138,35 @@ public class CallParticipant {
 		this.relayChannel = relayChannel;
     }
 
+    public long getStartTimestamp()
+    {
+		return startTimestamp;
+    }
+
+    public void setStartTimestamp(long startTimestamp)
+    {
+		this.startTimestamp = startTimestamp;
+    }
+
+    public long getEndTimestamp()
+    {
+		return endTimestamp;
+    }
+
+    public void setEndTimestamp(long endTimestamp)
+    {
+		this.endTimestamp = endTimestamp;
+    }
+
+    public Map<String, String> getHeaders()
+    {
+		return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers)
+    {
+		this.headers = headers;
+    }
 
     /**
      * Get call answer timeout

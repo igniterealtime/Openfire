@@ -4,6 +4,9 @@ import java.util.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,6 +22,8 @@ import org.jivesoftware.util.*;
 import org.xmpp.packet.*;
 
 public class Config implements MUCEventListener {
+
+    private static final Logger Log = LoggerFactory.getLogger(Config.class);
 
 	private MultiUserChatManager mucManager;
 	private HashMap<String, Conference> conferences;
@@ -59,7 +64,7 @@ public class Config implements MUCEventListener {
     	MUCEventDispatcher.addListener(this);
 
 		try {
-			System.out.println(String.format("VoiceBridge read site configuration"));
+			Log.info(String.format("VoiceBridge read site configuration"));
 
 			mucManager 	= XMPPServer.getInstance().getMultiUserChatManager();
 
@@ -87,13 +92,14 @@ public class Config implements MUCEventListener {
 						processDefaultRegistration(username);
 					}
 
+					Log.info(String.format("VoiceBridge sip plugin assumed available"));
+					sipPlugin = true;
+
 				} else {
 
 					registerWithDefaultProxy();
 				}
-
 			}
-
 
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -147,10 +153,10 @@ public class Config implements MUCEventListener {
 			registrars.add(sipAccount.getHost());
 			registrations.add(sipAccount);
 
-			System.out.println(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", sipAccount.getXmppUserName(), sipAccount.getUserName(), sipAccount.getHost()));
+			Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", sipAccount.getXmppUserName(), sipAccount.getUserName(), sipAccount.getHost()));
 
         } catch (Exception e) {
-			System.out.println("registerWithDefaultProxy " + e);
+			Log.info("registerWithDefaultProxy " + e);
 		}
 	}
 
@@ -176,20 +182,18 @@ public class Config implements MUCEventListener {
 					registrars.add(credentials.getHost());
 					registrations.add(credentials);
 
-					System.out.println(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
+					Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
 
 				} catch (Exception e) {
-					System.out.println(String.format("processDefaultRegistration Bad Address  %s ", credentials.getHost()));
+					Log.info(String.format("processDefaultRegistration Bad Address  %s ", credentials.getHost()));
 				}
 			}
 			rs.close();
 			pstmt.close();
 			con.close();
 
-			sipPlugin = true;
-
 		} catch (SQLException e) {
-			System.out.println("processDefaultRegistration " + e);
+			Log.info("processDefaultRegistration " + e);
 		}
 	}
 
@@ -214,21 +218,19 @@ public class Config implements MUCEventListener {
 					registrars.add(credentials.getHost());
 					registrations.add(credentials);
 
-					System.out.println(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
+					Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", credentials.getXmppUserName(), credentials.getUserName(), credentials.getHost()));
 
 				} catch (Exception e) {
-					System.out.println(String.format("processRegistrations Bad Address  %s ", credentials.getHost()));
+					Log.info(String.format("processRegistrations Bad Address  %s ", credentials.getHost()));
 				}
 			}
 			rs.close();
 			pstmt.close();
 			con.close();
 
-			sipPlugin = true;
-
 
 		} catch (SQLException e) {
-			System.out.println("processRegistrations " + e);
+			Log.info("processRegistrations " + e);
 		}
 	}
 
@@ -261,7 +263,7 @@ public class Config implements MUCEventListener {
             sipExtensions.put(username, sipAccount);
 
         } catch (SQLException e) {
-			System.out.println("ProxyCredentials " + e);
+			Log.info("ProxyCredentials " + e);
 		}
 
 		return sipAccount;
@@ -289,7 +291,7 @@ public class Config implements MUCEventListener {
 
 
 			} catch (SQLException e) {
-				System.out.println("updateStatus " + e);
+				Log.info("updateStatus " + e);
 
 			} finally {
 				DbConnectionManager.closeConnection(psmt, con);
@@ -297,33 +299,67 @@ public class Config implements MUCEventListener {
 		}
 	}
 
-    public static void recordCall(String username, String addressFrom, String addressTo, long datetime, int duration, String calltype)  {
+    public static void createCallRecord(String username, String addressFrom, String addressTo, long datetime, int duration, String calltype)  {
 
-        String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
+		if (sipPlugin)
+		{
+			Log.info("createCallRecord " + username + " " + addressFrom + " " + addressTo + " " + datetime);
 
-        Connection con = null;
-        PreparedStatement psmt = null;
-        ResultSet rs = null;
+			String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
 
-        try {
-            con = DbConnectionManager.getConnection();
-            psmt = con.prepareStatement(sql);
-            psmt.setString(1, username);
-            psmt.setString(2, addressFrom);
-            psmt.setString(3, addressTo);
-            psmt.setLong(4, datetime);
-            psmt.setInt(5, duration);
-            psmt.setString(6, calltype);
+			Connection con = null;
+			PreparedStatement psmt = null;
+			ResultSet rs = null;
 
-            psmt.executeUpdate();
+			try {
+				con = DbConnectionManager.getConnection();
+				psmt = con.prepareStatement(sql);
+				psmt.setString(1, username);
+				psmt.setString(2, addressFrom);
+				psmt.setString(3, addressTo);
+				psmt.setLong(4, datetime);
+				psmt.setInt(5, duration);
+				psmt.setString(6, calltype);
 
-        } catch (SQLException e) {
-            Log.debug(e.getMessage(), e);
-        } finally {
-            DbConnectionManager.closeConnection(rs, psmt, con);
-        }
+				psmt.executeUpdate();
 
+			} catch (SQLException e) {
+				Log.error(e.getMessage(), e);
+			} finally {
+				DbConnectionManager.closeConnection(rs, psmt, con);
+			}
+		}
     }
+
+	public static void updateCallRecord(long datetime, int duration) {
+
+		if (sipPlugin)
+		{
+			Log.info("updateCallRecord " + datetime + " " + duration);
+
+			String sql = "UPDATE ofSipPhoneLog SET duration = ? WHERE datetime = ?";
+
+			Connection con = null;
+			PreparedStatement psmt = null;
+
+			try {
+
+				con = DbConnectionManager.getConnection();
+				psmt = con.prepareStatement(sql);
+
+				psmt.setInt(1, duration);
+				psmt.setLong(2, datetime);
+				psmt.executeUpdate();
+
+
+			} catch (SQLException e) {
+				Log.error(e.getMessage(), e);
+
+			} finally {
+				DbConnectionManager.closeConnection(psmt, con);
+			}
+		}
+	}
 
     public ProxyCredentials getProxyCredentialsByUser(String username)
     {
@@ -370,7 +406,7 @@ public class Config implements MUCEventListener {
 
 		conferences.put(conference.id, conference);
 
-		System.out.println(String.format("VoiceBridge create  conference: %s with pin %s extension %s", conference.id, conference.pin, conference.exten));
+		Log.info(String.format("VoiceBridge create  conference: %s with pin %s extension %s", conference.id, conference.pin, conference.exten));
 	}
 
 	private void destroyConference(MUCRoom room)
@@ -383,7 +419,7 @@ public class Config implements MUCEventListener {
 			Conference conference2 = confExtensions.remove(room.getName());
 			conference2 = null;
 
-			System.out.println(String.format("VoiceBridge destroy conference: %s", room.getName()));
+			Log.info(String.format("VoiceBridge destroy conference: %s", room.getName()));
 		}
 	}
 

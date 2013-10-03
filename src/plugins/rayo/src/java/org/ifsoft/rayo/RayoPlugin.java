@@ -159,7 +159,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
         try {
             rc = RelayChannel.createLocalRelayChannel(bindAllInterfaces ? "0.0.0.0" : LocalIPResolver.getLocalIP(), 30000, 50000);
             final int id = ids.incrementAndGet();
-            final String sId = "rayo-handset-" + String.valueOf(id);
+            final String sId = JID.escapeNode(jid.toString());
             rc.setAttachment(sId);
             rc.setFrom(jid, component);
             rc.setCrypto(handset);

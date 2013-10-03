@@ -30,6 +30,8 @@ import org.xmpp.packet.*;
 
 import java.util.*;
 import java.text.ParseException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import com.rayo.core.*;
 import com.rayo.core.verb.*;
@@ -38,6 +40,11 @@ import com.rayo.core.xml.providers.*;
 
 import com.sun.voip.server.*;
 import com.sun.voip.*;
+
+import org.voicebridge.*;
+
+
+
 
 public class RayoComponent 	extends 	AbstractComponent
 							implements 	TreatmentDoneListener,
@@ -139,8 +146,6 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				if (object instanceof ConnectCommand) {
 
-				} else if (object instanceof AcceptCommand) {
-
 				} else if (object instanceof HoldCommand) {
 
 				} else if (object instanceof UnholdCommand) {
@@ -155,8 +160,11 @@ public class RayoComponent 	extends 	AbstractComponent
 				} else if (object instanceof UnjoinCommand) {
 					reply = handleUnjoinCommand((UnjoinCommand) object, iq);
 
+				} else if (object instanceof AcceptCommand) {
+					reply = handleAcceptCommand((AcceptCommand) object, iq);
 
 				} else if (object instanceof AnswerCommand) {
+					reply = handleAnswerCommand((AnswerCommand) object, iq);
 
 				} else if (object instanceof HangupCommand) {
 					reply = handleHangupCommand(iq);
@@ -199,22 +207,13 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		if (object instanceof OnHookCommand)
 		{
-			String key = iq.getTo().getNode();
+			RelayChannel channel = plugin.getRelayChannel(JID.escapeNode(iq.getFrom().toString()));
 
-			if (key != null)
+			if (channel != null)
 			{
-				RelayChannel channel = plugin.getRelayChannel(iq.getTo().getNode());
-
-				if (channel != null)
-				{
-					handleOnOffHook(object, channel);
-
-				} else {
-					reply.setError(PacketError.Condition.item_not_found);
-				}
+				handleOnOffHook(object, channel);
 
 			} else {
-
 				reply.setError(PacketError.Condition.item_not_found);
 			}
 
@@ -371,6 +370,88 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
+	private IQ handleAcceptCommand(AcceptCommand command, IQ iq)
+	{
+		Log.info("RayoComponent handleAcceptCommand " + iq.getFrom() + " " + iq.getTo().getNode());
+
+		IQ reply = IQ.createResultIQ(iq);
+		Map<String, String> headers = command.getHeaders();
+
+		try {
+			Presence presence = new Presence();
+			presence.setFrom(iq.getTo());
+			presence.setTo(JID.unescapeNode(iq.getTo().getNode()));
+
+			presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+			sendPacket(presence);
+
+		} catch (Exception e) {
+			reply.setError(PacketError.Condition.item_not_found);
+		}
+
+		return reply;
+	}
+
+	private IQ handleAnswerCommand(AnswerCommand command, IQ iq)
+	{
+		Log.info("RayoComponent AnswerCommand " + iq.getFrom() + " " + iq.getTo().getNode());
+
+		IQ reply = IQ.createResultIQ(iq);
+		Map<String, String> headers = command.getHeaders();
+
+		try {
+			String handsetId = JID.escapeNode(iq.getFrom().toString());
+
+			Presence presence = new Presence();
+			presence.setFrom(iq.getTo());
+			presence.setTo(JID.unescapeNode(iq.getTo().getNode()));
+
+			presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+			sendPacket(presence);
+
+			RelayChannel channel = plugin.getRelayChannel(handsetId);
+
+			if (channel != null)
+			{
+				Handset handset = channel.getHandset();
+				CallHandler callHandler = channel.getCallHandler();
+
+				if (callHandler != null)
+				{
+					Log.info("RayoComponent handleAnswerCommand found call handler " + callHandler);
+
+					CallParticipant cp = callHandler.getCallParticipant();
+
+					if (cp != null)
+					{
+						String username = iq.getFrom().getNode();
+
+						ConferenceManager conferenceManager = ConferenceManager.getConference(	handset.mixer,
+																								channel.getMediaPreference(),
+																								username, false);
+						try {
+							cp.setStartTimestamp(System.currentTimeMillis());
+							cp.setHeaders(headers);
+
+							String recording = handset.mixer + "-" + cp.getStartTimestamp() + ".au";
+							conferenceManager.recordConference(true, recording, "au");
+							Config.createCallRecord(username, recording, "xmpp:" + iq.getFrom().toString(), cp.getStartTimestamp(), 0, "dialed") ;
+
+						} catch (ParseException e1) {
+							reply.setError(PacketError.Condition.internal_server_error);
+						}
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			reply.setError(PacketError.Condition.item_not_found);
+            e.printStackTrace();
+		}
+
+		return reply;
+	}
+
 	private IQ handleHangupCommand(IQ iq)
 	{
 		Log.info("RayoComponent handleHangupCommand " + iq.getFrom());
@@ -478,54 +559,89 @@ public class RayoComponent 	extends 	AbstractComponent
 		boolean toPhone = to.indexOf("sip:") == 0 || to.indexOf("tel:") == 0;
 		boolean toXmpp = to.indexOf("xmpp:") == 0;
 
-		String codec = headers.get("caller-id");
-		String handsetId = headers.get("handset");
-		String mixer = null;
-
 		String callId = headers.get("call-id");
 		String callerName = headers.get("caller-name");
 		String calledName = headers.get("called-name");
 
+		String handsetId = iq.getFrom().toString();
+
 		JoinCommand join = command.getJoin();
 
-        if (join != null && join.getTo() != null)
+        if (join != null)
         {
         	if (join.getType() == JoinDestinationType.CALL) {
         		// TODO join.getTo()
         	} else {
-        		  mixer = join.getTo();
+
         	}
-        }
 
-		if (mixer != null)
-		{
-			if (callId == null) callId =  "rayo-call-" + System.currentTimeMillis();
-			if (callerName == null) callerName =  iq.getFrom().toString();
+			reply.setError(PacketError.Condition.feature_not_implemented);
 
-			CallParticipant cp = new CallParticipant();
-			cp.setVoiceDetection(true);
-			cp.setCallOwner(iq.getFrom().toString());
+        } else {
+
+			if (callId == null)
+			{
+					callId =  "rayo-call-" + System.currentTimeMillis();
+					headers.put("call-id", callId);
+			}
+
+			if (callerName == null)
+			{
+					callerName =  iq.getFrom().getNode();
+					headers.put("caller-name", callerName);
+			}
+
+			if (calledName == null)
+			{
+					calledName =  to;
+					headers.put("called-name", calledName);
+			}
 
 			if (toPhone)
 			{
+				CallParticipant cp = new CallParticipant();
+				cp.setVoiceDetection(true);
+				cp.setCallOwner(handsetId);
 				cp.setMediaPreference("PCMU/8000/1");
 				cp.setProtocol("SIP");
 				cp.setCallId(callId);
 				cp.setDisplayName(callerName);
 				cp.setPhoneNumber(to);
-				cp.setName(calledName == null ? cp.getPhoneNumber() : calledName);
-				cp.setConferenceId(mixer);
+				cp.setName(calledName);
+				cp.setHeaders(headers);
 
-				reply = doPhoneAndPcCall(handsetId, cp, reply);
+				reply = doPhoneAndPcCall(JID.escapeNode(handsetId), cp, reply);
 
 			} else if (toXmpp){
+
+				String destination = to.substring(5);
+				String mixer = JID.escapeNode(destination);
+
+				Presence presence = new Presence();
+				presence.setFrom(mixer + "@rayo." + getDomain());
+				presence.setTo(new JID(destination));
+
+				headers.put("mixer-name", mixer);
+
+				OfferEvent offer = new OfferEvent(callId);
+
+				try {
+					offer.setFrom(new URI("xmpp:" + iq.getFrom().toString()));
+					offer.setTo(new URI(to));
+
+				} catch (URISyntaxException e) {
+					reply.setError(PacketError.Condition.feature_not_implemented);
+					return reply;
+				}
+
+				offer.setHeaders(headers);
+
+				presence.getElement().add(rayoProvider.toXML(offer));
+				sendPacket(presence);
 
 			} else {
 				reply.setError(PacketError.Condition.feature_not_implemented);
 			}
-
-		} else {
-			reply.setError(PacketError.Condition.feature_not_implemented);
 		}
 
 		return reply;
@@ -662,16 +778,14 @@ public class RayoComponent 	extends 	AbstractComponent
 
 	private IQ doPhoneAndPcCall(String handsetId, CallParticipant cp, IQ reply)
 	{
-		String mixer = cp.getConferenceId();
-
-		Log.info("RayoComponent doPhoneAndPcCall " + handsetId + " " + mixer);
+		Log.info("RayoComponent doPhoneAndPcCall " + handsetId);
 
 		RelayChannel channel = plugin.getRelayChannel(handsetId);
 
 		if (channel != null)
 		{
 			try {
-				setMixer(mixer, channel, reply);
+				setMixer(channel, reply, cp);
 
 				OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
 
@@ -696,15 +810,20 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-    private void setMixer(String mixer, RelayChannel channel, IQ reply)
+    private void setMixer(RelayChannel channel, IQ reply, CallParticipant cp)
     {
+		String username = channel.getFrom().getNode();
+		String mixer = 	channel.getHandset().mixer;
+
 		ConferenceManager conferenceManager = ConferenceManager.getConference(	mixer,
 																				channel.getMediaPreference(),
-																				channel.getFrom().getNode(), false);
+																				username, false);
 		try {
-			if (conferenceManager.getMemberList().size() == 0) {
-				conferenceManager.recordConference(true, mixer + "-" + System.currentTimeMillis() + ".au", "au");
-			}
+			cp.setConferenceId(mixer);
+			cp.setStartTimestamp(System.currentTimeMillis());
+			String recording = mixer + "-" + cp.getStartTimestamp() + ".au";
+			conferenceManager.recordConference(true, recording, "au");
+			Config.createCallRecord(cp.getDisplayName(), recording, cp.getPhoneNumber(), cp.getStartTimestamp(), 0, "dialed") ;
 
 		} catch (ParseException e1) {
 			reply.setError(PacketError.Condition.internal_server_error);
@@ -737,50 +856,80 @@ public class RayoComponent 	extends 	AbstractComponent
 			String myEvent = com.sun.voip.CallEvent.getEventString(callEvent.getEvent());
 			String callState = callEvent.getCallState().toString();
 
-			Map<String, String> headers = new HashMap<String, String>();
-			headers.put("callId", callEvent.getCallId());
-			headers.put("info", callEvent.getCallInfo() == null ? "" : callEvent.getCallInfo());
-			headers.put("mixer", callEvent.getConferenceId() == null ? "" : callEvent.getConferenceId());
-			headers.put("callInfo", callEvent.getCallInfo() == null ? "" : callEvent.getCallInfo());
+			try {
+				CallHandler callHandler = CallHandler.findCall(callEvent.getCallId());
 
-			Presence presence = new Presence();
-			presence.setFrom(callEvent.getCallId() + "@rayo." + getDomain());
-			presence.setTo(from);
+				if (callHandler != null)
+				{
+					Log.info("RayoComponent callEventNotification found call handler " + callHandler);
 
-			if ("001 STATE CHANGED".equals(myEvent)) {
+					CallParticipant cp = callHandler.getCallParticipant();
 
-				if ("110 ANSWERED".equals(callState)) {
-					presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
-					sendPacket(presence);
+					if (cp != null)
+					{
+						Log.info("RayoComponent callEventNotification found call paticipant " + cp);
 
-				} else if ("200 ESTABLISHED".equals(callState)) {
-					presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-					sendPacket(presence);
+						Map<String, String> headers = cp.getHeaders();
 
-				} else if ("299 ENDED".equals(callState)) {
-					presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
-					sendPacket(presence);
+						headers.put("call-id", callEvent.getCallId());
+						headers.put("mixer-name", callEvent.getConferenceId());
+
+						Presence presence = new Presence();
+						presence.setFrom(callEvent.getCallId() + "@rayo." + getDomain());
+						presence.setTo(from);
+
+						if ("001 STATE CHANGED".equals(myEvent))
+						{
+							if ("110 ANSWERED".equals(callState)) {
+								presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+								sendPacket(presence);
+
+							} else if ("200 ESTABLISHED".equals(callState)) {
+								presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+								sendPacket(presence);
+
+							} else if ("299 ENDED".equals(callState)) {
+								presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
+								sendPacket(presence);
+
+								if (cp.getStartTimestamp() > 0)
+								{
+									cp.setEndTimestamp(System.currentTimeMillis());
+									Config.updateCallRecord(cp.getStartTimestamp(), (int)((cp.getEndTimestamp() - cp.getStartTimestamp()) / 1000));
+
+									ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(callEvent.getConferenceId());
+									conferenceManager.recordConference(false, null, null);
+
+									cp.setStartTimestamp(0);
+								}
+							}
+
+						} else if ("250 STARTED SPEAKING".equals(myEvent)) {
+							StartedSpeakingEvent speaker = new StartedSpeakingEvent();
+							speaker.setSpeakerId(callEvent.getCallId());
+							presence.getElement().add(rayoProvider.toXML(speaker));
+							sendPacket(presence);
+
+						} else if ("259 STOPPED SPEAKING".equals(myEvent)) {
+							StoppedSpeakingEvent speaker = new StoppedSpeakingEvent();
+							speaker.setSpeakerId(callEvent.getCallId());
+							presence.getElement().add(rayoProvider.toXML(speaker));
+							sendPacket(presence);
+
+						} else if ("269 DTMF".equals(myEvent)) {
+							presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
+							sendPacket(presence);
+
+						} else if ("230 TREATMENT DONE".equals(myEvent)) {
+							//presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
+							//sendPacket(presence);
+							Log.info("230 TREATMENT DONE");
+						}
+					}
 				}
-			} else if ("250 STARTED SPEAKING".equals(myEvent)) {
-				StartedSpeakingEvent speaker = new StartedSpeakingEvent();
-				speaker.setSpeakerId(headers.get("callId"));
-				presence.getElement().add(rayoProvider.toXML(speaker));
-				sendPacket(presence);
 
-			} else if ("259 STOPPED SPEAKING".equals(myEvent)) {
-				StoppedSpeakingEvent speaker = new StoppedSpeakingEvent();
-				speaker.setSpeakerId(headers.get("callId"));
-				presence.getElement().add(rayoProvider.toXML(speaker));
-				sendPacket(presence);
-
-			} else if ("269 DTMF".equals(myEvent)) {
-				presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
-				sendPacket(presence);
-
-			} else if ("230 TREATMENT DONE".equals(myEvent)) {
-				//presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
-				//sendPacket(presence);
-				Log.info("230 TREATMENT DONE");
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
     }

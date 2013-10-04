@@ -109,25 +109,33 @@
 		{
 			window.connection.rayo.phone(
 			{
-				onReady: function() {
-					console.log('Handset is off hook');
+				offHook: function() {
 					$("#status").html("Off Hook");
 				},
 
-				onUnready: function() {
-					console.log('Handset is on hook');
+				onHook: function() {
 					$("#status").html("On Hook");
 				},
 
+				offSpeaking: function() {
+					$("#status").html("Stopped Speaking");
+				},
+
+				onSpeaking: function() {
+					$("#status").html("Started Speaking");
+				},
+
 				onOffer: function(call, headers) {
-					console.log('onOffer ' + call.from);
-					console.log(headers);
+					//console.log('onOffer ' + call.from);
+					//console.log(headers);
 
 					if (window.candybar.call == null)	// ignore when user has active call
 					{
+						var cli = headers['caller-name'] ? headers['caller-name']: call.from;
+
 						window.candybar.setUser({
-							name: call.from,
-							number: call.to,
+							name: cli,
+							number: cli,
 							picUrl: 'unknown.jpg'
 						});
 
@@ -135,21 +143,24 @@
 						window.candybar.setState('incoming');
 						window.dialer.setCallLabel('Answer');
 					}
+
+					startTone("Diggztone_Vibe");
 				},
 
 				onEnd: function(callId, headers) {
-					console.log('onEnd ' + callId);
-					console.log(headers);
+					//console.log('onEnd ' + callId);
+					//console.log(headers);
 
 					window.candybar.endGently();
 					window.candybar.call = null;
 
 					window.dialer.setCallLabel('Call');
+					stopTone();
 				},
 
 				onAnswer: function(callId, headers) {
-					console.log('onAnswer ' + callId);
-					console.log(headers);
+					//console.log('onAnswer ' + callId);
+					//console.log(headers);
 
 					window.candybar.setState('active');
 					window.dialer.setCallLabel('Hangup');
@@ -157,8 +168,8 @@
 				},
 
 				onRing: function(callId, headers) {
-					console.log('onRing ' + callId);
-					console.log(headers);
+					//console.log('onRing ' + callId);
+					//console.log(headers);
 
 					window.candybar.setState('calling');
 					startTone("ringback-uk");
@@ -177,35 +188,19 @@
 
 		var sipUri = prefix + destination + "@" + domain
 
+		if (prefix == "sip:") sipUri = prefix + destination + "@" + domain
 		if (prefix == "tel:") sipUri = prefix + destination
+		if (prefix == "xmpp:") sipUri = prefix + destination + "@" + domain + "/" + destination;
+
 
 		window.candybar.call = window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri);
 
 		window.candybar.setUser({
-			name: sipUri,
+			name: destination,
 			number: destination,
 			picUrl: 'unknown.jpg'
 		});
     }
-
-	function onIncomingCall(call)
-	{
-		console.log(' call from ' + call.from);
-
-		if (window.candybar.call == null)	// ignore when user has active call
-		{
-			window.candybar.setUser({
-				name: call.from,
-				number: call.to,
-				picUrl: 'unknown.jpg'
-			});
-
-			window.candybar.call = call;
-			window.candybar.setState('incoming');
-			window.dialer.setCallLabel('Answer');
-		}
-	}
-
 
     function urlParam(name)
     {
@@ -216,10 +211,13 @@
 
     function startTone(name)
     {
-		ringtone = new Audio();
-		ringtone.loop = true;
-		ringtone.src = "ringtones/" + name + ".mp3";
-		ringtone.play();
+    	if (!ringtone)
+    	{
+			ringtone = new Audio();
+			ringtone.loop = true;
+			ringtone.src = "ringtones/" + name + ".mp3";
+			ringtone.play();
+		}
     }
 
     function stopTone()

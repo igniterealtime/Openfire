@@ -90,7 +90,7 @@ public class CallParticipant {
     private String remoteMediaInfo		   = null;
     private ProxyCredentials proxyCredentials = null;
     private RelayChannel relayChannel = null;
-    private boolean autoAnswer = true;
+    private boolean autoAnswer = false;
     private long startTimestamp = 0;
     private long endTimestamp = 0;
     private Map<String, String> headers = new HashMap<String, String>();

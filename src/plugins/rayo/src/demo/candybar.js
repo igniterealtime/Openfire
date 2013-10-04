@@ -111,7 +111,7 @@
   };
 
   CandyBar.prototype.setState = function (state) {
-    if (!this.dom) return this;
+    if (!this.dom) return this;    
     var buttons = this.dom.querySelectorAll('button'),
       callActionsEl = this.dom.querySelector('.callActions'),
       self = this,
@@ -137,10 +137,9 @@
       forEach.call(buttons, function (button) {
         button.parentElement.removeChild(button);
       });
-
       // add buttons
-      stateDef.buttons.forEach(function (button) {
-        callActionsEl.appendChild(self.domify('<button class="' + button.cls + '">' + button.label + '</button>'));
+      stateDef.buttons.forEach(function (button) {     
+        callActionsEl.appendChild(self.domify('<button class="' + button.cls + '">' + button.label + '</button>'));         
       });
 
       // start/stop timer

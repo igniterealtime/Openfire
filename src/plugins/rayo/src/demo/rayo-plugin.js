@@ -51,16 +51,16 @@ Strophe.addConnectionPlugin('rayo',
 
 	hangup: function(callId)
 	{
-		console.log("hangup " + callId);
+		//console.log("hangup " + callId);
 		
 		var that = this;
 		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c("hangup", {xmlns: Strophe.NS.RAYO_CORE});  
 
-		console.log(iq.toString());
+		//console.log(iq.toString());
 			
 		that._connection.sendIQ(iq, function(response)
 		{
-			console.log(response);
+			//console.log(response);
 			
 			if ($(response).attr('type') != "result")
 			{
@@ -87,18 +87,18 @@ Strophe.addConnectionPlugin('rayo',
 		});			
 	},
 			
-	answer: function(callId, headers)
+	answer: function(callId, mixer, headers)
 	{
-		//console.log('Rayo plugin accept ' + callId);
+		//console.log('Rayo plugin accept ' + callId + " " + mixer);
 		//console.log(headers)
 
 		var that = this;
 		
-		if (this._isOffhook()) this._onhook();
+		//if (this._isOffhook()) this._onhook();
 
-		this._offhook(callId, headers, function()
+		this._offhook(mixer, headers, function()
 		{
-			var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("answer", {xmlns: Strophe.NS.RAYO_CORE});  
+			var iq = $iq({to: callId + "@rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("answer", {xmlns: Strophe.NS.RAYO_CORE});  
 
 			if (headers)
 			{	
@@ -113,7 +113,7 @@ Strophe.addConnectionPlugin('rayo',
 				}
 			}
 
-			console.log(iq.toString());
+			//console.log(iq.toString());
 
 			that._connection.sendIQ(iq, function(response)
 			{		
@@ -131,12 +131,18 @@ Strophe.addConnectionPlugin('rayo',
 		//console.log(headers)
 				
 		var that = this;
-
+		
+		var mixer = "rayo-mixer-" + Math.random().toString(36).substr(2,9);		
 		var callId = "rayo-call-" + Math.random().toString(36).substr(2,9);
 
-		if (this._isOffhook()) this._onhook();
+		if (to.indexOf("xmpp:") == 0)
+		{
+			callId = Strophe.escapeNode(to.substring(5));
+		}		
+
+		//if (this._isOffhook()) this._onhook();
 		
-		this._offhook(callId, headers, function()
+		this._offhook(mixer, headers, function()
 		{
 			var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
 
@@ -155,7 +161,7 @@ Strophe.addConnectionPlugin('rayo',
 				}
 			}
 
-			console.log(iq.toString());
+			//console.log(iq.toString());
 
 			that._connection.sendIQ(iq, function(response)
 			{		
@@ -206,7 +212,16 @@ Strophe.addConnectionPlugin('rayo',
 		//console.log('Rayo plugin _offhook1 ' + mixer);
 		
 		var that = this;
-		that.pc1 = new webkitRTCPeerConnection(null);
+		that.pc1 = new webkitRTCPeerConnection(null);		
+		that.pc2 = new webkitRTCPeerConnection(null);
+
+		that.pc2.onaddstream = function(e)
+		{
+			that.audio = new Audio();
+			that.audio.autoplay = true;	
+			that.audio.src = webkitURL.createObjectURL(e.stream)
+		};		
+		
 		that.pc1.addStream(that.localStream);
 
 		that.pc1.createOffer(function(desc)
@@ -234,16 +249,7 @@ Strophe.addConnectionPlugin('rayo',
 				that._offhook2(mixer, headers, action);
 
 			});	
-		});
-
-		that.pc2 = new webkitRTCPeerConnection(null);
-
-		that.pc2.onaddstream = function(e)
-		{
-			that.audio = new Audio();
-			that.audio.autoplay = true;	
-			that.audio.src = webkitURL.createObjectURL(e.stream)
-		};		
+		});		
 	},
 
 	_offhook2: function(mixer, headers, action)
@@ -318,7 +324,8 @@ Strophe.addConnectionPlugin('rayo',
 			var value = $(this).attr('value');
 			
 			headers[name] = value;
-		});		
+		});
+			
 
 		$(presence).find('complete').each(function() 
 		{		
@@ -336,19 +343,21 @@ Strophe.addConnectionPlugin('rayo',
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
 				var callFrom = $(this).attr('from');
-				var callTo = $(this).attr('value');
+				var callTo = $(this).attr('to');				
 				var callId = Strophe.getNodeFromJid(from);
 				
+				var mixer = headers['mixer-name']
+				
 				var call = {		
-					digit: 	function(tone) 			{that.digit(callId, tone);},
-					hangup: function() 			{that.hangup(callId);},
-					answer: function(callId, headers) 	{that.answer(callId, headers);},
+					digit: 	function(tone) 	{that.digit(callId, tone);},
+					hangup: function() 	{that.hangup(callId);},
+					answer: function() 	{that.answer(callId, mixer, headers);},
 					
 					from: 	callFrom,
-					to:	callTo,	
+					to:	callTo,
 					id:	callId
 				}				
-				
+
 				if (that.callbacks && that.callbacks.onOffer) that.callbacks.onOffer(call, headers);
 								
 				var iq = $iq({to: from, from: that._connection.jid, type: "get"}).c("accept", {xmlns: Strophe.NS.RAYO_CORE});  
@@ -389,17 +398,32 @@ Strophe.addConnectionPlugin('rayo',
 			{				
 
 			}
-		});		
+		});
 		
-		$(presence).find('ringing').each(function() 
+		$(presence).find('started-speaking').each(function() 
 		{		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{
-				if (that.handsetId != Strophe.getNodeFromJid(from))
-				{			
-					var callId = Strophe.getNodeFromJid(from);
-					if (that.callbacks && that.callbacks.onRing) that.callbacks.onRing(callId, headers);
-				}
+			{				
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
+			}
+		});		
+		
+		$(presence).find('stopped-speaking').each(function() 
+		{		
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+			{				
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
+			}
+		});
+		
+		$(presence).find('ringing').each(function() 
+		{			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+			{			
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onRing) that.callbacks.onRing(callId, headers);
 			}
 		});
 		
@@ -407,30 +431,28 @@ Strophe.addConnectionPlugin('rayo',
 		{		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
-				if (that.handsetId != Strophe.getNodeFromJid(from))
-				{			
-					var callId = Strophe.getNodeFromJid(from);
-					if (that.callbacks && that.callbacks.onAnswer) that.callbacks.onAnswer(callId, headers);
+				var callId = Strophe.getNodeFromJid(from);			
+				
+				if (headers['call-protocol'] == "WebRtc")
+				{
+					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
 					
 				} else {
 				
-					if (that.callbacks && that.callbacks.onReady) that.callbacks.onReady();	
-				}
+					if (that.callbacks && that.callbacks.onAnswer) that.callbacks.onAnswer(callId, headers);
+				}				
 			}
 		});	
 		
 		$(presence).find('end').each(function() 
-		{		
+		{
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
-			{
-				if (that.handsetId != Strophe.getNodeFromJid(from))
-				{			
-					var callId = Strophe.getNodeFromJid(from);
-					if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);
-					
-				} else {
-					if (that.callbacks && that.callbacks.onUnready) that.callbacks.onUnready();
-				}
+			{			
+				var callId = Strophe.getNodeFromJid(from);
+				that._onhook();				
+				
+				if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();
+				if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);				
 			}
 		});
 		

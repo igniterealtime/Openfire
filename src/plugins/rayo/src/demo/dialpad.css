@@ -288,7 +288,7 @@ body {
   display: block;
   position: relative; }
 
-.cancel {
+.cancel_dialer {
   position: absolute;
   top: 4px;
   right: 10px;

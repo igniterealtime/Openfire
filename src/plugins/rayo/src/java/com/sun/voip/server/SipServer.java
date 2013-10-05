@@ -380,8 +380,7 @@ public class SipServer implements SipListener {
         	    String from = fromHeader.getAddress().toString();
         	    String to = toHeader.getAddress().toString();
 
-		    Logger.writeFile("SipServer:  duplicate INVITE from "
-			+ from + " to " + to);
+		    Logger.writeFile("SipServer:  duplicate INVITE from " + from + " to " + to);
 
 		    return;
 		}
@@ -434,6 +433,7 @@ public class SipServer implements SipListener {
              * we should send back a 500 Internal Server Error
              */
 	    Logger.exception("processRequest", e);
+	    e.printStackTrace();
         }
     }
 

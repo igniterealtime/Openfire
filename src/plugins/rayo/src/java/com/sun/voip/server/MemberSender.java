@@ -369,7 +369,7 @@ public class MemberSender {
 	    callHandler.getMember().adjustVolume(dataToSend, outputVolume);
 	}
 
-	dataToSend = normalize(dataToSend);
+	//dataToSend = normalize(dataToSend);
 
 	try {
 	    /*

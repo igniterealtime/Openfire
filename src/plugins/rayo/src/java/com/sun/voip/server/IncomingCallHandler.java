@@ -23,12 +23,6 @@
 
 package com.sun.voip.server;
 
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.util.JiveGlobals;
-
-import org.xmpp.packet.JID;
-
 import com.sun.voip.CallParticipant;
 import com.sun.voip.CallState;
 import com.sun.voip.CallEvent;
@@ -40,6 +34,9 @@ import java.io.IOException;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import java.util.NoSuchElementException;
 import java.text.ParseException;
 
@@ -47,6 +44,8 @@ import java.util.Vector;
 import java.util.Collection;
 import org.voicebridge.Application;
 import org.voicebridge.Config;
+
+import org.ifsoft.rayo.RayoComponent;
 
 
 /**
@@ -109,38 +108,12 @@ public class IncomingCallHandler extends CallHandler
 
 				System.out.println("Incoming SIP, call " + cp);
 
-				Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-				boolean foundUser = false;
-
-				for (ClientSession session : sessions)
+				if (RayoComponent.self.routeIncomingSIP(cp))
 				{
-					try{
-						String userId = session.getAddress().getNode();
-
-						if (cp.getToPhoneNumber().equals(userId))
-						{
-							System.out.println("Incoming SIP, call route to user " + userId);
-
-							foundUser = true;
-							break;
-						}
-
-					} catch (Exception e) { }
-				}
-
-				if (foundUser)		// send this call to conf with username and invite user to join with Jingle RTMP
-				{
-					String sid = "incoming-" + String.valueOf(System.currentTimeMillis());
-					cp.setConferenceId(sid);
 					haveIncomingConferenceId = true;
 
-					CallEvent callEvent = new CallEvent(CallEvent.STATE_CHANGED);
-					callEvent.setCallState(new CallState(CallState.INCOMING));
-					callEvent.setInfo(cp.getPhoneNumber());
-					callEvent.setCallId(sid);
-					sendCallEventNotification(callEvent);
-
-				} else {		//  conf bridge
+				} else {
+					//  conf bridge
 
 					if (Config.getInstance().getConferenceExten().equals(cp.getToPhoneNumber()))
 					{

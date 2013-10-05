@@ -77,9 +77,9 @@ Strophe.addConnectionPlugin('rayo',
 		
 		var that = this;		
 		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c("dtmf", {xmlns: Strophe.NS.RAYO_CORE, tones: key});  
-
+			
 		that._connection.sendIQ(iq, function(response)
-		{
+		{			
 			if ($(response).attr('type') != "result")
 			{
 				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dtmf failure");
@@ -132,7 +132,7 @@ Strophe.addConnectionPlugin('rayo',
 				
 		var that = this;
 		
-		var mixer = "rayo-mixer-" + Math.random().toString(36).substr(2,9);		
+		var mixer = "rayo-outgoing-" + Math.random().toString(36).substr(2,9);		
 		var callId = "rayo-call-" + Math.random().toString(36).substr(2,9);
 
 		if (to.indexOf("xmpp:") == 0)
@@ -146,7 +146,7 @@ Strophe.addConnectionPlugin('rayo',
 		{
 			var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
 
-			iq.c("header", {name: "call-id", value: callId}).up(); 
+			iq.c("header", {name: "call_id", value: callId}).up(); 
 
 			if (headers)
 			{	
@@ -210,8 +210,11 @@ Strophe.addConnectionPlugin('rayo',
 	_offhook1: function(mixer, headers, action)
 	{
 		//console.log('Rayo plugin _offhook1 ' + mixer);
-		
+
 		var that = this;
+		
+		var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
+		
 		that.pc1 = new webkitRTCPeerConnection(null);		
 		that.pc2 = new webkitRTCPeerConnection(null);
 
@@ -230,7 +233,12 @@ Strophe.addConnectionPlugin('rayo',
 			that.pc1.setLocalDescription(desc);
 
 			var sdpObj1 = WebrtcSDP.parseSDP(desc.sdp);
-			sdpObj1.contents[0].codecs = [{clockrate: "48000", id: "111", name: "opus", channels: 2}];
+			
+			if (codec == "PCMU")
+				sdpObj1.contents[0].codecs = [{clockrate: "8000", id: "0", name: "PCMU", channels: 1}];
+			else
+				sdpObj1.contents[0].codecs = [{clockrate: "48000", id: "111", name: "opus", channels: 2}];
+  	
 			var sdp = WebrtcSDP.buildSDP(sdpObj1);
 			//console.log(sdp);
 			that.cryptoSuite = sdpObj1.contents[0].crypto['crypto-suite'];
@@ -257,8 +265,8 @@ Strophe.addConnectionPlugin('rayo',
 		//console.log('Rayo plugin _offhook2 ' + this.cryptoSuite + " " + this.localCrypto + " " + this.remoteCrypto + " " + mixer);
 		
 		var that = this;
-		var stereo = (headers && headers.stereo) ? headers.stereo : "0";
-		var codec = (headers && headers.codec) ? headers.codec : "OPUS";		
+		var stereo = (headers && headers.stereo_pan) ? headers.stereo_pan : (that.callbacks.stereo_pan ? that.callbacks.stereo_pan : "0");
+		var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
 		
 		var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET, cryptoSuite: that.cryptoSuite, localCrypto: that.localCrypto, remoteCrypto: that.remoteCrypto, codec: codec, stereo: stereo, mixer: mixer});  
 		
@@ -346,7 +354,7 @@ Strophe.addConnectionPlugin('rayo',
 				var callTo = $(this).attr('to');				
 				var callId = Strophe.getNodeFromJid(from);
 				
-				var mixer = headers['mixer-name']
+				var mixer = headers['mixer_name']
 				
 				var call = {		
 					digit: 	function(tone) 	{that.digit(callId, tone);},
@@ -396,7 +404,14 @@ Strophe.addConnectionPlugin('rayo',
 		{		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
-
+				var callId = Strophe.getNodeFromJid(from);
+				
+				if (callId.indexOf("rayo-incoming-") == 0)
+				{
+					that._onhook();	
+					
+					if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);
+				}
 			}
 		});
 		
@@ -433,7 +448,7 @@ Strophe.addConnectionPlugin('rayo',
 			{
 				var callId = Strophe.getNodeFromJid(from);			
 				
-				if (headers['call-protocol'] == "WebRtc")
+				if (headers['call_protocol'] == "WebRtc")
 				{
 					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
 					

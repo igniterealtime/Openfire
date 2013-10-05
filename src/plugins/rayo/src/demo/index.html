@@ -109,6 +109,9 @@
 		{
 			window.connection.rayo.phone(
 			{
+				codec_name: "PCMU",
+				stereo_pan: "0",
+
 				offHook: function() {
 					$("#status").html("Off Hook");
 				},
@@ -131,7 +134,7 @@
 
 					if (window.candybar.call == null)	// ignore when user has active call
 					{
-						var cli = headers['caller-name'] ? headers['caller-name']: call.from;
+						var cli = headers.caller_name ? headers.caller_name : call.from;
 
 						window.candybar.setUser({
 							name: cli,
@@ -193,7 +196,10 @@
 		if (prefix == "xmpp:") sipUri = prefix + destination + "@" + domain + "/" + destination;
 
 
-		window.candybar.call = window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri);
+		window.candybar.call = window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
+
+			codec_name: "PCMU",
+		});
 
 		window.candybar.setUser({
 			name: destination,

@@ -24,6 +24,9 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 
 import org.xmpp.packet.JID;
 
@@ -286,6 +289,14 @@ public class RayoComponent 	extends 	AbstractComponent
 				cp.setVoiceDetection(true);
 				cp.setCallOwner(channel.getFrom().toString());
 
+				if (handset.group != null && ! "".equals(handset.group))
+				{
+					// set for new or existing conference
+
+					ConferenceManager.getConference(handset.mixer, channel.getMediaPreference(), handset.group, false);
+					ConferenceManager.setDisplayName(handset.mixer, handset.group);
+				}
+
 				callHandler = new OutgoingCallHandler(this, cp);
 				callHandler.start();
 
@@ -469,6 +480,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				try {
 					cp.setStartTimestamp(System.currentTimeMillis());
 					cp.setHeaders(headers);
+					//cp.setCallOwner(iq.getFrom().toString());
 
 					String recording = cp.getConferenceId() + "-" + cp.getStartTimestamp() + ".au";
 					ConferenceManager.recordConference(cp.getConferenceId(), true, recording, "au");
@@ -700,45 +712,61 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				headers.put("call_protocol", "XMPP");
 
-				String destination = to.substring(5);
-				String source = JID.escapeNode(handsetId);
+				JID destination = getJID(to.substring(5));
 
-				RelayChannel channel = plugin.getRelayChannel(source); // user mixer of caller
-
-				if (channel != null)
+				if (destination != null)
 				{
-					headers.put("mixer_name", channel.getHandset().mixer);
-					headers.put("codec_name", channel.getHandset().codec);
+					String source = JID.escapeNode(handsetId);
 
-					Presence presence = new Presence();
-					presence.setFrom(source + "@rayo." + getDomain());
-					presence.setTo(new JID(destination));
+					RelayChannel channel = plugin.getRelayChannel(source); // user mixer of caller
 
-					OfferEvent offer = new OfferEvent(callId);
-
-					try {
-						offer.setFrom(new URI("xmpp:" + iq.getFrom().toString()));
-						offer.setTo(new URI(to));
-
-					} catch (URISyntaxException e) {
-						reply.setError(PacketError.Condition.feature_not_implemented);
-						return reply;
-					}
-
-					if (calledName == null)
+					if (channel != null)
 					{
-							calledName =  presence.getTo().getNode();
-							headers.put("called_name", calledName);
+						headers.put("mixer_name", channel.getHandset().mixer);
+						headers.put("codec_name", channel.getHandset().codec);
+
+						if (findUser(destination.getNode()) != null)
+						{
+							routeXMPPCall(reply, destination, source, callId, calledName, headers);
+
+						} else {
+							int count = 0;
+
+							try {
+								Group group = GroupManager.getInstance().getGroup(destination.getNode());
+
+								for (JID memberJID : group.getMembers())
+								{
+									if (iq.getFrom().toBareJID().equals(memberJID.toBareJID()) == false)
+									{
+										Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
+
+										for (ClientSession session : sessions)
+										{
+											routeXMPPCall(reply, session.getAddress(), source, callId, calledName, headers);
+											count++;
+										}
+									}
+								}
+
+								if (count == 0)
+								{
+									reply.setError(PacketError.Condition.item_not_found);
+									return reply;
+								}
+											// tag conf with group name
+
+								ConferenceManager.setDisplayName(channel.getHandset().mixer, destination.getNode());
+
+							} catch (GroupNotFoundException e) {
+								reply.setError(PacketError.Condition.item_not_found);
+								return reply;
+							}
+						}
+
+					} else {
+						reply.setError(PacketError.Condition.item_not_found);
 					}
-
-					offer.setHeaders(headers);
-
-					presence.getElement().add(rayoProvider.toXML(offer));
-					sendPacket(presence);
-
-					final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
-					childElement.addAttribute(URI, (String) "xmpp:" + destination);
-					childElement.addAttribute(ID, (String)  JID.escapeNode(destination));
 
 				} else {
 					reply.setError(PacketError.Condition.item_not_found);
@@ -751,6 +779,40 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		return reply;
 	}
+
+	private void routeXMPPCall(IQ reply, JID destination, String source, String callId, String calledName, Map<String, String> headers)
+	{
+		Presence presence = new Presence();
+		presence.setFrom(source + "@rayo." + getDomain());
+		presence.setTo(destination);
+
+		OfferEvent offer = new OfferEvent(callId);
+
+		try {
+			offer.setFrom(new URI("xmpp:" + JID.unescapeNode(source)));
+			offer.setTo(new URI("xmpp:" + destination));
+
+		} catch (URISyntaxException e) {
+			reply.setError(PacketError.Condition.feature_not_implemented);
+			return;
+		}
+
+		if (calledName == null)
+		{
+				calledName =  presence.getTo().getNode();
+				headers.put("called_name", calledName);
+		}
+
+		offer.setHeaders(headers);
+
+		presence.getElement().add(rayoProvider.toXML(offer));
+		sendPacket(presence);
+
+		final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
+		childElement.addAttribute(URI, (String) "xmpp:" + destination);
+		childElement.addAttribute(ID, (String)  JID.escapeNode(destination.toString()));
+	}
+
 
 	private IQ handleBridgedDialCommand(DialCommand command, IQ iq)
 	{
@@ -1125,23 +1187,26 @@ public class RayoComponent 	extends 	AbstractComponent
 					{
 						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner());
 
-						Presence presence = new Presence();
-						presence.setFrom(conferenceEvent.getCallId() + "@rayo." + getDomain());
-						presence.setTo(callParticipant.getCallOwner());
+						String groupName = ConferenceManager.getDisplayName(conferenceEvent.getConferenceId());
 
-						if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+						if (groupName == null)
 						{
-							UnjoinedEvent event = new UnjoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
-							presence.getElement().add(rayoProvider.toXML(event));
-
-							finishCallRecord(callParticipant);
+							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent);
 
 						} else {
-							JoinedEvent event = new JoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
-							presence.getElement().add(rayoProvider.toXML(event));
-						}
 
-						sendPacket(presence);
+							Group group = GroupManager.getInstance().getGroup(groupName);
+
+							for (JID memberJID : group.getMembers())
+							{
+								Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
+
+								for (ClientSession session : sessions)
+								{
+									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent);
+								}
+							}
+						}
 					}
 				}
 
@@ -1164,6 +1229,28 @@ public class RayoComponent 	extends 	AbstractComponent
 			e.printStackTrace();
 		}
     }
+
+    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent)
+    {
+		Presence presence = new Presence();
+		presence.setFrom(conferenceEvent.getCallId() + "@rayo." + getDomain());
+		presence.setTo(callee);
+
+		if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+		{
+			UnjoinedEvent event = new UnjoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+			presence.getElement().add(rayoProvider.toXML(event));
+
+			finishCallRecord(callParticipant);
+
+		} else {
+			JoinedEvent event = new JoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+			presence.getElement().add(rayoProvider.toXML(event));
+		}
+
+		sendPacket(presence);
+	}
+
 
     private JID findUser(String username)
     {
@@ -1195,39 +1282,68 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		JID foundUser = findUser(cp.getToPhoneNumber());
 
-		if (foundUser != null)		// send this call to user
+		String callId = "rayo-incoming-" + System.currentTimeMillis();
+		cp.setCallId(callId);
+		cp.setConferenceId(callId);
+
+		Map<String, String> headers = cp.getHeaders();
+		headers.put("mixer_name", callId);
+		headers.put("call_protocol", "SIP");
+
+		if (foundUser != null)		// send this call to specific user
 		{
-			String callId = "rayo-incoming-" + System.currentTimeMillis();
-			cp.setCallId(callId);
-			cp.setConferenceId(callId);
-			cp.setCallOwner(foundUser.toString());
+			routeSIPCall(foundUser, cp, callId, headers);
+			return true;
+		}
+									// send to members of group
+        try {
+            Group group = GroupManager.getInstance().getGroup(cp.getToPhoneNumber());
+			headers.put("group_name", cp.getToPhoneNumber());
 
-			Map<String, String> headers = cp.getHeaders();
-			headers.put("mixer_name", callId);
-			headers.put("call_protocol", "SIP");
+			for (JID memberJID : group.getMembers())
+			{
+				Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
 
+				for (ClientSession session : sessions)
+				{
+					routeSIPCall(memberJID, cp, callId, headers);
+				}
+			}
+
+			return true;
+
+        } catch (GroupNotFoundException e) {
+            // Group not found
+            return false;
+		}
+	}
+
+    public void routeSIPCall(JID callee, CallParticipant cp, String callId, Map<String, String> headers)
+    {
+		Log.info("routeSIPCall to user " + callee);
+
+		if (callee != null)		// send this call to user
+		{
 			Presence presence = new Presence();
 			presence.setFrom(callId + "@rayo." + getDomain());
-			presence.setTo(foundUser);
+			presence.setTo(callee);
 
 			OfferEvent offer = new OfferEvent(callId);
 
 			try {
-				offer.setTo(new URI("xmpp:" + foundUser.toString()));
+				offer.setTo(new URI("xmpp:" + callee.toString()));
 				offer.setFrom(new URI("sip:" + cp.getPhoneNumber()));
 
 			} catch (URISyntaxException e) {
-				Log.error("SIP phone nos not URI " + cp.getPhoneNumber() + " " + foundUser);
+				Log.error("SIP phone nos not URI " + cp.getPhoneNumber() + " " + callee);
 			}
 
-			headers.put("called_name", foundUser.getNode());
+			headers.put("called_name", callee.getNode());
 			headers.put("caller_name", cp.getName());
 			offer.setHeaders(headers);
 
 			presence.getElement().add(rayoProvider.toXML(offer));
 			sendPacket(presence);
 		}
-
-		return foundUser != null;
 	}
 }

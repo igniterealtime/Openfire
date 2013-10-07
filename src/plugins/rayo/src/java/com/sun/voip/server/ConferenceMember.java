@@ -580,7 +580,7 @@ public class ConferenceMember implements TreatmentDoneListener,
 		}
 
 		conferenceManager.joinDistributedConference(this);
-		joinedDistributedConference = true;
+		joinedDistributedConference = false;
     }
 
     public void reinitialize(ConferenceManager conferenceManager) {

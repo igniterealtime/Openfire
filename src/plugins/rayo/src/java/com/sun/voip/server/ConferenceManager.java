@@ -516,14 +516,28 @@ public class ConferenceManager {
 	return displayName;
     }
 
-    public static String getDisplayName(String conferenceId) {
-	try {
-	    ConferenceManager conferenceManager =
-		findConferenceManager(conferenceId);
-	    return conferenceManager.getDisplayName();
-	} catch (ParseException e) {
-	    return null;
-	}
+    public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+    }
+
+    public static String getDisplayName(String conferenceId)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			return conferenceManager.getDisplayName();
+		} catch (ParseException e) {
+			return null;
+		}
+    }
+
+    public static void setDisplayName(String conferenceId, String displayName)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			conferenceManager.setDisplayName(displayName);
+		} catch (ParseException e) {
+
+		}
     }
 
     public void setPermanent(boolean permanent) {

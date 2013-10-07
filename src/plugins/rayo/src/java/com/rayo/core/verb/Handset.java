@@ -49,6 +49,8 @@ public class Handset extends BaseVerb {
     @NotNull(message=Handset.MISSING_MIXER)
     public String mixer;
 
+    public String group;
+
 	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo, String mixer)
 	{
 		this.cryptoSuite = cryptoSuite;

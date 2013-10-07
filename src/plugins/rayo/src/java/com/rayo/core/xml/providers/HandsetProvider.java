@@ -76,7 +76,9 @@ public class HandsetProvider extends BaseProvider {
         								element.attributeValue("stereo"),
         								element.attributeValue("mixer"));
 
-		OffHookCommand command = new OffHookCommand();
+        handset.group = element.attributeValue("group");
+
+ 		OffHookCommand command = new OffHookCommand();
 		command.setHandset(handset);
 
         return command;

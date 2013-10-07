@@ -20,10 +20,13 @@
 	var domain = "81.201.82.25";
 	var prefix = "sip:";
 	var ringtone;
+	var username = null;
+	var password = null;
+	var jid = window.location.hostname;
 
 	window.dialer = new Dialpad({
 		onPress: function (key) {
-			console.log('a key was pressed', key);
+			//console.log('a key was pressed', key);
 
 			if (window.candybar.call) window.candybar.call.digit(key);
 		},
@@ -32,12 +35,12 @@
 			//makeCall(number);
 		},
 		onHide: function () {
-			console.log('removed it');
+			//console.log('removed it');
 		},
 		onCall: function (number) {
 
 			if (window.dialer.getCallLabel() == "Call") {
-				console.log('The call button was pressed', number);
+				//console.log('The call button was pressed', number);
 				makeCall(number);
 
 			} else if (window.dialer.getCallLabel() == "Hangup") {
@@ -60,6 +63,8 @@
 
 		if (urlParam("prefix")) prefix = urlParam("prefix");
 		if (urlParam("domain")) domain = urlParam("domain");
+		if (urlParam("username")) username = urlParam("username");
+		if (urlParam("password")) password = urlParam("password");
 
 		if (domain == "81.201.82.25" && prefix == "sip:") prefix = "sip:883510";
 		if (prefix == "tel:") domain = "";
@@ -71,10 +76,17 @@
 		{
 			iNum = Math.random().toString(36).substr(2,9);
 		}
+
+		if (username && password)
+		{
+			iNum = username;
+			jid = username + "@" + window.location.hostname
+		}
+
 		window.connection = new Openfire.Connection(window.location.protocol + '//' + window.location.host + '/http-bind/');
 		window.connection.resource = iNum;
 
-		window.connection.connect(window.location.hostname, null, function (status)
+		window.connection.connect(jid, password, function (status)
 		{
 			//console.log("XMPPConnection.connect");
 			//console.log(status);
@@ -89,21 +101,21 @@
 				});
 
 				setPhone();
+
+				var destination = urlParam("destination");
+
+				if (destination)
+				{
+					makeCall(destination);
+				}
 			}
 		});
-
-		var destination = urlParam("destination");
-
-		if (destination)
-		{
-			makeCall(destination);
-		}
     })
 
 
    function setPhone()
    {
-		console.log("setPhone()");
+		//console.log("setPhone()");
 
 		if (window.connection)
 		{
@@ -126,6 +138,11 @@
 
 				onSpeaking: function() {
 					$("#status").html("Started Speaking");
+				},
+
+				onAccept: function(call) {
+
+					window.candybar.call = call;
 				},
 
 				onOffer: function(call, headers) {
@@ -178,7 +195,16 @@
 					startTone("ringback-uk");
 				},
 
+				onJoin: function(jid, mixer) {
+					//console.log('onJoin ' + jid + " " + mixer);
+				},
+
+				onUnjoin: function(jid, mixer) {
+					//console.log('onUnjoin ' + jid + " " + mixer);
+				},
+
 				onError: function(e) {
+
 					console.error(e);
 				}
 			});
@@ -187,7 +213,7 @@
 
    function makeCall(destination)
    {
-		console.log("makeCall " + destination);
+		//console.log("makeCall " + destination);
 
 		var sipUri = prefix + destination + "@" + domain
 
@@ -196,7 +222,7 @@
 		if (prefix == "xmpp:") sipUri = prefix + destination + "@" + domain + "/" + destination;
 
 
-		window.candybar.call = window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
+		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
 
 			codec_name: "PCMU",
 		});

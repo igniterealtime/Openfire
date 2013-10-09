@@ -72,7 +72,7 @@ Strophe.addConnectionPlugin('rayo',
 
 	digit: function(callId, key)
 	{
-		//console.log("digit " + callId + " " + key);
+		//console.log("Rayo plugin digit " + callId + " " + key);
 		
 		var that = this;		
 		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c("dtmf", {xmlns: Strophe.NS.RAYO_CORE, tones: key});  
@@ -87,6 +87,26 @@ Strophe.addConnectionPlugin('rayo',
 		});			
 	},
 			
+	join: function(mixer, headers)
+	{
+		//console.log('Rayo plugin join ' + mixer);
+		//console.log(headers)		
+		
+		if (this._isOffhook()) this._onhook();
+
+		this._offhook(mixer, headers, function()
+		{
+
+		});		
+	},
+	
+	leave: function(mixer)
+	{
+		//console.log('Rayo plugin leave ' + mixer);		
+		
+		this._onhook();		
+	},	
+	
 	answer: function(callId, mixer, headers)
 	{
 		//console.log('Rayo plugin accept ' + callId + " " + mixer);
@@ -94,7 +114,7 @@ Strophe.addConnectionPlugin('rayo',
 
 		var that = this;
 		
-		//if (this._isOffhook()) this._onhook();
+		if (this._isOffhook()) this._onhook();
 
 		this._offhook(mixer, headers, function()
 		{
@@ -125,7 +145,7 @@ Strophe.addConnectionPlugin('rayo',
 				});
 			});
 		});		
-	},
+	},	
 	
 	dial: function(from, to, headers)
 	{
@@ -175,8 +195,10 @@ Strophe.addConnectionPlugin('rayo',
 					{
 						that.callbacks.onAccept(
 						{  		
-							digit: function(tone) {that.digit(callId, tone);},
-							hangup: function() {that.hangup(callId);},
+							digit: 	function(tone) 	{that.digit(callId, tone);},
+							hangup: function() 	{that.hangup(callId);},
+							join: 	function() 	{that.join(mixer, headers);},
+							leave: 	function() 	{that.leave(mixer);},								
 
 							from: 	from,
 							to:	to,	
@@ -302,7 +324,7 @@ Strophe.addConnectionPlugin('rayo',
 				that.pc2.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayRemotePort + " typ host generation 0"}));
 				that.pc1.addIceCandidate(new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + that.relayHost + " " + that.relayLocalPort + " typ host generation 0"}));				
 
-				action();				
+				if (action) action();				
 			}); 
 			
 		}, function (error) {
@@ -334,8 +356,8 @@ Strophe.addConnectionPlugin('rayo',
 
 	_handlePresence: function(presence) 
 	{
-		//console.log('Rayo plugin handlePresence');
-		//console.log(presence);
+		console.log('Rayo plugin handlePresence');
+		console.log(presence);
 		
 		var that = this;
 		var from = $(presence).attr('from');
@@ -375,6 +397,8 @@ Strophe.addConnectionPlugin('rayo',
 					digit: 	function(tone) 	{that.digit(callId, tone);},
 					hangup: function() 	{that.hangup(callId);},
 					answer: function() 	{that.answer(callId, mixer, headers);},
+					join: 	function() 	{that.join(mixer, headers);},	
+					leave: 	function() 	{that.leave(mixer);},						
 					
 					from: 	callFrom,
 					to:	callTo,
@@ -409,16 +433,19 @@ Strophe.addConnectionPlugin('rayo',
 		})
 		
 		$(presence).find('joined').each(function() 
-		{		
+		{			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{	
-				var callId = Strophe.getNodeFromJid(from);
+				var callId = Strophe.getNodeFromJid(from);			
 				var jid = Strophe.unescapeNode(callId);
-				
-				if (jid.indexOf("@") > -1 && jid.indexOf("/") > -1)
+				var mixer = $(this).attr('mixer-name');	
+
+				if (jid == that._connection.jid)
 				{
-					if (that.callbacks && that.callbacks.onJoin) that.callbacks.onJoin(jid, $(this).attr('mixer-name'));     					
+					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();					
 				}
+				
+				if (that.callbacks && that.callbacks.onJoin) that.callbacks.onJoin(callId, jid, mixer);     					
 			}
 		});
 		
@@ -428,20 +455,14 @@ Strophe.addConnectionPlugin('rayo',
 			{
 				var callId = Strophe.getNodeFromJid(from);			
 				var jid = Strophe.unescapeNode(callId);
+				var mixer = $(this).attr('mixer-name');				
 				
-				if (jid.indexOf("@") > -1 && jid.indexOf("/") > -1)
+				if (jid == that._connection.jid)
 				{
-					if (that.callbacks && that.callbacks.onUnjoin) that.callbacks.onUnjoin(jid, $(this).attr('mixer-name'));     					
-				
-				} else {
-
-					if (callId.indexOf("rayo-incoming-") == 0)
-					{
-						that._onhook();	
-
-						if (that.callbacks && that.callbacks.onEnd) that.callbacks.onEnd(callId, headers);
-					}
+					if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();					
 				}
+				
+				if (that.callbacks && that.callbacks.onUnjoin) that.callbacks.onUnjoin(callId, jid, mixer);  
 			}
 		});
 		
@@ -450,7 +471,7 @@ Strophe.addConnectionPlugin('rayo',
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
 				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
+				//if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
 			}
 		});		
 		
@@ -459,7 +480,7 @@ Strophe.addConnectionPlugin('rayo',
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
 				var callId = Strophe.getNodeFromJid(from);
-				if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
+				//if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
 			}
 		});
 		
@@ -477,13 +498,31 @@ Strophe.addConnectionPlugin('rayo',
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
 				var callId = Strophe.getNodeFromJid(from);			
+				var jid = Strophe.unescapeNode(callId);	
 				
-				if (headers['call_protocol'] == "WebRtc")
+				var busy = false;
+				
+				if (jid.indexOf('@') > -1 && jid.indexOf('/') > -1)
 				{
-					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
-					
+					if (headers.call_action == "join")
+					{
+						busy = jid != that._connection.jid;
+
+					} else {
+
+						busy = jid == that._connection.jid;									
+					}
+				}
+				
+				
+				if (busy)
+				{
+					if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();						
+					if (that.callbacks && that.callbacks.onBusy) that.callbacks.onBusy(callId, headers);					
+
 				} else {
 				
+					if (that.callbacks && that.callbacks.offHook) that.callbacks.offHook();	
 					if (that.callbacks && that.callbacks.onAnswer) that.callbacks.onAnswer(callId, headers);
 				}				
 			}

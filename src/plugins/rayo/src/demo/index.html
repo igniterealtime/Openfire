@@ -46,8 +46,17 @@
 			} else if (window.dialer.getCallLabel() == "Hangup") {
 				window.candybar.call.hangup();
 
-			} else {
+			} else if (window.dialer.getCallLabel() == "Answer") {
 				window.candybar.call.answer();
+
+			} else if (window.dialer.getCallLabel() == "Join") {
+				window.candybar.call.join();
+
+			} else if (window.dialer.getCallLabel() == "Leave") {
+				window.candybar.call.leave();
+
+			} else {
+				console.error('bad call state');
 			}
 		}
 	});
@@ -187,6 +196,15 @@
 					stopTone();
 				},
 
+				onBusy: function(callId, headers) {
+					//console.log('onBusy ' + callId);
+					//console.log(headers);
+
+					window.candybar.setState('busy');
+					window.dialer.setCallLabel('Join');
+					stopTone();
+				},
+
 				onRing: function(callId, headers) {
 					//console.log('onRing ' + callId);
 					//console.log(headers);
@@ -195,12 +213,15 @@
 					startTone("ringback-uk");
 				},
 
-				onJoin: function(jid, mixer) {
-					//console.log('onJoin ' + jid + " " + mixer);
+				onJoin: function(callId, jid, mixer) {
+					//console.log('onJoin ' + jid + " " + mixer + " " + callId);
+
+					window.candybar.setState('conferenced');
+					window.dialer.setCallLabel('Leave');
 				},
 
-				onUnjoin: function(jid, mixer) {
-					//console.log('onUnjoin ' + jid + " " + mixer);
+				onUnjoin: function(callId, jid, mixer) {
+					console.log('onUnjoin ' + jid + " " + mixer + " " + callId);
 				},
 
 				onError: function(e) {
@@ -225,6 +246,7 @@
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
 
 			codec_name: "PCMU",
+			/* group_name: "12345678" */
 		});
 
 		window.candybar.setUser({

@@ -59,6 +59,18 @@
         }],
         timer: true
       },
+      busy: {
+        buttons: [{
+          cls: 'busy',
+          label: 'Join Call'
+        }],
+      },   
+      conferenced: {
+        buttons: [{
+          cls: 'leave',
+          label: 'Leave Call'
+        }],
+      },      
       inactive: {
         buttons: [],
         clearUser: true,
@@ -109,8 +121,14 @@
   CandyBar.prototype.getStates = function () {
     return Object.keys(this.states);
   };
+  
+  CandyBar.prototype.getState = function () {
+    return this.state;
+  };  
 
   CandyBar.prototype.setState = function (state) {
+    this.state = state;
+    
     if (!this.dom) return this;    
     var buttons = this.dom.querySelectorAll('button'),
       callActionsEl = this.dom.querySelector('.callActions'),
@@ -208,6 +226,16 @@
         self.call.answer();
       }
     };
+    self.join = function () {
+      if (self.call) {
+        self.call.join();
+      }
+    };  
+    self.leave = function () {
+      if (self.call) {
+        self.call.leave();
+      }
+    };    
     self.cancel = function () {
       if (self.call) {
         self.call.hangup();

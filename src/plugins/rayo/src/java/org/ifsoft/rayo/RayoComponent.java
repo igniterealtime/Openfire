@@ -431,6 +431,8 @@ public class RayoComponent 	extends 	AbstractComponent
 		if (callJID != null)		// XMPP call
 		{
 			headers.put("call_protocol", "XMPP");
+			headers.put("call_owner", callJID.toString());
+			headers.put("call_action", "join");
 
 			try {
 				Presence presence1 = new Presence();												//to caller
@@ -438,12 +440,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				presence1.setTo(callJID);
 				presence1.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
 				sendPacket(presence1);
-
-				Presence presence2 = new Presence();												//to called
-				presence2.setFrom(iq.getTo());
-				presence2.setTo(iq.getFrom());
-				presence2.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-				sendPacket(presence2);
 
 				RelayChannel channel = plugin.getRelayChannel(callId);
 
@@ -461,12 +457,6 @@ public class RayoComponent 	extends 	AbstractComponent
 		} else {
 
 			callHandler = CallHandler.findCall(callId);	// SIP call;
-
-			Presence presence = new Presence();												//to called
-			presence.setFrom(iq.getTo());
-			presence.setTo(iq.getFrom());
-			presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-			sendPacket(presence);
 		}
 
 		if (callHandler != null)
@@ -525,27 +515,23 @@ public class RayoComponent 	extends 	AbstractComponent
 		{
 			Log.info("RayoComponent handleHangupCommand found callhandler " + callId);
 
-			CallHandler.hangup(callId, "User requested call termination");
+			CallParticipant cp = callHandler.getCallParticipant();
+
+			try {
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(cp.getConferenceId());
+
+				Log.info("RayoComponent handleHangupCommand one person left, cancel call " + conferenceManager.getMemberList().size());
+
+				if (conferenceManager.getMemberList().size() <= 2)
+				{
+					CallHandler.hangup(callId, "User requested call termination");
+				}
+
+			} catch (Exception e) {}
 
 		} else {
 			reply.setError(PacketError.Condition.item_not_found);
 		}
-
-		try {
-			JID otherParty = getJID(callId);
-
-			if (otherParty != null)
-			{
-				Log.info("RayoComponent handleHangupCommand found other party " + otherParty);
-
-				Presence presence1 = new Presence();
-				presence1.setFrom(iq.getTo());
-				presence1.setTo(otherParty);
-				presence1.getElement().add(rayoProvider.toXML(new EndEvent(null, null)));
-				sendPacket(presence1);
-			}
-
-		} catch (Exception e) { }
 
 		return reply;
 	}
@@ -700,7 +686,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				cp.setCallOwner(handsetId);
 				cp.setMediaPreference("PCMU/8000/1");
 				cp.setProtocol("SIP");
-				cp.setCallId(callId);
 				cp.setDisplayName(callerName);
 				cp.setPhoneNumber(to);
 				cp.setName(calledName);
@@ -754,9 +739,6 @@ public class RayoComponent 	extends 	AbstractComponent
 									reply.setError(PacketError.Condition.item_not_found);
 									return reply;
 								}
-											// tag conf with group name
-
-								ConferenceManager.setDisplayName(channel.getHandset().mixer, destination.getNode());
 
 							} catch (GroupNotFoundException e) {
 								reply.setError(PacketError.Condition.item_not_found);
@@ -987,7 +969,9 @@ public class RayoComponent 	extends 	AbstractComponent
 																				username, false);
 		try {
 			cp.setConferenceId(mixer);
+			cp.setCallId(mixer);
 			cp.setStartTimestamp(System.currentTimeMillis());
+
 			String recording = mixer + "-" + cp.getStartTimestamp() + ".au";
 			conferenceManager.recordConference(true, recording, "au");
 			Config.createCallRecord(cp.getDisplayName(), recording, cp.getPhoneNumber(), cp.getStartTimestamp(), 0, "dialed") ;
@@ -1053,14 +1037,10 @@ public class RayoComponent 	extends 	AbstractComponent
 								sendPacket(presence);
 
 							} else if ("200 ESTABLISHED".equals(callState)) {
-								presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-								sendPacket(presence);
+
 
 							} else if ("299 ENDED".equals(callState)) {
-								presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
-								sendPacket(presence);
 
-								finishCallRecord(cp);
 							}
 
 						} else if ("250 STARTED SPEAKING".equals(myEvent)) {
@@ -1140,7 +1120,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		presence.setFrom(callId + "@rayo." + getDomain());
 		presence.setTo(new JID(name));
 		presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("ERROR"), null)));
-		sendPacket(presence);
+		//sendPacket(presence);
 	}
 
     public void terminated(String name, String callId)
@@ -1151,7 +1131,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		presence.setFrom(callId + "@rayo." + getDomain());
 		presence.setTo(new JID(name));
 		presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), null)));
-		sendPacket(presence);
+		//sendPacket(presence);
 	}
 
 	public void sendPacket(Packet packet)
@@ -1175,6 +1155,8 @@ public class RayoComponent 	extends 	AbstractComponent
 			{
 				Log.info("RayoComponent notifyConferenceMonitors looking for call " + conferenceEvent.getCallId() + " " + conferenceEvent.getMemberCount());
 
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
+
 				CallHandler callHandler = CallHandler.findCall(conferenceEvent.getCallId());
 
 				if (callHandler != null)
@@ -1185,13 +1167,15 @@ public class RayoComponent 	extends 	AbstractComponent
 
 					if (callParticipant != null)
 					{
-						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner());
+						int memberCount = conferenceManager.getMemberList().size();
+
+						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
 
 						String groupName = ConferenceManager.getDisplayName(conferenceEvent.getConferenceId());
 
 						if (groupName == null)
 						{
-							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent);
+							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName);
 
 						} else {
 
@@ -1203,23 +1187,16 @@ public class RayoComponent 	extends 	AbstractComponent
 
 								for (ClientSession session : sessions)
 								{
-									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent);
+									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent, memberCount, groupName);
 								}
 							}
 						}
 					}
 				}
 
-				try {
-					ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
-
-					if (conferenceManager.getMemberList().size() == 0) {
-						conferenceManager.recordConference(false, null, null);
-						conferenceManager.endConference(conferenceEvent.getConferenceId());
-					}
-
-				} catch (Exception e) {
-					//e.printStackTrace();
+				if (conferenceManager.getMemberList().size() == 0) {
+					conferenceManager.recordConference(false, null, null);
+					conferenceManager.endConference(conferenceEvent.getConferenceId());
 				}
 			}
 
@@ -1230,25 +1207,57 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
     }
 
-    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent)
+    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName)
     {
+		Log.info( "RayoComponent routeJoinEvent " + callee);
+
 		Presence presence = new Presence();
 		presence.setFrom(conferenceEvent.getCallId() + "@rayo." + getDomain());
 		presence.setTo(callee);
 
-		if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+		Map<String, String> headers = callParticipant.getHeaders();
+
+		headers.put("call_owner", callParticipant.getCallOwner());
+		headers.put("call_id", conferenceEvent.getCallId());
+		headers.put("call_action", conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT) ? "leave" : "join");
+		headers.put("call_protocol", callParticipant.getProtocol());
+
+		headers.put("mixer_name", conferenceEvent.getConferenceId());
+		headers.put("group_name", groupName);
+
+		if (memberCount > 2)	// conferencing state
 		{
-			UnjoinedEvent event = new UnjoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
-			presence.getElement().add(rayoProvider.toXML(event));
+			if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+			{
+				UnjoinedEvent event = new UnjoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+				presence.getElement().add(rayoProvider.toXML(event));
 
-			finishCallRecord(callParticipant);
+			} else {
+				JoinedEvent event = new JoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+				presence.getElement().add(rayoProvider.toXML(event));
+			}
 
-		} else {
-			JoinedEvent event = new JoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
-			presence.getElement().add(rayoProvider.toXML(event));
+			sendPacket(presence);
+
+		} else {		// caller with callee only
+
+			if (memberCount == 2)		// callee
+			{
+				presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+				sendPacket(presence);
+
+			} else {
+
+				if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+				{
+					presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
+					sendPacket(presence);
+
+					finishCallRecord(callParticipant);
+
+				}
+			}
 		}
-
-		sendPacket(presence);
 	}
 
 

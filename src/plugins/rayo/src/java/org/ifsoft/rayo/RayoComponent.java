@@ -470,7 +470,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				try {
 					cp.setStartTimestamp(System.currentTimeMillis());
 					cp.setHeaders(headers);
-					//cp.setCallOwner(iq.getFrom().toString());
 
 					String recording = cp.getConferenceId() + "-" + cp.getStartTimestamp() + ".au";
 					ConferenceManager.recordConference(cp.getConferenceId(), true, recording, "au");
@@ -641,7 +640,6 @@ public class RayoComponent 	extends 	AbstractComponent
 		boolean toPhone = to.indexOf("sip:") == 0 || to.indexOf("tel:") == 0;
 		boolean toXmpp = to.indexOf("xmpp:") == 0;
 
-		String callId = headers.get("call_id");
 		String callerName = headers.get("caller_name");
 		String calledName = headers.get("called_name");
 
@@ -660,12 +658,6 @@ public class RayoComponent 	extends 	AbstractComponent
 			reply.setError(PacketError.Condition.feature_not_implemented);
 
         } else {
-
-			if (callId == null)
-			{
-					callId =  "rayo-call-" + System.currentTimeMillis();
-					headers.put("call_id", callId);
-			}
 
 			if (callerName == null)
 			{
@@ -710,9 +702,11 @@ public class RayoComponent 	extends 	AbstractComponent
 						headers.put("mixer_name", channel.getHandset().mixer);
 						headers.put("codec_name", channel.getHandset().codec);
 
+						ConferenceManager.setCallId(channel.getHandset().mixer, source);
+
 						if (findUser(destination.getNode()) != null)
 						{
-							routeXMPPCall(reply, destination, source, callId, calledName, headers);
+							routeXMPPCall(reply, destination, source, calledName, headers);
 
 						} else {
 							int count = 0;
@@ -728,7 +722,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 										for (ClientSession session : sessions)
 										{
-											routeXMPPCall(reply, session.getAddress(), source, callId, calledName, headers);
+											routeXMPPCall(reply, session.getAddress(), source, calledName, headers);
 											count++;
 										}
 									}
@@ -762,13 +756,13 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-	private void routeXMPPCall(IQ reply, JID destination, String source, String callId, String calledName, Map<String, String> headers)
+	private void routeXMPPCall(IQ reply, JID destination, String source, String calledName, Map<String, String> headers)
 	{
 		Presence presence = new Presence();
 		presence.setFrom(source + "@rayo." + getDomain());
 		presence.setTo(destination);
 
-		OfferEvent offer = new OfferEvent(callId);
+		OfferEvent offer = new OfferEvent(null);
 
 		try {
 			offer.setFrom(new URI("xmpp:" + JID.unescapeNode(source)));
@@ -970,6 +964,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		try {
 			cp.setConferenceId(mixer);
 			cp.setCallId(mixer);
+			conferenceManager.setCallId(mixer);
 			cp.setStartTimestamp(System.currentTimeMillis());
 
 			String recording = mixer + "-" + cp.getStartTimestamp() + ".au";
@@ -1021,8 +1016,6 @@ public class RayoComponent 	extends 	AbstractComponent
 						Log.info("RayoComponent callEventNotification found call paticipant " + cp);
 
 						Map<String, String> headers = cp.getHeaders();
-
-						headers.put("call_id", callEvent.getCallId());
 						headers.put("mixer_name", callEvent.getConferenceId());
 						headers.put("call_protocol", cp.getProtocol());
 
@@ -1157,6 +1150,11 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
 
+				String groupName = conferenceManager.getDisplayName();
+				String callId = conferenceManager.getCallId();
+
+				if (callId == null) callId = conferenceEvent.getConferenceId();	// special case of SIP incoming
+
 				CallHandler callHandler = CallHandler.findCall(conferenceEvent.getCallId());
 
 				if (callHandler != null)
@@ -1165,17 +1163,15 @@ public class RayoComponent 	extends 	AbstractComponent
 
 					CallParticipant callParticipant = callHandler.getCallParticipant();
 
-					if (callParticipant != null)
+					if (callParticipant != null )
 					{
 						int memberCount = conferenceManager.getMemberList().size();
 
 						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
 
-						String groupName = ConferenceManager.getDisplayName(conferenceEvent.getConferenceId());
-
 						if (groupName == null)
 						{
-							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName);
+							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId);
 
 						} else {
 
@@ -1187,7 +1183,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 								for (ClientSession session : sessions)
 								{
-									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent, memberCount, groupName);
+									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent, memberCount, groupName, callId);
 								}
 							}
 						}
@@ -1207,18 +1203,17 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
     }
 
-    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName)
+    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName, String callId)
     {
-		Log.info( "RayoComponent routeJoinEvent " + callee);
+		Log.info( "RayoComponent routeJoinEvent " + callee + " " + callId + " " + groupName);
 
 		Presence presence = new Presence();
-		presence.setFrom(conferenceEvent.getCallId() + "@rayo." + getDomain());
+		presence.setFrom(callId + "@rayo." + getDomain());
 		presence.setTo(callee);
 
 		Map<String, String> headers = callParticipant.getHeaders();
 
 		headers.put("call_owner", callParticipant.getCallOwner());
-		headers.put("call_id", conferenceEvent.getCallId());
 		headers.put("call_action", conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT) ? "leave" : "join");
 		headers.put("call_protocol", callParticipant.getProtocol());
 
@@ -1295,6 +1290,8 @@ public class RayoComponent 	extends 	AbstractComponent
 		cp.setCallId(callId);
 		cp.setConferenceId(callId);
 
+		ConferenceManager.setCallId(callId, callId);
+
 		Map<String, String> headers = cp.getHeaders();
 		headers.put("mixer_name", callId);
 		headers.put("call_protocol", "SIP");
@@ -1337,7 +1334,7 @@ public class RayoComponent 	extends 	AbstractComponent
 			presence.setFrom(callId + "@rayo." + getDomain());
 			presence.setTo(callee);
 
-			OfferEvent offer = new OfferEvent(callId);
+			OfferEvent offer = new OfferEvent(null);
 
 			try {
 				offer.setTo(new URI("xmpp:" + callee.toString()));

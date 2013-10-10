@@ -51,7 +51,7 @@ Strophe.addConnectionPlugin('rayo',
 
 	hangup: function(callId)
 	{
-		//console.log("hangup " + callId);
+		console.log("hangup " + callId);
 		
 		var that = this;
 		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c("hangup", {xmlns: Strophe.NS.RAYO_CORE});  
@@ -129,7 +129,7 @@ Strophe.addConnectionPlugin('rayo',
 					var name = hdrs[i];
 					var value = headers[name];
 
-					iq.c("header", {name: name, value: value}).up(); 
+					if (value) iq.c("header", {name: name, value: value}).up(); 
 				}
 			}
 
@@ -154,21 +154,13 @@ Strophe.addConnectionPlugin('rayo',
 				
 		var that = this;
 		
-		var mixer = "rayo-outgoing-" + Math.random().toString(36).substr(2,9);		
-		var callId = "rayo-call-" + Math.random().toString(36).substr(2,9);
-
-		if (to.indexOf("xmpp:") == 0)
-		{
-			callId = Strophe.escapeNode(to.substring(5));
-		}		
+		var mixer = "rayo-outgoing-" + Math.random().toString(36).substr(2,9);				
 
 		if (this._isOffhook()) this._onhook();
 		
 		this._offhook(mixer, headers, function()
 		{
 			var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
-
-			iq.c("header", {name: "call_id", value: callId}).up(); 
 
 			if (headers)
 			{	
@@ -179,7 +171,7 @@ Strophe.addConnectionPlugin('rayo',
 					var name = hdrs[i];
 					var value = headers[name];
 
-					iq.c("header", {name: name, value: value}).up(); 
+					if (value) iq.c("header", {name: name, value: value}).up(); 
 				}
 			}
 
@@ -356,8 +348,8 @@ Strophe.addConnectionPlugin('rayo',
 
 	_handlePresence: function(presence) 
 	{
-		console.log('Rayo plugin handlePresence');
-		console.log(presence);
+		//console.log('Rayo plugin handlePresence');
+		//console.log(presence);
 		
 		var that = this;
 		var from = $(presence).attr('from');
@@ -391,7 +383,7 @@ Strophe.addConnectionPlugin('rayo',
 				var callTo = $(this).attr('to');				
 				var callId = Strophe.getNodeFromJid(from);
 				
-				var mixer = headers['mixer_name']
+				var mixer = headers.mixer_name;
 				
 				var call = {		
 					digit: 	function(tone) 	{that.digit(callId, tone);},
@@ -416,7 +408,7 @@ Strophe.addConnectionPlugin('rayo',
 					var name = hdrs[i];
 					var value = headers[name];
 
-					iq.c("header", {name: name, value: value}).up(); 
+					if (value) iq.c("header", {name: name, value: value}).up(); 
 				}
 			
 				//console.log(iq.toString());
@@ -433,7 +425,9 @@ Strophe.addConnectionPlugin('rayo',
 		})
 		
 		$(presence).find('joined').each(function() 
-		{			
+		{
+		//console.log('Rayo plugin handlePresence joined');
+		//console.log(presence);		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{	
 				var callId = Strophe.getNodeFromJid(from);			
@@ -450,7 +444,9 @@ Strophe.addConnectionPlugin('rayo',
 		});
 		
 		$(presence).find('unjoined').each(function() 
-		{		
+		{
+		//console.log('Rayo plugin handlePresence unjoined');
+		//console.log(presence);		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
 				var callId = Strophe.getNodeFromJid(from);			
@@ -494,11 +490,14 @@ Strophe.addConnectionPlugin('rayo',
 		});
 		
 		$(presence).find('answered').each(function() 
-		{		
+		{	
+		//console.log('Rayo plugin handlePresence answered');
+		//console.log(presence);
+		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
 				var callId = Strophe.getNodeFromJid(from);			
-				var jid = Strophe.unescapeNode(callId);	
+				var jid = Strophe.unescapeNode(headers.call_owner);	
 				
 				var busy = false;
 				
@@ -517,8 +516,20 @@ Strophe.addConnectionPlugin('rayo',
 				
 				if (busy)
 				{
+					var mixer = headers.mixer_name;
+					
+					var call = {		
+						digit: 	function(tone) 	{that.digit(callId, tone);},
+						hangup: function() 	{that.hangup(callId);},
+						answer: function() 	{that.answer(callId, mixer, headers);},
+						join: 	function() 	{that.join(mixer, headers);},	
+						leave: 	function() 	{that.leave(mixer);},							
+
+						id:	callId,
+						from: 	Strophe.getNodeFromJid(jid)
+					}				
 					if (that.callbacks && that.callbacks.onHook) that.callbacks.onHook();						
-					if (that.callbacks && that.callbacks.onBusy) that.callbacks.onBusy(callId, headers);					
+					if (that.callbacks && that.callbacks.onBusy) that.callbacks.onBusy(call, headers);					
 
 				} else {
 				
@@ -530,6 +541,8 @@ Strophe.addConnectionPlugin('rayo',
 		
 		$(presence).find('end').each(function() 
 		{
+		//console.log('Rayo plugin handlePresence end');
+		//console.log(presence);		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{			
 				var callId = Strophe.getNodeFromJid(from);

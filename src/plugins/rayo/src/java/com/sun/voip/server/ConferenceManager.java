@@ -57,6 +57,7 @@ public class ConferenceManager {
     private String             conferenceId;	      // conference identifier
 
     private String	       displayName;	      // user readable name
+    private String	       callId;	      // target call id
 
     private ArrayList 	       memberList;	      // for iterating members
 
@@ -512,9 +513,39 @@ public class ConferenceManager {
 	return conferenceId;
     }
 
-    public String getDisplayName() {
-	return displayName;
+
+    public String getCallId() {
+		return callId;
     }
+
+    public void setCallId(String callId) {
+		this.callId = callId;
+    }
+
+    public static String getCallId(String conferenceId)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			return conferenceManager.getCallId();
+		} catch (ParseException e) {
+			return null;
+		}
+    }
+
+    public static void setCallId(String conferenceId, String callId)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			conferenceManager.setCallId(callId);
+		} catch (ParseException e) {
+
+		}
+    }
+
+    public String getDisplayName() {
+		return displayName;
+    }
+
 
     public void setDisplayName(String displayName) {
 		this.displayName = displayName;

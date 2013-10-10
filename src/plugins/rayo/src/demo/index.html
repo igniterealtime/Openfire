@@ -196,10 +196,21 @@
 					stopTone();
 				},
 
-				onBusy: function(callId, headers) {
-					//console.log('onBusy ' + callId);
+				onBusy: function(call, headers) {
+					//console.log('onBusy ' + call.id);
 					//console.log(headers);
 
+					window.candybar.setState('inactive');
+
+					var cli = headers.caller_name ? headers.caller_name : call.from;
+
+					window.candybar.setUser({
+						name: cli,
+						number: cli,
+						picUrl: 'unknown.jpg'
+					});
+
+					window.candybar.call = call;
 					window.candybar.setState('busy');
 					window.dialer.setCallLabel('Join');
 					stopTone();
@@ -221,7 +232,7 @@
 				},
 
 				onUnjoin: function(callId, jid, mixer) {
-					console.log('onUnjoin ' + jid + " " + mixer + " " + callId);
+					//console.log('onUnjoin ' + jid + " " + mixer + " " + callId);
 				},
 
 				onError: function(e) {
@@ -237,16 +248,22 @@
 		//console.log("makeCall " + destination);
 
 		var sipUri = prefix + destination + "@" + domain
+		var groupname = "family";
 
 		if (prefix == "sip:") sipUri = prefix + destination + "@" + domain
 		if (prefix == "tel:") sipUri = prefix + destination
-		if (prefix == "xmpp:") sipUri = prefix + destination + "@" + domain + "/" + destination;
 
+		if (prefix == "xmpp:")
+		{
+			sipUri = prefix + destination + "@" + domain + "/" + destination;
+		}
+
+		if (!username) groupname = null;
 
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
 
 			codec_name: "PCMU",
-			/* group_name: "12345678" */
+			group_name: groupname
 		});
 
 		window.candybar.setUser({

@@ -40,6 +40,8 @@ public class Config implements MUCEventListener {
 	private String publicHost = JiveGlobals.getProperty("voicebridge.default.public.host", "127.0.0.1");
 	private String conferenceExten = JiveGlobals.getProperty("voicebridge.default.conf.exten", "default");
 	private String defaultProxy = JiveGlobals.getProperty("voicebridge.default.proxy.name", null);
+	private String defaultProtocol = JiveGlobals.getProperty("voicebridge.default.protocol", "udp");
+	private String defaultSIPPort = JiveGlobals.getProperty("voicebridge.default.sip.port", "5060");
 
     private boolean prefixPhoneNumber = true;
     private String internationalPrefix = "00";  // for international calls
@@ -583,6 +585,14 @@ public class Config implements MUCEventListener {
 	public String getDefaultProxy()
 	{
 		return defaultProxy;
+	}
+	public String getDefaultProtocol()
+	{
+		return defaultProtocol;
+	}
+	public String getDefaultSIPPort()
+	{
+		return defaultSIPPort;
 	}
 
 	public ArrayList<String> getRegistrars()

@@ -166,7 +166,8 @@ public class SipServer implements SipListener {
             return;
         }
 
-	ListeningPoint lp = null;
+		ListeningPoint udpListenPort = null;
+		ListeningPoint tcpListenPort = null;
 
         try {
             /*
@@ -176,28 +177,29 @@ public class SipServer implements SipListener {
              * port to assign to outgoing messages from this provider
              * at this point.
              */
-            String s = System.getProperty(
-		"gov.nist.jainsip.stack.enableUDP", String.valueOf(SIP_PORT));
+            String s = System.getProperty("com.sun.voip.server.SIP_PORT", String.valueOf(SIP_PORT));
+	    	int sipPort = Integer.parseInt(s);
 
-	    int sipPort = Integer.parseInt(s);
-
-            lp = sipStack.createListeningPoint(sipPort, "tcp");
-
-            sipProvider = sipStack.createSipProvider(lp);
-
-            sipProvider.addSipListener(this);
-
-            lp = sipStack.createListeningPoint(sipPort, "udp");
-
-	    sipAddress = new InetSocketAddress(sipStack.getIPAddress(), sipPort);
-
-            sipProvider = sipStack.createSipProvider(lp);
-
-            sipProvider.addSipListener(this);
-
-	    Logger.println("");
+	    	Logger.println("");
             Logger.println("Bridge private address:   " + properties.getProperty("javax.sip.IP_ADDRESS"));
-            Logger.println("Bridge private SIP port:  " + lp.getPort());
+
+	    	String protocol = System.getProperty("com.sun.voip.server.PROTOCOL");
+
+	    	if ("tcp".equals(protocol))
+	    	{
+            	tcpListenPort = sipStack.createListeningPoint(sipPort, "tcp");
+            	sipProvider = sipStack.createSipProvider(tcpListenPort);
+			}
+
+	    	if ("udp".equals(protocol))
+	    	{
+            	udpListenPort = sipStack.createListeningPoint(sipPort, "udp");
+            	sipProvider = sipStack.createSipProvider(udpListenPort);
+			}
+
+            sipProvider.addSipListener(this);
+
+	   		sipAddress = new InetSocketAddress(sipStack.getIPAddress(), sipPort);
 
             /*
 	     * get IPs of the SIP Proxy server

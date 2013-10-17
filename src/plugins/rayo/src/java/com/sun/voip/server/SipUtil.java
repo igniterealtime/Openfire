@@ -556,8 +556,7 @@ if (false) {
          *         152.70.1.43:5060 == (local address and SIP port)
          *          branch=z9hG4bk5 == (auto generated branch id)
          */
-        viaHeader = headerFactory.createViaHeader(ourIpAddress,
-	    ourSipPort, "udp", null);
+        viaHeader = headerFactory.createViaHeader(ourIpAddress,  ourSipPort, sipProvider.getListeningPoint().getTransport(), null);
         //viaHeader.setBranch(MessageFactoryImpl.generateBranchId());
         viaHeaders = new ArrayList();
         viaHeaders.add(viaHeader);
@@ -769,7 +768,8 @@ if (false) {
 	 */
 	Dialog dialog = clientTransaction.getDialog();
 
-	Request ackRequest = dialog.createRequest(Request.ACK);
+	//Request ackRequest = dialog.createRequest(Request.ACK);
+	Request ackRequest = clientTransaction.createAck();
 
         dialog.sendAck(ackRequest);
 	return;

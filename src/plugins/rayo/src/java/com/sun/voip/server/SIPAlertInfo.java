@@ -26,9 +26,14 @@ public final class SIPAlertInfo extends ParametersHeader
         return stringbuffer.toString();
     }
 
-    protected StringBuilder  encodeBody(StringBuilder builder)
+    protected StringBuilder encodeBody(StringBuilder builder)
     {
-		return null;
+        builder.append(namePair);
+
+        if(!parameters.isEmpty())
+            builder.append(";").append(parameters.encode());
+
+        return builder;
     }
 
     public void setNamePair(String namePair)

@@ -178,7 +178,7 @@ Strophe.addConnectionPlugin('rayo',
 			//console.log(iq.toString());
 
 			that._connection.sendIQ(iq, function(response) {
-			
+				
 				$('ref', response).each(function() 
 				{
 					callId = $(this).attr('id');
@@ -200,6 +200,8 @@ Strophe.addConnectionPlugin('rayo',
 				});
 			
 			}, function(error){
+
+				//console.log(error);			
 			
 				$('error', error).each(function() 
 				{
@@ -225,16 +227,47 @@ Strophe.addConnectionPlugin('rayo',
 		//console.log(headers);
 		
 		var that = this;
+		var sipuri = (headers && headers.sip_handset) ? headers.sip_handset : (that.callbacks.sip_handset ? that.callbacks.sip_handset : null);		
 
-		navigator.webkitGetUserMedia({audio:true, video:false}, function(stream) 
+		if (sipuri)
 		{
-			that.localStream = stream;
-			that._offhook1(mixer, headers, action);
-
-		}, function(error) {
+			var group = (headers && headers.group_name) ? headers.group_name : "";
+			var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
 			
-			if (that.callbacks && that.callbacks.onError) that.callbacks.onError(error);
-		});    
+
+			var iq = $iq({to: "rayo." + that._connection.domain, from: that._connection.jid, type: "get"}).c("offhook", {xmlns: Strophe.NS.RAYO_HANDSET,  sipuri: sipuri, mixer: mixer, group: group, codec: codec});  
+
+			//console.log(iq.toString())
+
+			that._connection.sendIQ(iq, function(response)
+			{	
+				//console.log(response)
+				
+				$('ref', response).each(function() 
+				{
+					that.handsetId = $(this).attr('id');
+					that.handsetUri = $(this).attr('uri');
+
+					if (action) action();				
+				}); 
+
+			}, function (error) {
+
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("offhook failure");		
+			});
+		
+		} else {
+
+			navigator.webkitGetUserMedia({audio:true, video:false}, function(stream) 
+			{
+				that.localStream = stream;
+				that._offhook1(mixer, headers, action);
+
+			}, function(error) {
+
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError(error);
+			}); 
+		}
 	},
 	
 	_offhook1: function(mixer, headers, action)

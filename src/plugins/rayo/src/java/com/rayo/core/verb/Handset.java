@@ -24,32 +24,14 @@ import org.apache.commons.lang.builder.ToStringStyle;
 
 public class Handset extends BaseVerb {
 
-    public static final String MISSING_CRYPTO_SUITE = "Missing Crypto Suite";
-    public static final String MISSING_LOCAL_CRYPTO = "Missing Local Crypto";
-    public static final String MISSING_REMOTE_CRYPTO = "Missing Remote Crypto";
-    public static final String MISSING_MIXER = "Missing Mixer";
-    public static final String MISSING_CODEC = "Missing Codec";
-    public static final String MISSING_STEREO = "Missing Stereo";
-
-    @NotNull(message=Handset.MISSING_CRYPTO_SUITE)
-    public String cryptoSuite;
-
-    @NotNull(message=Handset.MISSING_LOCAL_CRYPTO)
-    public String localCrypto;
-
-    @NotNull(message=Handset.MISSING_REMOTE_CRYPTO)
-    public String remoteCrypto;
-
-    @NotNull(message=Handset.MISSING_CODEC)
-    public String codec;
-
-    @NotNull(message=Handset.MISSING_STEREO)
-    public String stereo;
-
-    @NotNull(message=Handset.MISSING_MIXER)
-    public String mixer;
-
-    public String group;
+    public String cryptoSuite = null;
+    public String localCrypto = null;
+    public String remoteCrypto = null;
+    public String codec = null;
+    public String stereo = null;
+    public String mixer = null;
+    public String group = null;
+    public String sipuri = null;
 
 	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo, String mixer)
 	{
@@ -59,6 +41,13 @@ public class Handset extends BaseVerb {
 		this.codec = codec;
 		this.stereo = stereo;
 		this.mixer = mixer;
+	}
+
+	public Handset(String sipuri, String mixer, String codec)
+	{
+		this.sipuri = sipuri;
+		this.mixer = mixer;
+		this.codec = codec;
 	}
 
 	@Override
@@ -72,7 +61,8 @@ public class Handset extends BaseVerb {
     		.append("remoteCrypto",remoteCrypto)
     		.append("codec",codec)
     		.append("stereo",stereo)
-    		.append("stereo",mixer)
+    		.append("mixer",mixer)
+    		.append("sipuri",sipuri)
     		.toString();
     }
 }

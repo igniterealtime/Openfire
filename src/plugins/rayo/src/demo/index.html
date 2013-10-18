@@ -23,6 +23,7 @@
 	var username = null;
 	var password = null;
 	var jid = window.location.hostname;
+	var sipHandset = null;
 
 	window.dialer = new Dialpad({
 		onPress: function (key) {
@@ -74,6 +75,7 @@
 		if (urlParam("domain")) domain = urlParam("domain");
 		if (urlParam("username")) username = urlParam("username");
 		if (urlParam("password")) password = urlParam("password");
+		if (urlParam("handset")) sipHandset = urlParam("handset");
 
 		if (domain == "81.201.82.25" && prefix == "sip:") prefix = "sip:883510";
 		if (prefix == "tel:") domain = "";
@@ -132,6 +134,7 @@
 			{
 				codec_name: "PCMU",
 				stereo_pan: "0",
+				sip_handset: sipHandset,
 
 				offHook: function() {
 					$("#status").html("Off Hook");
@@ -261,7 +264,6 @@
 		if (!username) groupname = null;
 
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
-
 			codec_name: "PCMU",
 			group_name: groupname
 		});

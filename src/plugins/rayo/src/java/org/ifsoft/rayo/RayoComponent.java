@@ -124,10 +124,12 @@ public class RayoComponent 	extends 	AbstractComponent
 				Object object = handsetProvider.fromXML(element);
 
 				if (object instanceof OnHookCommand) {
-					reply = handleOnOffHookCommand((OnHookCommand) object, iq);
+					OnHookCommand command = (OnHookCommand) object;
+					reply = handleOnOffHookCommand(command, iq);
 
 				} else if (object instanceof OffHookCommand) {
-					reply = handleOnOffHookCommand((OffHookCommand) object, iq);
+					OffHookCommand command = (OffHookCommand) object;
+					reply = handleOnOffHookCommand(command, iq);
 				}
 				return reply;
 			}
@@ -214,14 +216,15 @@ public class RayoComponent 	extends 	AbstractComponent
 		Log.info("RayoComponent handleOnOffHookCommand");
 
 		IQ reply = IQ.createResultIQ(iq);
+		String callId = JID.escapeNode(iq.getFrom().toString());
 
 		if (object instanceof OnHookCommand)
 		{
-			RelayChannel channel = plugin.getRelayChannel(JID.escapeNode(iq.getFrom().toString()));
+			CallHandler handler = CallHandler.findCall(callId);
 
-			if (channel != null)
+			if (handler != null)
 			{
-				handleOnOffHook(object, channel);
+				handleOnOffHook(callId, object, plugin.getRelayChannel(callId));
 
 			} else {
 				reply.setError(PacketError.Condition.item_not_found);
@@ -230,24 +233,39 @@ public class RayoComponent 	extends 	AbstractComponent
 		} else {
 
 			final Handset handset = ((OffHookCommand) object).getHandset();
-			final RelayChannel channel = plugin.createRelayChannel(iq.getFrom(), handset);
 
-			if (channel != null)		// rayo handset component can have only one call
+			if (handset.sipuri == null)	// webrtc handset
 			{
+				final RelayChannel channel = plugin.createRelayChannel(iq.getFrom(), handset);
+
+				if (channel != null)
+				{
+					final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
+
+					childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
+					childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
+					childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
+					childElement.addAttribute(ID, channel.getAttachment());
+					childElement.addAttribute(URI, "handset:" + channel.getAttachment() + "@rayo." + getDomain() + "/" + iq.getFrom().getNode());
+
+					Log.debug("Created WebRTC handset channel {}:{}, {}:{}, {}:{}", new Object[]{HOST, LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT, Integer.toString(channel.getPortB())});
+
+					handleOnOffHook(callId, object, channel);
+
+				} else {
+					reply.setError(PacketError.Condition.internal_server_error);
+				}
+
+			} else {					// SIP handset
+
 				final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
 
-				childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
-				childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
-				childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
-				childElement.addAttribute(ID, channel.getAttachment());
-				childElement.addAttribute(URI, "handset:" + channel.getAttachment() + "@rayo." + getDomain() + "/" + iq.getFrom().getNode());
+				childElement.addAttribute(ID, callId);
+				childElement.addAttribute(URI, "handset:" + callId + "@rayo." + getDomain() + "/" + iq.getFrom().getNode());
 
-				Log.debug("Created handset channel {}:{}, {}:{}, {}:{}", new Object[]{HOST, LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT, Integer.toString(channel.getPortB())});
+				Log.info("Created SIP handset channel " + handset.sipuri);
 
-				handleOnOffHook(object, channel);
-
-			} else {
-				reply.setError(PacketError.Condition.internal_server_error);
+				handleOnOffHook(callId, object, null);
 			}
 		}
 
@@ -255,19 +273,19 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
-    private void handleOnOffHook(Object object, RelayChannel channel)
+    private void handleOnOffHook(String callId, Object object, RelayChannel channel)
     {
 		final boolean flag = object instanceof OnHookCommand;
 
 		Log.info("RayoComponent handleOnOffHook " + flag);
 
         try {
-			OutgoingCallHandler callHandler = channel.getCallHandler();
+			CallHandler handler = CallHandler.findCall(callId);
 
-			if (callHandler != null)
+			if (handler != null)
 			{
-				callHandler.cancelRequest("Reseting handset to " + (flag ? "on" : "off") + "hook");
-				callHandler = null;
+				handler.cancelRequest("Reseting handset to " + (flag ? "on" : "off") + "hook");
+				handler = null;
 			}
 
 			if (!flag)		// offhook
@@ -280,27 +298,41 @@ public class RayoComponent 	extends 	AbstractComponent
 					mediaPreference = "PCM/48000/2";
 
 				CallParticipant cp = new CallParticipant();
-				cp.setCallId(channel.getAttachment());
-				cp.setProtocol("WebRtc");
+				cp.setCallId(callId);
 				cp.setConferenceId(handset.mixer);
-				cp.setMediaPreference(mediaPreference);
-				cp.setRelayChannel(channel);
-				cp.setDisplayName(channel.getAttachment());
+				cp.setDisplayName("rayo-handset-" + System.currentTimeMillis());
+				cp.setName(cp.getDisplayName());
 				cp.setVoiceDetection(true);
-				cp.setCallOwner(channel.getFrom().toString());
+				cp.setCallOwner(JID.unescapeNode(callId));
 
 				if (handset.group != null && ! "".equals(handset.group))
 				{
 					// set for new or existing conference
 
-					ConferenceManager.getConference(handset.mixer, channel.getMediaPreference(), handset.group, false);
+					ConferenceManager.getConference(handset.mixer, mediaPreference, handset.group, false);
 					ConferenceManager.setDisplayName(handset.mixer, handset.group);
 				}
 
-				callHandler = new OutgoingCallHandler(this, cp);
+				if (channel == null)
+				{
+					cp.setMediaPreference("PCMU/8000/1");
+					cp.setPhoneNumber(handset.sipuri);
+					cp.setAutoAnswer(true);
+					cp.setProtocol("SIP");
+
+				} else {
+					cp.setMediaPreference(mediaPreference);
+					cp.setRelayChannel(channel);
+					cp.setProtocol("WebRtc");
+				}
+
+				OutgoingCallHandler callHandler = new OutgoingCallHandler(this, cp);
 				callHandler.start();
 
-				channel.setCallHandler(callHandler);
+				if (channel != null)
+				{
+					channel.setCallHandler(callHandler);
+				}
 			}
 
         } catch (Exception e) {
@@ -923,16 +955,15 @@ public class RayoComponent 	extends 	AbstractComponent
 	{
 		Log.info("RayoComponent doPhoneAndPcCall " + handsetId);
 
-		RelayChannel channel = plugin.getRelayChannel(handsetId);
+		CallHandler handsetHandler = CallHandler.findCall(handsetId);
 
-		if (channel != null)
+		if (handsetHandler != null)
 		{
 			try {
-				setMixer(channel, reply, cp);
+				setMixer(handsetHandler, reply, cp);
 
 				OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
 
-	    		//OutgoingCallHandler handsetHandler = channel.getCallHandler();
 	    		//outgoingCallHandler.setOtherCall(handsetHandler);
 	   			//handsetHandler.setOtherCall(outgoingCallHandler);
 
@@ -953,15 +984,16 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-    private void setMixer(RelayChannel channel, IQ reply, CallParticipant cp)
+    private void setMixer(CallHandler handsetHandler, IQ reply, CallParticipant cp)
     {
-		String username = channel.getFrom().getNode();
-		String mixer = 	channel.getHandset().mixer;
+		CallParticipant hp = handsetHandler.getCallParticipant();
 
-		ConferenceManager conferenceManager = ConferenceManager.getConference(	mixer,
-																				channel.getMediaPreference(),
-																				username, false);
 		try {
+			String mixer = 	hp.getConferenceId();
+
+			ConferenceManager conferenceManager = ConferenceManager.getConference(	mixer,
+																				hp.getMediaPreference(),
+																				cp.getName(), false);
 			cp.setConferenceId(mixer);
 			cp.setCallId(mixer);
 			conferenceManager.setCallId(mixer);
@@ -1026,8 +1058,12 @@ public class RayoComponent 	extends 	AbstractComponent
 						if ("001 STATE CHANGED".equals(myEvent))
 						{
 							if ("100 INVITED".equals(callState)) {
-								presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
-								sendPacket(presence);
+
+								if (cp.isAutoAnswer() == false)	// SIP handset, no ringing event
+								{
+									presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+									sendPacket(presence);
+								}
 
 							} else if ("200 ESTABLISHED".equals(callState)) {
 

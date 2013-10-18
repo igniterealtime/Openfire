@@ -294,9 +294,11 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 
     private void checkRecordingFolder(File pluginDirectory)
     {
+		String rayoHome = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo";
+
         try
         {
-			File rayoFolderPath = new File(JiveGlobals.getHomeDirectory() + File.separator + "rayo");
+			File rayoFolderPath = new File(rayoHome);
 
             if(!rayoFolderPath.exists())
             {
@@ -304,7 +306,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 
 			}
 
-			File recordingFolderPath = new File(JiveGlobals.getHomeDirectory() + File.separator + "rayo" + File.separator + "recordings");
+			File recordingFolderPath = new File(rayoHome + File.separator + "recordings");
 
             if(!recordingFolderPath.exists())
             {
@@ -312,7 +314,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
 
 			}
 
-			File soundsFolderPath = new File(JiveGlobals.getHomeDirectory() + File.separator + "rayo" + File.separator + "sounds");
+			File soundsFolderPath = new File(rayoHome + File.separator + "sounds");
 
             if(!soundsFolderPath.exists())
             {

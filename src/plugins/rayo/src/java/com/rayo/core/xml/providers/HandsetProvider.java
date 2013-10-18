@@ -69,12 +69,22 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildOffHookCommand(Element element) throws URISyntaxException {
 
-        Handset handset = new  Handset(	element.attributeValue("cryptosuite"),
-        								element.attributeValue("localcrypto"),
-        								element.attributeValue("remotecrypto"),
-        								element.attributeValue("codec"),
-        								element.attributeValue("stereo"),
-        								element.attributeValue("mixer"));
+		Handset handset;
+		String sipuri = element.attributeValue("sipuri");
+
+		if (sipuri != null && "".equals(sipuri) == false)
+		{
+			handset = new  Handset(	element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
+
+		} else {
+
+			handset = new  Handset(	element.attributeValue("cryptosuite"),
+											element.attributeValue("localcrypto"),
+											element.attributeValue("remotecrypto"),
+											element.attributeValue("codec"),
+											element.attributeValue("stereo"),
+											element.attributeValue("mixer"));
+		}
 
         handset.group = element.attributeValue("group");
 

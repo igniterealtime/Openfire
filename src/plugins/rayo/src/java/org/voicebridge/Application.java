@@ -46,7 +46,7 @@ public class Application implements  CallEventListener  {
 			System.setProperty("com.sun.voip.server.PUBLIC_IP_ADDRESS", config.getPublicHost());
 			System.setProperty("com.sun.voip.server.PROTOCOL", config.getDefaultProtocol());
 			System.setProperty("com.sun.voip.server.SIP_PORT", config.getDefaultSIPPort());
-			System.setProperty("com.sun.voip.server.Bridge.recordDirectory", pluginDirectory.getAbsolutePath()  + File.separator + ".." + File.separator + ".." + File.separator + "rayo" + File.separator + "recordings");
+			System.setProperty("com.sun.voip.server.Bridge.recordDirectory", pluginDirectory.getAbsolutePath()  + File.separator + ".." + File.separator + ".." + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo" + File.separator + "recordings");
 			System.setProperty("freetts.voices", "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
 
 			Properties properties = new Properties();

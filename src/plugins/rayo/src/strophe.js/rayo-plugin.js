@@ -51,23 +51,25 @@ Strophe.addConnectionPlugin('rayo',
 
 	hangup: function(callId)
 	{
-		console.log("hangup " + callId);
+		//console.log("hangup " + callId);
 		
 		var that = this;
 		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c("hangup", {xmlns: Strophe.NS.RAYO_CORE});  
 
 		//console.log(iq.toString());
 			
-		that._connection.sendIQ(iq, null, function(error)
+		that._connection.sendIQ(iq, function() 
 		{
+			this._onhook();			
+			
+		}, function(error) {
+		
 			$('error', error).each(function() 
 			{
 				var errorcode = $(this).attr('code');		
 				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("hangup failure " + errorcode);  
 			});
-		});
-		
-		this._onhook();		
+		});	
 	},
 
 	digit: function(callId, key)
@@ -459,8 +461,8 @@ Strophe.addConnectionPlugin('rayo',
 		
 		$(presence).find('joined').each(function() 
 		{
-		//console.log('Rayo plugin handlePresence joined');
-		//console.log(presence);		
+			//console.log(presence);	
+			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{	
 				var callId = Strophe.getNodeFromJid(from);			
@@ -478,8 +480,8 @@ Strophe.addConnectionPlugin('rayo',
 		
 		$(presence).find('unjoined').each(function() 
 		{
-		//console.log('Rayo plugin handlePresence unjoined');
-		//console.log(presence);		
+			//console.log(presence);
+			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
 				var callId = Strophe.getNodeFromJid(from);			
@@ -496,22 +498,37 @@ Strophe.addConnectionPlugin('rayo',
 		});
 		
 		$(presence).find('started-speaking').each(function() 
-		{		
+		{
+			//console.log(presence);		
+			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
 				var callId = Strophe.getNodeFromJid(from);
-				//if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
+				if (that.callbacks && that.callbacks.onSpeaking) that.callbacks.onSpeaking(callId, headers);
 			}
 		});		
 		
 		$(presence).find('stopped-speaking').each(function() 
-		{		
+		{
+			//console.log(presence);	
+			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{				
 				var callId = Strophe.getNodeFromJid(from);
-				//if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
+				if (that.callbacks && that.callbacks.offSpeaking) that.callbacks.offSpeaking(callId, headers);
 			}
 		});
+				
+		$(presence).find('onhold').each(function() 
+		{
+			//console.log(presence);		
+			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+			{				
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onHold) that.callbacks.onHold(callId);
+			}
+		});		
 		
 		$(presence).find('ringing').each(function() 
 		{			
@@ -524,8 +541,7 @@ Strophe.addConnectionPlugin('rayo',
 		
 		$(presence).find('answered').each(function() 
 		{	
-		//console.log('Rayo plugin handlePresence answered');
-		//console.log(presence);
+			//console.log(presence);
 		
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{
@@ -574,8 +590,8 @@ Strophe.addConnectionPlugin('rayo',
 		
 		$(presence).find('end').each(function() 
 		{
-		//console.log('Rayo plugin handlePresence end');
-		//console.log(presence);		
+			//console.log(presence);
+			
 			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
 			{			
 				var callId = Strophe.getNodeFromJid(from);

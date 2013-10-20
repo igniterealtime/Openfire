@@ -56,15 +56,25 @@
         buttons: [{
           cls: 'end',
           label: 'End Call'
+        },
+        {
+          cls: 'hold',
+          label: 'Hold Call'        
         }],
         timer: true
       },
       busy: {
         buttons: [{
-          cls: 'busy',
+          cls: 'join',
           label: 'Join Call'
         }],
       },   
+      held: {
+        buttons: [{
+          cls: 'join',
+          label: 'Unhold Call'
+        }],
+      },       
       conferenced: {
         buttons: [{
           cls: 'leave',
@@ -235,7 +245,12 @@
       if (self.call) {
         self.call.leave();
       }
-    };    
+    };  
+    self.hold = function () {
+      if (self.call) {
+        self.call.leave();
+      }
+    };       
     self.cancel = function () {
       if (self.call) {
         self.call.hangup();

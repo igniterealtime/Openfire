@@ -94,6 +94,9 @@ public class CallParticipant {
     private long startTimestamp = 0;
     private long endTimestamp = 0;
     private Map<String, String> headers = new HashMap<String, String>();
+    private CallParticipant farParty = null;
+    private CallParticipant handset = null;
+    private boolean isHeld = false;
 
     /*
      * Second party in a two party call or target of migration
@@ -156,6 +159,26 @@ public class CallParticipant {
     public void setEndTimestamp(long endTimestamp)
     {
 		this.endTimestamp = endTimestamp;
+    }
+
+    public CallParticipant getFarParty()
+    {
+		return farParty;
+    }
+
+    public void setFarParty(CallParticipant farParty)
+    {
+		this.farParty = farParty;
+    }
+
+    public CallParticipant getHandset()
+    {
+		return handset;
+    }
+
+    public void setHandset(CallParticipant handset)
+    {
+		this.handset = handset;
     }
 
     public Map<String, String> getHeaders()
@@ -349,6 +372,10 @@ public class CallParticipant {
      */
     public boolean isMuted() {
 	return isMuted;
+    }
+
+    public boolean isHeld() {
+	return isHeld;
     }
 
     /**
@@ -761,6 +788,10 @@ public class CallParticipant {
      */
     public void setMuted(boolean isMuted) {
 	this.isMuted = isMuted;
+    }
+
+    public void setHeld(boolean isHeld) {
+	this.isHeld = isHeld;
     }
 
     /**

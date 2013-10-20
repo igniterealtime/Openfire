@@ -94,6 +94,20 @@ body {
     -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Color=rgba(0, 0, 0, 0.2),Direction=135,Strength=5); } 
     #callStatus.busy .callerName:before {
       content: "Busy: "; }  
+  #callStatus.held {
+    background-color: #ff7474;
+    background-image: rgba(255, 255, 255, 0.3);
+    background-image: -moz-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(50, 50, 50, 0.1));
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, rgba(255, 255, 255, 0.3)), color-stop(1, rgba(50, 50, 50, 0.1)));
+    -ms-filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='$top', EndColorStr='$bottom');
+    border-top: 2px solid white;
+    border-bottom: 2px solid #bbbbbb;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.2) 0 3px 5px;
+    -moz-box-shadow: rgba(0, 0, 0, 0.2) 0 3px 5px;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 3px 5px;
+    -ms-filter: progid:DXImageTransform.Microsoft.Shadow(Color=rgba(0, 0, 0, 0.2),Direction=135,Strength=5); } 
+    #callStatus.held .callerName:before {
+      content: "Held: "; }        
   #callStatus.conferenced {
     background-color: #74e0ff;
     background-image: rgba(255, 255, 255, 0.3);

@@ -17,8 +17,7 @@
 
 package org.ifsoft.rayo;
 
-import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
+import org.dom4j.*;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
@@ -473,13 +472,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				presence1.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
 				sendPacket(presence1);
 
-				RelayChannel channel = plugin.getRelayChannel(callId);
-
-				if (channel != null)
-				{
-					callHandler = channel.getCallHandler();
-
-				} else 	reply.setError(PacketError.Condition.item_not_found);
+				callHandler = CallHandler.findCall(callId);
 
 			} catch (Exception e) {
 				reply.setError(PacketError.Condition.item_not_found);
@@ -495,11 +488,19 @@ public class RayoComponent 	extends 	AbstractComponent
 		{
 			Log.info("RayoComponent handleAnswerCommand found call handler " + callHandler);
 
-			CallParticipant cp = callHandler.getCallParticipant();
+			CallHandler handsetHandler = CallHandler.findCall(JID.escapeNode(iq.getFrom().toString()));
 
-			if (cp != null)
+			if (handsetHandler != null)
 			{
+				Log.info("RayoComponent handleAnswerCommand found handset handler " + handsetHandler);
+
 				try {
+					CallParticipant cp = callHandler.getCallParticipant();
+					CallParticipant hp = handsetHandler.getCallParticipant();
+
+					hp.setFarParty(cp);
+					cp.setHandset(hp);
+
 					cp.setStartTimestamp(System.currentTimeMillis());
 					cp.setHeaders(headers);
 
@@ -727,14 +728,15 @@ public class RayoComponent 	extends 	AbstractComponent
 				{
 					String source = JID.escapeNode(handsetId);
 
-					RelayChannel channel = plugin.getRelayChannel(source); // user mixer of caller
+					CallHandler handsetHandler = CallHandler.findCall(source);
 
-					if (channel != null)
+					if (handsetHandler != null)
 					{
-						headers.put("mixer_name", channel.getHandset().mixer);
-						headers.put("codec_name", channel.getHandset().codec);
+						CallParticipant hp = handsetHandler.getCallParticipant();
 
-						ConferenceManager.setCallId(channel.getHandset().mixer, source);
+						headers.put("mixer_name", hp.getConferenceId());
+
+						ConferenceManager.setCallId(hp.getConferenceId(), source);
 
 						if (findUser(destination.getNode()) != null)
 						{
@@ -989,9 +991,12 @@ public class RayoComponent 	extends 	AbstractComponent
 		CallParticipant hp = handsetHandler.getCallParticipant();
 
 		try {
+			hp.setFarParty(cp);
+			cp.setHandset(hp);
+
 			String mixer = 	hp.getConferenceId();
 
-			ConferenceManager conferenceManager = ConferenceManager.getConference(	mixer,
+			ConferenceManager conferenceManager = ConferenceManager.getConference(mixer,
 																				hp.getMediaPreference(),
 																				cp.getName(), false);
 			cp.setConferenceId(mixer);
@@ -1042,6 +1047,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					Log.info("RayoComponent callEventNotification found call handler " + callHandler);
 
 					CallParticipant cp = callHandler.getCallParticipant();
+					CallParticipant hp = cp.getHandset();
 
 					if (cp != null)
 					{
@@ -1073,16 +1079,12 @@ public class RayoComponent 	extends 	AbstractComponent
 							}
 
 						} else if ("250 STARTED SPEAKING".equals(myEvent)) {
-							StartedSpeakingEvent speaker = new StartedSpeakingEvent();
-							speaker.setSpeakerId(callEvent.getCallId());
-							presence.getElement().add(rayoProvider.toXML(speaker));
-							sendPacket(presence);
+
+							broadcastSpeaking(true, callEvent.getCallId(), callEvent.getConferenceId(), from);
 
 						} else if ("259 STOPPED SPEAKING".equals(myEvent)) {
-							StoppedSpeakingEvent speaker = new StoppedSpeakingEvent();
-							speaker.setSpeakerId(callEvent.getCallId());
-							presence.getElement().add(rayoProvider.toXML(speaker));
-							sendPacket(presence);
+
+							broadcastSpeaking(false, callEvent.getCallId(), callEvent.getConferenceId(), from);
 
 						} else if ("269 DTMF".equals(myEvent)) {
 							presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
@@ -1101,6 +1103,53 @@ public class RayoComponent 	extends 	AbstractComponent
 			}
 		}
     }
+
+	private void broadcastSpeaking(Boolean startSpeaking, String callId, String conferenceId, JID from)
+	{
+		Log.info( "RayoComponent broadcastSpeaking " + startSpeaking + " " + callId + " " + conferenceId + " " + from);
+
+		try {
+			ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceId);
+			ArrayList memberList = conferenceManager.getMemberList();
+
+			synchronized (memberList)
+			{
+				for (int i = 0; i < memberList.size(); i++)
+				{
+					ConferenceMember member = (ConferenceMember) memberList.get(i);
+					CallHandler callHandler = member.getCallHandler();
+					CallParticipant cp = callHandler.getCallParticipant();
+
+					String target = cp.getCallOwner();
+
+					Log.info( "RayoComponent broadcastSpeaking checking " + target);
+
+					if (target != null && callId.equals(cp.getCallId()) == false)
+					{
+						Presence presence = new Presence();
+						presence.setFrom(callId + "@rayo." + getDomain());
+						presence.setTo(target);
+
+						if (startSpeaking)
+						{
+							StartedSpeakingEvent speaker = new StartedSpeakingEvent();
+							speaker.setSpeakerId(callId);
+							presence.getElement().add(rayoProvider.toXML(speaker));
+						} else {
+							StoppedSpeakingEvent speaker = new StoppedSpeakingEvent();
+							speaker.setSpeakerId(callId);
+							presence.getElement().add(rayoProvider.toXML(speaker));
+						}
+
+						sendPacket(presence);
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	private void finishCallRecord(CallParticipant cp)
 	{
@@ -1191,23 +1240,43 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				if (callId == null) callId = conferenceEvent.getConferenceId();	// special case of SIP incoming
 
+				CallHandler farParty = CallHandler.findCall(callId);
 				CallHandler callHandler = CallHandler.findCall(conferenceEvent.getCallId());
 
 				if (callHandler != null)
 				{
-					Log.info("RayoComponent notifyConferenceMonitors found call handler " + callHandler);
+					Log.info("RayoComponent notifyConferenceMonitors found call handler " + callHandler + " " + farParty);
 
 					CallParticipant callParticipant = callHandler.getCallParticipant();
 
 					if (callParticipant != null )
 					{
-						int memberCount = conferenceManager.getMemberList().size();
+						ArrayList memberList = conferenceManager.getMemberList();
+
+						if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+						{
+							CallParticipant hp = callParticipant.getHandset();
+
+							if (hp != null)		// far party left
+							{
+								synchronized (memberList)
+								{
+									for (int i = 0; i < memberList.size(); i++)
+									{
+										CallHandler participant = ((ConferenceMember) memberList.get(i)).getCallHandler();
+										participant.cancelRequest("Far Party has left");
+									}
+								}
+							}
+						}
+
+						int memberCount = memberList.size();
 
 						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
 
 						if (groupName == null)
 						{
-							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId);
+							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty);
 
 						} else {
 
@@ -1219,7 +1288,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 								for (ClientSession session : sessions)
 								{
-									routeJoinEvent(memberJID.toString(), callParticipant, conferenceEvent, memberCount, groupName, callId);
+									routeJoinEvent(session.getAddress().toString(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty);
 								}
 							}
 						}
@@ -1239,9 +1308,9 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
     }
 
-    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName, String callId)
+    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName, String callId, CallHandler farParty)
     {
-		Log.info( "RayoComponent routeJoinEvent " + callee + " " + callId + " " + groupName);
+		Log.info( "RayoComponent routeJoinEvent " + callee + " " + callId + " " + groupName + " " + memberCount + " " + farParty);
 
 		Presence presence = new Presence();
 		presence.setFrom(callId + "@rayo." + getDomain());
@@ -1270,23 +1339,67 @@ public class RayoComponent 	extends 	AbstractComponent
 
 			sendPacket(presence);
 
-		} else {		// caller with callee only
+		} else {
 
-			if (memberCount == 2)		// callee
+			if (memberCount == 2)	// caller with callee only
 			{
-				presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-				sendPacket(presence);
+				if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))	// previously conferenced
+				{
+					if (callId.equals(conferenceEvent.getCallId()) == false) // handset leaving
+					{
+						presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+						sendPacket(presence);
+					}
 
-			} else {
+				} else {
+
+					if (callId.equals(conferenceEvent.getCallId())) // far party joined
+					{
+						presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+
+					} else {	// handset joined
+
+						if (farParty != null)
+						{
+							CallParticipant fp = farParty.getCallParticipant();
+
+							if (fp.isHeld())
+							{
+								fp.setHeld(false);
+								presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+
+							} else {
+								presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+							}
+						}
+					}
+
+					sendPacket(presence);
+				}
+
+			} else if (memberCount == 1) {		// callee or caller
 
 				if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
 				{
-					presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
-					sendPacket(presence);
+					if (callId.equals(conferenceEvent.getCallId()) == false)	// handset leaving
+					{
+						if (farParty != null)
+						{
+							CallParticipant fp = farParty.getCallParticipant();
+							fp.setHeld(true);
 
-					finishCallRecord(callParticipant);
-
+							presence.getElement().add(toXML(new OnHoldEvent()));
+							sendPacket(presence);
+						}
+					}
 				}
+
+			} else {	// nobody left, call ended
+
+				presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), headers)));
+				sendPacket(presence);
+
+				finishCallRecord(callParticipant);
 			}
 		}
 	}
@@ -1334,6 +1447,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		if (foundUser != null)		// send this call to specific user
 		{
+			cp.setCallOwner(foundUser.toString());
 			routeSIPCall(foundUser, cp, callId, headers);
 			return true;
 		}
@@ -1348,7 +1462,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				for (ClientSession session : sessions)
 				{
-					routeSIPCall(memberJID, cp, callId, headers);
+					routeSIPCall(session.getAddress(), cp, callId, headers);
 				}
 			}
 
@@ -1388,4 +1502,38 @@ public class RayoComponent 	extends 	AbstractComponent
 			sendPacket(presence);
 		}
 	}
+
+    private Element toXML(Object object)
+    {
+        try {
+            Document document = DocumentHelper.createDocument();
+            generateDocument(object, document);
+            return document.getRootElement();
+
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void generateDocument(Object object, Document document) throws Exception
+    {
+        if (object instanceof OnHoldEvent) {
+            createOnHoldEvent((OnHoldEvent) object, document);
+
+        } else if (object instanceof OffHoldEvent) {
+            createOffHoldEvent((OffHoldEvent) object, document);
+        }
+    }
+
+    private Document createOnHoldEvent(OnHoldEvent onHold, Document document)
+    {
+        Element root = document.addElement(new QName("onhold", new Namespace("", "urn:xmpp:rayo:1")));
+        return document;
+    }
+
+    private Document createOffHoldEvent(OffHoldEvent offHold, Document document)
+    {
+        Element root = document.addElement(new QName("offhold", new Namespace("", "urn:xmpp:rayo:1")));
+        return document;
+    }
 }

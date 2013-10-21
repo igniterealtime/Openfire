@@ -107,25 +107,15 @@ public class TransportSessionManager {
 
 	/**
 	 * 
-	 * Removing a registration will cause a unregister msg being sent to Spectrum2 for this specific User/Gateway
-	 * combination Also it will be removed from our db. For this to happen the transport has to be active.
+	 * Removes registration from our database.
 	 * 
 	 * @param transport
 	 * @param user
 	 * @return String that describes what happened.
 	 */
-	public String removeRegistrationOfUser(String transport, String user) {
-			adminManager.unregisterUserFrom(transport, user);
-			int result = db.removeSessionEntry(transport, user);
-			if (result == 0) {
-				return "Did not remove entry for user: " + user + " and transport: " + transport + "\n";
-			} else if (result == 1) {
-				return "Successfully removed entry for user: " + user + " and transport: " + transport + " \n";
-			} else {
-				return "What is happening ???: " + result;
-			}
+	public void removeRegistrationOfUserFromDB(String transport, String user) {
+		db.removeSessionEntry(transport, user);
 	}
-
 	/**
 	 * Initializes Sessions through adminmanager, ofc needs to be called at a point where there are Transports registered in
 	 * transportSessions

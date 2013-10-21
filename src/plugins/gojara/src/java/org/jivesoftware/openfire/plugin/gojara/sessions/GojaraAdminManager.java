@@ -134,15 +134,15 @@ public class GojaraAdminManager {
 	 * 
 	 * @param transport
 	 */
-	public void unregisterUserFrom(String transport, String user) {
+	public String unregisterUserFrom(String transport, String user) {
 		if (unconfiguredGateways.contains(transport))
-			return;
+			return "Gateway " + transport + "is not active. Didn't send unregister for "+ user+".";
 
 		Message message = generateCommand(transport, "unregister");
 		message.setBody("unregister " + _server.createJID(user, null).toString());
 		router.route(message);
 		Log.debug("Sent Unregister Packet!" + message.toString());
-
+		return "Sent unregister Packet for user: "+user;
 	}
 
 	public void putStatisticValue(String subdomain, String statistic, int value) {

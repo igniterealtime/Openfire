@@ -1,5 +1,8 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.gojara.sessions.GojaraAdminManager;
 import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
@@ -31,7 +34,7 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 		if (command.equals("online_users")) {
 			handleOnlineUsers(message, subdomain);
 		} else if (command.equals("unregister")) {
-			handleUnregister(message);
+			handleUnregister(message, subdomain);
 		} else if (command.equals("config_check")) {
 			handleConfigCheck(subdomain);
 		} else if (command.equals("uptime")) {
@@ -59,8 +62,18 @@ public class GojaraAdminProcessor extends AbstractRemoteRosterProcessor {
 		}
 	}
 
-	private void handleUnregister(Message message) {
+	private void handleUnregister(Message message, String subdomain) {
 		Log.debug("Found unregister command! ");
+		String body = message.getBody();
+
+		Pattern p = Pattern.compile("^User '(.+)' unregistered.");
+		Matcher m = p.matcher(body);
+		if (m.matches()) {
+			String user = m.group(1);
+			JID userJid = new JID(user);
+			transportSessionManager.removeRegistrationOfUserFromDB(subdomain, userJid.getNode());
+			Log.debug("unregister command was successfull for user: " + userJid.getNode());
+		}
 	}
 
 	private void handleConfigCheck(String subdomain) {

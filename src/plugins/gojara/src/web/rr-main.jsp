@@ -21,6 +21,11 @@
 	boolean success = request.getParameter("success") != null;
 	String persistentRosterParam = request.getParameter("persistentEnabled");
 	boolean persistentRoster = persistentRosterParam == null? false : persistentRosterParam.equals("true");
+	
+	String ignoreSubdomainsParam = request.getParameter("ignoreSubdomains");
+	boolean ignnoreSubdomains = ignoreSubdomainsParam == null ? false : ignoreSubdomainsParam.equals("true");
+	String blockPresencesParam = request.getParameter("blockPresences");
+	boolean blockPresences = blockPresencesParam == null ? false : blockPresencesParam.equals("true");
 
 	String sparkdiscoParam = request.getParameter("sparkDiscoInfo");
 	boolean sparkDiscoInfo = sparkdiscoParam == null ? false : sparkdiscoParam.equals("true");
@@ -53,10 +58,12 @@
 			}
 		}
 		JiveGlobals.setProperty("plugin.remoteroster.persistent", (persistentRoster ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.blockPresences", (blockPresences ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.sparkDiscoInfo", (sparkDiscoInfo ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.iqLastFilter", (iqLastFilter ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.mucFilter", (mucFilter ? "true" : "false"));
 		JiveGlobals.setProperty("plugin.remoteroster.gajimBroadcast", (gajimBroadcast ? "true" : "false"));
+		JiveGlobals.setProperty("plugin.remoteroster.ignoreSubdomains", (ignnoreSubdomains ? "true" : "false"));
 		response.sendRedirect("rr-main.jsp?success=true");
 		return;
 	}
@@ -302,7 +309,7 @@
 					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, contacts will be saved to database and
 					no contacts will be deleted	by GoJara automatically.<br>					
 					When Persistent-Roster is disabled, contacts will not be saved to database and 
-					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout. </td>
+					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout.<br>Enable this if you have a good reason to need it. </td>
 				</tr>
 				<tr>
 					<td><input type="checkbox" name="mucFilter" id="GO2" value="true"
@@ -315,6 +322,20 @@
 					<td align="left" style="font-size: -3; color: grey">Spectrum might add MUC(Multi User Chat) to supported features
 					 of some Transports. If this should not be allowed, because only internal Jabber Conferences should be used, GoJara
 					 can remove these.</td>
+				</tr>
+				
+				
+				<tr>
+					<td><input type="checkbox" name="ignoreSubdomains" id="GO3" value="true"
+						<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.ignoreSubdomains", true) ? "checked=\"checked\"" : ""%> />
+					</td>
+					<td><label for="GO2">Do not add Subdomains to Roster</label></td>
+				</tr>
+				<tr>
+					<td />
+					<td align="left" style="font-size: -3; color: grey">If you do not want the gateway itself to show up as a contact on your roster,
+					enable this (only happens on registration).
+					</td>
 				</tr>
 
            </tbody>
@@ -364,6 +385,26 @@
 										 This feature is not supported by spectrum so it won't response to this IQ stanza. To prevent the client from waiting
 										 for a response we could answer with a service-unavailable message as described in XEP-12.</td>
 									</tr>
+									
+									
+									<tr>
+										<td><input type="checkbox" name="blockPresences" id="SDI3" value="true"
+											<%=JiveGlobals.getBooleanProperty("plugin.remoteroster.blockPresences", true) ? "checked=\"checked\""
+					: ""%> />
+
+										</td>
+										<td><label for="SDI">Block presence pushing to rosterItems except gateway</label></td>
+									</tr>
+									<tr>
+										<td />
+										<td align="left" style="font-size: -3; color: grey">Openfire automatically pushes Presences to every Item on your Roster.
+										For Spark, this means that roster items which are imported through gateway will trigger automatic login, even if you configured
+										Spark to not connect to these gateways on Startup.
+										Block Presences if you use Spark.</td>
+									</tr>
+									
+									
+									
 								</tbody>
 							</table>
 						</td>
@@ -384,7 +425,7 @@
 										<td />
 										<td align="left" style="font-size: -3; color: grey">Enable this if Gojara should push available presences to
 										transports from your roster on startup. If disabled, you have to manually send an available presence to the specific 
-										transport to connect to it.</td>
+										transport to connect to it. (Not needed you dont add Subdomains to roster + disabled presence blocking.)</td>
 									</tr>
 								</tbody>
 							</table>

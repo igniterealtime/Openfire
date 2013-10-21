@@ -49,7 +49,7 @@
 				String[] uservalues = request.getParameterValues(key.toString());
 				for (String transport : uservalues) {
 	%>
-	<li><%=transportManager.removeRegistrationOfUser(transport, key.toString())%></li>
+	<li><%=gojaraAdminManager.unregisterUserFrom(transport, key.toString())%></li>
 	<%
 		}
 			}

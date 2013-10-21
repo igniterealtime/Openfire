@@ -52,7 +52,7 @@
 			for (String key : unregister) {
 		%>
 	
-			<li><%=transportManager.removeRegistrationOfUser(key, username)%></li>
+			<li><%=gojaraAdminManager.unregisterUserFrom(key, username)%></li>
 		<%
 			}
 		%>

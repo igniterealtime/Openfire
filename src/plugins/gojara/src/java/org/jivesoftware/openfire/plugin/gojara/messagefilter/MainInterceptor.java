@@ -54,11 +54,11 @@ public class MainInterceptor implements PacketInterceptor {
 	public MainInterceptor() {
 		Log.info("Created MainInterceptor for GoJara Plugin.");
 		server = XMPPServer.getInstance();
-		RosterManager rosterMananger = server.getRosterManager();
+		RosterManager rosterManager = server.getRosterManager();
 
 		AbstractRemoteRosterProcessor iqRegisteredProcessor = new DiscoIQRegisteredProcessor();
-		AbstractRemoteRosterProcessor iqRosterPayloadProcessor = new IQRosterPayloadProcessor(rosterMananger);
-		AbstractRemoteRosterProcessor nonPersistantProcessor = new NonPersistantRosterProcessor(rosterMananger);
+		AbstractRemoteRosterProcessor iqRosterPayloadProcessor = new IQRosterPayloadProcessor(rosterManager);
+		AbstractRemoteRosterProcessor nonPersistantProcessor = new NonPersistantRosterProcessor(rosterManager);
 		AbstractRemoteRosterProcessor statisticsProcessor = new StatisticsProcessor();
 		AbstractRemoteRosterProcessor updateToComponentProcessor = new ClientToComponentUpdateProcessor(activeTransports);
 		AbstractRemoteRosterProcessor whitelistProcessor = new WhitelistProcessor(activeTransports);
@@ -150,7 +150,7 @@ public class MainInterceptor implements PacketInterceptor {
 					return;
 				// Jabber:IQ:roster Indicates Client to Component update or Rosterpush
 				else if (query.getNamespaceURI().equals("jabber:iq:roster")) {
-					if (to.length() == 0 && iqPacket.getType().equals(IQ.Type.set))
+					if (!activeTransports.contains(from) && to.length() == 0 && iqPacket.getType().equals(IQ.Type.set))
 						packetProcessors.get("clientToComponentUpdate").process(packet, "", to, from);
 					else if (from.length() > 0 && activeTransports.contains(from))
 						packetProcessors.get("iqRosterPayload").process(packet, from, to, from);
@@ -214,7 +214,7 @@ public class MainInterceptor implements PacketInterceptor {
 				if (query.getNamespaceURI().equals("jabber:iq:register") && iqPacket.getType().equals(IQ.Type.set)) {
 					// spark + gajim unregister
 					if (query.element("remove") != null)
-						tSessionManager.removeRegistrationOfUser(to, iqPacket.getFrom().getNode().toString());
+						tSessionManager.removeRegistrationOfUserFromDB(to, iqPacket.getFrom().getNode().toString());
 					else if (query.element("x") != null) {
 						Element xElem = query.element("x");
 						String xNamespace = xElem.getNamespaceURI();
@@ -264,7 +264,7 @@ public class MainInterceptor implements PacketInterceptor {
 					}
 				}
 
-			} else if (packet instanceof Presence) {
+			} else if (JiveGlobals.getBooleanProperty("plugin.remoteroster.blockPresences", true) && packet instanceof Presence) {
 				/*
 				 * We block Presences to users of a subdomain (except transport itself) so OF/S2 wont log you in
 				 * automatically if you have a subdomain user in your roster. This prevents some clients from logging

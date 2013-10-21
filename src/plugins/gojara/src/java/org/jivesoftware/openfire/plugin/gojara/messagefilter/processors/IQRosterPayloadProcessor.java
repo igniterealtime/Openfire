@@ -3,6 +3,8 @@ package org.jivesoftware.openfire.plugin.gojara.messagefilter.processors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -20,13 +22,10 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 /**
- * This class implements the XEP-xxx Remote Roster Management standard
- * "2.3 Server or component requests user's roster". Part of command pattern
- * used in {@link RemoteRosterInterceptor}
+ * This class implements the XEP-xxx Remote Roster Management standard "2.3 Server or component requests user's roster".
+ * Part of command pattern used in {@link RemoteRosterInterceptor}
  * 
- * Further information: <a
- * href="http://jkaluza.fedorapeople.org/remote-roster.html#sect-id215516"
- * >Here</a>
+ * Further information: <a href="http://jkaluza.fedorapeople.org/remote-roster.html#sect-id215516" >Here</a>
  * 
  * @author Holger Bergunde
  * @author axel.frederik.brand
@@ -79,7 +78,8 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		response.setTo(subdomain);
 		Element query = new DefaultElement("query");
 		for (RosterItem i : items) {
-			if (i.getJid().toString().contains(subdomain)) {
+			String jid = i.getJid().toString();
+			if (!jid.equals(subdomain) && jid.contains(subdomain)) {
 				Log.debug("Roster exchange for external component " + subdomain + ". Sending user " + i.getJid().toString());
 				Element item = new DefaultElement("item", null);
 				item.add(new DefaultAttribute("jid", i.getJid().toString()));
@@ -109,7 +109,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		dispatchPacket(response);
 	}
 
-	private void handleIQset(IQ myPacket, String subdomain, String username) throws PacketRejectedException {
+	private void handleIQset(IQ myPacket, final String subdomain, final String username) throws PacketRejectedException {
 		IQ response = IQ.createResultIQ(myPacket);
 
 		List<Node> nodes = findNodesInDocument(myPacket.getElement().getDocument(), "//roster:item");
@@ -123,7 +123,8 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 			// reject that packet, it seems openfire itself
 			// can interpret the iq:roster remove stanzas in some way, this was
 			// causing trouble on register:remove
-			if (jid.equals(subdomain))
+			if (JiveGlobals.getBooleanProperty("plugin.remoteroster.ignoreSubdomains", true) && jid.equals(subdomain)
+					&& subvalue.equals("both"))
 				throw new PacketRejectedException();
 
 			if (subvalue.equals("both")) {
@@ -150,24 +151,47 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 					item.setSubStatus(RosterItem.SUB_BOTH);
 					roster.updateRosterItem(item);
 				} catch (Exception e) {
-					Log.debug("Could not add user to Roster although no entry should exist..." + username, e);
-					e.printStackTrace();
+					Log.info("Could not add user to Roster although no entry should exist..." + username, e);
+
 				}
+				dispatchPacket(response);
+
 			} else if (subvalue.equals("remove")) {
-				try {
-					roster = _rosterManager.getRoster(username);
-					roster.deleteRosterItem(new JID(jid), false);
-					Log.debug("Removed contact " + jid + " from contact list of " + username);
-				} catch (UserNotFoundException e) {
-					Log.debug("Could not find user while cleaning up the roster in GoJara for user " + username, e);
-					response.setType(IQ.Type.error);
-				} catch (SharedGroupException e) {
-					// We should ignore this. External contacts cannot be in
-					// shared groups
+				// check if its the right package to initiate unregister removal of contacts
+				// we dont need to do this when persistent = false because they will get deleted as soon as gateway is unavailable
+				if (JiveGlobals.getBooleanProperty("plugin.remoteroster.persistent", false) && jid.equals(subdomain)) {
+					deleteSubdomainItemsFromRoster(username, subdomain);
+				}
+				// in ANY case, if its a roster:remove, we want to reject packet, as it causes errors if Openfire tries
+				// to handle it
+				throw new PacketRejectedException();
+			}
+		}
+	}
+
+	/**
+	 * Searches the users roster for a specific subdomain and deletes all contacts that contain subdomain
+	 * 
+	 * @param username
+	 * @param subdomain
+	 */
+	private void deleteSubdomainItemsFromRoster(String username, String subdomain) {
+		try {
+			Roster roster = _rosterManager.getRoster(username);
+			Collection<RosterItem> items = roster.getRosterItems();
+			for (RosterItem item : items) {
+				String itemName = item.getJid().toString();
+				if (itemName.contains(subdomain)) {
+					Log.debug("Removing contact " + item.getJid().toString() + " from contact list because of Unregister.");
+					roster.deleteRosterItem(item.getJid(), false);
 				}
 			}
-			dispatchPacket(response);
+		} catch (UserNotFoundException e) {
+			Log.debug("Couldnt find User!" + e.toString());
+		} catch (SharedGroupException e) {
+			e.printStackTrace();
 		}
+
 	}
 
 }

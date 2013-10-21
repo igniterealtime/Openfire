@@ -19,13 +19,18 @@ package org.ifsoft.rayo;
 
 import org.dom4j.*;
 
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.spi.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+
+import org.jivesoftware.util.JiveGlobals;
 
 import org.xmpp.packet.JID;
 
@@ -51,7 +56,6 @@ import com.sun.voip.server.*;
 import com.sun.voip.*;
 
 import org.voicebridge.*;
-
 
 
 
@@ -89,6 +93,13 @@ public class RayoComponent 	extends 	AbstractComponent
 
         handsetProvider = new HandsetProvider();
         handsetProvider.setValidator(new Validator());
+
+		Plugin fastpath = XMPPServer.getInstance().getPluginManager().getPlugin("fastpath");
+
+		if (fastpath != null)
+		{
+			Log.info("RayoComponent found Fastpath");
+		}
     }
 
     public String getName() {
@@ -158,12 +169,16 @@ public class RayoComponent 	extends 	AbstractComponent
 				if (object instanceof ConnectCommand) {
 
 				} else if (object instanceof HoldCommand) {
+						// implemented as onhook on client
 
 				} else if (object instanceof UnholdCommand) {
+						// implemented as offhook on client
 
 				} else if (object instanceof MuteCommand) {
+					reply = handleMuteCommand((MuteCommand) object, iq);
 
 				} else if (object instanceof UnmuteCommand) {
+					reply = handleMuteCommand((UnmuteCommand) object, iq);
 
 				} else if (object instanceof JoinCommand) {
 					reply = handleJoinCommand((JoinCommand) object, iq);
@@ -181,6 +196,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					reply = handleHangupCommand(iq);
 
 				} else if (object instanceof RejectCommand) {
+						// implemented as hangup on client
 
 				} else if (object instanceof RedirectCommand) {
 
@@ -209,6 +225,68 @@ public class RayoComponent 	extends 	AbstractComponent
         }
     }
 
+
+	private IQ handleMuteCommand(Object object, IQ iq)
+	{
+		Log.info("RayoComponent handleMuteCommand");
+
+		boolean muted = object instanceof MuteCommand;
+
+		IQ reply = IQ.createResultIQ(iq);
+		String callId = JID.escapeNode(iq.getFrom().toString());
+
+		CallHandler handler = CallHandler.findCall(callId);
+
+		if (handler != null)
+		{
+			handler.setMuted(muted);
+
+			try {
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(handler.getCallParticipant().getConferenceId());
+				ArrayList memberList = conferenceManager.getMemberList();
+
+				synchronized (memberList)
+				{
+					for (int i = 0; i < memberList.size(); i++)
+					{
+						ConferenceMember member = (ConferenceMember) memberList.get(i);
+						CallHandler callHandler = member.getCallHandler();
+						CallParticipant cp = callHandler.getCallParticipant();
+
+						String target = cp.getCallOwner();
+
+						Log.info( "RayoComponent handleMuteCommand route event to " + target);
+
+						if (target != null)
+						{
+							Presence presence = new Presence();
+							presence.setFrom(callId + "@rayo." + getDomain());
+							presence.setTo(target);
+
+							if (muted)
+							{
+								MutedEvent event = new MutedEvent();
+								presence.getElement().add(toXML(event));
+							} else {
+								UnmutedEvent event = new UnmutedEvent();
+								presence.getElement().add(toXML(event));
+							}
+
+							sendPacket(presence);
+						}
+					}
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		} else {
+			reply.setError(PacketError.Condition.item_not_found);
+		}
+
+		return reply;
+	}
 
 	private IQ handleOnOffHookCommand(Object object, IQ iq)
 	{
@@ -432,17 +510,12 @@ public class RayoComponent 	extends 	AbstractComponent
 			Map<String, String> headers = command.getHeaders();
 			headers.put("call_protocol", "XMPP");
 
-			try {
-				Presence presence = new Presence();
-				presence.setFrom(iq.getTo());
-				presence.setTo(callJID);
+			Presence presence = new Presence();
+			presence.setFrom(iq.getTo());
+			presence.setTo(callJID);
 
-				presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
-				sendPacket(presence);
-
-			} catch (Exception e) {
-				reply.setError(PacketError.Condition.item_not_found);
-			}
+			presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+			sendPacket(presence);
 		}
 
 		return reply;
@@ -762,15 +835,32 @@ public class RayoComponent 	extends 	AbstractComponent
 									}
 								}
 
-								if (count == 0)
-								{
-									reply.setError(PacketError.Condition.item_not_found);
-									return reply;
-								}
-
 							} catch (GroupNotFoundException e) {
+
+								if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(destination.getNode())) {
+
+									MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(destination.getNode());
+
+									if (room != null)
+									{
+										for (MUCRole role : room.getOccupants())
+										{
+											if (iq.getFrom().toBareJID().equals(role.getUserAddress().toBareJID()) == false)
+											{
+												routeXMPPCall(reply, role.getUserAddress(), source, calledName, headers);
+												count++;
+											}
+										}
+									}
+
+								} else {
+									reply.setError(PacketError.Condition.item_not_found);
+								}
+							}
+
+							if (count == 0)
+							{
 								reply.setError(PacketError.Condition.item_not_found);
-								return reply;
 							}
 						}
 
@@ -1312,6 +1402,8 @@ public class RayoComponent 	extends 	AbstractComponent
     {
 		Log.info( "RayoComponent routeJoinEvent " + callee + " " + callId + " " + groupName + " " + memberCount + " " + farParty);
 
+		if (callee == null) return;
+
 		Presence presence = new Presence();
 		presence.setFrom(callId + "@rayo." + getDomain());
 		presence.setTo(callee);
@@ -1437,13 +1529,17 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		String callId = "rayo-incoming-" + System.currentTimeMillis();
 		cp.setCallId(callId);
+		cp.setMediaPreference("PCMU/8000/1");
 		cp.setConferenceId(callId);
+		cp.setConferenceDisplayName(cp.getToPhoneNumber());
 
-		ConferenceManager.setCallId(callId, callId);
+		ConferenceManager conferenceManager = ConferenceManager.getConference(callId, cp.getMediaPreference(), cp.getToPhoneNumber(), false);
+		conferenceManager.setCallId(callId);
 
 		Map<String, String> headers = cp.getHeaders();
 		headers.put("mixer_name", callId);
 		headers.put("call_protocol", "SIP");
+		headers.put("group_name", cp.getToPhoneNumber());
 
 		if (foundUser != null)		// send this call to specific user
 		{
@@ -1451,10 +1547,9 @@ public class RayoComponent 	extends 	AbstractComponent
 			routeSIPCall(foundUser, cp, callId, headers);
 			return true;
 		}
-									// send to members of group
+
         try {
             Group group = GroupManager.getInstance().getGroup(cp.getToPhoneNumber());
-			headers.put("group_name", cp.getToPhoneNumber());
 
 			for (JID memberJID : group.getMembers())
 			{
@@ -1470,7 +1565,23 @@ public class RayoComponent 	extends 	AbstractComponent
 
         } catch (GroupNotFoundException e) {
             // Group not found
-            return false;
+
+			if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(cp.getToPhoneNumber())) {
+
+				MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(cp.getToPhoneNumber());
+
+				if (room != null)
+				{
+					for (MUCRole role : room.getOccupants())
+					{
+						routeSIPCall(role.getUserAddress(), cp, callId, headers);
+					}
+				}
+            	return true;
+
+			} else {
+            	return false;
+			}
 		}
 	}
 
@@ -1522,6 +1633,12 @@ public class RayoComponent 	extends 	AbstractComponent
 
         } else if (object instanceof OffHoldEvent) {
             createOffHoldEvent((OffHoldEvent) object, document);
+
+        } else if (object instanceof MutedEvent) {
+            createMutedEvent((MutedEvent) object, document);
+
+        } else if (object instanceof UnmutedEvent) {
+            createUnmutedEvent((UnmutedEvent) object, document);
         }
     }
 
@@ -1534,6 +1651,18 @@ public class RayoComponent 	extends 	AbstractComponent
     private Document createOffHoldEvent(OffHoldEvent offHold, Document document)
     {
         Element root = document.addElement(new QName("offhold", new Namespace("", "urn:xmpp:rayo:1")));
+        return document;
+    }
+
+    private Document createMutedEvent(MutedEvent muted, Document document)
+    {
+        Element root = document.addElement(new QName("onmute", new Namespace("", "urn:xmpp:rayo:1")));
+        return document;
+    }
+
+    private Document createUnmutedEvent(UnmutedEvent unmuted, Document document)
+    {
+        Element root = document.addElement(new QName("offmute", new Namespace("", "urn:xmpp:rayo:1")));
         return document;
     }
 }

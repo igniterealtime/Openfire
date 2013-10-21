@@ -59,6 +59,9 @@
 			} else if (window.dialer.getCallLabel() == "Unhold") {
 				window.candybar.call.join();
 
+			} else if (window.dialer.getCallLabel() == "Unmute") {
+				window.candybar.call.mute(false);
+
 			} else {
 				console.error('bad call state');
 			}
@@ -246,6 +249,20 @@
 
 				onUnjoin: function(callId, jid, mixer) {
 					//console.log('onUnjoin ' + jid + " " + mixer + " " + callId);
+				},
+
+				onMute: function(callId) {
+					//console.log('onMute ' + callId);
+
+					window.candybar.setState('muted');
+					window.dialer.setCallLabel('Unmute');
+				},
+
+				offMute: function(callId) {
+					//console.log('offMute ' + callId);
+
+					window.candybar.setState('active');
+					window.dialer.setCallLabel('Hangup');
 				},
 
 				onError: function(e) {

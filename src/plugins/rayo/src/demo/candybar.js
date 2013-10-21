@@ -59,7 +59,11 @@
         },
         {
           cls: 'hold',
-          label: 'Hold Call'        
+          label: 'Hold Call'   
+        },          
+        {
+          cls: 'mute',
+          label: 'Mute Call'        
         }],
         timer: true
       },
@@ -69,6 +73,12 @@
           label: 'Join Call'
         }],
       },   
+      muted: {
+        buttons: [{
+          cls: 'unmute',
+          label: 'Unmute Call'
+        }],
+      },      
       held: {
         buttons: [{
           cls: 'join',
@@ -236,6 +246,11 @@
         self.call.answer();
       }
     };
+    self.ignore = function () {
+      if (self.call) {
+        self.call.hangup();
+      }
+    };    
     self.join = function () {
       if (self.call) {
         self.call.join();
@@ -250,7 +265,17 @@
       if (self.call) {
         self.call.leave();
       }
-    };       
+    };   
+    self.mute = function () {
+      if (self.call) {
+        self.call.mute(true);
+      }
+    };  
+    self.unmute = function () {
+      if (self.call) {
+        self.call.mute(false);
+      }
+    };     
     self.cancel = function () {
       if (self.call) {
         self.call.hangup();

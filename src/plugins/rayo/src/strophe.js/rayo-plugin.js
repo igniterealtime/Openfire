@@ -101,12 +101,30 @@ Strophe.addConnectionPlugin('rayo',
 
 		});		
 	},
-	
+
 	leave: function(mixer)
 	{
 		//console.log('Rayo plugin leave ' + mixer);		
 		
 		this._onhook();		
+	},
+	
+	mute: function(callId, flag)
+	{
+		//console.log('Rayo plugin mute ' + callId + " " + flag);		
+
+		var that = this;		
+		var iq = $iq({to: callId + "@rayo." + this._connection.domain, from: this._connection.jid, type: "get"}).c( flag ? "mute" : "unmute", {xmlns: Strophe.NS.RAYO_CORE});  
+			
+		that._connection.sendIQ(iq, null, function(error)
+		{
+			$('error', error).each(function() 
+			{
+				var errorcode = $(this).attr('code');
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("mute/unmute failure " + errorcode); 				
+			});		     	
+		});		
+	
 	},	
 	
 	answer: function(callId, mixer, headers)
@@ -192,7 +210,8 @@ Strophe.addConnectionPlugin('rayo',
 							digit: 	function(tone) 	{that.digit(callId, tone);},
 							hangup: function() 	{that.hangup(callId);},
 							join: 	function() 	{that.join(mixer, headers);},
-							leave: 	function() 	{that.leave(mixer);},								
+							leave: 	function() 	{that.leave(mixer);},	
+							mute: 	function(flag) 	{that.mute(callId, flag);},							
 
 							from: 	from,
 							to:	to,	
@@ -425,7 +444,8 @@ Strophe.addConnectionPlugin('rayo',
 					hangup: function() 	{that.hangup(callId);},
 					answer: function() 	{that.answer(callId, mixer, headers);},
 					join: 	function() 	{that.join(mixer, headers);},	
-					leave: 	function() 	{that.leave(mixer);},						
+					leave: 	function() 	{that.leave(mixer);},	
+					mute: 	function(flag) 	{that.mute(callId, flag);},						
 					
 					from: 	callFrom,
 					to:	callTo,
@@ -528,6 +548,28 @@ Strophe.addConnectionPlugin('rayo',
 				var callId = Strophe.getNodeFromJid(from);
 				if (that.callbacks && that.callbacks.onHold) that.callbacks.onHold(callId);
 			}
+		});
+		
+		$(presence).find('onmute').each(function() 
+		{
+			//console.log(presence);		
+			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+			{				
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onMute) that.callbacks.onMute(callId);
+			}
+		});
+		
+		$(presence).find('offmute').each(function() 
+		{
+			//console.log(presence);		
+			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_CORE)
+			{				
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.offMute) that.callbacks.offMute(callId);
+			}
 		});		
 		
 		$(presence).find('ringing').each(function() 
@@ -572,7 +614,8 @@ Strophe.addConnectionPlugin('rayo',
 						hangup: function() 	{that.hangup(callId);},
 						answer: function() 	{that.answer(callId, mixer, headers);},
 						join: 	function() 	{that.join(mixer, headers);},	
-						leave: 	function() 	{that.leave(mixer);},							
+						leave: 	function() 	{that.leave(mixer);},	
+						mute: 	function(flag) 	{that.mute(callId, flag);},						
 
 						id:	callId,
 						from: 	Strophe.getNodeFromJid(jid)

@@ -309,7 +309,7 @@
 					<td align="left" style="font-size: -3; color: grey">When Persistent-Roster is enabled, contacts will be saved to database and
 					no contacts will be deleted	by GoJara automatically.<br>					
 					When Persistent-Roster is disabled, contacts will not be saved to database and 
-					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout.<br>Enable this if you have a good reason to need it. </td>
+					GoJara will automatically delete all Legacy-RosterItems from the OF-Roster of a User upon logout.<br>Enable this if you want to store Gateway contacts in DB. </td>
 				</tr>
 				<tr>
 					<td><input type="checkbox" name="mucFilter" id="GO2" value="true"
@@ -399,8 +399,8 @@
 										<td />
 										<td align="left" style="font-size: -3; color: grey">Openfire automatically pushes Presences to every Item on your Roster.
 										For Spark, this means that roster items which are imported through gateway will trigger automatic login, even if you configured
-										Spark to not connect to these gateways on Startup.
-										Block Presences if you use Spark.</td>
+										Spark to not connect to these gateways on Startup.<br>
+										Block Presences if you use Spark and do not want to autoconnect.</td>
 									</tr>
 									
 									
@@ -424,8 +424,8 @@
 									<tr>
 										<td />
 										<td align="left" style="font-size: -3; color: grey">Enable this if Gojara should push available presences to
-										transports from your roster on startup. If disabled, you have to manually send an available presence to the specific 
-										transport to connect to it. (Not needed you dont add Subdomains to roster + disabled presence blocking.)</td>
+										transports from your roster on startup. If disabled, you may have to manually send an available presence to the specific 
+										transport to connect to it.<br>Not needed if you add Subdomains to roster + disabled presence blocking.</td>
 									</tr>
 								</tbody>
 							</table>

@@ -38,6 +38,11 @@
 		onHide: function () {
 			//console.log('removed it');
 		},
+		onHangup: function (number) {
+
+			window.candybar.call.hangup();
+		},
+
 		onCall: function (number) {
 
 			if (window.dialer.getCallLabel() == "Call") {
@@ -61,6 +66,12 @@
 
 			} else if (window.dialer.getCallLabel() == "Unmute") {
 				window.candybar.call.mute(false);
+
+			} else if (window.dialer.getCallLabel() == "Private") {
+				window.candybar.call.private();
+
+			} else if (window.dialer.getCallLabel() == "Public") {
+				window.candybar.call.private();
 
 			} else {
 				console.error('bad call state');
@@ -259,10 +270,34 @@
 				},
 
 				offMute: function(callId) {
-					//console.log('offMute ' + callId);
+					console.log('offMute ' + callId);
 
 					window.candybar.setState('active');
 					window.dialer.setCallLabel('Hangup');
+				},
+
+				onPrivate: function(callId) {
+					//console.log('onPrivate ' + callId);
+
+					window.candybar.call.privateCall = true;
+					window.dialer.setCallLabel('Public');
+				},
+
+				offPrivate: function(callId) {
+					//console.log('offPrivate ' + callId);
+
+					window.candybar.call.privateCall = false;
+					window.dialer.setCallLabel('Hangup');
+				},
+
+				onRedirect: function(callId) {
+					//console.log('onRedirect ' + callId);
+
+					window.candybar.endGently();
+					window.candybar.call = null;
+
+					window.dialer.setCallLabel('Call');
+					stopTone();
 				},
 
 				onError: function(e) {

@@ -23,10 +23,7 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 
-import com.rayo.core.verb.OnHookCommand;
-import com.rayo.core.verb.OffHookCommand;
-import com.rayo.core.verb.Handset;
-import com.rayo.core.verb.SayCompleteEvent;
+import com.rayo.core.verb.*;
 import com.rayo.core.verb.SayCompleteEvent.Reason;
 
 public class HandsetProvider extends BaseProvider {
@@ -39,6 +36,11 @@ public class HandsetProvider extends BaseProvider {
 
     private static final QName ONHOOK_QNAME = new QName("onhook", NAMESPACE);
     private static final QName OFFHOOK_QNAME = new QName("offhook", NAMESPACE);
+    private static final QName PRIVATE_QNAME = new QName("private", NAMESPACE);
+    private static final QName PUBLIC_QNAME = new QName("public", NAMESPACE);
+    private static final QName MUTE_QNAME = new QName("mute", NAMESPACE);
+    private static final QName UNMUTE_QNAME = new QName("unmute", NAMESPACE);
+    private static final QName HOLD_QNAME = new QName("hold", NAMESPACE);
 
     @Override
     protected Object processElement(Element element) throws Exception
@@ -49,14 +51,54 @@ public class HandsetProvider extends BaseProvider {
         } else if (OFFHOOK_QNAME.equals(element.getQName())) {
             return buildOffHookCommand(element);
 
+        } else if (PRIVATE_QNAME.equals(element.getQName())) {
+            return buildPrivateCommand(element);
+
+        } else if (PUBLIC_QNAME.equals(element.getQName())) {
+            return buildPublicCommand(element);
+
+        } else if (MUTE_QNAME.equals(element.getQName())) {
+            return buildMuteCommand(element);
+
+        } else if (UNMUTE_QNAME.equals(element.getQName())) {
+            return buildUnmuteCommand(element);
+
+        } else if (HOLD_QNAME.equals(element.getQName())) {
+            return buildHoldCommand(element);
+
         } else if (element.getNamespace().equals(RAYO_COMPONENT_NAMESPACE)) {
             return buildCompleteCommand(element);
         }
         return null;
     }
 
-    private Object buildCompleteCommand(Element element) {
+    private Object buildPrivateCommand(Element element)
+    {
+		return new PrivateCommand();
+	}
 
+    private Object buildPublicCommand(Element element)
+    {
+		return new PublicCommand();
+	}
+
+    private Object buildMuteCommand(Element element)
+    {
+        return new MuteCommand();
+    }
+
+    private Object buildUnmuteCommand(Element element)
+    {
+        return new UnmuteCommand();
+    }
+
+    private Object buildHoldCommand(Element element)
+    {
+        return new HoldCommand();
+    }
+
+    private Object buildCompleteCommand(Element element)
+    {
         Element reasonElement = (Element)element.elements().get(0);
     	String reasonValue = reasonElement.getName().toUpperCase();
         Reason reason = Reason.valueOf(reasonValue);
@@ -87,6 +129,7 @@ public class HandsetProvider extends BaseProvider {
 		}
 
         handset.group = element.attributeValue("group");
+        handset.callId = element.attributeValue("callid");
 
  		OffHookCommand command = new OffHookCommand();
 		command.setHandset(handset);
@@ -112,6 +155,24 @@ public class HandsetProvider extends BaseProvider {
 
         } else if (object instanceof SayCompleteEvent) {
             createHandsetCompleteEvent((SayCompleteEvent) object, document);
+
+        } else if (object instanceof OnHoldEvent) {
+            createOnHoldEvent((OnHoldEvent) object, document);
+
+        } else if (object instanceof OffHoldEvent) {
+            createOffHoldEvent((OffHoldEvent) object, document);
+
+        } else if (object instanceof MutedEvent) {
+            createMutedEvent((MutedEvent) object, document);
+
+        } else if (object instanceof UnmutedEvent) {
+            createUnmutedEvent((UnmutedEvent) object, document);
+
+        } else if (object instanceof PrivateEvent) {
+            createPrivateEvent((PrivateEvent) object, document);
+
+        } else if (object instanceof PublicEvent) {
+            createPublicEvent((PublicEvent) object, document);
         }
     }
 
@@ -128,11 +189,44 @@ public class HandsetProvider extends BaseProvider {
     }
 
 
-    private void createOnHookCommand(OnHookCommand command, Document document) throws Exception {
+    private void createOnHookCommand(OnHookCommand command, Document document) throws Exception
+    {
         document.addElement(new QName("onhook", NAMESPACE));
     }
 
-    private void createHandsetCompleteEvent(SayCompleteEvent event, Document document) throws Exception {
+    private void createHandsetCompleteEvent(SayCompleteEvent event, Document document) throws Exception
+    {
         addCompleteElement(document, event, COMPLETE_NAMESPACE);
     }
+
+    private void createOnHoldEvent(OnHoldEvent onHold, Document document)
+    {
+        document.addElement(new QName("onhold", NAMESPACE));
+    }
+
+    private void createOffHoldEvent(OffHoldEvent offHold, Document document)
+    {
+        document.addElement(new QName("offhold", NAMESPACE));
+    }
+
+    private void createMutedEvent(MutedEvent muted, Document document)
+    {
+        document.addElement(new QName("onmute", NAMESPACE));
+    }
+
+    private void createUnmutedEvent(UnmutedEvent unmuted, Document document)
+    {
+        document.addElement(new QName("offmute", NAMESPACE));
+    }
+
+    private void createPrivateEvent(PrivateEvent event, Document document)
+    {
+        document.addElement(new QName("private", NAMESPACE));
+    }
+
+    private void createPublicEvent(PublicEvent event, Document document)
+    {
+        document.addElement(new QName("public", NAMESPACE));
+    }
+
 }

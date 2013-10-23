@@ -60,10 +60,18 @@
         {
           cls: 'hold',
           label: 'Hold Call'   
-        },          
+        },  
         {
           cls: 'mute',
-          label: 'Mute Call'        
+          label: 'Mute Call'  
+        },  
+        {
+          cls: 'redirect',
+          label: 'Redirect Call'  
+        },        
+        {
+          cls: 'private',
+          label: 'Private Call'        
         }],
         timer: true
       },
@@ -263,14 +271,24 @@
     };  
     self.hold = function () {
       if (self.call) {
-        self.call.leave();
+        self.call.hold();
       }
-    };   
+    }; 
+    self.redirect = function () {
+      if (self.call) {
+        self.call.redirect(prompt("Please enter new destination:","sip:xxxx@domain.com"));
+      }
+    };    
     self.mute = function () {
       if (self.call) {
         self.call.mute(true);
       }
     };  
+    self.private = function () {
+      if (self.call) {
+        self.call.private();
+      }
+    };         
     self.unmute = function () {
       if (self.call) {
         self.call.mute(false);

@@ -32,6 +32,7 @@ public class Handset extends BaseVerb {
     public String mixer = null;
     public String group = null;
     public String sipuri = null;
+    public String callId = null;
 
 	public Handset(String cryptoSuite, String localCrypto, String remoteCrypto, String codec, String stereo, String mixer)
 	{

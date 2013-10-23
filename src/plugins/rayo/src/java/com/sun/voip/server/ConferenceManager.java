@@ -63,6 +63,10 @@ public class ConferenceManager {
 
     private boolean	       isFirstMember = true;
 
+    private boolean	       privateCall = false;
+
+    private String 		   groupName = null;
+
     /*
      * If useSingleSender is true, a single
      * conferenceSender will be used for all conferences.
@@ -623,17 +627,38 @@ public class ConferenceManager {
      * audio treatment.
      * @return true if this is the first member, false otherwise
      */
-    public boolean isFirstMember() {
-	synchronized (memberList) {
-	    if (isFirstMember == false) {
-	        return false;
-	    }
+    public boolean isFirstMember()
+    {
+		synchronized (memberList) {
+			if (isFirstMember == false) {
+				return false;
+			}
 
-	    isFirstMember = false;
+			isFirstMember = false;
 
-	    return memberList.isEmpty();
-	}
+			return memberList.isEmpty();
+		}
     }
+
+    public boolean isPrivateCall()
+    {
+		return privateCall;
+	}
+
+    public void setPrivateCall(boolean privateCall)
+    {
+		this.privateCall = privateCall;
+	}
+
+    public String getGroupName()
+    {
+		return groupName;
+	}
+
+    public void setGroupName(String groupName)
+    {
+		this.groupName = groupName;
+	}
 
     /**
      * Add a new member to the conference

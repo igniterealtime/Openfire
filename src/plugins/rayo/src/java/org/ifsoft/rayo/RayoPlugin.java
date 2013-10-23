@@ -104,6 +104,8 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
             Log.error("Could NOT load " + component.getName());
         }
         setup();
+
+        component.doStart();
     }
 
     private void setup() {
@@ -191,6 +193,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
         }
         closeAllChannels();
         executor.shutdownNow();
+        component.doStop();
     }
 
     public boolean hasPublicIP() {

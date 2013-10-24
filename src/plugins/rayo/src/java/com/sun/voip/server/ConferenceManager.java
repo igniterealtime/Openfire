@@ -65,6 +65,8 @@ public class ConferenceManager {
 
     private boolean	       privateCall = false;
 
+    private CallParticipant	heldCall = null;
+
     private String 		   groupName = null;
 
     /*
@@ -649,6 +651,37 @@ public class ConferenceManager {
     {
 		this.privateCall = privateCall;
 	}
+
+    public CallParticipant getHeldCall()
+    {
+		return heldCall;
+	}
+
+
+    public static CallParticipant getHeldCall(String conferenceId)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			return conferenceManager.getHeldCall();
+		} catch (ParseException e) {
+			return null;
+		}
+    }
+
+    public void setHeldCall(CallParticipant heldCall)
+    {
+		this.heldCall = heldCall;
+	}
+
+    public static void setHeldCall(String conferenceId, CallParticipant heldCall)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			conferenceManager.setHeldCall(heldCall);
+		} catch (ParseException e) {
+
+		}
+    }
 
     public String getGroupName()
     {

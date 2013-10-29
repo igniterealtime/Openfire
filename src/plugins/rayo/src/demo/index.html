@@ -149,7 +149,7 @@
 		{
 			window.connection.rayo.phone(
 			{
-				codec_name: "PCMU",
+				codec_name: "OPUS",
 				stereo_pan: "0",
 				sip_handset: sipHandset,
 
@@ -211,8 +211,11 @@
 					//console.log('onAnswer ' + callId);
 					//console.log(headers);
 
-					window.candybar.setState('active');
-					window.dialer.setCallLabel('Hangup');
+					if (window.candybar.redirect != callId)
+					{
+						window.candybar.setState('active');
+						window.dialer.setCallLabel('Hangup');
+					}
 					stopTone();
 				},
 
@@ -270,7 +273,7 @@
 				},
 
 				offMute: function(callId) {
-					console.log('offMute ' + callId);
+					//console.log('offMute ' + callId);
 
 					window.candybar.setState('active');
 					window.dialer.setCallLabel('Hangup');
@@ -291,13 +294,25 @@
 				},
 
 				onRedirect: function(callId) {
-					//console.log('onRedirect ' + callId);
+					console.log('onRedirect ' + callId);
 
 					window.candybar.endGently();
-					window.candybar.call = null;
+					window.candybar.redirect = callId;
 
 					window.dialer.setCallLabel('Call');
 					stopTone();
+				},
+
+				onSay: function(saying) {
+					console.log('Started saying ' + saying.sayId);
+
+					window.candybar.call.saying = saying;
+				},
+
+				onSayComplete: function(sayId) {
+					console.log('Finished saying ' + sayId);
+
+					window.candybar.call.saying = null;
 				},
 
 				onError: function(e) {
@@ -326,8 +341,8 @@
 		if (!username) groupname = null;
 
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
-			codec_name: "PCMU",
-			group_name: groupname
+			codec_name: "OPUS",
+			//group_name: groupname
 		});
 
 		window.candybar.setUser({

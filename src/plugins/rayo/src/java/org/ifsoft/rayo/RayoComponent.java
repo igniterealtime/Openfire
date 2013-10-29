@@ -160,6 +160,8 @@ public class RayoComponent 	extends 	AbstractComponent
     @Override
     protected IQ handleIQGet(IQ iq) throws Exception {
 
+		Log.info("RayoComponent handleIQGet \n" + iq.toString());
+
         final Element element = iq.getChildElement();
         final String namespace = element.getNamespaceURI();
 
@@ -450,7 +452,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
 					childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
 					childElement.addAttribute(ID, channel.getAttachment());
-					childElement.addAttribute(URI, "handset:" + channel.getAttachment() + "@" + getDomain() + "/" + iq.getFrom().getNode());
+					childElement.addAttribute(URI, "xmpp:" + channel.getAttachment() + "@" + getDomain() + "/webrtc");
 
 					Log.debug("Created WebRTC handset channel {}:{}, {}:{}, {}:{}", new Object[]{HOST, LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT, Integer.toString(channel.getPortB())});
 
@@ -465,7 +467,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				final Element childElement = reply.setChildElement("ref", RAYO_CORE);
 
 				childElement.addAttribute(ID, handsetId);
-				childElement.addAttribute(URI, "handset:" + handsetId + "@" + getDomain() + "/" + iq.getFrom().getNode());
+				childElement.addAttribute(URI, handset.sipuri);
 
 				Log.info("Created SIP handset channel " + handset.sipuri);
 
@@ -578,10 +580,12 @@ public class RayoComponent 	extends 	AbstractComponent
 				callHandler.playTreatmentToCall(treatmentId, this);
 
 				final Element childElement = reply.setChildElement("ref", RAYO_CORE);
+				childElement.addAttribute(ID, treatmentId);
 				childElement.addAttribute(URI, (String) "xmpp:" + entityId + "@" + getDomain() + "/" + treatmentId);
 
 			} catch (Exception e1) {
-				reply.setError(PacketError.Condition.internal_server_error);
+            	e1.printStackTrace();
+				reply.setError(PacketError.Condition.not_allowed);
 			}
 
 		} catch (NoSuchElementException e) {	// not call, lets try mixer
@@ -593,14 +597,15 @@ public class RayoComponent 	extends 	AbstractComponent
 					conferenceManager.addTreatment(treatmentId);
 
 					final Element childElement = reply.setChildElement("ref", RAYO_CORE);
+					childElement.addAttribute(ID, treatmentId);
 					childElement.addAttribute(URI, (String) "xmpp:" + entityId + "@" + getDomain() + "/" + treatmentId);
 
 				} catch (Exception e2) {
-					reply.setError(PacketError.Condition.internal_server_error);
+            		e2.printStackTrace();
+					reply.setError(PacketError.Condition.not_allowed);
 				}
 
 			} catch (ParseException e1) {
-
 				reply.setError(PacketError.Condition.item_not_found);
 			}
 		}
@@ -610,32 +615,37 @@ public class RayoComponent 	extends 	AbstractComponent
 
 	private IQ handlePauseCommand(boolean flag, IQ iq)
 	{
-		Log.info("RayoComponent handlePauseCommand " + iq.getFrom());
+		Log.info("RayoComponent handlePauseCommand " + iq.getFrom() + " " + iq.getTo());
 
 		IQ reply = IQ.createResultIQ(iq);
-		final String entityId = iq.getTo().getNode();
-		final String treatmentId = iq.getTo().getResource();
+		final JID entityId = getJID(iq.getTo().getNode());
 
-		try {
-			CallHandler callHandler = CallHandler.findCall(entityId);
+		if (entityId != null)
+		{
+			final String treatmentId = entityId.getResource();
+			final String callId = entityId.getNode();
 
-			try {
+			CallHandler callHandler = CallHandler.findCall(callId);
+
+			if (callHandler != null)
+			{
 				callHandler.getMember().pauseTreatment(treatmentId, flag);
 
-			} catch (Exception e1) {
-				reply.setError(PacketError.Condition.internal_server_error);
+			} else  {	// not call, lets try mixer
+
+				try {
+					ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(callId);
+					conferenceManager.getWGManager().pauseConferenceTreatment(treatmentId, flag);
+
+				} catch (ParseException e1) {
+
+					reply.setError(PacketError.Condition.item_not_found);
+				}
 			}
 
-		} catch (NoSuchElementException e) {	// not call, lets try mixer
+		} else {
 
-			try {
-				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(entityId);
-				conferenceManager.getWGManager().pauseConferenceTreatment(treatmentId, flag);
-
-			} catch (ParseException e1) {
-
-				reply.setError(PacketError.Condition.item_not_found);
-			}
+			reply.setError(PacketError.Condition.item_not_found);
 		}
 
 		return reply;
@@ -1208,9 +1218,11 @@ public class RayoComponent 	extends 	AbstractComponent
 							sendPacket(presence);
 
 						} else if ("230 TREATMENT DONE".equals(myEvent)) {
-							//presence.getElement().add(rayoProvider.toXML(new DtmfEvent(callEvent.getCallId(), callEvent.getDtmfKey())));
-							//sendPacket(presence);
-							Log.info("230 TREATMENT DONE");
+							presence.setFrom(callEvent.getCallId() + "@" + getDomain() + "/" + callEvent.getTreatmentId());
+							SayCompleteEvent complete = new SayCompleteEvent();
+							complete.setReason(SayCompleteEvent.Reason.valueOf("SUCCESS"));
+							presence.getElement().add(sayProvider.toXML(complete));
+							sendPacket(presence);
 						}
 					}
 				}

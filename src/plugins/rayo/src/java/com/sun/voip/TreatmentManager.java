@@ -50,8 +50,7 @@ public class TreatmentManager implements MixDataSource {
     private static String[] soundPath;
 
     static {
-	String s = System.getProperty("com.sun.voip.server.Bridge.soundPath",
-            "/com/sun/voip/server/sounds");
+	String s = System.getProperty("com.sun.voip.server.Bridge.soundPath", "/com/sun/voip/server/sounds");
 
 	String[] sp = s.split(":");
 
@@ -124,6 +123,8 @@ public class TreatmentManager implements MixDataSource {
 
     public void pause(boolean isPaused) {
 	this.isPaused = isPaused;
+
+	Logger.println("TreatmentManager paused " + isPaused);
     }
 
     public boolean isPaused() {
@@ -185,6 +186,11 @@ public class TreatmentManager implements MixDataSource {
     }
 
     public int[] getLinearData(int sampleTime) {
+
+	if (isPaused) {
+	    return null;
+	}
+
 	synchronized (treatments) {
 	    audioSource = getAudioSource();
 

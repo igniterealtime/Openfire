@@ -37,6 +37,8 @@ public class Application implements  CallEventListener  {
 			config = Config.getInstance();
 			config.initialise();
 
+			String webHome = pluginDirectory.getAbsolutePath()  + File.separator + ".." + File.separator + ".." + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo";
+
 			System.setProperty("com.sun.voip.server.LOGLEVEL", "99");
 			System.setProperty("com.sun.voip.server.FIRST_RTP_PORT", "3200");
 			System.setProperty("com.sun.voip.server.LAST_RTP_PORT", "3299");
@@ -46,7 +48,8 @@ public class Application implements  CallEventListener  {
 			System.setProperty("com.sun.voip.server.PUBLIC_IP_ADDRESS", config.getPublicHost());
 			System.setProperty("com.sun.voip.server.PROTOCOL", config.getDefaultProtocol());
 			System.setProperty("com.sun.voip.server.SIP_PORT", config.getDefaultSIPPort());
-			System.setProperty("com.sun.voip.server.Bridge.recordDirectory", pluginDirectory.getAbsolutePath()  + File.separator + ".." + File.separator + ".." + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo" + File.separator + "recordings");
+			System.setProperty("com.sun.voip.server.Bridge.recordDirectory", webHome + File.separator + "recordings");
+			System.setProperty("com.sun.voip.server.Bridge.soundPath", "/com/sun/voip/server/sounds:" + webHome + File.separator + "sounds");
 			System.setProperty("freetts.voices", "com.sun.speech.freetts.en.us.cmu_us_kal.KevinVoiceDirectory");
 
 			Properties properties = new Properties();

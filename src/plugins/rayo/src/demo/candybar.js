@@ -68,10 +68,18 @@
         {
           cls: 'redirect',
           label: 'Redirect Call'  
+        },   
+        {
+          cls: 'say',
+          label: 'Say Message'  
+        }, 
+        {
+          cls: 'pause',
+          label: 'Pause say'  
         },        
         {
-          cls: 'private',
-          label: 'Private Call'        
+          cls: 'resume',
+          label: 'Resume say'        
         }],
         timer: true
       },
@@ -98,6 +106,7 @@
           cls: 'leave',
           label: 'Leave Call'
         }],
+        timer: true        
       },      
       inactive: {
         buttons: [],
@@ -278,7 +287,22 @@
       if (self.call) {
         self.call.redirect(prompt("Please enter new destination:","sip:xxxx@domain.com"));
       }
+    };   
+    self.say = function () {
+      if (self.call) {
+        self.call.say(prompt("Please enter message:","tts:hello world, i love you"));
+      }
+    };   
+    self.pause = function () {
+      if (self.call.saying) {
+        self.call.saying.pause();
+      }
     };    
+    self.resume = function () {
+      if (self.call.saying) {
+        self.call.saying.resume();
+      }
+    };     
     self.mute = function () {
       if (self.call) {
         self.call.mute(true);

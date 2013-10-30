@@ -211,11 +211,8 @@
 					//console.log('onAnswer ' + callId);
 					//console.log(headers);
 
-					if (window.candybar.redirect != callId)
-					{
-						window.candybar.setState('active');
-						window.dialer.setCallLabel('Hangup');
-					}
+					window.candybar.setState('active');
+					window.dialer.setCallLabel('Hangup');
 					stopTone();
 				},
 
@@ -294,17 +291,23 @@
 				},
 
 				onRedirect: function(callId) {
-					console.log('onRedirect ' + callId);
+					//console.log('onRedirect ' + callId);
 
 					window.candybar.endGently();
-					window.candybar.redirect = callId;
-
 					window.dialer.setCallLabel('Call');
 					stopTone();
 				},
 
+				onRedirecting: function(callId) {
+					console.log('onRedirecting ' + callId);
+				},
+
+				onRedirected: function(callId) {
+					//console.log('onRedirected ' + callId);
+				},
+
 				onSay: function(saying) {
-					console.log('Started saying ' + saying.sayId);
+					//console.log('Started saying ' + saying.sayId);
 
 					window.candybar.call.saying = saying;
 				},

@@ -65,6 +65,8 @@ public class ConferenceManager {
 
     private boolean	       privateCall = false;
 
+    private boolean	       transferCall = false;
+
     private CallParticipant	heldCall = null;
 
     private String 		   groupName = null;
@@ -641,6 +643,26 @@ public class ConferenceManager {
 			return memberList.isEmpty();
 		}
     }
+
+    public boolean isTransferCall()
+    {
+		return transferCall;
+	}
+
+    public static boolean isTransferCall(String conferenceId)
+    {
+		try {
+			ConferenceManager conferenceManager = findConferenceManager(conferenceId);
+			return conferenceManager.isTransferCall();
+		} catch (ParseException e) {
+			return false;
+		}
+    }
+
+    public void setTransferCall(boolean transferCall)
+    {
+		this.transferCall = transferCall;
+	}
 
     public boolean isPrivateCall()
     {

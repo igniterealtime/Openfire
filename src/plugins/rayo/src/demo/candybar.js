@@ -70,9 +70,13 @@
           label: 'Redirect Call'  
         },   
         {
+          cls: 'record',
+          label: 'Record Voice'  
+        }, 
+        {
           cls: 'say',
           label: 'Say Message'  
-        }, 
+        },         
         {
           cls: 'pause',
           label: 'Pause say'  
@@ -292,7 +296,12 @@
       if (self.call) {
         self.call.say(prompt("Please enter message:","tts:hello world, i love you"));
       }
-    };   
+    };  
+    self.record = function () {
+      if (self.call) {
+        self.call.record(prompt("Please enter name:","greeting"));
+      }
+    };     
     self.pause = function () {
       if (self.call.saying) {
         self.call.saying.pause();

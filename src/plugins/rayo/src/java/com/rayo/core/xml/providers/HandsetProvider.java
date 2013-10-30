@@ -173,6 +173,12 @@ public class HandsetProvider extends BaseProvider {
 
         } else if (object instanceof PublicEvent) {
             createPublicEvent((PublicEvent) object, document);
+
+        } else if (object instanceof TransferredEvent) {
+            createTransferredEvent((TransferredEvent) object, document);
+
+        } else if (object instanceof TransferringEvent) {
+            createTransferringEvent((TransferringEvent) object, document);
         }
     }
 
@@ -229,4 +235,13 @@ public class HandsetProvider extends BaseProvider {
         document.addElement(new QName("public", NAMESPACE));
     }
 
+    private void createTransferredEvent(TransferredEvent event, Document document)
+    {
+        document.addElement(new QName("transferred", NAMESPACE));
+    }
+
+    private void createTransferringEvent(TransferringEvent event, Document document)
+    {
+        document.addElement(new QName("transferring", NAMESPACE));
+    }
 }

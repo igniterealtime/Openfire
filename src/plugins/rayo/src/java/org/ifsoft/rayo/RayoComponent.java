@@ -72,8 +72,9 @@ public class RayoComponent 	extends 	AbstractComponent
 
     private static final Logger Log = LoggerFactory.getLogger(RayoComponent.class);
 
-    private static final String RAYO_CORE = "urn:xmpp:rayo:1";
-    private static final String RAYO_SAY = "urn:xmpp:tropo:say:1";
+    private static final String RAYO_CORE 	= "urn:xmpp:rayo:1";
+    private static final String RAYO_RECORD = "urn:xmpp:rayo:record:1";
+    private static final String RAYO_SAY 	= "urn:xmpp:tropo:say:1";
     private static final String RAYO_HANDSET = "urn:xmpp:rayo:handset:1";
 
     private static final String HOST = "host";
@@ -88,6 +89,7 @@ public class RayoComponent 	extends 	AbstractComponent
     private final RayoPlugin plugin;
 
     private RayoProvider rayoProvider = null;
+    private RecordProvider recordProvider = null;
     private SayProvider sayProvider = null;
     private HandsetProvider handsetProvider = null;
 
@@ -107,6 +109,10 @@ public class RayoComponent 	extends 	AbstractComponent
 		server.getIQDiscoInfoHandler().addServerFeature(RAYO_CORE);
        	rayoProvider = new RayoProvider();
         rayoProvider.setValidator(new Validator());
+
+		server.getIQDiscoInfoHandler().addServerFeature(RAYO_RECORD);
+        recordProvider = new RecordProvider();
+        recordProvider.setValidator(new Validator());
 
 		server.getIQDiscoInfoHandler().addServerFeature(RAYO_SAY);
         sayProvider = new SayProvider();
@@ -133,6 +139,7 @@ public class RayoComponent 	extends 	AbstractComponent
         XMPPServer server = XMPPServer.getInstance();
 
         server.getIQDiscoInfoHandler().removeServerFeature(RAYO_CORE);
+        server.getIQDiscoInfoHandler().removeServerFeature(RAYO_RECORD);
         server.getIQDiscoInfoHandler().removeServerFeature(RAYO_SAY);
         server.getIQDiscoInfoHandler().removeServerFeature(RAYO_HANDSET);
 
@@ -198,6 +205,23 @@ public class RayoComponent 	extends 	AbstractComponent
 				return reply;
 			}
 
+			if (RAYO_RECORD.equals(namespace)) {
+				IQ reply = null;
+
+				Object object = recordProvider.fromXML(element);
+
+				if (object instanceof Record) {
+					reply = handleRecord((Record) object, iq);
+
+				} else if (object instanceof PauseCommand) {
+					reply = handlePauseRecordCommand(true, iq);
+
+				} else if (object instanceof ResumeCommand) {
+					reply = handlePauseRecordCommand(false, iq);
+				}
+				return reply;
+			}
+
 			if (RAYO_SAY.equals(namespace)) {
 				IQ reply = null;
 
@@ -207,10 +231,10 @@ public class RayoComponent 	extends 	AbstractComponent
 					reply = handleSay((Say) object, iq);
 
 				} else if (object instanceof PauseCommand) {
-					reply = handlePauseCommand(true, iq);
+					reply = handlePauseSayCommand(true, iq);
 
 				} else if (object instanceof ResumeCommand) {
-					reply = handlePauseCommand(false, iq);
+					reply = handlePauseSayCommand(false, iq);
 				}
 				return reply;
 			}
@@ -245,10 +269,10 @@ public class RayoComponent 	extends 	AbstractComponent
 					dial.setFrom(new URI("xmpp:" + iq.getFrom()));
 					dial.setHeaders(redirect.getHeaders());
 
-					reply = handleDialCommand((DialCommand) dial, iq);
+					reply = handleDialCommand((DialCommand) dial, iq, true);
 
 				} else if (object instanceof DialCommand) {
-					reply = handleDialCommand((DialCommand) object, iq);
+					reply = handleDialCommand((DialCommand) object, iq, false);
 
 				} else if (object instanceof StopCommand) {
 
@@ -565,6 +589,70 @@ public class RayoComponent 	extends 	AbstractComponent
 
 	}
 
+	private IQ handleRecord(Record command, IQ iq)
+	{
+		Log.info("RayoComponent handleRecord " + iq.getFrom());
+
+		IQ reply = IQ.createResultIQ(iq);
+		final String callId = JID.escapeNode(iq.getFrom().toString());
+		final String uri = command.getTo().toString();
+
+		CallHandler callHandler = CallHandler.findCall(callId);
+
+		if (callHandler != null)
+		{
+			try {
+				final String fileName = uri.substring(5);			// expecting file: prefix
+
+				callHandler.getCallParticipant().setRecordDirectory(System.getProperty("com.sun.voip.server.Bridge.soundsDirectory", "."));
+				callHandler.getMemberReceiver().setRecordFromMember(true, fileName, "au");
+
+				final Element childElement = reply.setChildElement("ref", RAYO_CORE);
+				childElement.addAttribute(ID, fileName);
+				childElement.addAttribute(URI, (String) uri);
+
+			} catch (Exception e1) {
+            	e1.printStackTrace();
+				reply.setError(PacketError.Condition.not_allowed);
+			}
+		} else {
+			reply.setError(PacketError.Condition.item_not_found);
+		}
+
+		return reply;
+	}
+
+	private IQ handlePauseRecordCommand(boolean flag, IQ iq)
+	{
+		Log.info("RayoComponent handlePauseRecordCommand " + iq.getFrom() + " " + iq.getTo());
+
+		IQ reply = IQ.createResultIQ(iq);
+		final String callId = JID.escapeNode(iq.getFrom().toString());
+
+		CallHandler callHandler = CallHandler.findCall(callId);
+
+		if (callHandler != null)
+		{
+			try {
+				CallParticipant cp = callHandler.getCallParticipant();
+				String fileName = cp.getFromRecordingFile();
+				cp.setRecordDirectory(System.getProperty("com.sun.voip.server.Bridge.soundsDirectory", "."));
+
+				callHandler.getMemberReceiver().setRecordFromMember(flag, fileName, "au");
+
+			} catch (Exception e1) {
+            	e1.printStackTrace();
+				reply.setError(PacketError.Condition.not_allowed);
+			}
+
+		} else {
+
+			reply.setError(PacketError.Condition.item_not_found);
+		}
+
+		return reply;
+	}
+
 	private IQ handleSay(Say command, IQ iq)
 	{
 		Log.info("RayoComponent handleSay " + iq.getFrom());
@@ -613,9 +701,9 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-	private IQ handlePauseCommand(boolean flag, IQ iq)
+	private IQ handlePauseSayCommand(boolean flag, IQ iq)
 	{
-		Log.info("RayoComponent handlePauseCommand " + iq.getFrom() + " " + iq.getTo());
+		Log.info("RayoComponent handlePauseSayCommand " + iq.getFrom() + " " + iq.getTo());
 
 		IQ reply = IQ.createResultIQ(iq);
 		final JID entityId = getJID(iq.getTo().getNode());
@@ -675,8 +763,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				Presence presence = new Presence();
 				presence.setFrom(iq.getTo());
 				presence.setTo(callerId);
-
-				presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+				setRingingState(presence, ConferenceManager.isTransferCall(mixer), headers);
 				sendPacket(presence);
 
 			} else reply.setError(PacketError.Condition.item_not_found);
@@ -712,14 +799,19 @@ public class RayoComponent 	extends 	AbstractComponent
 				headers.put("call_action", "join");
 
 				try {
-					Presence presence1 = new Presence();												//to caller
-					presence1.setFrom(iq.getTo());
-					presence1.setTo(callerId);
-					presence1.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
-					sendPacket(presence1);
-
 					callHandler = CallHandler.findCall(callId);
 					handsetHandler = CallHandler.findCall(JID.escapeNode(callerId));
+
+					if (handsetHandler != null)
+					{
+						CallParticipant hp = handsetHandler.getCallParticipant();
+
+						Presence presence1 = new Presence();												//to caller
+						presence1.setFrom(iq.getTo());
+						presence1.setTo(callerId);
+						setAnsweredState(presence1, ConferenceManager.isTransferCall(hp.getConferenceId()), headers);
+						sendPacket(presence1);
+					}
 
 				} catch (Exception e) {
 					reply.setError(PacketError.Condition.item_not_found);
@@ -896,7 +988,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-	private IQ handleDialCommand(DialCommand command, IQ iq)
+	private IQ handleDialCommand(DialCommand command, IQ iq, boolean transferCall)
 	{
 		Log.info("RayoComponent handleHandsetDialCommand " + iq.getFrom());
 
@@ -952,7 +1044,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				cp.setName(calledName);
 				cp.setHeaders(headers);
 
-				reply = doPhoneAndPcCall(JID.escapeNode(handsetId), cp, reply);
+				reply = doPhoneAndPcCall(JID.escapeNode(handsetId), cp, reply, transferCall);
 
 			} else if (toXmpp){
 
@@ -971,6 +1063,12 @@ public class RayoComponent 	extends 	AbstractComponent
 						CallParticipant hp = handsetHandler.getCallParticipant();
 
 						headers.put("mixer_name", hp.getConferenceId());
+
+						try {
+							ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(hp.getConferenceId());
+							conferenceManager.setTransferCall(transferCall);
+
+						} catch (Exception e) {}
 
 						if (findUser(destination.getNode()) != null)
 						{
@@ -1077,7 +1175,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
-	private IQ doPhoneAndPcCall(String handsetId, CallParticipant cp, IQ reply)
+	private IQ doPhoneAndPcCall(String handsetId, CallParticipant cp, IQ reply, boolean transferCall)
 	{
 		Log.info("RayoComponent doPhoneAndPcCall " + handsetId);
 
@@ -1086,7 +1184,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		if (handsetHandler != null)
 		{
 			try {
-				setMixer(handsetHandler, reply, cp);
+				setMixer(handsetHandler, reply, cp, transferCall);
 
 				OutgoingCallHandler outgoingCallHandler = new OutgoingCallHandler(this, cp);
 
@@ -1110,7 +1208,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
-    private void setMixer(CallHandler handsetHandler, IQ reply, CallParticipant cp)
+    private void setMixer(CallHandler handsetHandler, IQ reply, CallParticipant cp, boolean transferCall)
     {
 		CallParticipant hp = handsetHandler.getCallParticipant();
 
@@ -1128,6 +1226,7 @@ public class RayoComponent 	extends 	AbstractComponent
 			cp.setConferenceId(mixer);
 			cp.setCallId(mixer);
 			conferenceManager.setCallId(mixer);
+			conferenceManager.setTransferCall(transferCall);
 
 			String recording = mixer + "-" + cp.getStartTimestamp() + ".au";
 			conferenceManager.recordConference(true, recording, "au");
@@ -1194,7 +1293,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 								if (cp.isAutoAnswer() == false)	// SIP handset, no ringing event
 								{
-									presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+									setRingingState(presence, ConferenceManager.isTransferCall(callEvent.getConferenceId()), headers);
 									sendPacket(presence);
 								}
 
@@ -1407,7 +1506,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 					if (groupName == null)
 					{
-						routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty);
+						routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
 
 					} else {
 
@@ -1419,7 +1518,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 							for (ClientSession session : sessions)
 							{
-								routeJoinEvent(session.getAddress().toString(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty);
+								routeJoinEvent(session.getAddress().toString(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
 							}
 						}
 					}
@@ -1444,6 +1543,10 @@ public class RayoComponent 	extends 	AbstractComponent
 								sendPacket(presence);
 							}
 						}
+
+					} else if (memberCount == 2) {
+
+						conferenceManager.setTransferCall(false);	// reset after informing on redirect
 					}
 				}
 			}
@@ -1455,7 +1558,7 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
     }
 
-    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName, String callId, CallHandler farParty)
+    private void routeJoinEvent(String callee, CallParticipant callParticipant, ConferenceEvent conferenceEvent, int memberCount, String groupName, String callId, CallHandler farParty, ConferenceManager conferenceManager)
     {
 		Log.info( "RayoComponent routeJoinEvent " + callee + " " + callId + " " + groupName + " " + memberCount + " " + farParty);
 
@@ -1504,7 +1607,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					{
 						Log.info( "RayoComponent routeJoinEvent handset leaving ");
 
-						presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+						setAnsweredState(presence, conferenceManager.isTransferCall(), headers);
 						sendPacket(presence);
 
 					} else {
@@ -1519,7 +1622,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					{
 						Log.info( "RayoComponent routeJoinEvent far party joined ");
 
-						presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+						setAnsweredState(presence, conferenceManager.isTransferCall(), headers);
 						sendPacket(presence);
 
 					} else {	// handset joined
@@ -1535,8 +1638,8 @@ public class RayoComponent 	extends 	AbstractComponent
 								Log.info( "RayoComponent routeJoinEvent on hold ");
 
 								fp.setHeld(false);
-								ConferenceManager.setHeldCall(conferenceEvent.getConferenceId(), null);
-								presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+								conferenceManager.setHeldCall(null);
+								setAnsweredState(presence, conferenceManager.isTransferCall(), headers);
 								sendPacket(presence);
 
 							} else {
@@ -1546,7 +1649,7 @@ public class RayoComponent 	extends 	AbstractComponent
 								{
 									Log.info( "RayoComponent routeJoinEvent handset joing sip call");
 
-									presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+									setAnsweredState(presence, conferenceManager.isTransferCall(), headers);
 									sendPacket(presence);
 								}
 							}
@@ -1575,7 +1678,7 @@ public class RayoComponent 	extends 	AbstractComponent
 								presence.getElement().add(handsetProvider.toXML(new OnHoldEvent()));
 								sendPacket(presence);
 
-								ConferenceManager.setHeldCall(conferenceEvent.getConferenceId(), callParticipant);
+								conferenceManager.setHeldCall(callParticipant);
 							}
 						}
 
@@ -1590,7 +1693,7 @@ public class RayoComponent 	extends 	AbstractComponent
 							presence.getElement().add(handsetProvider.toXML(new OnHoldEvent()));
 							sendPacket(presence);
 
-							ConferenceManager.setHeldCall(conferenceEvent.getConferenceId(), farParty.getCallParticipant());
+							conferenceManager.setHeldCall(farParty.getCallParticipant());
 
 						} else {
 							finishCallRecord(callParticipant);
@@ -1611,6 +1714,26 @@ public class RayoComponent 	extends 	AbstractComponent
 		}
 	}
 
+
+	private void setAnsweredState(Presence presence, boolean isTransfer, Map<String, String> headers)
+	{
+		if (isTransfer)
+		{
+			presence.getElement().add(handsetProvider.toXML(new TransferredEvent()));
+		} else {
+			presence.getElement().add(rayoProvider.toXML(new AnsweredEvent(null, headers)));
+		}
+	}
+
+	private void setRingingState(Presence presence, boolean isTransfer, Map<String, String> headers)
+	{
+		if (isTransfer)
+		{
+			presence.getElement().add(handsetProvider.toXML(new TransferringEvent()));
+		} else {
+			presence.getElement().add(rayoProvider.toXML(new RingingEvent(null, headers)));
+		}
+	}
 
     private JID findUser(String username)
     {
@@ -1740,8 +1863,12 @@ public class RayoComponent 	extends 	AbstractComponent
 	private IQHandler holdIQHandler = null;
 
 	private IQHandler sayIQHandler = null;
-	private IQHandler pauseIQHandler = null;
-	private IQHandler resumeIQHandler = null;
+	private IQHandler pauseSayIQHandler = null;
+	private IQHandler resumeSayIQHandler = null;
+
+	private IQHandler recordIQHandler = null;
+	private IQHandler pauseRecordIQHandler = null;
+	private IQHandler resumeRecordIQHandler = null;
 
 	private IQHandler acceptIQHandler = null;
 	private IQHandler answerIQHandler = null;
@@ -1762,9 +1889,13 @@ public class RayoComponent 	extends 	AbstractComponent
 		unmuteIQHandler		= new UnmuteIQHandler(); server.getIQRouter().addHandler(unmuteIQHandler);
 		holdIQHandler 		= new HoldIQHandler(); server.getIQRouter().addHandler(holdIQHandler);
 
+		recordIQHandler 		= new RecordIQHandler(); server.getIQRouter().addHandler(recordIQHandler);
+		pauseRecordIQHandler 	= new PauseRecordIQHandler(); server.getIQRouter().addHandler(pauseRecordIQHandler);
+		resumeRecordIQHandler 	= new ResumeRecordIQHandler(); server.getIQRouter().addHandler(resumeRecordIQHandler);
+
 		sayIQHandler 		= new SayIQHandler(); server.getIQRouter().addHandler(sayIQHandler);
-		pauseIQHandler		= new PauseIQHandler(); server.getIQRouter().addHandler(pauseIQHandler);
-		resumeIQHandler 	= new ResumeIQHandler(); server.getIQRouter().addHandler(resumeIQHandler);
+		pauseSayIQHandler	= new PauseSayIQHandler(); server.getIQRouter().addHandler(pauseSayIQHandler);
+		resumeSayIQHandler 	= new ResumeSayIQHandler(); server.getIQRouter().addHandler(resumeSayIQHandler);
 
 		acceptIQHandler 	= new AcceptIQHandler(); server.getIQRouter().addHandler(acceptIQHandler);
 		answerIQHandler 	= new AnswerIQHandler(); server.getIQRouter().addHandler(answerIQHandler);
@@ -1787,8 +1918,8 @@ public class RayoComponent 	extends 	AbstractComponent
 		if (holdIQHandler != null) {server.getIQRouter().removeHandler(holdIQHandler); holdIQHandler = null;}
 
 		if (sayIQHandler != null) {server.getIQRouter().removeHandler(sayIQHandler); sayIQHandler = null;}
-		if (pauseIQHandler != null) {server.getIQRouter().removeHandler(pauseIQHandler); pauseIQHandler = null;}
-		if (resumeIQHandler != null) {server.getIQRouter().removeHandler(resumeIQHandler); resumeIQHandler = null;}
+		if (pauseSayIQHandler != null) {server.getIQRouter().removeHandler(pauseSayIQHandler); pauseSayIQHandler = null;}
+		if (resumeSayIQHandler != null) {server.getIQRouter().removeHandler(resumeSayIQHandler); resumeSayIQHandler = null;}
 
 		if (acceptIQHandler != null) {server.getIQRouter().removeHandler(acceptIQHandler); acceptIQHandler = null;}
 		if (answerIQHandler != null) {server.getIQRouter().removeHandler(answerIQHandler); answerIQHandler = null;}
@@ -1854,6 +1985,31 @@ public class RayoComponent 	extends 	AbstractComponent
 
 
 
+    private class RecordIQHandler extends IQHandler
+    {
+        public RecordIQHandler() { super("Rayo: XEP 0327 - Record");}
+
+        @Override public IQ handleIQ(IQ iq) {try {return handleIQGet(iq);} catch(Exception e) { return null;}}
+        @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("record", RAYO_RECORD); }
+    }
+
+    private class PauseRecordIQHandler extends IQHandler
+    {
+        public PauseRecordIQHandler() { super("Rayo: XEP 0327 - Pause Record");}
+
+        @Override public IQ handleIQ(IQ iq) {try {return handleIQGet(iq);} catch(Exception e) { return null;}}
+        @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("pause", RAYO_RECORD); }
+    }
+
+    private class ResumeRecordIQHandler extends IQHandler
+    {
+        public ResumeRecordIQHandler() { super("Rayo: XEP 0327 - Resume Record");}
+
+        @Override public IQ handleIQ(IQ iq) {try {return handleIQGet(iq);} catch(Exception e) { return null;}}
+        @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("resume", RAYO_RECORD); }
+    }
+
+
 
     private class SayIQHandler extends IQHandler
     {
@@ -1863,17 +2019,17 @@ public class RayoComponent 	extends 	AbstractComponent
         @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("say", RAYO_SAY); }
     }
 
-    private class PauseIQHandler extends IQHandler
+    private class PauseSayIQHandler extends IQHandler
     {
-        public PauseIQHandler() { super("Rayo: XEP 0327 - Pause Say");}
+        public PauseSayIQHandler() { super("Rayo: XEP 0327 - Pause Say");}
 
         @Override public IQ handleIQ(IQ iq) {try {return handleIQGet(iq);} catch(Exception e) { return null;}}
         @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("pause", RAYO_SAY); }
     }
 
-    private class ResumeIQHandler extends IQHandler
+    private class ResumeSayIQHandler extends IQHandler
     {
-        public ResumeIQHandler() { super("Rayo: XEP 0327 - Resume Say");}
+        public ResumeSayIQHandler() { super("Rayo: XEP 0327 - Resume Say");}
 
         @Override public IQ handleIQ(IQ iq) {try {return handleIQGet(iq);} catch(Exception e) { return null;}}
         @Override public IQHandlerInfo getInfo() { return new IQHandlerInfo("resume", RAYO_SAY); }

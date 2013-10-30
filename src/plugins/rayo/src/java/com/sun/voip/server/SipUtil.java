@@ -139,7 +139,7 @@ public class SipUtil {
             (byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, false));
 
         supportedMedia.add(new MediaInfo(
-            (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, true));
+            (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, false));
 
         supportedMedia.add(new MediaInfo(
             (byte)102, RtpPacket.PCM_ENCODING, 8000, 2, false));

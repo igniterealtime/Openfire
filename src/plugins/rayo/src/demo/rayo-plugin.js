@@ -155,7 +155,7 @@ Strophe.addConnectionPlugin('rayo',
 			}
 		}
 			
-		console.log(iq.toString());
+		//console.log(iq.toString());
 			
 		that._connection.sendIQ(iq, function(response) 
 		{
@@ -167,8 +167,7 @@ Strophe.addConnectionPlugin('rayo',
 				if (that.callbacks && that.callbacks.onRedirect) that.callbacks.onRedirect(callId);	
 			});
 			
-		}, function(error) {
-			console.log(error);		
+		}, function(error) {	
 			
 			$('error', error).each(function() 
 			{
@@ -229,6 +228,25 @@ Strophe.addConnectionPlugin('rayo',
 			{
 				var errorcode = $(this).attr('code');
 				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("say failure " + errorcode); 				
+			});		     	
+		});		
+		
+	},
+
+	record: function(callId, fileName)
+	{
+		var to = "file:" + fileName + ".au";
+		console.log('Rayo plugin record ' + callId + " " + to);
+		
+		var that = this;		
+		var iq = $iq({to: callId + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("record", {xmlns: Strophe.NS.RAYO_RECORD, to: to});  
+			
+		that._connection.sendIQ(iq, null, function(error)
+		{
+			$('error', error).each(function() 
+			{
+				var errorcode = $(this).attr('code');
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("record failure " + errorcode); 				
 			});		     	
 		});		
 		
@@ -357,7 +375,8 @@ Strophe.addConnectionPlugin('rayo',
 						{  		
 							digit: 	  function(tone) 	{that.digit(callId, tone);},
 							redirect: function(to) 		{that.redirect(to, headers);},	
-							say: 	  function(message)	{that.say(callId, message);},								
+							say: 	  function(message)	{that.say(callId, message);},	
+							record:	  function(file)	{that.record(callId, file);},								
 							hangup:   function() 		{that.hangup(callId);},
 							hold: 	  function() 		{that.hold(callId);},							
 							join: 	  function() 		{that.join(mixer, headers);},
@@ -557,7 +576,7 @@ Strophe.addConnectionPlugin('rayo',
 	_handlePresence: function(presence) 
 	{
 		//console.log('Rayo plugin handlePresence');
-		console.log(presence);
+		//console.log(presence);
 		
 		var that = this;
 		var from = $(presence).attr('from');
@@ -602,7 +621,8 @@ Strophe.addConnectionPlugin('rayo',
 				var call = {		
 					digit: 	  function(tone) 	{that.digit(callId, tone);},
 					redirect: function(to) 		{that.redirect(to, headers);},	
-					say: 	  function(message)	{that.say(callId, message);},						
+					say: 	  function(message)	{that.say(callId, message);},	
+					record:	  function(file)	{that.record(callId, file);},						
 					hangup:   function() 		{that.hangup(callId);},
 					hold: 	  function() 		{that.hold(callId);},						
 					answer:   function() 		{that.answer(callId, mixer, headers, callFrom);},
@@ -773,6 +793,28 @@ Strophe.addConnectionPlugin('rayo',
 			}
 		});
 		
+		$(presence).find('transferring').each(function() 
+		{
+			//console.log(presence);
+			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+			{			
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onRedirecting) that.callbacks.onRedirecting(callId);
+			}
+		});
+		
+		$(presence).find('transferred').each(function() 
+		{
+			//console.log(presence);
+			
+			if ($(this).attr('xmlns') == Strophe.NS.RAYO_HANDSET)
+			{			
+				var callId = Strophe.getNodeFromJid(from);
+				if (that.callbacks && that.callbacks.onRedirected) that.callbacks.onRedirected(callId);
+			}
+		});		
+		
 		$(presence).find('answered').each(function() 
 		{	
 			//console.log(presence);
@@ -803,7 +845,8 @@ Strophe.addConnectionPlugin('rayo',
 					
 					var call = {		
 						digit: 	 function(tone) 	{that.digit(callId, tone);},
-						say: 	 function(message)	{that.say(callId, message);},						
+						say: 	 function(message)	{that.say(callId, message);},	
+						record:	 function(file)		{that.record(callId, file);},							
 						hangup:  function() 		{that.hangup(callId);},
 						hold: 	 function() 		{that.hold(callId);},							
 						join: 	 function() 		{that.join(mixer, headers);},	

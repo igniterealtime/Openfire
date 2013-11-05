@@ -55,6 +55,8 @@ import org.xmpp.jnodes.RelayChannel;
 import org.ifsoft.*;
 import org.ifsoft.rtp.*;
 
+import org.jitsi.impl.neomedia.codec.audio.opus.Opus;
+
 /**
  * Send RTP data to this ConferenceMember,
  */
@@ -72,6 +74,14 @@ public class MemberSender {
     private int dtmfSendSequence;
     private RtpSenderPacket senderPacket;
     private SpeexEncoder speexEncoder;
+
+	private long opusEncoder = 0;
+    private final int opusSampleRate = 48000;
+    private final int frameSizeInMillis = 20;
+    private final int outputFrameSize = 2;
+    private final int opusChannels = 2;
+    private int frameSizeInSamplesPerChannel = (opusSampleRate * frameSizeInMillis) / 1000;
+    private int frameSizeInBytes = outputFrameSize * opusChannels * frameSizeInSamplesPerChannel;
 
     private InetSocketAddress memberAddress;
     private boolean done = false;
@@ -265,6 +275,23 @@ public class MemberSender {
 			}
 	}
 
+	if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
+
+		try {
+			opusEncoder = Opus.encoder_create(opusSampleRate, opusChannels);
+
+			if (opusEncoder == 0)
+			{
+				Logger.println("Call " + cp + " OPUS encoder creation error ");
+				callHandler.cancelRequest("OPUS encoder creation error ");
+				return;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	initializationDone = true;
 
@@ -411,6 +438,8 @@ public class MemberSender {
 
 	//Logger.println("Call " + cp + " Sending data...");
 
+	byte[] opusBytes = null;
+
 	if (myMediaInfo.getEncoding() == RtpPacket.PCMU_ENCODING) {
 	    /*
 	     * Convert to ulaw
@@ -433,13 +462,27 @@ public class MemberSender {
                 Logger.println("Call " + this + ":  " + e.getMessage());
 		return false;
 	    }
+
+	} else if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
+
+		byte[] input = AudioConversion.littleEndianIntsToBytes(dataToSend);
+		byte[] output = new byte[Opus.MAX_PACKET];
+
+		int outLength = Opus.encode(opusEncoder, input, 0, frameSizeInSamplesPerChannel, output, 0, output.length);
+		opusBytes = new byte[outLength];
+		System.arraycopy(output, 0, opusBytes, 0, outLength);
+
+		System.arraycopy(output, 0, rtpData, RtpPacket.HEADER_SIZE, outLength);
+	    senderPacket.setLength(outLength + RtpPacket.HEADER_SIZE);
+
+		//Logger.println("RtpPacket.PCM_ENCODING " + outLength);
+
 	} else {
 	    AudioConversion.intsToBytes(dataToSend, rtpData, RtpPacket.HEADER_SIZE);
 	}
 
 	recordPacket(rtpData, senderPacket.getLength());
-	recordAudio(rtpData, RtpPacket.HEADER_SIZE,
-	    senderPacket.getLength() - RtpPacket.HEADER_SIZE);
+	recordAudio(rtpData, RtpPacket.HEADER_SIZE,	senderPacket.getLength() - RtpPacket.HEADER_SIZE);
 
 	/*
 	 * Encrypt data if required
@@ -469,14 +512,12 @@ public class MemberSender {
 			try {
 				senderPacket.setSocketAddress(memberAddress);
 
-				datagramChannel.send(
-				ByteBuffer.wrap(senderPacket.getData(), 0,
-					senderPacket.getLength()), memberAddress);
+				datagramChannel.send(ByteBuffer.wrap(senderPacket.getData(), 0, senderPacket.getLength()), memberAddress);
 
 					if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
 					Logger.writeFile("Call " + cp + " back from sending data");
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				if (!done) {
 				Logger.error("Call " + cp + " sendData " + e.getMessage());
 					e.printStackTrace();
@@ -488,7 +529,8 @@ public class MemberSender {
 	} else {
 
 		try {
-			getWebRTCParticipant().pushAudio(rtpData, dataToSend);
+
+			getWebRTCParticipant().pushAudio(senderPacket.getData(), opusBytes);
 
 		} catch (Exception e) {
 
@@ -758,8 +800,7 @@ public class MemberSender {
         senderPacket.setSocketAddress(memberAddress);
 
 	try {
-	    datagramChannel.send(
-		ByteBuffer.wrap(senderPacket.getData()), memberAddress);
+	    datagramChannel.send(ByteBuffer.wrap(senderPacket.getData()), memberAddress);
 	} catch (IOException e) {
 	    if (!done) {
 		Logger.println("Call " + cp + " sendComfortNoisePayload "
@@ -854,16 +895,22 @@ public class MemberSender {
     public void end() {
         if (done) {
             return;
-	}
+		}
 
         done = true;
 
-	synchronized (recordingLock) {
-            if (recorder != null) {
-                recorder.done();
-                recorder = null;
-            }
-	}
+		synchronized (recordingLock) {
+				if (recorder != null) {
+					recorder.done();
+					recorder = null;
+				}
+		}
+
+        if (opusEncoder != 0)
+        {
+           	Opus.encoder_destroy(opusEncoder);
+            opusEncoder = 0;
+        }
     }
 
     public void printStatistics() {

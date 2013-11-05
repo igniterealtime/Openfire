@@ -80,10 +80,12 @@ public class IncomingConferenceHandler extends Thread
      * Constructor.
      */
     public IncomingConferenceHandler(IncomingCallHandler incomingCallHandler, String phoneNo) {
-	this.incomingCallHandler = incomingCallHandler;
-	this.phoneNo = phoneNo;
+		this.incomingCallHandler = incomingCallHandler;
+		this.phoneNo = phoneNo;
 
-	incomingCallHandler.addCallEventListener(this);
+		incomingCallHandler.addCallEventListener(this);
+
+	    Logger.println("IncomingConferenceHandler:  " + phoneNo);
     }
 
     private String lastMessagePlayed;
@@ -121,9 +123,9 @@ public class IncomingConferenceHandler extends Thread
      * Called when status for an incoming call changes.
      */
     public void callEventNotification(CallEvent callEvent) {
-	if (Logger.logLevel >= Logger.LOG_INFO) {
-	    Logger.println(callEvent.toString());
-	}
+	//if (Logger.logLevel >= Logger.LOG_INFO) {
+	    Logger.println("IncomingConferenceHandler " + callEvent.toString());
+	//}
 
 	if (callEvent.equals(CallEvent.STATE_CHANGED) &&
 		callEvent.getCallState().equals(CallState.ESTABLISHED)) {
@@ -132,18 +134,19 @@ public class IncomingConferenceHandler extends Thread
 	     * New incoming call
 	     */
 	    if (callEvent.getInfo() != null) {
-	    	Logger.println("IncomingConferenceHandler:  "
-		    + callEvent.getInfo());
+	    	Logger.println("IncomingConferenceHandler:  " + callEvent.getInfo());
 	    }
 
 		if (Config.getInstance().getMeetingCode(phoneNo) != null)
 		{
 			meetingCode = Config.getInstance().getMeetingCode(phoneNo);
 
+	    	Logger.println("IncomingConferenceHandler:  meeting code " + meetingCode);
+
 			if (Config.getInstance().getPassCode(meetingCode, phoneNo) == null)
 			{
 				try {
-					incomingCallHandler.transferCall(Config.getInstance().getMeetingCode(phoneNo));
+					incomingCallHandler.transferCall(meetingCode);
 					state = IN_MEETING;
 
 				} catch (IOException e) {

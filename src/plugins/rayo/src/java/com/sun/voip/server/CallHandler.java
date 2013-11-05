@@ -323,10 +323,9 @@ public abstract class CallHandler extends Thread {
      * Send indication when a dtmf key is pressed
      */
     public void dtmfKeys(String dtmfKeys) {
-	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println(cp + " got dtmf keys " + dtmfKeys + " "
-		+ cp.dtmfDetection());
-	}
+	//if (Logger.logLevel >= Logger.LOG_MOREINFO) {
+	    Logger.println(cp + " got dtmf keys " + dtmfKeys + " " 	+ cp.dtmfDetection());
+	//}
 
 	if (isCallEstablished()) {
 	    if (cp.dtmfDetection()) {

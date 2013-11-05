@@ -3,12 +3,12 @@
  *
  * This file is part of jVoiceBridge.
  *
- * jVoiceBridge is free software: you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License version 2 as 
- * published by the Free Software Foundation and distributed hereunder 
+ * jVoiceBridge is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation and distributed hereunder
  * to you.
  *
- * jVoiceBridge is distributed in the hope that it will be useful, 
+ * jVoiceBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Sun designates this particular file as subject to the "Classpath"
- * exception as provided by Sun in the License file that accompanied this 
- * code. 
+ * exception as provided by Sun in the License file that accompanied this
+ * code.
  */
 
 package com.sun.voip;
@@ -49,7 +49,7 @@ public class SdpInfo {
     private MediaInfo transmitMediaInfo;
     private boolean transmitMediaInfoOk;
 
-    public SdpInfo(String remoteHost, int remotePort, 
+    public SdpInfo(String remoteHost, int remotePort,
 	    byte telephoneEventPayload, Vector supportedMedia,
 	    MediaInfo mediaInfo, boolean preferredMediaSpecified) {
 
@@ -136,7 +136,7 @@ public class SdpInfo {
     public MediaInfo getMediaInfo() {
 	return mediaInfo;
     }
-    
+
     public void setTransmitMediaInfoOk(boolean transmitMediaInfoOk) {
 	this.transmitMediaInfoOk = transmitMediaInfoOk;
     }
@@ -150,7 +150,7 @@ public class SdpInfo {
     }
 
     public MediaInfo getTransmitMediaInfo() {
-	if (transmitMediaInfo == null || mediaInfo.getPayload() == 
+	if (transmitMediaInfo == null || mediaInfo.getPayload() ==
 		RtpPacket.PCMU_PAYLOAD) {
 
 	    return mediaInfo;
@@ -176,7 +176,7 @@ public class SdpInfo {
 	    Logger.println(e.getMessage());
 	    Logger.println("Using transmit media info " + transmitMediaInfo);
 	}
-	
+
 	return transmitMediaInfo;
     }
 
@@ -204,7 +204,7 @@ public class SdpInfo {
 	return true;
     }
 
-    public MediaInfo getMediaInfo(int sampleRate, int channels, int encoding) 
+    public MediaInfo getMediaInfo(int sampleRate, int channels, int encoding)
 	    throws IOException {
 
 	if (supportedMedia != null) {
@@ -224,8 +224,7 @@ public class SdpInfo {
 	    + encoding + "/" + sampleRate + "/" + channels);
     }
 
-    public MediaInfo findBestMediaInfo(Vector otherSupportedMedia,
-	    MediaInfo otherMediaPreference) throws IOException {
+    public MediaInfo findBestMediaInfo(Vector otherSupportedMedia,  MediaInfo otherMediaPreference) throws IOException {
 
 	MediaInfo best = null;
 
@@ -239,7 +238,7 @@ public class SdpInfo {
 	    if (otherMediaPreference != null) {
 		if (m.getSampleRate() > otherMediaPreference.getSampleRate() ||
 		        m.getChannels() > otherMediaPreference.getChannels()) {
-			
+
 		    continue;
 		}
 	    }
@@ -257,7 +256,7 @@ public class SdpInfo {
     }
 
     private boolean isBetter(MediaInfo m1, MediaInfo m2) {
-	if (m1.getSampleRate() > m2.getSampleRate() && 
+	if (m1.getSampleRate() > m2.getSampleRate() &&
 	        m1.getChannels() >= m2.getChannels()) {
 
 	    return true;

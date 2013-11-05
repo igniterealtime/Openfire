@@ -91,7 +91,6 @@ public class RelayChannel {
     private Integer lastAudioTimestamp = new Integer((int)0);
 
     private long decoder = 0;
-    private long encoder = 0;
     private final int sampleRate = 48000;
     private final int frameSizeInMillis = 20;
     private final int outputFrameSize = 2;
@@ -297,22 +296,13 @@ public class RelayChannel {
 				encryptor2 = new Encryptor(SDPCryptoSuite.getEncryptionMode(handset.cryptoSuite), remoteCryptoKey, remoteCryptoSalt, localCryptoKey, localCryptoSalt);
 
             	decoder = Opus.decoder_create(sampleRate, channels);
-				encoder = Opus.encoder_create(sampleRate, channels);
-
-				//Opus.encoder_set_bandwidth(encoder, Opus.OPUS_AUTO);
-				//Opus.encoder_set_bitrate(encoder, 32000);
-				//Opus.encoder_set_complexity(encoder, 10);
-				//Opus.encoder_set_inband_fec(encoder, 1);
-				//Opus.encoder_set_packet_loss_perc(encoder, 1);
-				//Opus.encoder_set_dtx(encoder, 1);
 
             	if (decoder == 0) Log.error( "Opus decoder creation error ");
-				if (encoder == 0) Log.error( "Opus encoder creation error ");
 
-				if (decoder == 0 || encoder == 0)
+				if (decoder == 0)
 				{
 					handset.codec = "PCMU";
-					Log.warn( "Opus encoder/decoder creation failure, PCMU will be used in default");
+					Log.warn( "Opus decoder creation failure, PCMU will be used in default");
 				}
 
 			} catch (Exception e) {
@@ -359,12 +349,6 @@ public class RelayChannel {
         {
             Opus.decoder_destroy(decoder);
             decoder = 0;
-        }
-
-        if (encoder != 0)
-        {
-           Opus.encoder_destroy(encoder);
-           encoder = 0;
         }
 
         SayCompleteEvent complete = new SayCompleteEvent();
@@ -445,7 +429,7 @@ public class RelayChannel {
         return new Long((new Integer(timestamp.intValue())).longValue());
     }
 
-	public synchronized void pushAudio(byte[] rtpData, int[] in)
+	public synchronized void pushAudio(byte[] rtpData, byte[] opus)
 	{
 		try {
 
@@ -454,15 +438,9 @@ public class RelayChannel {
 				RTPPacket newPacket = RTPPacket.parseBytes(BitAssistant.bytesToArray(rtpData));
 				RTPPacket packet = RTPPacket.parseBytes(lastAudioPacket.getBytes());
 
-				if (handset.codec == null || "OPUS".equals(handset.codec))
+				if (opus != null)
 				{
-					byte[] input = AudioConversion.littleEndianIntsToBytes(in);
-					byte[] output = new byte[Opus.MAX_PACKET];
-
-					int outLength = Opus.encode(encoder, input, 0, frameSizeInSamplesPerChannel, output, 0, output.length);
-					byte[] compressedBytes = new byte[outLength];
-					System.arraycopy(output, 0, compressedBytes, 0, outLength);
-					packet.setPayload(BitAssistant.bytesToArray(compressedBytes));
+					packet.setPayload(BitAssistant.bytesToArray(opus));
 					packet.setTimestamp(getNextAudioTimestamp(Long.valueOf(48000)));
 
 				} else { // ULAW
@@ -484,8 +462,8 @@ public class RelayChannel {
 
 					kt++;
 
-					if ( kt < 10 ) {
-						Log.info( "+++ " + in );
+					if ( kt < 20 ) {
+						Log.info( "+++ " + packet.getPayload().length );
 					}
 				}
 

@@ -71,6 +71,7 @@ import java.awt.Point;
 import org.ifsoft.*;
 import org.ifsoft.rtp.*;
 
+import org.jitsi.impl.neomedia.codec.audio.opus.Opus;
 
 /**
  * Receive RTP data for this ConferenceMember, add it to the mix
@@ -115,6 +116,15 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     private RtpReceiverPacket packet;
 
     private SpeexDecoder speexDecoder;
+
+	private long opusDecoder = 0;
+    private final int opusSampleRate = 48000;
+    private final int frameSizeInMillis = 20;
+    private final int outputFrameSize = 2;
+    private final int opusChannels = 2;
+    private int frameSizeInSamplesPerChannel = (opusSampleRate * frameSizeInMillis) / 1000;
+    private int frameSizeInBytes = outputFrameSize * opusChannels * frameSizeInSamplesPerChannel;
+
 
     private int dropPackets;
 
@@ -448,10 +458,27 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 					Logger.println("Call " + cp + " created SpeexDecoder");
 				} catch (SpeexException e) {
 					Logger.println("Call " + cp + e.getMessage());
-			callHandler.cancelRequest(e.getMessage());
+					callHandler.cancelRequest(e.getMessage());
 					return;
 				}
+
+		} else 	if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
+
+			try {
+            	opusDecoder = Opus.decoder_create(opusSampleRate, opusChannels);
+
+				if (opusDecoder == 0)
+				{
+					Logger.println("Call " + cp + " OPUS decoder creation error ");
+					callHandler.cancelRequest("OPUS decoder creation error ");
+					return;
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+
+		}
 
 		if (cp.getJoinConfirmationTimeout() == 0) {
 				joinConfirmationReceived = true;
@@ -1170,9 +1197,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 	    callHandler.getMember().adjustVolume(data, inputVolume);
 	}
 
-	//Logger.println("Call " + cp
-	//    + " receiveMedia length " + length + " decoded int length "
-	//    + data.length);
+	//Logger.println("Call " + cp  + " receiveMedia length " + length + " decoded int length " + data.length);
 
 	int numberOfSamples = data.length;
 
@@ -1246,60 +1271,77 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 	return numberOfSamples;
     }
 
-    private int[] decodeToLinear(byte[] receivedData, int length)
-	    throws SpeexException {
+    private int[] decodeToLinear(byte[] receivedData, int length) throws SpeexException
+    {
+		/*
+		 * receivedData has the 12 byte RTP header.
+		 */
 
-	/*
-	 * receivedData has the 12 byte RTP header.
-	 */
-	int[] data = new int[myMediaInfo.getSamplesPerPacket()];
+		int[] data = new int[myMediaInfo.getSamplesPerPacket()];
 
-	long start = 0;
+		long start = 0;
 
-        if (myMediaInfo.getEncoding() == RtpPacket.PCMU_ENCODING) {
-	    if (traceCall || Logger.logLevel == -1) {
-                start = System.nanoTime();
-            }
+        if (myMediaInfo.getEncoding() == RtpPacket.PCMU_ENCODING)
+        {
+			if (traceCall || Logger.logLevel == -1)
+			{
+				start = System.nanoTime();
+			}
 
             /*
              * Convert ulaw data to linear. length is the ulaw
-	     * data length plus the RTP header length.
-	     *
-	     * If the incoming packet is shorter, than we expect,
-	     * the rest of <data> will be filled with 0 * which is PCM_SILENCE.
+	     	 * data length plus the RTP header length.
+	      	 *
+	      	 * If the incoming packet is shorter, than we expect,
+	      	 * the rest of <data> will be filled with 0 * which is PCM_SILENCE.
              */
-            AudioConversion.ulawToLinear(receivedData, RtpPacket.HEADER_SIZE,
-		length - RtpPacket.HEADER_SIZE, data);
 
-	    if (length < 172 && Logger.logLevel >= Logger.LOG_DETAIL) {
-		Logger.println("Call " + cp + " received short packet "
-		    + length);
-	    }
+            AudioConversion.ulawToLinear(receivedData, RtpPacket.HEADER_SIZE, length - RtpPacket.HEADER_SIZE, data);
+
+			if (length < 172 && Logger.logLevel >= Logger.LOG_DETAIL) {
+				Logger.println("Call " + cp + " received short packet "	+ length);
+			}
 
             if (traceCall || Logger.logLevel == -1) {
-                Logger.println("Call " + cp + " ulawToLinear time "
-                    + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
+                Logger.println("Call " + cp + " ulawToLinear time " + ((System.nanoTime() - start) / 1000000000.)   + " seconds");
             }
+
+        } else if (myMediaInfo.getEncoding() == RtpPacket.PCM_ENCODING) {
+
+			int inputOffset = RtpPacket.HEADER_SIZE;
+			int inputLength = length - RtpPacket.HEADER_SIZE;
+
+			int frameSizeInSamplesPerChannel = Opus.decoder_get_nb_samples(opusDecoder, receivedData, inputOffset, inputLength);
+
+			if (frameSizeInSamplesPerChannel > 1)
+			{
+				int frameSizeInBytes = outputFrameSize * opusChannels * frameSizeInSamplesPerChannel;
+
+				byte[] output = new byte[frameSizeInBytes];
+				frameSizeInSamplesPerChannel = Opus.decode(opusDecoder, receivedData, inputOffset, inputLength, output, 0, frameSizeInSamplesPerChannel, 0);
+				data = AudioConversion.bytesToLittleEndianInts(output);
+			}
+
+
         } else if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
+
             if (traceCall || Logger.logLevel == -1) {
                 start = System.nanoTime();
             }
 
-            data = speexDecoder.decodeToIntArray(receivedData,
-		RtpPacket.HEADER_SIZE, length - RtpPacket.HEADER_SIZE);
+            data = speexDecoder.decodeToIntArray(receivedData, RtpPacket.HEADER_SIZE, length - RtpPacket.HEADER_SIZE);
 
-            if (traceCall || Logger.logLevel == -1) {
-                Logger.println("Call " + cp + " speex decode time "
-                    + ((System.nanoTime() - start) / 1000000000.)
-		    + " seconds");
-	    }
-	} else {
-	    AudioConversion.bytesToInts(receivedData, RtpPacket.HEADER_SIZE,
-		length - RtpPacket.HEADER_SIZE, data);
-	}
+            if (traceCall || Logger.logLevel == -1)
+            {
+                Logger.println("Call " + cp + " speex decode time " + ((System.nanoTime() - start) / 1000000000.) + " seconds");
+	    	}
 
-	return data;
+		} else {
+			AudioConversion.bytesToInts(receivedData, RtpPacket.HEADER_SIZE,
+			length - RtpPacket.HEADER_SIZE, data);
+		}
+
+		return data;
     }
 
     public synchronized void handleVP8Video(RTPPacket videoPacket)
@@ -1827,56 +1869,62 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
     public void end() {
         if (done) {
             return;
-	}
+		}
 
         done = true;
 
-	if (speechDetector != null && speechDetector.isSpeaking()) {
-            callHandler.speakingChanged(false);
-	}
-
-	synchronized (recordingLock) {
-            if (recorder != null) {
-                recorder.done();
-                recorder = null;
-            }
-	}
-
-	readyToReceiveData = false;
-
-	if (datagramChannelRegistered && datagramChannel != null) {
-	    try {
-	        datagramChannel.close();
-
-		if (Logger.logLevel >= Logger.LOG_DETAIL) {
-		    Logger.println("Call " + cp + " closed datagramChannel "
-		        + datagramChannel);
+		if (speechDetector != null && speechDetector.isSpeaking()) {
+				callHandler.speakingChanged(false);
 		}
-		datagramChannel = null;
-	    } catch (IOException e) {
-	        Logger.println("Call " + cp
-		    + " exception closing datagram channel " + e.getMessage());
-	    }
-	} else {
-	    Logger.println("Call " + cp + " not closing datagramChannel");
-	}
 
-	if (joinConfirmationReceived == true) {
-	    String leaveTreatment;
-
-            /**
-             * Play audio treatment to all conference members indicating that
-             * a member has left the conference.
-             */
-	    if ((leaveTreatment = cp.getConferenceLeaveTreatment()) != null) {
-		try {
-	            conferenceManager.addTreatment(leaveTreatment);
-		} catch (IOException e) {
-		    Logger.println("Call " + cp
-			+ " failed to start leave treatment " + leaveTreatment);
+		synchronized (recordingLock) {
+				if (recorder != null) {
+					recorder.done();
+					recorder = null;
+				}
 		}
-	    }
-	}
+
+		readyToReceiveData = false;
+
+		if (datagramChannelRegistered && datagramChannel != null) {
+			try {
+				datagramChannel.close();
+
+			if (Logger.logLevel >= Logger.LOG_DETAIL) {
+				Logger.println("Call " + cp + " closed datagramChannel "
+					+ datagramChannel);
+			}
+			datagramChannel = null;
+			} catch (IOException e) {
+				Logger.println("Call " + cp
+				+ " exception closing datagram channel " + e.getMessage());
+			}
+		} else {
+			Logger.println("Call " + cp + " not closing datagramChannel");
+		}
+
+		if (joinConfirmationReceived == true) {
+			String leaveTreatment;
+
+				/**
+				 * Play audio treatment to all conference members indicating that
+				 * a member has left the conference.
+				 */
+			if ((leaveTreatment = cp.getConferenceLeaveTreatment()) != null) {
+			try {
+					conferenceManager.addTreatment(leaveTreatment);
+			} catch (IOException e) {
+				Logger.println("Call " + cp
+				+ " failed to start leave treatment " + leaveTreatment);
+			}
+			}
+		}
+
+        if (opusDecoder != 0)
+        {
+            Opus.decoder_destroy(opusDecoder);
+            opusDecoder = 0;
+        }
     }
 
     public void printStatistics() {

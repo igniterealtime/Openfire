@@ -172,7 +172,7 @@ public class SdpParser {
                         + payloads[i], 0);
 	        }
 
-	        if (payload != 0 && payload < 96 || payload > 127) {
+	        if (payload != 0 && (payload < 96 || payload > 127)) {
 		    /*
 		     * Not one we can deal with
 		     */

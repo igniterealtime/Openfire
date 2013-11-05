@@ -3,12 +3,12 @@
  *
  * This file is part of jVoiceBridge.
  *
- * jVoiceBridge is free software: you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License version 2 as 
- * published by the Free Software Foundation and distributed hereunder 
+ * jVoiceBridge is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation and distributed hereunder
  * to you.
  *
- * jVoiceBridge is distributed in the hope that it will be useful, 
+ * jVoiceBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Sun designates this particular file as subject to the "Classpath"
- * exception as provided by Sun in the License file that accompanied this 
- * code. 
+ * exception as provided by Sun in the License file that accompanied this
+ * code.
  */
 
 package com.sun.voip.server;
@@ -143,7 +143,7 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
 	}
 
         members.add(member);
-    }      
+    }
 
     public void removeCall(ConferenceMember member) {
 	if (members.contains(member) == false) {
@@ -171,11 +171,11 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
 	    whisperers.add(member);
 
 	    if (Logger.logLevel >= Logger.LOG_INFO) {
-	        Logger.println("Call " + member + " started whispering to " 
+	        Logger.println("Call " + member + " started whispering to "
 		    + id);
 	    }
 	    return;
-        } 
+        }
 
 	if (whisperers.contains(member) == false) {
 	    Logger.println("Call " + member + " is not in whisperers!");
@@ -233,21 +233,22 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
      * This is called when data is received from a conference member
      * The member has already converted its contribution to linear.
      */
-    public void addToLinearDataMix(int[] contribution, boolean doNotRecord) {
-	if (doNotRecord) {
-            if (doNotRecordMix == null) {
-                doNotRecordMix = new int[contribution.length];
+    public void addToLinearDataMix(int[] contribution, boolean doNotRecord)
+    {
+		if (doNotRecord) {
+				if (doNotRecordMix == null) {
+					doNotRecordMix = new int[contribution.length];
 
-                System.arraycopy(contribution, 0, doNotRecordMix, 0,
-                    contribution.length);
-                return;
-            }
+					System.arraycopy(contribution, 0, doNotRecordMix, 0,
+						contribution.length);
+					return;
+				}
 
-            mixData(contribution, doNotRecordMix, true);
-	    return;
-	}
+				mixData(contribution, doNotRecordMix, true);
+			return;
+		}
 
-	if (linearMixBuffer == null) {
+		if (linearMixBuffer == null) {
             linearMixBuffer = new int[contribution.length];
 
             System.arraycopy(contribution, 0, linearMixBuffer, 0,
@@ -258,39 +259,70 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
         mixData(contribution, linearMixBuffer, true);
     }
 
-    public static void mixData(int[] inData, int[] mixData, boolean add) {
-	try {
-	    if (add) {
-	        for (int i = 0; i < inData.length; i++) {
-                    mixData[i] = mixData[i] + inData[i];
-	        }
-    	    } else {
-	        for (int i = 0; i < inData.length; i++) {
-                    mixData[i] = mixData[i] - inData[i];
-	        }
-	    }
-	} catch (IndexOutOfBoundsException e) {
-	    Logger.println("Exception!  inData length " + inData.length
-		+ " mixData length " + mixData.length + " add " + add);
+    public static void mixData(int[] inData, int[] mixData, boolean add)
+    {
+		//Logger.println("mixData - inData length " + inData.length  + " mixData length " + mixData.length + " add " + add);
 
-	    e.printStackTrace();
-	}
+		try {
+			if (add) {
+
+				if (inData.length <= mixData.length)
+				{
+					for (int i = 0; i < inData.length; i++) {
+							mixData[i] = mixData[i] + inData[i];
+					}
+
+				} else {
+
+					for (int i = 0; i < mixData.length; i++) {
+							mixData[i] = mixData[i] + inData[i];
+					}
+				}
+
+			} else {
+
+				if (inData.length <= mixData.length)
+				{
+					for (int i = 0; i < inData.length; i++) {
+							mixData[i] = mixData[i] - inData[i];
+					}
+				} else {
+					for (int i = 0; i < mixData.length; i++) {
+							mixData[i] = mixData[i] - inData[i];
+					}
+				}
+			}
+
+		} catch (IndexOutOfBoundsException e) {
+			Logger.println("Exception!  inData length " + inData.length
+			+ " mixData length " + mixData.length + " add " + add);
+
+			e.printStackTrace();
+		}
     }
 
-    public static void mixData(int[] conferenceData, int[] memberData,
-	    int[] outData) {
+    public static void mixData(int[] conferenceData, int[] memberData, int[] outData)
+    {
+		//Logger.println("mixData - conferenceData length " + conferenceData.length +" memberData.length " + memberData.length + " outData length " + outData.length);
 
-	try {
-	    for (int i = 0; i < outData.length; i ++) {
-	        outData[i] = conferenceData[i] - memberData[i];
-	    }
-	} catch (IndexOutOfBoundsException e) {
-	    Logger.println("Exception!  conferenceData length " 
-		+ conferenceData.length +" memberData.length " 
-		+ memberData.length + " outData length " + outData.length);
+		try {
+				if (outData.length <= memberData.length)
+				{
+					for (int i = 0; i < outData.length; i ++) {
+						outData[i] = conferenceData[i] - memberData[i];
+					}
 
-	    e.printStackTrace();
-	}
+				} else {
+					for (int i = 0; i < memberData.length; i ++) {
+						outData[i] = conferenceData[i] - memberData[i];
+					}
+				}
+
+		} catch (IndexOutOfBoundsException e) {
+			Logger.println("mixData Exception!  conferenceData length " + conferenceData.length +" memberData.length " + memberData.length + " outData length " + outData.length);
+
+			e.printStackTrace();
+		}
     }
 
     private int[] previousContribution;
@@ -321,8 +353,8 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
             synchronized (conferenceTreatments) {
 	        currentTreatment.saveCurrentContribution();
 
-	        int[] treatmentData = currentTreatment.getCurrentContribution();	
-	
+	        int[] treatmentData = currentTreatment.getCurrentContribution();
+
 		if (treatmentDone) {
 	            conferenceTreatments.remove(currentTreatment);
 
@@ -442,7 +474,7 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
 
 	if (audioRecorder == null) {
 	    synchronized (recordingLock) {
-                audioRecorder = new Recorder(recordingFile, "au", 
+                audioRecorder = new Recorder(recordingFile, "au",
 		    mediaInfo);
 
 		Logger.println("starting conference recorder for "
@@ -553,7 +585,7 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
 	s += " ";
 
 	for (int i = 0; i < members.size(); i++) {
-	    ConferenceMember member = 
+	    ConferenceMember member =
 		(ConferenceMember)members.get(i);
 
 	    CallParticipant cp = member.getCallParticipant();
@@ -564,7 +596,7 @@ public class WhisperGroup implements MixDataSource, TreatmentDoneListener {
 	    }
 
 	    s += " ";
-	}    
+	}
 
 	return s;
     }

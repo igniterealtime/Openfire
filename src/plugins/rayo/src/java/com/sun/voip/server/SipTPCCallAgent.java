@@ -87,8 +87,7 @@ public class SipTPCCallAgent extends CallSetupAgent implements SipListener {
     public SipTPCCallAgent(CallHandler callHandler) {
 	super(callHandler);
 
-	MediaInfo mixerMediaPreference =
-	    callHandler.getConferenceManager().getMediaInfo();
+	MediaInfo mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
 	sipUtil = new SipUtil(mixerMediaPreference);
     }

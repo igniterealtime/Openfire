@@ -124,17 +124,15 @@ if (false) {
             (byte)125, RtpPacket.SPEEX_ENCODING, 32000, 2, false));
     }
 
-    public MediaInfo(byte payload , int encoding, int sampleRate,
-	int channels, boolean isTelephoneEventPayload) {
+    public MediaInfo(byte payload , int encoding, int sampleRate, int channels, boolean isTelephoneEventPayload)
+    {
+		this.payload = payload;
+		this.encoding = encoding;
+		this.sampleRate = sampleRate;
+		this.channels = channels;
+		this.isTelephoneEventPayload = isTelephoneEventPayload;
 
-	this.payload = payload;
-	this.encoding = encoding;
-	this.sampleRate = sampleRate;
-	this.channels = channels;
-	this.isTelephoneEventPayload = isTelephoneEventPayload;
-
-	samplesPerPacket =
-	    sampleRate * channels / (1000 / RtpPacket.PACKET_PERIOD);
+		samplesPerPacket = sampleRate * channels / (1000 / RtpPacket.PACKET_PERIOD);
     }
 
     public static MediaInfo findMediaInfo(int encoding, int sampleRate,

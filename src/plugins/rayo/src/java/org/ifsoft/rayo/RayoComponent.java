@@ -558,7 +558,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				{
 					if (channel == null)
 					{
-						cp.setMediaPreference("PCMU/8000/1");
 						cp.setPhoneNumber(handset.sipuri);
 						cp.setAutoAnswer(true);
 						cp.setProtocol("SIP");
@@ -1037,7 +1036,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				CallParticipant cp = new CallParticipant();
 				cp.setVoiceDetection(true);
 				cp.setCallOwner(handsetId);
-				cp.setMediaPreference("PCMU/8000/1");
 				cp.setProtocol("SIP");
 				cp.setDisplayName(callerName);
 				cp.setPhoneNumber(to);
@@ -1063,6 +1061,7 @@ public class RayoComponent 	extends 	AbstractComponent
 						CallParticipant hp = handsetHandler.getCallParticipant();
 
 						headers.put("mixer_name", hp.getConferenceId());
+						headers.put("codec_name", "PCM/48000/2".equals(hp.getMediaPreference()) ? "OPUS" : "PCMU");
 
 						try {
 							ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(hp.getConferenceId());
@@ -1225,6 +1224,7 @@ public class RayoComponent 	extends 	AbstractComponent
 			ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(mixer);
 			cp.setConferenceId(mixer);
 			cp.setCallId(mixer);
+			cp.setMediaPreference(hp.getMediaPreference());
 			conferenceManager.setCallId(mixer);
 			conferenceManager.setTransferCall(transferCall);
 
@@ -1761,68 +1761,65 @@ public class RayoComponent 	extends 	AbstractComponent
 
     public boolean routeIncomingSIP(CallParticipant cp)
     {
-		Log.info("Incoming SIP, call route to user " + cp.getToPhoneNumber());
+		boolean canRoute = false;
+		Group group = null;
 
 		JID foundUser = findUser(cp.getToPhoneNumber());
 
-		String callId = "rayo-incoming-" + System.currentTimeMillis();
-		cp.setCallId(callId);
-		cp.setMediaPreference("PCMU/8000/1");
-		cp.setConferenceId(callId);
+		if (foundUser != null)
+			canRoute = true;
 
+		else {
+        	try {
+            	group = GroupManager.getInstance().getGroup(cp.getToPhoneNumber());
+				canRoute = true;
 
-		ConferenceManager conferenceManager = ConferenceManager.getConference(callId, cp.getMediaPreference(), cp.getToPhoneNumber(), false);
-		conferenceManager.setCallId(callId);
+        	} catch (GroupNotFoundException e) {
 
-		Map<String, String> headers = cp.getHeaders();
-		headers.put("mixer_name", callId);
-		headers.put("call_protocol", "SIP");
-		headers.put("group_name", cp.getToPhoneNumber());
-
-		if (foundUser != null)		// send this call to specific user
-		{
-			cp.setCallOwner(foundUser.toString());
-			routeSIPCall(foundUser, cp, callId, headers);
-			return true;
+			}
 		}
 
-        try {
-            Group group = GroupManager.getInstance().getGroup(cp.getToPhoneNumber());
+		Log.info("Incoming SIP, call route to entity " + cp.getToPhoneNumber() + " " + canRoute);
 
-			conferenceManager.setGroupName(cp.getToPhoneNumber());
+		if (canRoute)
+		{
+			String callId = "rayo-incoming-" + System.currentTimeMillis();
+			cp.setCallId(callId);
+			cp.setConferenceId(callId);
 
-			for (JID memberJID : group.getMembers())
+			if (cp.getMediaPreference() == null) cp.setMediaPreference("PCMU/8000/1");	// regular phone
+
+			ConferenceManager conferenceManager = ConferenceManager.getConference(callId, cp.getMediaPreference(), cp.getToPhoneNumber(), false);
+			conferenceManager.setCallId(callId);
+
+			Map<String, String> headers = cp.getHeaders();
+			headers.put("mixer_name", callId);
+			headers.put("call_protocol", "SIP");
+			headers.put("codec_name", "PCM/48000/2".equals(cp.getMediaPreference()) ? "OPUS" : "PCMU");
+			headers.put("group_name", cp.getToPhoneNumber());
+
+			if (foundUser != null)		// send this call to specific user
 			{
-				Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
-
-				for (ClientSession session : sessions)
-				{
-					routeSIPCall(session.getAddress(), cp, callId, headers);
-				}
-			}
-
-			return true;
-
-        } catch (GroupNotFoundException e) {
-            // Group not found
-
-			if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(cp.getToPhoneNumber())) {
-
-				MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(cp.getToPhoneNumber());
-
-				if (room != null)
-				{
-					for (MUCRole role : room.getOccupants())
-					{
-						routeSIPCall(role.getUserAddress(), cp, callId, headers);
-					}
-				}
-            	return true;
+				cp.setCallOwner(foundUser.toString());
+				routeSIPCall(foundUser, cp, callId, headers);
 
 			} else {
-            	return false;
+
+				conferenceManager.setGroupName(cp.getToPhoneNumber());
+
+				for (JID memberJID : group.getMembers())
+				{
+					Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
+
+					for (ClientSession session : sessions)
+					{
+						routeSIPCall(session.getAddress(), cp, callId, headers);
+					}
+				}
 			}
 		}
+
+		return canRoute;
 	}
 
     public void routeSIPCall(JID callee, CallParticipant cp, String callId, Map<String, String> headers)

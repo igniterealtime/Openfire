@@ -71,28 +71,30 @@ public class SipUtil {
     private SdpManager sdpManager;
 
     public SipUtil() {
-	this(null);
+		this(null);
     }
 
-    public SipUtil(MediaInfo mediaInfo) {
-	if (!initialized) {
-	    initialize();
-        }
+    public SipUtil(MediaInfo mediaInfo)
+    {
+		if (!initialized) {
+			initialize();
+		}
 
-	sdpManager = new SdpManager();
+		sdpManager = new SdpManager();
 
-	if (mediaInfo == null) {
-	    try {
-	        mediaInfo = sdpManager.findMediaInfo(RtpPacket.PCMU_ENCODING,
-		    8000, 1);
-	    } catch (ParseException e) {
-		Logger.println(
-		    "SipUtil:  Invalid media info, can't set preference"
-		    + e.getMessage());
-	    }
-	}
+		if (mediaInfo == null)
+		{
+			try {
+				mediaInfo = sdpManager.findMediaInfo(RtpPacket.PCMU_ENCODING, 8000, 1);
 
-	sdpManager.setPreferredMediaInfo(mediaInfo);
+				Logger.println("SipUtil:  Preference default media " + mediaInfo);
+
+			} catch (ParseException e) {
+				Logger.println("SipUtil:  Invalid media info, can't set preference" + e.getMessage());
+			}
+		}
+
+		sdpManager.setPreferredMediaInfo(mediaInfo);
     }
 
     /**
@@ -1042,9 +1044,8 @@ if (false) {
 	return getSdpInfo(sdpBody, true);
     }
 
-    public SdpInfo getSdpInfo(String sdpBody, boolean isRequest)
-	    throws ParseException {
-
+    public SdpInfo getSdpInfo(String sdpBody, boolean isRequest)   throws ParseException
+    {
 	SdpInfo remoteSdpInfo = sdpManager.parseSdp(sdpBody);
 
 	MediaInfo myPreferredMediaInfo = sdpManager.getPreferredMediaInfo();
@@ -1065,18 +1066,16 @@ if (false) {
 	    Logger.println("My preferred payload being used " + payload);
 	} else {
 	    if (isRequest) {
-	        Logger.writeFile("My preferred media "
-		    + myPreferredMediaInfo + " not supported...");
+	        Logger.writeFile("My preferred media " + myPreferredMediaInfo + " not supported...");
 	    }
 
 	    try {
-		payload = remoteSdpInfo.getMediaInfo().getPayload();
+			payload = remoteSdpInfo.getMediaInfo().getPayload();
 	        remoteSdpInfo.setMediaInfo(sdpManager.findMediaInfo(payload));
-	        Logger.writeFile("media setting is "
-		    + remoteSdpInfo.getMediaInfo());
+	        Logger.writeFile("media setting is " + remoteSdpInfo.getMediaInfo());
+
 	    } catch (ParseException e) {
-	        throw new ParseException("Unsupported media "
-		    + remoteSdpInfo.getMediaInfo(), 0);
+	        remoteSdpInfo.setMediaInfo(new MediaInfo((byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, false));
 	    }
 	}
 	return remoteSdpInfo;

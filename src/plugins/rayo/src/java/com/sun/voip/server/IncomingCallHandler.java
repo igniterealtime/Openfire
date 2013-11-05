@@ -97,46 +97,49 @@ public class IncomingCallHandler extends CallHandler
 
 		addCallEventListener(this);
 
-		if (cp.getConferenceId() == null || cp.getConferenceId().length() == 0)
+		if (directConferencing)
 		{
-			if (directConferencing)
+			if (cp.getConferenceId() == null || cp.getConferenceId().length() == 0)
 			{
 				System.out.println("Don't have conf, using default....");
 				cp.setConferenceId(defaultIncomingConferenceId); // wait in lobby
 
 			} else {
 
-				System.out.println("Incoming SIP, call " + cp);
-
-				if (RayoComponent.self.routeIncomingSIP(cp))
-				{
-					haveIncomingConferenceId = true;
-
-				} else {
-					//  conf bridge
-
-					if (Config.getInstance().getConferenceExten().equals(cp.getToPhoneNumber()))
-					{
-						incomingConferenceHandler = new IncomingConferenceHandler(this, cp.getToPhoneNumber());
-
-					} else if (Config.getInstance().getConferenceByPhone(cp.getToPhoneNumber()) != null) {
-
-						incomingConferenceHandler = new IncomingConferenceHandler(this, cp.getToPhoneNumber());
-
-					} else {
-						cancelRequest(cp.getToPhoneNumber() + " is not a valid endpoint");	// reject call
-					}
-				}
-
+				Logger.println("Have conf " + cp.getConferenceId());
+				haveIncomingConferenceId = true; // goto your conference
 			}
+
+			start();
 
 		} else {
 
-			Logger.println("Have conf " + cp.getConferenceId());
-			haveIncomingConferenceId = true; // goto your conference
-		}
+			System.out.println("Incoming SIP, call " + cp);
 
-		start();
+			if (RayoComponent.self.routeIncomingSIP(cp))
+			{
+				haveIncomingConferenceId = true;
+				start();
+
+			} else {
+				//  conf bridge
+
+				if (Config.getInstance().getConferenceExten().equals(cp.getToPhoneNumber()))
+				{
+					incomingConferenceHandler = new IncomingConferenceHandler(this, cp.getToPhoneNumber());
+					start();
+
+				} else if (Config.getInstance().getConferenceByPhone(cp.getToPhoneNumber()) != null) {
+
+					incomingConferenceHandler = new IncomingConferenceHandler(this, cp.getToPhoneNumber());
+					start();
+
+				} else {
+					cancelRequest(cp.getToPhoneNumber() + " is not a valid endpoint");	// reject call
+				}
+			}
+
+		}
     }
 
     public static void setDirectConferencing(boolean directConferencing) {
@@ -350,6 +353,9 @@ public class IncomingCallHandler extends CallHandler
 
     public void callEventNotification(CallEvent callEvent) {
 
+
+	Logger.println("IncomingCallHandler " + callEvent.toString());
+
 	if (callEvent.equals(callEvent.STATE_CHANGED) &&
 	        callEvent.getCallState().equals(CallState.ESTABLISHED)) {
 
@@ -460,6 +466,8 @@ public class IncomingCallHandler extends CallHandler
 
     public ConferenceManager transferCall(String conferenceId)
 	    throws IOException {
+
+	System.out.println("transferCall " + conferenceId);
 
 	ConferenceManager conferenceManager = transferCall(this, conferenceId);
 

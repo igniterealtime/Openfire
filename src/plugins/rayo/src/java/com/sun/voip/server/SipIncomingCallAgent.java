@@ -74,12 +74,11 @@ public class SipIncomingCallAgent extends CallSetupAgent implements SipListener 
 
         sipServerCallback = SipServer.getSipServerCallback();
 
-        MediaInfo mixerMediaPreference =
-            callHandler.getConferenceManager().getMediaInfo();
+        MediaInfo mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
         sipUtil = new SipUtil(mixerMediaPreference);
 
-	handleInvite((RequestEvent)o);
+		handleInvite((RequestEvent)o);
     }
 
     /**

@@ -3,12 +3,12 @@
  *
  * This file is part of jVoiceBridge.
  *
- * jVoiceBridge is free software: you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License version 2 as 
- * published by the Free Software Foundation and distributed hereunder 
+ * jVoiceBridge is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation and distributed hereunder
  * to you.
  *
- * jVoiceBridge is distributed in the hope that it will be useful, 
+ * jVoiceBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Sun designates this particular file as subject to the "Classpath"
- * exception as provided by Sun in the License file that accompanied this 
- * code. 
+ * exception as provided by Sun in the License file that accompanied this
+ * code.
  */
 
 package com.sun.voip.server;
@@ -46,7 +46,7 @@ public class MixManager {
 
     private SpatialAudio sa;
 
-    public MixManager(ConferenceMember member, 
+    public MixManager(ConferenceMember member,
 	    int conferenceSamplesPerPacket, int channels) {
 
 	this.member = member;
@@ -66,7 +66,7 @@ public class MixManager {
 	}
 
 	sa.initialize(member.getConferenceManager().getId(),
-	    member.getCallParticipant().getCallId(), sampleRate, 
+	    member.getCallParticipant().getCallId(), sampleRate,
 	    channels, conferenceSamplesPerPacket / channels);
     }
 
@@ -119,7 +119,7 @@ public class MixManager {
 	mixDescriptors.add(mixDescriptor);
 	setUseFastMix();
     }
-	
+
     public void addMix(MixDataSource mixDataSource, double attenuation) {
 	MixDescriptor mixDescriptor = findMixDescriptor(mixDataSource);
 
@@ -127,7 +127,7 @@ public class MixManager {
 	    if (mixDescriptor != null) {
 	    	if (Logger.logLevel >= Logger.LOG_MOREINFO) {
 		    Logger.println("Call " + member
-		        + " Remove mix, volume 0 " + " mixDataSource " 
+		        + " Remove mix, volume 0 " + " mixDataSource "
 			+ mixDataSource);
 		}
 		removeMix(mixDescriptor);
@@ -147,7 +147,7 @@ public class MixManager {
 	    mixDescriptors.add(mixDescriptor);
 
 	    if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-		Logger.println("created new mix for " + mixDataSource 
+		Logger.println("created new mix for " + mixDataSource
 		    + " " + attenuation);
 	    }
 
@@ -158,7 +158,7 @@ public class MixManager {
 	mixDescriptor.setAttenuation(attenuation);
 	setUseFastMix();
     }
-    
+
     public void removeMix(MixDataSource mixDataSource) {
 	MixDescriptor mixDescriptor = findMixDescriptor(mixDataSource);
 
@@ -227,7 +227,7 @@ public class MixManager {
 	    }
 	    return;
 	}
-	    
+
 	for (int i = 0; i < 2; i++) {
 	    MixDescriptor mixDescriptor = (MixDescriptor)
 	        mixDescriptors.get(i);
@@ -322,7 +322,7 @@ public class MixManager {
 	return forcePrivateMix;
     }
 
-    public MixDescriptor setPrivateMix(MixDataSource mixDataSource, 
+    public MixDescriptor setPrivateMix(MixDataSource mixDataSource,
 	    double[] spatialValues) {
 
         MixDescriptor mixDescriptor;
@@ -334,7 +334,7 @@ public class MixManager {
 	}
 
 	if (mixDescriptor == null) {
-	    mixDescriptor = new MixDescriptor(mixDataSource, 1.0, 
+	    mixDescriptor = new MixDescriptor(mixDataSource, 1.0,
 		spatialValues);
 
 	    mixDescriptors.add(mixDescriptor);
@@ -351,7 +351,7 @@ public class MixManager {
 	}
 
         if (Logger.logLevel >= Logger.LOG_MOREINFO) {
-	    Logger.println("MixManager:  Setting private mix " 
+	    Logger.println("MixManager:  Setting private mix "
 		+ mixDescriptor);
 	}
 
@@ -389,7 +389,7 @@ public class MixManager {
 
         outData = new int[conferenceSamplesPerPacket];
 
-	//Logger.println("Call " + member + " MixManager mixing " 
+	//Logger.println("Call " + member + " MixManager mixing "
 	//	+ mixDescriptors.size());
 
 	boolean needToSend = false;
@@ -428,7 +428,7 @@ public class MixManager {
 		        spatialValues = sv;
 
 		        if (Logger.logLevel == -69) {
-			    Logger.println("Call " + member + " pm for " 
+			    Logger.println("Call " + member + " pm for "
 			        + mixDataSource.toAbbreviatedString()
 			        + " s3 " + spatialValues[3]);
 			}
@@ -437,7 +437,7 @@ public class MixManager {
 		    /*
 		     * Subtract the current contribution from the mix
 		     */
-		    if (contribution != null && 
+		    if (contribution != null &&
 			    mixDataSource.contributionIsInCommonMix()) {
 
             		WhisperGroup.mixData(contribution, outData, false);
@@ -453,7 +453,7 @@ public class MixManager {
 		}
 
 		contribution = sa.generateSpatialAudio(
-		    mixDataSource.getSourceId(), 
+		    mixDataSource.getSourceId(),
                     mixDataSource.getPreviousContribution(),
 		    contribution, spatialValues);
 	    }
@@ -484,8 +484,8 @@ public class MixManager {
     }
 
     /*
-     * We know there are two MixDescriptors and the first one is 
-     * the conference Mix and the second one is for subtracting 
+     * We know there are two MixDescriptors and the first one is
+     * the conference Mix and the second one is for subtracting
      * out the member's own data.
      */
     private int[] fastMix() {
@@ -508,26 +508,28 @@ public class MixManager {
             memberMixDescriptor.getMixDataSource().getCurrentContribution();
 
         if (memberContribution == null) {
-	    System.arraycopy(conferenceMixContribution, 0, outData, 0,
-		conferenceMixContribution.length);
-		
-	    if (Logger.logLevel == -39) {
+
+			if (outData.length <= conferenceMixContribution.length)
+	    		System.arraycopy(conferenceMixContribution, 0, outData, 0, outData.length);
+	    	else
+	    		System.arraycopy(conferenceMixContribution, 0, outData, 0, conferenceMixContribution.length);
+
+	    	if (Logger.logLevel == -39) {
                 checkData(outData, useFastMix);
             }
 
-	    AudioConversion.clip(outData);
+	    	AudioConversion.clip(outData);
             return outData;
         }
 
-	WhisperGroup.mixData(conferenceMixContribution, memberContribution, 
-	    outData);
+		WhisperGroup.mixData(conferenceMixContribution, memberContribution,  outData);
 
-	if (Logger.logLevel == -39) {
+		if (Logger.logLevel == -39) {
             checkData(outData, useFastMix);
         }
 
         AudioConversion.clip(outData);
-	return outData;
+		return outData;
     }
 
     private void checkData(int[] data, boolean useFastMix) {
@@ -536,7 +538,7 @@ public class MixManager {
 		Logger.println("Call " + member + " Non-zero data at " + i);
 		Logger.println("Call " + member
 		    + " useFastMix " + useFastMix);
-		Logger.println("Call " + member + " " 
+		Logger.println("Call " + member + " "
 		    + toAbbreviatedString());
 		if (mixDescriptors.size() != 2 && useFastMix == true) {
 		    Logger.println("useFastMix should be false!!!");
@@ -559,7 +561,7 @@ public class MixManager {
 	    for (int i = 0; i < data.length; i++) {
 		data[i] = 0;	// optimize when volume is 0
 	    }
-	    return; 
+	    return;
 	}
 
 	for (int i = 0; i < data.length; i++) {
@@ -593,9 +595,9 @@ public class MixManager {
 
                 s += "    " + mixDescriptor.toAbbreviatedString();
 
-		if (member.getWhisperGroup() == 
+		if (member.getWhisperGroup() ==
 		        mixDescriptor.getMixDataSource()) {
-		
+
 		    s += " + ";
 		}
 

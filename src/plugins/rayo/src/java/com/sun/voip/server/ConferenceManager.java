@@ -804,14 +804,11 @@ public class ConferenceManager {
     /*
      * Transfer an incoming call to the target conference.
      */
-    public void transferMember(ConferenceManager newConferenceManager,
-	    ConferenceMember member) throws IOException {
-
-	leave(member, true);		   // leave the temporary conference
-
-	member.reinitialize(newConferenceManager, false);
-
-	newConferenceManager.joinConference(member); // join the new conference
+    public void transferMember(ConferenceManager newConferenceManager,  ConferenceMember member) throws IOException
+    {
+		leave(member, true);		   // leave the temporary conference
+		member.reinitialize(newConferenceManager, true);
+		newConferenceManager.joinConference(member); // join the new conference
     }
 
     /**

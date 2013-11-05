@@ -97,10 +97,21 @@ Strophe.addConnectionPlugin('rayo',
 		//console.log(headers)		
 		
 		if (this._isOffhook()) this._onhook();
+		
+		var that = this;		
 
 		this._offhook(mixer, headers, function()
 		{
+			var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
 
+			that._connection.sendIQ(iq, null, function(error)
+			{
+				$('error', error).each(function() 
+				{
+					var errorcode = $(this).attr('code');
+					if (that.callbacks && that.callbacks.onError) that.callbacks.onError("join failure " + errorcode); 				
+				});		     	
+			});
 		});		
 	},
 
@@ -108,7 +119,21 @@ Strophe.addConnectionPlugin('rayo',
 	{
 		//console.log('Rayo plugin leave ' + mixer);		
 		
-		this._onhook();		
+		var that = this;
+		var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("unjoin", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+
+		that._connection.sendIQ(iq, function(response) 
+		{
+			this._onhook();			
+		
+		}, function(error) {
+		
+			$('error', error).each(function() 
+			{
+				var errorcode = $(this).attr('code');
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("unjoin failure " + errorcode); 				
+			});		     	
+		});	
 	},
 
 	hold: function(callId)
@@ -124,8 +149,7 @@ Strophe.addConnectionPlugin('rayo',
 		{
 			that._onhook();			
 			
-		}, function(error) {
-			//console.log(error);		
+		}, function(error) {		
 			
 			$('error', error).each(function() 
 			{

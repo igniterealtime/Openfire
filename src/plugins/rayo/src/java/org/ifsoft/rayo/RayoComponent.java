@@ -852,13 +852,13 @@ public class RayoComponent 	extends 	AbstractComponent
 						Config.createCallRecord(source, recording, "xmpp:" + iq.getFrom(), cp.getStartTimestamp(), 0, "dialed") ;
 						Config.createCallRecord(destination, recording, "xmpp:" + callerId, cp.getStartTimestamp(), 0, "received");
 
-						sendMessage(new JID(callerId), iq.getFrom(), "Call started", recording);
+						sendMessage(new JID(callerId), iq.getFrom(), "Call started", recording, "chat");
 
 					} else { // incoming SIP
 
 						Config.createCallRecord(destination, recording, "sip:" + cp.getPhoneNumber(), cp.getStartTimestamp(), 0, "received") ;
 
-						sendMessage(iq.getFrom(), new JID(cp.getCallId() + "@" + getDomain()), "Call started", recording);
+						sendMessage(iq.getFrom(), new JID(cp.getCallId() + "@" + getDomain()), "Call started", recording, "chat");
 					}
 
 				} catch (ParseException e1) {
@@ -958,10 +958,19 @@ public class RayoComponent 	extends 	AbstractComponent
 		if (mixer != null)
 		{
 			try {
-				IncomingCallHandler.transferCall(iq.getTo().getNode(), mixer);
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(mixer);
+
+				if (conferenceManager.getMemberList().size() == 1)
+				{
+					String recording = mixer + "-" + System.currentTimeMillis() + ".au";
+					conferenceManager.recordConference(true, recording, "au");
+					sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+				}
+
+				sendMucMessage(mixer, null, iq.getFrom(), "Joined voice conversation");
 
 			} catch (Exception e) {
-				reply.setError(PacketError.Condition.internal_server_error);
+				reply.setError(PacketError.Condition.item_not_found);
 			}
 
 		} else {
@@ -977,14 +986,57 @@ public class RayoComponent 	extends 	AbstractComponent
 
         IQ reply = IQ.createResultIQ(iq);
 
-		try {
-			IncomingCallHandler.transferCall(iq.getTo().getNode(), defaultIncomingConferenceId);
+		String mixer = null;
 
-		} catch (Exception e) {
-			reply.setError(PacketError.Condition.internal_server_error);
+		if (command.getType() == JoinDestinationType.CALL) {
+			// TODO join.getFrom()
+		} else {
+			  mixer = command.getFrom();
+		}
+
+		if (mixer != null)
+		{
+			try {
+				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(mixer);
+
+				if (conferenceManager.getMemberList().size() == 1)
+				{
+					conferenceManager.recordConference(false, null, null);
+					sendMucMessage(mixer, null, iq.getFrom(), "Stopped voice recording");
+				}
+
+				sendMucMessage(mixer, null, iq.getFrom(), "Left voice conversation");
+
+			} catch (Exception e) {
+				reply.setError(PacketError.Condition.item_not_found);
+			}
+
+		} else {
+			reply.setError(PacketError.Condition.feature_not_implemented);
 		}
 
 		return reply;
+	}
+
+
+	private void sendMucMessage(String mixer, String recording, JID participant, String message)
+	{
+		if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(mixer)) {
+
+			MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(mixer);
+
+			if (room != null)
+			{
+				for (MUCRole role : room.getOccupants())
+				{
+					if (participant.toBareJID().equals(role.getUserAddress().toBareJID()))
+					{
+						sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	private IQ handleDialCommand(DialCommand command, IQ iq, boolean transferCall)
@@ -1232,7 +1284,7 @@ public class RayoComponent 	extends 	AbstractComponent
 			conferenceManager.recordConference(true, recording, "au");
 			Config.createCallRecord(cp.getDisplayName(), recording, cp.getPhoneNumber(), cp.getStartTimestamp(), 0, "dialed") ;
 
-			sendMessage(new JID(cp.getCallOwner()), new JID(cp.getCallId() + "@" + getDomain()), "Call started", recording);
+			sendMessage(new JID(cp.getCallOwner()), new JID(cp.getCallId() + "@" + getDomain()), "Call started", recording, "chat");
 
 		} catch (ParseException e1) {
 			reply.setError(PacketError.Condition.internal_server_error);
@@ -1418,7 +1470,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 						if (target.equals(destination.toString()) == false)
 						{
-							sendMessage(new JID(target), destination, "Call ended", null);
+							sendMessage(new JID(target), destination, "Call ended", null, "chat");
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -1432,7 +1484,7 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
-    private void sendMessage(JID from, JID to, String body, String fileName)
+    private void sendMessage(JID from, JID to, String body, String fileName, String type)
     {
 		Log.info( "RayoComponent sendMessage " + from + " " + to + " " + body + " " + fileName);
 
@@ -1440,11 +1492,12 @@ public class RayoComponent 	extends 	AbstractComponent
         Message packet = new Message();
         packet.setTo(to);
         packet.setFrom(from);
-        packet.setType(Message.Type.chat);
-        packet.setThread("http://" + getDomain() + ":" + port + "/rayo/recordings/" + fileName);
+        packet.setType("chat".equals(type) ? Message.Type.chat : Message.Type.groupchat);
+        if (fileName != null) packet.setThread("http://" + getDomain() + ":" + port + "/rayo/recordings/" + fileName);
         packet.setBody(body);
         sendPacket(packet);
     }
+
 
 	public void sendPacket(Packet packet)
 	{
@@ -1461,92 +1514,101 @@ public class RayoComponent 	extends 	AbstractComponent
     {
 		Log.info( "RayoComponent notifyConferenceMonitors " + conferenceEvent.toString());
 
+		if (defaultIncomingConferenceId.equals(conferenceEvent.getConferenceId())) return;
+
+		ConferenceManager conferenceManager = null;
+
 		try {
 
 			if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT) || conferenceEvent.equals(ConferenceEvent.MEMBER_JOINED))
 			{
 				Log.info("RayoComponent notifyConferenceMonitors looking for call " + conferenceEvent.getCallId() + " " + conferenceEvent.getMemberCount());
 
-				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
+				try {
+					conferenceManager = ConferenceManager.findConferenceManager(conferenceEvent.getConferenceId());
+				} catch (Exception e) {}
 
-				String groupName = conferenceManager.getGroupName();
-				String callId = conferenceManager.getCallId();
-
-				if (callId == null) callId = conferenceEvent.getConferenceId();	// special case of SIP incoming
-
-				CallHandler farParty = CallHandler.findCall(callId);
-				CallHandler callHandler = CallHandler.findCall(conferenceEvent.getCallId());
-
-				if (callHandler != null)
+				if (conferenceManager != null)
 				{
-					Log.info("RayoComponent notifyConferenceMonitors found call handler " + callHandler + " " + farParty);
+					String groupName = conferenceManager.getGroupName();
+					String callId = conferenceManager.getCallId();
 
-					CallParticipant callParticipant = callHandler.getCallParticipant();
+					if (callId == null) callId = conferenceEvent.getConferenceId();	// special case of SIP incoming
 
-					ArrayList memberList = conferenceManager.getMemberList();
+					CallHandler farParty = CallHandler.findCall(callId);
+					CallHandler callHandler = CallHandler.findCall(conferenceEvent.getCallId());
 
-					if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT) && callId.equals(conferenceEvent.getCallId()))
+					if (callHandler != null)
 					{
-						if (farParty != null && farParty.getCallParticipant().isHeld() == false)		// far party left
+						Log.info("RayoComponent notifyConferenceMonitors found call handler " + callHandler + " " + farParty);
+
+						CallParticipant callParticipant = callHandler.getCallParticipant();
+
+						ArrayList memberList = conferenceManager.getMemberList();
+
+						if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT) && callId.equals(conferenceEvent.getCallId()))
 						{
-							synchronized (memberList)
+							if (farParty != null && farParty.getCallParticipant().isHeld() == false)		// far party left
 							{
-								for (int i = 0; i < memberList.size(); i++)
+								synchronized (memberList)
 								{
-									CallHandler participant = ((ConferenceMember) memberList.get(i)).getCallHandler();
-									participant.cancelRequest("Far Party has left");
+									for (int i = 0; i < memberList.size(); i++)
+									{
+										CallHandler participant = ((ConferenceMember) memberList.get(i)).getCallHandler();
+										participant.cancelRequest("Far Party has left");
+									}
 								}
 							}
 						}
-					}
 
-					int memberCount = memberList.size();
+						int memberCount = memberList.size();
 
-					Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
+						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
 
-					if (groupName == null)
-					{
-						routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
-
-					} else {
-
-						Group group = GroupManager.getInstance().getGroup(groupName);
-
-						for (JID memberJID : group.getMembers())
+						if (groupName == null)
 						{
-							Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
+							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
 
-							for (ClientSession session : sessions)
+						} else {
+
+							Group group = GroupManager.getInstance().getGroup(groupName);
+
+							for (JID memberJID : group.getMembers())
 							{
-								routeJoinEvent(session.getAddress().toString(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
-							}
-						}
-					}
+								Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(memberJID.getNode());
 
-					if (memberCount == 0)
-					{
-						conferenceManager.recordConference(false, null, null);
-						conferenceManager.endConference(conferenceEvent.getConferenceId());
-
-						CallParticipant heldCall = conferenceManager.getHeldCall();
-
-						if (heldCall != null)
-						{
-							JID target = getJID(heldCall.getCallId());
-
-							if (target != null)
-							{
-								Presence presence = new Presence();
-								presence.setFrom(callId + "@" + getDomain());
-								presence.setTo(target);
-								presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), callParticipant.getHeaders())));
-								sendPacket(presence);
+								for (ClientSession session : sessions)
+								{
+									routeJoinEvent(session.getAddress().toString(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
+								}
 							}
 						}
 
-					} else if (memberCount == 2) {
+						if (memberCount == 0 && conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+						{
+							conferenceManager.recordConference(false, null, null);
+							conferenceManager.endConference(conferenceEvent.getConferenceId());
 
-						conferenceManager.setTransferCall(false);	// reset after informing on redirect
+							CallParticipant heldCall = conferenceManager.getHeldCall();
+
+							if (heldCall != null)
+							{
+								JID target = getJID(heldCall.getCallId());
+
+								if (target != null)
+								{
+									Presence presence = new Presence();
+									presence.setFrom(callId + "@" + getDomain());
+									presence.setTo(target);
+									presence.getElement().add(rayoProvider.toXML(new EndEvent(null, EndEvent.Reason.valueOf("HANGUP"), callParticipant.getHeaders())));
+									sendPacket(presence);
+								}
+							}
+
+						} else if (memberCount == 2) {
+
+							conferenceManager.setTransferCall(false);	// reset after informing on redirect
+						}
 					}
 				}
 			}
@@ -1670,6 +1732,8 @@ public class RayoComponent 	extends 	AbstractComponent
 							Log.info( "RayoComponent routeJoinEvent handset leaving call " + farParty.getCallParticipant());
 
 							CallParticipant fp = farParty.getCallParticipant();
+
+							if (callParticipant.isAutoAnswer()) fp.setHeld(true);	// sip phone as handset hangup
 
 							if (fp.isHeld())
 							{

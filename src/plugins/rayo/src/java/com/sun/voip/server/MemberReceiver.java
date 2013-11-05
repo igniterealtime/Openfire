@@ -442,15 +442,12 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 			return;
 		}
 
-		if (telephoneEventPayload == 0 &&
-			(cp.dtmfDetection() || cp.getJoinConfirmationTimeout() != 0)) {
+		//if (telephoneEventPayload == 0 && (cp.dtmfDetection() || cp.getJoinConfirmationTimeout() != 0)) {
 
-			if (traceCall || Logger.logLevel >= Logger.LOG_INFO) {
-				Logger.println("Call " + cp + " starting dtmf Detector...");
-			}
+			Logger.println("Call " + cp + " starting dtmf Detector..." + telephoneEventPayload + " " + cp.dtmfDetection());
 
 			dtmfDecoder = new DtmfDecoder(this, myMediaInfo);
-		}
+		//}
 
 		if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
 				try {

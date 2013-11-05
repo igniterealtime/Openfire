@@ -73,7 +73,7 @@ public class IncomingConferenceHandler extends Thread
 
     private IncomingCallHandler incomingCallHandler;
 
-    private String lastDtmfKey;
+    private String lastDtmfKey = "";
     private String phoneNo;
 
     /**

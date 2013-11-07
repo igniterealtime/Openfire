@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.application;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +20,11 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
-
-public interface ISessions
+public class AudioWriter extends StreamWriter
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public AudioWriter(byte abyte0[], com.jcumulus.server.rtmfp.D d)
+    {
+        super((byte)8, abyte0, d);
+    }
 }

@@ -22,6 +22,9 @@ package com.jcumulus.server.rtmfp;
 
 public class B
 {
+    private int A;
+    private com.jcumulus.server.rtmfp.pipe.B B;
+
 
     public B(int i)
     {
@@ -32,7 +35,4 @@ public class B
     {
         return B.A(0x7270e00L);
     }
-
-    private int A;
-    private com.jcumulus.server.rtmfp.b.B B;
 }

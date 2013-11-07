@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.publisher;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +20,21 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
+import com.jcumulus.server.rtmfp.D;
+import com.jcumulus.server.rtmfp.P;
 
-public interface ISessions
+
+public class C extends E
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public C(int i, P p, D d)
+    {
+        super(i, Q, "NetGroup", p, d);
+    }
+
+    public static final byte Q[] = {
+        0, 71, 67
+    };
+    public static final String R = "NetGroup";
+
 }

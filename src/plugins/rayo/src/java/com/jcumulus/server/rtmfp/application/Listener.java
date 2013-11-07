@@ -21,9 +21,9 @@ package com.jcumulus.server.rtmfp.application;
  */
 
 import com.jcumulus.server.rtmfp.packet.*;
-import com.jcumulus.server.rtmfp.d.H;
-import com.jcumulus.server.rtmfp.e.F;
-import com.jcumulus.server.rtmfp.g.A;
+import com.jcumulus.server.rtmfp.publisher.FlowWriter;
+import com.jcumulus.server.rtmfp.flow.F;
+import com.jcumulus.server.rtmfp.stream.BinaryWriter;
 import org.apache.log4j.Logger;
 
 
@@ -38,12 +38,12 @@ public class Listener
     private int G;
     private int H;
     private int L;
-    private H J;
-    private D C;
-    private com.jcumulus.server.rtmfp.application.F I;
+    private FlowWriter J;
+    private AudioWriter C;
+    private com.jcumulus.server.rtmfp.application.VideoWriter I;
 
 
-    public Listener(int i, Publication b, H h, boolean flag)
+    public Listener(int i, Publication b, FlowWriter h, boolean flag)
     {
         B = i;
         K = b;
@@ -73,9 +73,9 @@ public class Listener
     private void A()
     {
         if(I != null)
-            A(((H) (I)));
+            A(((FlowWriter) (I)));
         if(C != null)
-            A(((H) (C)));
+            A(((FlowWriter) (C)));
         A(J);
         D++;
     }
@@ -98,10 +98,10 @@ public class Listener
         return L;
     }
 
-    private void A(H h)
+    private void A(FlowWriter h)
     {
         E.debug((new StringBuilder()).append("Writing bound ").append(D).append(" on flow writer ").append(h.E()).toString());
-        A a = h.A(false);
+        BinaryWriter a = h.A(false);
         a.A((short)34);
         a.A(D);
         a.A(3);

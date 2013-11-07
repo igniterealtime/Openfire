@@ -22,9 +22,9 @@ package com.jcumulus.server.rtmfp;
 
 import com.jcumulus.server.rtmfp.packet.*;
 
-import com.jcumulus.server.rtmfp.b.C;
-import com.jcumulus.server.rtmfp.b.D;
-import com.jcumulus.server.rtmfp.g.B;
+import com.jcumulus.server.rtmfp.pipe.C;
+import com.jcumulus.server.rtmfp.pipe.D;
+import com.jcumulus.server.rtmfp.stream.B;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -168,7 +168,7 @@ public class N
         byte abyte0[] = new byte[D.length];
         try
         {
-            com.jcumulus.server.rtmfp.b.C.A().read(abyte0);
+            com.jcumulus.server.rtmfp.pipe.C.A().read(abyte0);
             BigInteger biginteger2 = new BigInteger(1, abyte0);
             byte abyte1[] = biginteger1.modPow(biginteger2, biginteger).toByteArray();
             byte abyte2[] = Arrays.copyOfRange(abyte1, abyte1.length - F, abyte1.length);
@@ -239,7 +239,7 @@ public class N
 
     public static short A()
     {
-        return A((new com.jcumulus.server.rtmfp.b.B()).getTime());
+        return A((new com.jcumulus.server.rtmfp.pipe.B()).getTime());
     }
 
     public static short A(long l)

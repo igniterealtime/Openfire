@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.pipe;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +20,35 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
+import java.util.Date;
 
-public interface ISessions
+public class B extends Date
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public B()
+    {
+        super((new Date()).getTime());
+    }
+
+    public void A()
+    {
+        setTime((new Date()).getTime());
+    }
+
+    public boolean A(long l)
+    {
+        long l1 = (new B()).getTime() - getTime();
+        return l1 > l;
+    }
+
+    public long B()
+    {
+        Long long1 = Long.valueOf((new Date()).getTime());
+        long l = long1.longValue() - getTime();
+        if(l == 0L)
+            l = 1L;
+        return l;
+    }
+
+    public static final int A = 4;
 }

@@ -1,4 +1,5 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.flow;
+
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +21,32 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
+import java.util.LinkedList;
 
-public interface ISessions
+public class D
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public D(int i)
+    {
+        this(i, (byte)0);
+    }
+
+    public D(int i, byte byte0)
+    {
+        F = new LinkedList();
+        D = i;
+        B = 0;
+        E = false;
+        C = false;
+        A = 0;
+        G = byte0;
+    }
+
+    LinkedList F;
+    int B;
+    boolean E;
+    boolean C;
+    int A;
+    byte G;
+    int D;
 }

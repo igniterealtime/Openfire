@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp.application;
+package com.jcumulus.server.rtmfp.flow;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,31 +20,57 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
-import java.util.HashMap;
-import java.util.Map;
+import com.jcumulus.server.rtmfp.pipe.B;
 
 
-public class C
+public class A
 {
 
-    private Map A;
-    private Streams B;
-
-
-    public C()
+    public A(F f)
     {
-        A = new HashMap();
-        B = new Streams(A);
+        A = f;
+        f.C();
     }
 
-    public Streams getStreams()
+    public void A(String s)
     {
-        return B;
+        A.C(s);
     }
 
-    public Map getPublications()
+    public void A(String s, B b)
     {
-        return A;
+        A.A(s, b);
     }
 
+    public void A(E e)
+    {
+        A.A(e);
+    }
+
+    public void A(String s, int i)
+    {
+        A.A(s, Integer.valueOf(i));
+    }
+
+    public void A(String s, double d)
+    {
+        A.A(s, Double.valueOf(d));
+    }
+
+    public void A(String s, String s1)
+    {
+        A.A(s, s1);
+    }
+
+    public void A(String s, byte abyte0[])
+    {
+        A.A(s, abyte0);
+    }
+
+    public void A()
+    {
+        A.B();
+    }
+
+    private F A;
 }

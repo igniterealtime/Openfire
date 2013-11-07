@@ -21,19 +21,18 @@ package com.jcumulus.server.rtmfp;
  */
 
 
-import com.jcumulus.server.rtmfp.d.H;
-import com.jcumulus.server.rtmfp.g.B;
+import com.jcumulus.server.rtmfp.publisher.FlowWriter;
+import com.jcumulus.server.rtmfp.stream.B;
 
 public interface D
 {
-
     public abstract void A(boolean flag);
 
-    public abstract boolean A(H h);
+    public abstract boolean A(FlowWriter h);
 
-    public abstract void B(H h);
+    public abstract void B(FlowWriter h);
 
-    public abstract B A(byte byte0, int i, H h);
+    public abstract B A(byte byte0, int i, FlowWriter h);
 
     public abstract boolean A();
 

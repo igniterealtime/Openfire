@@ -36,7 +36,7 @@ public class ClientHandler implements IClientHandler
 	private static Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private short counter = 0;
 
-	public boolean onConnection(Client client, com.jcumulus.server.rtmfp.e.B b, com.jcumulus.server.rtmfp.e.A a)
+	public boolean onConnection(Client client, com.jcumulus.server.rtmfp.flow.B b, com.jcumulus.server.rtmfp.flow.A a)
 	{
 		log.info("onConnect ");
 
@@ -74,7 +74,7 @@ public class ClientHandler implements IClientHandler
 
 		if (RtmfpCallAgent.publishHandlers.containsKey(publishName) == false)
 		{
-			RtmfpCallAgent.publishHandlers.put(publishName, com.jcumulus.server.rtmfp.d.E.I.getStreams().A(publishName));
+			RtmfpCallAgent.publishHandlers.put(publishName, com.jcumulus.server.rtmfp.publisher.E.I.getStreams().A(publishName));
 		}
 
 		return true;
@@ -130,7 +130,7 @@ public class ClientHandler implements IClientHandler
 
 	}
 
-    public void sendDigit(Client client, com.jcumulus.server.rtmfp.e.B b)
+    public void sendDigit(Client client, com.jcumulus.server.rtmfp.flow.B b)
     {
         String stream = b.E();
         String digit = b.E();

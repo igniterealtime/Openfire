@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.flow;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +20,33 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
-
-public interface ISessions
+public class G
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public G()
+    {
+    }
+
+    public String A()
+    {
+        return A;
+    }
+
+    public void A(String s)
+    {
+        A = s;
+    }
+
+    public H B()
+    {
+        return B;
+    }
+
+    public void A(H h)
+    {
+        B = h;
+    }
+
+    private String A;
+    private H B;
 }

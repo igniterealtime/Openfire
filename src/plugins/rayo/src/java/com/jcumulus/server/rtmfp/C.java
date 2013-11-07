@@ -20,17 +20,29 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.b.A;
-import com.jcumulus.server.rtmfp.b.D;
-import com.jcumulus.server.rtmfp.g.B;
+import com.jcumulus.server.rtmfp.pipe.A;
+import com.jcumulus.server.rtmfp.pipe.D;
+import com.jcumulus.server.rtmfp.stream.B;
 import java.io.IOException;
 import org.apache.log4j.Logger;
 
-// Referenced classes of package com.jcumulus.server.rtmfp:
-//            N
 
 public class C
 {
+    private static final Logger E = Logger.getLogger(C.class);
+    public static final int A = 64;
+    boolean F;
+    byte M[];
+    byte J[];
+    String K;
+    int B;
+    byte C;
+    byte H[];
+    com.jcumulus.server.rtmfp.pipe.B G;
+    D I;
+    byte D[];
+    B L;
+
 
     public C()
     {
@@ -55,7 +67,7 @@ public class C
         H = new byte[N.F + 11];
         try
         {
-            com.jcumulus.server.rtmfp.b.C.A().read(J);
+            com.jcumulus.server.rtmfp.pipe.C.A().read(J);
             System.arraycopy(new byte[] {
                 3, 26, 0, 0, 2, 30, 0, -127, 2, 13,
                 2
@@ -81,11 +93,11 @@ public class C
         H = new byte[73];
         try
         {
-            com.jcumulus.server.rtmfp.b.C.A().read(J);
+            com.jcumulus.server.rtmfp.pipe.C.A().read(J);
             System.arraycopy(new byte[] {
                 3, 26, 0, 0, 2, 30, 0, 65, 14
             }, 0, H, 0, 9);
-            com.jcumulus.server.rtmfp.b.C.A().read(H, 9, 64);
+            com.jcumulus.server.rtmfp.pipe.C.A().read(H, 9, 64);
         }
         catch(IOException ioexception)
         {
@@ -118,19 +130,5 @@ public class C
         b.B(L.B());
         return (byte)L.A();
     }
-
-    private static final Logger E = Logger.getLogger(C.class);
-    public static final int A = 64;
-    boolean F;
-    byte M[];
-    byte J[];
-    String K;
-    int B;
-    byte C;
-    byte H[];
-    com.jcumulus.server.rtmfp.b.B G;
-    D I;
-    byte D[];
-    B L;
 
 }

@@ -22,8 +22,8 @@ package com.jcumulus.server.rtmfp.application;
 
 import com.jcumulus.server.rtmfp.P;
 import com.jcumulus.server.rtmfp.packet.*;
-import com.jcumulus.server.rtmfp.d.E;
-import com.jcumulus.server.rtmfp.d.H;
+import com.jcumulus.server.rtmfp.publisher.E;
+import com.jcumulus.server.rtmfp.publisher.FlowWriter;
 import com.google.common.base.Strings;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ public class Publication
 {
     private static final Logger F = Logger.getLogger(Publication.class);
     private P E;
-    private H A;
+    private FlowWriter A;
     private boolean G;
     private String J;
     private int I;
@@ -109,7 +109,7 @@ public class Publication
         J = s;
     }
 
-    public boolean A(P p, int i, H h, boolean flag)
+    public boolean A(P p, int i, FlowWriter h, boolean flag)
     {
         Listener j = (Listener)H.get(Integer.valueOf(i));
         if(j != null)
@@ -165,7 +165,7 @@ public class Publication
         }
     }
 
-    public void A(P p, int i, H h)
+    public void A(P p, int i, FlowWriter h)
         throws Exception
     {
         if(I != 0)

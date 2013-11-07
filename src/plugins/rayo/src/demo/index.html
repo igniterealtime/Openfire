@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
 	<link rel="stylesheet" href="bootstrap.min.css">
@@ -24,6 +25,7 @@
 	var password = null;
 	var jid = window.location.hostname;
 	var sipHandset = null;
+	var rtmpIframe = null;
 
 	window.dialer = new Dialpad({
 		onPress: function (key) {
@@ -83,7 +85,7 @@
 
     $(document).ready(function()
     {
-		document.getElementById("dialpadDiv").insertBefore(window.dialer.render());
+		document.body.insertBefore(window.dialer.render(), document.body.firstChild);
 
 		window.candybar.render();
 		window.candybar.call = null;
@@ -92,7 +94,17 @@
 		if (urlParam("domain")) domain = urlParam("domain");
 		if (urlParam("username")) username = urlParam("username");
 		if (urlParam("password")) password = urlParam("password");
-		if (urlParam("handset")) sipHandset = urlParam("handset");
+
+		if (urlParam("handset"))
+		{
+			sipHandset = urlParam("handset");
+
+			if (sipHandset.indexOf("rtmfp:") == 0)
+			{
+				tokens = sipHandset.split(":")
+				rtmpIframe = $("<iframe>").attr("style", "width:1px;height:1px;").attr("src", window.location.protocol + '//' + window.location.host + '/rayo-phone/confphone.swf?rtmpUrl=rtmfp://' + window.location.hostname + '&recieverStream=' + tokens[2] + '&senderStream=' + tokens[1]).appendTo("body");
+			}
+		}
 
 		if (domain == "81.201.82.25" && prefix == "sip:") prefix = "sip:883510";
 		if (prefix == "tel:") domain = "";
@@ -384,8 +396,7 @@
 
     </script>
   </head>
-  <body>
-	<div id="dialpadDiv" style="position: absolute; width: 500px: height: 300px;"/>
+  <body style="position: absolute; width: 500px: height: 300px;">
     <span id="status">Loading...</span>
   </body>
 </html>

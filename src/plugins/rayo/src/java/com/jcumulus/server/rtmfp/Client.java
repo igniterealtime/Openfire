@@ -20,9 +20,9 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.b.C;
-import com.jcumulus.server.rtmfp.d.H;
-import com.jcumulus.server.rtmfp.e.F;
+import com.jcumulus.server.rtmfp.pipe.C;
+import com.jcumulus.server.rtmfp.publisher.FlowWriter;
+import com.jcumulus.server.rtmfp.flow.F;
 import org.apache.log4j.Logger;
 
 public class Client
@@ -36,7 +36,7 @@ public class Client
     private String C;
     private short G;
     protected boolean A;
-    protected H F;
+    protected FlowWriter F;
 
 
     public Client()
@@ -77,7 +77,7 @@ public class Client
 
     public String E()
     {
-        return com.jcumulus.server.rtmfp.b.C.A(B);
+        return com.jcumulus.server.rtmfp.pipe.C.A(B);
     }
 
     public String H()
@@ -130,7 +130,7 @@ public class Client
         G = word0;
     }
 
-    public H F()
+    public FlowWriter F()
     {
         return F;
     }

@@ -28,7 +28,7 @@ public class Sessions implements ISessions
 {
     private static Logger A = Logger.getLogger(Sessions.class);
 
-    private F D;
+    private Handshake D;
     private Map C;
     int B;
 
@@ -36,23 +36,23 @@ public class Sessions implements ISessions
     {
         C = new HashMap();
         B = 1;
-        D = new F(this);
+        D = new Handshake(this);
     }
 
-    public H A(int i, byte abyte0[], byte abyte1[], P p)
+    public ServerSession A(int i, byte abyte0[], byte abyte1[], P p)
     {
         int j = A();
-        H h = new H(j, i, abyte0, abyte1, p);
+        ServerSession h = new ServerSession(j, i, abyte0, abyte1, p);
         C.put(Integer.valueOf(j), h);
         A.info((new StringBuilder()).append("Session ").append(j).append(" created").toString());
         return h;
     }
 
-    public H A(int i)
+    public ServerSession A(int i)
     {
         if(i == 0)
             return D;
-        H h = (H)C.get(Integer.valueOf(i));
+        ServerSession h = (ServerSession)C.get(Integer.valueOf(i));
         if(h != null && !h.F)
             return h;
         else

@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp;
+package com.jcumulus.server.rtmfp.publisher;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,9 +20,35 @@ package com.jcumulus.server.rtmfp;
  * This file is a part of jCumulus.
  */
 
+import com.jcumulus.server.rtmfp.flow.F;
+import com.jcumulus.server.rtmfp.stream.BinaryWriter;
 
-public interface ISessions
+
+public class K extends I
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public K()
+    {
+        super(true);
+        J = new BinaryWriter(G);
+        I = new F(J);
+    }
+
+    public F F()
+    {
+        return I;
+    }
+
+    public BinaryWriter E()
+    {
+        return J;
+    }
+
+    public int C()
+    {
+        return J.A();
+    }
+
+    private F I;
+    private BinaryWriter J;
 }

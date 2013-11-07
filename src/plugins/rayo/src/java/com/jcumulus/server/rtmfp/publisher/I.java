@@ -1,4 +1,4 @@
-package com.jcumulus.server.rtmfp.application;
+package com.jcumulus.server.rtmfp.publisher;
 
 /**
  * jCumulus is a Java port of Cumulus OpenRTMP
@@ -20,31 +20,51 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
-import java.util.HashMap;
+import com.jcumulus.server.rtmfp.packet.*;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-
-public class C
+public abstract class I
 {
 
+    public static final byte F = 0;
+    public static final byte E = 8;
+    public static final byte D = 9;
+    public static final byte C = 20;
+    public static final byte H = 15;
     private Map A;
-    private Streams B;
+    private boolean B;
+    protected byte G[];
 
 
-    public C()
+    protected I(boolean flag)
     {
-        A = new HashMap();
-        B = new Streams(A);
+        A = new LinkedHashMap();
+        G = new byte[20000];
+        B = flag;
     }
 
-    public Streams getStreams()
+    public abstract int C();
+
+    public Packet D()
     {
-        return B;
+        return new Packet(G, C());
     }
 
-    public Map getPublications()
+    public Packet A(int i)
+    {
+        Packet b = new Packet(G, C());
+        b.E(i);
+        return b;
+    }
+
+    public Map B()
     {
         return A;
     }
 
+    public boolean A()
+    {
+        return B;
+    }
 }

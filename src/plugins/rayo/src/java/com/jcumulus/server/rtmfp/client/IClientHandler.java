@@ -22,14 +22,14 @@ package com.jcumulus.server.rtmfp.client;
 
 import com.jcumulus.server.rtmfp.packet.*;
 import com.jcumulus.server.rtmfp.Client;
-import com.jcumulus.server.rtmfp.e.B;
+import com.jcumulus.server.rtmfp.flow.B;
 import com.jcumulus.server.rtmfp.application.Publication;
 import com.jcumulus.server.rtmfp.application.Listener;
 
 public interface IClientHandler
 {
 
-    public abstract boolean onConnection(Client client, B b, com.jcumulus.server.rtmfp.e.A a);
+    public abstract boolean onConnection(Client client, B b, com.jcumulus.server.rtmfp.flow.A a);
 
     public abstract void onFailed(Client client, String s);
 

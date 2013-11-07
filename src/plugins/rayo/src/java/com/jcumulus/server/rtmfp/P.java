@@ -25,9 +25,9 @@ import com.jcumulus.server.rtmfp.application.Publication;
 import com.jcumulus.server.rtmfp.application.Listener;
 
 import com.jcumulus.server.rtmfp.client.ClientHandler;
-import com.jcumulus.server.rtmfp.d.H;
-import com.jcumulus.server.rtmfp.e.B;
-import com.jcumulus.server.rtmfp.e.F;
+import com.jcumulus.server.rtmfp.publisher.FlowWriter;
+import com.jcumulus.server.rtmfp.flow.B;
+import com.jcumulus.server.rtmfp.flow.F;
 
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
@@ -55,7 +55,7 @@ public class P extends Client
         K = a;
     }
 
-    public boolean A(B b, com.jcumulus.server.rtmfp.e.A a)
+    public boolean A(B b, com.jcumulus.server.rtmfp.flow.A a)
     {
         if(!M)
             M = K == null || K.onConnection(this, b, a);
@@ -212,7 +212,7 @@ public class P extends Client
         return N;
     }
 
-    public void A(H h)
+    public void A(FlowWriter h)
     {
         F = h;
     }

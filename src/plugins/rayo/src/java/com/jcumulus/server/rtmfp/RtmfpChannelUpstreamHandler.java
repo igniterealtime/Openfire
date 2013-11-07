@@ -50,7 +50,7 @@ public class RtmfpChannelUpstreamHandler extends SimpleChannelUpstreamHandler
         byte abyte0[] = channelbuffer.array();
         AudioPacket packet = new AudioPacket(abyte0, channelbuffer.readableBytes());
         int i = com.jcumulus.server.rtmfp.N.A(packet);
-        H h = sessions.A(i);
+        ServerSession h = sessions.A(i);
 
         if(h == null)
         {

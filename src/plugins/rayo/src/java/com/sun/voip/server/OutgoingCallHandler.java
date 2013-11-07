@@ -142,7 +142,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
 			 placeCall(); // no gateway involved, direct SIP call
 
-		} else if (cp.getProtocol() != null &&  cp.getProtocol().equalsIgnoreCase("WebRtc")) {
+		} else if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
 
 			 placeCall(); // WebRtc call
 
@@ -172,6 +172,8 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 	    csa = new NSOutgoingCallAgent(this);
 	} else if (protocol.equalsIgnoreCase("WebRtc")) {
 	    csa = new WebRtcCallAgent(this);
+	} else if (protocol.equalsIgnoreCase("Rtmfp")) {
+	    csa = new RtmfpCallAgent(this);
 	} else {
 	    //csa = new H323TPCCallAgent(this);
 	    reasonCallEnded =
@@ -478,7 +480,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 			protocol = cp.getProtocol();
 		}
 
-		if (protocol.equalsIgnoreCase("WebRtc")) {
+		if (protocol.equalsIgnoreCase("WebRtc") || protocol.equalsIgnoreCase("Rtmfp")) {
 			return true;
 		}
 
@@ -502,7 +504,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
     public boolean waitForCallToBeEstablished() {
 
-		if (cp.getProtocol().equalsIgnoreCase("WebRtc")) {
+		if (cp.getProtocol().equalsIgnoreCase("WebRtc") || cp.getProtocol().equalsIgnoreCase("Rtmfp")) {
 			return true;
 		}
 

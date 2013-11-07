@@ -1851,7 +1851,7 @@ public class Application implements  CallEventListener  {
 
 		if ("protocol".equalsIgnoreCase(parameter))
 		{
-			if (value.equalsIgnoreCase("SIP") == false && value.equalsIgnoreCase("NS") == false && value.equalsIgnoreCase("WebRtc") == false)
+			if (value.equalsIgnoreCase("SIP") == false && value.equalsIgnoreCase("NS") == false && value.equalsIgnoreCase("WebRtc") == false && value.equalsIgnoreCase("Rtmfp") == false)
 			{
 				reportError("Invalid protocol:  " + value);
 				return;

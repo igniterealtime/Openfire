@@ -451,7 +451,7 @@ public class ConferenceMember implements TreatmentDoneListener,
 
         this.callHandler = callHandler;
 
-		if (cp.getProtocol() != null && "WebRtc".equals(cp.getProtocol()) == false)
+		if (cp.getProtocol() != null && "WebRtc".equals(cp.getProtocol()) == false && "Rtmfp".equals(cp.getProtocol()) == false)
 		{
 			if (rtcpAddress != null) {
 				this.rtcpAddress = rtcpAddress;

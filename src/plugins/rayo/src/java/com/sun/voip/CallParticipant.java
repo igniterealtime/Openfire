@@ -108,7 +108,8 @@ public class CallParticipant {
     private int     secondPartyTimeout             = 0;
     private String  secondPartyTreatment           = null;
     private boolean secondPartyVoiceDetection      = false;
-
+    private String  rtmfpSendStream					= null;
+    private String  rtmfpRecieveStream				= null;
 
     /**
      * Constructor
@@ -192,6 +193,20 @@ public class CallParticipant {
     }
 
     /**
+     * Get RTMFP send stream name
+     */
+    public String getRtmfpSendStream() {
+        return rtmfpSendStream;
+    }
+
+    /**
+     * Get RTMFP recieve stream name
+     */
+    public String getRtmfpRecieveStream() {
+        return rtmfpRecieveStream;
+    }
+
+    /**
      * Get call answer timeout
      */
     public int getCallAnswerTimeout() {
@@ -210,6 +225,20 @@ public class CallParticipant {
      */
     public String getCallEndTreatment() {
         return callEndTreatment;
+    }
+
+    /**
+     * Set RTMFP send stream name
+     */
+    public void setRtmfpSendStream(String rtmfpSendStream) {
+        this.rtmfpSendStream = rtmfpSendStream;
+    }
+
+    /**
+     * Set RTMFP recieve stream name
+     */
+    public void setRtmfpRecieveStream(String rtmfpRecieveStream) {
+        this.rtmfpRecieveStream = rtmfpRecieveStream;
     }
 
     /**

@@ -50,9 +50,9 @@ import org.xmpp.jnodes.nio.LocalIPResolver;
 import org.xmpp.packet.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.text.ParseException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 
 import com.rayo.core.*;
 import com.rayo.core.verb.*;
@@ -64,6 +64,14 @@ import com.sun.voip.*;
 
 import org.voicebridge.*;
 
+import com.jcumulus.server.rtmfp.ServerPipelineFactory;
+import com.jcumulus.server.rtmfp.Sessions;
+
+import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.FixedReceiveBufferSizePredictorFactory;
+import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 
 
 public class RayoComponent 	extends 	AbstractComponent
@@ -92,6 +100,10 @@ public class RayoComponent 	extends 	AbstractComponent
     private RecordProvider recordProvider = null;
     private SayProvider sayProvider = null;
     private HandsetProvider handsetProvider = null;
+
+    private static ConnectionlessBootstrap bootstrap = null;
+    public static Channel channel = null;
+    private static Sessions sessions;
 
 
     public RayoComponent(final RayoPlugin plugin)
@@ -130,6 +142,32 @@ public class RayoComponent 	extends 	AbstractComponent
 		{
 			Log.info("RayoComponent found Fastpath");
 		}
+
+		try{
+			Log.info("Starting jCumulus.....");
+
+			sessions = new Sessions();
+			ExecutorService executorservice = Executors.newCachedThreadPool();
+			NioDatagramChannelFactory niodatagramchannelfactory = new NioDatagramChannelFactory(executorservice);
+			bootstrap = new ConnectionlessBootstrap(niodatagramchannelfactory);
+			OrderedMemoryAwareThreadPoolExecutor orderedmemoryawarethreadpoolexecutor = new OrderedMemoryAwareThreadPoolExecutor(10, 0x100000L, 0x40000000L, 100L, TimeUnit.MILLISECONDS, Executors.defaultThreadFactory());
+
+			bootstrap.setPipelineFactory(new ServerPipelineFactory(sessions, orderedmemoryawarethreadpoolexecutor));
+			bootstrap.setOption("reuseAddress", Boolean.valueOf(true));
+			bootstrap.setOption("sendBufferSize", Integer.valueOf(1215));
+			bootstrap.setOption("receiveBufferSize", Integer.valueOf(2048));
+			bootstrap.setOption("receiveBufferSizePredictorFactory", new FixedReceiveBufferSizePredictorFactory(2048));
+
+			InetSocketAddress inetsocketaddress = new InetSocketAddress(JiveGlobals.getIntProperty("voicebridge.rtmfp.port", 1935));
+
+			Log.info("Listening on " + inetsocketaddress.getPort() + " port");
+
+			channel = bootstrap.bind(inetsocketaddress);
+
+		} catch (Exception e) {
+			Log.error("jCumulus startup failure");
+			e.printStackTrace();
+		}
 	}
 
 	public void doStop()
@@ -144,6 +182,11 @@ public class RayoComponent 	extends 	AbstractComponent
         server.getIQDiscoInfoHandler().removeServerFeature(RAYO_HANDSET);
 
 		destroyIQHandlers();
+
+		Log.info("jCumulus stopping...");
+
+		channel.close();
+		bootstrap.releaseExternalResources();
 	}
 
     public String getName() {
@@ -558,9 +601,32 @@ public class RayoComponent 	extends 	AbstractComponent
 				{
 					if (channel == null)
 					{
-						cp.setPhoneNumber(handset.sipuri);
-						cp.setAutoAnswer(true);
-						cp.setProtocol("SIP");
+						if (handset.sipuri.indexOf("sip:") == 0)
+						{
+							cp.setPhoneNumber(handset.sipuri);
+							cp.setAutoAnswer(true);
+							cp.setProtocol("SIP");
+
+						} else if (handset.sipuri.indexOf("rtmfp:") == 0) {
+
+							String[] tokens = handset.sipuri.split(":");
+
+	    					if (tokens.length == 3)
+	    					{
+								cp.setProtocol("Rtmfp");
+								cp.setRtmfpSendStream(tokens[1]);
+								cp.setRtmfpRecieveStream(tokens[2]);
+								cp.setAutoAnswer(true);
+
+							} else {
+								reply.setError(PacketError.Condition.not_allowed);
+								return;
+							}
+
+						} else {
+							reply.setError(PacketError.Condition.not_allowed);
+							return;
+						}
 
 					} else {
 						cp.setMediaPreference(mediaPreference);

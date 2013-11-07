@@ -57,6 +57,8 @@ import org.ifsoft.rtp.*;
 
 import org.jitsi.impl.neomedia.codec.audio.opus.Opus;
 
+import com.jcumulus.server.rtmfp.packet.AudioPacket;
+
 /**
  * Send RTP data to this ConferenceMember,
  */
@@ -102,6 +104,7 @@ public class MemberSender {
     private DatagramChannel datagramChannel;
     private boolean initializationDone = false;
     private RelayChannel relayChannel;
+	private long startTime = 0;
 
     public MemberSender(CallParticipant cp, DatagramChannel datagramChannel) throws IOException
     {
@@ -141,6 +144,8 @@ public class MemberSender {
 					+ e.getMessage());
 			}
 		}
+
+        startTime = System.currentTimeMillis();
     }
 
 
@@ -355,8 +360,10 @@ public class MemberSender {
 		    }
 
 		    if (getWebRTCParticipant() == null)
-		    	sendComfortNoisePayload();
-		    else getWebRTCParticipant().sendComfortNoisePayload();
+		    {
+				if (cp.getRtmfpSendStream() == null) sendComfortNoisePayload();
+
+			} else getWebRTCParticipant().sendComfortNoisePayload();
 		}
 	    }
 
@@ -444,20 +451,23 @@ public class MemberSender {
 	    /*
 	     * Convert to ulaw
 	     */
-	    AudioConversion.linearToUlaw(dataToSend, rtpData,
-		RtpPacket.HEADER_SIZE);
+	    AudioConversion.linearToUlaw(dataToSend, rtpData, RtpPacket.HEADER_SIZE);
+
+		senderPacket.setLength(rtpData.length);
+
 	    //Util.dump("Call " + cp + " sending ulaw data " + rtpData.length,
 	    //    rtpData, 0, 16);
+
 	} else if (myMediaInfo.getEncoding() == RtpPacket.SPEEX_ENCODING) {
 	    try {
                 if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
-	            Logger.writeFile("Call " + cp + " speex encoding data ");
-	        }
+	            	Logger.writeFile("Call " + cp + " speex encoding data ");
+	        	}
 
-	        int length = speexEncoder.encode(dataToSend, rtpData,
-		    RtpPacket.HEADER_SIZE);
+	        	int length = speexEncoder.encode(dataToSend, rtpData,  RtpPacket.HEADER_SIZE);
 
-	        senderPacket.setLength(length + RtpPacket.HEADER_SIZE);
+	        	senderPacket.setLength(length + RtpPacket.HEADER_SIZE);
+
             } catch (SpeexException e) {
                 Logger.println("Call " + this + ":  " + e.getMessage());
 		return false;
@@ -508,25 +518,41 @@ public class MemberSender {
 
 	if (getWebRTCParticipant() == null)
 	{
-		if (cp.getInputTreatment() == null) {
-			try {
-				senderPacket.setSocketAddress(memberAddress);
+		if (cp.getRtmfpSendStream() != null)	// RTMFP
+		{
+			if (RtmfpCallAgent.publishHandlers.containsKey(cp.getRtmfpSendStream()) )
+			{
+				int ts = (int)(System.currentTimeMillis() - startTime);
 
-				datagramChannel.send(ByteBuffer.wrap(senderPacket.getData(), 0, senderPacket.getLength()), memberAddress);
+				byte[] rtmfp = new byte[rtpData.length + 1 - RtpPacket.HEADER_SIZE];
+				rtmfp[0] = (byte) 130;
+				System.arraycopy(rtpData, RtpPacket.HEADER_SIZE, rtmfp, 1, rtmfp.length - 1);
 
-					if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
-					Logger.writeFile("Call " + cp + " back from sending data");
+				RtmfpCallAgent.publishHandlers.get(cp.getRtmfpSendStream()).B(ts, new AudioPacket(rtmfp,  rtmfp.length), 0);
+			}
+
+		} else {	// SIP
+
+			if (cp.getInputTreatment() == null) {
+				try {
+					senderPacket.setSocketAddress(memberAddress);
+
+					datagramChannel.send(ByteBuffer.wrap(senderPacket.getData(), 0, senderPacket.getLength()), memberAddress);
+
+						if (Logger.logLevel >= Logger.LOG_MOREDETAIL) {
+						Logger.writeFile("Call " + cp + " back from sending data");
+					}
+				} catch (Exception e) {
+					if (!done) {
+					Logger.error("Call " + cp + " sendData " + e.getMessage());
+						e.printStackTrace();
+					}
+					return false;
 				}
-			} catch (Exception e) {
-				if (!done) {
-				Logger.error("Call " + cp + " sendData " + e.getMessage());
-					e.printStackTrace();
-				}
-				return false;
 			}
 		}
 
-	} else {
+	} else {	// WebRTC
 
 		try {
 
@@ -539,7 +565,6 @@ public class MemberSender {
 	}
 
 	senderPacket.setBuffer(rtpData);
-	senderPacket.setLength(rtpData.length);
 
 	if (Logger.logLevel >= Logger.LOG_DEBUG) {
 	    log(true);
@@ -557,7 +582,7 @@ public class MemberSender {
 	return true;
     }
 
-	private int[] normalize(int[] audio)
+	public static int[] normalize(int[] audio)
 	{
 		int length = audio.length;
 		// Scan for max peak value here

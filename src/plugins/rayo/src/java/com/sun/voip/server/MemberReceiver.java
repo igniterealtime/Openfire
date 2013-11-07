@@ -376,7 +376,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
 
 
-	if (cp.getProtocol() != null && "WebRtc".equals(cp.getProtocol()))
+	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol())))
 	{
 	    conferenceManager.getConferenceReceiver().addMember(this);
 
@@ -870,7 +870,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     private boolean callIsDead() {
 
-	if (cp.getProtocol() != null && "WebRtc".equals(cp.getProtocol()))
+	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol())))
 	{
 		return false;
 	}

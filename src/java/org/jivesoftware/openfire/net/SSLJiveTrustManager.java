@@ -28,7 +28,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.net.ssl.X509TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Trust manager which accepts certificates without any validation

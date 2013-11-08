@@ -28,7 +28,7 @@ import java.security.cert.X509Certificate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.net.ssl.X509KeyManager;
+import javax.net.ssl.X509KeyManager;
 
 /**
  * A skeleton placeholder for developers wishing to implement their own custom

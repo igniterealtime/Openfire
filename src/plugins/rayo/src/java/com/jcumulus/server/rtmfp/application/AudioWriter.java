@@ -20,10 +20,13 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
+import com.jcumulus.server.rtmfp.ISession;
+
+
 public class AudioWriter extends StreamWriter
 {
 
-    public AudioWriter(byte abyte0[], com.jcumulus.server.rtmfp.D d)
+    public AudioWriter(byte abyte0[], ISession d)
     {
         super((byte)8, abyte0, d);
     }

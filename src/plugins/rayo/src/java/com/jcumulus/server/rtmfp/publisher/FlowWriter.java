@@ -20,7 +20,7 @@ package com.jcumulus.server.rtmfp.publisher;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.D;
+import com.jcumulus.server.rtmfp.ISession;
 import com.jcumulus.server.rtmfp.packet.*;
 import com.jcumulus.server.rtmfp.pipe.C;
 import com.jcumulus.server.rtmfp.application.VideoWriter;
@@ -44,7 +44,7 @@ public class FlowWriter
     private boolean K;
     private int C;
     private byte I[];
-    private D H;
+    private ISession H;
     private boolean B;
     private L A;
     private final List P = new ArrayList();
@@ -60,7 +60,7 @@ public class FlowWriter
 
 
 
-    public FlowWriter(byte abyte0[], D d)
+    public FlowWriter(byte abyte0[], ISession d)
     {
         A = new L();
         K = false;

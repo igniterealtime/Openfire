@@ -20,13 +20,13 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.D;
+import com.jcumulus.server.rtmfp.ISession;
 
 
 public class VideoWriter extends StreamWriter
 {
 
-    public VideoWriter(byte abyte0[], D d)
+    public VideoWriter(byte abyte0[], ISession d)
     {
         super((byte)9, abyte0, d);
     }

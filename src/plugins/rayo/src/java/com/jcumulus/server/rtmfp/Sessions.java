@@ -39,7 +39,7 @@ public class Sessions implements ISessions
         D = new Handshake(this);
     }
 
-    public ServerSession A(int i, byte abyte0[], byte abyte1[], P p)
+    public ServerSession A(int i, byte abyte0[], byte abyte1[], Peer p)
     {
         int j = A();
         ServerSession h = new ServerSession(j, i, abyte0, abyte1, p);

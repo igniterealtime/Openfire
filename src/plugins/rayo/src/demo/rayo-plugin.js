@@ -104,6 +104,8 @@ Strophe.addConnectionPlugin('rayo',
 		{
 			var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
 
+			//console.log(iq.toString());
+		
 			that._connection.sendIQ(iq, null, function(error)
 			{
 				$('error', error).each(function() 
@@ -122,9 +124,11 @@ Strophe.addConnectionPlugin('rayo',
 		var that = this;
 		var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("unjoin", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
 
+		//console.log(iq.toString());
+		
 		that._connection.sendIQ(iq, function(response) 
 		{
-			this._onhook();			
+			that._onhook();			
 		
 		}, function(error) {
 		

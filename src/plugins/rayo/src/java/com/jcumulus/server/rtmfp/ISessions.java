@@ -24,5 +24,5 @@ package com.jcumulus.server.rtmfp;
 public interface ISessions
 {
 
-    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], P p);
+    public abstract ServerSession A(int i, byte abyte0[], byte abyte1[], Peer p);
 }

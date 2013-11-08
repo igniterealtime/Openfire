@@ -1361,6 +1361,8 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     public synchronized void handleWebRtcMedia(int[] data, short sequenceNumber)
     {
+		if (readyToReceiveData() == false) return;
+
 		timeCurrentPacketReceived = System.currentTimeMillis();
 		int elapsedTime = (int) (timeCurrentPacketReceived - timePreviousPacketReceived);
 

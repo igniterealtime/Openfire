@@ -24,7 +24,7 @@ package com.jcumulus.server.rtmfp;
 import com.jcumulus.server.rtmfp.publisher.FlowWriter;
 import com.jcumulus.server.rtmfp.stream.B;
 
-public interface D
+public interface ISession
 {
     public abstract void A(boolean flag);
 

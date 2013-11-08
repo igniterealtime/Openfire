@@ -20,7 +20,7 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.Peer;
 import com.jcumulus.server.rtmfp.packet.*;
 import com.jcumulus.server.rtmfp.publisher.E;
 import com.jcumulus.server.rtmfp.publisher.FlowWriter;
@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 public class Publication
 {
     private static final Logger F = Logger.getLogger(Publication.class);
-    private P E;
+    private Peer E;
     private FlowWriter A;
     private boolean G;
     private String J;
@@ -109,7 +109,7 @@ public class Publication
         J = s;
     }
 
-    public boolean A(P p, int i, FlowWriter h, boolean flag)
+    public boolean A(Peer p, int i, FlowWriter h, boolean flag)
     {
         Listener j = (Listener)H.get(Integer.valueOf(i));
         if(j != null)
@@ -132,7 +132,7 @@ public class Publication
         }
     }
 
-    public void A(P p, int i)
+    public void A(Peer p, int i)
     {
         Listener j = (Listener)H.get(Integer.valueOf(i));
         if(j == null)
@@ -165,7 +165,7 @@ public class Publication
         }
     }
 
-    public void A(P p, int i, FlowWriter h)
+    public void A(Peer p, int i, FlowWriter h)
         throws Exception
     {
         if(I != 0)
@@ -195,7 +195,7 @@ public class Publication
             h.A("Publish.Start", (new StringBuilder()).append(J).append(" is now published").toString());
     }
 
-    public void B(P p, int i)
+    public void B(Peer p, int i)
     {
         B.A();
         if(I != i)

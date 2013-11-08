@@ -22,7 +22,7 @@ package com.jcumulus.server.rtmfp.application;
 
 import com.jcumulus.server.rtmfp.packet.*;
 
-import com.jcumulus.server.rtmfp.D;
+import com.jcumulus.server.rtmfp.ISession;
 import com.jcumulus.server.rtmfp.stream.B;
 import org.apache.log4j.Logger;
 
@@ -35,7 +35,7 @@ public class StreamWriter extends com.jcumulus.server.rtmfp.publisher.FlowWriter
     private boolean U;
 
 
-    public StreamWriter(byte byte0, byte abyte0[], D d)
+    public StreamWriter(byte byte0, byte abyte0[], ISession d)
     {
         super(abyte0, d);
         T = new G();

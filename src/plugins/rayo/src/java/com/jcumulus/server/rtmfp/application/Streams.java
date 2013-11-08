@@ -20,7 +20,7 @@ package com.jcumulus.server.rtmfp.application;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.Peer;
 import com.jcumulus.server.rtmfp.publisher.FlowWriter;
 import java.util.*;
 import org.apache.log4j.Logger;
@@ -66,7 +66,7 @@ public class Streams
         }
     }
 
-    public Publication A(P p, int i, String s, FlowWriter h)
+    public Publication A(Peer p, int i, String s, FlowWriter h)
         throws Exception
     {
         Publication b = A(s);
@@ -83,7 +83,7 @@ public class Streams
         return b;
     }
 
-    public void A(P p, int i, String s)
+    public void A(Peer p, int i, String s)
     {
         Publication b = (Publication)C.get(s);
         if(b == null)
@@ -96,7 +96,7 @@ public class Streams
             A(b);
     }
 
-    public boolean A(P p, int i, String s, FlowWriter h, double d)
+    public boolean A(Peer p, int i, String s, FlowWriter h, double d)
     {
         Publication b = (Publication)C.get(s);
         boolean flag = false;
@@ -111,7 +111,7 @@ public class Streams
         return flag;
     }
 
-    public void B(P p, int i, String s)
+    public void B(Peer p, int i, String s)
     {
         Publication b = (Publication)C.get(s);
         if(b == null)

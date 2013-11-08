@@ -20,14 +20,14 @@ package com.jcumulus.server.rtmfp.publisher;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.D;
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.ISession;
+import com.jcumulus.server.rtmfp.Peer;
 
 
 public class C extends E
 {
 
-    public C(int i, P p, D d)
+    public C(int i, Peer p, ISession d)
     {
         super(i, Q, "NetGroup", p, d);
     }

@@ -21,7 +21,7 @@ package com.jcumulus.server.rtmfp.pipe;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.Peer;
 
 
 public class C
@@ -31,7 +31,7 @@ public class C
     {
     }
 
-    public static void A(String s, P p)
+    public static void A(String s, Peer p)
     {
     }
 

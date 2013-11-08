@@ -152,8 +152,10 @@ public class Handshake extends ServerSession
                 a.E(j);
                 X.put(new String(c.J), c);
             }
-            P p = new P();
+
+            Peer p = new Peer();
             p.A(M.L());
+
             if(c.B == 0)
             {
                 D d = null;

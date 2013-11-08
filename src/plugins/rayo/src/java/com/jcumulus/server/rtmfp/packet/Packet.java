@@ -110,9 +110,15 @@ public class Packet
 
     public byte[] F(int i)
     {
-        byte abyte0[] = Arrays.copyOfRange(D, A, A + i);
-        A += i;
-        return abyte0;
+		if (A > D.length || (A + i) > D.length)
+		{
+			return new byte[0];
+
+		} else {
+			byte abyte0[] = Arrays.copyOfRange(D, A, A + i);
+			A += i;
+			return abyte0;
+		}
     }
 
     private int F()

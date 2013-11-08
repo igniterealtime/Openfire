@@ -36,16 +36,16 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 
-public class P extends Client
+public class Peer extends Client
 {
 
-    private static final Logger L = Logger.getLogger(P.class);
+    private static final Logger L = Logger.getLogger(Peer.class);
     private SocketAddress J;
     private List N;
     private ClientHandler K;
     private boolean M;
 
-    public P()
+    public Peer()
     {
         N = new ArrayList();
     }

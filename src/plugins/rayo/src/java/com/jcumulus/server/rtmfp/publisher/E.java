@@ -22,8 +22,8 @@ package com.jcumulus.server.rtmfp.publisher;
 
 import com.jcumulus.server.rtmfp.packet.*;
 
-import com.jcumulus.server.rtmfp.D;
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.ISession;
+import com.jcumulus.server.rtmfp.Peer;
 import com.jcumulus.server.rtmfp.pipe.C;
 import com.jcumulus.server.rtmfp.flow.H;
 import com.jcumulus.server.rtmfp.stream.BinaryWriter;
@@ -49,9 +49,9 @@ public class E
     public static com.jcumulus.server.rtmfp.application.C I = new com.jcumulus.server.rtmfp.application.C();
     protected int A;
     private int J;
-    protected P K;
+    protected Peer K;
     private boolean G;
-    private D D;
+    private ISession D;
     private com.jcumulus.server.rtmfp.publisher.D B;
     protected com.jcumulus.server.rtmfp.publisher.FlowWriter O;
     private Map P;
@@ -59,7 +59,7 @@ public class E
 
 
 
-    public E(int i, byte abyte0[], String s, P p, D d)
+    public E(int i, byte abyte0[], String s, Peer p, ISession d)
     {
         P = new HashMap();
         A = i;

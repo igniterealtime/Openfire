@@ -40,12 +40,12 @@ import org.apache.log4j.Logger;
 import org.jboss.netty.channel.Channel;
 
 
-public class ServerSession implements D
+public class ServerSession implements ISession
 {
     private static final Logger J = Logger.getLogger(ServerSession.class);
     int O;
     int D;
-    protected P M;
+    protected Peer M;
     boolean I;
     boolean F;
     byte H;
@@ -67,10 +67,10 @@ public class ServerSession implements D
 
     public ServerSession(int i, int j, byte abyte0[], byte abyte1[])
     {
-        this(i, j, abyte0, abyte1, new P());
+        this(i, j, abyte0, abyte1, new Peer());
     }
 
-    public ServerSession(int i, int j, byte abyte0[], byte abyte1[], P p)
+    public ServerSession(int i, int j, byte abyte0[], byte abyte1[], Peer p)
     {
         N = new B();
         G = new com.jcumulus.server.rtmfp.pipe.B();

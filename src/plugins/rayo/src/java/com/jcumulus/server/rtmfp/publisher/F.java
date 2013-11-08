@@ -20,8 +20,8 @@ package com.jcumulus.server.rtmfp.publisher;
  * This file is a part of jCumulus.
  */
 
-import com.jcumulus.server.rtmfp.D;
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.ISession;
+import com.jcumulus.server.rtmfp.Peer;
 import com.jcumulus.server.rtmfp.flow.A;
 import com.jcumulus.server.rtmfp.flow.B;
 import com.jcumulus.server.rtmfp.flow.E;
@@ -36,7 +36,7 @@ import org.jivesoftware.util.*;
 public class F extends com.jcumulus.server.rtmfp.publisher.E
 {
 
-    public F(int i, P p, D d)
+    public F(int i, Peer p, ISession d)
     {
         super(i, S, "NetConnection", p, d);
         U = new ArrayList();

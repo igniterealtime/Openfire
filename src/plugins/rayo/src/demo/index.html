@@ -161,7 +161,7 @@
 		{
 			window.connection.rayo.phone(
 			{
-				codec_name: "PCMU",
+				codec_name: document.getElementById("codec").value,
 				stereo_pan: "0",
 				sip_handset: sipHandset,
 
@@ -356,7 +356,7 @@
 		if (!username) groupname = null;
 
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
-			codec_name: "PCMU",
+			codec_name: document.getElementById("codec").value,
 			//group_name: groupname
 		});
 
@@ -397,6 +397,7 @@
     </script>
   </head>
   <body style="position: absolute; width: 500px: height: 300px;">
+    <div>Codec<select id="codec"><option value="OPUS"><b>OPUS</b></option><option value="PCMU"><b>PCMU (Ulaw)</b></option></select></div>
     <span id="status">Loading...</span>
   </body>
 </html>

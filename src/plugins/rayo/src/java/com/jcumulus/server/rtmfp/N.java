@@ -34,8 +34,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.log4j.Logger;
 
-// Referenced classes of package com.jcumulus.server.rtmfp:
-//            K, C
 
 public class N
 {

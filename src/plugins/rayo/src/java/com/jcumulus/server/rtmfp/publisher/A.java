@@ -21,8 +21,8 @@ package com.jcumulus.server.rtmfp.publisher;
  */
 
 import com.jcumulus.server.rtmfp.packet.*;
-import com.jcumulus.server.rtmfp.D;
-import com.jcumulus.server.rtmfp.P;
+import com.jcumulus.server.rtmfp.ISession;
+import com.jcumulus.server.rtmfp.Peer;
 import com.jcumulus.server.rtmfp.application.Publication;
 import com.jcumulus.server.rtmfp.application.C;
 
@@ -52,7 +52,7 @@ public class A extends com.jcumulus.server.rtmfp.publisher.E
     String a;
 
 
-    public A(int i, byte abyte0[], P p, D d)
+    public A(int i, byte abyte0[], Peer p, ISession d)
     {
         super(i, abyte0, "NetStream", p, d);
         Packet a1 = new AudioPacket(abyte0, abyte0.length);

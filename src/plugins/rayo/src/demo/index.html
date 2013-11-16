@@ -98,12 +98,6 @@
 		if (urlParam("handset"))
 		{
 			sipHandset = urlParam("handset");
-
-			if (sipHandset.indexOf("rtmfp:") == 0)
-			{
-				tokens = sipHandset.split(":")
-				rtmpIframe = $("<iframe>").attr("style", "width:1px;height:1px;").attr("src", window.location.protocol + '//' + window.location.host + '/rayo-phone/confphone.swf?rtmpUrl=rtmfp://' + window.location.hostname + '&recieverStream=' + tokens[2] + '&senderStream=' + tokens[1]).appendTo("body");
-			}
 		}
 
 		if (domain == "81.201.82.25" && prefix == "sip:") prefix = "sip:883510";
@@ -217,6 +211,7 @@
 
 					window.dialer.setCallLabel('Call');
 					stopTone();
+					if (rtmpIframe) rtmpIframe.src = "about:blank"
 				},
 
 				onAnswer: function(callId, headers) {
@@ -355,6 +350,13 @@
 
 		if (!username) groupname = null;
 
+		if (sipHandset && sipHandset.indexOf("rtmfp:") == 0)
+		{
+			tokens = sipHandset.split(":")
+			rtmpIframe = document.getElementById("rtmpIframeDIV");
+			rtmpIframe.src = window.location.protocol + '//' + window.location.host + '/rayo-phone/confphone.swf?rtmpUrl=rtmfp://' + window.location.hostname + '&recieverStream=' + tokens[2] + '&senderStream=' + tokens[1];
+		}
+
 		window.connection.rayo.dial("xmpp:" + window.connection.jid, sipUri, {
 			codec_name: document.getElementById("codec").value,
 			//group_name: groupname
@@ -399,5 +401,6 @@
   <body style="position: absolute; width: 500px: height: 300px;">
     <div>Codec<select id="codec"><option value="OPUS"><b>OPUS</b></option><option value="PCMU"><b>PCMU (Ulaw)</b></option></select></div>
     <span id="status">Loading...</span>
+    <iframe id="rtmpIframeDIV" style="width:1px;height:1px;"></iframe>
   </body>
 </html>

@@ -412,6 +412,11 @@ if (false) {
 
 	} else {		// telephone number
 
+   		if (toNumber.indexOf("tel:") == 0)
+   		{
+			toNumber = toNumber.substring(4);
+		}
+
 	    voipGateway = proxy;
 	    Logger.println("Call " + cp + " Using proxy " + proxy + " for " + toNumber);
 	}

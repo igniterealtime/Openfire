@@ -498,9 +498,11 @@ Strophe.addConnectionPlugin('rayo',
 		var that = this;
 		
 		var codec = (headers && headers.codec_name) ? headers.codec_name : (that.callbacks.codec_name ? that.callbacks.codec_name : "OPUS");		
+
+		var peerConstraints = {'optional': [{'DtlsSrtpKeyAgreement': 'false'}]};		
 		
-		that.pc1 = new webkitRTCPeerConnection(null);		
-		that.pc2 = new webkitRTCPeerConnection(null);
+		that.pc1 = new webkitRTCPeerConnection(null, peerConstraints);		
+		that.pc2 = new webkitRTCPeerConnection(null, peerConstraints);
 
 		that.pc2.onaddstream = function(e)
 		{
@@ -534,6 +536,8 @@ Strophe.addConnectionPlugin('rayo',
 				that.pc2.setLocalDescription(desc);
 
 				var sdpObj2 = WebrtcSDP.parseSDP(desc.sdp);
+				//console.log(desc.sdp);
+				//console.log(sdpObj2);
 				that.localCrypto = sdpObj2.contents[0].crypto['key-params'].substring(7);
 				var sdp = WebrtcSDP.buildSDP(sdpObj2);
 				//console.log(sdp);			
@@ -921,6 +925,7 @@ Strophe.addConnectionPlugin('rayo',
     // representation of candidates, offers and answers
 
     _parseLine = function(line) {
+    
         var s1 = line.split("=");
         return {
             type: s1[0],
@@ -1490,6 +1495,10 @@ Strophe.addConnectionPlugin('rayo',
         // Return an object representing the SDP in Jingle like constructs
         
         parseSDP: function(sdpString) {
+        
+            //console.log('parseSDP');
+            //console.log(sdpString);
+            
             var contentsObj = {};
             contentsObj.contents = [];
             var sdpObj = null;
@@ -1497,7 +1506,11 @@ Strophe.addConnectionPlugin('rayo',
             // Iterate the lines
             var sdpLines = sdpString.split("\r\n");
             for (var sdpLine in sdpLines) {
+            	//console.log("parseSDP sdpLines[sdpLine] " + typeof sdpLines[sdpLine]);
                 //console.log(sdpLines[sdpLine]);
+                
+                if (typeof sdpLines[sdpLine] != "string") continue;
+                
                 var line = _parseLine(sdpLines[sdpLine]);
 
                 if (line.type == "o") {

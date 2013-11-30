@@ -58,10 +58,11 @@ import java.util.regex.Pattern;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DEREncodable;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.x509.GeneralName;
@@ -99,7 +100,7 @@ public class CertificateManager {
     private static final int CERT_REQ_LINE_LENGTH = 76;
 
     private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<CertificateEventListener>();
-    
+
     static {
         // Add the BC provider to the list of security providers
         Security.addProvider(provider);
@@ -251,12 +252,12 @@ public class CertificateManager {
                     try {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
                         ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
-                        DERSequence otherNameSeq = (DERSequence) decoder.readObject();
+                        ASN1Sequence otherNameSeq = (ASN1Sequence) decoder.readObject();
 
                         // Check the object identifier
                         DERObjectIdentifier objectId = (DERObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
-                        
+
                         if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
                             // Not a XMPP otherName
                             Log.debug("Ignoring non-XMPP otherName, " + objectId.getId());
@@ -266,7 +267,7 @@ public class CertificateManager {
                         // Get identity string
                         try {
                         	final String identity;
-	                        DEREncodable o = otherNameSeq.getObjectAt(1);
+	                        ASN1Encodable o = otherNameSeq.getObjectAt(1);
 	                        if (o instanceof DERTaggedObject) {
 	                        	ASN1TaggedObject ato = DERTaggedObject.getInstance(o);
 	                        	Log.debug("... processing DERTaggedObject: " + ato.toString());
@@ -455,7 +456,7 @@ public class CertificateManager {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DEROutputStream deros = new DEROutputStream(baos);
-        deros.writeObject(csr.getDERObject());
+        deros.writeObject(csr.toASN1Primitive());
         String sTmp = new String(org.bouncycastle.util.encoders.Base64.encode(baos.toByteArray()));
 
         // Header
@@ -900,10 +901,10 @@ public class CertificateManager {
 
         // Generate the subject alternative name
         boolean critical = subjectDN == null || "".equals(subjectDN.trim());
-        DERSequence othernameSequence = new DERSequence(new ASN1Encodable[]{
+        ASN1Sequence othernameSequence = new DERSequence(new ASN1Encodable[]{
                 new DERObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(domain))});
         GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);
-        GeneralNames subjectAltNames = new GeneralNames(new DERSequence(new ASN1Encodable[]{othernameGN}));
+        GeneralNames subjectAltNames = new GeneralNames(new GeneralName[]{othernameGN});
         // Add subject alternative name extension
         certGenerator.addExtension(X509Extensions.SubjectAlternativeName, critical, subjectAltNames);
 

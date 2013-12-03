@@ -67,12 +67,12 @@ public class PluginImpl
     /**
      * The minimum port number default value.
      */
-    public static final int MIN_PORT_DEFAULT_VALUE = 5000;
+    public static final int MIN_PORT_DEFAULT_VALUE = 50000;
 
     /**
      * The maximum port number default value.
      */
-    public static final int MAX_PORT_DEFAULT_VALUE = 6000;
+    public static final int MAX_PORT_DEFAULT_VALUE = 60000;
 
     /**
      * The Jabber component which has been added to {@link #componentManager}

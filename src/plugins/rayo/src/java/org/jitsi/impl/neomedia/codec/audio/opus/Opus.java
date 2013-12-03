@@ -67,7 +67,7 @@ public class Opus
      */
     static
     {
-        System.loadLibrary("jnopus");
+        System.loadLibrary("jnopus-rayo");
     }
 
     /**

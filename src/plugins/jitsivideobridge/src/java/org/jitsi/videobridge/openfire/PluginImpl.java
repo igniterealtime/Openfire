@@ -17,9 +17,16 @@ import org.jitsi.util.*;
 import org.jitsi.videobridge.*;
 import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.slf4j.*;
 import org.slf4j.Logger;
 import org.xmpp.component.*;
+
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.webapp.WebAppContext;
+
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -36,6 +43,12 @@ public class PluginImpl
      * The logger.
      */
     private static final Logger Log = LoggerFactory.getLogger(PluginImpl.class);
+
+    /**
+     * The name of the property that contains the name of video conference application
+     */
+    public static final String VIDEO_CONFERENCE_PROPERTY_NAME
+        = "org.jitsi.videobridge.video.conference.name";
 
     /**
      * The name of the property that contains the maximum port number that we'd
@@ -121,6 +134,22 @@ public class PluginImpl
 
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_LOCATION", pluginDirectory.getPath());
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_NAME", ".");
+
+		// start video conference web application
+
+		try {
+			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "videobridge");
+			Log.info("Initialize Web App " + appName);
+
+			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
+			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
+			context.setWelcomeFiles(new String[]{"index.html"});
+
+		}
+		catch(Exception e) {
+			Log.error( "Jitsi Videobridge web app initialize error", e);
+		}
+
 
         // Let's check for custom configuration
         String maxVal = JiveGlobals.getProperty(MAX_PORT_NUMBER_PROPERTY_NAME);

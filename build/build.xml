@@ -1604,6 +1604,7 @@
                         <include name="database/**/*.sql"/>
                         <include name="i18n/*.properties"/>
                         <include name="web/**/*.*"/>
+                        <include name="**/*.*"/>                        
                         <exclude name="web/WEB-INF/web.xml"/>
                         <exclude name="web/**/*.jsp"/>
                         <exclude name="web/**/*.jspf"/>

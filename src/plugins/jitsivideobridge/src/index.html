@@ -1,0 +1,187 @@
+<html>
+  <head>
+    <title>Jitsi Videobridge</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="strophejingle.bundle.js"></script>
+    <script src="colibri.js"></script>
+    <script src="videobridge.js"></script>
+    <script src="muc.js"></script>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <style type='text/css'>
+		html,body{margin:0px;}
+		#largeVideo {width:1280px;height:720px;margin-left:auto;margin-right:auto;display:block}
+		#localVideo {-webkit-transform: scale(-1,1);}
+		#remoteVideos {text-align:center;height:180px;}
+		#remoteVideos video {width:320;height:180;}
+		#spacer {height:40px;}
+		#settings {display:none;}
+		#header {text-align:center;visibility:hidden;}
+		#nowebrtc {display:none;}
+    </style>
+  </head>
+  <body>
+    <div id="header" onclick='window.prompt("Share this link with anyone you want to invite to join you:", window.location.href);return;'>
+        <i class='fa fa-external-link'>&nbsp;</i>Others can join you by just going to <span id='roomurl'></span>
+    </div>
+    <div id="settings">
+      <h1>Connection Settings</h1>
+      <form id="loginInfo">
+        <label>JID: <input id="jid" type="text" name="jid" placeholder="me@example.com"/></label>
+        <label>Password: <input id="password" type="password" name="password" placeholder="secret"/></label>
+        <input id="connect" type="submit" value="Connect" />
+      </form>
+    </div>
+
+    <video id="largeVideo" autoplay oncontextmenu="return false;"></video>
+    <div id="spacer"></div>
+    <div id="remoteVideos">
+      <video id="localVideo" autoplay oncontextmenu="return false;" muted/>
+    </div>
+
+    <script>
+    var connection = null;
+    var master = null;
+    var RTC = setupRTC();
+    if (RTC == null) {
+        alert('Sorry, your browser is not WebRTC enabled!');	// BAO
+        window.location.href = 'about:blank';
+    } else if (RTC.browser != 'chrome') {
+        alert('Sorry, only Chrome supported for now!');			// BAO
+        window.location.href = 'about:blank';
+    }
+    var RTCPeerconnection = RTC.peerconnection;
+    document.getElementById('jid').value = window.location.hostname;
+
+	var connType = "BOSH";	// change this line to WEBSOCKETS for Openfire websockets
+
+	if (connType == "WEBSOCKETS")
+    	connection = new Openfire.Connection(window.location.protocol + '//' + window.location.host + '/http-bind/');	// BAO
+    else
+    	connection = new Strophe.Connection(window.location.protocol + '//' + window.location.host + '/http-bind/');	// BAO
+
+    window.connection.resource = Math.random().toString(36).substr(2, 20);
+    connection.rawInput = function (data) { console.log('RECV: ' + data); };
+    connection.rawOutput = function (data) { console.log('SEND: ' + data); };
+    connection.jingle.pc_constraints = RTC.pc_constraints;
+
+    var jid = document.getElementById('jid').value || window.location.hostname;
+
+    connection.connect(jid, document.getElementById('password').value, function(status) {
+        if (status == Strophe.Status.CONNECTED) {
+            console.log('connected');
+          	connection.send($pres());     							// BAO
+            getUserMediaWithConstraints(['audio','video'], '360');
+            document.getElementById('connect').disabled = true;
+        } else {
+            console.log('status', status);
+        }
+    });
+
+    $(document).bind('mediaready.jingle', function(event, stream) {
+        connection.emuc.doJoin();
+        connection.jingle.localStream = stream;
+        RTC.attachMediaStream($('#localVideo'), stream);
+        document.getElementById('localVideo').muted = true;
+        document.getElementById('localVideo').autoplay = true;
+        document.getElementById('localVideo').volume = 0;
+
+        document.getElementById('largeVideo').volume = 0;
+        document.getElementById('largeVideo').src = document.getElementById('localVideo').src;
+    });
+    //$(document).bind('mediafailure.jingle', onMediaFailure);
+
+    $(document).bind('remotestreamadded.jingle', function(event, data, sid) {
+        // TODO: when adding a video, make sure they fit in a single row
+        function waitForRemoteVideo(selector, sid) {
+            var sess = connection.jingle.sessions[sid];
+            videoTracks = data.stream.getVideoTracks();
+            if (videoTracks.length === 0 || selector[0].currentTime > 0) {
+                RTC.attachMediaStream(selector, data.stream); // FIXME: why do i have to do this for FF?
+                $(document).trigger('callactive.jingle', [selector, sid]);
+                console.log('waitForremotevideo', sess.peerconnection.iceConnectionState, sess.peerconnection.signalingState);
+            } else {
+                setTimeout(function() { waitForRemoteVideo(selector, sid); }, 100);
+            }
+        }
+        var sess = connection.jingle.sessions[sid];
+        var vid = document.createElement('video');
+        var id = 'remoteVideo_' + sid + '_' + data.stream.id;
+        vid.id = id;
+        vid.autoplay = true;
+        vid.oncontextmenu = function() { return false; };
+        var remotes = document.getElementById('remoteVideos');
+        remotes.appendChild(vid);
+        var sel = $('#' + id);
+        sel.hide();
+        RTC.attachMediaStream(sel, data.stream);
+        waitForRemoteVideo(sel, sid);
+        data.stream.onended = function() {
+            console.log('stream ended', this.id);
+            var src = $('#' + id).attr('src');
+            $('#' + id).remove();
+            if (src === $('#largeVideo').attr('src')) {
+                // this is currently displayed as large
+                // pick the last visible video in the row
+                // ... well, if nobody else is left, this picks the local video
+                var pick = $('#remoteVideos :visible:last').get(0);
+                // mute if localvideo
+                document.getElementById('largeVideo').volume = pick.volume;
+                document.getElementById('largeVideo').src = pick.src;
+            }
+        }
+        // FIXME: hover is bad, this causes flicker. How about moving this?
+        // remember that moving this in the DOM requires to play() again
+        sel.hover(
+            function() {
+                console.log('hover in', $(this).attr('src'));
+                if ($('#largeVideo').attr('src') != $(this).attr('src')) {
+                    document.getElementById('largeVideo').volume = 1;
+                    $('#largeVideo').attr('src', $(this).attr('src'));
+                }
+            },
+            function() {
+                //console.log('hover out', $(this).attr('src'));
+                //$('#largeVideo').attr('src', null);
+            }
+        );
+    });
+    $(document).bind('callincoming.jingle', function(event, sid) {
+        var sess = connection.jingle.sessions[sid];
+        sess.sendAnswer();
+        sess.accept();
+    });
+    $(document).bind('callactive.jingle', function(event, videoelem, sid) {
+        console.log('call active');
+        if (videoelem.attr('id').indexOf('mixedmslabel') == -1) {
+            // ignore mixedmslabela0 and v0
+            videoelem.show();
+
+            document.getElementById('largeVideo').volume = 1;
+            $('#largeVideo').attr('src', videoelem.attr('src'));
+        }
+    });
+    $(document).bind('callterminated.jingle', function(event, sid, reason) {
+        // FIXME
+    });
+    function resizeLarge() {
+        var availableHeight = window.innerHeight;
+        availableHeight -= $('#remoteVideos').height();
+        availableHeight -= 100; // padding + link ontop
+        var availableWidth = window.innerWidth;
+        var aspectRatio = 16.0 / 9.0;
+        if (availableHeight < availableWidth / aspectRatio) {
+            availableWidth = availableHeight * aspectRatio;
+        }
+        if (availableWidth < 0 || availableHeight < 0) return;
+        $('#largeVideo').width(availableWidth);
+        $('#largeVideo').height(availableWidth/aspectRatio);
+    }
+    $(document).ready(function() {
+        resizeLarge();
+        $(window).resize(function() {
+            resizeLarge();
+        });
+    });
+    </script>
+  </body>
+</html>

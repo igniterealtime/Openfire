@@ -4,9 +4,9 @@
     <class>org.jitsi.videobridge.openfire.PluginImpl</class>
     <description>Integrates Jitsi Video Bridge into Openfire.</description>
     <licenseType>other</licenseType>
-    <minServerVersion>3.0.0</minServerVersion>
+    <minServerVersion>3.9.0</minServerVersion>
     <name>Jitsi Video Bridge</name>
-    <version>1.0</version>
+    <version>1.1</version>
 
    <adminconsole>
         <tab id="tab-server">

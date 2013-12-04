@@ -1,5 +1,25 @@
+/*
+Copyright (c) 2013 ESTOS GmbH
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 /* jshint -W117 */
-var bridgejid = 'jitsi-videobridge.' + window.location.hostname;
 // static offer taken from chrome M31
 var staticoffer = 'v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 103 104 0 8 106 105 13 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n';
 
@@ -7,6 +27,7 @@ function Colibri(connection, bridgejid) {
     this.connection = connection;
     this.bridgejid = bridgejid;
     this.peers = [];
+    this.confid = null;
 
     this.peerconnection = null;
 
@@ -63,9 +84,9 @@ Colibri.prototype.createdConference = function(result) {
     var tmp;
 
     this.confid = $(result).find('>conference').attr('id');
-    this.remotecontents = $(result).find('>conference>content').get();
-    for (var i = 0; i < this.remotecontents.length; i++) {
-        tmp = $(this.remotecontents[i]).find('>channel').get();
+    var remotecontents = $(result).find('>conference>content').get();
+    for (var i = 0; i < remotecontents.length; i++) {
+        tmp = $(remotecontents[i]).find('>channel').get();
         this.mychannel.push($(tmp.shift()));
         for (j = 0; j < tmp.length; j++) {
             if (this.channels[j] === undefined) {
@@ -250,12 +271,14 @@ Colibri.prototype.updateChannel = function (remoteSDP, participant) {
             change.c('payload-type', rtpmap);
             // 
             // put any 'a=fmtp:' + mline.fmt[j] lines into <param name=foo value=bar/>
+            /*
             if (SDPUtil.find_line(remoteSDP.media[channel], 'a=fmtp:' + rtpmap.id)) {
                 tmp = SDPUtil.parse_fmtp(SDPUtil.find_line(remoteSDP.media[channel], 'a=fmtp:' + rtpmap.id));
                 for (var k = 0; k < tmp.length; k++) {
                     change.c('parameter', tmp[k]).up();
                 }
             }
+            */
             change.up();
         });
 
@@ -647,6 +670,7 @@ Colibri.prototype.terminate = function (session, reason) {
 Colibri.prototype.modifySources = function() {
     var ob = this;
     if (!(this.addssrc.length || this.removessrc.length)) return;
+    if (this.peerconnection.signalingState == 'closed') return;
 
     // FIXME: this is a big hack
     if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')) {

@@ -1,22 +1,22 @@
 <html>
   <head>
     <title>Jitsi Videobridge</title>
+    <script src="config.js"></script><!-- adapt to your needs, i.e. set hosts and bosh path -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="strophejingle.bundle.js"></script>
     <script src="colibri.js"></script>
-    <script src="videobridge.js"></script>
     <script src="muc.js"></script>
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <style type='text/css'>
-		html,body{margin:0px;}
-		#largeVideo {width:1280px;height:720px;margin-left:auto;margin-right:auto;display:block}
-		#localVideo {-webkit-transform: scale(-1,1);}
-		#remoteVideos {text-align:center;height:180px;}
-		#remoteVideos video {width:320;height:180;}
-		#spacer {height:40px;}
-		#settings {display:none;}
-		#header {text-align:center;visibility:hidden;}
-		#nowebrtc {display:none;}
+html,body{margin:0px;}
+#largeVideo {width:1280px;height:720px;margin-left:auto;margin-right:auto;display:block}
+#localVideo {-webkit-transform: scale(-1,1);}
+#remoteVideos {text-align:center;height:180px;}
+#remoteVideos video {width:320;height:180;}
+#spacer {height:40px;}
+#settings {display:none;}
+#header {text-align:center;visibility:hidden;}
+#nowebrtc {display:none;}
     </style>
   </head>
   <body>
@@ -28,6 +28,7 @@
       <form id="loginInfo">
         <label>JID: <input id="jid" type="text" name="jid" placeholder="me@example.com"/></label>
         <label>Password: <input id="password" type="password" name="password" placeholder="secret"/></label>
+        <label>BOSH URL: <input id="boshURL" type="text" name="boshURL" placeholder="/http-bind/"/></label>
         <input id="connect" type="submit" value="Connect" />
       </form>
     </div>
@@ -41,41 +42,47 @@
     <script>
     var connection = null;
     var master = null;
-    var RTC = setupRTC();
-    if (RTC == null) {
-        alert('Sorry, your browser is not WebRTC enabled!');	// BAO
-        window.location.href = 'about:blank';
-    } else if (RTC.browser != 'chrome') {
-        alert('Sorry, only Chrome supported for now!');			// BAO
-        window.location.href = 'about:blank';
-    }
-    var RTCPeerconnection = RTC.peerconnection;
-    document.getElementById('jid').value = window.location.hostname;
+    var RTC;
+    var RTCPeerConnection = null;
 
-	var connType = "BOSH";	// change this line to WEBSOCKETS for Openfire websockets
-
-	if (connType == "WEBSOCKETS")
-    	connection = new Openfire.Connection(window.location.protocol + '//' + window.location.host + '/http-bind/');	// BAO
-    else
-    	connection = new Strophe.Connection(window.location.protocol + '//' + window.location.host + '/http-bind/');	// BAO
-
-    window.connection.resource = Math.random().toString(36).substr(2, 20);
-    connection.rawInput = function (data) { console.log('RECV: ' + data); };
-    connection.rawOutput = function (data) { console.log('SEND: ' + data); };
-    connection.jingle.pc_constraints = RTC.pc_constraints;
-
-    var jid = document.getElementById('jid').value || window.location.hostname;
-
-    connection.connect(jid, document.getElementById('password').value, function(status) {
-        if (status == Strophe.Status.CONNECTED) {
-            console.log('connected');
-          	connection.send($pres());     							// BAO
-            getUserMediaWithConstraints(['audio','video'], '360');
-            document.getElementById('connect').disabled = true;
-        } else {
-            console.log('status', status);
+    function init() {
+        RTC = setupRTC();
+        if (RTC == null) {
+             alert('Sorry, your browser is not WebRTC enabled!');	// BAO
+            return;
+        } else if (RTC.browser != 'chrome') {
+            alert('Sorry, only Chrome supported for now!');			// BAO
+            return;
         }
-    });
+        RTCPeerconnection = RTC.peerconnection;
+
+		if (config.type == "bosh")									// BAO
+        	connection = new Strophe.Connection(document.getElementById('boshURL').value || config.bosh || '/http-bind/');
+        else
+        	connection = new Openfire.Connection(config.bosh);
+
+    	window.connection.resource = Math.random().toString(36).substr(2, 20);	// BAO
+
+        /*
+        connection.rawInput = function (data) { console.log('RECV: ' + data); };
+        connection.rawOutput = function (data) { console.log('SEND: ' + data); };
+        */
+        connection.jingle.pc_constraints = RTC.pc_constraints;
+        connection.emuc.setDomain(config.hosts.muc);
+
+        var jid = document.getElementById('jid').value || config.hosts.domain || window.location.hostname;
+
+        connection.connect(jid, document.getElementById('password').value, function(status) {
+            if (status == Strophe.Status.CONNECTED) {
+                console.log('connected');
+          		connection.send($pres());     								// BAO
+                getUserMediaWithConstraints(['audio','video'], '360');
+                document.getElementById('connect').disabled = true;
+            } else {
+                console.log('status', status);
+            }
+        });
+    }
 
     $(document).bind('mediaready.jingle', function(event, stream) {
         connection.emuc.doJoin();
@@ -128,6 +135,7 @@
                 document.getElementById('largeVideo').volume = pick.volume;
                 document.getElementById('largeVideo').src = pick.src;
             }
+            resizeThumbnails();
         }
         // FIXME: hover is bad, this causes flicker. How about moving this?
         // remember that moving this in the DOM requires to play() again
@@ -155,6 +163,7 @@
         if (videoelem.attr('id').indexOf('mixedmslabel') == -1) {
             // ignore mixedmslabela0 and v0
             videoelem.show();
+            resizeThumbnails();
 
             document.getElementById('largeVideo').volume = 1;
             $('#largeVideo').attr('src', videoelem.attr('src'));
@@ -170,17 +179,33 @@
         var availableWidth = window.innerWidth;
         var aspectRatio = 16.0 / 9.0;
         if (availableHeight < availableWidth / aspectRatio) {
-            availableWidth = availableHeight * aspectRatio;
+            availableWidth = Math.floor(availableHeight * aspectRatio);
         }
         if (availableWidth < 0 || availableHeight < 0) return;
         $('#largeVideo').width(availableWidth);
         $('#largeVideo').height(availableWidth/aspectRatio);
+    }
+    function resizeThumbnails() {
+        var availableWidth = $('#remoteVideos').width();
+        var numvids = $('#remoteVideos>video:visible').length;
+        // size videos so that while keeping AR and max height, we have a nice fit
+        console.log('fit', numvids, 'videos into', availableWidth);
     }
     $(document).ready(function() {
         resizeLarge();
         $(window).resize(function() {
             resizeLarge();
         });
+        if (!$('#settings').is(':visible')) {
+            console.log('init');
+            init();
+        } else {
+            loginInfo.onsubmit = function (e) {
+                if (e.preventDefault) e.preventDefault();
+                $('#settings').hide();
+                init();
+            };
+        }
     });
     </script>
   </body>

@@ -1,3 +1,14 @@
+var config = {
+    hosts: {
+        domain: window.location.hostname,
+        muc: 'conference.' + window.location.hostname, // FIXME: use XEP-0030
+        bridge: 'jitsi-videobridge.' + window.location.hostname // FIXME: use XEP-0030
+    },
+    useNicks: false,
+    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/', // FIXME: use xep-0156 for that
+    type: 'bosh' // use websockets if openfire websockets plugin is installed
+};
+
 function urlParam(name)
 {
 	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -55,7 +66,7 @@ Openfire.Connection = function(url)
     this.host = url.indexOf("/") < 0 ? url : url.split("/")[2];   
     this.protocol = url.indexOf("/") < 0 ? "wss:" : (url.split("/")[0] == "http:") ? "ws:" : "wss:";   
     this.jid = "";
-    this.resource = "ofchat";
+    this.resource = "jitsi-videobridge";
     this.streamId = null;
 
     // handler lists

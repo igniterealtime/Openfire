@@ -1,34 +1,49 @@
-var CONFERENCEDOMAIN = 'conference.' + window.location.hostname;	// BAO
 Strophe.addConnectionPlugin('emuc', {
     connection: null,
     roomjid: null,
     myroomjid: null,
     list_members: [],
     isOwner: false,
+    mucDomain: config.hosts.muc,
+    
     init: function (conn) {
         this.connection = conn;
     },
+    setDomain: function(domain) {
+        this.mucDomain = domain;
+    },
     doJoin: function () {
         var roomnode = urlParam("r");			// BAO
-	console.log("roomnode = " + roomnode);  
-
+	
         if (!roomnode) {
             roomnode = Math.random().toString(36).substr(2, 20);
             window.history.pushState('VideoChat', 'Room: ' + roomnode, window.location.pathname + "?r=" + roomnode);
         }
-       
+        
         if (this.roomjid == null) {
-            this.roomjid = roomnode + '@' + CONFERENCEDOMAIN;
+            this.roomjid = roomnode + '@' + this.mucDomain;
         }
-        this.myroomjid = this.roomjid + '/' + Strophe.getNodeFromJid(this.connection.jid);
-        console.log('joining', this.roomjid);
 
         // muc stuff
         this.connection.addHandler(this.onPresence.bind(this), null, 'presence', null, null, this.roomjid, {matchBare: true});
         this.connection.addHandler(this.onPresenceUnavailable.bind(this), null, 'presence', 'unavailable', null, this.roomjid, {matchBare: true});
         this.connection.addHandler(this.onPresenceError.bind(this), null, 'presence', 'error', null, this.roomjid, {matchBare: true});
 
-        this.connection.send($pres({to: this.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}));
+        this.connection.addHandler(this.onMessage.bind(this), null, 'message', null, null, this.roomjid, {matchBare: true});
+
+        if (config.useNicks) {
+            var nick = window.prompt('Your nickname (optional)');
+            if (nick) {
+                this.myroomjid = this.roomjid + '/' + nick;
+            } else {
+                this.myroomjid = this.roomjid + '/' + Strophe.getNodeFromJid(this.connection.jid);
+            }
+            this.connection.send($pres({to: this.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}));
+        } else {
+            this.myroomjid = this.roomjid + '/' + Strophe.getNodeFromJid(this.connection.jid);
+            console.log('joining', this.roomjid);
+            this.connection.send($pres({to: this.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}));
+        }
     },
     onPresence: function (pres) {
         var from = pres.getAttribute('from'),
@@ -52,7 +67,7 @@ Strophe.addConnectionPlugin('emuc', {
             // FIXME: belongs into an event so we can separate emuc and colibri
             if (master !== null) {
                 // FIXME: this should prepare the video
-                if (master.peers.length == 0) {
+                if (master.confid === null) {
                     console.log('make new conference with', from);
                     master.makeConference(this.list_members);
                 } else {
@@ -83,6 +98,10 @@ Strophe.addConnectionPlugin('emuc', {
         }
         if (this.list_members.length == 0) {
             console.log('everyone left');
+            if (master !== null) {
+                if (master.peerconnection !== null) master.peerconnection.close();
+                master = new Colibri(connection, config.hosts.bridge);
+            }
         }
         return true;
     },
@@ -108,9 +127,22 @@ Strophe.addConnectionPlugin('emuc', {
         $('#header').css('visibility', 'visible');
         if (this.list_members.length < 1) {
             // FIXME: belongs into an event so we can separate emuc and colibri
-            master = new Colibri(connection, bridgejid);
+            master = new Colibri(connection, config.hosts.bridge);
             return;
         }
+    },
+    sendMessage: function(body) {
+        msg = $msg({to: this.roomjid, type: 'groupchat'});
+        msg.c('body', body);
+        this.connection.send(msg);
+    },
+    onMessage: function (msg) {
+        var txt = $(msg).find('>body').text();
+        // TODO: <subject/>
+        if (txt) {
+            //console.log('chat', Strophe.getResourceFromJid($(msg).attr('from')), txt);
+        }
+        return true;
     },
     lockRoom: function(key) {
         //http://xmpp.org/extensions/xep-0045.html#roomconfig
@@ -144,21 +176,6 @@ Strophe.addConnectionPlugin('emuc', {
 
 $(window).bind('beforeunload', function() {
     if (connection && connection.connected) {
-        // ensure signout
-        $.ajax({
-                type: 'POST',
-                url: '/http-bind',
-                async: false,
-                cache: false,
-                contentType: 'application/xml',
-                data: "<body rid='" + connection.rid + "' xmlns='http://jabber.org/protocol/httpbind' sid='" + connection.sid + "' type='terminate'><presence xmlns='jabber:client' type='unavailable'/></body>",
-                success: function(data) {
-                console.log('signed out');
-                console.log(data);
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                console.log('signout error', textStatus + ' (' + errorThrown + ')');
-            }
-        });
+	connection.disconnect();
     }
 })

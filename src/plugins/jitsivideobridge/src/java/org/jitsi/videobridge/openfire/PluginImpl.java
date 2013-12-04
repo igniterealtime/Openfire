@@ -47,6 +47,12 @@ public class PluginImpl
     /**
      * The name of the property that contains the name of video conference application
      */
+    public static final String CHECKREPLAY_PROPERTY_NAME
+        = "org.jitsi.videobridge.video.srtpcryptocontext.checkreplay";
+
+    /**
+     * The name of the property that contains the name of video conference application
+     */
     public static final String VIDEO_CONFERENCE_PROPERTY_NAME
         = "org.jitsi.videobridge.video.conference.name";
 
@@ -134,6 +140,7 @@ public class PluginImpl
 
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_LOCATION", pluginDirectory.getPath());
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_NAME", ".");
+		System.setProperty("org.jitsi.impl.neomedia.transform.srtp.SRTPCryptoContext.checkReplay", JiveGlobals.getProperty(CHECKREPLAY_PROPERTY_NAME, "false"));
 
 		// start video conference web application
 

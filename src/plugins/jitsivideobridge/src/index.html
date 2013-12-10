@@ -1,49 +1,67 @@
+
 <html>
   <head>
     <title>Jitsi Videobridge</title>
     <script src="config.js"></script><!-- adapt to your needs, i.e. set hosts and bosh path -->
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="strophejingle.bundle.js"></script>
+    <script src="jquery.min.js"></script>
+    <script src="strophe.js"></script>
+    <script src="strophe-jingle.js"></script>
     <script src="colibri.js"></script>
     <script src="muc.js"></script>
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
-    <style type='text/css'>
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <!--style type='text/css'>
 html,body{margin:0px;}
 #largeVideo {width:1280px;height:720px;margin-left:auto;margin-right:auto;display:block}
 #localVideo {-webkit-transform: scale(-1,1);}
 #remoteVideos {text-align:center;height:180px;}
 #remoteVideos video {width:320;height:180;}
-#spacer {height:40px;}
+#chatspace {height:46px;line-height:20px;font-size:20px;visibility:hidden;padding:10px;margin-left:auto;margin-right:auto;}
+#chatspace .nick {font-weight:bold;}
+#chatspace>:first-child{visibility:hidden}
 #settings {display:none;}
 #header {text-align:center;visibility:hidden;}
-#nowebrtc {display:none;}
-    </style>
+    </style-->
   </head>
   <body>
-    <div id="header" onclick='window.prompt("Share this link with anyone you want to invite to join you:", window.location.href);return;'>
-        <i class='fa fa-external-link'>&nbsp;</i>Others can join you by just going to <span id='roomurl'></span>
+    <div id="header">
+        <div id="leftlogo"></div>
+        <div id="rightlogo"></div>
+        <div id="link" onclick='window.prompt("Share this link with anyone you want to invite to join you:", window.location.href);return;'>
+            <i class='fa fa-external-link'>&nbsp;</i>Others can join you by just going to <span id='roomurl'></span>
+        </div>
     </div>
     <div id="settings">
       <h1>Connection Settings</h1>
       <form id="loginInfo">
         <label>JID: <input id="jid" type="text" name="jid" placeholder="me@example.com"/></label>
         <label>Password: <input id="password" type="password" name="password" placeholder="secret"/></label>
-        <label>BOSH URL: <input id="boshURL" type="text" name="boshURL" placeholder="/http-bind/"/></label>
+        <label>BOSH URL: <input id="boshURL" type="text" name="boshURL" placeholder="/http-bind"/></label>
         <input id="connect" type="submit" value="Connect" />
       </form>
     </div>
 
+    <div class="fade_line"></div>
     <video id="largeVideo" autoplay oncontextmenu="return false;"></video>
-    <div id="spacer"></div>
+    <div class="fade_line"></div>
+    <!--div id="chatspace">
+      <div><i class="fa fa-comments">&nbsp;</i><span class='nick'></span>:&nbsp;<span class='chattext'></span></div>
+      <div>
+        <form>
+          <label><i class="fa fa-comment">&nbsp;</i></label><input type='text' id="chatinput" placeholder='Choose a nickname' maxlength='10'/>
+        </form>
+      </div>
+    </div-->
     <div id="remoteVideos">
       <video id="localVideo" autoplay oncontextmenu="return false;" muted/>
     </div>
+
 
     <script>
     var connection = null;
     var master = null;
     var RTC;
     var RTCPeerConnection = null;
+    var nickname = null;
 
     function init() {
         RTC = setupRTC();
@@ -56,7 +74,7 @@ html,body{margin:0px;}
         }
         RTCPeerconnection = RTC.peerconnection;
 
-		if (config.type == "bosh")									// BAO
+	if (config.type == "bosh")									// BAO
         	connection = new Strophe.Connection(document.getElementById('boshURL').value || config.bosh || '/http-bind/');
         else
         	connection = new Openfire.Connection(config.bosh);
@@ -75,7 +93,7 @@ html,body{margin:0px;}
         connection.connect(jid, document.getElementById('password').value, function(status) {
             if (status == Strophe.Status.CONNECTED) {
                 console.log('connected');
-          		connection.send($pres());     								// BAO
+          	connection.send($pres());
                 getUserMediaWithConstraints(['audio','video'], '360');
                 document.getElementById('connect').disabled = true;
             } else {
@@ -139,17 +157,17 @@ html,body{margin:0px;}
         }
         // FIXME: hover is bad, this causes flicker. How about moving this?
         // remember that moving this in the DOM requires to play() again
-        sel.hover(
+        sel.click(
             function() {
                 console.log('hover in', $(this).attr('src'));
-                if ($('#largeVideo').attr('src') != $(this).attr('src')) {
+                var newSrc = $(this).attr('src');
+                if ($('#largeVideo').attr('src') != newSrc) {
                     document.getElementById('largeVideo').volume = 1;
-                    $('#largeVideo').attr('src', $(this).attr('src'));
+                    $('#largeVideo').fadeOut(300, function(){
+                        $(this).attr('src', newSrc);
+                        $(this).fadeIn(300);
+                    });
                 }
-            },
-            function() {
-                //console.log('hover out', $(this).attr('src'));
-                //$('#largeVideo').attr('src', null);
             }
         );
     });
@@ -172,10 +190,43 @@ html,body{margin:0px;}
     $(document).bind('callterminated.jingle', function(event, sid, reason) {
         // FIXME
     });
+    function toggleVideo(enable) {
+        if (!(connection && connection.jingle.localStream)) return;
+        for (var idx = 0; idx < connection.jingle.localStream.getVideoTracks().length; idx++) {
+            connection.jingle.localStream.getVideoTracks()[idx].enabled = enable;
+        }
+    }
+    function toggleAudio(enable) {
+        if (!(connection && connection.jingle.localStream)) return;
+        for (var idx = 0; idx < connection.jingle.localStream.getAudioTracks().length; idx++) {
+            connection.jingle.localStream.getAudioTracks()[idx].enabled = enable;
+        }
+    }
+
+    $('#chatinput').keydown(function(event) {
+        if (event.keyCode == 13) {
+            event.preventDefault();
+            var val = this.value;
+            this.value = '';
+            if (!nickname) {
+                nickname = val;
+                this.placeholder = 'Enter text...';
+                this.maxLength = 255;
+                $(this).width('90%');
+                return;
+            }
+            connection.emuc.sendMessage(val, nickname);
+        }
+    });
     function resizeLarge() {
         var availableHeight = window.innerHeight;
-        availableHeight -= $('#remoteVideos').height();
-        availableHeight -= 100; // padding + link ontop
+        var numvids = $('#remoteVideos>video:visible').length;
+        if (numvids < 5)
+            availableHeight -= 100; // min thumbnail height for up to 4 videos
+        else
+            availableHeight -= 50; // min thumbnail height for more than 5 videos
+
+        availableHeight -= 79; // padding + link ontop
         var availableWidth = window.innerWidth;
         var aspectRatio = 16.0 / 9.0;
         if (availableHeight < availableWidth / aspectRatio) {
@@ -184,12 +235,28 @@ html,body{margin:0px;}
         if (availableWidth < 0 || availableHeight < 0) return;
         $('#largeVideo').width(availableWidth);
         $('#largeVideo').height(availableWidth/aspectRatio);
+        $('#chatspace').width(availableWidth);
+        resizeThumbnails() ;
     }
     function resizeThumbnails() {
-        var availableWidth = $('#remoteVideos').width();
+        // Calculate the available height, which is the inner window height minus 39px for the header
+        // minus 4px for the delimiter lines on the top and bottom of the large video,
+        // minus the 36px space inside the remoteVideos container used for highlighting shadow.
+        var availableHeight = window.innerHeight - $('#largeVideo').height() - 79;
         var numvids = $('#remoteVideos>video:visible').length;
+        // Remove the 1px borders arround videos.
+        var availableWinWidth = $('#remoteVideos').width() - numvids*2;
+        var availableWidth = availableWinWidth / numvids;
+        var aspectRatio = 16.0 / 9.0;
+        var maxHeight = Math.min(160, availableHeight);
+        var availableHeight = Math.min(maxHeight, availableWidth / aspectRatio);
+        if (availableHeight < availableWidth / aspectRatio) {
+            availableWidth = Math.floor(availableHeight * aspectRatio);
+        }
         // size videos so that while keeping AR and max height, we have a nice fit
-        console.log('fit', numvids, 'videos into', availableWidth);
+        $('#remoteVideos').height(availableHeight + 36); // add the 2*18px border used for highlighting shadow.
+        $('#remoteVideos>video:visible').width(availableWidth);
+        $('#remoteVideos>video:visible').height(availableHeight);
     }
     $(document).ready(function() {
         resizeLarge();

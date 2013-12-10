@@ -19,7 +19,7 @@ Strophe.addConnectionPlugin('emuc', {
             roomnode = Math.random().toString(36).substr(2, 20);
             window.history.pushState('VideoChat', 'Room: ' + roomnode, window.location.pathname + "?r=" + roomnode);
         }
-        
+
         if (this.roomjid == null) {
             this.roomjid = roomnode + '@' + this.mucDomain;
         }
@@ -124,23 +124,32 @@ Strophe.addConnectionPlugin('emuc', {
     onJoinComplete: function() {
         console.log('onJoinComplete');
         $('#roomurl').text(window.location.href);
-        $('#header').css('visibility', 'visible');
+        $('#link').css('visibility', 'visible');
+        $('#chatspace').css('visibility', 'visible');
         if (this.list_members.length < 1) {
             // FIXME: belongs into an event so we can separate emuc and colibri
             master = new Colibri(connection, config.hosts.bridge);
             return;
         }
     },
-    sendMessage: function(body) {
+    sendMessage: function(body, nickname) {
         msg = $msg({to: this.roomjid, type: 'groupchat'});
-        msg.c('body', body);
+        msg.c('body', body).up();
+        if (nickname) {
+            msg.c('nick', {xmlns: 'http://jabber.org/protocol/nick'}).t(nickname).up().up();
+        }
         this.connection.send(msg);
     },
     onMessage: function (msg) {
         var txt = $(msg).find('>body').text();
         // TODO: <subject/>
+        // FIXME: this is a hack. but jingle on muc makes nickchanges hard
+        var nick = $(msg).find('>nick[xmlns="http://jabber.org/protocol/nick"]').text() || Strophe.getResourceFromJid($(msg).attr('from'));
         if (txt) {
-            //console.log('chat', Strophe.getResourceFromJid($(msg).attr('from')), txt);
+            console.log('chat', nick, txt);
+            $('#chatspace>div:first').css('visibility', 'visible');
+            $('#chatspace>div:first>span[class="nick"]').text(nick);
+            $('#chatspace>div:first>span[class="chattext"]').text(txt);
         }
         return true;
     },

@@ -48,21 +48,119 @@ function Colibri(connection, bridgejid) {
 // FIXME: is the initial set required?
 Colibri.prototype.makeConference = function (peers) {
     var ob = this;
+    if (this.confid !== null) {
+        // makeConference called twice...
+        console.error('somegoing bad is going to happen');
+        // FIXME: just invite peers?
+        return;
+    }
+    this.confid = 0; // !null
     this.peers = [];
     peers.forEach(function(peer) { 
         ob.peers.push(peer);
+        ob.channels.push([]);
     });
 
+    this.peerconnection = new RTC.peerconnection(this.connection.jingle.ice_config, this.connection.jingle.pc_constraints);
+    this.peerconnection.addStream(this.connection.jingle.localStream);
+    this.peerconnection.oniceconnectionstatechange = function (event) {
+        console.warn('ice connection state changed to', ob.peerconnection.iceConnectionState);
+        /*
+        if (ob.peerconnection.signalingState == 'stable' && ob.peerconnection.iceConnectionState == 'connected') {
+            console.log('adding new remote SSRCs from iceconnectionstatechange');
+            window.setTimeout(function() { ob.modifySources(); }, 1000);
+        }
+        */
+    }
+    this.peerconnection.onsignalingstatechange = function (event) {
+        console.warn(ob.peerconnection.signalingState);
+        /*
+        if (ob.peerconnection.signalingState == 'stable' && ob.peerconnection.iceConnectionState == 'connected') {
+            console.log('adding new remote SSRCs from signalingstatechange');
+            window.setTimeout(function() { ob.modifySources(); }, 1000);
+        }
+        */
+    }
+    this.peerconnection.onaddstream = function (event) {
+        ob.remoteStream = event.stream;
+        $(document).trigger('remotestreamadded.jingle', [event, ob.sid]);
+    };
+    this.peerconnection.onicecandidate = function (event) {
+        ob.sendIceCandidate(event.candidate);
+    };
+    this.peerconnection.createOffer(
+        function (offer) {
+            ob.peerconnection.setLocalDescription(offer,
+                function() {
+                    // success
+                },
+                function(error) {
+                    console.log('setLocalDescription failed', error);
+                }
+            );
+        },
+        function (error) {
+            console.warn(error);
+        }
+    );
+    this.peerconnection.onicecandidate = function (event) {
+        console.log('candidate', event.candidate);
+        if (!event.candidate) {
+            console.log('end of candidates');
+            ob._makeConference();
+            return;
+        }
+    }
+}
+Colibri.prototype._makeConference = function () {
+    var ob = this;
     var elem = $iq({to: this.bridgejid, type: 'get'});
     elem.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri'});
 
-    // FIXME: static contents are bad
-    var contents = ['audio', 'video'];
-    contents.forEach(function(name) {
+    var localSDP = new SDP(this.peerconnection.localDescription.sdp);
+    var contents = SDPUtil.find_lines(localSDP.raw, 'a=mid:').map(SDPUtil.parse_mid);
+    localSDP.media.forEach(function(media, channel) {
+        var name = SDPUtil.parse_mid(SDPUtil.find_line(media, 'a=mid:'));
         elem.c('content', {creator: 'initiator', name: name});
-        elem.c('channel', {initiator: 'true'});
+        elem.c('channel', {initiator: 'false'});
+
+        var mline = SDPUtil.parse_mline(media.split('\r\n')[0]);
+        for (var j = 0; j < mline.fmt.length; j++) {
+            var rtpmap = SDPUtil.find_line(media, 'a=rtpmap:' + mline.fmt[j]);
+            elem.c('payload-type', SDPUtil.parse_rtpmap(rtpmap));
+            elem.up();
+        }
+
+        elem.c('transport', {xmlns: 'urn:xmpp:jingle:transports:ice-udp:1'});
+        var tmp = SDPUtil.iceparams(media, localSDP.session);
+        if (tmp) {
+            elem.attrs(tmp);
+            var fingerprints = SDPUtil.find_lines(media, 'a=fingerprint:', localSDP.session);
+            fingerprints.forEach(function (line) {
+                tmp = SDPUtil.parse_fingerprint(line);
+                //tmp.xmlns = 'urn:xmpp:tmp:jingle:apps:dtls:0';
+                tmp.xmlns = 'urn:xmpp:jingle:apps:dtls:0';
+                elem.c('fingerprint').t(tmp.fingerprint);
+                delete tmp.fingerprint;
+                line = SDPUtil.find_line(media, 'a=setup:', ob.session);
+                if (line) {
+                    tmp.setup = line.substr(8);
+                }
+                elem.attrs(tmp);
+                elem.up();
+            });
+            // XEP-0176
+            if (SDPUtil.find_line(media, 'a=candidate:', localSDP.session)) { // add any a=candidate lines
+                lines = SDPUtil.find_lines(media, 'a=candidate:', localSDP.session);
+                for (j = 0; j < lines.length; j++) {
+                    tmp = SDPUtil.candidateToJingle(lines[j]);
+                    elem.c('candidate', tmp).up();
+                }
+            }
+            elem.up(); // end of transport
+        }
         elem.up(); // end of channel
-        for (var j = 0; j < peers.length; j++) {
+        for (var j = 0; j < ob.peers.length; j++) {
             elem.c('channel', {initiator: 'true' }).up();
         }
         elem.up(); // end of content
@@ -96,16 +194,64 @@ Colibri.prototype.createdConference = function(result) {
         }
     }
     console.log('remote channels', this.channels);
+
+    // establish our channel with the bridge
+    // static answer taken from chrome, should be replaced by a dynamic one
+    // that is based on our offer
+    var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 103 104 0 8 106 105 13 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');
+    // get the mixed ssrc
+    for (var channel = 0; channel < remotecontents.length; channel++) {
+        tmp = $(this.mychannel[channel]).find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
+        if (tmp.length) {
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' +'\r\n';
+        } else {
+            // make chrome happy... '3735928559' == 0xDEADBEEF
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' +'\r\n';
+        }
+
+        tmp = $(this.mychannel[channel]).find('>transport[xmlns="urn:xmpp:jingle:transports:ice-udp:1"]');
+        if (tmp.length) {
+            bridgeSDP.media[channel] += 'a=ice-ufrag:' + tmp.attr('ufrag') + '\r\n';
+            bridgeSDP.media[channel] += 'a=ice-pwd:' + tmp.attr('pwd') + '\r\n';
+            tmp.find('>candidate').each(function() {
+                bridgeSDP.media[channel] += SDPUtil.candidateFromJingle(this);
+            });
+            tmp = tmp.find('>fingerprint');
+            if (tmp.length) {
+                bridgeSDP.media[channel] += 'a=fingerprint:' + tmp.attr('hash') + ' ' + tmp.text() + '\r\n';
+                if (tmp.attr('direction')) {
+                    bridgeSDP.media[channel]+= 'a=setup:' + tmp.attr('direction') + '\r\n';
+                }
+            }
+        }
+    }
+    bridgeSDP.raw = bridgeSDP.session + bridgeSDP.media.join('');
     var ob = this;
-    this.peers.forEach(function(peer, participant) {
-        ob.initiate(peer, true);
-    });
+    this.peerconnection.setRemoteDescription(new RTCSessionDescription({type:'answer', sdp:bridgeSDP.raw}),
+        function () {
+            console.log('setRemoteDescription success');
+            // remote channels == remotecontents length - 1!
+            for (var i = 0; i < remotecontents.length - 1; i++) { 
+                ob.initiate(ob.peers[i], true);
+            }
+        },
+        function(error) {
+            console.log('setRemoteDescription failed');
+        }
+    );
+
 };
 
 // send a session-initiate to a new participant
 Colibri.prototype.initiate = function (peer, isInitiator) {
-    console.log('tell', peer, participant);
     var participant = this.peers.indexOf(peer);
+    console.log('tell', peer, participant);
     var sdp;
     if (this.peerconnection != null && this.peerconnection.signalingState == 'stable') {
         sdp = new SDP(this.peerconnection.remoteDescription.sdp);
@@ -113,24 +259,18 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
         // throw away stuff we don't want
         // not needed with static offer
         var line;
-        sdp.session = sdp.session.replace(SDPUtil.find_line(sdp.session, 'a=group:') + '\r\n', '');
-        sdp.session = sdp.session.replace(SDPUtil.find_line(sdp.session, 'a=msid-semantic:') + '\r\n', '');
+        sdp.removeSessionLines('a=group:');
+        sdp.removeSessionLines('a=msid-semantic:');
         for (var j = 0; j < sdp.media.length; j++) {
-            sdp.media[j] = sdp.media[j].replace('a=rtcp-mux\r\n', '');
-            while (SDPUtil.find_line(sdp.media[j], 'a=ssrc:')) {
-                sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=ssrc:') + '\r\n', '');
-            }
-            while (SDPUtil.find_line(sdp.media[j], 'a=crypto:')) {
-                sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=crypto:') + '\r\n', '');
-            }
-            while (SDPUtil.find_line(sdp.media[j], 'a=candidate:')) {
-                sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=candidate:') + '\r\n', '');
-            }
-            sdp.media[j] = sdp.media[j].replace('a=ice-options:google-ice\r\n', '');
-            sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=ice-ufrag:') + '\r\n', '');
-            sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=ice-pwd:') + '\r\n', '');
-            sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=fingerprint:') + '\r\n', '');
-            sdp.media[j] = sdp.media[j].replace(SDPUtil.find_line(sdp.media[j], 'a=setup:') + '\r\n', '');
+            sdp.removeMediaLines(j, 'a=rtcp-mux');
+            sdp.removeMediaLines(j, 'a=ssrc:');
+            sdp.removeMediaLines(j, 'a=crypto:');
+            sdp.removeMediaLines(j, 'a=candidate:');
+            sdp.removeMediaLines(j, 'a=ice-options:google-ice');
+            sdp.removeMediaLines(j, 'a=ice-ufrag:');
+            sdp.removeMediaLines(j, 'a=ice-pwd:');
+            sdp.removeMediaLines(j, 'a=fingerprint:');
+            sdp.removeMediaLines(j, 'a=setup:');
 
             // re-add all remote a=ssrcs
             for (var jid in this.remotessrc) {
@@ -143,6 +283,7 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
         sdp.raw = sdp.session + sdp.media.join('');
     } else {
         sdp = new SDP(staticoffer);
+        console.warn('staticoffer, should no longer happen here');
     }
 
     // make a new colibri session and configure it
@@ -220,18 +361,24 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
 }
 
 // pull in a new participant into the conference
-// FIXME: lots of duplicate code with makeconference
-//        note that here the id is set
-// FIXME: does this needs safeguards?
 Colibri.prototype.addNewParticipant = function(peer) {
     var ob = this;
+    if (this.confid === 0) {
+        // bad state
+        console.log('confid does not exist yet, postponing', peer);
+        window.setTimeout(function() {
+            ob.addNewParticipant(peer);
+        }, 250);
+        return;
+    }
     var index = this.channels.length;
     this.channels.push([])
     this.peers.push(peer);
 
     var elem = $iq({to: this.bridgejid, type: 'get'});
     elem.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
-    var contents = ['audio', 'video'];
+    var localSDP = new SDP(this.peerconnection.localDescription.sdp);
+    var contents = SDPUtil.find_lines(localSDP.raw, 'a=mid:').map(SDPUtil.parse_mid);
     contents.forEach(function(name) {
         elem.c('content', {creator: 'initiator', name: name});
         elem.c('channel', {initiator: 'true'});
@@ -326,9 +473,16 @@ Colibri.prototype.updateChannel = function (remoteSDP, participant) {
 // FIXME: should not take an SDP, but rather the a=ssrc lines and probably a=mid
 Colibri.prototype.sendSSRCUpdate = function(sdp, exclude, isadd) {
     var ob = this;
+    // FIXME: this should only send to participants that are stable, i.e. who have sent a session-accept
+    // possibly, this.remoteSSRC[session.peerjid] does not exist yet
     this.peers.forEach(function(peerjid) {
-        console.warn('tell', peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from', exclude);
         if (peerjid == exclude) return;
+        console.warn('tell', peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from', exclude);
+        console.warn('remoteSSRC', ob.remotessrc[peerjid]);
+        if (!ob.remotessrc[peerjid]) {
+            // don't tell them about updates yet?
+            console.warn('do we really want to bother', peerjid, 'with updates yet?')
+        }
         var channel;
         var peersess = ob.connection.jingle.jid2session[peerjid];
         var modify = $iq({to: peerjid, type: 'set'})
@@ -385,183 +539,20 @@ Colibri.prototype.setRemoteDescription = function(session, elem, desctype) {
     // ACT 1: change allocation on bridge
     this.updateChannel(remoteSDP, participant);
 
-    // ACT 1.1: tell anyone else about the new SSRCs
+    // ACT 2: tell anyone else about the new SSRCs
     this.sendSSRCUpdate(remoteSDP, session.peerjid, true);
 
-    // ACT 1.2: note the SSRCs
+    // ACT 3: note the SSRCs
     this.remotessrc[session.peerjid] = [];
     for (channel = 0; channel < this.channels[participant].length; channel++) {
         this.remotessrc[session.peerjid][channel] = SDPUtil.find_lines(remoteSDP.media[channel], 'a=ssrc:').join('\r\n') + '\r\n';
     }
 
-    // ACT 2: set remote description
-    console.log('set the remote description');
-    for (channel = 0; channel < this.channels[participant].length; channel++) {
-        while (SDPUtil.find_line(remoteSDP.media[channel], 'a=candidate:')) {
-            remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=candidate:') + '\r\n', '');
-        }
-        remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=ice-ufrag:') + '\r\n', '');
-        remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=ice-pwd:') + '\r\n', '');
-        remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=fingerprint:') + '\r\n', '');
-        remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=setup:') + '\r\n', '');
-
-        // omitting it just for audio does not work
-        if (this.peerconnection != null) {
-            if (!this.addssrc[channel]) this.addssrc[channel] = '';
-            this.addssrc[channel] += SDPUtil.find_lines(remoteSDP.media[channel], 'a=ssrc:').join('\r\n') + '\r\n';
-            while (SDPUtil.find_line(remoteSDP.media[channel], 'a=ssrc:')) {
-                remoteSDP.media[channel] = remoteSDP.media[channel].replace(SDPUtil.find_line(remoteSDP.media[channel], 'a=ssrc:') + '\r\n', '');
-            }
-        }
-
-        // get the mixed ssrc
-        tmp = $(this.mychannel[channel]).find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
-        if (tmp.length) {
-            remoteSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' +'\r\n';
-            remoteSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' +'\r\n';
-            remoteSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' +'\r\n';
-            remoteSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' +'\r\n';
-        }
-
-        tmp = $(this.mychannel[channel]).find('>transport[xmlns="urn:xmpp:jingle:transports:ice-udp:1"]');
-        if (tmp.length) {
-            remoteSDP.media[channel] += 'a=ice-ufrag:' + tmp.attr('ufrag') + '\r\n';
-            remoteSDP.media[channel] += 'a=ice-pwd:' + tmp.attr('pwd') + '\r\n';
-            tmp.find('>candidate').each(function() {
-                remoteSDP.media[channel] += SDPUtil.candidateFromJingle(this);
-            });
-            tmp = tmp.find('>fingerprint');
-            if (tmp.length) {
-                remoteSDP.media[channel] += 'a=fingerprint:' + tmp.attr('hash') + ' ' + tmp.text() + '\r\n';
-                if (tmp.attr('direction')) {
-                    remoteSDP.media[channel]+= 'a=setup:' + tmp.attr('direction') + '\r\n';
-                }
-            }
-        }
-    }
-    remoteSDP.raw = remoteSDP.session + remoteSDP.media.join('');
-
-    // ACT 3: reinitialize peerconnection
-    // FIXME: this should happen earlier
-    if (this.peerconnection === null) {
-        this.peerconnection = new RTC.peerconnection(connection.jingle.ice_config, connection.jingle.pc_constraints);
-        this.peerconnection.oniceconnectionstatechange = function (event) {
-            console.warn('ice connection state changed to', ob.peerconnection.iceConnectionState);
-            /*
-            if (ob.peerconnection.signalingState == 'stable' && ob.peerconnection.iceConnectionState == 'connected') {
-                console.log('adding new remote SSRCs from iceconnectionstatechange');
-                window.setTimeout(function() { ob.modifySources(); }, 1000);
-            }
-            */
-        }
-        this.peerconnection.onsignalingstatechange = function (event) {
-            console.warn(ob.peerconnection.signalingState);
-            /*
-            if (ob.peerconnection.signalingState == 'stable' && ob.peerconnection.iceConnectionState == 'connected') {
-                console.log('adding new remote SSRCs from signalingstatechange');
-                window.setTimeout(function() { ob.modifySources(); }, 1000);
-            }
-            */
-        }
-        this.peerconnection.addStream(connection.jingle.localStream);
-        var remote = new RTCSessionDescription({type:'offer', sdp:remoteSDP.raw});
-        this.peerconnection.onaddstream = function (event) {
-            ob.remoteStream = event.stream;
-            $(document).trigger('remotestreamadded.jingle', [event, ob.sid]);
-        };
-        this.peerconnection.onicecandidate = function (event) {
-            ob.sendIceCandidate(event.candidate);
-        };
-        this.peerconnection.setRemoteDescription(remote,
-            function () {
-                console.log('setRemoteDescription success');
-                ob.peerconnection.createAnswer(
-                    function (answer) {
-                        console.log('now do the dance with the bridge...')
-                        ob.peerconnection.setLocalDescription(answer,
-                            function() {
-                                console.log('setLocalDescription success');
-                            },
-                            function(error) {
-                                console.error('setLocalDescription failed', error);
-                            }
-                        );
-                        var mydesc = $iq({to: ob.bridgejid, type: 'set'});
-                        var localSDP = new SDP(answer.sdp);
-                        mydesc.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: ob.confid});
-                        for (var channel = 0; channel < localSDP.media.length; channel++) {
-                            console.log('my channel', $(ob.mychannel[channel]).attr('id')); 
-                            mydesc.c('content', {name: channel == 0 ? 'audio' : 'video' });
-                            mydesc.c('channel', {id: $(ob.mychannel[channel]).attr('id'), initiator: 'true'});
-
-                            var mline = SDPUtil.parse_mline(localSDP.media[channel].split('\r\n')[0]);
-                            for (j = 0; j < mline.fmt.length; j++) {
-                                rtpmap = SDPUtil.find_line(localSDP.media[channel], 'a=rtpmap:' + mline.fmt[j]);
-                                mydesc.c('payload-type', SDPUtil.parse_rtpmap(rtpmap));
-                                // put any 'a=fmtp:' + mline.fmt[j] lines into <param name=foo value=bar/>
-                                if (SDPUtil.find_line(localSDP.media[channel], 'a=fmtp:' + mline.fmt[j])) {
-                                    tmp = SDPUtil.parse_fmtp(SDPUtil.find_line(localSDP.media[channel], 'a=fmtp:' + mline.fmt[j]));
-                                    for (k = 0; k < tmp.length; k++) {
-                                        mydesc.c('parameter', tmp[k]).up();
-                                    }
-                                }
-                                mydesc.up();
-                            }
-
-                            mydesc.c('transport', {xmlns: 'urn:xmpp:jingle:transports:ice-udp:1'});
-                            tmp = SDPUtil.iceparams(localSDP.media[channel], localSDP.session);
-                            if (tmp) {
-                                mydesc.attrs(tmp);
-                                var fingerprints = SDPUtil.find_lines(localSDP.media[channel], 'a=fingerprint:', localSDP.session);
-                                fingerprints.forEach(function (line) {
-                                    tmp = SDPUtil.parse_fingerprint(line);
-                                    //tmp.xmlns = 'urn:xmpp:tmp:jingle:apps:dtls:0';
-                                    tmp.xmlns = 'urn:xmpp:jingle:apps:dtls:0';
-                                    mydesc.c('fingerprint').t(tmp.fingerprint);
-                                    delete tmp.fingerprint;
-                                    line = SDPUtil.find_line(localSDP.media[channel], 'a=setup:', ob.session);
-                                    if (line) {
-                                        tmp.setup = line.substr(8);
-                                    }
-                                    mydesc.attrs(tmp);
-                                    mydesc.up();
-                                });
-                                // XEP-0176
-                                if (SDPUtil.find_line(localSDP.media[channel], 'a=candidate:', localSDP.session)) { // add any a=candidate lines
-                                    lines = SDPUtil.find_lines(localSDP.media[channel], 'a=candidate:', localSDP.session);
-                                    for (j = 0; j < lines.length; j++) {
-                                        tmp = SDPUtil.candidateToJingle(lines[j]);
-                                        mydesc.c('candidate', tmp).up();
-                                    }
-                                }
-                                mydesc.up(); // end of transport
-                                mydesc.up(); // end of channel
-                                mydesc.up(); // end of content
-                            }
-                        }
-                        ob.connection.sendIQ(mydesc,
-                            function (res) {
-                                console.log('got result');
-                            },
-                            function (err) {
-                                console.log('got error');
-                            }
-                        );
-
-                        // tell everyone our actual ssrc
-                        ob.sendSSRCUpdate(localSDP, null, true);
-                    },
-                    function (error) {
-                        console.warn(error);
-                    }
-                );
-            },
-            function (error) {
-                console.error('setRemoteDescription failed', error);
-            }
-        );
-    }
     // ACT 4: add new a=ssrc lines to local remotedescription
+    for (channel = 0; channel < this.channels[participant].length; channel++) {
+        if (!this.addssrc[channel]) this.addssrc[channel] = '';
+        this.addssrc[channel] += SDPUtil.find_lines(remoteSDP.media[channel], 'a=ssrc:').join('\r\n') + '\r\n';
+    }
     this.modifySources();
 };
 
@@ -655,7 +646,8 @@ Colibri.prototype.terminate = function (session, reason) {
 
     // tell everyone about the ssrcs to be removed
     var sdp = new SDP('');
-    var contents = ['audio', 'video'];
+    var localSDP = new SDP(this.peerconnection.localDescription.sdp);
+    var contents = SDPUtil.find_lines(localSDP.raw, 'a=mid:').map(SDPUtil.parse_mid);
     for (var j = 0; j < ssrcs.length; j++) {
         sdp.media[j] = 'a=mid:' + contents[j] + '\r\n';
         sdp.media[j] += ssrcs[j];
@@ -688,10 +680,8 @@ Colibri.prototype.modifySources = function() {
 
     // mangle SDP a little
     // remove the msid-semantics from the remote description, if any
-    if (SDPUtil.find_line(sdp.session, 'a=msid-semantic:')) {
-        sdp.session = sdp.session.replace(SDPUtil.find_line(sdp.session, 'a=msid-semantic:') + '\r\n', '');
-    }
-    
+    sdp.removeSessionLines('a=msid-semantic:');
+
     // add sources
     this.addssrc.forEach(function(lines, idx) {
         sdp.media[idx] += lines;

@@ -27,8 +27,10 @@ if [ -z $JAVA_HOME ]; then
 		/usr/lib/jvm/java-6-sun \
 		/usr/lib/jvm/java-1.5.0-sun \
 		/usr/lib/jvm/java-7-openjdk-amd64 \
+		/usr/lib/jvm/java-7-openjdk-i386 \
 		/usr/lib/jvm/java-7-openjdk \
 		/usr/lib/jvm/java-6-openjdk-amd64 \
+		/usr/lib/jvm/java-6-openjdk-i386 \
 		/usr/lib/jvm/java-6-openjdk"
     for t in $JAVA_HOMES ; do
 	if [ -d $t ] ; then
@@ -45,7 +47,7 @@ DESC=openfire
 DAEMON_DIR=/usr/share/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
 
-test -x $JAVA || exit 0
+test -x $JAVA || exit 1
 
 # Include openfire defaults if available
 if [ -f /etc/default/openfire ] ; then

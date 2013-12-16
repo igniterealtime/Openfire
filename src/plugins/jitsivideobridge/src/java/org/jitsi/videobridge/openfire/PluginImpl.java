@@ -11,6 +11,8 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.jar.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.security.cert.Certificate;
 
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
@@ -18,14 +20,35 @@ import org.jitsi.videobridge.*;
 import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.SessionPacketRouter;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.VirtualConnection;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.auth.AuthToken;
+
 import org.slf4j.*;
 import org.slf4j.Logger;
+
 import org.xmpp.component.*;
+import org.xmpp.packet.*;
+
+import com.rayo.core.*;
+import com.rayo.core.verb.*;
+import com.rayo.core.validation.*;
+import com.rayo.core.xml.providers.*;
 
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
+
+import org.dom4j.*;
 
 
 /**
@@ -35,9 +58,7 @@ import org.eclipse.jetty.webapp.WebAppContext;
  * @author Lyubomir Marinov
  * @author Damian Minkov
  */
-public class PluginImpl
-    implements Plugin,
-               PropertyEventListener
+public class PluginImpl  implements Plugin, PropertyEventListener
 {
     /**
      * The logger.
@@ -45,30 +66,30 @@ public class PluginImpl
     private static final Logger Log = LoggerFactory.getLogger(PluginImpl.class);
 
     /**
+     * RAYO videobridge namespace
+     */
+    private static final String RAYO_COLIBRI = "urn:xmpp:rayo:colibri:1";
+    /**
      * The name of the property that contains the name of video conference application
      */
-    public static final String CHECKREPLAY_PROPERTY_NAME
-        = "org.jitsi.videobridge.video.srtpcryptocontext.checkreplay";
+    public static final String CHECKREPLAY_PROPERTY_NAME = "org.jitsi.videobridge.video.srtpcryptocontext.checkreplay";
 
     /**
      * The name of the property that contains the name of video conference application
      */
-    public static final String VIDEO_CONFERENCE_PROPERTY_NAME
-        = "org.jitsi.videobridge.video.conference.name";
+    public static final String VIDEO_CONFERENCE_PROPERTY_NAME = "org.jitsi.videobridge.video.conference.name";
 
     /**
      * The name of the property that contains the maximum port number that we'd
      * like our RTP managers to bind upon.
      */
-    public static final String MAX_PORT_NUMBER_PROPERTY_NAME
-        = "org.jitsi.videobridge.media.MAX_PORT_NUMBER";
+    public static final String MAX_PORT_NUMBER_PROPERTY_NAME = "org.jitsi.videobridge.media.MAX_PORT_NUMBER";
 
     /**
      * The name of the property that contains the minimum port number that we'd
      * like our RTP managers to bind upon.
      */
-    public static final String MIN_PORT_NUMBER_PROPERTY_NAME
-        = "org.jitsi.videobridge.media.MIN_PORT_NUMBER";
+    public static final String MIN_PORT_NUMBER_PROPERTY_NAME = "org.jitsi.videobridge.media.MIN_PORT_NUMBER";
 
     /**
      * The minimum port number default value.
@@ -99,12 +120,25 @@ public class PluginImpl
     private String subdomain;
 
     /**
+     * RAYO IQ Handler for colibri
+     *
+     */
+	private IQHandler colibriIQHandler = null;
+
+    /**
+     * RAYO Colibri Provider for colibri
+     *
+     */
+    private ColibriProvider colibriProvider = null;
+
+    /**
      * Destroys this <tt>Plugin</tt> i.e. releases the resources acquired by
      * this <tt>Plugin</tt> throughout its life up until now and prepares it for
      * garbage collection.
      *
      * @see Plugin#destroyPlugin()
      */
+
     public void destroyPlugin()
     {
         PropertyEventDispatcher.removeListener(this);
@@ -123,6 +157,8 @@ public class PluginImpl
             subdomain = null;
             component = null;
         }
+
+		destroyIQHandlers();
     }
 
     /**
@@ -145,12 +181,14 @@ public class PluginImpl
 		// start video conference web application
 
 		try {
-			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "videobridge");
+			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "jitmeet");
 			Log.info("Initialize Web App " + appName);
 
 			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
 			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
 			context.setWelcomeFiles(new String[]{"index.html"});
+
+			createIQHandlers();
 
 		}
 		catch(Exception e) {
@@ -173,8 +211,7 @@ public class PluginImpl
 
         checkNatives();
 
-        ComponentManager componentManager
-            = ComponentManagerFactory.getComponentManager();
+        ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
         String subdomain = ComponentImpl.SUBDOMAIN;
         Component component = new ComponentImpl();
         boolean added = false;
@@ -423,4 +460,261 @@ public class PluginImpl
         propertyDeleted(property, params);
     }
 
+    /**
+     *
+     *
+     */
+
+	private void createIQHandlers()
+	{
+		colibriProvider = new ColibriProvider();
+        colibriProvider.setValidator(new Validator());
+
+		XMPPServer server = XMPPServer.getInstance();
+		colibriIQHandler = new ColibriIQHandler();
+		server.getIQRouter().addHandler(colibriIQHandler);
+	}
+
+    /**
+     *
+     *
+     */
+
+	private void destroyIQHandlers()
+	{
+		XMPPServer server = XMPPServer.getInstance();
+
+		if (colibriIQHandler != null)
+		{
+			server.getIQRouter().removeHandler(colibriIQHandler);
+			colibriIQHandler = null;
+		}
+	}
+
+    /**
+     *
+     *
+     */
+
+    private class ColibriIQHandler extends IQHandler
+    {
+		private ConcurrentHashMap<String, LocalClientSession> sessions;
+
+        public ColibriIQHandler()
+        {
+			super("Rayo: XEP 0327 - Colibri");
+			sessions = new ConcurrentHashMap<String, LocalClientSession>();
+		}
+
+		/**
+		 *
+		 *
+		 */
+        @Override public IQ handleIQ(IQ iq)
+        {
+			try {
+				Log.info("ColibriIQHandler handleIQ \n" + iq.toString());
+
+				final Element element = iq.getChildElement();
+				IQ reply = null;
+
+				Object object = colibriProvider.fromXML(element);
+
+				if (object instanceof ColibriCommand) {
+					ColibriCommand command = (ColibriCommand) object;
+					reply = handleColibriCommand(command, iq);
+				}
+
+				return reply;
+
+			} catch(Exception e) {
+				return null;
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+        @Override public IQHandlerInfo getInfo()
+        {
+			return new IQHandlerInfo("colibri", RAYO_COLIBRI);
+		}
+		/**
+		 *
+		 *
+		 */
+		private IQ handleColibriCommand(ColibriCommand command, IQ iq)
+		{
+			Log.info("ColibriIQHandler handleColibriCommand " + command);
+
+			IQ reply = IQ.createResultIQ(iq);
+			String vBridge = command.getVideobridge();
+
+			if (vBridge != null)
+			{
+				createColibriFocus(vBridge);
+			}
+
+			return reply;
+		}
+		/**
+		 *
+		 *
+		 */
+		private void createColibriFocus(String vBridge)
+		{
+			Log.info("ColibriIQHandler createColibriFocus " + vBridge);
+			LocalClientSession session;
+
+			if (sessions.containsKey(vBridge))
+			{
+				session = sessions.get(vBridge);
+
+			} else {
+				WSConnection wsConnection = new WSConnection(vBridge, vBridge);
+				session = SessionManager.getInstance().createClientSession(wsConnection, new BasicStreamID(vBridge + "-" + System.currentTimeMillis() ) );
+				wsConnection.setRouter( new SessionPacketRouter(session));
+				AuthToken authToken = new AuthToken(vBridge, true);
+				session.setAuthToken(authToken, vBridge);
+				sessions.put(vBridge, session);
+
+				Presence presence = new Presence();
+				wsConnection.getRouter().route(presence);
+			}
+		}
+    }
+
+    /**
+     *
+     *
+     */
+	public class BasicStreamID implements StreamID
+	{
+		/**
+		 *
+		 *
+		 */
+		String id;
+
+		/**
+		 *
+		 *
+		 */
+		public BasicStreamID(String id) {
+			this.id = id;
+		}
+		/**
+		 *
+		 *
+		 */
+		public String getID() {
+			return id;
+		}
+		/**
+		 *
+		 *
+		 */
+		public String toString() {
+			return id;
+		}
+		/**
+		 *
+		 *
+		 */
+		public int hashCode() {
+			return id.hashCode();
+		}
+	}
+
+	public class WSConnection extends VirtualConnection
+	{
+		private SessionPacketRouter router;
+		private String remoteAddr;
+		private String hostName;
+		private LocalClientSession session;
+
+		/**
+		 *
+		 *
+		 */
+		public WSConnection( String remoteAddr, String hostName ) {
+			this.remoteAddr = remoteAddr;
+			this.hostName = hostName;
+		}
+
+		/**
+		 *
+		 *
+		 */
+		public SessionPacketRouter getRouter()
+		{
+			return router;
+		}
+		/**
+		 *
+		 *
+		 */
+		public void setRouter(SessionPacketRouter router)
+		{
+			this.router = router;
+		}
+		/**
+		 *
+		 *
+		 */
+		public void closeVirtualConnection()
+		{
+			Log.debug("WSConnection - close ");
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public byte[] getAddress() {
+			return remoteAddr.getBytes();
+		}
+		/**
+		 *
+		 *
+		 */
+		public String getHostAddress() {
+			return remoteAddr;
+		}
+
+		public String getHostName()  {
+			return ( hostName != null ) ? hostName : "0.0.0.0";
+		}
+		/**
+		 *
+		 *
+		 */
+		public void systemShutdown() {
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public void deliver(Packet packet) throws UnauthorizedException
+		{
+			deliverRawText(packet.toXML());
+		}
+		/**
+		 *
+		 *
+		 */
+		public void deliverRawText(String text)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public Certificate[] getPeerCertificates() {
+			return null;
+		}
+
+	}
 }

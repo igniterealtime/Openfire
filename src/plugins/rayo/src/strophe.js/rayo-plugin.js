@@ -20,6 +20,7 @@ Strophe.addConnectionPlugin('rayo',
 
 	init: function(conn) 
 	{
+		this.callbacks = {};
 		this._connection = conn;
 
 		Strophe.addNamespace('RAYO_CORE', "urn:xmpp:rayo:1");
@@ -102,7 +103,7 @@ Strophe.addConnectionPlugin('rayo',
 
 		this._offhook(mixer, headers, function()
 		{
-			var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+			var iq = $iq({to: mixer + "@" + that._connection.domain, from: that._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
 
 			//console.log(iq.toString());
 		

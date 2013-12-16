@@ -1,3 +1,17 @@
+/* colibri.js -- a COLIBRI focus 
+ * The colibri spec has been submitted to the XMPP Standards Foundation
+ * for publications as a XMPP extensions:
+ * http://xmpp.org/extensions/inbox/colibri.html
+ *
+ * colibri.js is a participating focus, i.e. the focus participates
+ * in the conference. The conference itself can be ad-hoc, through a
+ * MUC, through PubSub, etc.
+ *
+ * colibri.js relies heavily on the strophe.jingle library available 
+ * from https://github.com/ESTOS/strophe.jingle
+ * and interoperates with the Jitsi videobridge available from
+ * https://jitsi.org/Projects/JitsiVideobridge
+ */
 /*
 Copyright (c) 2013 ESTOS GmbH
 
@@ -20,10 +34,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 /* jshint -W117 */
-// static offer taken from chrome M31
-var staticoffer = 'v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 103 104 0 8 106 105 13 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n';
-
-function Colibri(connection, bridgejid) {
+function ColibriFocus(connection, bridgejid) {
     this.connection = connection;
     this.bridgejid = bridgejid;
     this.peers = [];
@@ -32,7 +43,7 @@ function Colibri(connection, bridgejid) {
     this.peerconnection = null;
 
     this.sid = Math.random().toString(36).substr(2, 12);
-    connection.jingle.sessions[this.sid] = this;
+    this.connection.jingle.sessions[this.sid] = this;
     this.mychannel = [];
     this.channels = [];
     this.remotessrc = {};
@@ -41,22 +52,22 @@ function Colibri(connection, bridgejid) {
     this.addssrc = [];
     // ssrc lines to be removed on next update
     this.removessrc = [];
+
+    // silly wait flag
     this.wait = true;
 }
 
 // creates a conferences with an initial set of peers
-// FIXME: is the initial set required?
-Colibri.prototype.makeConference = function (peers) {
+ColibriFocus.prototype.makeConference = function (peers) {
     var ob = this;
     if (this.confid !== null) {
-        // makeConference called twice...
-        console.error('somegoing bad is going to happen');
+        console.error('makeConference called twice? Ignoring...');
         // FIXME: just invite peers?
         return;
     }
     this.confid = 0; // !null
     this.peers = [];
-    peers.forEach(function(peer) { 
+    peers.forEach(function (peer) {
         ob.peers.push(peer);
         ob.channels.push([]);
     });
@@ -71,7 +82,7 @@ Colibri.prototype.makeConference = function (peers) {
             window.setTimeout(function() { ob.modifySources(); }, 1000);
         }
         */
-    }
+    };
     this.peerconnection.onsignalingstatechange = function (event) {
         console.warn(ob.peerconnection.signalingState);
         /*
@@ -80,7 +91,7 @@ Colibri.prototype.makeConference = function (peers) {
             window.setTimeout(function() { ob.modifySources(); }, 1000);
         }
         */
-    }
+    };
     this.peerconnection.onaddstream = function (event) {
         ob.remoteStream = event.stream;
         $(document).trigger('remotestreamadded.jingle', [event, ob.sid]);
@@ -90,11 +101,13 @@ Colibri.prototype.makeConference = function (peers) {
     };
     this.peerconnection.createOffer(
         function (offer) {
-            ob.peerconnection.setLocalDescription(offer,
-                function() {
+            ob.peerconnection.setLocalDescription(
+                offer,
+                function () {
                     // success
+                    // FIXME: could call _makeConference here and trickle candidates later
                 },
-                function(error) {
+                function (error) {
                     console.log('setLocalDescription failed', error);
                 }
             );
@@ -110,20 +123,22 @@ Colibri.prototype.makeConference = function (peers) {
             ob._makeConference();
             return;
         }
-    }
-}
-Colibri.prototype._makeConference = function () {
+    };
+};
+
+ColibriFocus.prototype._makeConference = function () {
     var ob = this;
     var elem = $iq({to: this.bridgejid, type: 'get'});
     elem.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri'});
 
     var localSDP = new SDP(this.peerconnection.localDescription.sdp);
     var contents = SDPUtil.find_lines(localSDP.raw, 'a=mid:').map(SDPUtil.parse_mid);
-    localSDP.media.forEach(function(media, channel) {
+    localSDP.media.forEach(function (media, channel) {
         var name = SDPUtil.parse_mid(SDPUtil.find_line(media, 'a=mid:'));
-        elem.c('content', {creator: 'initiator', name: name});
-        elem.c('channel', {initiator: 'false'});
+        elem.c('content', {name: name});
+        elem.c('channel', {initiator: 'false', expire: '15'});
 
+        // FIXME: should reuse code from .toJingle
         var mline = SDPUtil.parse_mline(media.split('\r\n')[0]);
         for (var j = 0; j < mline.fmt.length; j++) {
             var rtpmap = SDPUtil.find_line(media, 'a=rtpmap:' + mline.fmt[j]);
@@ -131,6 +146,7 @@ Colibri.prototype._makeConference = function () {
             elem.up();
         }
 
+        // FIXME: should reuse code from .toJingle
         elem.c('transport', {xmlns: 'urn:xmpp:jingle:transports:ice-udp:1'});
         var tmp = SDPUtil.iceparams(media, localSDP.session);
         if (tmp) {
@@ -160,14 +176,14 @@ Colibri.prototype._makeConference = function () {
             elem.up(); // end of transport
         }
         elem.up(); // end of channel
-        for (var j = 0; j < ob.peers.length; j++) {
-            elem.c('channel', {initiator: 'true' }).up();
+        for (j = 0; j < ob.peers.length; j++) {
+            elem.c('channel', {initiator: 'true', expire:'15' }).up();
         }
         elem.up(); // end of content
     });
 
     this.connection.sendIQ(elem,
-        function(result) {
+        function (result) {
             ob.createdConference(result);
         },
         function (error) {
@@ -177,7 +193,7 @@ Colibri.prototype._makeConference = function () {
 };
 
 // callback when a conference was created
-Colibri.prototype.createdConference = function(result) {
+ColibriFocus.prototype.createdConference = function (result) {
     console.log('created a conference on the bridge');
     var tmp;
 
@@ -196,52 +212,56 @@ Colibri.prototype.createdConference = function(result) {
     console.log('remote channels', this.channels);
 
     // establish our channel with the bridge
-    // static answer taken from chrome, should be replaced by a dynamic one
-    // that is based on our offer
+    // static answer taken from chrome M31, should be replaced by a 
+    // dynamic one that is based on our offer FIXME
     var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 103 104 0 8 106 105 13 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');
     // get the mixed ssrc
     for (var channel = 0; channel < remotecontents.length; channel++) {
         tmp = $(this.mychannel[channel]).find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
+        // FIXME: check rtp-level-relay-type
         if (tmp.length) {
-            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' + '\r\n';
         } else {
             // make chrome happy... '3735928559' == 0xDEADBEEF
-            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' +'\r\n';
-            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' +'\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' + '\r\n';
+            bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' + '\r\n';
         }
 
+        // FIXME: should take code from .fromJingle
         tmp = $(this.mychannel[channel]).find('>transport[xmlns="urn:xmpp:jingle:transports:ice-udp:1"]');
         if (tmp.length) {
             bridgeSDP.media[channel] += 'a=ice-ufrag:' + tmp.attr('ufrag') + '\r\n';
             bridgeSDP.media[channel] += 'a=ice-pwd:' + tmp.attr('pwd') + '\r\n';
-            tmp.find('>candidate').each(function() {
+            tmp.find('>candidate').each(function () {
                 bridgeSDP.media[channel] += SDPUtil.candidateFromJingle(this);
             });
             tmp = tmp.find('>fingerprint');
             if (tmp.length) {
                 bridgeSDP.media[channel] += 'a=fingerprint:' + tmp.attr('hash') + ' ' + tmp.text() + '\r\n';
-                if (tmp.attr('direction')) {
-                    bridgeSDP.media[channel]+= 'a=setup:' + tmp.attr('direction') + '\r\n';
+                if (tmp.attr('setup')) {
+                    bridgeSDP.media[channel] += 'a=setup:' + tmp.attr('setup') + '\r\n';
                 }
             }
         }
     }
     bridgeSDP.raw = bridgeSDP.session + bridgeSDP.media.join('');
+
     var ob = this;
-    this.peerconnection.setRemoteDescription(new RTCSessionDescription({type:'answer', sdp:bridgeSDP.raw}),
+    this.peerconnection.setRemoteDescription(
+        new RTCSessionDescription({type: 'answer', sdp: bridgeSDP.raw}),
         function () {
             console.log('setRemoteDescription success');
             // remote channels == remotecontents length - 1!
-            for (var i = 0; i < remotecontents.length - 1; i++) { 
+            for (var i = 0; i < remotecontents.length - 1; i++) {
                 ob.initiate(ob.peers[i], true);
             }
         },
-        function(error) {
+        function (error) {
             console.log('setRemoteDescription failed');
         }
     );
@@ -249,7 +269,7 @@ Colibri.prototype.createdConference = function(result) {
 };
 
 // send a session-initiate to a new participant
-Colibri.prototype.initiate = function (peer, isInitiator) {
+ColibriFocus.prototype.initiate = function (peer, isInitiator) {
     var participant = this.peers.indexOf(peer);
     console.log('tell', peer, participant);
     var sdp;
@@ -258,55 +278,32 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
         var localSDP = new SDP(this.peerconnection.localDescription.sdp);
         // throw away stuff we don't want
         // not needed with static offer
-        var line;
         sdp.removeSessionLines('a=group:');
-        sdp.removeSessionLines('a=msid-semantic:');
-        for (var j = 0; j < sdp.media.length; j++) {
-            sdp.removeMediaLines(j, 'a=rtcp-mux');
-            sdp.removeMediaLines(j, 'a=ssrc:');
-            sdp.removeMediaLines(j, 'a=crypto:');
-            sdp.removeMediaLines(j, 'a=candidate:');
-            sdp.removeMediaLines(j, 'a=ice-options:google-ice');
-            sdp.removeMediaLines(j, 'a=ice-ufrag:');
-            sdp.removeMediaLines(j, 'a=ice-pwd:');
-            sdp.removeMediaLines(j, 'a=fingerprint:');
-            sdp.removeMediaLines(j, 'a=setup:');
+        sdp.removeSessionLines('a=msid-semantic:'); // FIXME: not mapped over jingle anyway...
+        for (var i = 0; i < sdp.media.length; i++) {
+            sdp.removeMediaLines(i, 'a=rtcp-mux');
+            sdp.removeMediaLines(i, 'a=ssrc:');
+            sdp.removeMediaLines(i, 'a=crypto:');
+            sdp.removeMediaLines(i, 'a=candidate:');
+            sdp.removeMediaLines(i, 'a=ice-options:google-ice');
+            sdp.removeMediaLines(i, 'a=ice-ufrag:');
+            sdp.removeMediaLines(i, 'a=ice-pwd:');
+            sdp.removeMediaLines(i, 'a=fingerprint:');
+            sdp.removeMediaLines(i, 'a=setup:');
 
             // re-add all remote a=ssrcs
             for (var jid in this.remotessrc) {
                 if (jid == peer) continue;
-                sdp.media[j] += this.remotessrc[jid][j];
+                sdp.media[i] += this.remotessrc[jid][i];
             }
             // and local a=ssrc lines
-            sdp.media[j] += SDPUtil.find_lines(localSDP.media[j], 'a=ssrc').join('\r\n') + '\r\n';
+            sdp.media[i] += SDPUtil.find_lines(localSDP.media[i], 'a=ssrc').join('\r\n') + '\r\n';
         }
         sdp.raw = sdp.session + sdp.media.join('');
     } else {
-        sdp = new SDP(staticoffer);
-        console.warn('staticoffer, should no longer happen here');
+        console.error('can not initiate a new session without a stable peerconnection');
+        return;
     }
-
-    // make a new colibri session and configure it
-    var sess = new ColibriSession(this.connection.jid,
-                                  Math.random().toString(36).substr(2, 12), // random string
-                                  this.connection);
-    sess.initiate(peer); 
-    sess.colibri = this;
-    sess.localStream = this.connection.jingle.localStream;
-    sess.media_constraints = this.connection.jingle.media_constraints;
-    sess.pc_constraints = this.connection.jingle.pc_constraints;
-    sess.ice_config = this.connection.ice_config;
-
-    connection.jingle.sessions[sess.sid] = sess;
-    connection.jingle.jid2session[sess.peerjid] = sess;
-
-
-    var init = $iq({to: sess.peerjid,
-                   type: 'set'})
-            .c('jingle', {xmlns: 'urn:xmpp:jingle:1',
-               action: 'session-initiate',
-               initiator: sess.me,
-               sid: sess.sid });
 
     // add stuff we got from the bridge
     for (var j = 0; j < sdp.media.length; j++) {
@@ -315,16 +312,16 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
 
         tmp = chan.find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
         if (tmp.length) {
-            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' +'\r\n';
+            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'cname:mixed' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'label:mixedlabela0' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'msid:mixedmslabela0 mixedlabela0' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + tmp.attr('ssrc') + ' ' + 'mslabel:mixedmslabela0' + '\r\n';
         } else {
             // make chrome happy... '3735928559' == 0xDEADBEEF
-            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' +'\r\n';
-            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' +'\r\n';
+            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' + '\r\n';
+            sdp.media[j] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' + '\r\n';
         }
 
         tmp = chan.find('>transport[xmlns="urn:xmpp:jingle:transports:ice-udp:1"]');
@@ -349,6 +346,30 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
             }
         }
     }
+    // make a new colibri session and configure it
+    // FIXME: is it correct to use this.connection.jid when used in a MUC?
+    var sess = new ColibriSession(this.connection.jid,
+                                  Math.random().toString(36).substr(2, 12), // random string
+                                  this.connection);
+    sess.initiate(peer);
+    sess.colibri = this;
+    sess.localStream = this.connection.jingle.localStream;
+    sess.media_constraints = this.connection.jingle.media_constraints;
+    sess.pc_constraints = this.connection.jingle.pc_constraints;
+    sess.ice_config = this.connection.ice_config;
+
+    this.connection.jingle.sessions[sess.sid] = sess;
+    this.connection.jingle.jid2session[sess.peerjid] = sess;
+
+    // send a session-initiate
+    var init = $iq({to: peer, type: 'set'})
+        .c('jingle',
+            {xmlns: 'urn:xmpp:jingle:1',
+             action: 'session-initiate',
+             initiator: sess.me,
+             sid: sess.sid
+            }
+    );
     sdp.toJingle(init, 'initiator');
     this.connection.sendIQ(init,
         function (res) {
@@ -358,36 +379,36 @@ Colibri.prototype.initiate = function (peer, isInitiator) {
             console.log('got error');
         }
     );
-}
+};
 
 // pull in a new participant into the conference
-Colibri.prototype.addNewParticipant = function(peer) {
+ColibriFocus.prototype.addNewParticipant = function (peer) {
     var ob = this;
     if (this.confid === 0) {
         // bad state
         console.log('confid does not exist yet, postponing', peer);
-        window.setTimeout(function() {
+        window.setTimeout(function () {
             ob.addNewParticipant(peer);
         }, 250);
         return;
     }
     var index = this.channels.length;
-    this.channels.push([])
+    this.channels.push([]);
     this.peers.push(peer);
 
     var elem = $iq({to: this.bridgejid, type: 'get'});
     elem.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
     var localSDP = new SDP(this.peerconnection.localDescription.sdp);
     var contents = SDPUtil.find_lines(localSDP.raw, 'a=mid:').map(SDPUtil.parse_mid);
-    contents.forEach(function(name) {
-        elem.c('content', {creator: 'initiator', name: name});
-        elem.c('channel', {initiator: 'true'});
+    contents.forEach(function (name) {
+        elem.c('content', {name: name});
+        elem.c('channel', {initiator: 'true', expire:'15'});
         elem.up(); // end of channel
         elem.up(); // end of content
     });
 
     this.connection.sendIQ(elem,
-        function(result) {
+        function (result) {
             var contents = $(result).find('>conference>content').get();
             for (var i = 0; i < contents.length; i++) {
                 tmp = $(contents[i]).find('>channel').get();
@@ -399,17 +420,16 @@ Colibri.prototype.addNewParticipant = function(peer) {
             console.warn(error);
         }
     );
-}
+};
 
 // update the channel description (payload-types + dtls fp) for a participant
-Colibri.prototype.updateChannel = function (remoteSDP, participant) {
+ColibriFocus.prototype.updateChannel = function (remoteSDP, participant) {
     console.log('change allocation for', this.confid);
     var change = $iq({to: this.bridgejid, type: 'set'});
     change.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
     for (channel = 0; channel < this.channels[participant].length; channel++) {
-        change.c('content', {name: channel == 0 ? 'audio' : 'video'});
-        change.c('channel', {id: $(this.channels[participant][channel]).attr('id'), initiator: 'true'});
-        console.log('channel id', $(this.channels[participant][channel]).attr('id'));
+        change.c('content', {name: channel === 0 ? 'audio' : 'video'});
+        change.c('channel', {id: $(this.channels[participant][channel]).attr('id')});
 
         var rtpmap = SDPUtil.find_lines(remoteSDP.media[channel], 'a=rtpmap:');
         rtpmap.forEach(function (val) {
@@ -471,17 +491,15 @@ Colibri.prototype.updateChannel = function (remoteSDP, participant) {
 // tell everyone about a new participants a=ssrc lines (isadd is true)
 // or a leaving participants a=ssrc lines
 // FIXME: should not take an SDP, but rather the a=ssrc lines and probably a=mid
-Colibri.prototype.sendSSRCUpdate = function(sdp, exclude, isadd) {
+ColibriFocus.prototype.sendSSRCUpdate = function (sdp, exclude, isadd) {
     var ob = this;
-    // FIXME: this should only send to participants that are stable, i.e. who have sent a session-accept
-    // possibly, this.remoteSSRC[session.peerjid] does not exist yet
-    this.peers.forEach(function(peerjid) {
+    this.peers.forEach(function (peerjid) {
         if (peerjid == exclude) return;
-        console.warn('tell', peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from', exclude);
-        console.warn('remoteSSRC', ob.remotessrc[peerjid]);
+        console.log('tell', peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from', exclude);
         if (!ob.remotessrc[peerjid]) {
-            // don't tell them about updates yet?
-            console.warn('do we really want to bother', peerjid, 'with updates yet?')
+            // FIXME: this should only send to participants that are stable, i.e. who have sent a session-accept
+            // possibly, this.remoteSSRC[session.peerjid] does not exist yet
+            console.warn('do we really want to bother', peerjid, 'with updates yet?');
         }
         var channel;
         var peersess = ob.connection.jingle.jid2session[peerjid];
@@ -498,10 +516,10 @@ Colibri.prototype.sendSSRCUpdate = function(sdp, exclude, isadd) {
             modify.c('content', {name: SDPUtil.parse_mid(SDPUtil.find_line(sdp.media[channel], 'a=mid:'))});
             modify.c('source', { xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0' });
             // FIXME: not completly sure this operates on blocks and / or handles different ssrcs correctly
-            tmp.forEach(function(line) {
+            tmp.forEach(function (line) {
                 var idx = line.indexOf(' ');
                 var linessrc = line.substr(0, idx).substr(7);
-                modify.attrs({ssrc:linessrc});
+                modify.attrs({ssrc: linessrc});
 
                 var kv = line.substr(idx + 1);
                 modify.c('parameter');
@@ -527,7 +545,7 @@ Colibri.prototype.sendSSRCUpdate = function(sdp, exclude, isadd) {
     });
 };
 
-Colibri.prototype.setRemoteDescription = function(session, elem, desctype) {
+ColibriFocus.prototype.setRemoteDescription = function (session, elem, desctype) {
     var participant = this.peers.indexOf(session.peerjid);
     console.log('Colibri.setRemoteDescription from', session.peerjid, participant);
     var ob = this;
@@ -557,19 +575,19 @@ Colibri.prototype.setRemoteDescription = function(session, elem, desctype) {
 };
 
 // relay ice candidates to bridge using trickle
-Colibri.prototype.addIceCandidate = function (session, elem) {
+ColibriFocus.prototype.addIceCandidate = function (session, elem) {
     var ob = this;
     var participant = this.peers.indexOf(session.peerjid);
     console.log('change transport allocation for', this.confid, session.peerjid, participant);
     var change = $iq({to: this.bridgejid, type: 'set'});
     change.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
-    $(elem).each(function() {
+    $(elem).each(function () {
         var name = $(this).attr('name');
-        var channel = name == 'audio' ? 0 :  1;
+        var channel = name == 'audio' ? 0 : 1; // FIXME: search mlineindex in localdesc
 
         change.c('content', {name: name});
-        change.c('channel', {id: $(ob.channels[participant][channel]).attr('id'), initiator: 'true'});
-        $(this).find('>transport').each(function() {
+        change.c('channel', {id: $(ob.channels[participant][channel]).attr('id')});
+        $(this).find('>transport').each(function () {
             change.c('transport', {
                 ufrag: $(this).attr('ufrag'),
                 pwd: $(this).attr('pwd'),
@@ -603,7 +621,7 @@ Colibri.prototype.addIceCandidate = function (session, elem) {
 };
 
 // send our own candidate to the bridge
-Colibri.prototype.sendIceCandidate = function(candidate) {
+ColibriFocus.prototype.sendIceCandidate = function (candidate) {
     //console.log('candidate', candidate);
     if (!candidate) {
         console.log('end of candidates');
@@ -612,7 +630,7 @@ Colibri.prototype.sendIceCandidate = function(candidate) {
     var mycands = $iq({to: this.bridgejid, type: 'set'});
     mycands.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
     mycands.c('content', {name: candidate.sdpMid });
-    mycands.c('channel', {id: $(this.mychannel[candidate.sdpMLineIndex]).attr('id'), initiator: 'true'});
+    mycands.c('channel', {id: $(this.mychannel[candidate.sdpMLineIndex]).attr('id')});
     mycands.c('transport', {xmlns: 'urn:xmpp:jingle:transports:ice-udp:1'});
     tmp = SDPUtil.candidateToJingle(candidate.candidate);
     mycands.c('candidate', tmp).up();
@@ -626,7 +644,7 @@ Colibri.prototype.sendIceCandidate = function(candidate) {
     );
 };
 
-Colibri.prototype.terminate = function (session, reason) {
+ColibriFocus.prototype.terminate = function (session, reason) {
     console.log('remote session terminated from', session.peerjid);
     var participant = this.peers.indexOf(session.peerjid);
     if (!this.remotessrc[session.peerjid] || participant == -1) {
@@ -640,8 +658,24 @@ Colibri.prototype.terminate = function (session, reason) {
     }
     // remove from this.peers
     this.peers.splice(participant, 1);
-    // and from channels -- this wil timeout on the bridge
-    // FIXME: this suggests keeping parallel arrays is wrong
+    // expire channel on bridge
+    var change = $iq({to: this.bridgejid, type: 'set'});
+    change.c('conference', {xmlns: 'http://jitsi.org/protocol/colibri', id: this.confid});
+    for (var channel = 0; channel < this.channels[participant].length; channel++) {
+        change.c('content', {name: channel === 0 ? 'audio' : 'video'});
+        change.c('channel', {id: $(this.channels[participant][channel]).attr('id'), expire: '0'});
+        change.up(); // end of channel
+        change.up(); // end of content
+    }
+    this.connection.sendIQ(change,
+        function (res) {
+            console.log('got result');
+        },
+        function (err) {
+            console.log('got error');
+        }
+    );
+    // and remove from channels
     this.channels.splice(participant, 1);
 
     // tell everyone about the ssrcs to be removed
@@ -657,42 +691,39 @@ Colibri.prototype.terminate = function (session, reason) {
 
     delete this.remotessrc[session.peerjid];
     this.modifySources();
-}
+};
 
-Colibri.prototype.modifySources = function() {
+ColibriFocus.prototype.modifySources = function () {
     var ob = this;
     if (!(this.addssrc.length || this.removessrc.length)) return;
     if (this.peerconnection.signalingState == 'closed') return;
 
     // FIXME: this is a big hack
+    // https://code.google.com/p/webrtc/issues/detail?id=2688
     if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')) {
         console.warn('modifySources not yet', this.peerconnection.signalingState, this.peerconnection.iceConnectionState);
-        window.setTimeout(function() { ob.modifySources(); }, 250);
+        window.setTimeout(function () { ob.modifySources(); }, 250);
         this.wait = true;
         return;
     }
     if (this.wait) {
-        window.setTimeout(function() { ob.modifySources(); }, 2500);
+        window.setTimeout(function () { ob.modifySources(); }, 2500);
         this.wait = false;
         return;
     }
     var sdp = new SDP(this.peerconnection.remoteDescription.sdp);
 
-    // mangle SDP a little
-    // remove the msid-semantics from the remote description, if any
-    sdp.removeSessionLines('a=msid-semantic:');
-
     // add sources
-    this.addssrc.forEach(function(lines, idx) {
+    this.addssrc.forEach(function (lines, idx) {
         sdp.media[idx] += lines;
     });
     this.addssrc = [];
 
     // remove sources
-    this.removessrc.forEach(function(lines, idx) {
+    this.removessrc.forEach(function (lines, idx) {
         lines = lines.split('\r\n');
         lines.pop(); // remove empty last element;
-        lines.forEach(function(line) {
+        lines.forEach(function (line) {
             sdp.media[idx] = sdp.media[idx].replace(line + '\r\n', '');
         });
     });
@@ -701,33 +732,33 @@ Colibri.prototype.modifySources = function() {
     sdp.raw = sdp.session + sdp.media.join('');
     this.peerconnection.setRemoteDescription(
         new RTCSessionDescription({type: 'offer', sdp: sdp.raw }),
-        function() {
+        function () {
             console.log('setModifiedRemoteDescription ok');
             ob.peerconnection.createAnswer(
-                function(modifiedAnswer) {
+                function (modifiedAnswer) {
                     console.log('modifiedAnswer created');
                     // FIXME: pushing down an answer while ice connection state 
                     // is still checking is bad...
                     console.log(ob.peerconnection.iceConnectionState);
                     ob.peerconnection.setLocalDescription(modifiedAnswer,
-                        function() {
+                        function () {
                             console.log('setModifiedLocalDescription ok');
                         },
-                        function(error) {
+                        function (error) {
                             console.log('setModifiedLocalDescription failed');
                         }
                     );
                 },
-                function(error) {
+                function (error) {
                     console.log('createModifiedAnswer failed');
                 }
             );
         },
-        function(error) {
+        function (error) {
             console.log('setModifiedRemoteDescription failed');
         }
     );
-}
+};
 
 
 // A colibri session is similar to a jingle session, it just implements some things differently
@@ -742,10 +773,10 @@ function ColibriSession(me, sid, connection) {
     this.peerjid = null;
 
     this.colibri = null;
-};
+}
 
+// implementation of JingleSession interface
 ColibriSession.prototype.initiate = function (peerjid, isInitiator) {
-    console.log('ColibriSession.initiate');
     this.peerjid = peerjid;
 };
 
@@ -759,7 +790,6 @@ ColibriSession.prototype.accept = function () {
 };
 
 ColibriSession.prototype.terminate = function (reason) {
-    console.log('ColibriSession.terminate');
     this.colibri.terminate(this, reason);
 };
 
@@ -768,13 +798,12 @@ ColibriSession.prototype.active = function () {
 };
 
 ColibriSession.prototype.setRemoteDescription = function (elem, desctype) {
-    console.log('ColibriSession.setRemoteDescription');
     this.colibri.setRemoteDescription(this, elem, desctype);
-}
+};
 
 ColibriSession.prototype.addIceCandidate = function (elem) {
     this.colibri.addIceCandidate(this, elem);
-}
+};
 
 ColibriSession.prototype.sendAnswer = function (sdp, provisional) {
     console.log('ColibriSession.sendAnswer');

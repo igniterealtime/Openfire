@@ -3,16 +3,16 @@ package com.rayo.core.verb;
 import org.xmpp.packet.*;
 import org.dom4j.*;
 
-public class AddSourceEvent extends AbstractVerbEvent {
+public class ColibriOfferEvent extends AbstractVerbEvent {
 
     private JID muc;
     private String nickname;
     private JID participant;
     private Element conference;
 
-    public AddSourceEvent() {}
+    public ColibriOfferEvent() {}
 
-    public AddSourceEvent(Verb verb) {
+    public ColibriOfferEvent(Verb verb) {
         super(verb);
     }
 

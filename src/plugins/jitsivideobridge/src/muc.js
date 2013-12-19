@@ -7,6 +7,7 @@ Strophe.addConnectionPlugin('emuc', {
     roomjid: null,
     myroomjid: null,
     members: {},
+    joined: false,
     isOwner: false,
     init: function (conn) {
         this.connection = conn;
@@ -23,7 +24,7 @@ Strophe.addConnectionPlugin('emuc', {
         }
 
         var join = $pres({to: this.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'});
-        if (password !== null) {
+        if (password !== undefined) {
             join.c('password').t(password);
         }
         this.connection.send(join);
@@ -47,10 +48,14 @@ Strophe.addConnectionPlugin('emuc', {
         member.show = $(pres).find('>show').text();
         member.status = $(pres).find('>status').text();
         var tmp = $(pres).find('>x[xmlns="http://jabber.org/protocol/muc#user"]>item');
-        member.affilication = tmp.attr('affiliation');
+        member.affiliation = tmp.attr('affiliation');
         member.role = tmp.attr('role');
         if (from == this.myroomjid) {
-            $(document).trigger('joined.muc', [from, member]);
+            if (member.affiliation == 'owner') this.isOwner = true;
+            if (!this.joined) {
+                this.joined = true;
+                $(document).trigger('joined.muc', [from, member]);
+            }
         } else if (this.members[from] === undefined) {
             // new participant
             this.members[from] = member;

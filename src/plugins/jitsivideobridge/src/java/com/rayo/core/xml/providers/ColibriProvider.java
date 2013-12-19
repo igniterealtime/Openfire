@@ -46,8 +46,9 @@ public class ColibriProvider extends BaseProvider {
     private Object buildColibriCommand(Element element) throws URISyntaxException
     {
 		String videobridge = element.attributeValue("videobridge");
- 		ColibriCommand command = new ColibriCommand();
-		command.setVideobridge(videobridge);
+		Element conference = element.element("conference").createCopy();
+
+ 		ColibriCommand command = new ColibriCommand(videobridge, conference);
 
         return command;
     }
@@ -61,6 +62,9 @@ public class ColibriProvider extends BaseProvider {
 
 		if (object instanceof ColibriCommand) {
             createColibriCommand((ColibriCommand) object, document);
+
+        } else if (object instanceof ColibriOfferEvent) {
+            createColibriOfferEvent((ColibriOfferEvent) object, document);
 
         } else if (object instanceof AddSourceEvent) {
             createAddSourceEvent((AddSourceEvent) object, document);
@@ -82,14 +86,34 @@ public class ColibriProvider extends BaseProvider {
 		root.addAttribute("videobridge", command.getVideobridge());
     }
 
+    private void createColibriOfferEvent(ColibriOfferEvent event, Document document)
+    {
+        Element root = document.addElement(new QName("offer", NAMESPACE));
+		root.addAttribute("muc", event.getMuc().toString());
+		root.addAttribute("videobridge", event.getMuc().getNode());
+		root.addAttribute("nickname", event.getNickname());
+		root.addAttribute("participant", event.getParticipant().toString());
+        root.add(event.getConference().createCopy());
+    }
+
     private void createAddSourceEvent(AddSourceEvent event, Document document)
     {
-        document.addElement(new QName("addsource", NAMESPACE));
+        Element root = document.addElement(new QName("addsource", NAMESPACE));
+		root.addAttribute("muc", event.getMuc().toString());
+		root.addAttribute("videobridge", event.getMuc().getNode());
+		root.addAttribute("nickname", event.getNickname());
+		root.addAttribute("participant", event.getParticipant().toString());
+        root.add(event.getConference().createCopy());
     }
 
     private void createRemoveSourceEvent(RemoveSourceEvent event, Document document)
     {
-        document.addElement(new QName("removesource", NAMESPACE));
+        Element root = document.addElement(new QName("removesource", NAMESPACE));
+		root.addAttribute("muc", event.getMuc().toString());
+		root.addAttribute("videobridge", event.getMuc().getNode());
+		root.addAttribute("nickname", event.getNickname());
+		root.addAttribute("participant", event.getParticipant().toString());
+		root.addAttribute("active", event.isActive() ? "true" : "false");
     }
 
     private void createMutedEvent(MutedEvent muted, Document document)

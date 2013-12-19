@@ -18,6 +18,7 @@ import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
 import org.jitsi.videobridge.*;
 import org.jivesoftware.openfire.container.*;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -158,7 +159,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
             component = null;
         }
 
-		destroyIQHandlers();
+		//destroyIQHandlers();
     }
 
     /**
@@ -188,7 +189,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
 			context.setWelcomeFiles(new String[]{"index.html"});
 
-			createIQHandlers();
+			//createIQHandlers();
 
 		}
 		catch(Exception e) {
@@ -496,14 +497,18 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      *
      */
 
-    private class ColibriIQHandler extends IQHandler
+    private class ColibriIQHandler extends IQHandler implements MUCEventListener
     {
-		private ConcurrentHashMap<String, LocalClientSession> sessions;
+		private ConcurrentHashMap<String, FocusAgent> sessions;
+		private MultiUserChatManager mucManager;
 
         public ColibriIQHandler()
         {
 			super("Rayo: XEP 0327 - Colibri");
-			sessions = new ConcurrentHashMap<String, LocalClientSession>();
+			sessions = new ConcurrentHashMap<String, FocusAgent>();
+
+			MUCEventDispatcher.addListener(this);
+			mucManager = XMPPServer.getInstance().getMultiUserChatManager();
 		}
 
 		/**
@@ -523,6 +528,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				if (object instanceof ColibriCommand) {
 					ColibriCommand command = (ColibriCommand) object;
 					reply = handleColibriCommand(command, iq);
+
+				} else {
+					reply = IQ.createResultIQ(iq);
+					reply.setError(PacketError.Condition.not_allowed);
 				}
 
 				return reply;
@@ -549,10 +558,28 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			IQ reply = IQ.createResultIQ(iq);
 			String vBridge = command.getVideobridge();
+			Element conference = command.getConference();
 
 			if (vBridge != null)
 			{
-				createColibriFocus(vBridge);
+				String focusAgentName = "colibri.focus.agent." + vBridge;
+				JID user = iq.getFrom();
+
+				if (sessions.containsKey(focusAgentName))
+				{
+					FocusAgent focusAgent = sessions.get(focusAgentName);
+
+					if (focusAgent.isUser(user))
+					{
+						focusAgent.handleColibriCommand(reply, user, conference);
+
+					} else {
+						reply.setError(PacketError.Condition.item_not_found);
+					}
+
+				} else {
+					reply.setError(PacketError.Condition.not_allowed);
+				}
 			}
 
 			return reply;
@@ -561,26 +588,102 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		private void createColibriFocus(String vBridge)
+		public void roomCreated(JID roomJID)
 		{
-			Log.info("ColibriIQHandler createColibriFocus " + vBridge);
-			LocalClientSession session;
 
-			if (sessions.containsKey(vBridge))
+		}
+		/**
+		 *
+		 *
+		 */
+		public void roomDestroyed(JID roomJID)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public void occupantJoined(JID roomJID, JID user, String nickname)
+		{
+			MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
+
+			Log.info("ColibriIQHandler occupantJoined " + roomJID + " " + user + " " + nickname);
+
+			String focusAgentName = "colibri.focus.agent." + roomJID.getNode();
+
+			FocusAgent focusAgent;
+
+			Participant participant = new Participant(nickname, user);
+
+			if (sessions.containsKey(focusAgentName))
 			{
-				session = sessions.get(vBridge);
+				focusAgent = sessions.get(focusAgentName);
 
 			} else {
-				WSConnection wsConnection = new WSConnection(vBridge, vBridge);
-				session = SessionManager.getInstance().createClientSession(wsConnection, new BasicStreamID(vBridge + "-" + System.currentTimeMillis() ) );
-				wsConnection.setRouter( new SessionPacketRouter(session));
-				AuthToken authToken = new AuthToken(vBridge, true);
-				session.setAuthToken(authToken, vBridge);
-				sessions.put(vBridge, session);
+				focusAgent = new FocusAgent(focusAgentName, roomJID);
+				LocalClientSession session = SessionManager.getInstance().createClientSession(focusAgent, new BasicStreamID(focusAgentName + "-" + System.currentTimeMillis() ) );
+				focusAgent.setRouter( new SessionPacketRouter(session));
+				AuthToken authToken = new AuthToken(focusAgentName, true);
+				session.setAuthToken(authToken, focusAgentName);
+				sessions.put(focusAgentName, focusAgent);
 
 				Presence presence = new Presence();
-				wsConnection.getRouter().route(presence);
+				focusAgent.getRouter().route(presence);
 			}
+
+			focusAgent.createColibriChannel(participant);
+		}
+		/**
+		 *
+		 *
+		 */
+		public void occupantLeft(JID roomJID, JID user)
+		{
+			MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
+
+			Log.info("ColibriIQHandler occupantLeft " + roomJID + " " + user);
+
+			String focusAgentName = "colibri.focus.agent." + roomJID.getNode();
+
+			if (sessions.containsKey(focusAgentName))
+			{
+				FocusAgent focusAgent = sessions.get(focusAgentName);
+
+				focusAgent.removeColibriChannel(user);
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		public void nicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public void messageReceived(JID roomJID, JID user, String nickname, Message message)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public void roomSubjectChanged(JID roomJID, JID user, String newSubject)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public void privateMessageRecieved(JID a, JID b, Message message)
+		{
+
 		}
     }
 
@@ -626,22 +729,240 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		}
 	}
 
-	public class WSConnection extends VirtualConnection
+    /**
+     *
+     *
+     */
+	public class Participant
+	{
+		/**
+		 *
+		 *
+		 */
+		public String audioChannelId;
+		/**
+		 *
+		 *
+		 */
+		public String videoChannelId;
+		/**
+		 *
+		 *
+		 */
+		private String nickname;
+		/**
+		 *
+		 *
+		 */
+		private JID user;
+		/**
+		 *
+		 *
+		 */
+		public Participant(String nickname, JID user) {
+			this.nickname = nickname;
+			this.user = user;
+		}
+		/**
+		 *
+		 *
+		 */
+		public String getNickname() {
+			return nickname;
+		}
+		/**
+		 *
+		 *
+		 */
+		public String toString() {
+			return user + " " + nickname;
+		}
+		/**
+		 *
+		 *
+		 */
+		public JID getUser() {
+			return user;
+		}
+	}
+
+	public class FocusAgent extends VirtualConnection
 	{
 		private SessionPacketRouter router;
-		private String remoteAddr;
-		private String hostName;
+		private String focusName;
+		private JID roomJid;
+		private String focusId = null;
+		private int count = 0;
 		private LocalClientSession session;
+		private Participant firstParticipant;
+		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
+		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
+		public ConcurrentHashMap<String, Participant> channels = new ConcurrentHashMap<String, Participant>();
 
 		/**
 		 *
 		 *
 		 */
-		public WSConnection( String remoteAddr, String hostName ) {
-			this.remoteAddr = remoteAddr;
-			this.hostName = hostName;
+		public FocusAgent(String focusName, JID roomJid) {
+			this.focusName = focusName;
+			this.roomJid = roomJid;
 		}
+		/**
+		 *
+		 *
+		 */
+		public void notifyUser(Participant participant, Element conference)
+		{
+			routeColibriEvent(participant, conference, true);
+		}
+		/**
+		 *
+		 *
+		 */
+		public void answerUser(Participant participant, Element conference)
+		{
+			String nickname	= participant.getNickname();
 
+        	IQ iq = new IQ(IQ.Type.set);
+			iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+			iq.setTo("jitsi-videobridge." + domainName);
+
+			String id = nickname + "-" + System.currentTimeMillis();
+			ids.put(id, participant);
+			iq.setID(id);
+
+			iq.setChildElement(conference.createCopy());
+			router.route(iq);
+
+			routeColibriEvent(participant, conference, true);
+		}
+		/**
+		 *
+		 *
+		 */
+		public void addUser(Participant participant, Element conference)
+		{
+			users.put(participant.getUser().toString(), participant);
+
+			Presence presence = new Presence();
+			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+			presence.setTo(participant.getUser());
+
+			ColibriOfferEvent event = new ColibriOfferEvent();
+			event.setMuc(roomJid);
+			event.setNickname(participant.getNickname());
+			event.setParticipant(participant.getUser());
+			event.setConference(conference);
+			presence.getElement().add(colibriProvider.toXML(event));
+
+			router.route(presence);
+
+			for ( Iterator i = conference.elementIterator("content"); i.hasNext(); )
+			{
+				Element content = (Element) i.next();
+				Element channel = content.element("channel");
+
+				if ("audio".equals(content.attributeValue("name")))
+				{
+					participant.audioChannelId = channel.attributeValue("id");
+					channels.put(participant.audioChannelId, participant);
+
+				} else {
+					participant.videoChannelId = channel.attributeValue("id");
+					channels.put(participant.videoChannelId, participant);
+				}
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		public void updateUser(Participant participant, Element conference)
+		{
+
+		}
+		/**
+		 *
+		 *
+		 */
+		public boolean isUser(JID user)
+		{
+			return users.containsKey(user.toString());
+		}
+		/**
+		 *
+		 *
+		 */
+		public void createColibriChannel(Participant participant)
+		{
+			Log.info("createColibriChannel " + participant + " " + count);
+
+			count++;
+
+			if (count == 1)
+			{
+				firstParticipant = participant;		// can't start until we have at least 2 people
+				return;
+			}
+
+			String nickname	= participant.getNickname();
+
+        	IQ iq = new IQ(IQ.Type.get);
+			iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+			iq.setTo("jitsi-videobridge." + domainName);
+
+			String id = nickname + "-" + System.currentTimeMillis();
+			ids.put(id, participant);
+			iq.setID(id);
+
+			Element conferenceIq = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
+
+			if (focusId != null)
+			{
+				conferenceIq.addAttribute("id", focusId);
+			}
+
+			Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
+			audioContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15");
+
+			Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
+			videoContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15");
+
+			router.route(iq);
+		}
+		/**
+		 *
+		 *
+		 */
+		public void removeColibriChannel(JID user)
+		{
+			String username = user.toString();
+
+			count--;
+
+			if (count <= 1)
+			{
+				focusId = null;	// invalidate current focus session
+				count = 0;
+			}
+
+			if (users.containsKey(username))
+			{
+				Participant participant = users.remove(username);
+				routeColibriEvent(participant, null, false);
+			}
+
+			Log.info("removeColibriChannel " + count);
+		}
+		/**
+		 *
+		 *
+		 */
+		public void handleColibriCommand(IQ reply, JID user, Element conference)
+		{
+			reply.setError(PacketError.Condition.not_allowed);		// not implemented
+		}
 		/**
 		 *
 		 *
@@ -664,7 +985,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void closeVirtualConnection()
 		{
-			Log.debug("WSConnection - close ");
+			Log.debug("FocusAgent - close ");
 
 		}
 		/**
@@ -672,18 +993,18 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 */
 		public byte[] getAddress() {
-			return remoteAddr.getBytes();
+			return focusName.getBytes();
 		}
 		/**
 		 *
 		 *
 		 */
 		public String getHostAddress() {
-			return remoteAddr;
+			return focusName;
 		}
 
 		public String getHostName()  {
-			return ( hostName != null ) ? hostName : "0.0.0.0";
+			return "0.0.0.0";
 		}
 		/**
 		 *
@@ -698,7 +1019,81 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void deliver(Packet packet) throws UnauthorizedException
 		{
-			deliverRawText(packet.toXML());
+			Log.info("FocusAgent deliver\n" + packet);
+
+			IQ iq = (IQ) packet;
+
+			if (iq.getType() == IQ.Type.result)
+			{
+				Element conference = iq.getChildElement().createCopy();
+				focusId = conference.attributeValue("id");
+				String id = packet.getID();
+
+				if (ids.containsKey(id))
+				{
+					Participant participant = ids.remove(id);
+
+					if (users.containsKey(participant.getUser().toString()))
+						updateUser(participant, conference);
+					else
+						addUser(participant, conference);
+
+					Log.info("FocusAgent response for user " + participant + " " + focusId + "\n" + conference);
+
+				} else Log.error("FocusAgent deliver cannot find iq owner " + id + "\n" + packet);
+
+				if (firstParticipant != null)			// send pending channel request for first participant
+				{
+					createColibriChannel(firstParticipant);
+					firstParticipant = null;
+				}
+
+
+			} else if (iq.getType() == IQ.Type.error)  {
+				focusId = null;	// error
+				count = 0;
+				Log.error("Videobrideg error \n" + packet);
+
+				for (Participant reciepient : users.values())
+				{
+					Log.info("routeColibriEvent - E " + reciepient);
+					sendRayoEvent(reciepient, null, false, reciepient);
+				}
+
+
+			} else if (iq.getType() == IQ.Type.set || iq.getType() == IQ.Type.get)  {
+				JID user = iq.getFrom();
+				Element root = iq.getChildElement();
+				Element conference = null;
+
+				if (user.toString().equals("jitsi-videobridge." + domainName)) // SSRC notification from videobridge
+				{
+/*
+					conference = root.createCopy();
+					String channelId = conference.element("content").element("channel").attributeValue("id");
+
+					if (channels.containsKey(channelId))
+						notifyUser(channels.get(channelId), conference);
+
+					else Log.error("FocusAgent deliver cannot find channel owner " + channelId + "\n" + packet);
+*/
+				} else {
+
+					conference = root.element("conference").createCopy();	// rayo from participant
+
+					IQ reply = IQ.createResultIQ(iq);
+
+					if (users.containsKey(user.toString()))
+						answerUser(users.get(user.toString()), conference);
+					else
+						reply.setError(PacketError.Condition.not_allowed);
+
+					router.route(reply);
+				}
+
+			} else {
+				Log.warn("Unexpected Videobrideg message \n" + packet);
+			}
 		}
 		/**
 		 *
@@ -706,7 +1101,56 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void deliverRawText(String text)
 		{
+			Log.debug("FocusAgent deliverRawText\n" + text);
+		}
+		/**
+		 *
+		 *
+		 */
+		private void routeColibriEvent(Participant participant, Element conference, boolean isAdd)
+		{
+			Log.info("routeColibriEvent - P " + participant);
 
+			for (Participant reciepient : users.values())
+			{
+				if (participant.getUser().toString().equals(reciepient.getUser().toString()) == false)
+				{
+					Log.info("routeColibriEvent - R " + reciepient);
+					sendRayoEvent(reciepient, conference, isAdd, participant);
+				}
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		private void sendRayoEvent(Participant reciepient, Element conference, boolean isAdd, Participant participant)
+		{
+			Presence presence = new Presence();
+			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+			presence.setTo(reciepient.getUser());
+
+			if (isAdd)
+			{
+				AddSourceEvent event = new AddSourceEvent();
+				event.setMuc(roomJid);
+				event.setNickname(participant.getNickname());
+				event.setParticipant(participant.getUser());
+				event.setConference(conference);
+
+				presence.getElement().add(colibriProvider.toXML(event));
+
+			} else {
+				RemoveSourceEvent event = new RemoveSourceEvent();
+				event.setMuc(roomJid);
+				event.setNickname(participant.getNickname());
+				event.setParticipant(participant.getUser());
+				event.setActive(focusId != null);
+
+				presence.getElement().add(colibriProvider.toXML(event));
+			}
+
+			router.route(presence);
 		}
 		/**
 		 *

@@ -64,7 +64,7 @@ CREATE TABLE ofRoster (
   nick                  VARCHAR(255),
   PRIMARY KEY (rosterID),
   INDEX ofRoster_unameid_idx (username),
-  INDEX ofRoster_jid_idx (jid)
+  INDEX ofRoster_jid_idx (jid(255))
 );
 
 CREATE TABLE ofRosterGroups (

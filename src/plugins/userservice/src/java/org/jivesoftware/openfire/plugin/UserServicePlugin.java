@@ -125,9 +125,12 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
         }
     }
 
-    public void deleteUser(String username) throws UserNotFoundException{
+    public void deleteUser(String username) throws UserNotFoundException, SharedGroupException
+    {
         User user = getUser(username);
         userManager.deleteUser(user);
+
+		rosterManager.deleteRoster(server.createJID(username, null));
     }
 
     /**

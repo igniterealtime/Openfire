@@ -114,6 +114,7 @@ public class ColibriProvider extends BaseProvider {
 		root.addAttribute("nickname", event.getNickname());
 		root.addAttribute("participant", event.getParticipant().toString());
 		root.addAttribute("active", event.isActive() ? "true" : "false");
+        root.add(event.getConference().createCopy());
     }
 
     private void createMutedEvent(MutedEvent muted, Document document)

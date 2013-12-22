@@ -159,7 +159,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
             component = null;
         }
 
-		//destroyIQHandlers();
+		destroyIQHandlers();
     }
 
     /**
@@ -189,7 +189,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
 			context.setWelcomeFiles(new String[]{"index.html"});
 
-			//createIQHandlers();
+			createIQHandlers();
 
 		}
 		catch(Exception e) {
@@ -794,10 +794,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private String focusId = null;
 		private int count = 0;
 		private LocalClientSession session;
-		private Participant firstParticipant;
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
+		public ConcurrentHashMap<String, Element> ssrcs = new ConcurrentHashMap<String, Element>();
 		public ConcurrentHashMap<String, Participant> channels = new ConcurrentHashMap<String, Participant>();
 
 		/**
@@ -812,15 +812,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void notifyUser(Participant participant, Element conference)
-		{
-			routeColibriEvent(participant, conference, true);
-		}
-		/**
-		 *
-		 *
-		 */
-		public void answerUser(Participant participant, Element conference)
+		public void processUserAnswer(Participant participant, Element conference)
 		{
 			String nickname	= participant.getNickname();
 
@@ -835,7 +827,31 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			iq.setChildElement(conference.createCopy());
 			router.route(iq);
 
-			routeColibriEvent(participant, conference, true);
+			ssrcs.put(participant.getUser().toString(), conference);
+
+			for (Participant reciepient : users.values())
+			{
+				if (participant.getUser().toString().equals(reciepient.getUser().toString()) == false)
+				{
+					Element conf = ssrcs.get(reciepient.getUser().toString());
+
+					if (conf != null)							// send others to me
+					{
+						Presence presence = new Presence();
+						presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+						presence.setTo(participant.getUser());
+
+						AddSourceEvent event = new AddSourceEvent();
+						event.setMuc(roomJid);
+						event.setNickname(participant.getNickname());
+						event.setParticipant(participant.getUser());
+						event.setConference(conf);
+						presence.getElement().add(colibriProvider.toXML(event));
+
+						router.route(presence);
+					}
+				}
+			}
 		}
 		/**
 		 *
@@ -863,14 +879,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				Element content = (Element) i.next();
 				Element channel = content.element("channel");
 
-				if ("audio".equals(content.attributeValue("name")))
+				if ("video".equals(content.attributeValue("name")))
 				{
-					participant.audioChannelId = channel.attributeValue("id");
-					channels.put(participant.audioChannelId, participant);
-
-				} else {
-					participant.videoChannelId = channel.attributeValue("id");
-					channels.put(participant.videoChannelId, participant);
+						participant.videoChannelId = channel.attributeValue("id");
+						channels.put(participant.videoChannelId, participant);
 				}
 			}
 		}
@@ -878,7 +890,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void updateUser(Participant participant, Element conference)
+		public void broadcastSSRC(Participant participant)
+		{
+			Log.info("broadcastSSRC " + participant + " " + count);
+
+			if (ssrcs.containsKey(participant.getUser().toString()))
+			{
+				Element conference = ssrcs.get(participant.getUser().toString());
+				routeColibriEvent(participant, conference, true);	// send to others
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		public void updateUser(Participant participant)
 		{
 
 		}
@@ -899,13 +925,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			Log.info("createColibriChannel " + participant + " " + count);
 
 			count++;
-
-			if (count == 1)
-			{
-				firstParticipant = participant;		// can't start until we have at least 2 people
-				return;
-			}
-
 			String nickname	= participant.getNickname();
 
         	IQ iq = new IQ(IQ.Type.get);
@@ -941,10 +960,9 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			count--;
 
-			if (count <= 1)
+			if (count < 1)
 			{
 				focusId = null;	// invalidate current focus session
-				count = 0;
 			}
 
 			if (users.containsKey(username))
@@ -1019,7 +1037,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void deliver(Packet packet) throws UnauthorizedException
 		{
-			Log.info("FocusAgent deliver\n" + packet);
+			Log.debug("FocusAgent deliver\n" + packet);
 
 			IQ iq = (IQ) packet;
 
@@ -1034,19 +1052,13 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					Participant participant = ids.remove(id);
 
 					if (users.containsKey(participant.getUser().toString()))
-						updateUser(participant, conference);
+						updateUser(participant);			// ignore ack payload
 					else
 						addUser(participant, conference);
 
 					Log.info("FocusAgent response for user " + participant + " " + focusId + "\n" + conference);
 
 				} else Log.error("FocusAgent deliver cannot find iq owner " + id + "\n" + packet);
-
-				if (firstParticipant != null)			// send pending channel request for first participant
-				{
-					createColibriChannel(firstParticipant);
-					firstParticipant = null;
-				}
 
 
 			} else if (iq.getType() == IQ.Type.error)  {
@@ -1056,7 +1068,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 				for (Participant reciepient : users.values())
 				{
-					Log.info("routeColibriEvent - E " + reciepient);
 					sendRayoEvent(reciepient, null, false, reciepient);
 				}
 
@@ -1066,17 +1077,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				Element root = iq.getChildElement();
 				Element conference = null;
 
-				if (user.toString().equals("jitsi-videobridge." + domainName)) // SSRC notification from videobridge
+				if (user.toString().equals("jitsi-videobridge." + domainName)) // SSRC notification from videobridge, ignore
 				{
-/*
-					conference = root.createCopy();
+					conference = root.createCopy();	// rayo from participant
+
 					String channelId = conference.element("content").element("channel").attributeValue("id");
 
-					if (channels.containsKey(channelId))
-						notifyUser(channels.get(channelId), conference);
+ 	 	 			if (channels.containsKey(channelId))
+ 	 	 				broadcastSSRC(channels.get(channelId));
 
-					else Log.error("FocusAgent deliver cannot find channel owner " + channelId + "\n" + packet);
-*/
 				} else {
 
 					conference = root.element("conference").createCopy();	// rayo from participant
@@ -1084,7 +1093,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					IQ reply = IQ.createResultIQ(iq);
 
 					if (users.containsKey(user.toString()))
-						answerUser(users.get(user.toString()), conference);
+						processUserAnswer(users.get(user.toString()), conference);
 					else
 						reply.setError(PacketError.Condition.not_allowed);
 
@@ -1115,7 +1124,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			{
 				if (participant.getUser().toString().equals(reciepient.getUser().toString()) == false)
 				{
-					Log.info("routeColibriEvent - R " + reciepient);
 					sendRayoEvent(reciepient, conference, isAdd, participant);
 				}
 			}
@@ -1126,6 +1134,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		private void sendRayoEvent(Participant reciepient, Element conference, boolean isAdd, Participant participant)
 		{
+			Log.info("sendRayoEvent - " + reciepient);
+
 			Presence presence = new Presence();
 			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
 			presence.setTo(reciepient.getUser());
@@ -1146,6 +1156,13 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				event.setNickname(participant.getNickname());
 				event.setParticipant(participant.getUser());
 				event.setActive(focusId != null);
+
+				Element conf = ssrcs.get(participant.getUser().toString());
+
+				if (conf != null)
+				{
+					event.setConference(conf);
+				}
 
 				presence.getElement().add(colibriProvider.toXML(event));
 			}

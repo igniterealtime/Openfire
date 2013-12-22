@@ -90,7 +90,8 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     function waitForRemoteVideo(selector, sid) {
         var sess = connection.jingle.sessions[sid];
         videoTracks = data.stream.getVideoTracks();
-        if (videoTracks.length === 0 || selector[0].currentTime > 0) {
+        
+        if (sess.peerconnection.iceConnectionState == "connected" &&  sess.peerconnection.signalingState == "stable") {
             RTC.attachMediaStream(selector, data.stream); // FIXME: why do i have to do this for FF?
             $(document).trigger('callactive.jingle', [selector, sid]);
             console.log('waitForremotevideo', sess.peerconnection.iceConnectionState, sess.peerconnection.signalingState);

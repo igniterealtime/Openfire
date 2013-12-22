@@ -1,6 +1,7 @@
 package com.rayo.core.verb;
 
 import org.xmpp.packet.*;
+import org.dom4j.*;
 
 public class RemoveSourceEvent extends AbstractVerbEvent {
 
@@ -8,11 +9,20 @@ public class RemoveSourceEvent extends AbstractVerbEvent {
     private String nickname;
     private JID participant;
     private boolean active;
+    private Element conference;
 
     public RemoveSourceEvent() {}
 
     public RemoveSourceEvent(Verb verb) {
         super(verb);
+    }
+
+    public Element getConference() {
+        return conference;
+    }
+
+    public void setConference(Element conference) {
+        this.conference = conference;
     }
 
     public JID getParticipant() {

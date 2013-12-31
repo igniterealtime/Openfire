@@ -50,7 +50,14 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import org.dom4j.*;
-
+import org.jitsi.videobridge.*;
+import org.jitsi.impl.neomedia.*;
+import org.jitsi.impl.neomedia.format.*;
+import org.jitsi.service.neomedia.*;
+import org.jitsi.service.neomedia.device.*;
+import org.jitsi.service.neomedia.event.*;
+import org.jitsi.service.neomedia.format.*;
+import org.jitsi.service.libjitsi.*;
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -140,6 +147,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * @see Plugin#destroyPlugin()
      */
 
+    /**
+     * The <tt>Videobridge</tt> which creates, lists and destroys
+     * {@link Conference} instances and which is being represented as a Jabber
+     * component by this instance.
+     */
+    private Videobridge videoBridge;
+
+    /**
+	 *
+     */
+    private ComponentImpl componentImpl;
+
+
     public void destroyPlugin()
     {
         PropertyEventDispatcher.removeListener(this);
@@ -221,6 +241,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
         {
             componentManager.addComponent(subdomain, component);
             added = true;
+            componentImpl = (ComponentImpl) component;
         }
         catch (ComponentException ce)
         {
@@ -496,6 +517,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      *
      *
      */
+    public Videobridge getVideoBridge()
+    {
+        return componentImpl.getVideoBridge();
+    }
+
+    /**
+     *
+     *
+     */
 
     private class ColibriIQHandler extends IQHandler implements MUCEventListener
     {
@@ -558,12 +588,13 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			IQ reply = IQ.createResultIQ(iq);
 			String vBridge = command.getVideobridge();
-			Element conference = command.getConference();
 
 			if (vBridge != null)
 			{
 				String focusAgentName = "colibri.focus.agent." + vBridge;
 				JID user = iq.getFrom();
+
+				Log.info("ColibriIQHandler handleColibriCommand bridge " + focusAgentName);
 
 				if (sessions.containsKey(focusAgentName))
 				{
@@ -571,7 +602,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 					if (focusAgent.isUser(user))
 					{
-						focusAgent.handleColibriCommand(reply, user, conference);
+						reply = focusAgent.handleColibriCommand(command, iq);
 
 					} else {
 						reply.setError(PacketError.Condition.item_not_found);
@@ -795,6 +826,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private int count = 0;
 		private LocalClientSession session;
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+		private MediaStream mediaStream;
+
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Element> ssrcs = new ConcurrentHashMap<String, Element>();
@@ -884,6 +917,11 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 						participant.videoChannelId = channel.attributeValue("id");
 						channels.put(participant.videoChannelId, participant);
 				}
+
+				if ("audio".equals(content.attributeValue("name")))
+				{
+						participant.audioChannelId = channel.attributeValue("id");
+				}
 			}
 		}
 		/**
@@ -904,9 +942,9 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void updateUser(Participant participant)
+		public void removeUser(Participant participant)
 		{
-
+			Log.info("removeUser " + participant);
 		}
 		/**
 		 *
@@ -914,7 +952,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public boolean isUser(JID user)
 		{
-			return users.containsKey(user.toString());
+			return users.containsKey(user.toString())  && focusId != null;
 		}
 		/**
 		 *
@@ -954,6 +992,38 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
+		public void expireColibriChannel(Participant participant)
+		{
+			Log.info("expireColibriChannel " + participant + " " + focusId + " " + participant.audioChannelId + " " + participant.videoChannelId);
+
+			if (focusId != null && participant.audioChannelId != null && participant.videoChannelId != null)
+			{
+				String nickname	= participant.getNickname();
+
+				IQ iq = new IQ(IQ.Type.get);
+				iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+				iq.setTo("jitsi-videobridge." + domainName);
+
+				String id = nickname + "-" + System.currentTimeMillis();
+				ids.put(id, participant);
+				iq.setID(id);
+
+				Element conferenceIq = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
+				conferenceIq.addAttribute("id", focusId);
+
+				Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
+				audioContent.addElement("channel").addAttribute("id", participant.audioChannelId).addAttribute("expire", "0");
+
+				Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
+				videoContent.addElement("channel").addAttribute("id", participant.videoChannelId).addAttribute("expire", "0");
+
+				router.route(iq);
+			}
+		}
+		/**
+		 *
+		 *
+		 */
 		public void removeColibriChannel(JID user)
 		{
 			String username = user.toString();
@@ -962,13 +1032,40 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			if (count < 1)
 			{
-				focusId = null;	// invalidate current focus session
+				closeColibri();
 			}
 
 			if (users.containsKey(username))
 			{
-				Participant participant = users.remove(username);
-				routeColibriEvent(participant, null, false);
+				Participant participant = users.get(username);
+				//expireColibriChannel(participant);
+
+				routeColibriEvent(participant, null, false);	// send to others
+
+				for (Participant reciepient : users.values())
+				{
+					if (participant.getUser().toString().equals(reciepient.getUser().toString()) == false)
+					{
+						Element conf = ssrcs.get(reciepient.getUser().toString());
+
+						if (conf != null)							// send others to me
+						{
+							Presence presence = new Presence();
+							presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+							presence.setTo(participant.getUser());
+
+							RemoveSourceEvent event = new RemoveSourceEvent();
+							event.setMuc(roomJid);
+							event.setNickname(participant.getNickname());
+							event.setParticipant(participant.getUser());
+							event.setConference(conf);
+							presence.getElement().add(colibriProvider.toXML(event));
+
+							router.route(presence);
+						}
+					}
+				}
+				users.remove(username);
 			}
 
 			Log.info("removeColibriChannel " + count);
@@ -977,9 +1074,63 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void handleColibriCommand(IQ reply, JID user, Element conference)
+		public IQ handleColibriCommand(ColibriCommand command, IQ iq)
 		{
-			reply.setError(PacketError.Condition.not_allowed);		// not implemented
+			String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+
+			Log.info("FocusAgent handleColibriCommand " + focusId + " " + focusJid);
+
+			IQ reply = IQ.createResultIQ(iq);
+
+			Conference conference = getVideoBridge().getConference(focusId, focusJid);
+
+			try {
+				int localRTPPort = Integer.parseInt(command.getLocalRTPPort());
+				int localRTCPPort = Integer.parseInt(command.getLocalRTCPPort());
+				int remoteRTPPort = Integer.parseInt(command.getRemoteRTPPort());
+				int remoteRTCPPort = Integer.parseInt(command.getRemoteRTCPPort());
+				String codec = command.getCodec();
+
+				if (conference != null)
+				{
+					if (mediaStream != null)
+					{
+						mediaStream.stop();
+					}
+					Content content = conference.getOrCreateContent("audio");
+					MediaDevice mediaDevice = content.getMixer();
+					MediaService mediaService = LibJitsi.getMediaService();
+					mediaStream = mediaService.createMediaStream(org.jitsi.service.neomedia.MediaType.AUDIO);
+					MediaFormat mediaFormat;
+
+					if ("opus".equals(codec))
+						mediaFormat = mediaService.getFormatFactory().createMediaFormat("opus", 48000, 2);
+					else
+						mediaFormat = mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1);
+
+					mediaStream.setName("rayo-" + System.currentTimeMillis());
+					mediaStream.setDevice(mediaDevice);
+					mediaStream.setDirection(MediaDirection.SENDRECV);
+					mediaStream.addDynamicRTPPayloadType((byte)111, mediaFormat);
+					mediaStream.setFormat(mediaFormat);
+
+					StreamConnector connector = new DefaultStreamConnector(new DatagramSocket(localRTPPort), new DatagramSocket(localRTCPPort));
+					mediaStream.setConnector(connector);
+
+					InetAddress remoteAddr = InetAddress.getByName("localhost");
+
+					MediaStreamTarget target = new MediaStreamTarget(new InetSocketAddress(remoteAddr, remoteRTPPort),new InetSocketAddress(remoteAddr, remoteRTCPPort));
+					mediaStream.setTarget(target);
+
+					mediaStream.start();
+				}
+
+			} catch (Exception e) {
+
+				reply.setError(PacketError.Condition.not_allowed);
+				e.printStackTrace();
+			}
+			return reply;
 		}
 		/**
 		 *
@@ -988,6 +1139,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		public SessionPacketRouter getRouter()
 		{
 			return router;
+		}
+		/**
+		 *
+		 *
+		 */
+		public void closeColibri()
+		{
+			count = 0;
+			focusId = null;	// invalidate current focus session
+
+			if (mediaStream != null)
+			{
+				mediaStream.stop();
+				mediaStream = null;
+			}
 		}
 		/**
 		 *
@@ -1004,7 +1170,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		public void closeVirtualConnection()
 		{
 			Log.debug("FocusAgent - close ");
-
+			closeColibri();
 		}
 		/**
 		 *
@@ -1029,7 +1195,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 */
 		public void systemShutdown() {
-
+			closeColibri();
 		}
 		/**
 		 *
@@ -1037,7 +1203,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void deliver(Packet packet) throws UnauthorizedException
 		{
-			Log.debug("FocusAgent deliver\n" + packet);
+			Log.debug("FocusAgent deliver\n" + packet + " " + getVideoBridge());
 
 			IQ iq = (IQ) packet;
 
@@ -1052,7 +1218,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					Participant participant = ids.remove(id);
 
 					if (users.containsKey(participant.getUser().toString()))
-						updateUser(participant);			// ignore ack payload
+						removeUser(participant);
 					else
 						addUser(participant, conference);
 
@@ -1062,8 +1228,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 
 			} else if (iq.getType() == IQ.Type.error)  {
-				focusId = null;	// error
-				count = 0;
+				closeColibri();
 				Log.error("Videobrideg error \n" + packet);
 
 				for (Participant reciepient : users.values())
@@ -1149,6 +1314,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				event.setConference(conference);
 
 				presence.getElement().add(colibriProvider.toXML(event));
+				router.route(presence);
 
 			} else {
 				RemoveSourceEvent event = new RemoveSourceEvent();
@@ -1162,12 +1328,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				if (conf != null)
 				{
 					event.setConference(conf);
+					presence.getElement().add(colibriProvider.toXML(event));
+					router.route(presence);
 				}
-
-				presence.getElement().add(colibriProvider.toXML(event));
 			}
-
-			router.route(presence);
 		}
 		/**
 		 *

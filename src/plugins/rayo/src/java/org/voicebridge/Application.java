@@ -41,7 +41,9 @@ public class Application implements  CallEventListener  {
 
 			System.setProperty("com.sun.voip.server.LOGLEVEL", "99");
 			System.setProperty("com.sun.voip.server.FIRST_RTP_PORT", "3200");
-			System.setProperty("com.sun.voip.server.LAST_RTP_PORT", "3299");
+			System.setProperty("com.sun.voip.server.LAST_RTP_PORT", "3899");
+			System.setProperty("com.sun.voip.server.FIRST_VIDEOBRIDGE_RTP_PORT", "3900");
+			System.setProperty("com.sun.voip.server.LAST_VIDEOBRIDGE_RTP_PORT", "3999");
 			System.setProperty("com.sun.voip.server.Bridge.logDirectory", logDir);
 			System.setProperty("com.sun.voip.server.BRIDGE_LOG", "bridge.log");
 			System.setProperty("com.sun.voip.server.LOGLEVEL", "99");

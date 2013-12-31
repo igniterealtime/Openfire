@@ -142,7 +142,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
 			 placeCall(); // no gateway involved, direct SIP call
 
-		} else if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
+		} else if (cp.getProtocol() != null && ("Videobridge".equals(cp.getProtocol()) || "WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
 
 			 placeCall(); // WebRtc call
 
@@ -172,6 +172,8 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 	    csa = new NSOutgoingCallAgent(this);
 	} else if (protocol.equalsIgnoreCase("WebRtc")) {
 	    csa = new WebRtcCallAgent(this);
+	} else if (protocol.equalsIgnoreCase("Videobridge")) {
+	    csa = new VideobridgeCallAgent(this);
 	} else if (protocol.equalsIgnoreCase("Rtmfp")) {
 	    csa = new RtmfpCallAgent(this);
 	} else {

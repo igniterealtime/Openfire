@@ -405,12 +405,10 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 		int inChannels = myMediaInfo.getChannels();
 
 
-		if (cp.getPhoneNumber().indexOf("@") >= 0) {
-			ConferenceReceiver conferenceReceiver =
-				conferenceManager.getConferenceReceiver();
-
+		//if (cp.getPhoneNumber().indexOf("@") >= 0) {
+			ConferenceReceiver conferenceReceiver = conferenceManager.getConferenceReceiver();
 			conferenceManager.getConferenceReceiver().addMember(this);
-		}
+		//}
 
 		/*
 		 * For input treatments, the treatment manager does the resampling.
@@ -889,7 +887,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 	 * Only do this for sip calls.  For some reason, other calls
 	 * are getting timed out if this "if" is removed.
 	 */
-	if (cp.isDistributedBridge() == true || phoneNumber.indexOf("sip:") < 0) {
+	if (cp.isDistributedBridge() == true || phoneNumber.indexOf("sip:") < 0 || phoneNumber.indexOf("tel:") < 0) {
 	    return false;
 	}
 

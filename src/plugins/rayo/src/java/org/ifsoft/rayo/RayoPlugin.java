@@ -76,7 +76,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
     private boolean hasPublicIP = false;
 
     private Application bridge = new Application();
-    private RayoComponent component = null;
+    public static RayoComponent component = null;
 
     public RayoPlugin() {
         final String os = System.getProperty("os.name");

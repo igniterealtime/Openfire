@@ -1026,14 +1026,33 @@ public class RayoComponent 	extends 	AbstractComponent
 			try {
 				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(mixer);
 
-				if (conferenceManager.getMemberList().size() == 1)
+				if (CallHandler.findCall("colibri-" + mixer) == null)	// other participant than colibri
 				{
-					String recording = mixer + "-" + System.currentTimeMillis() + ".au";
-					conferenceManager.recordConference(true, recording, "au");
-					sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+					attachVideobridge(mixer, iq.getFrom(), conferenceManager.getMediaInfo().toString());
+
+					if (conferenceManager.getMemberList().size() == 1)	// handset already in call
+					{
+						String recording = mixer + "-" + System.currentTimeMillis() + ".au";
+						conferenceManager.recordConference(true, recording, "au");
+						sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+					}
 				}
 
 				sendMucMessage(mixer, null, iq.getFrom(), "Joined voice conversation");
+
+			} catch (ParseException pe) {				// colibri joining as first participant
+
+				try {
+					ConferenceManager conferenceManager = ConferenceManager.getConference(mixer, "PCM/48000/2", mixer, false);
+					String recording = mixer + "-" + System.currentTimeMillis() + ".au";
+					conferenceManager.recordConference(true, recording, "au");
+					sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+
+					attachVideobridge(mixer, iq.getFrom(), "PCM/48000/2");
+
+				} catch (Exception e) {
+					reply.setError(PacketError.Condition.item_not_found);
+				}
 
 			} catch (Exception e) {
 				reply.setError(PacketError.Condition.item_not_found);
@@ -1069,6 +1088,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				{
 					conferenceManager.recordConference(false, null, null);
 					sendMucMessage(mixer, null, iq.getFrom(), "Stopped voice recording");
+					detachVideobridge(mixer);
 				}
 
 				sendMucMessage(mixer, null, iq.getFrom(), "Left voice conversation");
@@ -1084,6 +1104,65 @@ public class RayoComponent 	extends 	AbstractComponent
 		return reply;
 	}
 
+    private void attachVideobridge(String conferenceId, JID participant, String mediaPreference)
+    {
+		//if (XMPPServer.getInstance().getPluginManager().getPlugin("jitsivideobridge") != null)
+		//{
+			Log.info("attachVideobridge Found Jitsi Videobridge, attaching.." + conferenceId);
+
+			if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(conferenceId)) {
+
+				MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(conferenceId);
+
+				if (room != null)
+				{
+					for (MUCRole role : room.getOccupants())
+					{
+						if (participant.toBareJID().equals(role.getUserAddress().toBareJID()))
+						{
+							Log.info("attachVideobridge Found participant " + participant.toBareJID());
+
+							try {
+								CallParticipant vp = new CallParticipant();
+								vp.setCallId("colibri-" + conferenceId);
+								vp.setCallOwner(participant.toString());
+								vp.setProtocol("Videobridge");
+								vp.setPhoneNumber(participant.getNode());
+								vp.setMediaPreference(mediaPreference);
+								vp.setConferenceId(conferenceId);
+
+								OutgoingCallHandler videoBridgeHandler = new OutgoingCallHandler(null, vp);
+								videoBridgeHandler.start();
+
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+
+							break;
+						}
+					}
+				}
+			}
+		//}
+	}
+
+    private void detachVideobridge(String conferenceId)
+    {
+		try {
+			Log.info("Jitsi Videobridge, detaching.." + conferenceId);
+
+			CallHandler callHandler = CallHandler.findCall("colibri-" + conferenceId);
+
+			if (callHandler != null)
+			{
+				CallHandler.hangup("colibri-" + conferenceId, "Detaching from Jitsi Videobridge");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	private void sendMucMessage(String mixer, String recording, JID participant, String message)
 	{
@@ -1093,14 +1172,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 			if (room != null)
 			{
-				for (MUCRole role : room.getOccupants())
-				{
-					if (participant.toBareJID().equals(role.getUserAddress().toBareJID()))
-					{
-						sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
-						break;
-					}
-				}
+				sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
 			}
 		}
 	}

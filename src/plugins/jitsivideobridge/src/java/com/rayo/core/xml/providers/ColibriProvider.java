@@ -31,7 +31,6 @@ public class ColibriProvider extends BaseProvider {
     // ================================================================================
 
     private static final Namespace NAMESPACE = new Namespace("", "urn:xmpp:rayo:colibri:1");
-
     private static final QName COLIBRI_QNAME = new QName("colibri", NAMESPACE);
 
     @Override
@@ -46,9 +45,13 @@ public class ColibriProvider extends BaseProvider {
     private Object buildColibriCommand(Element element) throws URISyntaxException
     {
 		String videobridge = element.attributeValue("videobridge");
-		Element conference = element.element("conference").createCopy();
+		String localRTPPort = element.attributeValue("localrtpport");
+		String localRTCPPort = element.attributeValue("localrtcpport");
+		String remoteRTPPort = element.attributeValue("remotertpport");
+		String remoteRTCPPort = element.attributeValue("remotertcpport");
+		String codec = element.attributeValue("codec");
 
- 		ColibriCommand command = new ColibriCommand(videobridge, conference);
+ 		ColibriCommand command = new ColibriCommand(videobridge, localRTPPort, localRTCPPort, remoteRTPPort, remoteRTCPPort, codec);
 
         return command;
     }
@@ -60,10 +63,7 @@ public class ColibriProvider extends BaseProvider {
     @Override
     protected void generateDocument(Object object, Document document) throws Exception {
 
-		if (object instanceof ColibriCommand) {
-            createColibriCommand((ColibriCommand) object, document);
-
-        } else if (object instanceof ColibriOfferEvent) {
+		if (object instanceof ColibriOfferEvent) {
             createColibriOfferEvent((ColibriOfferEvent) object, document);
 
         } else if (object instanceof AddSourceEvent) {
@@ -78,12 +78,6 @@ public class ColibriProvider extends BaseProvider {
         } else if (object instanceof UnmutedEvent) {
             createUnmutedEvent((UnmutedEvent) object, document);
         }
-    }
-
-    private void createColibriCommand(ColibriCommand command, Document document) throws Exception
-    {
-        Element root = document.addElement(new QName("colibri", NAMESPACE));
-		root.addAttribute("videobridge", command.getVideobridge());
     }
 
     private void createColibriOfferEvent(ColibriOfferEvent event, Document document)

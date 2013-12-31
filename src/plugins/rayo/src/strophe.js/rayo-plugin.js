@@ -91,7 +91,7 @@ Strophe.addConnectionPlugin('rayo',
 			});		     	
 		});			
 	},
-			
+	
 	join: function(mixer, headers)
 	{
 		//console.log('Rayo plugin join ' + mixer);
@@ -375,69 +375,102 @@ Strophe.addConnectionPlugin('rayo',
 		
 		this._offhook(mixer, headers, function()
 		{
-			var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
-
-			if (headers)
-			{	
-				var hdrs = Object.getOwnPropertyNames(headers)
-
-				for (var i=0; i< hdrs.length; i++)
-				{
-					var name = hdrs[i];
-					var value = headers[name];
-
-					if (value) iq.c("header", {name: name, value: value}).up(); 
-				}
-			}
-
-			//console.log(iq.toString());
-
-			that._connection.sendIQ(iq, function(response) {
-				
-				$('ref', response).each(function() 
-				{
-					callId = $(this).attr('id');
-
-					if (that.callbacks && that.callbacks.onAccept)
-					{
-						that.callbacks.onAccept(
-						{  		
-							digit: 	  function(tone) 	{that.digit(callId, tone);},
-							redirect: function(to) 		{that.redirect(to, headers);},	
-							say: 	  function(message)	{that.say(callId, message);},	
-							record:	  function(file)	{that.record(callId, file);},								
-							hangup:   function() 		{that.hangup(callId);},
-							hold: 	  function() 		{that.hold(callId);},							
-							join: 	  function() 		{that.join(mixer, headers);},
-							leave: 	  function() 		{that.leave(mixer);},	
-							mute: 	  function(flag) 	{that.mute(callId, flag);},
-							private:  function() 		{that.private(callId, !this.privateCall);},							
-
-							from: 	from,
-							to:	to,	
-							id:	callId,
-							privateCall: false
-						});
-					}					
-				});
-			
-			}, function(error){
-
-				//console.log(error);			
-			
-				$('error', error).each(function() 
-				{
-					var errorcode = $(this).attr('code');						
-					if (that._isOffhook()) that._onhook();
-					if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dial failure " + errorcode);  
-				});
-				
-				that._onhook();
-			});
+			that._dial(mixer, from, to, headers);
 		});		
 	},	
 		
+	voicebridge: function(mixer, from, to, headers)
+	{
+		console.log('Rayo plugin voicebridge ' + mixer);	
+		
+		var that = this;		
 
+		var iq = $iq({to: mixer + "@" + this._connection.domain, from: this._connection.jid, type: "get"}).c("join", {xmlns: Strophe.NS.RAYO_CORE, "mixer-name": mixer});  
+
+		//console.log(iq.toString());
+
+		this._connection.sendIQ(iq, function(response) 
+		{
+			that._dial(mixer, from, to, headers);		
+		
+		}, function(error) {
+		
+			$('error', error).each(function() 
+			{
+				var errorcode = $(this).attr('code');
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("voicebridge failure " + errorcode); 				
+			});		     	
+		});		
+	},
+	
+	_dial: function(mixer, from, to, headers)
+	{
+		//console.log('Rayo plugin _dial ' + from + " " + to);
+		//console.log(headers)
+				
+		var that = this;
+		
+		var iq = $iq({to: that._connection.domain, from: that._connection.jid, type: "get"}).c("dial", {xmlns: Strophe.NS.RAYO_CORE, to: to, from: from});  
+
+		if (headers)
+		{	
+			var hdrs = Object.getOwnPropertyNames(headers)
+
+			for (var i=0; i< hdrs.length; i++)
+			{
+				var name = hdrs[i];
+				var value = headers[name];
+
+				if (value) iq.c("header", {name: name, value: value}).up(); 
+			}
+		}
+
+		//console.log(iq.toString());
+
+		that._connection.sendIQ(iq, function(response) {
+
+			$('ref', response).each(function() 
+			{
+				callId = $(this).attr('id');
+
+				if (that.callbacks && that.callbacks.onAccept)
+				{
+					that.callbacks.onAccept(
+					{  		
+						digit: 	  function(tone) 	{that.digit(callId, tone);},
+						redirect: function(to) 		{that.redirect(to, headers);},	
+						say: 	  function(message)	{that.say(callId, message);},	
+						record:	  function(file)	{that.record(callId, file);},								
+						hangup:   function() 		{that.hangup(callId);},
+						hold: 	  function() 		{that.hold(callId);},							
+						join: 	  function() 		{that.join(mixer, headers);},
+						leave: 	  function() 		{that.leave(mixer);},	
+						mute: 	  function(flag) 	{that.mute(callId, flag);},
+						private:  function() 		{that.private(callId, !this.privateCall);},							
+
+						from: 	from,
+						to:	to,	
+						id:	callId,
+						privateCall: false
+					});
+				}					
+			});
+
+		}, function(error){
+
+			//console.log(error);			
+
+			$('error', error).each(function() 
+			{
+				var errorcode = $(this).attr('code');						
+				if (that._isOffhook()) that._onhook();
+				if (that.callbacks && that.callbacks.onError) that.callbacks.onError("dial failure " + errorcode);  
+			});
+
+			that._onhook();
+		});		
+	},
+	
 	_isOffhook: function() 
 	{
 		return this.localStream != null;

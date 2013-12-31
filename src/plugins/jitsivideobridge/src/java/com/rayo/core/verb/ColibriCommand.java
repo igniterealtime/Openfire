@@ -5,12 +5,20 @@ import org.dom4j.Element;
 public class ColibriCommand extends AbstractVerbCommand {
 
     private String videobridge;
-   	private Element conference;
+   	private String localRTPPort;
+   	private String localRTCPPort;
+   	private String remoteRTPPort;
+   	private String remoteRTCPPort;
+   	private String codec;
 
-	public ColibriCommand(String videobridge, Element conference)
+	public ColibriCommand(String videobridge, String localRTPPort, String localRTCPPort, String remoteRTPPort, String remoteRTCPPort, String codec)
 	{
 		this.videobridge = videobridge;
-		this.conference = conference;
+		this.localRTPPort = localRTPPort;
+		this.localRTCPPort = localRTCPPort;
+		this.remoteRTPPort = remoteRTPPort;
+		this.remoteRTCPPort = remoteRTCPPort;
+		this.codec = codec;
 	}
 
 	public String getVideobridge()
@@ -18,8 +26,28 @@ public class ColibriCommand extends AbstractVerbCommand {
 		return this.videobridge;
 	}
 
-	public Element getConference()
+	public String getLocalRTPPort()
 	{
-		return this.conference;
+		return this.localRTPPort;
+	}
+
+	public String getLocalRTCPPort()
+	{
+		return this.localRTCPPort;
+	}
+
+	public String getRemoteRTPPort()
+	{
+		return this.remoteRTPPort;
+	}
+
+	public String getRemoteRTCPPort()
+	{
+		return this.remoteRTCPPort;
+	}
+
+	public String getCodec()
+	{
+		return this.codec;
 	}
 }

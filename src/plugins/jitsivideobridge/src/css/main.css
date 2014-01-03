@@ -7,6 +7,7 @@ html, body{
     background: #e9e9e9;
 }
 
+
 #videospace {
     display: block;
     position: absolute;
@@ -70,26 +71,13 @@ html, body{
     top: 40px;
     bottom: 0px;
     right: 0px;
-    width:0;
+    width:450px;
     opacity: 0;
     overflow: hidden;
     background-color:#f6f6f6;
     border-left:1px solid #424242;
 }
 
-#chatconversation {
-    display:block;
-    position:relative;
-    top: -120px;
-    float:top;
-    text-align:left;
-    line-height:20px;
-    font-size:14px;
-    padding:5px;
-    height:90%;
-    overflow:scroll;
-    visibility:hidden;
-}
 
 .localuser {
     color: #087dba;
@@ -154,7 +142,6 @@ html, body{
     top: 0px;
     width: 100px;
     height: 39px;
-	background-image:url(../images/left1.png);
 	background-repeat:no-repeat;
 	margin: 0;
 	padding: 0;
@@ -163,8 +150,8 @@ html, body{
 #leftlogo {
     position:absolute;
     top: 5px;
+    color: white;
     left: 15px;
-    background-image:url(../images/jitsilogo.png);
     background-repeat:no-repeat;
     height: 31px;
     width: 68px;
@@ -229,7 +216,6 @@ a.button:hover {
     position:absolute;
     right: 0px;
     top: 0px;
-	background-image:url(../images/right1.png);
 	background-repeat:no-repeat;
 	margin:0;
 	padding:0;
@@ -241,7 +227,7 @@ a.button:hover {
     position:absolute;
     top: 6px;
     right: 15px;
-    background-image:url(../images/estoslogo.png);
+    color: white;    
     background-repeat:no-repeat;
     height: 25px;
     width: 62px;

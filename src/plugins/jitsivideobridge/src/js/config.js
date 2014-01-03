@@ -5,12 +5,6 @@ var config = {
         bridge: 'jitsi-videobridge.' + window.location.hostname // FIXME: use XEP-0030
     },
     useNicks: false,
-    bosh: '/http-bind/' // FIXME: use xep-0156 for that
+    useWebsockets: true,
+    bosh: window.location.protocol + "//" + window.location.host + '/http-bind/' // FIXME: use xep-0156 for that
 };
-
-function urlParam(name)
-{
-	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-	if (!results) { return undefined; }
-	return results[1] || undefined;
-}

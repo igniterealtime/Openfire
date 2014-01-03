@@ -1,0 +1,160 @@
+div#ofmeet {
+    border: 1px solid #C9C9C9;
+    margin: 10px auto 20px auto;
+    padding: 10px;
+    font-family: Arial,Helvetica,sans-serif,"sans serif";
+    background-color: #F9F9F9;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    display:block;
+    position:relative;
+    top: -100px;
+    float:top;
+    text-align:left;
+    line-height:20px;
+    font-size:14px;
+    padding:5px;
+    overflow:scroll;
+    visibility:hidden;    
+}
+
+
+div#ofmeet div.ofmeet-clear {
+    clear: both;
+}
+
+div#ofmeet form {
+    margin: 0;
+    padding: 0;
+}
+
+div#ofmeet div#ofmeet-login {
+    overflow: hidden;
+    position: relative;
+}
+
+div#ofmeet div#ofmeet-login label,
+div#ofmeet div#ofmeet-login span#ofmeet-usernameDisplay {
+    font-size: 0.9em;
+    line-height: 22px;
+    margin: 0px 6px;
+}
+
+div#ofmeet div#ofmeet-login span#ofmeet-usernameDisplay {
+    font-weight: bold;
+    margin: 0;
+}
+
+div#ofmeet div#ofmeet-login label,
+div#ofmeet div#.ofmeet-login input#ofmeet-username,
+div#ofmeet div#ofmeet-login span#ofmeet-usernameDisplay {
+    float: left;
+    vertical-align: middle;
+}
+
+div#ofmeet div#ofmeet-login input#ofmeet-connect {
+    float: right;
+    margin-right: 5px;
+}
+
+div#ofmeet div#ofmeet-messaging {
+    position: relative;
+    overflow: hidden;
+    zoom: 1; /* uh, dirty ie6 hack... */
+}
+
+div#ofmeet div#ofmeet-log {
+    height: 85%;
+    border: 1px solid #999999;
+    background-color: #FFFFFF;
+    overflow: auto;
+    margin: 5px;
+    padding-top: 10px;
+    font-size: 0.8em;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    position: relative;
+}
+
+div#ofmeet div#ofmeet-log div.message {
+    width: 95%;
+    background: transparent url(../images/bubble_top.png) left top no-repeat;
+    padding-top: 9px;
+    margin: 0 auto;
+}
+
+div#ofmeet div#ofmeet-log div.message a:link,
+div#ofmeet div#ofmeet-log div.message a:visited,
+div#ofmeet div#ofmeet-log div.message a:hover,
+div#ofmeet div#ofmeet-log div.message a:active {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+div#ofmeet div#ofmeet-log div.message a:link,
+div#ofmeet div#ofmeet-log div.message a:visited {
+    color: #C64100;
+}
+
+div#ofmeet div#ofmeet-log div.message a:hover,
+div#ofmeet div#ofmeet-log div.message a:active {
+    color: #333333;
+    background-color: #EAEAEA;
+}
+
+div#ofmeet div#ofmeet-log div.messageIn {
+    color: #444444;
+}
+
+div#ofmeet div#ofmeet-log div.messageOut {
+    color: #888888;
+}
+
+div#ofmeet div#ofmeet-log div.messageSystem {
+    color: #BBBBBB;
+}
+
+div#ofmeet div#ofmeet-log div.message span.msgText {
+    display: block;
+    font-weight: bold;
+    background: #E0E1E1 url(../images/bubble_content.png) left top no-repeat;
+    padding: 0px 12px;
+}
+
+div#ofmeet div#ofmeet-log div.message span.msgPerson {
+    display: block;
+    background: transparent url(../images/bubble_bottom.png) left top no-repeat;
+    height: 25px;
+    padding: 12px 0 0 50px;
+    font-size: 0.8em;
+}
+
+div#ofmeet div#ofmeet-log div.message span.msgPerson span.msgTime {
+    color: #AAAAAA;
+}
+
+div#ofmeet div#ofmeet-messaging textarea#ofmeet-message {
+    width: 388px;
+    border: 1px solid #999999;
+    margin: 5px 5px 0;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    position: relative;
+}
+
+div#ofmeet div#ofmeet-messaging input#ofmeet-sendmessage {
+    float: right;
+    position: relative;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 0px 10px;
+    margin: 7px 5px 0 0;
+}
+
+

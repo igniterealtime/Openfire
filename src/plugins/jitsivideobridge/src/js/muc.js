@@ -29,6 +29,11 @@ Strophe.addConnectionPlugin('emuc', {
         }
         this.connection.send(join);
     },
+    changeNick: function(jid) {  
+    	console.log("changeNick", jid);
+        var presence = $pres({to: jid}).c("x",{xmlns: 'http://jabber.org/protocol/muc'});
+        this.connection.send(presence);
+    },    
     onPresence: function (pres) {
         var from = pres.getAttribute('from');
         var type = pres.getAttribute('type');
@@ -73,8 +78,19 @@ Strophe.addConnectionPlugin('emuc', {
     },
     onPresenceError: function (pres) {
         var from = pres.getAttribute('from');
-        if ($(pres).find('>error[type="auth"]>not-authorized[xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"]').length) {
-            $(document).trigger('passwordrequired.muc', [from]);
+        
+        if ($(pres).find('>error[type="auth"]>not-authorized[xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"]').length) 
+        {
+            var ob = this;
+            window.setTimeout(function () {
+                var given = window.prompt('Password required');
+                
+                if (given != null) {
+                    ob.connection.send($pres({to: ob.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}).c('password').t(given));
+                } else {
+                    // user aborted
+                }
+            }, 50);
         } else {
             console.warn('onPresError ', pres);
         }
@@ -94,8 +110,6 @@ Strophe.addConnectionPlugin('emuc', {
         // FIXME: this is a hack. but jingle on muc makes nickchanges hard
         var nick = $(msg).find('>nick[xmlns="http://jabber.org/protocol/nick"]').text() || Strophe.getResourceFromJid(msg.getAttribute('from'));
         if (txt) {
-            console.log('chat', nick, txt);
-
             updateChatConversation(nick, txt);
         }
         return true;
@@ -110,6 +124,8 @@ Strophe.addConnectionPlugin('emuc', {
                     formsubmit.c('x', {xmlns: 'jabber:x:data', type: 'submit'});
                     formsubmit.c('field', {'var': 'FORM_TYPE'}).c('value').t('http://jabber.org/protocol/muc#roomconfig').up().up();
                     formsubmit.c('field', {'var': 'muc#roomconfig_roomsecret'}).c('value').t(key).up().up();
+		    formsubmit.c('field', {'var': 'muc#roomconfig_passwordprotectedroom'}).c('value').t('1').up().up();                    
+                    
                     // FIXME: is muc#roomconfig_passwordprotectedroom required?
                     this.connection.sendIQ(formsubmit,
                         function (res) {

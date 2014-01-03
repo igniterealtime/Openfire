@@ -202,7 +202,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		// start video conference web application
 
 		try {
-			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "jitmeet");
+			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "ofmeet");
 			Log.info("Initialize Web App " + appName);
 
 			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();

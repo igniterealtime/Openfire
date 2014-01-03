@@ -7,3 +7,10 @@ var config = {
     useNicks: false,
     bosh: '/http-bind/' // FIXME: use xep-0156 for that
 };
+
+function urlParam(name)
+{
+	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+	if (!results) { return undefined; }
+	return results[1] || undefined;
+}

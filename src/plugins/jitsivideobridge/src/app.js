@@ -8,13 +8,15 @@ var nickname = null;
 var sharedKey = '';
 var roomUrl = null;
 
+window.onbeforeunload = closePageWarning;
+
 function init() {
     RTC = setupRTC();
     if (RTC === null) {
-        window.location.href = 'webrtcrequired.html';
+        window.location.href = '/webrtcrequired.html';
         return;
     } else if (RTC.browser != 'chrome') {
-        window.location.href = 'chromeonly.html';
+        window.location.href = '/chromeonly.html';
         return;
     }
     RTCPeerconnection = RTC.peerconnection;
@@ -31,20 +33,13 @@ function init() {
     connection.connect(jid, document.getElementById('password').value, function (status) {
         if (status == Strophe.Status.CONNECTED) {
             console.log('connected');
-            connection.send($pres()); 
+            connection.send($pres());             
             getUserMediaWithConstraints(['audio', 'video'], '360');
             document.getElementById('connect').disabled = true;
         } else {
             console.log('status', status);
         }
     });
-}
-
-function urlParam(name)
-{
-	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-	if (!results) { return undefined; }
-	return results[1] || undefined;
 }
 
 function doJoin() {
@@ -90,8 +85,7 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     function waitForRemoteVideo(selector, sid) {
         var sess = connection.jingle.sessions[sid];
         videoTracks = data.stream.getVideoTracks();
-        
-        if (sess.peerconnection.iceConnectionState == "connected" &&  sess.peerconnection.signalingState == "stable") {
+        if (videoTracks.length === 0 || selector[0].currentTime > 0) {
             RTC.attachMediaStream(selector, data.stream); // FIXME: why do i have to do this for FF?
             $(document).trigger('callactive.jingle', [selector, sid]);
             console.log('waitForremotevideo', sess.peerconnection.iceConnectionState, sess.peerconnection.signalingState);
@@ -169,7 +163,10 @@ $(document).bind('callterminated.jingle', function (event, sid, reason) {
 $(document).bind('joined.muc', function (event, jid, info) {
     console.log('onJoinComplete', info);
     updateRoomUrl(window.location.href);
-    showToolbar();    
+
+    // Once we've joined the muc show the toolbar
+    showToolbar();
+
     if (Object.keys(connection.emuc.members).length < 1) {
         focus = new ColibriFocus(connection, config.hosts.bridge);
         return;
@@ -179,7 +176,7 @@ $(document).bind('joined.muc', function (event, jid, info) {
 $(document).bind('entered.muc', function (event, jid, info) {
     console.log('entered', jid, info);
     console.log(focus);
-    
+
     if (focus !== null) {
         // FIXME: this should prepare the video
         if (focus.confid === null) {
@@ -189,6 +186,9 @@ $(document).bind('entered.muc', function (event, jid, info) {
             console.log('invite', jid, 'into conference');
             focus.addNewParticipant(jid);
         }
+    }
+    else if (sharedKey) {
+        updateLockButton();
     }
 });
 
@@ -208,6 +208,33 @@ $(document).bind('left.muc', function (event, jid) {
             focus = new ColibriFocus(connection, config.hosts.bridge);
         }
     }
+});
+
+$(document).bind('passwordrequired.muc', function (event, jid) {
+    console.log('on password required', jid);
+
+    $.prompt('<h2>Password required</h2>' +
+            '<input id="lockKey" type="text" placeholder="shared key" autofocus>',
+             {
+                persistent: true,
+                buttons: { "Ok": true , "Cancel": false},
+                defaultButton: 1,
+                loaded: function(event) {
+                    document.getElementById('lockKey').focus();
+                },
+                submit: function(e,v,m,f){
+                    if(v)
+                    {
+                        var lockKey = document.getElementById('lockKey');
+
+                        if (lockKey.value != null)
+                        {
+                            setSharedKey(lockKey);
+                            connection.emuc.doJoin(jid, lockKey.value);
+                        }
+                    }
+                }
+            });
 });
 
 function toggleVideo() {
@@ -312,7 +339,7 @@ $(document).ready(function () {
     }
 });
 
-$(window).bind('beforeunload', function () {
+$(window).bind('unload', function () {
     if (connection && connection.connected) {
         // ensure signout
         $.ajax({
@@ -333,6 +360,9 @@ $(window).bind('beforeunload', function () {
     }
 });
 
+/*
+ * Appends the given message to the chat conversation.
+ */
 function updateChatConversation(nick, message)
 {
     var divClassName = '';
@@ -345,51 +375,78 @@ function updateChatConversation(nick, message)
     $('#chatconversation').animate({ scrollTop: $('#chatconversation')[0].scrollHeight}, 1000);
 }
 
+/*
+ * Changes the style class of the element given by id.
+ */
 function buttonClick(id, classname) {
     $(id).toggleClass(classname); // add the class to the clicked element
 }
 
+/*
+ * Opens the lock room dialog.
+ */
 function openLockDialog() {
-    if (sharedKey)
-        $.prompt("Are you sure you would like to remove your secret key?",
-        {
-            title: "Remove secrect key",
-            persistent: false,
-            buttons: { "Remove": true, "Cancel": false},
-            defaultButton: 1,
-            submit: function(e,v,m,f){
-                if(v)
-                {
-                    sharedKey = '';
-                    lockRoom();
-                }
-            }
-            });
-    else
-        $.prompt('<h2>Set a secrect key to lock your room</h2>' +
-                 '<input id="lockKey" type="text" placeholder="your shared key" autofocus>',
-                {
-                    persistent: false,
-                    buttons: { "Save": true , "Cancel": false},
-                    defaultButton: 1,
-                    loaded: function(event) {
-                        document.getElementById('lockKey').focus();
-                    },
-                    submit: function(e,v,m,f){
-                    if(v)
-                    {
-                        var lockKey = document.getElementById('lockKey');
-
-                    if (lockKey.value != null)
-                    {
-                        sharedKey = lockKey.value;
+    // Only the focus is able to set a shared key.
+    if (focus == null) {
+        if (sharedKey)
+            $.prompt("This conversation is currently protected by a shared secret key.",
+                 {
+                 title: "Secrect key",
+                 persistent: false
+                 });
+        else
+            $.prompt("This conversation isn't currently protected by a secret key. Only the owner of the conference could set a shared key.",
+                     {
+                     title: "Secrect key",
+                     persistent: false
+                     });
+    }
+    else {
+        if (sharedKey)
+            $.prompt("Are you sure you would like to remove your secret key?",
+                     {
+                     title: "Remove secrect key",
+                     persistent: false,
+                     buttons: { "Remove": true, "Cancel": false},
+                     defaultButton: 1,
+                     submit: function(e,v,m,f){
+                     if(v)
+                     {
+                        setSharedKey('');
+                        lockRoom();
+                     }
+                     }
+                     });
+        else
+            $.prompt('<h2>Set a secrect key to lock your room</h2>' +
+                     '<input id="lockKey" type="text" placeholder="your shared key" autofocus>',
+                     {
+                     persistent: false,
+                     buttons: { "Save": true , "Cancel": false},
+                     defaultButton: 1,
+                     loaded: function(event) {
+                     document.getElementById('lockKey').focus();
+                     },
+                     submit: function(e,v,m,f){
+                     if(v)
+                     {
+                     var lockKey = document.getElementById('lockKey');
+                     
+                     if (lockKey.value)
+                     {
+                     console.log("LOCK KEY", lockKey.value);
+                        setSharedKey(lockKey.value);
                         lockRoom(true);
-                    }
+                     }
                 }
             }
         });
+    }
 }
 
+/*
+ * Opens the invite link dialog.
+ */
 function openLinkDialog() {
     $.prompt('<input id="inviteLinkRef" type="text" value="' + roomUrl + '" onclick="this.select();">',
              {
@@ -402,12 +459,32 @@ function openLinkDialog() {
              });
 }
 
+/*
+ * Locks / unlocks the room.
+ */
 function lockRoom(lock) {
     connection.emuc.lockRoom(sharedKey);
     
+    updateLockButton();
+}
+
+/*
+ * Sets the shared key.
+ */
+function setSharedKey(sKey) {
+    sharedKey = sKey;
+}
+
+/*
+ * Updates the lock button state.
+ */
+function updateLockButton() {
     buttonClick("#lockIcon", "fa fa-unlock fa-lg fa fa-lock fa-lg");
 }
 
+/*
+ * Opens / closes the chat area.
+ */
 function openChat() {
     var chatspace = $('#chatspace');
     var videospace = $('#videospace');
@@ -431,10 +508,27 @@ function openChat() {
         $('#usermsg').focus();
 }
 
+/*
+ * Shows the call main toolbar.
+ */
 function showToolbar() {
     $('#toolbar').css({visibility:"visible"});
 }
 
+/*
+ * Updates the room invite url.
+ */
 function updateRoomUrl(newRoomUrl) {
     roomUrl = newRoomUrl;
+}
+
+/*
+ * Warning to the user that the conference window is about to be closed.
+ */
+function closePageWarning() {
+    if (focus != null)
+        return "You are the owner of this conference call and you are about to end it.";
+    else
+        return "You are about to leave this conversation.";
+        
 }

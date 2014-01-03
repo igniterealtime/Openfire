@@ -700,7 +700,7 @@ ColibriFocus.prototype.modifySources = function () {
 
     // FIXME: this is a big hack
     // https://code.google.com/p/webrtc/issues/detail?id=2688
-    if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')) {
+    if (!(this.peerconnection.iceConnectionState == 'connected')) {
         console.warn('modifySources not yet', this.peerconnection.signalingState, this.peerconnection.iceConnectionState);
         window.setTimeout(function () { ob.modifySources(); }, 250);
         this.wait = true;

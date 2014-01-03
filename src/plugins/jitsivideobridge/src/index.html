@@ -1,15 +1,16 @@
 <html>
   <head>
-    <title>JitMeet</title>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="libs/strophejingle.bundle.js"></script><!-- strophe.jingle bundle -->
-    <script src="libs/colibri.js"></script><!-- colibri focus implementation -->
-    <script src="muc.js"></script><!-- simple MUC library -->
-    <script src="app.js"></script><!-- application logic -->
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
-    <link rel="stylesheet" href="css/jquery-impromptu.css">
-    <link rel="stylesheet" href="css/modaldialog.css">
+    <title>WebRTC, meet the Jitsi Videobridge</title>
+    <script src="jquery.min.js"></script>
+    <script src="libs/strophejingle.bundle.js?v=1"></script><!-- strophe.jingle bundle -->
+    <script src="libs/colibri.js?v=1"></script><!-- colibri focus implementation -->
+    <script src="muc.js?v=2"></script><!-- simple MUC library -->
+    <script src="estos_log.js?v=1"></script><!-- simple stanza logger -->
+    <script src="app.js?v=2"></script><!-- application logic -->
+    <link rel="stylesheet" href="font-awesome-4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="css/main.css?v=1"/>
+    <link rel="stylesheet" href="css/jquery-impromptu.css?v=1">
+    <link rel="stylesheet" href="css/modaldialog.css?v=1">
     <script src="libs/jquery-impromptu.js"></script>
     <script src="libs/jquery.autosize.js"></script>
     <script src="config.js"></script><!-- adapt to your needs, i.e. set hosts and bosh path -->
@@ -28,7 +29,7 @@
             <a class="button" onclick="openLinkDialog();"><i title="Invite others" class="fa fa-link fa-lg"></i></a>
             <div class="header_button_separator"></div>
             <a class="button" onclick='openChat();'><i id="chat" title="Open chat" class="fa fa-comments fa-lg"></i></a>
-            <!--i class='fa fa-external-link'>&nbsp;</i>Others can join you by just going to <span id='roomurl'></span-->
+ <!--i class='fa fa-external-link'>&nbsp;</i>Others can join you by just going to <span id='roomurl'></span-->
         </div>
     </div>
     <div id="settings">
@@ -61,8 +62,13 @@
         <div id="chatconversation"></div>
         <textarea id="usermsg" class= "animated" placeholder='Enter text...' autofocus></textarea>
     </div>
-
+    <a id="downloadlog" class="fa fa-cloud-download" title="Download logfile for support" onclick="connection.logger.dump(event.target);" style="position: absolute; bottom: 5; left: 5; overflow: visible; z-index: 100;"></a>
     <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-319188-14', 'jit.si');
+        ga('send', 'pageview');
     </script>
   </body>
 </html>

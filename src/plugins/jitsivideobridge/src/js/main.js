@@ -77,6 +77,7 @@ $(document).ready(function ()
 	{
 	    console.log('connected');
 	    connection.send($pres()); 
+	    registerRayoEvents();
 	    getConstraints(['audio', 'video'], '720');	    
 	    getUserMedia();
 	    
@@ -89,6 +90,7 @@ $(document).ready(function ()
 $(window).bind('beforeunload', function () 
 {
     if (connection && connection.connected) {
+    	unregisterRayoEvents();
 	connection.disconnect();
     }
 });
@@ -172,6 +174,32 @@ $(document).bind('remotestreamadded.rayo', function(event, data, sid)
 	    }
 	);
 });
+
+function registerRayoEvents()
+{	
+	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'register'}),
+		function (res) {
+		    console.log('rayo colibri register set ok');			
+		},
+
+		function (err) {
+		    console.log('rayo colibri register got error', err);
+		}
+	);
+}
+
+function unregisterRayoEvents()
+{	
+	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'unregister'}),
+		function (res) {
+		    console.log('rayo colibri unregister set ok');			
+		},
+
+		function (err) {
+		    console.log('rayo colibri unregister got error', err);
+		}
+	);
+}
 
 function setupRTC() 
 {

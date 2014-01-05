@@ -530,12 +530,14 @@ public class PluginImpl  implements Plugin, PropertyEventListener
     private class ColibriIQHandler extends IQHandler implements MUCEventListener
     {
 		private ConcurrentHashMap<String, FocusAgent> sessions;
+		private ConcurrentHashMap<String, JID> registry;
 		private MultiUserChatManager mucManager;
 
         public ColibriIQHandler()
         {
 			super("Rayo: XEP 0327 - Colibri");
 			sessions = new ConcurrentHashMap<String, FocusAgent>();
+			registry = new ConcurrentHashMap<String, JID>();
 
 			MUCEventDispatcher.addListener(this);
 			mucManager = XMPPServer.getInstance().getMultiUserChatManager();
@@ -552,12 +554,24 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 				final Element element = iq.getChildElement();
 				IQ reply = null;
+				JID from = iq.getFrom();
+				String fromId = from.toString();
 
 				Object object = colibriProvider.fromXML(element);
 
 				if (object instanceof ColibriCommand) {
 					ColibriCommand command = (ColibriCommand) object;
 					reply = handleColibriCommand(command, iq);
+
+				} else if (object instanceof RegisterCommand) {
+
+					registry.put(fromId, from);
+					reply = IQ.createResultIQ(iq);
+
+				} else if (object instanceof UnRegisterCommand) {
+
+					if (registry.containsKey(fromId)) registry.remove(fromId, from);
+					reply = IQ.createResultIQ(iq);
 
 				} else {
 					reply = IQ.createResultIQ(iq);
@@ -646,33 +660,34 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void occupantJoined(JID roomJID, JID user, String nickname)
 		{
-			//MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
-
-			Log.info("ColibriIQHandler occupantJoined " + roomJID + " " + user + " " + nickname);
-
-			String focusAgentName = "jitsi.videobridge." + roomJID.getNode();
-
-			FocusAgent focusAgent;
-
-			Participant participant = new Participant(nickname, user);
-
-			if (sessions.containsKey(focusAgentName))
+			if (registry.containsKey(user.toString()))
 			{
-				focusAgent = sessions.get(focusAgentName);
+				Log.info("ColibriIQHandler occupantJoined " + roomJID + " " + user + " " + nickname);
 
-			} else {
-				focusAgent = new FocusAgent(focusAgentName, roomJID);
-				LocalClientSession session = SessionManager.getInstance().createClientSession(focusAgent, new BasicStreamID(focusAgentName + "-" + System.currentTimeMillis() ) );
-				focusAgent.setRouter( new SessionPacketRouter(session), session);
-				AuthToken authToken = new AuthToken(focusAgentName, true);
-				session.setAuthToken(authToken, focusAgentName);
-				sessions.put(focusAgentName, focusAgent);
+				String focusAgentName = "jitsi.videobridge." + roomJID.getNode();
 
-				Presence presence = new Presence();
-				focusAgent.getRouter().route(presence);
+				FocusAgent focusAgent;
+
+				Participant participant = new Participant(nickname, user);
+
+				if (sessions.containsKey(focusAgentName))
+				{
+					focusAgent = sessions.get(focusAgentName);
+
+				} else {
+					focusAgent = new FocusAgent(focusAgentName, roomJID);
+					LocalClientSession session = SessionManager.getInstance().createClientSession(focusAgent, new BasicStreamID(focusAgentName + "-" + System.currentTimeMillis() ) );
+					focusAgent.setRouter( new SessionPacketRouter(session), session);
+					AuthToken authToken = new AuthToken(focusAgentName, true);
+					session.setAuthToken(authToken, focusAgentName);
+					sessions.put(focusAgentName, focusAgent);
+
+					Presence presence = new Presence();
+					focusAgent.getRouter().route(presence);
+				}
+
+				focusAgent.createColibriChannel(participant);
 			}
-
-			focusAgent.createColibriChannel(participant);
 		}
 		/**
 		 *
@@ -680,17 +695,18 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void occupantLeft(JID roomJID, JID user)
 		{
-			//MUCRoom mucRoom = mucManager.getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
-
-			Log.info("ColibriIQHandler occupantLeft " + roomJID + " " + user);
-
-			String focusAgentName = "jitsi.videobridge." + roomJID.getNode();
-
-			if (sessions.containsKey(focusAgentName))
+			if (registry.containsKey(user.toString()))
 			{
-				FocusAgent focusAgent = sessions.get(focusAgentName);
+				Log.info("ColibriIQHandler occupantLeft " + roomJID + " " + user);
 
-				focusAgent.removeColibriChannel(user);
+				String focusAgentName = "jitsi.videobridge." + roomJID.getNode();
+
+				if (sessions.containsKey(focusAgentName))
+				{
+					FocusAgent focusAgent = sessions.get(focusAgentName);
+
+					focusAgent.removeColibriChannel(user);
+				}
 			}
 		}
 		/**

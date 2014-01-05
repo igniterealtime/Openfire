@@ -44,6 +44,7 @@ public class ColibriProvider extends BaseProvider {
 
     private Object buildColibriCommand(Element element) throws URISyntaxException
     {
+		String action = element.attributeValue("action");
 		String videobridge = element.attributeValue("videobridge");
 		String localRTPPort = element.attributeValue("localrtpport");
 		String localRTCPPort = element.attributeValue("localrtcpport");
@@ -51,11 +52,21 @@ public class ColibriProvider extends BaseProvider {
 		String remoteRTCPPort = element.attributeValue("remotertcpport");
 		String codec = element.attributeValue("codec");
 
- 		ColibriCommand command = new ColibriCommand(videobridge, localRTPPort, localRTCPPort, remoteRTPPort, remoteRTCPPort, codec);
+		Object command = null;
+
+		if ("register".equals(action))
+		{
+			command = new RegisterCommand();
+
+		} else if ("unregister".equals(action)) {
+			command = new UnRegisterCommand();
+
+		} else if ("bridge".equals(action)) {
+ 			command = new ColibriCommand(videobridge, localRTPPort, localRTCPPort, remoteRTPPort, remoteRTCPPort, codec);
+		}
 
         return command;
     }
-
 
     // Object -> XML
     // ================================================================================

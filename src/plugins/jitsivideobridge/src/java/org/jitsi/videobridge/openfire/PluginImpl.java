@@ -14,6 +14,9 @@ import java.util.jar.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.security.cert.Certificate;
 
+import javax.media.*;
+import javax.media.protocol.*;
+
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
 import org.jitsi.videobridge.*;
@@ -53,11 +56,14 @@ import org.dom4j.*;
 import org.jitsi.videobridge.*;
 import org.jitsi.impl.neomedia.*;
 import org.jitsi.impl.neomedia.format.*;
+import org.jitsi.impl.neomedia.device.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.event.*;
 import org.jitsi.service.neomedia.format.*;
 import org.jitsi.service.libjitsi.*;
+import org.jitsi.util.*;
+
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -274,7 +280,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
         try
         {
             String binaryPath =
-                (new URL(ComponentImpl.class.getProtectionDomain()
+                (new URL(Videobridge.class.getProtectionDomain()
                     .getCodeSource().getLocation(), ".")).openConnection()
                     .getPermission().getName();
 
@@ -559,12 +565,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 				Object object = colibriProvider.fromXML(element);
 
-				if (object instanceof ColibriCommand) {
-					ColibriCommand command = (ColibriCommand) object;
-					reply = handleColibriCommand(command, iq);
-
-				} else if (object instanceof RegisterCommand) {
-
+				if (object instanceof RegisterCommand) {
 					registry.put(fromId, from);
 					reply = IQ.createResultIQ(iq);
 
@@ -591,43 +592,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
         @Override public IQHandlerInfo getInfo()
         {
 			return new IQHandlerInfo("colibri", RAYO_COLIBRI);
-		}
-		/**
-		 *
-		 *
-		 */
-		private IQ handleColibriCommand(ColibriCommand command, IQ iq)
-		{
-			Log.info("ColibriIQHandler handleColibriCommand " + command);
-
-			IQ reply = IQ.createResultIQ(iq);
-			String vBridge = command.getVideobridge();
-
-			if (vBridge != null)
-			{
-				String focusAgentName = "jitsi.videobridge." + vBridge;
-				JID user = iq.getFrom();
-
-				Log.info("ColibriIQHandler handleColibriCommand bridge " + focusAgentName);
-
-				if (sessions.containsKey(focusAgentName))
-				{
-					FocusAgent focusAgent = sessions.get(focusAgentName);
-
-					if (focusAgent.isUser(user))
-					{
-						reply = focusAgent.handleColibriCommand(command, iq);
-
-					} else {
-						reply.setError(PacketError.Condition.item_not_found);
-					}
-
-				} else {
-					reply.setError(PacketError.Condition.not_allowed);
-				}
-			}
-
-			return reply;
 		}
 		/**
 		 *
@@ -852,6 +816,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private LocalClientSession session;
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		private MediaStream mediaStream;
+		private DataSink mediaSink;
 
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
@@ -1098,7 +1063,9 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		/**
 		 *
 		 *
+		 *
 		 */
+		 /*
 		public IQ handleColibriCommand(ColibriCommand command, IQ iq)
 		{
 			String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
@@ -1157,6 +1124,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			}
 			return reply;
 		}
+		*/
 		/**
 		 *
 		 *
@@ -1178,6 +1146,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			{
 				mediaStream.stop();
 				mediaStream = null;
+			}
+
+			if (mediaSink != null)
+			{
+				try {
+					mediaSink.stop();
+				} catch (Exception e) {}
+
+				mediaSink = null;
 			}
 		}
 		/**
@@ -1251,7 +1228,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			if (iq.getType() == IQ.Type.result)
 			{
 				Element conference = iq.getChildElement().createCopy();
-				focusId = conference.attributeValue("id");
+
+				if (focusId == null)
+				{
+					focusId = conference.attributeValue("id");
+				}
+
 				String id = packet.getID();
 
 				if (ids.containsKey(id))
@@ -1283,7 +1265,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				Element root = iq.getChildElement();
 				Element conference = null;
 
-				if (user.toString().equals("jitsi-videobridge." + domainName)) // SSRC notification from videobridge, ignore
+				if (user.toString().equals("jitsi-videobridge." + domainName)) // SSRC notification from videobridge, brodcast, create recorder
 				{
 					conference = root.createCopy();	// rayo from participant
 
@@ -1291,6 +1273,30 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
  	 	 			if (channels.containsKey(channelId))
  	 	 				broadcastSSRC(channels.get(channelId));
+
+ 	 	 			if (mediaSink == null /*&& count > 1*/)		// recording not working, causing exception
+ 	 	 			{
+						try {
+/*
+							String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+							Content content = getVideoBridge().getConference(focusId, focusJid).getOrCreateContent("audio");
+							AudioMixerMediaDevice mediaDevice = (AudioMixerMediaDevice) content.getMixer();
+
+							MediaDeviceSession deviceSession = mediaDevice.createSession();
+							deviceSession.setContentDescriptor(new ContentDescriptor(FileTypeDescriptor.MPEG_AUDIO));
+							deviceSession.setMute(false);
+							deviceSession.start(MediaDirection.SENDRECV);
+							DataSource outputDataSource = deviceSession.getCaptureDevice();
+
+							mediaSink = Manager.createDataSink(outputDataSource, new MediaLocator("file:recording-" + focusName + ".mp3"));
+							mediaSink.open();
+							mediaSink.start();
+*/
+						} catch (Exception e) {
+
+							Log.error("Error creating recording file", e);
+						}
+					}
 
 				} else {
 

@@ -444,6 +444,10 @@ function doJoin() {
         var nick = window.prompt('Your nickname (optional)');
         if (nick) {
             myroomjid += '/' + nick;
+            nickname = nick;
+            $('#nickname').css({visibility:"hidden"});
+            $('#ofmeet').css({visibility:'visible'});
+            $('#usermsg').css({visibility:'visible'});            
         } else {
             myroomjid += '/' + Strophe.getNodeFromJid(connection.jid);
         }

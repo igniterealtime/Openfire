@@ -22,6 +22,7 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.xmpp.packet.*;
 
 import com.rayo.core.verb.*;
 
@@ -52,6 +53,12 @@ public class ColibriProvider extends BaseProvider {
 
 		} else if ("unregister".equals(action)) {
 			command = new UnRegisterCommand();
+
+		} else if ("offer".equals(action)) {
+			command = new ColibriOfferCommand(new JID(element.attributeValue("muc")));
+
+		} else if ("expire".equals(action)) {
+			command = new ColibriExpireCommand(new JID(element.attributeValue("muc")));
 		}
 
         return command;

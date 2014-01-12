@@ -1,0 +1,13 @@
+.inlineimages-link {
+	text-decoration:none;
+	position:relative;
+	display:inline-block;
+}
+
+.inlineimages-link:hover:before {
+	content: url('overlay.png');
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	opacity: .8;
+}

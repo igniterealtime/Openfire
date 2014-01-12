@@ -1,0 +1,8 @@
+.roomList a {
+    color: #AAA;
+}
+
+#roomPanel-control {
+    width: 16px;
+    background: url(images/room.png);
+}

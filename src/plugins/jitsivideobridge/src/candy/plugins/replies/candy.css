@@ -1,0 +1,7 @@
+.message-pane dt {
+  height: 13px;
+}
+
+.message-pane dd.mention, .message-pane dt.mention {
+  background-color: #FFF7DE;
+}

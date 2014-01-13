@@ -183,6 +183,12 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 			    videoOn = false;
 			    $('.message-pane-wrapper').css("bottom", "0px");
 			    $('#videobridge-control').removeClass('active');
+			    
+			    setTimeout(function()
+			    {
+					if (window.RTC.rayo.pc) window.RTC.rayo.pc.close();
+
+			    }, 2000);			    
 			},
 
 			function (err) {
@@ -190,15 +196,9 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 			    $('.message-pane-wrapper').css("bottom", "0px");
 			    $('#videobridge-control').removeClass('active');			    
 			}
-		);
-		
-		setTimeout(function()
-		{
-			if (window.RTC.rayo.pc) window.RTC.rayo.pc.close();
-
-		}, 2000);		
-		
+		);				
 	}
+	
 	
 	var chatObserver = 
 	{
@@ -680,7 +680,7 @@ CandyShop.Videobridge = (function(self, Candy, $) {
     $(document).bind('remotestreamadded.rayo', function(event, data, sid) {
 	console.log("remotestreamadded.rayo", sid);
 	
-        var id = 'remoteVideo_' + sid + '_' + data.stream.id;
+        var id = 'remoteVideo_' + data.stream.id;
         
         if (!document.getElementById(id))
         {

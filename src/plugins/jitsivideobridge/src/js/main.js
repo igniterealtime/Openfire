@@ -78,7 +78,12 @@ $(document).ready(function ()
 	    console.log('connected');
 	    connection.send($pres()); 
 	    registerRayoEvents();
-	    getConstraints(['audio', 'video'], '720');	    
+	    
+	    if (urlParam("screen"))		    
+	    	getConstraints(['screen']);
+	    else
+		getConstraints(['audio', 'video'], '720');	
+		
 	    getUserMedia();
 	    
 	} else {
@@ -711,10 +716,11 @@ function sendAnswer(from, videobridge, confid, channelId)
 
 	for (channel = 0; channel < 2; channel++) 
 	{
-	    if (channelId[channel])
+	    if (remoteSDP.media[channel])
 	    {
-		change.c('content', {name: channel === 0 ? 'audio' : 'video'});
-		change.c('channel', {id: channelId[channel]});
+	    	var indx = 
+		change.c('content', {name: remoteSDP.media[channel].indexOf('m=audio') > -1 ? 'audio' : 'video'});
+		change.c('channel', {id: remoteSDP.media[channel].indexOf('m=audio') > -1 ? channelId[0] : channelId[1]});
 
 		tmp = SDPUtil.find_lines(remoteSDP.media[channel], 'a=ssrc:');			
 		change.c('source', { xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0' });
@@ -935,6 +941,29 @@ function updateRoomUrl(newRoomUrl) {
     roomUrl = newRoomUrl;
 }
 
+function toggleFullScreen()
+{
+	var videoElement = document.getElementById("largeVideo");
+
+	if (!document.mozFullScreen && !document.webkitFullScreen)
+	{
+	  if (videoElement.mozRequestFullScreen) {
+		videoElement.mozRequestFullScreen();
+
+	  } else {
+		videoElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+	  }
+
+	} else {
+
+	  if (document.mozCancelFullScreen) {
+		document.mozCancelFullScreen();
+	  } else {
+		document.webkitCancelFullScreen();
+	  }
+	}
+}
+		
 function setEmoticons(body) 
 {
 	if (body)

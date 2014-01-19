@@ -5,6 +5,6 @@ var config = {
         bridge: 'jitsi-videobridge.' + window.location.hostname // FIXME: use XEP-0030
     },
     useNicks: false,
-    useWebsockets: false,
+    useWebsockets: true,
     bosh: window.location.protocol + "//" + window.location.host + '/http-bind/' // FIXME: use xep-0156 for that
 };

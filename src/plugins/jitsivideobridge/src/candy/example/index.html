@@ -31,6 +31,29 @@
 			return results[1] || undefined;
     	};
 
+		function toggleFullScreen()
+		{
+			var videoElement = document.getElementById("largeVideo");
+
+			if (!document.mozFullScreen && !document.webkitFullScreen)
+			{
+			  if (videoElement.mozRequestFullScreen) {
+				videoElement.mozRequestFullScreen();
+
+			  } else {
+				videoElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+			  }
+
+			} else {
+
+			  if (document.mozCancelFullScreen) {
+				document.mozCancelFullScreen();
+			  } else {
+				document.webkitCancelFullScreen();
+			  }
+			}
+		}
+
 		$(document).ready(function() {
 			Candy.init('/http-bind/', {
 				core: { debug: false, websockets: true},
@@ -59,11 +82,10 @@
 			CandyShop.Videobridge.init();
 			CandyShop.Fastpath.init();
 
-			Candy.Core.connect();
-
-			// for testing only
-			// Candy.Core.connect(username + "@" + window.location.hostname, password, username);
-
+			if (username)
+				Candy.Core.connect(username + "@" + window.location.hostname, password, username);
+			else
+				Candy.Core.connect();
 
 		});
 	</script>
@@ -72,7 +94,7 @@
     <div class="fade_line"></div>
 	<div id="candy"></div>
     <div class="fade_line"></div>
-	<video  id="largeVideo" autoplay oncontextmenu="return false;"></video>
+	<video  id="largeVideo" onDblClick="toggleFullScreen();" autoplay oncontextmenu="return false;"></video>
 	<div id="remoteVideos">
 	<video id="localVideo" autoplay oncontextmenu="return false;" muted/>
     </div>

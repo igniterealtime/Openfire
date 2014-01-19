@@ -894,7 +894,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
 			iq.setTo("jitsi-videobridge." + domainName);
 
-			String id = nickname + "-" + System.currentTimeMillis();
+			String id = "answer-" + nickname + "-" + System.currentTimeMillis();
 			ids.put(id, participant);
 			iq.setID(id);
 
@@ -1004,7 +1004,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
 			iq.setTo("jitsi-videobridge." + domainName);
 
-			String id = nickname + "-" + System.currentTimeMillis();
+			String id = "offer-" + nickname + "-" + System.currentTimeMillis();
 			ids.put(id, participant);
 			iq.setID(id);
 
@@ -1039,7 +1039,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				iq.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
 				iq.setTo("jitsi-videobridge." + domainName);
 
-				String id = nickname + "-" + System.currentTimeMillis();
+				String id = "expire-" + nickname + "-" + System.currentTimeMillis();
+				ids.put(id, participant);
 				iq.setID(id);
 
 				Element conferenceIq = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
@@ -1286,13 +1287,17 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					Participant participant = ids.remove(id);
 					String username = participant.getUser().toString();
 
-					if (users.containsKey(username) == false)
+					Log.info("FocusAgent response for user " + participant + " " + focusId + "\n" + conference);
+
+					if (id.startsWith("offer-") && users.containsKey(username) == false)
 					{
 						addUser(participant, conference);
 					}
 
-					Log.info("FocusAgent response for user " + participant + " " + focusId + "\n" + conference);
-					broadcastSSRC(participant);
+					if (id.startsWith("answer-"))
+					{
+						broadcastSSRC(participant);
+					}
 
 				} else Log.error("FocusAgent deliver cannot find iq owner " + id + "\n" + packet);
 

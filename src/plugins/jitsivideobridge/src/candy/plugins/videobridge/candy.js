@@ -14,6 +14,7 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 	var room = null;
 	var previousRoom = null;
 	var videoOn = false;
+	var screenShare = false;	
 
 	self.init = function() 
 	{
@@ -57,7 +58,8 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 		var html = "";
 		html += '<li id="videobridge-control" data-tooltip="add or remove video"></li>';
 		html += '<li id="webcam-control" data-tooltip="mute/toggle video mute"></li>';
-		html += '<li id="mic-control" data-tooltip="toggle audio mute"></li>';		
+		html += '<li id="mic-control" data-tooltip="toggle audio mute"></li>';	
+		html += '<li id="screen-control" data-tooltip="toggle desktop screen share"></li>';			
 		
 		$('#chat-toolbar').prepend(html);
 		
@@ -92,12 +94,29 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 				}
 
 			}			
-		});		
+		});
 		
-		$('#largeVideo').click(function() {
-		    
-		    $("#largeVideo").css("visibility", "hidden");
-		});		
+		$('#screen-control').click(function() {			
+			
+			var videobridge = Strophe.getNodeFromJid(roomJid);
+
+			if (screenShare)
+			{	
+				var screenDIV = document.getElementById("screenshare");
+				screenDIV.parentElement.removeChild(screenDIV);
+				$(this).removeClass('active');
+
+			} else {
+				var url = "../../publish.html?r=" + videobridge + "&screen=true";
+				//var url = "/ofmeet/publish.html?r=" + videobridge + "&screen=true";
+
+				$("body").append("<div id='screenshare'><iframe  style='display:none' src='" + url + "'></iframe></div>");
+				$("#screen").addClass("fa-border");
+				$(this).addClass('active');	
+			}
+			
+			screenShare = !screenShare;
+		});				
 
 	};
 	
@@ -186,7 +205,12 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 			    
 			    setTimeout(function()
 			    {
-					if (window.RTC.rayo.pc) window.RTC.rayo.pc.close();
+				if (window.RTC.rayo.pc)
+				{
+			    		console.log("sendExpireCommand close peer conection");
+					window.RTC.rayo.pc.close();
+					window.RTC.rayo.pc = null;
+				}
 
 			    }, 2000);			    
 			},
@@ -338,7 +362,7 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 
 		window.RTC.rayo.pc.onicecandidate = function(event)
 		{
-			//console.log('candidate', event.candidate);
+			console.log('candidate', event.candidate);
 
 			if (!event.candidate) 
 			{

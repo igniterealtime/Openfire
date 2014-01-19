@@ -3,6 +3,7 @@ var roomjid;
 var nickname = null;
 var roomUrl = null;
 var sharedKey = '';
+var screenShare = false;
 
 $(document).ready(function () 
 {
@@ -77,12 +78,17 @@ $(document).ready(function ()
 	{
 	    console.log('connected');
 	    connection.send($pres()); 
-	    registerRayoEvents();
+	    doJoin(); 
 	    
-	    if (urlParam("screen"))		    
+	    if (urlParam("screen"))
+	    {
 	    	getConstraints(['screen']);
-	    else
+	    	$("#screen").addClass("fa-border");
+	    	
+	    } else {
 		getConstraints(['audio', 'video'], '720');	
+	    	$("#screen").removeClass("fa-border");
+	    }
 		
 	    getUserMedia();
 	    
@@ -113,7 +119,8 @@ $(document).bind('mediaready.rayo', function(event, stream)
 	document.getElementById('largeVideo').src = document.getElementById('localVideo').src;
     
 	console.log("mediaready.rayo");   
-	doJoin();	
+	
+	registerRayoEvents();	
 });
 
 $(document).bind('mediafailure.rayo', function(error) {
@@ -180,31 +187,6 @@ $(document).bind('remotestreamadded.rayo', function(event, data, sid)
 	);
 });
 
-function registerRayoEvents()
-{	
-	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'register'}),
-		function (res) {
-		    console.log('rayo colibri register set ok');			
-		},
-
-		function (err) {
-		    console.log('rayo colibri register got error', err);
-		}
-	);
-}
-
-function unregisterRayoEvents()
-{	
-	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'unregister'}),
-		function (res) {
-		    console.log('rayo colibri unregister set ok');			
-		},
-
-		function (err) {
-		    console.log('rayo colibri unregister got error', err);
-		}
-	);
-}
 
 function setupRTC() 
 {
@@ -217,7 +199,7 @@ function setupRTC()
 		rayo: {
 			channels: {},
 			confid: {},
-			pc: null,
+			pc: {},
 			addssrc: {},
 			localStream: null,
 			constraints: {audio: false, video: false}
@@ -244,7 +226,7 @@ function setupRTC()
 		rayo: {
 			channels: {},
 			confid: {},
-			pc: null,
+			pc: {},
 			addssrc: {},
 			localStream: null,
 			constraints: {audio: false, video: false}	    		
@@ -462,7 +444,7 @@ function doJoin() {
     }
             
     connection.addHandler(rayoCallback, 'urn:xmpp:rayo:colibri:1');
-    connection.emuc.doJoin(myroomjid);
+    connection.emuc.doJoin(myroomjid);    
 }
  
 function rayoCallback(presence) 
@@ -490,13 +472,12 @@ function rayoCallback(presence)
 };
 
 
-
 function removeSSRC(from, removesource) 
 {		
 	console.log("removeSSRC input ssrc ", removesource);
 
 	var videobridge = $(removesource).attr('videobridge');							
-	var sdp = new SDP(window.RTC.rayo.pc.remoteDescription.sdp);
+	var sdp = new SDP(window.RTC.rayo.pc[videobridge].remoteDescription.sdp);
 
 	console.log("removeSSRC unmodified SDP", videobridge);
 
@@ -521,26 +502,29 @@ function removeSSRC(from, removesource)
 
 	//console.log("removeSSRC modified SDP", sdp.raw);
 
-	window.RTC.rayo.pc.setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
+	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
 
 		), function() {
-		    console.log('modify ok');		    
+		    console.log('removeSSRC modify ok');		    
 
 		}, function(error) {
-		    console.log('handleSSRC modify failed');
+		    console.log('removeSSRC modify failed');
 	});
 };
+
 
 function handleAddSSRC(from, addsource) 
 {
 	console.log("handleSSRC input ssrc ", addsource);
 
 	var videobridge = $(addsource).attr('videobridge');					
-	var sdp = new SDP(window.RTC.rayo.pc.remoteDescription.sdp);
+	var sdp = new SDP(window.RTC.rayo.pc[videobridge].remoteDescription.sdp);
 
 	$(addsource).find('content').each(function() 
 	{		
 		var name = $(this).attr('name');
+		
+		if (name == "audio") return;
 
 		var lines = '';
 
@@ -566,10 +550,10 @@ function handleAddSSRC(from, addsource)
 
 	window.RTC.rayo.addssrc = true;
 
-	window.RTC.rayo.pc.setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
+	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
 
 		), function() {
-		    console.log('modify ok', window.RTC.rayo.pc.signalingState);			    
+		    console.log('handleAddSSRC modify ok', window.RTC.rayo.pc[videobridge].signalingState);			    
 
 		}, function(error) {
 		    console.log('handleSSRC modify failed');
@@ -667,9 +651,10 @@ function handleOffer (from, offer)
 
 	//console.log("bridgeSDP.raw", bridgeSDP.raw);	
 
-	window.RTC.rayo.pc = new window.RTC.peerconnection(null, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}]});
+   	window.RTC.rayo.pc[videobridge] = new window.RTC.peerconnection(null, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}]}); 
 
-	window.RTC.rayo.pc.onicecandidate = function(event)
+   
+	window.RTC.rayo.pc[videobridge].onicecandidate = function(event)
 	{
 		//console.log('candidate', event.candidate);
 
@@ -680,22 +665,22 @@ function handleOffer (from, offer)
 
 	}
 
-	window.RTC.rayo.pc.onaddstream = function(e)
+	window.RTC.rayo.pc[videobridge].onaddstream = function(e)
 	{
 		console.log("onstream", e, window.RTC.rayo.addssrc);
 
-		if (window.RTC.rayo.pc.signalingState == "have-remote-offer")
+		if (window.RTC.rayo.pc[videobridge].signalingState == "have-remote-offer")
 			$(document).trigger('remotestreamadded.rayo', [e, nick]);
 
-		window.RTC.rayo.pc.createAnswer(function(desc)
+		window.RTC.rayo.pc[videobridge].createAnswer(function(desc)
 		{
 			if (!window.RTC.rayo.addssrc)				
-				window.RTC.rayo.pc.setLocalDescription(desc);
+				window.RTC.rayo.pc[videobridge].setLocalDescription(desc);
 		});				
 	};			
 
-	window.RTC.rayo.pc.addStream(window.RTC.rayo.localStream);
-	window.RTC.rayo.pc.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : bridgeSDP.raw}));
+	window.RTC.rayo.pc[videobridge].addStream(window.RTC.rayo.localStream);
+	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : bridgeSDP.raw}));
 	
     	showToolbar();	
     	updateRoomUrl(window.location.href);
@@ -706,9 +691,9 @@ function sendAnswer(from, videobridge, confid, channelId)
 {
 	console.log("sendAnswer");
 
-	var remoteSDP = new SDP(window.RTC.rayo.pc.localDescription.sdp);	
+	var remoteSDP = new SDP(window.RTC.rayo.pc[videobridge].localDescription.sdp);	
 
-	//console.log("remoteSDP ", window.RTC.rayo.pc.localDescription.sdp);
+	//console.log("remoteSDP ", window.RTC.rayo.pc[videobridge].localDescription.sdp);
 
 	var change = $iq({to: from, type: 'set'});
 	change.c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', videobridge: videobridge});					
@@ -718,7 +703,6 @@ function sendAnswer(from, videobridge, confid, channelId)
 	{
 	    if (remoteSDP.media[channel])
 	    {
-	    	var indx = 
 		change.c('content', {name: remoteSDP.media[channel].indexOf('m=audio') > -1 ? 'audio' : 'video'});
 		change.c('channel', {id: remoteSDP.media[channel].indexOf('m=audio') > -1 ? channelId[0] : channelId[1]});
 
@@ -793,7 +777,7 @@ function sendAnswer(from, videobridge, confid, channelId)
 
 	connection.sendIQ(change,
 		function (res) {
-		    console.log('rayo colibri answer set ok', window.RTC.rayo.pc.signalingState);			
+		    console.log('rayo colibri answer set ok', window.RTC.rayo.pc[videobridge].signalingState);			
 		},
 
 		function (err) {
@@ -819,6 +803,56 @@ function toggleAudio()
         for (var idx = 0; idx < window.RTC.rayo.localStream.getAudioTracks().length; idx++) {
             window.RTC.rayo.localStream.getAudioTracks()[idx].enabled = !window.RTC.rayo.localStream.getAudioTracks()[idx].enabled;
         }
+}
+
+function registerRayoEvents()
+{	
+	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'offer', muc: roomjid}),
+		function (res) {
+		    console.log('rayo colibri register set ok');			    
+		},
+
+		function (err) {
+		    console.log('rayo colibri register got error', err);
+		}
+	);
+}
+
+function unregisterRayoEvents()
+{	
+	window.RTC.rayo.localStream.stop();
+	
+	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'expire', muc: roomjid}),
+		function (res) {
+		    console.log('rayo colibri unregister set ok');
+		},
+
+		function (err) {
+		    console.log('rayo colibri unregister got error', err);
+		}
+	);	
+}
+
+function toggleScreenShare()
+{
+	console.log('toggleScreenShare', window.RTC.rayo.constraints);
+		
+	var videobridge = Strophe.getNodeFromJid(roomjid);
+
+	if (screenShare)
+	{	
+		var screenDIV = document.getElementById("screenshare");
+		screenDIV.parentElement.removeChild(screenDIV);
+		$("#screen").removeClass("fa-border");
+
+	} else {
+		var url = "publish.html?r=" + videobridge + "&screen=true";
+		
+		$("body").append("<div id='screenshare'><iframe  style='display:none' src='" + url + "'></iframe></div>");
+		$("#screen").addClass("fa-border");		
+	}
+	
+	screenShare = !screenShare;
 }
 
 function updateChatConversation(nick, message)

@@ -38,6 +38,13 @@ body{
 #mic-control.muted {
 	background-image: url(mic_muted.png);
 }
+#screen-control {
+	background-image: url(desktop_off.png);
+}
+
+#screen-control.active {
+	background-image: url(desktop_on.png);
+}
 
 #remoteVideos {
     display:block;

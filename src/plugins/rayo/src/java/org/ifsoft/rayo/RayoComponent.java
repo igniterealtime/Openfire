@@ -1034,11 +1034,11 @@ public class RayoComponent 	extends 	AbstractComponent
 					{
 						String recording = mixer + "-" + System.currentTimeMillis() + ".au";
 						conferenceManager.recordConference(true, recording, "au");
-						sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+						sendMucMessage(mixer, recording, iq.getFrom(), "started voice recording");
 					}
 				}
 
-				sendMucMessage(mixer, null, iq.getFrom(), "Joined voice conversation");
+				sendMucMessage(mixer, null, iq.getFrom(), iq.getFrom().getNode() + " joined voice conversation");
 
 			} catch (ParseException pe) {				// colibri joining as first participant
 
@@ -1046,7 +1046,7 @@ public class RayoComponent 	extends 	AbstractComponent
 					ConferenceManager conferenceManager = ConferenceManager.getConference(mixer, "PCM/48000/2", mixer, false);
 					String recording = mixer + "-" + System.currentTimeMillis() + ".au";
 					conferenceManager.recordConference(true, recording, "au");
-					sendMucMessage(mixer, recording, iq.getFrom(), "Started voice recording");
+					sendMucMessage(mixer, recording, iq.getFrom(), "started voice recording");
 
 					attachVideobridge(mixer, iq.getFrom(), "PCM/48000/2");
 
@@ -1087,11 +1087,11 @@ public class RayoComponent 	extends 	AbstractComponent
 				if (conferenceManager.getMemberList().size() == 1)
 				{
 					conferenceManager.recordConference(false, null, null);
-					sendMucMessage(mixer, null, iq.getFrom(), "Stopped voice recording");
+					sendMucMessage(mixer, null, iq.getFrom(), "stopped voice recording");
 					detachVideobridge(mixer);
 				}
 
-				sendMucMessage(mixer, null, iq.getFrom(), "Left voice conversation");
+				sendMucMessage(mixer, null, iq.getFrom(), iq.getFrom().getNode() + " left voice conversation");
 
 			} catch (Exception e) {
 				reply.setError(PacketError.Condition.item_not_found);
@@ -1529,6 +1529,8 @@ public class RayoComponent 	extends 	AbstractComponent
 		try {
 			ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceId);
 			ArrayList memberList = conferenceManager.getMemberList();
+
+			sendMucMessage(conferenceId, null, from, from.getNode() + (startSpeaking ? "started" : "stopped") + " speaking");
 
 			synchronized (memberList)
 			{

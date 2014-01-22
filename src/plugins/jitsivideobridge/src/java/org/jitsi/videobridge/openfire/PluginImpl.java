@@ -1298,8 +1298,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					{
 						broadcastSSRC(participant);
 					}
-
-				} else Log.error("FocusAgent deliver cannot find iq owner " + id + "\n" + packet);
+				}
 
 
 			} else if (iq.getType() == IQ.Type.error)  {

@@ -176,7 +176,10 @@ function getConstraints(um, resolution, bandwidth, fps)
     if (um.indexOf('screen') >= 0) {
 	window.RTC.rayo.constraints.video = {
 	    "mandatory": {
-		"chromeMediaSource": "screen"
+		"chromeMediaSource": "screen",
+		"maxWidth": "1280",
+		"maxHeight": "1280",
+		"maxFrameRate": "30"		
 	    }
 	};
     }

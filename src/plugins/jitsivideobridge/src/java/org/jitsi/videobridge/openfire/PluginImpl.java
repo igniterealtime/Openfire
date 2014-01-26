@@ -640,6 +640,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
         {
 			return new IQHandlerInfo("colibri", RAYO_COLIBRI);
 		}
+
 		/**
 		 *
 		 *
@@ -926,7 +927,42 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					}
 				}
 			}
+
+			bridgeJoin(true, participant);
 		}
+		/**
+		 *
+		 *
+		 */
+		public void bridgeJoin(boolean join, Participant participant)
+		{
+			String roomName = roomJid.getNode();
+			MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(roomName);
+
+			Log.info("bridgeJoin event to room occupants of " + roomName);
+
+			for ( MUCRole role : room.getOccupants())
+			{
+				String jid = role.getUserAddress().toString();
+				Log.info("bridgeJoin event to room occupant " + jid);
+
+				Presence presence = new Presence();
+				presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+				presence.setTo(jid);
+
+				if (join)
+				{
+					JoinBridgeEvent event = new JoinBridgeEvent(roomName, participant.getUser(), participant.getNickname());
+					presence.getElement().add(colibriProvider.toXML(event));
+
+				} else {
+					LeaveBridgeEvent event = new LeaveBridgeEvent(roomName, participant.getUser(), participant.getNickname());
+					presence.getElement().add(colibriProvider.toXML(event));
+				}
+				router.route(presence);
+			}
+		}
+
 		/**
 		 *
 		 *
@@ -1102,6 +1138,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				}
 				users.remove(username);
 				ssrcs.remove(username);
+
+				bridgeJoin(false, participant);
 			}
 
 			Log.info("removeColibriChannel " + count);

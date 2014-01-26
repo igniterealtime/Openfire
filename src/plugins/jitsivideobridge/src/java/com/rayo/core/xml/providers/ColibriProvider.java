@@ -79,6 +79,12 @@ public class ColibriProvider extends BaseProvider {
         } else if (object instanceof RemoveSourceEvent) {
             createRemoveSourceEvent((RemoveSourceEvent) object, document);
 
+        } else if (object instanceof JoinBridgeEvent) {
+            createJoinBridgeEvent((JoinBridgeEvent) object, document);
+
+        } else if (object instanceof LeaveBridgeEvent) {
+            createLeaveBridgeEvent((LeaveBridgeEvent) object, document);
+
         } else if (object instanceof MutedEvent) {
             createMutedEvent((MutedEvent) object, document);
 
@@ -118,6 +124,22 @@ public class ColibriProvider extends BaseProvider {
         root.add(event.getConference().createCopy());
     }
 
+    private void createJoinBridgeEvent(JoinBridgeEvent joined, Document document)
+    {
+        Element root = document.addElement(new QName("joined", NAMESPACE));
+		root.addAttribute("mixer-name", joined.getMixer());
+		root.addAttribute("nickname", joined.getNickname());
+		root.addAttribute("participant", joined.getParticipant().toString());
+    }
+
+    private void createLeaveBridgeEvent(LeaveBridgeEvent unjoined, Document document)
+    {
+        Element root = document.addElement(new QName("unjoined", NAMESPACE));
+		root.addAttribute("mixer-name", unjoined.getMixer());
+		root.addAttribute("nickname", unjoined.getNickname());
+		root.addAttribute("participant", unjoined.getParticipant().toString());
+    }
+
     private void createMutedEvent(MutedEvent muted, Document document)
     {
         document.addElement(new QName("onmute", NAMESPACE));
@@ -127,5 +149,4 @@ public class ColibriProvider extends BaseProvider {
     {
         document.addElement(new QName("offmute", NAMESPACE));
     }
-
 }

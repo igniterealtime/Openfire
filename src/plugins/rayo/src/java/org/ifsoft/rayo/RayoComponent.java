@@ -1028,8 +1028,6 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				if (CallHandler.findCall("colibri-" + mixer) == null)	// other participant than colibri
 				{
-					attachVideobridge(mixer, iq.getFrom(), conferenceManager.getMediaInfo().toString());
-
 					if (conferenceManager.getMemberList().size() == 1)	// handset already in call
 					{
 						String recording = mixer + "-" + System.currentTimeMillis() + ".au";
@@ -1047,8 +1045,6 @@ public class RayoComponent 	extends 	AbstractComponent
 					String recording = mixer + "-" + System.currentTimeMillis() + ".au";
 					conferenceManager.recordConference(true, recording, "au");
 					sendMucMessage(mixer, recording, iq.getFrom(), "started voice recording");
-
-					attachVideobridge(mixer, iq.getFrom(), "PCM/48000/2");
 
 				} catch (Exception e) {
 					reply.setError(PacketError.Condition.item_not_found);
@@ -1088,7 +1084,6 @@ public class RayoComponent 	extends 	AbstractComponent
 				{
 					conferenceManager.recordConference(false, null, null);
 					sendMucMessage(mixer, null, iq.getFrom(), "stopped voice recording");
-					detachVideobridge(mixer);
 				}
 
 				sendMucMessage(mixer, null, iq.getFrom(), iq.getFrom().getNode() + " left voice conversation");
@@ -1164,17 +1159,24 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
-	private void sendMucMessage(String mixer, String recording, JID participant, String message)
+	private boolean isMixerMuc(String mixer)
 	{
+		boolean isMuc = false;
+
 		if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(mixer)) {
 
-			MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(mixer);
-
-			if (room != null)
-			{
-				sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
-			}
+			isMuc =  null != XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(mixer);
 		}
+		return isMuc;
+	}
+
+	private void sendMucMessage(String mixer, String recording, JID participant, String message)
+	{
+		if (isMixerMuc(mixer))	// not working
+		{
+			//sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
+		}
+
 	}
 
 	private IQ handleDialCommand(DialCommand command, IQ iq, boolean transferCall)
@@ -1530,7 +1532,7 @@ public class RayoComponent 	extends 	AbstractComponent
 			ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(conferenceId);
 			ArrayList memberList = conferenceManager.getMemberList();
 
-			sendMucMessage(conferenceId, null, from, from.getNode() + (startSpeaking ? "started" : "stopped") + " speaking");
+			//sendMucMessage(conferenceId, null, from, from.getNode() + (startSpeaking ? " started" : " stopped") + " speaking");
 
 			synchronized (memberList)
 			{
@@ -1550,7 +1552,7 @@ public class RayoComponent 	extends 	AbstractComponent
 						if (target != null && callId.equals(cp.getCallId()) == false)
 						{
 							Presence presence = new Presence();
-							presence.setFrom(callId + "@" + getDomain());
+							presence.setFrom(conferenceId + "@" + getDomain());
 							presence.setTo(target);
 
 							if (startSpeaking)
@@ -1703,11 +1705,45 @@ public class RayoComponent 	extends 	AbstractComponent
 
 						int memberCount = memberList.size();
 
-						Log.info("RayoComponent notifyConferenceMonitors found owner " + callParticipant.getCallOwner() + " " + memberCount);
+						/*
+							When mixer is an muc, assume a conference call just sent join/unjoin
+							When mixer is a group, assume a third party call, inform group members
+
+						*/
 
 						if (groupName == null)
 						{
-							routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
+							if (isMixerMuc(conferenceEvent.getConferenceId()))
+							{
+								MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(conferenceEvent.getConferenceId());
+
+								Log.info("RayoComponent notifyConferenceMonitors routing to room occupants of " + conferenceEvent.getConferenceId());
+
+								for ( MUCRole role : room.getOccupants())
+								{
+									String jid = role.getUserAddress().toString();
+									Log.info("RayoComponent notifyConferenceMonitors routing to room occupant " + jid);
+
+									Presence presence = new Presence();
+									presence.setFrom(conferenceEvent.getCallId() + "@" + getDomain());
+									presence.setTo(jid);
+
+									if (conferenceEvent.equals(ConferenceEvent.MEMBER_LEFT))
+									{
+										UnjoinedEvent event = new UnjoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+										presence.getElement().add(rayoProvider.toXML(event));
+
+									} else {
+										JoinedEvent event = new JoinedEvent(null, conferenceEvent.getConferenceId(), JoinDestinationType.MIXER);
+										presence.getElement().add(rayoProvider.toXML(event));
+									}
+									sendPacket(presence);
+								}
+
+							} else {
+								Log.info("RayoComponent notifyConferenceMonitors routing to owner " + callParticipant.getCallOwner() + " " + memberCount);
+								routeJoinEvent(callParticipant.getCallOwner(), callParticipant, conferenceEvent, memberCount, groupName, callId, farParty, conferenceManager);
+							}
 
 						} else {
 

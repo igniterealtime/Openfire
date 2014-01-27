@@ -86,7 +86,7 @@ $(document).ready(function ()
 	    	$("#screen").addClass("fa-border");
 	    	
 	    } else {
-		getConstraints(['audio', 'video'], '720');	
+		getConstraints(['audio', 'video'], config.resolution);	
 	    	$("#screen").removeClass("fa-border");
 	    }
 		
@@ -129,7 +129,7 @@ $(document).bind('mediafailure.rayo', function(error) {
 
 $(document).bind('remotestreamadded.rayo', function(event, data, sid) 
 {
-	var id = 'remoteVideo_' + sid + '_' + data.stream.id;
+	var id = 'remoteVideo_' + data.stream.id;
 
 	if (!document.getElementById(id))
 	{
@@ -145,14 +145,15 @@ $(document).bind('remotestreamadded.rayo', function(event, data, sid)
 
 	window.RTC.attachMediaStream(sel, data.stream);	    
 
-	if (sel.attr('id').indexOf('mixedmslabel') == -1) {
+	if (sel.attr('id') && sel.attr('id').indexOf('mixedmslabel') == -1) {
 	    // ignore mixedmslabela0 and non room members
 	    sel.show();
-	    resizeThumbnails();
 
 	    document.getElementById('largeVideo').volume = 1;
 	    $('#largeVideo').attr('src', sel.attr('src'));
 	}
+	
+	resizeThumbnails();	
 
 	data.stream.onended = function() {
 	    console.log('stream ended', this.id);
@@ -416,8 +417,9 @@ function urlParam(name)
 
 function doJoin() {
     var roomnode = urlParam("r");
+    nickname = unescape(urlParam("n"));
 
-    console.log("doJoin", roomnode);
+    console.log("doJoin", roomnode, nickname);
 	
     if (!roomnode) {
     	roomnode = Math.random().toString(36).substr(2, 20);
@@ -431,21 +433,35 @@ function doJoin() {
         var nick = window.prompt('Your nickname (optional)');
         if (nick) {
             myroomjid += '/' + nick;
-            nickname = nick;
-            $('#nickname').css({visibility:"hidden"});
-            $('#ofmeet').css({visibility:'visible'});
-            $('#usermsg').css({visibility:'visible'});            
+            nickname = nick;            
         } else {
             myroomjid += '/' + Strophe.getNodeFromJid(connection.jid);
         }
         
     } else {
-        myroomjid += '/' + Strophe.getNodeFromJid(connection.jid);
+    
+    	if (nickname)
+        	myroomjid += '/' + nickname;    	
+    	else
+        	myroomjid += '/' + Strophe.getNodeFromJid(connection.jid);
     }
             
     connection.addHandler(rayoCallback, 'urn:xmpp:rayo:colibri:1');
-    connection.emuc.doJoin(myroomjid);    
+    connection.emuc.doJoin(myroomjid);  
+    
+    if (nickname)
+    {
+    	var question = unescape(urlParam("q"));    	
+    	
+    	if (question) updateChatConversation(nickname, question);
+    	
+	$('#nickname').css({visibility:"hidden"});
+	$('#ofmeet').css({visibility:'visible'});
+	$('#usermsg').css({visibility:'visible'});    
+	openChat();
+    }
 }
+
  
 function rayoCallback(presence) 
 {
@@ -573,13 +589,11 @@ function handleOffer (from, offer)
 	var confid = null;
 	var channelId = [];
 
-	window.RTC.rayo.channels = {}
 	window.RTC.rayo.addssrc = false;
 
 	$(offer).find('conference').each(function() 
 	{		
 		confid = $(this).attr('id');
-		window.RTC.rayo.channels.id = confid;
 
 		$(this).find('content').each(function() 
 		{		
@@ -647,11 +661,10 @@ function handleOffer (from, offer)
 	});
 
 	bridgeSDP.raw = bridgeSDP.session + bridgeSDP.media.join('');
-	window.RTC.rayo.channels.sdp = bridgeSDP.raw;
 
 	//console.log("bridgeSDP.raw", bridgeSDP.raw);	
 
-   	window.RTC.rayo.pc[videobridge] = new window.RTC.peerconnection(null, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}]}); 
+   	window.RTC.rayo.pc[videobridge] = new window.RTC.peerconnection(null, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}, {googIPv6: config.useIPv6}]}); 
 
    
 	window.RTC.rayo.pc[videobridge].onicecandidate = function(event)

@@ -1,4 +1,5 @@
 var connection = null;
+var userForm = null;
 
 $(document).ready(function () 
 {
@@ -25,6 +26,8 @@ $(document).ready(function ()
 
 function joinWorkgroup(workgroup, form)
 {
+	userForm = form;
+	
 	if (connection != null && connection.connected)
 	{
 		var iq = $iq({to: workgroup + "@workgroup." + connection.domain, type: 'set'}).c('join-queue', {xmlns: 'http://jabber.org/protocol/workgroup'});	
@@ -63,7 +66,7 @@ function onMessage(message)
 		if (xmlns == "jabber:x:conference")
 		{
 			var roomJid = $(this).attr("jid");	
-			window.location.href = "/ofmeet/?r=" + Strophe.getNodeFromJid(roomJid);
+			window.location.href = "/ofmeet/?r=" + Strophe.getNodeFromJid(roomJid) + "&n=" + userForm.username + "&q=" + userForm.question;
 		}
 	});
 	return true;

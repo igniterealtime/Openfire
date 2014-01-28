@@ -417,7 +417,7 @@ function urlParam(name)
 
 function doJoin() {
     var roomnode = urlParam("r");
-    nickname = unescape(urlParam("n"));
+    nickname = urlParam("n");
 
     console.log("doJoin", roomnode, nickname);
 	
@@ -441,9 +441,9 @@ function doJoin() {
     } else {
     
     	if (nickname)
-        	myroomjid += '/' + nickname;    	
+        	myroomjid += '/' + escape(nickname);    	
     	else
-        	myroomjid += '/' + Strophe.getNodeFromJid(connection.jid);
+        	myroomjid += '/' + Math.random().toString(36).substr(2, 20);
     }
             
     connection.addHandler(rayoCallback, 'urn:xmpp:rayo:colibri:1');
@@ -451,9 +451,9 @@ function doJoin() {
     
     if (nickname)
     {
-    	var question = unescape(urlParam("q"));    	
+    	var question = urlParam("q");    	
     	
-    	if (question) updateChatConversation(nickname, question);
+    	if (question) updateChatConversation(nickname, unescape(question));
     	
 	$('#nickname').css({visibility:"hidden"});
 	$('#ofmeet').css({visibility:'visible'});

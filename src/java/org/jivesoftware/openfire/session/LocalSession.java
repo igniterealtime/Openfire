@@ -74,7 +74,7 @@ public abstract class LocalSession implements Session {
 
     protected SessionManager sessionManager;
 
-    protected String serverName;
+    private String serverName;
 
     private long startDate = System.currentTimeMillis();
 

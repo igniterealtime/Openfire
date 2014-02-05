@@ -824,8 +824,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     @Override
 	public boolean canProcess(Packet packet) {
-        // All packets from our own service are implicitly not blocked
-        if (packet.getFrom().getDomain().equals(serverName)) return true;
 
         PrivacyList list = getActiveList();
         if (list != null) {

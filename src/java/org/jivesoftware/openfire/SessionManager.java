@@ -589,11 +589,26 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
     }
 
     /**
+     * Returns true if the session should broadcast presences to all other resources for the
+     * current client. When disabled it is not possible to broadcast presence packets to another
+     * resource of the connected user. This is desirable if you have a use case where you have
+     * many resources attached to the same user account.
+     *
+     * @return true if presence should be broadcast to other resources of the same account
+     */
+    public static boolean isOtherResourcePresenceEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.client.other-resource.presence", true);
+    }
+
+    /**
      * Sends the presences of other connected resources to the resource that just connected.
-     * 
+     *
      * @param session the newly created session.
      */
     private void broadcastPresenceOfOtherResource(LocalClientSession session) {
+        if (!SessionManager.isOtherResourcePresenceEnabled()) {
+            return;
+        }
         Presence presence;
         // Get list of sessions of the same user
         JID searchJID = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
@@ -619,6 +634,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @param presence the presence.
      */
     public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
+        if (!SessionManager.isOtherResourcePresenceEnabled()) {
+            return;
+        }
         // Get list of sessions of the same user
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
         List<JID> addresses = routingTable.getRoutes(searchJID, null);

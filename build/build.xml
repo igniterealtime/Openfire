@@ -901,7 +901,7 @@
         <for param="jar">
             <path>
                 <fileset dir="${release.out.dir}/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar, bcpg-jdk15on.jar bcpkix-jdk15on.jar bcprov-jdk15on.jar"/>
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar"/>
             </path>
             <sequential>
                 <delete file="@{jar}.pack"/>
@@ -918,7 +918,7 @@
         <for param="jar">
             <path>
                 <fileset dir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar, bcpg-jdk15on.jar bcpkix-jdk15on.jar bcprov-jdk15on.jar"/>
+                         excludes="startup.jar,jdic.jar,mail.jar,activation.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar"/>
             </path>
             <sequential>
                 <delete file="@{jar}.pack"/>

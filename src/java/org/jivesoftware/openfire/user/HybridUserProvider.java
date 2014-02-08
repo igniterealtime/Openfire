@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * HybridUserProvider.java
- *
- * Created on 16. April 2007, 21:48
- * by Marc Seeger
- * code works fine as far as my 10 User Test-Server goes
- * It basically checks different userproviders which are being set in the configuration xml file
- * I use it in combination with hybridauth providers to be able to get the usual users from ldap but still have some Bots in MySQL
- *
- * Changed on 14. Nov. 2007, 10:48
- * by Chris Neasbitt
- *  -changed getUsers(int startIndex, int numResults) method to return a subset of the total users from all providers
- *  -changed the getUsers() method to use a vector internally since addAll is an optional method of the collection
- *   interface we cannot assume that all classes that support the collection interface also support the addAll method
- *  -changed the getUserCount() method to iterate through an array of providers while calling a private helper method
- *   getUserCount(UserProvider provider) on each of them.
  */
 
 package org.jivesoftware.openfire.user;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -44,405 +30,246 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Delegate UserProvider operations among up to three configurable provider implementation classes.
+ *
  * @author Marc Seeger
  * @author Chris Neasbitt
+ * @author Tom Evans
  */
 
 public class HybridUserProvider implements UserProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(HybridUserProvider.class);
 
-    private UserProvider primaryProvider = null;
-    private UserProvider secondaryProvider = null;
-    private UserProvider tertiaryProvider = null;
-    private UserProvider[] userproviders = {primaryProvider, secondaryProvider, tertiaryProvider};
-
-    private Set<String> primaryOverrides = new HashSet<String>();
-    private Set<String> secondaryOverrides = new HashSet<String>();
-    private Set<String> tertiaryOverrides = new HashSet<String>();
-
+    private List<UserProvider> userproviders = null;
 
     public HybridUserProvider() {
-// Load primary, secondary, and tertiary user providers.
-        String primaryClass = JiveGlobals.getXMLProperty("hybridUserProvider.primaryProvider.className");
+
+		// Migrate user provider properties
+		JiveGlobals.migrateProperty("hybridUserProvider.primaryProvider.className");
+		JiveGlobals.migrateProperty("hybridUserProvider.secondaryProvider.className");
+		JiveGlobals.migrateProperty("hybridUserProvider.tertiaryProvider.className");
+
+        userproviders = new ArrayList<UserProvider>();
+
+		// Load primary, secondary, and tertiary user providers.
+        String primaryClass = JiveGlobals.getProperty("hybridUserProvider.primaryProvider.className");
         if (primaryClass == null) {
-            Log.error("A primary UserProvider must be specified in the openfire.xml.");
+            Log.error("A primary UserProvider must be specified via openfire.xml or the system properties");
             return;
         }
         try {
             Class c = ClassUtils.forName(primaryClass);
-            primaryProvider = (UserProvider) c.newInstance();
+            UserProvider primaryProvider = (UserProvider) c.newInstance();
+            userproviders.add(primaryProvider);
             Log.debug("Primary user provider: " + primaryClass);
         } catch (Exception e) {
             Log.error("Unable to load primary user provider: " + primaryClass +
                     ". Users in this provider will be disabled.", e);
             return;
         }
-        String secondaryClass = JiveGlobals.getXMLProperty("hybridUserProvider.secondaryProvider.className");
+        String secondaryClass = JiveGlobals.getProperty("hybridUserProvider.secondaryProvider.className");
         if (secondaryClass != null) {
             try {
                 Class c = ClassUtils.forName(secondaryClass);
-                secondaryProvider = (UserProvider) c.newInstance();
+                UserProvider secondaryProvider = (UserProvider) c.newInstance();
+                userproviders.add(secondaryProvider);
                 Log.debug("Secondary user provider: " + secondaryClass);
             } catch (Exception e) {
                 Log.error("Unable to load secondary user provider: " + secondaryClass, e);
             }
         }
-        String tertiaryClass = JiveGlobals.getXMLProperty("hybridUserProvider.tertiaryProvider.className");
+        String tertiaryClass = JiveGlobals.getProperty("hybridUserProvider.tertiaryProvider.className");
         if (tertiaryClass != null) {
             try {
                 Class c = ClassUtils.forName(tertiaryClass);
-                tertiaryProvider = (UserProvider) c.newInstance();
+                UserProvider tertiaryProvider = (UserProvider) c.newInstance();
+                userproviders.add(tertiaryProvider);
                 Log.debug("Tertiary user provider: " + tertiaryClass);
             } catch (Exception e) {
                 Log.error("Unable to load tertiary user provider: " + tertiaryClass, e);
             }
         }
-
-        // Now, load any overrides.
-        String overrideList = JiveGlobals.getXMLProperty(
-                "hybridUserProvider.primaryProvider.overrideList", "");
-        for (String user : overrideList.split(",")) {
-            primaryOverrides.add(user.trim().toLowerCase());
-        }
-
-        if (secondaryProvider != null) {
-            overrideList = JiveGlobals.getXMLProperty(
-                    "hybridUserProvider.secondaryProvider.overrideList", "");
-            for (String user : overrideList.split(",")) {
-                secondaryOverrides.add(user.trim().toLowerCase());
-            }
-        }
-
-        if (tertiaryProvider != null) {
-            overrideList = JiveGlobals.getXMLProperty(
-                    "hybridUserProvider.tertiaryProvider.overrideList", "");
-            for (String user : overrideList.split(",")) {
-                tertiaryOverrides.add(user.trim().toLowerCase());
-            }
-        }
-
     }
 
 
     public User createUser(String username, String password, String name, String email) throws UserAlreadyExistsException {
-        //initialize our returnvalue
+
         User returnvalue = null;
 
-        //try to use the providers to create a user and change the return value to that user
-        if (!primaryProvider.isReadOnly()) {
-            try {
-                returnvalue = primaryProvider.createUser(username, password, name, email);
-            }
-
-            finally {
-            }
-
-        } else if (secondaryProvider != null) {
-            if (!secondaryProvider.isReadOnly()) {
-                try {
-                    returnvalue = secondaryProvider.createUser(username, password, name, email);
-                }
-
-                finally {
-                }
-
-            }
-        } else if (tertiaryProvider != null) {
-            if (!tertiaryProvider.isReadOnly()) {
-                try {
-                    returnvalue = tertiaryProvider.createUser(username, password, name, email);
-                }
-
-                finally {
-                }
-            }
+        // create the user (first writable provider wins)
+        for (UserProvider provider : userproviders) {
+        	if (provider.isReadOnly()) {
+        		continue;
+        	}
+        	returnvalue = provider.createUser(username, password, name, email);
+        	if (returnvalue != null) {
+        		break;
+        	}
         }
 
-        //return our created user
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
-            throw new UnsupportedOperationException();
+        if (returnvalue == null) {
+        	throw new UnsupportedOperationException();
         }
+        return returnvalue;
     }
 
 
     public void deleteUser(String username) {
-        if (!primaryProvider.isReadOnly()) {
-            try {
-                primaryProvider.deleteUser(username);
-                return;
-            }
 
-            finally {
-            }
+    	boolean isDeleted = false;
 
-        } else if (secondaryProvider != null) {
-            if (!secondaryProvider.isReadOnly()) {
-                try {
-                    secondaryProvider.deleteUser(username);
-                    return;
-                }
+    	for (UserProvider provider : userproviders) {
+    		if (provider.isReadOnly()) {
+    			continue;
+    		}
+    		provider.deleteUser(username);
+    		isDeleted = true;
+    	}
 
-                finally {
-                }
-
-            }
-        } else if (tertiaryProvider != null) {
-            if (!tertiaryProvider.isReadOnly()) {
-                try {
-                    tertiaryProvider.deleteUser(username);
-                    return;
-                }
-
-                finally {
-                }
-
-            } else {
-// Reject the operation since all of the providers seem to be read-only
-                throw new UnsupportedOperationException();
-            }
-
-        }
+    	// all providers are read-only
+    	if (!isDeleted) {
+    		throw new UnsupportedOperationException();
+    	}
     }
 
 
     public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 
+    	List<User> userList = new ArrayList<User>();
+    	boolean isUnsupported = false;
 
-        Collection<User> returnvalue = null;
-        try {
-            returnvalue = primaryProvider.findUsers(fields, query);
-        }
+    	for (UserProvider provider : userproviders) {
 
-        finally {
-        }
+    		// validate search fields for each provider
+    		Set<String> validFields = provider.getSearchFields();
+    		for (String field : fields) {
+    			if (!validFields.contains(field)) {
+    				continue;
+    			}
+    		}
 
-        if (secondaryProvider != null) {
-            try {
+    		try {
+    			userList.addAll(provider.findUsers(fields, query));
+    		} catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.findUsers is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    	}
 
-                returnvalue = secondaryProvider.findUsers(fields, query);
-            }
-
-            finally {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                returnvalue = tertiaryProvider.findUsers(fields, query);
-            }
-
-            finally {
-            }
-        }
-
-        //return our collection of users
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
-            throw new UnsupportedOperationException();
-        }
+    	if (isUnsupported && userList.size() == 0) {
+    		throw new UnsupportedOperationException();
+    	}
+        return userList;
     }
 
 
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
-        Collection<User> returnvalue = null;
-        try {
-            returnvalue = primaryProvider.findUsers(fields, query, startIndex, numResults);
-        }
 
-        finally {
-        }
+    	List<User> userList = new ArrayList<User>();
+    	boolean isUnsupported = false;
+    	int totalMatchedUserCount = 0;
 
-        if (secondaryProvider != null) {
-            try {
+    	for (UserProvider provider : userproviders) {
 
-                returnvalue = secondaryProvider.findUsers(fields, query, startIndex, numResults);
-            }
+    		// validate search fields for each provider
+    		Set<String> validFields = provider.getSearchFields();
+    		for (String field : fields) {
+    			if (!validFields.contains(field)) {
+    				continue;
+    			}
+    		}
 
-            finally {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                returnvalue = tertiaryProvider.findUsers(fields, query, startIndex, numResults);
-            }
+    		try {
+        		Collection<User> providerResults = provider.findUsers(fields, query);
+        		totalMatchedUserCount += providerResults.size();
+        		if (startIndex >= totalMatchedUserCount) {
+        			continue;
+        		}
+        		int providerStartIndex = Math.max(0, startIndex - totalMatchedUserCount);
+        		int providerResultMax = numResults - userList.size();
+        		List<User> providerList = providerResults instanceof List<?> ? 
+        				(List<User>) providerResults : new ArrayList<User>(providerResults);
+        		userList.addAll(providerList.subList(providerStartIndex, providerResultMax));
+    			if (userList.size() >= numResults) {
+    				break;
+    			}
+    		} catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.findUsers is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    	}
 
-            finally {
-            }
-        }
-
-        //return our Collection of Users
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
-            throw new UnsupportedOperationException();
-        }
+    	if (isUnsupported && userList.size() == 0) {
+    		throw new UnsupportedOperationException();
+    	}
+        return userList;
     }
 
 
     public Set<String> getSearchFields() throws UnsupportedOperationException {
-        Set<String> returnvalue = null;
-        try {
-            returnvalue = primaryProvider.getSearchFields();
+
+    	Set<String> returnvalue = new HashSet<String>();
+
+        for (UserProvider provider : userproviders) {
+        	returnvalue.addAll(provider.getSearchFields());
         }
 
-        finally {
-        }
-
-        if (secondaryProvider != null) {
-            try {
-
-                returnvalue = secondaryProvider.getSearchFields();
-            }
-
-            finally {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                returnvalue = tertiaryProvider.getSearchFields();
-            }
-
-            finally {
-            }
-        }
-
-        //return our Set of Strings
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
+        // no search fields were returned
+        if (returnvalue.size() == 0) {
             throw new UnsupportedOperationException();
         }
+        return returnvalue;
     }
 
 
     public int getUserCount() {
         int count = 0;
         for (UserProvider provider : userproviders) {
-            count = count + this.getUserCount(provider);
+            count += provider.getUserCount();
         }
         return count;
     }
 
-    private int getUserCount(UserProvider provider) {
-        int returnvalue = 0;
-        if (provider != null) {
-            try {
+    public Collection<String> getUsernames() {
 
-                returnvalue = returnvalue + provider.getUserCount();
-            }
+        List<String> returnvalue = new ArrayList<String>();
 
-            finally {
-            }
+        for (UserProvider provider : userproviders){
+        	returnvalue.addAll(provider.getUsernames());
         }
         return returnvalue;
     }
 
 
-    public Collection<String> getUsernames() {
-        Collection<String> returnvalue = null;
-        try {
-            returnvalue = primaryProvider.getUsernames();
-        }
-
-        finally {
-        }
-
-        if (secondaryProvider != null) {
-            try {
-                returnvalue.addAll(secondaryProvider.getUsernames());
-            }
-
-            finally {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                returnvalue.addAll(tertiaryProvider.getUsernames());
-            }
-
-            finally {
-            }
-        }
-
-        //return our Set of Strings
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-
     public Collection<User> getUsers() {
-        Vector<User> returnvalue = null;
-        try {
-            returnvalue = new Vector<User>(primaryProvider.getUsers());
+        List<User> returnvalue = new ArrayList<User>();
+
+        for (UserProvider provider : userproviders){
+        	returnvalue.addAll(provider.getUsers());
         }
 
-        finally {
-        }
-
-        if (secondaryProvider != null) {
-            try {
-                returnvalue.addAll(secondaryProvider.getUsers());
-            }
-
-            finally {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                returnvalue.addAll(tertiaryProvider.getUsers());
-            }
-
-            finally {
-            }
-        }
-
-        //return our Set of Strings
-        if (returnvalue != null) {
-            return returnvalue;
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        return returnvalue;
     }
-
-/*
-*Changed by Chris Neasbitt to more accurately represent the intent of the method
-*
-*This method now removes a sub set of the combined users from all providers.  This
-*is done in places as to avoid copying collections of users in memory.
-*/
 
     public Collection<User> getUsers(int startIndex, int numResults) {
-        Vector<User> returnresult = new Vector<User>();
-        int numResultsLeft = numResults;
-        int currentStartIndex = startIndex;
-        for (UserProvider provider : userproviders) {
-            if (numResultsLeft == 0) {
-                break;
-            }
 
-            int pusercount = this.getUserCount(provider);
+    	List<User> userList = new ArrayList<User>();
+    	int totalUserCount = 0;
 
-            if (pusercount == 0 || currentStartIndex >= pusercount) {
-
-                currentStartIndex = currentStartIndex - pusercount;
-                continue;
-
-            } else {
-
-                Collection<User> subresult = provider.getUsers(currentStartIndex, numResultsLeft);
-                currentStartIndex = currentStartIndex - subresult.size();
-                numResultsLeft = numResultsLeft - subresult.size();
-                returnresult.addAll(subresult);
-            }
-        }
-
-        return returnresult;
+    	for (UserProvider provider : userproviders) {
+    		int providerStartIndex = Math.max((startIndex - totalUserCount), 0);
+    		totalUserCount += provider.getUserCount();
+    		if (startIndex >= totalUserCount) {
+    			continue;
+    		}
+    		int providerResultMax = numResults - userList.size();
+    		userList.addAll(provider.getUsers(providerStartIndex, providerResultMax));
+			if (userList.size() >= numResults) {
+				break;
+			}
+    	}
+        return userList;
     }
 
     public boolean isReadOnly() {
@@ -458,163 +285,128 @@ public class HybridUserProvider implements UserProvider {
     }
 
     public User loadUser(String username) throws UserNotFoundException {
-        try {
-            return primaryProvider.loadUser(username);
 
-        }
-
-        catch (Exception e) {
-        }
-
-        if (secondaryProvider != null) {
-            try {
-
-                return secondaryProvider.loadUser(username);
-            }
-
-            catch (Exception e) {
-            }
-        }
-
-
-        if (tertiaryProvider != null) {
-            try {
-                return tertiaryProvider.loadUser(username);
-            }
-
-            catch (Exception e) {
-            }
-        }
-
-        //if we get this far, no provider seems to successfully have loaded the user
+    	for (UserProvider provider : userproviders) {
+    		try {
+    			return provider.loadUser(username);
+    		}
+    		catch (UserNotFoundException unfe) {
+    			if (Log.isDebugEnabled()) {
+        			Log.debug("User " + username + " not found by UserProvider " + provider.getClass().getName());
+    			}
+    		}
+    	}
+        //if we get this far, no provider was able to load the user
         throw new UserNotFoundException();
     }
 
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
-        if (primaryProvider != null)
-            try {
-                primaryProvider.setCreationDate(username, creationDate);
-                return;
-            } catch (Exception e) {
-            }
 
-        if (secondaryProvider != null) {
-            try {
-                secondaryProvider.setCreationDate(username, creationDate);
-                return;
-            }
+    	boolean isUnsupported = false;
 
-            catch (Exception e) {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                tertiaryProvider.setCreationDate(username, creationDate);
-                return;
-            }
-
-            catch (Exception e) {
-                throw new UserNotFoundException();
-            }
-        }
-
-
+    	for (UserProvider provider : userproviders) {
+    		try {
+    			provider.setCreationDate(username, creationDate);
+    			return;
+    		}
+    		catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.setCreationDate is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    		catch (UserNotFoundException unfe) {
+    			if (Log.isDebugEnabled()) {
+        			Log.debug("User " + username + " not found by UserProvider " + provider.getClass().getName());
+    			}
+    		}
+    	}
+    	if (isUnsupported) {
+    		throw new UnsupportedOperationException();
+    	}
+    	else {
+            throw new UserNotFoundException();
+    	}
     }
 
     public void setEmail(String username, String email) throws UserNotFoundException {
-        if (primaryProvider != null)
-            try {
-                primaryProvider.setEmail(username, email);
-                return;
-            } catch (Exception e) {
-            }
 
-        if (secondaryProvider != null) {
-            try {
-                secondaryProvider.setEmail(username, email);
-                return;
-            }
+    	boolean isUnsupported = false;
 
-            catch (Exception e) {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                tertiaryProvider.setEmail(username, email);
-                return;
-            }
-
-            catch (Exception e) {
-                throw new UserNotFoundException();
-            }
-        }
-
+    	for (UserProvider provider : userproviders) {
+    		try {
+    			provider.setEmail(username, email);
+    			return;
+    		}
+    		catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.setEmail is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    		catch (UserNotFoundException unfe) {
+    			if (Log.isDebugEnabled()) {
+        			Log.debug("User " + username + " not found by UserProvider " + provider.getClass().getName());
+    			}
+    		}
+    	}
+    	if (isUnsupported) {
+    		throw new UnsupportedOperationException();
+    	}
+    	else {
+            throw new UserNotFoundException();
+    	}
     }
 
 
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
 
-        //without it eclipse goes apeshit
-        if (primaryProvider != null)
-            //apeshit I say!
+    	boolean isUnsupported = false;
 
-
-            try {
-                primaryProvider.setModificationDate(username, modificationDate);
-                return;
-            } catch (Exception e) {
-            }
-
-        if (secondaryProvider != null) {
-            try {
-                secondaryProvider.setModificationDate(username, modificationDate);
-                return;
-            }
-
-            catch (Exception e) {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                tertiaryProvider.setModificationDate(username, modificationDate);
-                return;
-            }
-
-            catch (Exception e) {
-                throw new UserNotFoundException();
-            }
-        }
-
-
+    	for (UserProvider provider : userproviders) {
+    		try {
+    			provider.setModificationDate(username, modificationDate);
+    			return;
+    		}
+    		catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.setModificationDate is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    		catch (UserNotFoundException unfe) {
+    			if (Log.isDebugEnabled()) {
+        			Log.debug("User " + username + " not found by UserProvider " + provider.getClass().getName());
+    			}
+    		}
+    	}
+    	if (isUnsupported) {
+    		throw new UnsupportedOperationException();
+    	}
+    	else {
+            throw new UserNotFoundException();
+    	}
     }
 
     public void setName(String username, String name) throws UserNotFoundException {
-        if (primaryProvider != null)
-            try {
-                primaryProvider.setName(username, name);
-                return;
-            } catch (Exception e) {
-            }
 
-        if (secondaryProvider != null) {
-            try {
-                secondaryProvider.setName(username, name);
-                return;
-            }
+    	boolean isUnsupported = false;
 
-            catch (Exception e) {
-            }
-        }
-        if (tertiaryProvider != null) {
-            try {
-                tertiaryProvider.setName(username, name);
-                return;
-            }
-
-            catch (Exception e) {
-                throw new UserNotFoundException();
-            }
-        }
+    	for (UserProvider provider : userproviders) {
+    		try {
+    			provider.setName(username, name);
+    			return;
+    		}
+    		catch (UnsupportedOperationException uoe) {
+    			Log.warn("UserProvider.setName is not supported by this UserProvider: " + provider.getClass().getName());
+    			isUnsupported = true;
+    		}
+    		catch (UserNotFoundException unfe) {
+    			if (Log.isDebugEnabled()) {
+        			Log.debug("User " + username + " not found by UserProvider " + provider.getClass().getName());
+    			}
+    		}
+    	}
+    	if (isUnsupported) {
+    		throw new UnsupportedOperationException();
+    	}
+    	else {
+            throw new UserNotFoundException();
+    	}
     }
 }
 

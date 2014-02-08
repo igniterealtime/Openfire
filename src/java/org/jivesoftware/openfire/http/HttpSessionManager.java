@@ -73,6 +73,10 @@ public class HttpSessionManager {
      * Creates a new HttpSessionManager instance.
      */
     public HttpSessionManager() {
+    	
+        JiveGlobals.migrateProperty("xmpp.httpbind.worker.threads");
+        JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
+    	
         this.sessionManager = SessionManager.getInstance();
 
         // Configure a pooled executor to handle async routing for incoming packets

@@ -335,6 +335,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
 	public void initialize(XMPPServer server) {
         super.initialize(server);
+        
+        JiveGlobals.migrateProperty("xmpp.pubsub.enabled");
+        JiveGlobals.migrateProperty("xmpp.pubsub.service");
+        JiveGlobals.migrateProperty("xmpp.pubsub.root.nodeID");
+        JiveGlobals.migrateProperty("xmpp.pubsub.root.creator");
+        JiveGlobals.migrateProperty("xmpp.pubsub.multiple-subscriptions");
 
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);

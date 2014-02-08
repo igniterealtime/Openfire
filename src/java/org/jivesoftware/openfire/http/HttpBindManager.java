@@ -130,6 +130,18 @@ public final class HttpBindManager {
     private HttpBindManager() {
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
+        
+        JiveGlobals.migrateProperty(HTTP_BIND_ENABLED);
+        JiveGlobals.migrateProperty(HTTP_BIND_PORT);
+        JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT);
+        JiveGlobals.migrateProperty(HTTP_BIND_THREADS);
+        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED);
+        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_FOR);
+        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_SERVER);
+        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST);
+        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+        JiveGlobals.migrateProperty(HTTP_BIND_CORS_ENABLED);
+        JiveGlobals.migrateProperty(HTTP_BIND_CORS_ALLOW_ORIGIN);
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();

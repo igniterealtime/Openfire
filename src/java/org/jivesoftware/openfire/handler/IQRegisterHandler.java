@@ -157,6 +157,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // Add the registration form to the probe result.
             probeResult.add(registrationForm.getElement());
         }
+        
+        JiveGlobals.migrateProperty("register.inband");
+        JiveGlobals.migrateProperty("register.password");
+        
         // See if in-band registration should be enabled (default is true).
         registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
         // See if users can change their passwords (default is true).

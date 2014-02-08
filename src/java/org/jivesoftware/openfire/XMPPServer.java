@@ -350,13 +350,12 @@ public class XMPPServer {
     private void initialize() throws FileNotFoundException {
         locateOpenfire();
 
-        name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
-
         try {
             host = InetAddress.getLocalHost().getHostName();
         }
         catch (UnknownHostException ex) {
             Log.warn("Unable to determine local hostname.", ex);
+            host = "127.0.0.1";
         }
 
         version = new Version(3, 9, 2, Version.ReleaseStatus.Alpha, -1);
@@ -379,6 +378,11 @@ public class XMPPServer {
             Log.error(e.getMessage(), e);
         }
 
+        JiveGlobals.migrateProperty("xmpp.domain");
+        name = JiveGlobals.getProperty("xmpp.domain", host).toLowerCase();
+
+        org.jivesoftware.util.Log.setDebugEnabled(JiveGlobals.getXMLProperty("log.debug.enabled", false));
+        
         initialized = true;
     }
 

@@ -4,6 +4,9 @@ var nickname = null;
 var roomUrl = null;
 var sharedKey = '';
 var screenShare = false;
+var pdfShare = null;
+var pdfFrame = null;
+var pdfPage = "1";
 
 $(document).ready(function () 
 {
@@ -89,7 +92,8 @@ $(document).ready(function ()
 		getConstraints(['audio', 'video'], config.resolution);	
 	    	$("#screen").removeClass("fa-border");
 	    }
-		
+	    showToolbar();
+	    updateRoomUrl(window.location.href);		
 	    getUserMedia();
 	    
 	} else {
@@ -100,23 +104,75 @@ $(document).ready(function ()
 
 $(window).bind('beforeunload', function () 
 {
-    if (connection && connection.connected) {
-    	unregisterRayoEvents();
-	connection.disconnect();
+    console.log("beforeunload");
+    
+    if (pdfShare != null)
+    {
+	connection.emuc.pdfShare("destroy", pdfShare);    
     }
+    
+    if (connection && connection.connected) {
+    	unregisterRayoEvents();	
+    }
+    
+    if (window.RTC.rayo.localStream)
+    {
+    	window.RTC.rayo.localStream.stop();
+    	window.RTC.rayo.localStream = null;
+    }
+    
+    if (window.RTC.rayo.pc)
+    {
+	var pcs = Object.getOwnPropertyNames(window.RTC.rayo.pc) 
+	
+	for (var i=0; i< pcs.length; i++)
+	{
+		console.log("closing peer connection", pcs[i]);
+		
+		var pc = window.RTC.rayo.pc[pcs[i]];
+		
+		if (pc)
+		{
+			pc.close();
+			pc = null;
+		}
+	}
+    }
+    
+    connection.disconnect();    
+});
+
+$(window).bind('entered.muc', function (event, from, member) 
+{
+	console.log('entered.muc', from, member);
+	
+	if (pdfShare)
+	{					
+		connection.emuc.pdfShare("create", pdfShare + "&control=false#" + pdfPage);
+	}	
+});
+
+$(window).bind('left.muc', function (event, from) 
+{
+	console.log('left.muc', from);
 });
 
 $(document).bind('mediaready.rayo', function(event, stream) 
 {
 	window.RTC.rayo.localStream = stream;
 
-	window.RTC.attachMediaStream($('#localVideo'), stream);
-	document.getElementById('localVideo').muted = true;
-	document.getElementById('localVideo').autoplay = true;
-	document.getElementById('localVideo').volume = 0;
+	if (stream.getVideoTracks().length > 0)
+	{
+		window.RTC.attachMediaStream($('#localVideo'), stream);
+		document.getElementById('localVideo').muted = true;
+		document.getElementById('localVideo').autoplay = true;
+		document.getElementById('localVideo').volume = 0;
 
-	document.getElementById('largeVideo').volume = 0;
-	document.getElementById('largeVideo').src = document.getElementById('localVideo').src;
+		document.getElementById('largeVideo').volume = 0;
+		document.getElementById('largeVideo').src = document.getElementById('localVideo').src;
+	} else {
+		window.RTC.attachMediaStream($('#localAudio'), stream);	
+	}
     
 	console.log("mediaready.rayo");   
 	
@@ -177,12 +233,18 @@ $(document).bind('remotestreamadded.rayo', function(event, data, sid)
 		console.log('hover in', $(this).attr('src'));
 		$("#largeVideo").css("visibility", "visible");
 		var newSrc = $(this).attr('src');
+		
 		if ($('#largeVideo').attr('src') != newSrc) {
 		    document.getElementById('largeVideo').volume = 1;
 		    $('#largeVideo').fadeOut(300, function(){
 			$(this).attr('src', newSrc);
 			$(this).fadeIn(300);
 		    });
+		}
+		
+		if (pdfFrame != null)
+		{			
+			$("#largeVideo").css("display", "none");
 		}
 	    }
 	);
@@ -694,9 +756,6 @@ function handleOffer (from, offer)
 
 	window.RTC.rayo.pc[videobridge].addStream(window.RTC.rayo.localStream);
 	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : bridgeSDP.raw}));
-	
-    	showToolbar();	
-    	updateRoomUrl(window.location.href);
 };
 	
 	
@@ -957,6 +1016,130 @@ function lockRoom(lock) {
     buttonClick("#lockIcon", "fa fa-unlock fa-lg fa fa-lock fa-lg");
 }
 
+function openPDFDialog() 
+{
+    if (pdfShare) 
+    {
+        $.prompt("Are you sure you would like to remove your Presentation?",
+                {
+                title: "Remove PDF Presentation",
+                buttons: { "Remove": true, "Cancel": false},
+                defaultButton: 1,
+                submit: function(e,v,m,f)
+                {
+			if(v)
+			{
+				connection.emuc.pdfShare("destroy", pdfShare);
+				pdfStop(pdfShare);
+				pdfShare = null;
+				
+				$("#pdf").removeClass("fa-spin fa-border");	
+			}
+            	}
+        });
+    }
+    else if (pdfFrame != null) {
+        $.prompt("Another participant is already sharing a Presentation. This conference allows only one Presentation at a time.",
+                 {
+                 title: "Share a PDF Prsentation",
+                 buttons: { "Ok": true},
+                 defaultButton: 0,
+                 submit: function(e,v,m,f)
+                 {
+                    $.prompt.close();
+                 }
+        });
+    }
+    else {
+	$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" placeholder="e.g. http://www.ge.com/battery/resources/pdf/CraigIrwin.pdf" autofocus >',
+	{
+                title: "Share a PDF Prsentation",
+            	persistent: false,
+            	buttons: { "Share": true , "Cancel": false},
+            	defaultButton: 1,
+		loaded: function(event) {
+			document.getElementById('pdfiUrl').select();
+		},
+		submit: function(e,v,m,f) 
+		{
+			if(v)
+			{
+				pdfShare = document.getElementById('pdfiUrl').value;
+		
+				if (pdfShare)
+				{	
+					pdfStart(pdfShare  + "&control=true");
+					connection.emuc.pdfShare("create", pdfShare  + "&control=false");
+				}
+			}					 
+		}
+	});    
+    }
+}
+
+function pfdReady()
+{
+	if (pdfFrame != null)
+	{
+		console.log("pdfReady");
+		$("#pdfViewer").css("display", "block");
+		$('#pdfViewer').height($('#largeVideo').height());
+		$('#pdfViewer').width($('#largeVideo').width());
+		$("#largeVideo").css("display", "none");
+		$("#pdf").removeClass("fa-spin");
+		if (pdfShare) $("#pdf").addClass("fa-border");
+	}
+}
+
+
+function pdfStart(url)
+{
+	console.log("pdfStart", url);	
+	pdfFrame = document.getElementById("pdfViewer");
+	pdfFrame.contentWindow.location.href = "/ofmeet/pdf/index.html?pdf=" + url;
+	$("#pdf").addClass("fa-spin");
+}
+
+function pdfStop(url)
+{
+	console.log("pdfStop", url);	
+	$("#pdf").removeClass("fa-border fa-spin");		
+	$("#largeVideo").css("display", "block");
+	$("#pdfViewer").css("display", "none");	
+	pdfFrame = null;
+}
+
+function pfdGoto(page)
+{
+	console.log("pfdGoto", page);
+	
+	pdfPage = page;
+	
+	if (pdfShare != null)
+	{
+		connection.emuc.pdfShare("goto", pdfShare + "#" + page);
+	}
+}
+
+function handlePdfShare(action, url)
+{
+	console.log("handlePdfShare", url, action);
+	
+	if (pdfShare == null)
+	{
+		if (pdfFrame == null) 
+		{
+			if (action == "create") pdfStart(url);		
+		
+		} else {
+
+			if (action == "destroy") pdfStop(url);	
+			if (action == "goto") pdfFrame.contentWindow.location.href = "/ofmeet/pdf/index.html?pdf=" + url;
+		}
+	}
+}
+
+
 function openChat() {
     var chatspace = $('#chatspace');
     var videospace = $('#videospace');
@@ -988,9 +1171,13 @@ function updateRoomUrl(newRoomUrl) {
     roomUrl = newRoomUrl;
 }
 
-function toggleFullScreen()
+function goFullScreen()
 {
-	var videoElement = document.getElementById("largeVideo");
+	var tag = "largeVideo";
+	
+	if (pdfFrame != null) tag = "pdfViewer";
+	
+	var videoElement = document.getElementById(tag);
 
 	if (!document.mozFullScreen && !document.webkitFullScreen)
 	{

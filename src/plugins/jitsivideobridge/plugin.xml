@@ -3,10 +3,10 @@
     <author>jitsi.org and igniterealtime.org</author>
     <class>org.jitsi.videobridge.openfire.PluginImpl</class>
     <description>Integrates Jitsi Video Bridge into Openfire.</description>
-    <licenseType>other</licenseType>
+    <licenseType>LGPL</licenseType>
     <minServerVersion>3.9.0</minServerVersion>
     <name>Jitsi Video Bridge</name>
-    <version>1.1</version>
+    <version>1.1.1</version>
 
    <adminconsole>
         <tab id="tab-server">

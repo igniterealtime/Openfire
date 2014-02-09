@@ -20,7 +20,7 @@ Strophe.addConnectionPlugin('emuc', {
             this.connection.addHandler(this.onPresence.bind(this), null, 'presence', null, null, this.roomjid, {matchBare: true});
             this.connection.addHandler(this.onPresenceUnavailable.bind(this), null, 'presence', 'unavailable', null, this.roomjid, {matchBare: true});
             this.connection.addHandler(this.onPresenceError.bind(this), null, 'presence', 'error', null, this.roomjid, {matchBare: true});
-            this.connection.addHandler(this.onMessage.bind(this), null, 'message', null, null, this.roomjid, {matchBare: true});
+            this.connection.addHandler(this.onMessage.bind(this), null, 'message');
         }
 
         var join = $pres({to: this.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'});
@@ -35,6 +35,7 @@ Strophe.addConnectionPlugin('emuc', {
         this.connection.send(presence);
     },    
     onPresence: function (pres) {
+    	console.log('onPresence', $(pres))    
         var from = pres.getAttribute('from');
         var type = pres.getAttribute('type');
         if (type != null) {
@@ -71,6 +72,7 @@ Strophe.addConnectionPlugin('emuc', {
         return true;
     },
     onPresenceUnavailable: function (pres) {
+    	console.log('onPresenceUnavailable', $(pres))      
         var from = pres.getAttribute('from');
         delete this.members[from];
         $(document).trigger('left.muc', [from]);
@@ -105,14 +107,33 @@ Strophe.addConnectionPlugin('emuc', {
         this.connection.send(msg);
     },
     onMessage: function (msg) {
+    	console.log('onMessage', $(msg))
+    	
         var txt = $(msg).find('>body').text();
         // TODO: <subject/>
         // FIXME: this is a hack. but jingle on muc makes nickchanges hard
         var nick = $(msg).find('>nick[xmlns="http://jabber.org/protocol/nick"]').text() || Strophe.getResourceFromJid(msg.getAttribute('from'));
+        
         if (txt) {
             updateChatConversation(nick, txt);
+            return true;            
         }
+        
+	$(msg).find('pdfshare').each(function() 
+	{
+		var action = $(this).attr('action');
+		var url = $(this).attr('url');
+		
+		handlePdfShare(action, url);	
+	});
+	
         return true;
+    },
+    pdfShare: function(action, url) {
+    	console.log("emuc.pdfShare", url, action)
+        var msg = $msg({to: this.roomjid, type: 'groupchat'});
+        msg.c('pdfshare', {xmlns: 'http://igniterealtime.org/protocol/pdfshare', action: action, url: url}).up();
+        this.connection.send(msg);        
     },
     lockRoom: function (key) {
         //http://xmpp.org/extensions/xep-0045.html#roomconfig

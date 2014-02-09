@@ -69,16 +69,20 @@ It includes the OfMeet video conference application using WebRTC as well as a si
 
 <h2>Installation</h2>
 
-<p>Copy jitsivideobridge.jar into the plugins directory of your Openfire server. The
-plugin will then be automatically deployed. To upgrade to a new version, copy the new
- jitsiVideobridge.jar file over the existing file.</p>
+<ol>
+    <li>Copy the jitsivideobridge.jar file to the OPENFIRE_HOME/plugins directory.</li>
+    <li>Restart Openfire.</li>
+    <li>Configure the admin properties page.</li>
+</ol>
 
 <h2>Configuration</h2>
 
-Under Server settings -> Jitsi Videobridge tab you can configure it.
+Under Server settings -> Jitsi Videobridge tab you can configure the range of UDP ports to be used by the videobridge.
 
 <h2>How to use</h2>
 
+Make sure you are using Google Chrome as your web browser and you have a webcam installed and ready for use.
+</p>
 To run the demo video conference application, point your browser at https://your_server:7443/ofmeet
 <p/>
 To download the Spark plugin, point your browser at https://your_server:7443/ofmeet/jitsivideobridge-plugin.jar

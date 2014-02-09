@@ -27,11 +27,19 @@ html, body{
     z-index: 0;
 }
 
+
+#pdfViewer {
+    display:block;
+    position:relative;
+    width:auto;
+    height:auto;
+}
+
 #remoteVideos {
     display:block;
     position:relative;
     text-align:center;
-    height:196px;
+    height:170px;
     width:auto;
     overflow: hidden;
     border:1px solid transparent;
@@ -46,6 +54,9 @@ html, body{
     width:auto;
     z-index:0;
     border:1px solid #FFFFFF;
+    background-repeat:no-repeat;
+    background-image:url(../images/avatar1.png);
+    background-size: contain;    
 }
 
 #remoteVideos video:hover {

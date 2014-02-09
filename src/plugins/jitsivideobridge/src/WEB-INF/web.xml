@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
-  
+
+	<servlet>
+		<servlet-name>proxy</servlet-name>
+		<servlet-class>org.jitsi.videobridge.openfire.HttpProxy</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>proxy</servlet-name>
+		<url-pattern>/proxy</url-pattern>
+	</servlet-mapping>	
+	
 </web-app>

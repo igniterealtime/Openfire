@@ -6,7 +6,7 @@ var config = {
     },
     useIPv6: false, // ipv6 support. use at your own risk
     useNicks: false,
-    useWebsockets: true,
+    useWebsockets: false,
     resolution: "360",
     bosh: window.location.protocol + "//" + window.location.host + '/http-bind/' // FIXME: use xep-0156 for that
 };

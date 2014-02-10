@@ -61,11 +61,11 @@ servers together in a cluster.  By running Openfire as a cluster, you can
 distribute the connection load among several servers, while also providing
 failover in the event that one of your servers fails. This plugin is a
 drop-in replacement for the original Openfire clustering plugin, using the
-open source <a href="http://www.hazelcast.com">Hazelcast</a> data distribution
+open source <a href="http://www.hazelcast.org">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 2.5.1.
+The current Hazelcast release is version 3.1.5.
 </p>
 <h2>Installation</h2>
 <p>
@@ -186,7 +186,7 @@ Hazelcast JMX docs</a> for additional information.</li>
 </ol>
 </p>
 <p>
-The Hazelcast plugin uses the <a href="http://www.hazelcast.com/docs/2.5/manual/single_html/#Config">
+The Hazelcast plugin uses the <a href="http://www.hazelcast.org/docs/3.1/manual/single_html/#Config">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
 By default the cluster members will attempt to discover each other via multicast at the
 following location:
@@ -211,7 +211,7 @@ following alternative:
 &lt;/join&gt;
 ...
 </pre>
-Please refer to the <a href="http://www.hazelcast.com/docs/2.5/manual/single_html/">
+Please refer to the <a href="http://www.hazelcast.org/docs/3.1/manual/single_html/">
 Hazelcast reference manual</a> for more information.
 </p>
 </body>

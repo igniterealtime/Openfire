@@ -19,6 +19,7 @@
 package com.jivesoftware.util.cache;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,8 @@ import com.hazelcast.monitor.LocalMapStats;
 public class ClusteredCache implements Cache {
 
     private static Logger logger = LoggerFactory.getLogger(ClusteredCache.class);
+    
+    private final Map<EntryListener, String> registrations = new HashMap<EntryListener, String>();
 
     /**
      * The map is used for distributed operations such as get, put, etc.
@@ -59,11 +62,14 @@ public class ClusteredCache implements Cache {
     }
 
     public void addEntryListener(EntryListener listener, boolean includeValue) {
-        map.addEntryListener(listener, includeValue);
+    	registrations.put(listener, map.addEntryListener(listener, includeValue));
     }
 
     public void removeEntryListener(EntryListener listener) {
-        map.removeEntryListener(listener);
+    	String registrationId = registrations.get(listener);
+    	if (registrationId != null) {
+    		map.removeEntryListener(registrationId);
+    	}
     }
 
     // Cache Interface
@@ -168,7 +174,12 @@ public class ClusteredCache implements Cache {
     	} else if (timeout == 0) {
     		result = map.tryLock(key);
     	} else {
-    		result = map.tryLock(key, timeout, TimeUnit.MILLISECONDS);
+    		try {
+    			result = map.tryLock(key, timeout, TimeUnit.MILLISECONDS);
+    		} catch (InterruptedException e) {
+    			logger.error("Failed to get cluster lock", e);
+    			result = false;
+    		}
     	}
         return result;
     }

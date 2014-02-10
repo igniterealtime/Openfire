@@ -54,6 +54,7 @@ import org.xmpp.packet.Presence;
 
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryEventType;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
@@ -138,18 +139,6 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 
         directedPresencesCache = CacheFactory.createCache(PresenceUpdateHandler.PRESENCE_CACHE_NAME);
 
-        addEntryListener(C2SCache, new CacheListener(this, C2SCache.getName()));
-        addEntryListener(anonymousC2SCache, new CacheListener(this, anonymousC2SCache.getName()));
-        addEntryListener(S2SCache, new CacheListener(this, S2SCache.getName()));
-        addEntryListener(componentsCache, new ComponentCacheListener());
-
-        addEntryListener(sessionInfoCache, new CacheListener(this, sessionInfoCache.getName()));
-        addEntryListener(componentSessionsCache, new CacheListener(this, componentSessionsCache.getName()));
-        addEntryListener(multiplexerSessionsCache, new CacheListener(this, multiplexerSessionsCache.getName()));
-        addEntryListener(incomingServerSessionsCache, new CacheListener(this, incomingServerSessionsCache.getName()));
-
-        addEntryListener(directedPresencesCache, new DirectedPresenceListener());
-
         joinCluster();
     }
 
@@ -173,7 +162,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
                     ClusteredCache clusteredCache = (ClusteredCache) wrapped;
                     for (Map.Entry entry : (Set<Map.Entry>) cache.entrySet()) {
                         EntryEvent event = new EntryEvent(clusteredCache.map.getName(), cluster.getLocalMember(), 
-                        		EntryEvent.TYPE_ADDED, entry.getKey(), null, entry.getValue());
+                        		EntryEventType.ADDED.getType(), entry.getKey(), null, entry.getValue());
                         EntryListener.entryAdded(event);
                     }
                 }
@@ -555,6 +544,20 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 		if (!isDone()) { // already joined
 			return;
 		}
+		// Trigger events
+        ClusterManager.fireJoinedCluster(false);
+        addEntryListener(C2SCache, new CacheListener(this, C2SCache.getName()));
+        addEntryListener(anonymousC2SCache, new CacheListener(this, anonymousC2SCache.getName()));
+        addEntryListener(S2SCache, new CacheListener(this, S2SCache.getName()));
+        addEntryListener(componentsCache, new ComponentCacheListener());
+
+        addEntryListener(sessionInfoCache, new CacheListener(this, sessionInfoCache.getName()));
+        addEntryListener(componentSessionsCache, new CacheListener(this, componentSessionsCache.getName()));
+        addEntryListener(multiplexerSessionsCache, new CacheListener(this, multiplexerSessionsCache.getName()));
+        addEntryListener(incomingServerSessionsCache, new CacheListener(this, incomingServerSessionsCache.getName()));
+
+        addEntryListener(directedPresencesCache, new DirectedPresenceListener());
+
         // Simulate insert events of existing cache content
         simulateCacheInserts(C2SCache);
         simulateCacheInserts(anonymousC2SCache);
@@ -566,8 +569,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         simulateCacheInserts(incomingServerSessionsCache);
         simulateCacheInserts(directedPresencesCache);
 
-        // Trigger events
-        ClusterManager.fireJoinedCluster(false);
+        
         if (CacheFactory.isSeniorClusterMember()) {
             seniorClusterMember = true;
             ClusterManager.fireMarkedAsSeniorClusterMember();

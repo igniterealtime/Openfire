@@ -20,6 +20,7 @@
 package com.jivesoftware.util.cache;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
@@ -52,11 +54,9 @@ import org.slf4j.LoggerFactory;
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Cluster;
-import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
-import com.hazelcast.core.MultiTask;
 import com.jivesoftware.openfire.session.RemoteSessionLocator;
 import com.jivesoftware.util.cluster.ClusterPacketRouter;
 import com.jivesoftware.util.cluster.HazelcastClusterNodeInfo;
@@ -69,6 +69,8 @@ import com.jivesoftware.util.cluster.HazelcastClusterNodeInfo;
  */
 public class ClusteredCacheFactory implements CacheFactoryStrategy {
 
+    public static final String HAZELCAST_EXECUTOR_SERVICE_NAME =
+    		JiveGlobals.getProperty("hazelcast.executor.service.name", "openfire::cluster::executor");
     private static final long MAX_CLUSTER_EXECUTION_TIME = 
     		JiveGlobals.getLongProperty("hazelcast.max.execution.seconds", 30);
     private static final long CLUSTER_STARTUP_RETRY_TIME = 
@@ -276,8 +278,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         if (members.size() > 0) {
 	        // Asynchronously execute the task on the other cluster members
     		logger.debug("Executing asynchronous MultiTask: " + task.getClass().getName());
-	        hazelcast.getExecutorService().execute(
-        		new MultiTask<Object>(new CallableTask<Object>(task), members));
+	        hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMembers(
+        		new CallableTask<Object>(task), members);
         } else {
        		logger.warn("No cluster members selected for cluster task " + task.getClass().getName());
         }
@@ -295,8 +297,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         if (member != null) {
             // Asynchronously execute the task on the target member
     		logger.debug("Executing asynchronous DistributedTask: " + task.getClass().getName());
-	        hazelcast.getExecutorService().execute(
-        		new DistributedTask<Object>(new CallableTask<Object>(task), member));
+	        hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(
+	        		new CallableTask<Object>(task), member);
             return true;
         } else {
 	        logger.warn("Requested node " + StringUtils.getString(nodeID) + " not found in cluster");
@@ -310,8 +312,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * (seconds) until the task is run on all members.
      */
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
-        Collection<Object> result = Collections.emptyList();
-        if (cluster == null) { return result; }
+        if (cluster == null) { return Collections.emptyList(); }
         Set<Member> members = new HashSet<Member>();
         Member current = cluster.getLocalMember();
         for(Member member : cluster.getMembers()) {
@@ -319,15 +320,19 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		members.add(member);
         	}
         }
+        Collection<Object> result = new ArrayList<Object>();
         if (members.size() > 0) {
 	        // Asynchronously execute the task on the other cluster members
-        	MultiTask<Object> multiTask = new MultiTask<Object>(
-        			new CallableTask<Object>(task), members);
         	try {
         		logger.debug("Executing MultiTask: " + task.getClass().getName());
-        		hazelcast.getExecutorService().execute(multiTask);
-        		result = multiTask.get(MAX_CLUSTER_EXECUTION_TIME,TimeUnit.SECONDS);
-        		logger.debug("MultiTask result: " + (result == null ? "null" : result.size()));
+        		Map<Member, Future<Object>> futures = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME)
+        			.submitToMembers(new CallableTask<Object>(task), members);
+        		long nanosLeft = TimeUnit.SECONDS.toNanos(MAX_CLUSTER_EXECUTION_TIME);
+        		for (Future<Object> future : futures.values()) {
+        			long start = System.nanoTime();
+        			result.add(future.get(nanosLeft, TimeUnit.NANOSECONDS));
+        			nanosLeft = (System.nanoTime() - start);
+        		}
         	} catch (TimeoutException te) {
         		logger.error("Failed to execute cluster task within " + MAX_CLUSTER_EXECUTION_TIME + " seconds", te);
         	} catch (Exception e) {
@@ -351,12 +356,11 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         // Check that the requested member was found
         if (member != null) {
             // Asynchronously execute the task on the target member
-        	DistributedTask<Object> distributedTask = new DistributedTask<Object>(
-        			new CallableTask<Object>(task), member);
     		logger.debug("Executing DistributedTask: " + task.getClass().getName());
-	        hazelcast.getExecutorService().execute(distributedTask);
             try { 
-            	result = distributedTask.get(MAX_CLUSTER_EXECUTION_TIME, TimeUnit.SECONDS);
+            	Future<Object> future = hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME)
+            			.submitToMember(new CallableTask<Object>(task), member);
+    			result = future.get(MAX_CLUSTER_EXECUTION_TIME, TimeUnit.SECONDS);
         		logger.debug("DistributedTask result: " + (result == null ? "null" : result));
         	} catch (TimeoutException te) {
         		logger.error("Failed to execute cluster task within " + MAX_CLUSTER_EXECUTION_TIME + " seconds", te);

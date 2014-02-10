@@ -146,7 +146,7 @@ public class UpdateManager extends BasicModule {
                             catch (Exception e) {
                                 Log.error("Error checking for updates", e);
                             }
-                            // Keep track of the last time we checked for updates. 
+                            // Keep track of the last time we checked for updates.
                             long now = System.currentTimeMillis();
                             JiveGlobals.setProperty("update.lastCheck", String.valueOf(now));
                             // As an extra precaution, make sure that that the value
@@ -198,6 +198,9 @@ public class UpdateManager extends BasicModule {
         super.initialize(server);
         router = server.getMessageRouter();
         serverName = server.getServerInfo().getXMPPDomain();
+
+        JiveGlobals.migrateProperty("update.service-enabled");
+        JiveGlobals.migrateProperty("update.notify-admins");
     }
 
     /**

@@ -137,7 +137,7 @@
           <versionLine x="20" y="40" text="version ${compiler:sys.version}" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500" />
         </text>
       </splashScreen>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="" arguments="-DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot; -Dopenfire.lib.dir=&quot;$app_home/lib&quot;" allowVMPassthroughParameters="true" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot; -Dopenfire.lib.dir=&quot;$app_home/lib&quot;" arguments="" allowVMPassthroughParameters="true" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="true" />
         </classPath>

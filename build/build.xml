@@ -709,6 +709,14 @@
         <copy todir="${target.openfireHome}">
             <fileset dir="${src.dir}" includes="bin/**/*"/>
         </copy>
+        <!-- Make stuff under bin executable -->
+        <chmod perm="+x">
+            <fileset dir="${target.openfireHome}/bin" includes="**/*">
+                <exclude name="**/*.bat"/>
+                <exclude name="**/*.rc"/>
+                <exclude name="**/*-sysconfig"/>
+            </fileset>
+        </chmod>
         <fixcrlf srcdir="${target.openfireHome}/bin" eol="lf" eof="remove" includes="*.sh,extra/*"/>
 
         <!-- Create a logs dir in the binary release -->

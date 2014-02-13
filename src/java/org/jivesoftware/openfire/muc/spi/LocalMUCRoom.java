@@ -518,7 +518,7 @@ public class LocalMUCRoom implements MUCRoom {
         lock.writeLock().lock();
         try {
             // If the room has a limit of max user then check if the limit has been reached
-            if (isDestroyed || (getMaxUsers() > 0 && getOccupantsCount() >= getMaxUsers())) {
+            if (!canJoinRoom(user)) {
                 throw new ServiceUnavailableException();
             }
             final JID bareJID = user.getAddress().asBareJID();
@@ -696,6 +696,27 @@ public class LocalMUCRoom implements MUCRoom {
         return joinRole;
     }
 
+    /**
+     * Can a user join this room
+     * 
+     * @param user the user attempting to join this room
+     * @return boolean
+     */
+    private boolean canJoinRoom(LocalMUCUser user){
+    	boolean isOwner = owners.contains(user.getAddress().toBareJID());
+    	boolean isAdmin = admins.contains(user.getAddress().toBareJID());
+    	return (!isDestroyed && (!hasOccupancyLimit() || isAdmin || isOwner || (getOccupantsCount() < getMaxUsers())));
+    }
+
+    /**
+     * Does this room have an occupancy limit?
+     * 
+     * @return boolean
+     */
+    private boolean hasOccupancyLimit(){
+    	return getMaxUsers() != 0;
+    }
+    
     /**
      * Sends presence of existing occupants to new occupant.
      *

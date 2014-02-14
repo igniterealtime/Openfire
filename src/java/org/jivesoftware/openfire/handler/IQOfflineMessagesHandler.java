@@ -50,6 +50,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 /**
  * Implements JEP-0013: Flexible Offline Message Retrieval. Allows users to request number of
@@ -115,7 +116,12 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
                 }
                 else if ("remove".equals(item.attributeValue("action"))) {
                     // User requested to delete specific message
-                    messageStore.deleteMessage(from.getNode(), creationDate);
+                    if (messageStore.getMessage(from.getNode(), creationDate) != null) {
+                        messageStore.deleteMessage(from.getNode(), creationDate);
+                    } else {
+                        // If the requester is authorized but the node does not exist, the server MUST return a <item-not-found/> error.
+                        reply.setError(PacketError.Condition.item_not_found);
+                    }
                 }
             }
         }

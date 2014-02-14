@@ -272,7 +272,20 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
                 Roster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
-                recipientRoster.deleteRosterItem(sender, true);
+                // Instead of deleting the sender in the recipient's roster, update it.
+                // http://issues.igniterealtime.org/browse/OF-720
+                RosterItem rosterItem = recipientRoster.getRosterItem(sender);
+                // If the receiver doesn't have subscribed yet, delete the sender from the receiver's roster, too.
+                if (rosterItem.getRecvStatus().equals(RosterItem.RECV_SUBSCRIBE)) {
+                    recipientRoster.deleteRosterItem(sender, true);
+                }
+                // Otherwise only update it, so that the sender is not deleted from the receivers roster.
+                else {
+                    rosterItem.setAskStatus(RosterItem.ASK_NONE);
+                    rosterItem.setRecvStatus(RosterItem.RECV_NONE);
+                    rosterItem.setSubStatus(RosterItem.SUB_NONE);
+                    recipientRoster.updateRosterItem(rosterItem);
+                }
             }
             catch (UserNotFoundException e) {
                 // Do nothing

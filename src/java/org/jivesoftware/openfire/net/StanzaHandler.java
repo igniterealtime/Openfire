@@ -19,9 +19,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
-import java.io.StringReader;
-
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -38,13 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Roster;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -53,7 +47,7 @@ import org.xmpp.packet.StreamError;
  * @author Gaston Dombiak
  */
 public abstract class StanzaHandler {
-	
+
 	private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
 
     /**
@@ -602,36 +596,36 @@ public abstract class StanzaHandler {
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
         // error and close the underlying connection.
         String host = xpp.getAttributeValue("", "to");
+        StreamError streamError = null;
         if (validateHost() && isHostUnknown(host)) {
-            StringBuilder sb = new StringBuilder(250);
-            sb.append("<?xml version='1.0' encoding='");
-            sb.append(CHARSET);
-            sb.append("'?>");
-            // Append stream header
-            sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
-            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
-            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
-            sb.append("version=\"1.0\">");
-            // Set the host_unknown error
-            StreamError error = new StreamError(StreamError.Condition.host_unknown);
-            sb.append(error.toXML());
-            // Deliver stanza
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            streamError = new StreamError(StreamError.Condition.host_unknown);
             // Log a warning so that admins can track this cases from the server side
             Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host +
                     ". Connection: " + connection);
         }
+        // Validate the stream namespace
+        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
+            // Include the invalid-namespace in the response
+            streamError = new StreamError(StreamError.Condition.invalid_namespace);
+            // Log a warning so that admins can track this cases from the server side
+            Log.warn("Closing session due to invalid_namespace in stream header. Namespace: " +
+                    xpp.getNamespace() + ". Connection: " + connection);
 
+        }
         // Create the correct session based on the sent namespace. At this point the server
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
         else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
+            // Include the bad-namespace-prefix in the response
+            streamError = new StreamError(StreamError.Condition.bad_namespace_prefix);
+            // Log a warning so that admins can track this cases from the server side
+            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: " +
+                    xpp.getNamespace(null) + ". Connection: " + connection);
+        }
+
+        if (streamError != null) {
             StringBuilder sb = new StringBuilder(250);
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
@@ -641,18 +635,15 @@ public abstract class StanzaHandler {
             sb.append("from=\"").append(serverName).append("\" ");
             sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
-            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
+            sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
             sb.append("version=\"1.0\">");
-            // Include the bad-namespace-prefix in the response
-            StreamError error = new StreamError(StreamError.Condition.bad_namespace_prefix);
-            sb.append(error.toXML());
+            sb.append(streamError.toXML());
+            // Deliver stanza
             connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: " +
-                    xpp.getNamespace(null) + ". Connection: " + connection);
         }
+
     }
 
     private boolean isHostUnknown(String host) {
@@ -671,23 +662,23 @@ public abstract class StanzaHandler {
     /**
 	 * Obtain the address of the XMPP entity for which this StanzaHandler
 	 * handles stanzas.
-	 * 
+	 *
 	 * Note that the value that is returned for this method can
 	 * change over time. For example, if no session has been established yet,
 	 * this method will return </tt>null</tt>, or, if resource binding occurs,
 	 * the returned value might change. Values obtained from this method are
 	 * therefore best <em>not</em> cached.
-	 * 
+	 *
 	 * @return The address of the XMPP entity for.
 	 */
     public JID getAddress() {
     	if (session == null) {
     		return null;
     	}
-    	
+
     	return session.getAddress();
     }
-    
+
     /**
      * Returns the stream namespace. (E.g. jabber:client, jabber:server, etc.).
      *

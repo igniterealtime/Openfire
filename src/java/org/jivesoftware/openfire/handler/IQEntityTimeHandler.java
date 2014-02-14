@@ -25,6 +25,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.IQ;
 
 import javax.xml.bind.DatatypeConverter;
@@ -45,7 +46,7 @@ public final class IQEntityTimeHandler extends IQHandler implements ServerFeatur
     @Override
     public IQ handleIQ(IQ packet) {
         IQ response = IQ.createResultIQ(packet);
-        Element timeElement = DocumentHelper.createElement(QName.get("time", "urn:xmpp:time"));
+        Element timeElement = DocumentHelper.createElement(QName.get(info.getName(), info.getNamespace()));
         timeElement.addElement("tzo").setText(formatsTimeZone(TimeZone.getDefault()));
         timeElement.addElement("utc").setText(getUtcDate(new Date()));
         response.setChildElement(timeElement);
@@ -59,7 +60,7 @@ public final class IQEntityTimeHandler extends IQHandler implements ServerFeatur
 
     @Override
     public Iterator<String> getFeatures() {
-        return Collections.singleton("urn:xmpp:time").iterator();
+        return Collections.singleton(info.getNamespace()).iterator();
     }
 
     /**
@@ -68,7 +69,8 @@ public final class IQEntityTimeHandler extends IQHandler implements ServerFeatur
      * @param tz The time zone.
      * @return The formatted time zone.
      */
-    private String formatsTimeZone(TimeZone tz) {
+    String formatsTimeZone(TimeZone tz) {
+        // package-private for test.
         int seconds = Math.abs(tz.getRawOffset()) / 1000;
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
@@ -81,10 +83,10 @@ public final class IQEntityTimeHandler extends IQHandler implements ServerFeatur
      * @param date The date.
      * @return The UTC formatted date.
      */
-    private String getUtcDate(Date date) {
-        Calendar calendar = new GregorianCalendar();
+    String getUtcDate(Date date) {
+        // package-private for test.
+        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
         calendar.setTime(date);
-        calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
         // This makes sure the date is formatted as the xs:dateTime type.
         return DatatypeConverter.printDateTime(calendar);
     }

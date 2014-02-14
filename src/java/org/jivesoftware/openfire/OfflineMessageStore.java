@@ -20,22 +20,9 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.StringReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
@@ -54,6 +41,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+
+import java.io.StringReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -126,13 +123,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         if (message == null) {
             return;
         }
-		// ignore empty bodied message (typically chat-state notifications).
-        if (message.getBody() == null || message.getBody().length() == 0) {
-        	// allow empty pubsub messages (OF-191)
-        	if (message.getChildElement("event", "http://jabber.org/protocol/pubsub#event") == null)
-        	{ 
-        		return; 
-        	}
+        if(!shouldStoreMessage(message)) {
+            return;
         }
         JID recipient = message.getTo();
         String username = recipient.getNode();
@@ -469,5 +461,62 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         xmlReaders.clear();
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(this);
+    }
+
+    /**
+     * Decide whether a message should be stored offline according to XEP-0160 and XEP-0334.
+     *
+     * @param message
+     * @return <code>true</code> if the message should be stored offline, <code>false</code> otherwise.
+     */
+    static boolean shouldStoreMessage(final Message message) {
+        // XEP-0334: Implement the <no-store/> hint to override offline storage
+        if (message.getChildElement("no-store", "urn:xmpp:hints") != null) {
+            return false;
+        }
+
+        switch (message.getType()) {
+            case chat:
+                // XEP-0160: Messages with a 'type' attribute whose value is "chat" SHOULD be stored offline, with the exception of messages that contain only Chat State Notifications (XEP-0085) [7] content
+
+                // Iterate through the child elements to see if we can find anything that's not a chat state notification or
+                // real time text notification
+                Iterator<?> it = message.getElement().elementIterator();
+
+                while (it.hasNext()) {
+                    Object item = it.next();
+
+                    if (item instanceof Element) {
+                        Element el = (Element) item;
+
+                        if (!el.getNamespaceURI().equals("http://jabber.org/protocol/chatstates")
+                                && !(el.getQName().equals(QName.get("rtt", "urn:xmpp:rtt:0")))
+                                ) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+
+            case groupchat:
+            case headline:
+                // XEP-0160: "groupchat" message types SHOULD NOT be stored offline
+                // XEP-0160: "headline" message types SHOULD NOT be stored offline
+                return false;
+
+            case error:
+                // XEP-0160: "error" message types SHOULD NOT be stored offline,
+                // although a server MAY store advanced message processing errors offline
+                if (message.getChildElement("amp", "http://jabber.org/protocol/amp") == null) {
+                    return false;
+                }
+                break;
+
+            default:
+                // XEP-0160: Messages with a 'type' attribute whose value is "normal" (or messages with no 'type' attribute) SHOULD be stored offline.
+                break;
+        }
+        return true;
     }
 }

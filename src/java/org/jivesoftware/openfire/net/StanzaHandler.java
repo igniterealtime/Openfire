@@ -616,12 +616,11 @@ public abstract class StanzaHandler {
         // may offer the client to secure the connection. If the client decides to secure
         // the connection then a <starttls> stanza should be received
         else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
-            // No session was created because of an invalid namespace prefix so answer a stream
-            // error and close the underlying connection
-            // Include the bad-namespace-prefix in the response
-            streamError = new StreamError(StreamError.Condition.bad_namespace_prefix);
+            // http://xmpp.org/rfcs/rfc6120.html#streams-error-conditions-invalid-namespace
+            // "or the content namespace declared as the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server")."
+            streamError = new StreamError(StreamError.Condition.invalid_namespace);
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: " +
+            Log.warn("Closing session due to invalid_namespace in stream header. Prefix: " +
                     xpp.getNamespace(null) + ". Connection: " + connection);
         }
 

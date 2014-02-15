@@ -64,6 +64,11 @@
 			<artifactId>jetty-webapp</artifactId>
 			<version>${jetty.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-jmx</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>org.mortbay.jetty</groupId>
 			<version>6.0.1</version>
@@ -74,6 +79,11 @@
 			<artifactId>mina-core</artifactId>
 			<version>${mina.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-integration-jmx</artifactId>
+            <version>${mina.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.mina</groupId>
 			<artifactId>mina-filter-ssl</artifactId>
@@ -89,10 +99,20 @@
 			<artifactId>commons-httpclient</artifactId>
 			<version>3.1</version>
 		</dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpg-jdk15on</artifactId>
+            <version>1.49</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.49</version>
+        </dependency>
   		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk16</artifactId>
-			<version>1.46</version>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.49</version>
 		</dependency>
 		<dependency>
 			<groupId>org.igniterealtime</groupId>

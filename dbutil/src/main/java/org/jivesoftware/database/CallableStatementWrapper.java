@@ -864,7 +864,15 @@ public abstract class CallableStatementWrapper extends StatementWrapper
 		cstmt.setNClob(parameterName, reader);
 	}
 
-	public CallableStatementWrapper(CallableStatement cstmt) {
+    public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
+        return cstmt.getObject(parameterIndex, type);
+    }
+
+    public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
+        return cstmt.getObject(parameterName, type);
+    }
+
+    public CallableStatementWrapper(CallableStatement cstmt) {
         super(cstmt);
         this.cstmt = cstmt;
     }

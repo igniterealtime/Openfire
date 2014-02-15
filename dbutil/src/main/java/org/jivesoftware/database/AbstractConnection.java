@@ -14,6 +14,7 @@ package org.jivesoftware.database;
 import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 /**
  * An implementation of the Connection interface that wraps an underlying
@@ -228,4 +229,24 @@ public abstract class AbstractConnection implements Connection {
 	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
 		return connection.createStruct(typeName, attributes);
 	}
+
+    public void setSchema(String schema) throws SQLException {
+        connection.setSchema(schema);
+    }
+
+    public String getSchema() throws SQLException {
+        return connection.getSchema();
+    }
+
+    public void abort(Executor executor) throws SQLException {
+        connection.abort(executor);
+    }
+
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+        connection.setNetworkTimeout(executor, milliseconds);
+    }
+
+    public int getNetworkTimeout() throws SQLException {
+        return connection.getNetworkTimeout();
+    }
 }

@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>org.igniterealtime.openfire.plugins</groupId>
 	<artifactId>stunserver</artifactId>
-	<name>Broadcast plugin</name>
+	<name>STUN server plugin</name>
 
 	<build>
 		<plugins>

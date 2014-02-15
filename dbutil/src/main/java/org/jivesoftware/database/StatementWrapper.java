@@ -26,7 +26,7 @@ public abstract class StatementWrapper implements Statement {
     /**
      * Creates a new StatementWrapper that wraps <tt>stmt</tt>.
      *
-     * @param stmt
+     * @param stmt The to-be-wrapped statement.
      */
     public StatementWrapper(Statement stmt) {
         this.stmt = stmt;
@@ -199,4 +199,13 @@ public abstract class StatementWrapper implements Statement {
 	public boolean isPoolable() throws SQLException {
 		return stmt.isPoolable();
 	}
+
+    public void closeOnCompletion() throws SQLException {
+        stmt.closeOnCompletion();
+    }
+
+    @Override
+    public boolean isCloseOnCompletion() throws SQLException {
+        return stmt.isCloseOnCompletion();
+    }
 }

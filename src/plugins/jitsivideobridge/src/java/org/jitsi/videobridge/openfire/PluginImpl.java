@@ -208,7 +208,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		// start video conference web application
 
 		try {
-			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "ofmeet");
+			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "jitsi");
 			Log.info("Initialize Web App " + appName);
 
 			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
@@ -730,7 +730,16 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void nicknameChanged(JID roomJID, JID user, String oldNickname, String newNickname)
 		{
+			Log.info("ColibriIQHandler nicknameChanged " + roomJID + " " + user);
 
+			String focusAgentName = "jitsi.videobridge." + roomJID.getNode();
+
+			if (sessions.containsKey(focusAgentName))
+			{
+				FocusAgent focusAgent = sessions.get(focusAgentName);
+
+				focusAgent.changeNickname(user, newNickname);
+			}
 		}
 		/**
 		 *
@@ -845,6 +854,13 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
+		public void setNickname(String nickname) {
+			this.nickname = nickname;
+		}
+		/**
+		 *
+		 *
+		 */
 		public String toString() {
 			return user + " " + nickname;
 		}
@@ -918,8 +934,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 						AddSourceEvent event = new AddSourceEvent();
 						event.setMuc(roomJid);
-						event.setNickname(participant.getNickname());
-						event.setParticipant(participant.getUser());
+						event.setNickname(reciepient.getNickname());
+						event.setParticipant(reciepient.getUser());
 						event.setConference(conf);
 						presence.getElement().add(colibriProvider.toXML(event));
 
@@ -1076,8 +1092,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				iq.setTo("jitsi-videobridge." + domainName);
 
 				String id = "expire-" + nickname + "-" + System.currentTimeMillis();
-				ids.put(id, participant);
-				iq.setID(id);
+				//ids.put(id, participant);
+				//iq.setID(id);
 
 				Element conferenceIq = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
 				conferenceIq.addAttribute("id", focusId);
@@ -1091,6 +1107,20 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				router.route(iq);
 			}
 		}
+		/**
+		 *
+		 *
+		 */
+		public void changeNickname(JID user, String nickName)
+		{
+			Participant participant = users.get(user.toString());
+
+			if (participant != null)
+			{
+				participant.setNickname(nickName);
+			}
+		}
+
 		/**
 		 *
 		 *
@@ -1127,8 +1157,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 							RemoveSourceEvent event = new RemoveSourceEvent();
 							event.setMuc(roomJid);
-							event.setNickname(participant.getNickname());
-							event.setParticipant(participant.getUser());
+							event.setNickname(reciepient.getNickname());
+							event.setParticipant(reciepient.getUser());
 							event.setConference(conf);
 							presence.getElement().add(colibriProvider.toXML(event));
 

@@ -6,7 +6,7 @@
     <licenseType>LGPL</licenseType>
     <minServerVersion>3.9.0</minServerVersion>
     <name>Jitsi Video Bridge</name>
-    <version>1.1.1</version>
+    <version>1.2</version>
 
    <adminconsole>
         <tab id="tab-server">

@@ -67,6 +67,11 @@ It includes the OfMeet video conference application using WebRTC as well as a si
 
 </p>
 
+<h2>Known Issues</h2>
+
+<p>
+The first video conference creating after restarting Openfire may fail. Work around is remove all participants from the room and try again or use a new room.
+</p>
 <h2>Installation</h2>
 
 <ol>
@@ -81,11 +86,25 @@ Under Server settings -> Jitsi Videobridge tab you can configure the range of UD
 
 <h2>How to use</h2>
 
-Make sure you are using Google Chrome as your web browser and you have a webcam installed and ready for use.
+<p>
+Make sure:
+<ul>
+<li>you are using Google Chrome as your web browser</li>
+<li>you have a webcam installed and ready for use for each user</li>
+<li>you have opened ports 50000 - 60000 (or whatever you configured) on your openfire server</li>
+</ul>
 </p>
-To run the demo video conference application, point your browser at https://your_server:7443/ofmeet
+<h2>OfMeet</h2>
+To run the ofmeet video conference application, point your browser at https://your_server:7443/jitsi/apps/ofmeet
 <p/>
-To download the Spark plugin, point your browser at https://your_server:7443/ofmeet/jitsivideobridge-plugin.jar
+<h2>Candy</h2>
+To run the Candy web application with multi-user video, point your browser at https://your_server:7443/jitsi/apps/candy
+<p/>
+<h2>Spark</h2>
+To download the Spark plugin, point your browser at https://your_server:7443/jitsi/apps/spark/jitsivideobridge-plugin.jar
+<p/>
+<h2>JitMeet</h2>
+To run the jitmeet video conference application, point your browser at https://your_server:7443/jitsi/apps/jitmeet
 <p/>
 You will need Google Chrome  as your default browser to use the Spark plugin
 </body>

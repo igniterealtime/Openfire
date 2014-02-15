@@ -1558,9 +1558,8 @@
                 <!-- Some JAR files don't work well through Pack200. When that's the case, they should
                      be manually added to this list.
                 -->
-                <property name="pack200.excludes" value="*.jar" />
-                      <!-- temporarily disable Pack200 for plugins (OF-739)
-						value="gnujaxp.jar,mail.jar,activation.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar,tangosol.jar"/> -->
+                <property name="pack200.excludes"
+                          value="gnujaxp.jar,mail.jar,activation.jar,bouncycastle.jar,tangosol.jar"/>
 
                 <if>
                     <equals arg1="${pack200.enabled}" arg2="true" />

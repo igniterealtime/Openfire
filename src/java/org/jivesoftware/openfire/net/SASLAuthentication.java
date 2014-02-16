@@ -121,6 +121,32 @@ public class SASLAuthentication {
         }
     }
 
+    private enum Failure {
+
+        ABORTED("aborted"),
+        ACCOUNT_DISABLED("account-disabled"),
+        CREDENTIALS_EXPIRED("credentials-expired"),
+        ENCRYPTION_REQUIRED("encryption-required"),
+        INCORRECT_ENCODING("incorrect-encoding"),
+        INVALID_AUTHZID("invalid-authzid"),
+        INVALID_MECHANISM("invalid-mechanism"),
+        MALFORMED_REQUEST("malformed-request"),
+        MECHANISM_TOO_WEAK("mechanism-too-weak"),
+        NOT_AUTHORIZED("not-authorized"),
+        TEMPORARY_AUTH_FAILURE("temporary-auth-failure");
+
+        private String name = null;
+
+        private Failure(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
     public enum Status {
         /**
          * Entity needs to respond last challenge. Session is still negotiating
@@ -234,6 +260,13 @@ public class SASLAuthentication {
             switch (type) {
                 case AUTH:
                     mechanism = doc.attributeValue("mechanism");
+                    // http://xmpp.org/rfcs/rfc6120.html#sasl-errors-invalid-mechanism
+                    // The initiating entity did not specify a mechanism
+                    if (mechanism == null) {
+                        authenticationFailed(session, Failure.INVALID_MECHANISM);
+                        status = Status.failed;
+                        break;
+                    }
                     // Store the requested SASL mechanism by the client
                     session.setSessionData("SaslMechanism", mechanism);
                     //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
@@ -286,14 +319,14 @@ public class SASLAuthentication {
                         }
                         catch (SaslException e) {
                         	Log.info("User Login Failed. " + e.getMessage());
-                            authenticationFailed(session);
+                            authenticationFailed(session, Failure.NOT_AUTHORIZED);
                             status = Status.failed;
                         }
                     }
                     else {
                         Log.warn("Client wants to do a MECH we don't support: '" +
                                 mechanism + "'");
-                        authenticationFailed(session);
+                        authenticationFailed(session, Failure.INVALID_MECHANISM);
                         status = Status.failed;
                     }
                     break;
@@ -337,25 +370,25 @@ public class SASLAuthentication {
                             }
                             catch (SaslException e) {
                                 Log.debug("SASLAuthentication: SaslException", e);
-                                authenticationFailed(session);
+                                authenticationFailed(session, Failure.NOT_AUTHORIZED);
                                 status = Status.failed;
                             }
                         }
                         else {
                             Log.error("SaslServer is null, should be valid object instead.");
-                            authenticationFailed(session);
+                            authenticationFailed(session, Failure.NOT_AUTHORIZED);
                             status = Status.failed;
                         }
                     }
                     else {
                         Log.warn(
                                 "Client responded to a MECH we don't support: '" + mechanism + "'");
-                        authenticationFailed(session);
+                        authenticationFailed(session, Failure.INVALID_MECHANISM);
                         status = Status.failed;
                     }
                     break;
                 default:
-                    authenticationFailed(session);
+                    authenticationFailed(session, Failure.NOT_AUTHORIZED);
                     status = Status.failed;
                     // Ignore
                     break;
@@ -363,7 +396,7 @@ public class SASLAuthentication {
         }
         else {
             Log.debug("SASLAuthentication: Unknown namespace sent in auth element: " + doc.asXML());
-            authenticationFailed(session);
+            authenticationFailed(session, Failure.MALFORMED_REQUEST);
             status = Status.failed;
         }
         // Check if SASL authentication has finished so we can clean up temp information
@@ -461,7 +494,7 @@ public class SASLAuthentication {
                 forbidAccess = true;
             }
             if (forbidAccess) {
-                authenticationFailed(session);
+                authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed;
             }
             // Just accept the authentication :)
@@ -470,7 +503,7 @@ public class SASLAuthentication {
         }
         else {
             // anonymous login is disabled so close the connection
-            authenticationFailed(session);
+            authenticationFailed(session, Failure.NOT_AUTHORIZED);
             return Status.failed;
         }
     }
@@ -521,13 +554,13 @@ public class SASLAuthentication {
             Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
             
             // This may be null, we will deal with that later
-            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), CHARSET); 
+            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), CHARSET);
             String principal = "";
             ArrayList<String> principals = new ArrayList<String>();
             Connection connection = session.getConnection();
             if (connection.getPeerCertificates().length < 1) {
                 Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no certificates found.");
-                authenticationFailed(session);
+                authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed; 
             }
 
@@ -578,7 +611,7 @@ public class SASLAuthentication {
         } else {
             Log.debug("SASLAuthentication: unknown session type. Cannot perform EXTERNAL authentication");
         }
-        authenticationFailed(session);
+        authenticationFailed(session, Failure.NOT_AUTHORIZED);
         return Status.failed;
     }
 
@@ -603,7 +636,7 @@ public class SASLAuthentication {
             return Status.authenticated;
         }
         // Otherwise, authentication failed.
-        authenticationFailed(session);
+        authenticationFailed(session, Failure.NOT_AUTHORIZED);
         return Status.failed;
     }
 
@@ -628,7 +661,7 @@ public class SASLAuthentication {
         if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
             // Interception!  This person is locked out, fail instead!
             LockOutManager.getInstance().recordFailedLogin(username);
-            authenticationFailed(session);
+            authenticationFailed(session, Failure.ACCOUNT_DISABLED);
             return;
         }
         StringBuilder reply = new StringBuilder(80);
@@ -653,10 +686,11 @@ public class SASLAuthentication {
         }
     }
 
-    private static void authenticationFailed(LocalSession session) {
+    private static void authenticationFailed(LocalSession session, Failure failure) {
         StringBuilder reply = new StringBuilder(80);
-        reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        reply.append("<not-authorized/></failure>");
+        reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"><");
+        reply.append(failure.toString());
+        reply.append("/></failure>");
         session.deliverRawText(reply.toString());
         // Give a number of retries before closing the connection
         Integer retries = (Integer) session.getSessionData("authRetries");

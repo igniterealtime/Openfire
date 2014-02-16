@@ -146,8 +146,8 @@ public class WebManager extends WebBean {
         try {
             pageUser = getUserManager().getUser(getAuthToken().getUsername());
         }
-        catch (Exception ignored) {
-            // Ignore.
+        catch (Exception ex) {
+            Log.debug("Unexpected exception (which is ignored) while trying to obtain user.", ex);
         }
         return pageUser;
     }

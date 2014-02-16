@@ -171,8 +171,7 @@ public abstract class StanzaHandler {
             startedSASL = true;
             // Process authentication stanza
             saslStatus = SASLAuthentication.handle(session, doc);
-        }
-        else if (startedSASL && "response".equals(tag)) {
+        } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
             // User is responding to SASL challenge. Process response
             saslStatus = SASLAuthentication.handle(session, doc);
         }

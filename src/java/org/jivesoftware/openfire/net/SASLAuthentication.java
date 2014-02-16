@@ -98,7 +98,7 @@ public class SASLAuthentication {
 
     public enum ElementType {
 
-        AUTH("auth"), RESPONSE("response"), CHALLENGE("challenge"), FAILURE("failure"), UNDEF("");
+        ABORT("abort"), AUTH("auth"), RESPONSE("response"), CHALLENGE("challenge"), FAILURE("failure"), UNDEF("");
 
         private String name = null;
 
@@ -258,6 +258,10 @@ public class SASLAuthentication {
         if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
             ElementType type = ElementType.valueof(doc.getName());
             switch (type) {
+                case ABORT:
+                    authenticationFailed(session, Failure.ABORTED);
+                    status = Status.failed;
+                    break;
                 case AUTH:
                     mechanism = doc.attributeValue("mechanism");
                     // http://xmpp.org/rfcs/rfc6120.html#sasl-errors-invalid-mechanism

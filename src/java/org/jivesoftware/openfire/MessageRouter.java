@@ -90,7 +90,7 @@ public class MessageRouter extends BasicModule {
 
                 // If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID <localpart@domainpart> of the sending entity.
                 if (recipientJID == null) {
-                    recipientJID = packet.getFrom();
+                    recipientJID = packet.getFrom().asBareJID();
                 }
 
                 // Check if the message was sent to the server hostname

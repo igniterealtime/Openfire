@@ -367,7 +367,7 @@ public class HttpSessionManager {
         Element response = DocumentHelper.createElement("body");
         response.addNamespace("", "http://jabber.org/protocol/httpbind");
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
-        response.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        response.addAttribute("from", session.getServerName());
         response.addAttribute("authid", session.getStreamID().getID());
         response.addAttribute("sid", session.getStreamID().getID());
         response.addAttribute("secure", Boolean.TRUE.toString());

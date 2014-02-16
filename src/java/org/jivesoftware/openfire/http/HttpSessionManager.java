@@ -37,6 +37,7 @@ import org.dom4j.QName;
 import org.eclipse.jetty.util.log.Log;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
@@ -366,6 +367,7 @@ public class HttpSessionManager {
         Element response = DocumentHelper.createElement("body");
         response.addNamespace("", "http://jabber.org/protocol/httpbind");
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
+        response.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         response.addAttribute("authid", session.getStreamID().getID());
         response.addAttribute("sid", session.getStreamID().getID());
         response.addAttribute("secure", Boolean.TRUE.toString());

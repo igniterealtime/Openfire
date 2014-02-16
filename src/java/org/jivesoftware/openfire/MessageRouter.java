@@ -88,6 +88,11 @@ public class MessageRouter extends BasicModule {
             if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
                 JID recipientJID = packet.getTo();
 
+                // If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID <localpart@domainpart> of the sending entity.
+                if (recipientJID == null) {
+                    recipientJID = packet.getFrom();
+                }
+
                 // Check if the message was sent to the server hostname
                 if (recipientJID != null && recipientJID.getNode() == null && recipientJID.getResource() == null &&
                         serverName.equals(recipientJID.getDomain())) {

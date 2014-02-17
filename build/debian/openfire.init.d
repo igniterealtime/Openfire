@@ -23,7 +23,9 @@
 # Attempt to locate JAVA_HOME
 if [ -z $JAVA_HOME ]; then
     JAVA_HOMES="/usr/lib/jvm/default-java \
+		/usr/lib/jvm/java-7-oracle \
 		/usr/lib/jvm/java-7-sun \
+		/usr/lib/jvm/java-6-oracle \
 		/usr/lib/jvm/java-6-sun \
 		/usr/lib/jvm/java-1.5.0-sun \
 		/usr/lib/jvm/java-7-openjdk-amd64 \

@@ -22,24 +22,11 @@
 
 # Attempt to locate JAVA_HOME
 if [ -z $JAVA_HOME ]; then
-    JAVA_HOMES="/usr/lib/jvm/default-java \
-		/usr/lib/jvm/java-7-oracle \
-		/usr/lib/jvm/java-7-sun \
-		/usr/lib/jvm/java-6-oracle \
-		/usr/lib/jvm/java-6-sun \
-		/usr/lib/jvm/java-1.5.0-sun \
-		/usr/lib/jvm/java-7-openjdk-amd64 \
-		/usr/lib/jvm/java-7-openjdk-i386 \
-		/usr/lib/jvm/java-7-openjdk \
-		/usr/lib/jvm/java-6-openjdk-amd64 \
-		/usr/lib/jvm/java-6-openjdk-i386 \
-		/usr/lib/jvm/java-6-openjdk"
-    for t in $JAVA_HOMES ; do
-	if [ -d $t ] ; then
-	    JAVA_HOME=$t
-	    break;
-	fi
-    done
+ JAVA_HOME=$(LC_ALL=C update-alternatives --display java \
+    | grep best \
+    | grep -oe \/.*\.java \
+    | sed 's/\/jre\/.*//g')
+    echo "best java alternative in: "$JAVA_HOME
 fi
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:${JAVA_HOME}/bin

@@ -62,6 +62,12 @@
                     "jitsivideobridge");
             }
         }
+        
+	String username = request.getParameter("username"); 
+        JiveGlobals.setProperty(PluginImpl.USERNAME_PROPERTY_NAME, username);	
+        
+	String password = request.getParameter("password"); 	
+        JiveGlobals.setProperty(PluginImpl.PASSWORD_PROPERTY_NAME, password);		
     }
 
 %>
@@ -104,6 +110,22 @@
                            value="<%=plugin.getMaxPort()%>"/>
                 </td>
             </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="config.page.configuration.username"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="username" type="text" maxlength="16" size="16"
+                           value="<%=JiveGlobals.getProperty(PluginImpl.USERNAME_PROPERTY_NAME, "jitsi")%>"/>
+                </td>
+            </tr>     
+            <tr>
+                <td><label class="jive-label"><fmt:message key="config.page.configuration.password"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="password" type="password" maxlength="16" size="16"
+                           value="<%=JiveGlobals.getProperty(PluginImpl.PASSWORD_PROPERTY_NAME, "jitsi")%>"/>
+                </td>
+            </tr>             
             <tr>
                 <th colspan="2"><input type="submit" name="update"
                                        value="<fmt:message key="config.page.configuration.submit" />"></th>

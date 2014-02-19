@@ -51,6 +51,9 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.http.security.*;
+import org.eclipse.jetty.security.*;
+import org.eclipse.jetty.security.authentication.*;
 
 import org.dom4j.*;
 import org.jitsi.videobridge.*;
@@ -92,6 +95,16 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * The name of the property that contains the name of video conference application
      */
     public static final String VIDEO_CONFERENCE_PROPERTY_NAME = "org.jitsi.videobridge.video.conference.name";
+
+    /**
+     * The name of the property that contains the security username for basic authentication
+     */
+    public static final String USERNAME_PROPERTY_NAME = "org.jitsi.videobridge.security.username";
+
+    /**
+     * The name of the property that contains the security password for basic authentication
+     */
+    public static final String PASSWORD_PROPERTY_NAME = "org.jitsi.videobridge.security.password";
 
     /**
      * The name of the property that contains the maximum port number that we'd
@@ -215,6 +228,14 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
 			context.setWelcomeFiles(new String[]{"index.html"});
 
+			String username = JiveGlobals.getProperty(USERNAME_PROPERTY_NAME, null);
+			String password = JiveGlobals.getProperty(PASSWORD_PROPERTY_NAME, "jitsi");
+
+			if (username != null)
+			{
+				context.setSecurityHandler(basicAuth(username, password, "Private!"));
+			}
+
 			createIQHandlers();
 
 		}
@@ -265,6 +286,34 @@ public class PluginImpl  implements Plugin, PropertyEventListener
             this.subdomain = null;
             this.component = null;
         }
+    }
+
+    /**
+
+     */
+    private static final SecurityHandler basicAuth(String username, String password, String realm) {
+
+    	HashLoginService l = new HashLoginService();
+        l.putUser(username, Credential.getCredential(password), new String[] {"user"});
+        l.setName(realm);
+
+        Constraint constraint = new Constraint();
+        constraint.setName(Constraint.__BASIC_AUTH);
+        constraint.setRoles(new String[]{"user"});
+        constraint.setAuthenticate(true);
+
+        ConstraintMapping cm = new ConstraintMapping();
+        cm.setConstraint(constraint);
+        cm.setPathSpec("/*");
+
+        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
+        csh.setAuthenticator(new BasicAuthenticator());
+        csh.setRealmName("myrealm");
+        csh.addConstraintMapping(cm);
+        csh.setLoginService(l);
+
+        return csh;
+
     }
 
     /**

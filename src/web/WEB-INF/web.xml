@@ -8,6 +8,12 @@
 
     <display-name>Openfire</display-name>
 
+    <!-- prevent URL rewritting with jsessionid included, OF-669 -->
+    <context-param>
+        <param-name>org.eclipse.jetty.servlet.SessionIdPathParameterName</param-name>
+        <param-value>none</param-value>
+    </context-param>
+
     <context-param>
         <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
         <param-value>openfire_i18n</param-value>

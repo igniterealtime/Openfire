@@ -71,8 +71,13 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PKCS10CertificationRequest;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -576,6 +581,7 @@ public class CertificateManager {
             Log.warn("Certificate already exists for alias: " + alias);
             return false;
         }
+/*
         // Retrieve the private key of the stored certificate
         PasswordFinder passwordFinder = new PasswordFinder() {
             public char[] getPassword() {
@@ -584,6 +590,24 @@ public class CertificateManager {
         };
         PEMReader pemReader = new PEMReader(new InputStreamReader(pkInputStream), passwordFinder);
         KeyPair kp = (KeyPair) pemReader.readObject();
+        PrivateKey privKey = kp.getPrivate();
+*/
+
+        PEMParser pemParser = new PEMParser(new InputStreamReader(pkInputStream));
+		Object object = pemParser.readObject();
+		PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(passPhrase.toCharArray());
+		JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+
+		KeyPair kp;
+
+		if (object instanceof PEMEncryptedKeyPair) {
+			Log.debug("Encrypted key - we will use provided password");
+			kp = converter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
+		} else {
+			Log.debug("Unencrypted key - no password needed");
+			kp = converter.getKeyPair((PEMKeyPair) object);
+		}
+
         PrivateKey privKey = kp.getPrivate();
 
         // Load certificates found in the PEM input stream

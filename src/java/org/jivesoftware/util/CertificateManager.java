@@ -581,17 +581,6 @@ public class CertificateManager {
             Log.warn("Certificate already exists for alias: " + alias);
             return false;
         }
-/*
-        // Retrieve the private key of the stored certificate
-        PasswordFinder passwordFinder = new PasswordFinder() {
-            public char[] getPassword() {
-                return passPhrase != null ? passPhrase.toCharArray() : new char[] {};
-            }
-        };
-        PEMReader pemReader = new PEMReader(new InputStreamReader(pkInputStream), passwordFinder);
-        KeyPair kp = (KeyPair) pemReader.readObject();
-        PrivateKey privKey = kp.getPrivate();
-*/
 
         PEMParser pemParser = new PEMParser(new InputStreamReader(pkInputStream));
 		Object object = pemParser.readObject();

@@ -231,7 +231,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			String username = JiveGlobals.getProperty(USERNAME_PROPERTY_NAME, null);
 			String password = JiveGlobals.getProperty(PASSWORD_PROPERTY_NAME, "jitsi");
 
-			if (username != null)
+			if (username != null && "".equals(username) == false)
 			{
 				context.setSecurityHandler(basicAuth(username, password, "Private!"));
 			}

@@ -60,8 +60,18 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         String username = packet.getTo() == null ? null : packet.getTo().getNode();
 
         // Check if any of the usernames is null
-        if (sender == null || username == null) {
+        if (sender == null) {
             reply.setError(PacketError.Condition.forbidden);
+            return reply;
+        }
+        if (username == null) {
+            // http://xmpp.org/extensions/xep-0012.html#server
+            // When the last activity query is sent to a server or component (i.e., to a JID of the form <domain.tld>),
+            // the information contained in the IQ reply reflects the uptime of the JID sending the reply.
+            // The seconds attribute specifies how long the host has been running since it was last (re-)started.
+            long uptime = XMPPServer.getInstance().getServerInfo().getLastStarted().getTime();
+            long lastActivityTime = (System.currentTimeMillis() - uptime) / 1000;
+            lastActivity.addAttribute("seconds", String.valueOf(lastActivityTime));
             return reply;
         }
 

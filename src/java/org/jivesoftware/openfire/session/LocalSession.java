@@ -24,14 +24,15 @@ import java.util.Map;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
+import org.xmpp.packet.*;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -287,6 +288,25 @@ public abstract class LocalSession implements Session {
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            }
+        } else {
+            // http://xmpp.org/extensions/xep-0016.html#protocol-error
+            if (packet instanceof Message) {
+                // For message stanzas, the server SHOULD return an error, which SHOULD be <service-unavailable/>.
+                Message message = (Message) packet;
+                Message result = message.createCopy();
+                result.setTo(message.getFrom());
+                result.setError(PacketError.Condition.service_unavailable);
+                XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), result, true);
+            } else if (packet instanceof IQ) {
+                // For IQ stanzas of type "get" or "set", the server MUST return an error, which SHOULD be <service-unavailable/>.
+                // IQ stanzas of other types MUST be silently dropped by the server.
+                IQ iq = (IQ) packet;
+                if (iq.getType() == IQ.Type.get || iq.getType() == IQ.Type.set) {
+                    IQ result = IQ.createResultIQ(iq);
+                    result.setError(PacketError.Condition.service_unavailable);
+                    XMPPServer.getInstance().getRoutingTable().routePacket(iq.getFrom(), result, true);
+                }
             }
         }
     }

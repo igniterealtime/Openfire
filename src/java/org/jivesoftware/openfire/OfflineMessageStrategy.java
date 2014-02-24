@@ -96,6 +96,10 @@ public class OfflineMessageStrategy extends BasicModule {
             PrivacyList list =
                     PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
             if (list != null && list.shouldBlockPacket(message)) {
+                Message result = message.createCopy();
+                result.setTo(message.getFrom());
+                result.setError(PacketError.Condition.service_unavailable);
+                XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), result, true);
                 return;
             }
 

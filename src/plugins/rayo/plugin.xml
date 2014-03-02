@@ -5,8 +5,8 @@
     <name>Rayo Plugin</name>
     <description>Provides support for XEP-0327</description>
     <author>Ignite Realtime Community</author>
-    <version>0.0.1</version>
-    <date>2/6/2013</date>
+    <version>0.0.2</version>
+    <date>2/4/2014</date>
     <minServerVersion>3.9.0</minServerVersion>
 
     <adminconsole>

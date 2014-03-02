@@ -150,7 +150,8 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
 
     public int incrementConflictCount() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.incrementConflictCount);
-        return (Integer) doSynchronousClusterTask(task);
+        Object result = doSynchronousClusterTask(task);
+        return result == null ? 0 : (Integer) result;
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {

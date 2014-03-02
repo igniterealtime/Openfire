@@ -236,24 +236,38 @@ public class SdpManager {
 	    + " channels " + channels, 0);
     }
 
-    public String generateSdp(String name, InetSocketAddress isa) {
-	String sdp =
-	    "v=0\r\n"
-            + "o=" + name + " 1 1 IN IP4 "
-            + isa.getAddress().getHostAddress() + "\r\n"
-            + "s=SIP Call\r\n"
-            + "c=IN IP4 "
-	    + isa.getAddress().getHostAddress() + "\r\n"
-            + "t=0 0 \r\n"
-            + "m=audio " + isa.getPort()
-            + " RTP/AVP " + "13 " + getSupportedMedia() + "\r\n"
-	    + "a=rtpmap:13 CN/8000" + "\r\n"
-            + getRtpmaps();
+    public String generateSdp(CallParticipant cp, String name, InetSocketAddress isa)
+    {
+		String toNumber = cp.getPhoneNumber();
 
-        if (localMediaPreference != null) {
-	    sdp += "a=PreferredPayload:"
-	 	+ localMediaPreference.getPayload() + "\r\n";
-	}
+			String sdp = "v=0\r\n"
+				+ "o=" + name + " 1 1 IN IP4 "
+				+ isa.getAddress().getHostAddress() + "\r\n"
+				+ "s=SIP Call\r\n"
+				+ "c=IN IP4 "
+				+ isa.getAddress().getHostAddress() + "\r\n"
+				+ "t=0 0 \r\n"
+				+ "m=audio " + isa.getPort();
+
+   			if (toNumber.indexOf("sip:") == 0)	// TODO hack for Lync DTMF
+   			{
+				sdp += " RTP/AVP " + "13 " + getSupportedMedia() + "\r\n"
+						+ "a=rtpmap:13 CN/8000" + "\r\n";
+
+			} else {	// Lync, add DTMF support
+
+				sdp += " RTP/AVP " + "13 101 " + getSupportedMedia() + "\r\n"
+						+ "a=rtpmap:13 CN/8000" + "\r\n"
+						+ "a=rtpmap:101 telephone-event/8000" + "\r\n"
+						+ "a=fmtp:101 0-16" + "\r\n";
+			}
+
+			sdp += getRtpmaps();
+
+			if (localMediaPreference != null)
+			{
+				sdp += "a=PreferredPayload:" + localMediaPreference.getPayload() + "\r\n";
+			}
 
 	if (transmitMediaInfo != null) {
 	    sdp += "a=transmitPayload:"
@@ -307,7 +321,7 @@ public class SdpManager {
 
 		remoteSdpInfo.setMediaInfo(mediaInfo);
 
-		String payloads = "13 " + mediaInfo.getPayload();
+		String payloads = "13 101 " + mediaInfo.getPayload();
 
 		byte telephoneEventPayload = remoteSdpInfo.getTelephoneEventPayload();
 
@@ -340,6 +354,8 @@ public class SdpManager {
 				+ "m=audio " + isa.getPort()
 				+ " RTP/AVP " + payloads + "\r\n"
 				+ "a=rtpmap:13 CN/8000" + "\r\n"
+				+ "a=rtpmap:101 telephone-event/8000" + "\r\n"
+				+ "a=fmtp:101 0-16" + "\r\n"
 				+ generateRtpmap(mediaInfo) + "\r\n"
 			+ transmitMap
 			+ telephoneEvent;

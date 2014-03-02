@@ -67,7 +67,10 @@
         JiveGlobals.setProperty(PluginImpl.USERNAME_PROPERTY_NAME, username);	
         
 	String password = request.getParameter("password"); 	
-        JiveGlobals.setProperty(PluginImpl.PASSWORD_PROPERTY_NAME, password);		
+        JiveGlobals.setProperty(PluginImpl.PASSWORD_PROPERTY_NAME, password);	
+        
+	String enabled = request.getParameter("enabled"); 	
+        JiveGlobals.setProperty(PluginImpl.RECORD_PROPERTY_NAME, enabled);        
     }
 
 %>
@@ -125,7 +128,19 @@
                     <input name="password" type="password" maxlength="16" size="16"
                            value="<%=JiveGlobals.getProperty(PluginImpl.PASSWORD_PROPERTY_NAME, "jitsi")%>"/>
                 </td>
-            </tr>             
+            </tr>  
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="enabled" <%= ("false".equals(JiveGlobals.getProperty(PluginImpl.RECORD_PROPERTY_NAME, "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.record.disabled" /></b> - <fmt:message key="config.page.configuration.record.disabled_description" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="enabled" <%= ("true".equals(JiveGlobals.getProperty(PluginImpl.RECORD_PROPERTY_NAME, "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.record.enabled" /></b> - <fmt:message key="config.page.configuration.record.enabled_description" />
+		    </td>
+	    </tr> 	    
             <tr>
                 <th colspan="2"><input type="submit" name="update"
                                        value="<fmt:message key="config.page.configuration.submit" />"></th>

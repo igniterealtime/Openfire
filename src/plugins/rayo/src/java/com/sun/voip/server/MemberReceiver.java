@@ -73,6 +73,10 @@ import org.ifsoft.rtp.*;
 
 import org.jitsi.impl.neomedia.codec.audio.opus.Opus;
 
+import org.xmpp.jnodes.IChannel;
+
+
+
 /**
  * Receive RTP data for this ConferenceMember, add it to the mix
  * and keep statistics.
@@ -175,8 +179,17 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     private boolean initializationDone = false;
 
-    public MemberReceiver(ConferenceMember member, CallParticipant cp,
-	    DatagramChannel datagramChannel) throws IOException {
+    private IChannel relayChannel = null;
+
+
+
+	public void setChannel(IChannel relayChannel)
+	{
+		this.relayChannel = relayChannel;
+	}
+
+    public MemberReceiver(ConferenceMember member, CallParticipant cp, DatagramChannel datagramChannel) throws IOException
+    {
 
 	this.member = member;
 	this.cp = cp;
@@ -376,7 +389,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
 
 
-	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol())))
+	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
 	{
 	    conferenceManager.getConferenceReceiver().addMember(this);
 
@@ -868,7 +881,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
     private boolean callIsDead() {
 
-	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol())))
+	if (cp.getProtocol() != null && ("WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()) || "Speaker".equals(cp.getProtocol())))
 	{
 		return false;
 	}
@@ -988,6 +1001,7 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
 
 	member.getMemberSender().setSendAddress(fromAddress);
 
+	if (packet == null) return;
 	/*
 	 * receivedData has a 12 byte RTP header at the beginning
 	 * and length includes the RTP header.
@@ -1408,7 +1422,17 @@ public class MemberReceiver implements MixDataSource, TreatmentDoneListener {
                 }
 	    }
 	    return;
-        }
+    }
+
+	if (relayChannel != null)
+	{
+		try {
+			relayChannel.pushReceiverAudio(data);
+		} catch(Exception e) {}
+
+		return;
+	}
+
 
 	long start = 0;
 

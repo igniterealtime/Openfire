@@ -183,20 +183,11 @@ public class SipServer implements SipListener {
 	    	Logger.println("");
             Logger.println("Bridge private address:   " + properties.getProperty("javax.sip.IP_ADDRESS"));
 
-	    	String protocol = System.getProperty("com.sun.voip.server.PROTOCOL");
+            tcpListenPort = sipStack.createListeningPoint(localHostAddress, sipPort, "tcp");
+            udpListenPort = sipStack.createListeningPoint(localHostAddress, sipPort, "udp");
 
-	    	if ("tcp".equals(protocol))
-	    	{
-            	tcpListenPort = sipStack.createListeningPoint(sipPort, "tcp");
-            	sipProvider = sipStack.createSipProvider(tcpListenPort);
-			}
-
-	    	if ("udp".equals(protocol))
-	    	{
-            	udpListenPort = sipStack.createListeningPoint(sipPort, "udp");
-            	sipProvider = sipStack.createSipProvider(udpListenPort);
-			}
-
+            sipProvider = sipStack.createSipProvider(tcpListenPort);
+            sipProvider.addListeningPoint(udpListenPort);
             sipProvider.addSipListener(this);
 
 	   		sipAddress = new InetSocketAddress(sipStack.getIPAddress(), sipPort);
@@ -216,7 +207,13 @@ public class SipServer implements SipListener {
 			{
 				try {
 					InetAddress inetAddress = InetAddress.getByName(voIPGateways.get(i));
-					registrations.add(new RegisterProcessing(inetAddress.getHostAddress(), voIPGateways.get(i), voIPGatewayLoginInfo.get(i)));
+
+					ProxyCredentials proxyCredentials = voIPGatewayLoginInfo.get(i);
+
+					if (proxyCredentials.getAuthUserName() != null)
+					{
+						registrations.add(new RegisterProcessing(inetAddress.getHostAddress(), voIPGateways.get(i), proxyCredentials));
+					}
 
 				} catch (Exception e) {
 					System.out.println(String.format("Bad Address  %s ", voIPGateways.get(i)));
@@ -224,6 +221,10 @@ public class SipServer implements SipListener {
 				}
 			}
 
+
+        } catch(TransportAlreadySupportedException e) {
+            Logger.exception("Stack has transport already supported", e);
+            return;
         } catch(NullPointerException e) {
             Logger.exception("Stack has no ListeningPoints", e);
             return;
@@ -360,6 +361,13 @@ public class SipServer implements SipListener {
             } else {
 		if (request.getMethod().equals(Request.REGISTER)) {
 		    handleRegister(request, requestEvent);
+
+		} else if (request.getMethod().equals(Request.OPTIONS)) {
+
+			Response res = messageFactory.createResponse(Response.OK, request);
+			sipProvider.sendResponse(res);
+			return;
+
 
 		} else if (!request.getMethod().equals(Request.INVITE)) {
                     Logger.writeFile("sipListener could not be found for " + sipCallId + " " + request.getMethod() + ".  Ignoring");
@@ -856,5 +864,21 @@ public class SipServer implements SipListener {
 
         return authorization;
     }
-
+/*
+    private class CRLfKeepAliveTask extends TimerTask
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+            	tcpListenPort.sendHeartbeat( sipAddress.getAddress().getHostAddress(), sipAddress.getPort() );
+            }
+            catch (IOException e)
+            {
+                Logger.println("Error while sending a heartbeat", e);
+            }
+        }
+    }
+*/
 }

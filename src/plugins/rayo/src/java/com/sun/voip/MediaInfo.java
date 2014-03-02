@@ -42,10 +42,10 @@ public class MediaInfo {
 
     static {
 	supportedMedia.add(new MediaInfo(
-            (byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, false));
+            (byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, true));
 
-        supportedMedia.add(new MediaInfo(
-            (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, false));
+        //supportedMedia.add(new MediaInfo(
+        //    (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, false));
 
         supportedMedia.add(new MediaInfo(
             (byte)102, RtpPacket.PCM_ENCODING, 8000, 2, false));

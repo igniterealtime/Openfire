@@ -140,8 +140,8 @@ public class SipUtil {
 	supportedMedia.add(new MediaInfo(
             (byte)0, RtpPacket.PCMU_ENCODING, 8000, 1, false));
 
-        supportedMedia.add(new MediaInfo(
-            (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, false));
+       // supportedMedia.add(new MediaInfo(
+       //     (byte)101, RtpPacket.PCM_ENCODING, 8000, 1, false));
 
         supportedMedia.add(new MediaInfo(
             (byte)102, RtpPacket.PCM_ENCODING, 8000, 2, false));
@@ -236,7 +236,7 @@ if (false) {
     }
 
     public String generateSdp(CallParticipant cp, InetSocketAddress isa) {
-        String sdp = sdpManager.generateSdp("MeetingCentral", isa);
+        String sdp = sdpManager.generateSdp(cp, "MeetingCentral", isa);
 
 	String s = "a=conferenceId:" + cp.getConferenceId();
 
@@ -321,6 +321,9 @@ if (false) {
 	String fromName = cp.getDisplayName();
 	String fromNumber = cp.getDisplayName(); //cp.getFromPhoneNumber();
 	String toNumber = cp.getPhoneNumber();
+	String transport = "udp";
+
+Logger.println("XXX from = " + fromName + " " + cp);
 
         // int toSipPort = SipServer.getSipAddress().getPort();
 	// XXX this should be the proxy or gateway port!
@@ -412,6 +415,8 @@ if (false) {
 
 	} else {		// telephone number
 
+		transport =  System.getProperty("com.sun.voip.server.PROTOCOL");
+
    		if (toNumber.indexOf("tel:") == 0)
    		{
 			toNumber = toNumber.substring(4);
@@ -454,8 +459,11 @@ if (false) {
 
 	if (gatewayRequired)
 	{
+		Logger.println("XXXX gatewayRequired");
+
 		if (proxyCredentialList.size() != 0)
 		{
+			Logger.println("XXXX gatewayRequired 1");
 			int voipIndex = 0;
 
 			for (int i=0; i<proxyCredentialList.size(); i++)
@@ -470,18 +478,25 @@ if (false) {
 
 			ProxyCredentials proxyCredentials = proxyCredentialList.get(voipIndex);
 
-			fromName = proxyCredentials.getUserDisplay();
+			//fromName = proxyCredentials.getUserDisplay();
 			voipGateway = proxyCredentials.getHost();
 			obProxy = proxyCredentials.getProxy();
-			fromAddress = addressFactory.createSipURI(proxyCredentials.getUserName(), voipGateway);
+			//fromAddress = addressFactory.createSipURI(proxyCredentials.getUserName(), voipGateway);
+			fromAddress = addressFactory.createSipURI(fromName, voipGateway);
 
-       	 	cp.setProxyCredentials(proxyCredentials);				// we need this to match SIP transaction later
-        	cp.setDisplayName(proxyCredentials.getUserDisplay());	// we need this to get proxy authentication details later
+       	 	//cp.setProxyCredentials(proxyCredentials);				// we need this to match SIP transaction later
+        	//cp.setDisplayName(proxyCredentials.getUserDisplay());	// we need this to get proxy authentication details later
+		} else {
+			Logger.println("XXXX gatewayRequired 2");
 		}
+
+		Logger.println("XXXX gatewayRequired 3");
 
         toAddress = addressFactory.createSipURI(toNumber, voipGateway);
 
 	} else {
+
+		Logger.println("XXXX gatewayRequired 4");
 
 		Logger.println("fromNumber " + fromNumber);
 
@@ -494,6 +509,7 @@ if (false) {
         toAddress = addressFactory.createSipURI(toNumber, voipGateway);
 	}
 
+	Logger.println("XXXX gatewayRequired 5");
 
 	Logger.println("from " + fromAddress);
 	Logger.println("to " + toAddress);
@@ -509,6 +525,7 @@ if (false) {
 	 *                    5060 == cp.getPort()
 	 */
 
+	Logger.println("XXXX gatewayRequired 6");
 
 	if (Bridge.getPrivateHost().startsWith("127.") &&
 	    voipGateway.equals("127.0.0.1") == false) {
@@ -550,12 +567,14 @@ if (false) {
 	    toNumber = toNumber.substring(0, ix);
 	}
 
+	Logger.println("XXXX gatewayRequired 7");
+
         requestURI = addressFactory.createSipURI(toNumber, voipGateway);
 
 	requestURI.setPort(toSipPort);
 
         requestURI.setTransportParam
-            (sipProvider.getListeningPoint().getTransport());
+            (sipProvider.getListeningPoint(transport).getTransport());
 
         /* create Via headers
          * e.g. Via: SIP/2.0/UDP 152.70.1.43:5060;branch=z9hG4bK5
@@ -563,7 +582,7 @@ if (false) {
          *         152.70.1.43:5060 == (local address and SIP port)
          *          branch=z9hG4bk5 == (auto generated branch id)
          */
-        viaHeader = headerFactory.createViaHeader(ourIpAddress,  ourSipPort, sipProvider.getListeningPoint().getTransport(), null);
+        viaHeader = headerFactory.createViaHeader(ourIpAddress,  ourSipPort, sipProvider.getListeningPoint(transport).getTransport(), null);
         //viaHeader.setBranch(MessageFactoryImpl.generateBranchId());
         viaHeaders = new ArrayList();
         viaHeaders.add(viaHeader);
@@ -591,6 +610,8 @@ if (false) {
             Request.INVITE, callIdHeader, cSeqHeader,
             fromHeader, toHeader, viaHeaders, maxForwards);
 
+	Logger.println("XXXX gatewayRequired 10");
+
 	if (SdpManager.useTelephoneEvent() == true) {
 	    allowEventsHeader =
 	        headerFactory.createAllowEventsHeader("telephone-event");
@@ -610,6 +631,8 @@ if (false) {
 			contactURI = addressFactory.createSipURI(fromNumber, ourPublicIpAddress);
 
 
+	Logger.println("XXXX gatewayRequired 12");
+
 	contactURI.setPort(ourPublicSipPort);
 
         Address contactAddress =
@@ -621,6 +644,8 @@ if (false) {
 	    headerFactory.createContactHeader(contactAddress);
 
 	invite.addHeader(contactHeader);
+
+	Logger.println("XXXX gatewayRequired 14");
 
 	if (obProxy != null)
 	{
@@ -634,6 +659,8 @@ if (false) {
 			Logger.error("Creating registration route error " + e);
 		}
 	}
+
+	Logger.println("XXXX gatewayRequired 16");
 
 	if (cp.isAutoAnswer())
 	{
@@ -651,6 +678,8 @@ if (false) {
 		}
 	}
 
+
+	Logger.println("XXXX gatewayRequired 18");
 
 	if (sdp != null) {
             contentTypeHeader =
@@ -672,7 +701,9 @@ if (false) {
 	    return null;
 	}
 
+	Logger.println("XXXX gatewayRequired 19");
         clientTransaction.sendRequest();
+	Logger.println("XXXX gatewayRequired 20");
 	return clientTransaction;
     }
 

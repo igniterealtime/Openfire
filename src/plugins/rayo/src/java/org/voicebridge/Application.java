@@ -61,6 +61,7 @@ public class Application implements  CallEventListener  {
 			properties.setProperty("javax.sip.STACK_NAME", "JAIN SIP 1.1");
 			properties.setProperty("javax.sip.RETRANSMISSION_FILTER", "on");
 			properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "99");
+			properties.setProperty("gov.nist.javax.sip.MIN_KEEPALIVE_TIME_SECONDS", "360");
 			properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
 			properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
 			properties.setProperty("javax.sip.IP_ADDRESS",config.getPrivateHost());
@@ -1853,7 +1854,7 @@ public class Application implements  CallEventListener  {
 
 		if ("protocol".equalsIgnoreCase(parameter))
 		{
-			if (value.equalsIgnoreCase("SIP") == false && value.equalsIgnoreCase("NS") == false && value.equalsIgnoreCase("WebRtc") == false && value.equalsIgnoreCase("Rtmfp") == false)
+			if (value.equalsIgnoreCase("SIP") == false && value.equalsIgnoreCase("NS") == false && value.equalsIgnoreCase("WebRtc") == false && value.equalsIgnoreCase("Rtmfp") == false && value.equalsIgnoreCase("Speaker") == false)
 			{
 				reportError("Invalid protocol:  " + value);
 				return;

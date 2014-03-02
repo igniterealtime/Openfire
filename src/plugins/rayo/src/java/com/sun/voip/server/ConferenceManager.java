@@ -739,7 +739,7 @@ public class ConferenceManager {
         }
 
 	if (displayName != null) {
-	    cp.setDisplayName(displayName);
+	    //cp.setDisplayName(displayName);
 	    cp.setConferenceDisplayName(displayName);
 	}
 

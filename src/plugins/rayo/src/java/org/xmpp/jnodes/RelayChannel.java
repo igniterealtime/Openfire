@@ -48,7 +48,7 @@ import com.rayo.core.xml.providers.*;
 
 
 
-public class RelayChannel {
+public class RelayChannel implements IChannel {
 
     private final SelDatagramChannel channelA;
     private final SelDatagramChannel channelB;
@@ -97,6 +97,8 @@ public class RelayChannel {
     private final int channels = 2;
     private int frameSizeInSamplesPerChannel = (sampleRate * frameSizeInMillis) / 1000;
     private int frameSizeInBytes = outputFrameSize * channels * frameSizeInSamplesPerChannel;
+
+    private boolean active = true;
 
     private static final Logger Log = LoggerFactory.getLogger(RelayChannel.class);
 
@@ -417,17 +419,39 @@ public class RelayChannel {
             return BitAssistant.toShortNetwork(bytes, Integer.valueOf(2));
     }
 
-	public void sendComfortNoisePayload()
-	{
-
-	}
-
     private Long getNextAudioTimestamp(Long clockRate)
     {
         Integer timestamp = lastAudioTimestamp;
         lastAudioTimestamp = Integer.valueOf(lastAudioTimestamp.intValue() + (new Integer((new Long((20L * clockRate.longValue()) / 1000L)).intValue())).intValue());
         return new Long((new Integer(timestamp.intValue())).longValue());
     }
+
+
+
+	public void sendComfortNoisePayload()
+	{
+
+	}
+
+	public boolean encode()
+	{
+		return true;
+	}
+
+	public boolean isActive()
+	{
+		return active;
+	}
+
+	public void setActive(boolean active)
+	{
+		this.active = active;
+	}
+
+	public void pushAudio(int[] dataToSend)
+	{
+
+	}
 
 	public synchronized void pushAudio(byte[] rtpData, byte[] opus)
 	{
@@ -478,6 +502,11 @@ public class RelayChannel {
 	}
 
 	public synchronized void pushVideo(RTPPacket videoPacket)
+	{
+
+	}
+
+	public void pushReceiverAudio(int[] dataToSend)
 	{
 
 	}

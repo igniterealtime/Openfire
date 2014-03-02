@@ -6,6 +6,8 @@
  */
 package org.jitsi.videobridge.openfire;
 
+import org.ice4j.socket.*;
+import java.beans.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
@@ -16,6 +18,7 @@ import java.security.cert.Certificate;
 
 import javax.media.*;
 import javax.media.protocol.*;
+import javax.media.format.*;
 
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
@@ -60,12 +63,17 @@ import org.jitsi.videobridge.*;
 import org.jitsi.impl.neomedia.*;
 import org.jitsi.impl.neomedia.format.*;
 import org.jitsi.impl.neomedia.device.*;
+import org.jitsi.impl.neomedia.conference.*;
+import org.jitsi.impl.neomedia.jmfext.media.renderer.audio.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.service.neomedia.device.*;
 import org.jitsi.service.neomedia.event.*;
 import org.jitsi.service.neomedia.format.*;
 import org.jitsi.service.libjitsi.*;
 import org.jitsi.util.*;
+
+import org.ifsoft.*;
+import org.ifsoft.rtp.*;
 
 
 /**
@@ -105,6 +113,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * The name of the property that contains the security password for basic authentication
      */
     public static final String PASSWORD_PROPERTY_NAME = "org.jitsi.videobridge.security.password";
+
+    /**
+     * The name of the property that contains the maximum port number that we'd
+     * like our RTP managers to bind upon.
+     */
+    public static final String RECORD_PROPERTY_NAME = "org.jitsi.videobridge.media.record";
 
     /**
      * The name of the property that contains the maximum port number that we'd
@@ -258,6 +272,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
                 minVal);
 
         checkNatives();
+        checkRecordingFolder(pluginDirectory);
 
         ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
         String subdomain = ComponentImpl.SUBDOMAIN;
@@ -315,6 +330,39 @@ public class PluginImpl  implements Plugin, PropertyEventListener
         return csh;
 
     }
+
+    /**
+     * Checks whether we have folder for video recordings, if missing, create it
+     */
+    private void checkRecordingFolder(File pluginDirectory)
+    {
+		String rayoHome = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo";
+
+        try
+        {
+			File rayoFolderPath = new File(rayoHome);
+
+            if(!rayoFolderPath.exists())
+            {
+                rayoFolderPath.mkdirs();
+                Log.info("Rayo home folder created");
+
+			}
+
+			File recordingFolderPath = new File(rayoHome + File.separator + "video_recordings");
+
+            if(!recordingFolderPath.exists())
+            {
+                recordingFolderPath.mkdirs();
+                Log.info("Rayo video recordings folder created");
+
+			}
+        }
+        catch (Exception e)
+        {
+            Log.error(e.getMessage(), e);
+        }
+	}
 
     /**
      * Checks whether we have folder with extracted natives, if missing
@@ -727,7 +775,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			FocusAgent focusAgent;
 
-			Participant participant = new Participant(nickname, user);
+			Participant participant = new Participant(nickname, user, focusAgentName);
 
 			if (sessions.containsKey(focusAgentName))
 			{
@@ -868,6 +916,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
+		private String focusName;
+		/**
+		 *
+		 *
+		 */
+		private Recorder recorder = null;
+		/**
+		 *
+		 *
+		 */
+		public MediaStream mediaStream = null;
+		/**
+		 *
+		 *
+		 */
 		public String audioChannelId;
 		/**
 		 *
@@ -888,9 +951,61 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public Participant(String nickname, JID user) {
+		private PropertyChangeListener streamPropertyChangeListener = new PropertyChangeListener()
+		{
+			public void propertyChange(PropertyChangeEvent ev)
+			{
+				String propertyName = ev.getPropertyName();
+				String prefix = MediaStreamImpl.class.getName() + ".rtpConnector.";
+
+				if (propertyName.startsWith(prefix))
+				{
+					Object newValue = ev.getNewValue();
+
+					if (newValue instanceof RTPConnectorInputStream)
+					{
+						String rtpConnectorPropertyName = propertyName.substring(prefix.length());
+						DatagramPacketFilter datagramPacketFilter = null;
+
+						if (rtpConnectorPropertyName.equals("dataInputStream"))
+						{
+							datagramPacketFilter = new DatagramPacketFilter()
+							{
+								public boolean accept(DatagramPacket p)
+								{
+									byte[] data = p.getData();
+
+									try{
+										RTPPacket packet = RTPPacket.parseBytes(BitAssistant.bytesToArray(data));
+										byte[] videoFrame = BitAssistant.bytesFromArray(packet.getPayload());
+
+										//Log.info("Video media " + " " + packet.getPayloadType() + " " + packet.getSequenceNumber() + " " + packet.getTimestamp() + " " + packet.getPayload());
+										if (recorder != null) recorder.write(videoFrame, 0, videoFrame.length);
+
+									} catch (Exception e) {
+
+									}
+									return true;
+								}
+							};
+						}
+
+						if (datagramPacketFilter != null)
+						{
+							((RTPConnectorInputStream) newValue).addDatagramPacketFilter(datagramPacketFilter);
+						}
+					}
+				}
+			}
+		};
+		/**
+		 *
+		 *
+		 */
+		public Participant(String nickname, JID user, String focusName) {
 			this.nickname = nickname;
 			this.user = user;
+			this.focusName = focusName;
 		}
 		/**
 		 *
@@ -920,6 +1035,44 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		public JID getUser() {
 			return user;
 		}
+		/**
+		 *
+		 *
+		 */
+		public void addMediaStream(MediaStream mediaStream)
+		{
+			boolean recordMedia = "true".equals(JiveGlobals.getProperty(RECORD_PROPERTY_NAME, "false"));
+
+			if (recordMedia)
+			{
+				this.mediaStream = mediaStream;
+				mediaStream.addPropertyChangeListener(streamPropertyChangeListener);
+
+				String recordingPath = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo"  + File.separator + "video_recordings";
+				String fileName = "video-" + focusName + "-" + nickname + "-" + System.currentTimeMillis() + ".rtp";
+
+				try {
+					recorder = new Recorder(recordingPath, fileName, "rtp", false, 0, 0);
+
+				} catch (Exception e) {
+					Log.error("Error creating video recording " + fileName + " " + recordingPath, e);
+				}
+			}
+		}
+
+		/**
+		 *
+		 *
+		 */
+		public void removeMediaStream()
+		{
+			if (this.mediaStream != null)
+			{
+				mediaStream.removePropertyChangeListener(streamPropertyChangeListener);
+				recorder.done();
+				recorder = null;
+			}
+		}
 	}
 
 	public class FocusAgent extends VirtualConnection
@@ -931,8 +1084,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private int count = 0;
 		private LocalClientSession session;
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-		private MediaStream mediaStream;
-		private DataSink mediaSink;
+		private Recorder recorder = null;
+		private AudioMixingPushBufferDataSource outDataSource;
 
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
@@ -1061,6 +1214,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				if ("video".equals(content.attributeValue("name")))
 				{
 						participant.videoChannelId = channel.attributeValue("id");
+
+						String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+						Content vbContent = getVideoBridge().getConference(focusId, focusJid).getOrCreateContent("video");
+
+						if (vbContent != null)
+						{
+							Channel videoChannel = vbContent.getChannel(participant.videoChannelId);
+
+							if (videoChannel != null)
+							{
+								participant.addMediaStream(videoChannel.getMediaStream());
+							}
+						}
 				}
 
 				if ("audio".equals(content.attributeValue("name")))
@@ -1154,6 +1320,11 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				videoContent.addElement("channel").addAttribute("id", participant.videoChannelId).addAttribute("expire", "0");
 
 				router.route(iq);
+
+				if (participant.mediaStream != null)
+				{
+                	participant.removeMediaStream();
+				}
 			}
 		}
 		/**
@@ -1226,71 +1397,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		/**
 		 *
 		 *
-		 *
-		 */
-		 /*
-		public IQ handleColibriCommand(ColibriCommand command, IQ iq)
-		{
-			String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
-
-			Log.info("FocusAgent handleColibriCommand " + focusId + " " + focusJid);
-
-			IQ reply = IQ.createResultIQ(iq);
-
-			Conference conference = getVideoBridge().getConference(focusId, focusJid);
-
-			try {
-				int localRTPPort = Integer.parseInt(command.getLocalRTPPort());
-				int localRTCPPort = Integer.parseInt(command.getLocalRTCPPort());
-				int remoteRTPPort = Integer.parseInt(command.getRemoteRTPPort());
-				int remoteRTCPPort = Integer.parseInt(command.getRemoteRTCPPort());
-				String codec = command.getCodec();
-
-				if (conference != null)
-				{
-					if (mediaStream != null)
-					{
-						mediaStream.stop();
-					}
-					Content content = conference.getOrCreateContent("audio");
-					MediaDevice mediaDevice = content.getMixer();
-					MediaService mediaService = LibJitsi.getMediaService();
-					mediaStream = mediaService.createMediaStream(org.jitsi.service.neomedia.MediaType.AUDIO);
-					MediaFormat mediaFormat;
-
-					if ("opus".equals(codec))
-						mediaFormat = mediaService.getFormatFactory().createMediaFormat("opus", 48000, 2);
-					else
-						mediaFormat = mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1);
-
-					mediaStream.setName("rayo-" + System.currentTimeMillis());
-					mediaStream.setDevice(mediaDevice);
-					mediaStream.setDirection(MediaDirection.SENDRECV);
-					mediaStream.addDynamicRTPPayloadType((byte)111, mediaFormat);
-					mediaStream.setFormat(mediaFormat);
-
-					StreamConnector connector = new DefaultStreamConnector(new DatagramSocket(localRTPPort), new DatagramSocket(localRTCPPort));
-					mediaStream.setConnector(connector);
-
-					InetAddress remoteAddr = InetAddress.getByName("localhost");
-
-					MediaStreamTarget target = new MediaStreamTarget(new InetSocketAddress(remoteAddr, remoteRTPPort),new InetSocketAddress(remoteAddr, remoteRTCPPort));
-					mediaStream.setTarget(target);
-
-					mediaStream.start();
-				}
-
-			} catch (Exception e) {
-
-				reply.setError(PacketError.Condition.not_allowed);
-				e.printStackTrace();
-			}
-			return reply;
-		}
-		*/
-		/**
-		 *
-		 *
 		 */
 		public SessionPacketRouter getRouter()
 		{
@@ -1302,22 +1408,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void closeColibri()
 		{
+			Log.info("FocusAgent - closeColibri ");
+
 			count = 0;
 			focusId = null;	// invalidate current focus
 
-			if (mediaStream != null)
-			{
-				mediaStream.stop();
-				mediaStream = null;
-			}
-
-			if (mediaSink != null)
+			if (recorder != null)
 			{
 				try {
-					mediaSink.stop();
+					recorder.done();
+					outDataSource.disconnect();
+					outDataSource.stop();
 				} catch (Exception e) {}
 
-				mediaSink = null;
+				recorder = null;
+				outDataSource = null;
 			}
 		}
 		/**
@@ -1437,24 +1542,60 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				{
 					conference = root.createCopy();	// rayo from participant
 
- 	 	 			if (mediaSink == null /*&& count > 1*/)		// recording not working, causing exception
- 	 	 			{
+					boolean recordMedia = "true".equals(JiveGlobals.getProperty(RECORD_PROPERTY_NAME, "false"));
+
+					if (recordMedia && recorder == null)
+					{
 						try {
-/*
-							String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
-							Content content = getVideoBridge().getConference(focusId, focusJid).getOrCreateContent("audio");
-							AudioMixerMediaDevice mediaDevice = (AudioMixerMediaDevice) content.getMixer();
+							synchronized (this)
+							{
+								Log.info("Creating recorder file " + iq.getTo());
 
-							MediaDeviceSession deviceSession = mediaDevice.createSession();
-							deviceSession.setContentDescriptor(new ContentDescriptor(FileTypeDescriptor.MPEG_AUDIO));
-							deviceSession.setMute(false);
-							deviceSession.start(MediaDirection.SENDRECV);
-							DataSource outputDataSource = deviceSession.getCaptureDevice();
+								String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+								Content content = getVideoBridge().getConference(focusId, focusJid).getOrCreateContent("audio");
+								AudioMixerMediaDevice mediaDevice = (AudioMixerMediaDevice) content.getMixer();
+								outDataSource = mediaDevice.createOutputDataSource();
 
-							mediaSink = Manager.createDataSink(outputDataSource, new MediaLocator("file:recording-" + focusName + ".mp3"));
-							mediaSink.open();
-							mediaSink.start();
-*/
+								outDataSource.connect();
+
+								BufferTransferHandler transferHandler = new BufferTransferHandler()
+								{
+									private final Buffer buffer = new Buffer();
+
+									public void transferData(PushBufferStream stream)
+									{
+										try {
+											stream.read(buffer);
+
+											byte[] data = (byte[]) buffer.getData();
+											byte[] ulawData = new byte[data.length /2];
+											AudioConversion.linearToUlaw(data, 0, ulawData, 0);
+
+											if (recorder != null) recorder.write(ulawData, 0, ulawData.length);
+
+										} catch (Exception e) {
+
+											Log.error("transferData exception", e);
+										}
+									}
+								};
+
+								AudioMixingPushBufferStream stream = (AudioMixingPushBufferStream) outDataSource.getStreams()[0];
+								stream.setTransferHandler(transferHandler);
+
+								AudioFormat format = stream.getFormat();
+
+								String recordingPath = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo"  + File.separator + "video_recordings";
+								String fileName = "audio-" + focusName + "-" + System.currentTimeMillis() + ".au";
+								boolean pcmu = format.getEncoding() == AudioFormat.ULAW;
+								int sampleRate = (int) Math.round(format.getSampleRate());
+								int channels = format.getChannels();
+
+								recorder = new Recorder(recordingPath, fileName, "au", true, sampleRate, channels);
+
+								outDataSource.start();
+
+							}
 
 						} catch (Exception e) {
 

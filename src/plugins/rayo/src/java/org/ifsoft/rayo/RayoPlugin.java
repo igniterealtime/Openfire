@@ -122,7 +122,7 @@ public class RayoPlugin implements Plugin, SessionEventListener  {
                 }
             }
         }, timeout, timeout, TimeUnit.MILLISECONDS);
-        Log.info("Jingle Nodes Loaded.");
+        Log.info("Rayo Plugin Loaded.");
 
         verifyNetwork();
     }

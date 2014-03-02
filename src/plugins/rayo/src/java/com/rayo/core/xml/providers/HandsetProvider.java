@@ -41,6 +41,12 @@ public class HandsetProvider extends BaseProvider {
     private static final QName MUTE_QNAME = new QName("mute", NAMESPACE);
     private static final QName UNMUTE_QNAME = new QName("unmute", NAMESPACE);
     private static final QName HOLD_QNAME = new QName("hold", NAMESPACE);
+    private static final QName TALK_QNAME = new QName("talk", NAMESPACE);
+    private static final QName UNTALK_QNAME = new QName("untalk", NAMESPACE);
+    private static final QName ONSPEAKER_QNAME = new QName("onspeaker", NAMESPACE);
+    private static final QName OFFSPEAKER_QNAME = new QName("offspeaker", NAMESPACE);
+    private static final QName CREATE_SPEAKER_QNAME = new QName("createspeaker", NAMESPACE);
+    private static final QName DESTROY_SPEAKER_QNAME = new QName("destroyspeaker", NAMESPACE);
 
     @Override
     protected Object processElement(Element element) throws Exception
@@ -65,6 +71,24 @@ public class HandsetProvider extends BaseProvider {
 
         } else if (HOLD_QNAME.equals(element.getQName())) {
             return buildHoldCommand(element);
+
+        } else if (TALK_QNAME.equals(element.getQName())) {
+            return buildTalkCommand(element);
+
+        } else if (UNTALK_QNAME.equals(element.getQName())) {
+            return buildUntalkCommand(element);
+
+        } else if (ONSPEAKER_QNAME.equals(element.getQName())) {
+            return buildOnSpeakerCommand(element);
+
+        } else if (OFFSPEAKER_QNAME.equals(element.getQName())) {
+            return buildOffSpeakerCommand(element);
+
+        } else if (CREATE_SPEAKER_QNAME.equals(element.getQName())) {
+            return buildCreateSpeakerCommand(element);
+
+        } else if (DESTROY_SPEAKER_QNAME.equals(element.getQName())) {
+            return buildDestroySpeakerCommand(element);
 
         } else if (element.getNamespace().equals(RAYO_COMPONENT_NAMESPACE)) {
             return buildCompleteCommand(element);
@@ -139,6 +163,36 @@ public class HandsetProvider extends BaseProvider {
 
     private Object buildOnHookCommand(Element element) throws URISyntaxException {
         return new OnHookCommand();
+    }
+
+    private Object buildTalkCommand(Element element)
+    {
+		return new TalkCommand();
+	}
+
+    private Object buildUntalkCommand(Element element)
+    {
+		return new UntalkCommand();
+	}
+
+    private Object buildOnSpeakerCommand(Element element)
+    {
+        return new PutOnSpeakerCommand();
+    }
+
+    private Object buildOffSpeakerCommand(Element element)
+    {
+        return new TakeOffSpeakerCommand();
+    }
+
+    private Object buildCreateSpeakerCommand(Element element)
+    {
+		return new CreateSpeakerCommand(element.attributeValue("sipuri"), element.attributeValue("mixer"), element.attributeValue("codec"));
+	}
+
+    private Object buildDestroySpeakerCommand(Element element)
+    {
+        return new DestroySpeakerCommand();
     }
 
     // Object -> XML

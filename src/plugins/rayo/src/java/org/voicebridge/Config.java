@@ -130,7 +130,7 @@ public class Config implements MUCEventListener {
 			String name = defaultProxy;
 			String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", "admin");
 			String sipusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipusername", name);
-			String authusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", name);
+			String authusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
 			String displayname = JiveGlobals.getProperty("voicebridge.default.proxy.sipdisplayname", name);
 			String password = JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", name);
 			String server = JiveGlobals.getProperty("voicebridge.default.proxy.sipserver");

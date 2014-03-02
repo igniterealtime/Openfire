@@ -25,7 +25,8 @@ package com.sun.voip;
 
 import java.net.InetSocketAddress;
 import org.voicebridge.*;
-import org.xmpp.jnodes.RelayChannel;
+import org.xmpp.jnodes.IChannel;
+import com.sun.voip.server.*;
 
 import java.util.*;
 
@@ -89,7 +90,7 @@ public class CallParticipant {
     private boolean handleSessionProgress	   = false;
     private String remoteMediaInfo		   = null;
     private ProxyCredentials proxyCredentials = null;
-    private RelayChannel relayChannel = null;
+    private IChannel channel = null;
     private boolean autoAnswer = false;
     private long startTimestamp = 0;
     private long endTimestamp = 0;
@@ -110,6 +111,7 @@ public class CallParticipant {
     private boolean secondPartyVoiceDetection      = false;
     private String  rtmfpSendStream					= null;
     private String  rtmfpRecieveStream				= null;
+    private CallHandler otherCall					= null;
 
     /**
      * Constructor
@@ -131,15 +133,24 @@ public class CallParticipant {
 		this.proxyCredentials = proxyCredentials;
     }
 
-
-    public RelayChannel getRelayChannel()
+    public CallHandler getOtherCall()
     {
-		return relayChannel;
+		return otherCall;
     }
 
-    public void setRelayChannel(RelayChannel relayChannel)
+    public void setOtherCall(CallHandler otherCall)
     {
-		this.relayChannel = relayChannel;
+		this.otherCall = otherCall;
+    }
+
+    public IChannel getChannel()
+    {
+		return channel;
+    }
+
+    public void setChannel(IChannel channel)
+    {
+		this.channel = channel;
     }
 
     public long getStartTimestamp()

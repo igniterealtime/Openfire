@@ -142,7 +142,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
 			 placeCall(); // no gateway involved, direct SIP call
 
-		} else if (cp.getProtocol() != null && ("Videobridge".equals(cp.getProtocol()) || "WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
+		} else if (cp.getProtocol() != null && ("Speaker".equals(cp.getProtocol()) || "WebRtc".equals(cp.getProtocol()) || "Rtmfp".equals(cp.getProtocol()))) {
 
 			 placeCall(); // WebRtc call
 
@@ -172,8 +172,8 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 	    csa = new NSOutgoingCallAgent(this);
 	} else if (protocol.equalsIgnoreCase("WebRtc")) {
 	    csa = new WebRtcCallAgent(this);
-	} else if (protocol.equalsIgnoreCase("Videobridge")) {
-	    csa = new VideobridgeCallAgent(this);
+	} else if (protocol.equalsIgnoreCase("Speaker")) {
+	    csa = new SpeakerCallAgent(this);
 	} else if (protocol.equalsIgnoreCase("Rtmfp")) {
 	    csa = new RtmfpCallAgent(this);
 	} else {
@@ -482,7 +482,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 			protocol = cp.getProtocol();
 		}
 
-		if (protocol.equalsIgnoreCase("WebRtc") || protocol.equalsIgnoreCase("Rtmfp")) {
+		if (protocol.equalsIgnoreCase("WebRtc") || protocol.equalsIgnoreCase("Rtmfp")  || protocol.equalsIgnoreCase("Speaker")) {
 			return true;
 		}
 
@@ -506,7 +506,7 @@ public class OutgoingCallHandler extends CallHandler implements CallEventListene
 
     public boolean waitForCallToBeEstablished() {
 
-		if (cp.getProtocol().equalsIgnoreCase("WebRtc") || cp.getProtocol().equalsIgnoreCase("Rtmfp")) {
+		if (cp.getProtocol().equalsIgnoreCase("WebRtc") || cp.getProtocol().equalsIgnoreCase("Rtmfp") || cp.getProtocol().equalsIgnoreCase("Speaker")) {
 			return true;
 		}
 

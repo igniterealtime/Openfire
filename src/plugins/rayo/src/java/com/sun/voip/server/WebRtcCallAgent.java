@@ -47,7 +47,7 @@ public class WebRtcCallAgent extends CallSetupAgent
 		mixerMediaPreference = callHandler.getConferenceManager().getMediaInfo();
 
 		memberSender = callHandler.getMemberSender();
-		memberSender.setWebRTCParticipant(cp.getRelayChannel());
+		memberSender.setChannel(cp.getChannel());
 		memberReceiver = callHandler.getMemberReceiver();
 
 		callHandler.setEndpointAddress(null, (byte) (cp.getMediaPreference() == "PCM/48000/2" ? 111 : 0), (byte)0, (byte)0);

@@ -89,6 +89,10 @@ public abstract class CallHandler extends Thread {
      */
     protected CallHandler otherCall;
 
+    public CallHandler getOtherCall() {
+        return this.otherCall;
+    }
+
     public void suppressStatus(boolean suppressStatus) {
 	this.suppressStatus = suppressStatus;
     }

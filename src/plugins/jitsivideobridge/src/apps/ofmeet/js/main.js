@@ -7,6 +7,7 @@ var screenShare = false;
 var pdfShare = null;
 var pdfFrame = null;
 var pdfPage = "1";
+var altView = false;
 
 $(document).ready(function () 
 {
@@ -219,6 +220,7 @@ $(document).bind('remotestreamadded.rayo', function(event, data, nick)
 	if (sel.attr('id') && sel.attr('id').indexOf('mixedmslabel') == -1) {
 	    // ignore mixedmslabela0 and non room members
 	    sel.attr("title", unescape(nick))
+	    sel.attr("class", "remotevideo")	    
 	    sel.show();
 
 	    document.getElementById('largeVideo').volume = 1;
@@ -441,10 +443,35 @@ function getConstraints(um, resolution, bandwidth, fps)
     }
 } 
 
+function goAltView()
+{
+	if (altView)
+	{
+		$("#altview").addClass("fa-stop");
+		$("#altview").removeClass("fa-th");
+		$('#largeVideo').css("display", "");
+		resizeLarge();	
+
+	} else {
+		$("#altview").removeClass("fa-stop");
+		$("#altview").addClass("fa-th");
+		arrangeVideos();
+	}
+
+	altView = !altView;
+}
+
+function arrangeVideos() 
+{	
+	
+	
+}     
+
 function resizeLarge() 
 {
         var availableHeight = window.innerHeight;
         var numvids = $('#remoteVideos>video:visible').length;
+        
         if (numvids < 5)
             availableHeight -= 100; // min thumbnail height for up to 4 videos
         else
@@ -461,7 +488,9 @@ function resizeLarge()
         $('#largeVideo').height(availableWidth/aspectRatio);
         
         if (availableWidth <= 450) $('#chatspace').width(availableWidth);
+        
         resizeThumbnails() ;
+        
 }
     
 function resizeThumbnails() 
@@ -484,6 +513,8 @@ function resizeThumbnails()
 	$('#remoteVideos').height(availableHeight + 36); // add the 2*18px border used for highlighting shadow.
 	$('#remoteVideos>video:visible').width(availableWidth);
 	$('#remoteVideos>video:visible').height(availableHeight);
+	$('#remoteVideos>video:visible').css('position', 'relative');
+	$('#remoteVideos>video:visible').css({top: '18px', left: '0px', right: '0px', bottom: '0px'});	
 }
 
 function urlParam(name)

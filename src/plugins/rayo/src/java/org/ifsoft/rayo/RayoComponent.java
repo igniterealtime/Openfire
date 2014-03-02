@@ -136,13 +136,6 @@ public class RayoComponent 	extends 	AbstractComponent
 
 		createIQHandlers();
 
-		Plugin fastpath = server.getPluginManager().getPlugin("fastpath");
-
-		if (fastpath != null)
-		{
-			Log.info("RayoComponent found Fastpath");
-		}
-
 		try{
 			Log.info("Starting jCumulus.....");
 
@@ -208,7 +201,7 @@ public class RayoComponent 	extends 	AbstractComponent
     }
 
     @Override
-    protected IQ handleIQGet(IQ iq) throws Exception {
+    synchronized protected IQ handleIQGet(IQ iq) throws Exception {
 
 		Log.info("RayoComponent handleIQGet \n" + iq.toString());
 
@@ -244,6 +237,24 @@ public class RayoComponent 	extends 	AbstractComponent
 
 				} else if (object instanceof PublicCommand) {
 					reply = handlePrivateCommand(object, iq);
+
+				} else if (object instanceof CreateSpeakerCommand) {
+					reply = handleCreateSpeakerCommand(object, iq);
+
+				} else if (object instanceof DestroySpeakerCommand) {
+					reply = handleDestroySpeakerCommand(object, iq);
+
+				} else if (object instanceof PutOnSpeakerCommand) {
+					reply = handleOnOffSpeakerCommand(object, iq, true);
+
+				} else if (object instanceof TakeOffSpeakerCommand) {
+					reply = handleOnOffSpeakerCommand(object, iq, false);
+
+				} else if (object instanceof TalkCommand) {
+					reply = handleOnOffTalkCommand(object, iq, false);
+
+				} else if (object instanceof UntalkCommand) {
+					reply = handleOnOffTalkCommand(object, iq, true);
 				}
 				return reply;
 			}
@@ -546,6 +557,265 @@ public class RayoComponent 	extends 	AbstractComponent
 	}
 
 
+	private IQ handleOnOffTalkCommand(Object object, IQ iq, boolean mute)
+	{
+		Log.info("RayoComponent handleOnOffTalkCommand");
+
+		IQ reply = IQ.createResultIQ(iq);
+		String callId = iq.getTo().getNode();
+		String speakerId = JID.escapeNode(iq.getFrom().toBareJID() + "/speaker");
+		String bridgeCallId = "call-" + callId + speakerId;
+		String bridgeSpeakerId = "spkr-" + speakerId + callId;
+
+		CallHandler callHandler = CallHandler.findCall(bridgeCallId);
+		CallHandler callHandler2 = CallHandler.findCall(bridgeSpeakerId);
+
+		if (callHandler != null)
+		{
+			CallHandler spkrHandler = CallHandler.findCall(speakerId);
+
+			if (spkrHandler != null)
+			{
+				MemberReceiver memberReceiver = spkrHandler.getMemberReceiver();
+				MemberSender memberSender = callHandler.getMemberSender();
+
+				if (!mute)
+				{
+					memberReceiver.setChannel(new SpeakerChannel(callHandler.getMemberReceiver()));
+				} else {
+					memberReceiver.setChannel(null);
+				}
+
+				CallParticipant cp = spkrHandler.getCallParticipant();
+				cp.setMuted(mute);	// mic on/off
+			}
+
+		} else {
+			reply.setError(PacketError.Condition.item_not_found);
+		}
+
+		return reply;
+	}
+
+
+
+	private IQ handleOnOffSpeakerCommand(Object object, IQ iq, boolean flag)
+	{
+		Log.info("RayoComponent handleOnOffSpeakerCommand");
+
+		IQ reply = IQ.createResultIQ(iq);
+		String callId = iq.getTo().getNode();
+		String speakerId = JID.escapeNode(iq.getFrom().toBareJID() + "/speaker");
+
+		CallHandler callHandler = CallHandler.findCall(callId);
+		CallHandler spkrHandler = CallHandler.findCall(speakerId);
+
+		if (callHandler != null)
+		{
+			if (spkrHandler != null)
+			{
+				Log.info("RayoComponent handleOnOffSpeakerCommand, found call " + callId);
+
+				bridgeMixers(spkrHandler, callHandler, flag, iq.getFrom());
+			}
+
+		} else {	// not call, we use callId for mixer name
+
+			ConferenceManager cm = ConferenceManager.getConference(callId, "PCMU/8000/1", callId, false);
+
+			if (spkrHandler != null)
+			{
+				Log.info("RayoComponent handleOnOffSpeakerCommand, found conference " + callId);
+
+				CallParticipant sp = spkrHandler.getCallParticipant();
+				String spkrMixer = sp.getConferenceId();
+				String callMixer = callId;
+
+				bridgeMixers(spkrMixer, speakerId, callMixer, callId, flag, iq.getFrom());
+			}
+		}
+
+		return reply;
+	}
+
+	private void bridgeMixers(CallHandler spkrHandler, CallHandler callHandler, boolean flag, JID from)
+	{
+		Log.info("RayoComponent bridgeMixers");
+
+		CallParticipant sp = spkrHandler.getCallParticipant();
+		CallParticipant cp = callHandler.getCallParticipant();
+
+		String callMixer = cp.getConferenceId();
+		String spkrMixer = sp.getConferenceId();
+
+		bridgeMixers(spkrMixer, sp.getCallId(), callMixer, cp.getCallId(), flag, from);
+	}
+
+	synchronized private void bridgeMixers(String spkrMixer, String speakerId, String callMixer, String callId, boolean flag, JID from)
+	{
+		Log.info("RayoComponent bridgeMixers " + speakerId + " " + callMixer + " " + callId  + " " + flag);
+
+		String bridgeSpeakerId = "spkr-" + speakerId + callId;
+		String bridgeCallId = "call-" + callId + speakerId;
+
+		CallHandler bridge1 = CallHandler.findCall(bridgeSpeakerId);
+		if (bridge1 != null) bridge1.cancelRequest("Speaker terminated");
+
+		CallHandler bridge2 = CallHandler.findCall(bridgeCallId);
+		if (bridge2 != null) bridge2.cancelRequest("Speaker terminated");
+
+		if (flag)
+		{
+			synchronized (this)
+			{
+				CallParticipant bp1 = new CallParticipant();
+				bp1.setCallId(bridgeSpeakerId);
+				bp1.setConferenceId(spkrMixer);
+				bp1.setPhoneNumber(speakerId);
+				bp1.setDisplayName("SPKR");
+				bp1.setVoiceDetection(false);
+				bp1.setProtocol("Speaker");
+				bridge1 = new OutgoingCallHandler(this, bp1);
+
+				CallParticipant bp2 = new CallParticipant();
+				bp2.setCallId(bridgeCallId);
+				bp2.setConferenceId(callMixer);
+				bp2.setPhoneNumber(speakerId);
+				bp2.setDisplayName("CALL");
+				bp2.setVoiceDetection(true);
+				bp2.setCallOwner(from.toString());
+				bp2.setProtocol("Speaker");
+				bp2.setOtherCall(bridge1);
+				bridge2 = new OutgoingCallHandler(this, bp2);
+
+				bridge1.start();
+
+				try {
+					Thread.sleep(3000);
+				} catch (Exception e) {}
+
+				bridge2.start();
+			}
+		}
+
+	}
+
+	private IQ handleDestroySpeakerCommand(Object object, IQ iq)
+	{
+		Log.info("RayoComponent handleDestroySpeakerCommand");
+
+		IQ reply = IQ.createResultIQ(iq);
+		DestroySpeakerCommand speaker = (DestroySpeakerCommand) object;
+
+        try {
+			String speakerId = JID.escapeNode(iq.getFrom().toBareJID() + "/speaker");
+
+			CallHandler handler = CallHandler.findCall(speakerId);
+
+			if (handler != null)
+			{
+				killSpeaker(handler);
+			}
+
+        } catch (Exception e) {
+           e.printStackTrace();
+           reply.setError(PacketError.Condition.not_allowed);
+        }
+		return reply;
+	}
+
+	private void killSpeaker(CallHandler handler)
+	{
+		Log.info("RayoComponent killSpeaker");
+
+        try {
+
+			handler.cancelRequest("Speaker is destroyed");
+
+			CallParticipant cp = handler.getCallParticipant();
+			String confId = cp.getConferenceId();
+			handler = null;
+
+			ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(confId);
+
+			ArrayList memberList = conferenceManager.getMemberList();
+
+			synchronized (memberList)
+			{
+				for (int i = 0; i < memberList.size(); i++)
+				{
+					CallHandler participant = ((ConferenceMember) memberList.get(i)).getCallHandler();
+
+					if (participant != null)
+					{
+						participant.cancelRequest("Speaker is destroyed");
+						participant = null;
+					}
+				}
+			}
+
+
+        } catch (Exception e) {
+           e.printStackTrace();
+        }
+	}
+
+	private IQ handleCreateSpeakerCommand(Object object, IQ iq)
+	{
+		Log.info("RayoComponent handleCreateSpeakerCommand");
+
+		IQ reply = IQ.createResultIQ(iq);
+		CreateSpeakerCommand speaker = (CreateSpeakerCommand) object;
+
+        try {
+			String speakerId = JID.escapeNode(iq.getFrom().toBareJID() + "/speaker");
+			String label = iq.getFrom().getNode();
+
+			CallHandler handler = CallHandler.findCall(speakerId);
+
+			if (handler != null)
+			{
+				//killSpeaker(handler);
+				final Element childElement = reply.setChildElement("ref", RAYO_CORE);
+				childElement.addAttribute(ID, speakerId);
+				childElement.addAttribute(URI, "xmpp:" + iq.getFrom().toBareJID() + "/speaker");
+				return reply;
+			}
+
+			String mediaPreference = "PCMU/8000/1";
+
+			if (speaker.codec == null || "OPUS".equals(speaker.codec))
+				mediaPreference = "PCM/48000/2";
+
+			CallParticipant cp = new CallParticipant();
+			cp.setCallId(speakerId);
+			cp.setConferenceId(speaker.mixer);
+			cp.setDisplayName("rayo-speaker-" + System.currentTimeMillis());
+			cp.setName(cp.getDisplayName());
+			cp.setVoiceDetection(true);
+			cp.setCallOwner(iq.getFrom().toString());
+			cp.setPhoneNumber(speaker.sipuri);
+			cp.setAutoAnswer(true);
+			cp.setProtocol("SIP");
+			cp.setMuted(true);	// set mic off
+
+			ConferenceManager cm = ConferenceManager.getConference(speaker.mixer, mediaPreference, label, false);
+
+			OutgoingCallHandler callHandler = new OutgoingCallHandler(this, cp);
+			callHandler.start();
+
+			final Element childElement = reply.setChildElement("ref", RAYO_CORE);
+			childElement.addAttribute(ID, speakerId);
+			childElement.addAttribute(URI, "xmpp:" + iq.getFrom().toBareJID() + "/speaker");
+
+        } catch (Exception e) {
+           e.printStackTrace();
+           reply.setError(PacketError.Condition.not_allowed);
+        }
+
+		return reply;
+	}
+
     private void handleOnOffHook(String handsetId, Object object, RelayChannel channel, IQ reply)
     {
 		final boolean flag = object instanceof OnHookCommand;
@@ -630,7 +900,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 					} else {
 						cp.setMediaPreference(mediaPreference);
-						cp.setRelayChannel(channel);
+						cp.setChannel(channel);
 						cp.setProtocol("WebRtc");
 					}
 
@@ -726,9 +996,10 @@ public class RayoComponent 	extends 	AbstractComponent
 		final String entityId = iq.getTo().getNode();
 		final String treatmentId = command.getPrompt().getText();
 
-		try {
-			CallHandler callHandler = CallHandler.findCall(entityId);
+		CallHandler callHandler = CallHandler.findCall(entityId);
 
+		if (callHandler != null)
+		{
 			try {
 				callHandler.playTreatmentToCall(treatmentId, this);
 
@@ -741,7 +1012,7 @@ public class RayoComponent 	extends 	AbstractComponent
 				reply.setError(PacketError.Condition.not_allowed);
 			}
 
-		} catch (NoSuchElementException e) {	// not call, lets try mixer
+		} else {	// not call, lets try mixer
 
 			try {
 				ConferenceManager conferenceManager = ConferenceManager.findConferenceManager(entityId);
@@ -977,17 +1248,21 @@ public class RayoComponent 	extends 	AbstractComponent
 
 	private JID getJID(String jid)
 	{
-		jid = JID.unescapeNode(jid);
+		if (jid != null)
+		{
+			jid = JID.unescapeNode(jid);
 
-		if (jid.indexOf("@") == -1 || jid.indexOf("/") == -1) return null;
+			if (jid.indexOf("@") == -1 || jid.indexOf("/") == -1) return null;
 
-		try {
-			return new JID(jid);
+			try {
+				return new JID(jid);
 
-		} catch (Exception e) {
+			} catch (Exception e) {
 
-			return null;
-		}
+				return null;
+			}
+
+		} else return null;
 	}
 
 	private IQ handleDtmfCommand(DtmfCommand command, IQ iq)
@@ -1161,20 +1436,26 @@ public class RayoComponent 	extends 	AbstractComponent
 
 	private boolean isMixerMuc(String mixer)
 	{
+		Log.info("RayoComponent isMixerMuc " + mixer);
+
 		boolean isMuc = false;
 
-		if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(mixer)) {
+		try {
+			if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").hasChatRoom(mixer)) {
 
-			isMuc =  null != XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(mixer);
-		}
+				isMuc =  null != XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(mixer);
+			}
+
+		} catch (Exception e) {}
+
 		return isMuc;
 	}
 
 	private void sendMucMessage(String mixer, String recording, JID participant, String message)
 	{
-		if (isMixerMuc(mixer))	// not working
+		if (isMixerMuc(mixer))	// not working properly. sending only to single person
 		{
-			//sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
+			sendMessage(new JID(mixer + "@conference." + getDomain()), participant, message, recording, "groupchat");
 		}
 
 	}
@@ -1494,6 +1775,25 @@ public class RayoComponent 	extends 	AbstractComponent
 
 							} else if ("299 ENDED".equals(callState)) {
 
+/*
+								if (callEvent.getCallId().indexOf("2fspeaker") > -1 && callEvent.getInfo().indexOf("Reason='System shutdown'") == -1)
+								{
+									CallParticipant cp2 = new CallParticipant();
+									cp2.setCallId(cp.getCallId());
+									cp2.setConferenceId(cp.getConferenceId());
+									cp2.setDisplayName(cp.getDisplayName());
+									cp2.setName(cp.getDisplayName());
+									cp2.setCallOwner(cp.getCallOwner());
+									cp2.setPhoneNumber(cp.getPhoneNumber());
+									cp2.setVoiceDetection(true);
+									cp2.setAutoAnswer(true);
+									cp2.setProtocol("SIP");
+									cp2.setMuted(true);	// set mic off
+
+									OutgoingCallHandler callHandlerNew = new OutgoingCallHandler(this, cp2);
+									callHandlerNew.start();
+								}
+*/
 							}
 
 						} else if ("250 STARTED SPEAKING".equals(myEvent)) {
@@ -1549,7 +1849,7 @@ public class RayoComponent 	extends 	AbstractComponent
 
 						Log.info( "RayoComponent broadcastSpeaking checking " + target);
 
-						if (target != null && callId.equals(cp.getCallId()) == false)
+						if (target != null && target.equals(from.toString()) == false)
 						{
 							Presence presence = new Presence();
 							presence.setFrom(conferenceId + "@" + getDomain());
@@ -1558,11 +1858,11 @@ public class RayoComponent 	extends 	AbstractComponent
 							if (startSpeaking)
 							{
 								StartedSpeakingEvent speaker = new StartedSpeakingEvent();
-								speaker.setSpeakerId(callId);
+								speaker.setSpeakerId(JID.escapeNode(from.toString()));
 								presence.getElement().add(rayoProvider.toXML(speaker));
 							} else {
 								StoppedSpeakingEvent speaker = new StoppedSpeakingEvent();
-								speaker.setSpeakerId(callId);
+								speaker.setSpeakerId(JID.escapeNode(from.toString()));
 								presence.getElement().add(rayoProvider.toXML(speaker));
 							}
 
@@ -1635,7 +1935,13 @@ public class RayoComponent 	extends 	AbstractComponent
         packet.setTo(to);
         packet.setFrom(from);
         packet.setType("chat".equals(type) ? Message.Type.chat : Message.Type.groupchat);
-        if (fileName != null) packet.setThread("http://" + getDomain() + ":" + port + "/rayo/recordings/" + fileName);
+        if (fileName != null)
+        {
+			String url = "http://" + getDomain() + ":" + port + "/rayo/recordings/" + fileName;
+			packet.setThread(url);
+			body = body + " " + url;
+		}
+
         packet.setBody(body);
         sendPacket(packet);
     }

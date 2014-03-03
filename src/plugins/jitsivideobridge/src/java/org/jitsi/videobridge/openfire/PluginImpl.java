@@ -1069,8 +1069,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			if (this.mediaStream != null)
 			{
 				mediaStream.removePropertyChangeListener(streamPropertyChangeListener);
-				recorder.done();
-				recorder = null;
+
+				if (recorder != null)
+				{
+					recorder.done();
+					recorder = null;
+				}
 			}
 		}
 	}
@@ -1588,7 +1592,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 								String recordingPath = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo"  + File.separator + "video_recordings";
 								String fileName = "audio-" + focusName + "-" + System.currentTimeMillis() + ".au";
 								boolean pcmu = format.getEncoding() == AudioFormat.ULAW;
-								int sampleRate = (int) Math.round(format.getSampleRate());
+								int sampleRate = (int) format.getSampleRate();
 								int channels = format.getChannels();
 
 								recorder = new Recorder(recordingPath, fileName, "au", true, sampleRate, channels);

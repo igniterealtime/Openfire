@@ -2,7 +2,8 @@
 /* application specific logic */
 var connection = null;
 var focus = null;
-var RTC;
+var activecall = null;
+var RTC = null;
 var RTCPeerConnection = null;
 var nickname = null;
 var sharedKey = '';
@@ -83,7 +84,8 @@ function doJoin() {
             roomnode = path.substr(1).toLowerCase();
         } else {
             roomnode = Math.random().toString(36).substr(2, 20);
-            window.history.pushState('VideoChat', 'Room: ' + roomnode, window.location.pathname + roomnode);
+            window.history.pushState('VideoChat',
+                    'Room: ' + roomnode, window.location.pathname + roomnode);
         }
     }
 
@@ -165,12 +167,14 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     var remotes = document.getElementById('remoteVideos');
 
     if (data.peerjid) {
-        container  = document.getElementById('participant_' + Strophe.getResourceFromJid(data.peerjid));
+        container  = document.getElementById(
+                'participant_' + Strophe.getResourceFromJid(data.peerjid));
         if (!container) {
             console.warn('no container for', data.peerjid);
             // create for now...
             // FIXME: should be removed
-            container = addRemoteVideoContainer('participant_' + Strophe.getResourceFromJid(data.peerjid));
+            container = addRemoteVideoContainer(
+                    'participant_' + Strophe.getResourceFromJid(data.peerjid));
         } else {
             //console.log('found container for', data.peerjid);
         }
@@ -182,6 +186,7 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
         container = document.createElement('span');
         container.className = 'videocontainer';
         remotes.appendChild(container);
+        Util.playSoundNotification('userJoined');
     }
     var vid = document.createElement('video');
     var id = 'remoteVideo_' + sid + '_' + data.stream.id;
@@ -212,11 +217,12 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
             if (pick) {
                  if (pick.src === localVideoSrc)
                  isLocalVideo = true;
-                 
+
                  updateLargeVideo(pick.src, isLocalVideo, pick.volume);
             }
         }
         $('#' + id).parent().remove();
+        Util.playSoundNotification('userLeft');
         resizeThumbnails();
     };
     sel.click(
@@ -263,13 +269,84 @@ function sendKeyframe(pc) {
     );
 }
 
+function demonstrateabug(pc) {
+    // funny way of doing mute. the subsequent offer contains things like rtcp-mux
+    // and triggers all new ice candidates (ice restart)
+    // this code is here to demonstrate a bug
+    pc.createOffer(
+        function (offer) {
+            console.log(offer);
+            var sdp = new SDP(offer.sdp);
+            if (sdp.media.length > 1) {
+                sdp.media[1] = sdp.media[1].replace('a=sendrecv', 'a=recvonly');
+                sdp.raw = sdp.session + sdp.media.join('');
+                offer.sdp = sdp.raw;
+                pc.setLocalDescription(offer,
+                    function () {
+                        console.log('mute SLD ok');
+                    },
+                    function(error) {
+                        console.log('mute SLD error');
+                    }
+                );
+            }
+        },
+        function (error) {
+            console.warn(error);
+        },
+        {mandatory: {OfferToReceiveAudio: true, OfferToReceiveVideo: false}}
+    );
+}
+
+// really mute video, i.e. dont even send black frames
+function muteVideo(pc, unmute) {
+    // FIXME: this probably needs another of those lovely state safeguards...
+    // which checks for iceconn == connected and sigstate == stable
+    pc.setRemoteDescription(pc.remoteDescription,
+        function () {
+            pc.createAnswer(
+                function (answer) {
+                    var sdp = new SDP(answer.sdp);
+                    if (sdp.media.length > 1) {
+                        if (unmute)
+                            sdp.media[1] = sdp.media[1].replace('a=recvonly', 'a=sendrecv');
+                        else
+                            sdp.media[1] = sdp.media[1].replace('a=sendrecv', 'a=recvonly');
+                        sdp.raw = sdp.session + sdp.media.join('');
+                        answer.sdp = sdp.raw;
+                    }
+                    pc.setLocalDescription(answer,
+                        function () {
+                            console.log('mute SLD ok');
+                        },
+                        function(error) {
+                            console.log('mute SLD error');
+                        }
+                    );
+                },
+                function (error) {
+                    console.log(error);
+                }
+            );
+        },
+        function (error) {
+            console.log('muteVideo SRD error');
+        }
+    );
+}
+
 $(document).bind('callincoming.jingle', function (event, sid) {
     var sess = connection.jingle.sessions[sid];
+
+    // TODO: do we check activecall == null?
+    activecall = sess;
+
     // TODO: check affiliation and/or role
     console.log('emuc data for', sess.peerjid, connection.emuc.members[sess.peerjid]);
     sess.usedrip = true; // not-so-naive trickle ice
     sess.sendAnswer();
     sess.accept();
+
 });
 
 $(document).bind('callactive.jingle', function (event, videoelem, sid) {
@@ -292,13 +369,17 @@ $(document).bind('setLocalDescription.jingle', function (event, sid) {
     // put our ssrcs into presence so other clients can identify our stream
     var sess = connection.jingle.sessions[sid];
     var newssrcs = {};
+    var directions = {};
     var localSDP = new SDP(sess.peerconnection.localDescription.sdp);
     localSDP.media.forEach(function (media) {
         var type = SDPUtil.parse_mline(media.split('\r\n')[0]).media;
+
         if (SDPUtil.find_line(media, 'a=ssrc:')) {
-            var ssrc = SDPUtil.find_line(media, 'a=ssrc:').substring(7).split(' ')[0];
             // assumes a single local ssrc
+            var ssrc = SDPUtil.find_line(media, 'a=ssrc:').substring(7).split(' ')[0];
             newssrcs[type] = ssrc;
+
+            directions[type] = (SDPUtil.find_line(media, 'a=sendrecv') || SDPUtil.find_line(media, 'a=recvonly') || SDPUtil.find_line('a=sendonly') || SDPUtil.find_line('a=inactive') || 'a=sendrecv').substr(2);
         }
     });
     console.log('new ssrcs', newssrcs);
@@ -306,7 +387,7 @@ $(document).bind('setLocalDescription.jingle', function (event, sid) {
     var i = 0;
     Object.keys(newssrcs).forEach(function (mtype) {
         i++;
-        connection.emuc.addMediaToPresence(i, mtype, newssrcs[mtype]);
+        connection.emuc.addMediaToPresence(i, mtype, newssrcs[mtype], directions[mtype]);
     });
     if (i > 0) {
         connection.emuc.sendPresence();
@@ -411,6 +492,19 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
     $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
         //console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
         ssrc2jid[ssrc.getAttribute('ssrc')] = jid;
+
+        // might need to update the direction if participant just went from sendrecv to recvonly
+        if (ssrc.getAttribute('type') == 'video') {
+            var el = $('#participant_'  + Strophe.getResourceFromJid(jid) + '>video');
+            switch(ssrc.getAttribute('direction')) {
+            case 'sendrecv':
+                el.show(); 
+                break;
+            case 'recvonly':
+                el.hide();
+                break;
+            }
+        }
     });
 
     if (info.displayName) {
@@ -511,7 +605,7 @@ $(document).bind('presentationadded.muc', function (event, jid, presUrl, current
                 });
 
     $('#presentation>iframe').attr('id', preziPlayer.options.preziId);
-                 
+
     preziPlayer.on(PreziPlayer.EVENT_STATUS, function(event) {
         console.log("prezi status", event.value);
         if (event.value == PreziPlayer.STATUS_CONTENT_READY) {
@@ -620,9 +714,19 @@ function updateLargeVideo(newSrc, localVideo, vol) {
 
 function toggleVideo() {
     if (!(connection && connection.jingle.localStream)) return;
+    var ismuted = false;
+    for (var idx = 0; idx < connection.jingle.localStream.getVideoTracks().length; idx++) {
+        ismuted = !connection.jingle.localStream.getVideoTracks()[idx].enabled;
+    }
     for (var idx = 0; idx < connection.jingle.localStream.getVideoTracks().length; idx++) {
         connection.jingle.localStream.getVideoTracks()[idx].enabled = !connection.jingle.localStream.getVideoTracks()[idx].enabled;
     }
+    var sess = focus || activecall;
+    if (!sess) {
+        return;
+    }
+    sess.pendingop = ismuted ? 'unmute' : 'mute';
+    sess.modifySources();
 }
 
 function toggleAudio() {
@@ -632,8 +736,8 @@ function toggleAudio() {
     }
 }
 
-function resizeLarge() {
-    resizeChat();
+var resizeLarge = function () {
+    Chat.resizeChat();
     var availableHeight = window.innerHeight;
     var chatspaceWidth = $('#chatspace').is(":visible")
                             ? $('#chatspace').width()
@@ -666,7 +770,7 @@ function resizeLarge() {
     }
 
     resizeThumbnails();
-}
+};
 
 function resizeThumbnails() {
     // Calculate the available height, which is the inner window height minus 39px for the header
@@ -691,70 +795,8 @@ function resizeThumbnails() {
     $('#remoteVideos>span').height(availableHeight);
 }
 
-function resizeChat() {
-    var availableHeight = window.innerHeight;
-    var availableWidth = window.innerWidth;
-
-    var chatWidth = 200;
-    if (availableWidth*0.2 < 200)
-        chatWidth = availableWidth*0.2;
-
-    $('#chatspace').width(chatWidth);
-    $('#chatspace').height(availableHeight - 40);
-
-    resizeChatConversation();
-}
-
-function resizeChatConversation() {
-    var usermsgStyleHeight = document.getElementById("usermsg").style.height;
-    var usermsgHeight = usermsgStyleHeight.substring(0, usermsgStyleHeight.indexOf('px'));
-
-    $('#chatconversation').width($('#chatspace').width() - 10);
-    $('#chatconversation').height(window.innerHeight - 50 - parseInt(usermsgHeight));
-}
-
 $(document).ready(function () {
-    var storedDisplayName = window.localStorage.displayname;
-    if (storedDisplayName) {
-        nickname = storedDisplayName;
-
-        setChatConversationMode(true);
-    }
-
-    $('#nickinput').keydown(function(event) {
-        if (event.keyCode == 13) {
-            event.preventDefault();
-            var val = this.value;
-            this.value = '';
-            if (!nickname) {
-                nickname = val;
-                window.localStorage.displayname = nickname;
-
-                connection.emuc.addDisplayNameToPresence(nickname);
-                connection.emuc.sendPresence();
-
-                setChatConversationMode(true);
-
-                return;
-            }
-        }
-    });
-
-    $('#usermsg').keydown(function(event) {
-        if (event.keyCode == 13) {
-            event.preventDefault();
-            var message = this.value;
-            $('#usermsg').val('').trigger('autosize.resize');
-            this.focus();
-            connection.emuc.sendMessage(message, nickname);
-        }
-    });
-
-    var onTextAreaResize = function() {
-        resizeChatConversation();
-        scrollChatToBottom();
-    };
-    $('#usermsg').autosize({callback: onTextAreaResize});
+    Chat.init();
 
     // Set the defaults for prompt dialogs.
     jQuery.prompt.setDefaults({persistent: false});
@@ -827,24 +869,6 @@ function dump(elem, filename){
 }
 
 /*
- * Appends the given message to the chat conversation.
- */
-function updateChatConversation(nick, message)
-{
-    var divClassName = '';
-    if (nickname == nick)
-        divClassName = "localuser";
-    else
-        divClassName = "remoteuser";
-
-    //replace links and smileys
-    message = processReplacements(message);
-
-    $('#chatconversation').append('<div class="' + divClassName + '"><b>' + nick + ': </b>' + message + '</div>');
-    $('#chatconversation').animate({ scrollTop: $('#chatconversation')[0].scrollHeight}, 1000);
-}
-
-/*
  * Changes the style class of the element given by id.
  */
 function buttonClick(id, classname) {
@@ -900,10 +924,10 @@ function openLockDialog() {
                      if(v)
                      {
                         var lockKey = document.getElementById('lockKey');
-                     
+
                         if (lockKey.value)
                         {
-                            setSharedKey(lockKey.value);
+                            setSharedKey(Util.escapeHtml(lockKey.value));
                             lockRoom(true);
                         }
                      }
@@ -916,7 +940,8 @@ function openLockDialog() {
  * Opens the invite link dialog.
  */
 function openLinkDialog() {
-    $.prompt('<input id="inviteLinkRef" type="text" value="' + roomUrl + '" onclick="this.select();">',
+    $.prompt('<input id="inviteLinkRef" type="text" value="'
+            + encodeURI(roomUrl) + '" onclick="this.select();" readonly>',
              {
              title: "Share this link with everyone you want to invite",
              persistent: false,
@@ -952,7 +977,7 @@ function openSettingsDialog() {
 
                         if ($('#requireNicknames').is(":checked"))
                         {
-                            // it is checked                        
+                            // it is checked
                         }
              /*
                         var lockKey = document.getElementById('lockKey');
@@ -989,7 +1014,8 @@ function openPreziDialog() {
         });
     }
     else if (preziPlayer != null) {
-        $.prompt("Another participant is already sharing a Prezi. This conference allows only one Prezi at a time.",
+        $.prompt("Another participant is already sharing a Prezi." +
+                "This conference allows only one Prezi at a time.",
                  {
                  title: "Share a Prezi",
                  buttons: { "Ok": true},
@@ -1015,20 +1041,24 @@ function openPreziDialog() {
 
                     if (preziUrl.value)
                     {
-                        if (preziUrl.value.indexOf('http://prezi.com/') != 0
-                            && preziUrl.value.indexOf('https://prezi.com/') != 0)
+                        var urlValue
+                            = encodeURI(Util.escapeHtml(preziUrl.value));
+
+                        if (urlValue.indexOf('http://prezi.com/') != 0
+                            && urlValue.indexOf('https://prezi.com/') != 0)
                         {
                             $.prompt.goToState('state1');
                             return false;
                         }
                         else {
-                            var presIdTmp = preziUrl.value.substring(preziUrl.value.indexOf("prezi.com/") + 10);
-                            if (presIdTmp.indexOf('/') < 2) {
+                            var presIdTmp = urlValue.substring(urlValue.indexOf("prezi.com/") + 10);
+                            if (!Util.isAlphanumeric(presIdTmp)
+                                    || presIdTmp.indexOf('/') < 2) {
                                 $.prompt.goToState('state1');
                                 return false;
                             }
                             else {
-                                connection.emuc.addPreziToPresence(preziUrl.value, 0);
+                                connection.emuc.addPreziToPresence(urlValue, 0);
                                 connection.emuc.sendPresence();
                                 $.prompt.close();
                             }
@@ -1056,7 +1086,7 @@ function openPreziDialog() {
         };
 
         var myPrompt = jQuery.prompt(openPreziState);
-        
+
         myPrompt.on('impromptu:loaded', function(e) {
                     document.getElementById('preziUrl').focus();
                     });
@@ -1074,7 +1104,7 @@ function lockRoom(lock) {
         connection.emuc.lockRoom(sharedKey);
     else
         connection.emuc.lockRoom('');
-    
+
     updateLockButton();
 }
 
@@ -1090,44 +1120,6 @@ function setSharedKey(sKey) {
  */
 function updateLockButton() {
     buttonClick("#lockIcon", "fa fa-unlock fa-lg fa fa-lock fa-lg");
-}
-
-/*
- * Opens / closes the chat area.
- */
-function openChat() {
-    var chatspace = $('#chatspace');
-    var videospace = $('#videospace');
-
-    var onShow = function () {
-        resizeLarge();
-        $('#chatspace').show("slide", { direction: "right", duration: 500});
-    };
-    var onHide = function () {
-        $('#chatspace').hide("slide", { direction: "right", duration: 500});
-        resizeLarge();
-    };
-
-    if (chatspace.css("display") == 'block') {
-        videospace.animate({right: 0}, {queue: false, duration: 500, progress: onHide});
-    }
-    else {
-        videospace.animate({right: chatspace.width()},
-                           {queue: false,
-                            duration: 500,
-                            progress: onShow,
-                            complete: function() {
-                                scrollChatToBottom();
-                            }
-                           });
-    }
-
-    // Request the focus in the nickname field or the chat input field.
-    if ($('#nickname').css('visibility') == 'visible')
-        $('#nickinput').focus();
-    else {
-        $('#usermsg').focus();
-    }
 }
 
 /*
@@ -1199,7 +1191,7 @@ function addRemoteVideoContainer(id) {
     return container;
 }
 
-/*
+/**
  * Creates the element indicating the focus of the conference.
  */
 function createFocusIndicatorElement(parentElement) {
@@ -1209,13 +1201,7 @@ function createFocusIndicatorElement(parentElement) {
     parentElement.appendChild(focusIndicator);
 }
 
-function scrollChatToBottom() {
-    setTimeout(function() {
-        $('#chatconversation').scrollTop($('#chatconversation')[0].scrollHeight);
-    }, 5);
-}
-
-/*
+/**
  * Toggles the application in and out of full screen mode 
  * (a.k.a. presentation mode in Chrome).
  */
@@ -1246,9 +1232,11 @@ function toggleFullScreen() {
 }
 
 /**
- *
+ * Shows the display name for the given video.
  */
 function showDisplayName(videoSpanId, displayName) {
+    var escDisplayName = Util.escapeHtml(displayName);
+
     var nameSpan = $('#' + videoSpanId + '>span.displayname');
 
     // If we already have a display name for this video.
@@ -1256,21 +1244,21 @@ function showDisplayName(videoSpanId, displayName) {
         var nameSpanElement = nameSpan.get(0);
 
         if (nameSpanElement.id == 'localDisplayName'
-            && $('#localDisplayName').html() != displayName)
-            $('#localDisplayName').html(displayName);
+            && $('#localDisplayName').html() != escDisplayName)
+            $('#localDisplayName').html(escDisplayName);
         else
-            $('#' + videoSpanId + '_name').html(displayName);
+            $('#' + videoSpanId + '_name').html(escDisplayName);
     }
     else {
         var editButton = null;
+
         if (videoSpanId == 'localVideoContainer') {
             editButton = createEditDisplayNameButton();
         }
-
-        if (displayName.length) {
+        if (escDisplayName.length) {
             nameSpan = document.createElement('span');
             nameSpan.className = 'displayname';
-            nameSpan.innerHTML = displayName;
+            nameSpan.innerHTML = escDisplayName;
             $('#' + videoSpanId)[0].appendChild(nameSpan);
         }
 
@@ -1280,13 +1268,14 @@ function showDisplayName(videoSpanId, displayName) {
         else {
             nameSpan.id = 'localDisplayName';
             $('#' + videoSpanId)[0].appendChild(editButton);
-            
+
             var editableText = document.createElement('input');
             editableText.className = 'displayname';
             editableText.id = 'editDisplayName';
 
-            if (displayName.length)
-                editableText.value = displayName.substring(0, displayName.indexOf(' (me)'));
+            if (escDisplayName.length)
+                editableText.value
+                    = escDisplayName.substring(0, escDisplayName.indexOf(' (me)'));
 
             editableText.setAttribute('style', 'display:none;');
             editableText.setAttribute('placeholder', 'ex. Jane Pink');
@@ -1301,16 +1290,16 @@ function showDisplayName(videoSpanId, displayName) {
 
                 var inputDisplayNameHandler = function(name) {
                     if (nickname != name) {
-                        nickname = name;
+                        nickname = Util.escapeHtml(name);
                         window.localStorage.displayname = nickname;
                         connection.emuc.addDisplayNameToPresence(nickname);
                         connection.emuc.sendPresence();
 
-                        setChatConversationMode(true);
+                        Chat.setChatConversationMode(true);
                     }
 
                     if (!$('#localDisplayName').is(":visible")) {
-                        $('#localDisplayName').html(name + " (me)");
+                        $('#localDisplayName').html(nickname + " (me)");
                         $('#localDisplayName').show();
                         $('#editDisplayName').hide();
                     }
@@ -1337,13 +1326,4 @@ function createEditDisplayNameButton() {
     editButton.innerHTML = '<i class="fa fa-pencil"></i>';
 
     return editButton;
-}
-
-function setChatConversationMode(isConversationMode) {
-    if (isConversationMode) {
-        $('#nickname').css({visibility:"hidden"});
-        $('#chatconversation').css({visibility:'visible'});
-        $('#usermsg').css({visibility:'visible'});
-        $('#usermsg').focus();
-    }
 }

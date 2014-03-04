@@ -293,6 +293,12 @@ public class SASLAuthentication {
                             SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
                                     JiveGlobals.getProperty("xmpp.fqdn", session.getServerName()), props,
                                     new XMPPCallbackHandler());
+
+                            if (ss == null) {
+                                authenticationFailed(session, Failure.INVALID_MECHANISM);
+                                return Status.failed;
+                            }
+
                             // evaluateResponse doesn't like null parameter
                             byte[] token = new byte[0];
                             if (doc.getText().length() > 0) {

@@ -643,6 +643,12 @@ public class LocalMUCRoom implements MUCRoom {
         try {
             // Send the presence of this new occupant to existing occupants
             Presence joinPresence = joinRole.getPresence().createCopy();
+            if (canAnyoneDiscoverJID()) {
+                // // XEP-0045: Example 26.
+                // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+                Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                frag.addElement("status").addAttribute("code", "100");
+            }
             if (isRoomNew) {
                 Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.addElement("status").addAttribute("code", "201");
@@ -655,30 +661,43 @@ public class LocalMUCRoom implements MUCRoom {
         // If the room has just been created send the "room locked until configuration is
         // confirmed" message
         if (isRoomNew) {
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setBody(LocaleUtils.getLocalizedString("muc.new"));
-            message.setFrom(role.getRoleAddress());
-            joinRole.send(message);
+        // Nothing in XEP-0045 says, that a message must be sent upon entering a room.
+        // Instead, only MUC status code 201 MUST be included in the initial presence.
+//            Message message = new Message();
+//            message.setType(Message.Type.groupchat);
+//            message.setBody(LocaleUtils.getLocalizedString("muc.new"));
+//            message.setFrom(role.getRoleAddress());
+//            joinRole.send(message);
         }
         else if (isLocked()) {
-            // Warn the owner that the room is locked but it's not new
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
-            message.setFrom(role.getRoleAddress());
-            joinRole.send(message);
+            // http://xmpp.org/extensions/xep-0045.html#enter-locked
+            Presence presenceItemNotFound = new Presence(Presence.Type.error);
+            presenceItemNotFound.setError(PacketError.Condition.item_not_found);
+            presenceItemNotFound.setFrom(role.getRoleAddress());
+            joinRole.send(presenceItemNotFound);
+
+//            // Warn the owner that the room is locked but it's not new
+//            Message message = new Message();
+//            message.setType(Message.Type.groupchat);
+//            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
+//            message.setFrom(role.getRoleAddress());
+//            joinRole.send(message);
         }
         else if (canAnyoneDiscoverJID()) {
             // Warn the new occupant that the room is non-anonymous (i.e. his JID will be
             // public)
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setBody(LocaleUtils.getLocalizedString("muc.warnnonanonymous"));
-            message.setFrom(role.getRoleAddress());
-            Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
-            frag.addElement("status").addAttribute("code", "100");
-            joinRole.send(message);
+
+            // The following warning should not be sent as message, but instead as status code 100 in presence.
+            // XEP-0045: Example 26.
+            // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+
+//            Message message = new Message();
+//            message.setType(Message.Type.groupchat);
+//            message.setBody(LocaleUtils.getLocalizedString("muc.warnnonanonymous"));
+//            message.setFrom(role.getRoleAddress());
+//            Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
+//            frag.addElement("status").addAttribute("code", "100");
+//            joinRole.send(message);
         }
         if (historyRequest == null) {
             Iterator<Message> history = roomHistory.getMessageHistory();
@@ -2262,14 +2281,14 @@ public class LocalMUCRoom implements MUCRoom {
             return;
         }
         setLocked(true);
-        if (senderRole.getUserAddress() != null) {
-            // Send to the occupant that locked the room a message saying so
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
-            message.setFrom(getRole().getRoleAddress());
-            senderRole.send(message);
-        }
+//        if (senderRole.getUserAddress() != null) {
+//            // Send to the occupant that locked the room a message saying so
+//            Message message = new Message();
+//            message.setType(Message.Type.groupchat);
+//            message.setBody(LocaleUtils.getLocalizedString("muc.locked"));
+//            message.setFrom(getRole().getRoleAddress());
+//            senderRole.send(message);
+//        }
     }
 
     public void unlock(MUCRole senderRole) throws ForbiddenException {
@@ -2281,14 +2300,17 @@ public class LocalMUCRoom implements MUCRoom {
             return;
         }
         setLocked(false);
-        if (senderRole.getUserAddress() != null) {
-            // Send to the occupant that unlocked the room a message saying so
-            Message message = new Message();
-            message.setType(Message.Type.groupchat);
-            message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
-            message.setFrom(getRole().getRoleAddress());
-            senderRole.send(message);
-        }
+
+        // Nothing in XEP-0045 says, that a message must be sent upon unlocking a room, only this:
+        // Once the service receives the completed configuration form from the initial room owner (or receives a request for an instant room), the service MUST "unlock" the room (i.e., allow other users to enter the room) and send an IQ of type "result" to the room owner.
+//        if (senderRole.getUserAddress() != null) {
+//            // Send to the occupant that unlocked the room a message saying so
+//            Message message = new Message();
+//            message.setType(Message.Type.groupchat);
+//            message.setBody(LocaleUtils.getLocalizedString("muc.unlocked"));
+//            message.setFrom(getRole().getRoleAddress());
+//            senderRole.send(message);
+//        }
     }
 
     private void setLocked(boolean locked) {

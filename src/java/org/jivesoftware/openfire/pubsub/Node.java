@@ -2016,7 +2016,7 @@ public abstract class Node {
             headers = notification.addChildElement("headers", "http://jabber.org/protocol/shim");
             for (String subID : subIDs) {
                 Element header = headers.addElement("header");
-                header.addAttribute("name", "pubsub#subid");
+                header.addAttribute("name", "SubID");
                 header.setText(subID);
             }
         }

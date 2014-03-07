@@ -25,22 +25,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PresenceManager;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -71,7 +63,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Iain Shigeoka
  */
-public class PresenceManagerImpl extends BasicModule implements PresenceManager, UserEventListener {
+public class PresenceManagerImpl extends BasicModule implements PresenceManager, UserEventListener, XMPPServerListener {
 
 	private static final Logger Log = LoggerFactory.getLogger(PresenceManagerImpl.class);
 
@@ -273,31 +265,32 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             }
             lastActivityCache.put(username, offlinePresenceDate.getTime());
 
-            // delete existing offline presence (if any)
-            deleteOfflinePresenceFromDB(username);
-            
-            // Insert data into the database.
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            try {
-                con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(INSERT_OFFLINE_PRESENCE);
-                pstmt.setString(1, username);
-                if (offlinePresence != null) {
-                    DbConnectionManager.setLargeTextField(pstmt, 2, offlinePresence);
-                }
-                else {
-                    pstmt.setNull(2, Types.VARCHAR);
-                }
-                pstmt.setString(3, StringUtils.dateToMillis(offlinePresenceDate));
-                pstmt.execute();
+            writeToDatabase(username, offlinePresence, offlinePresenceDate);
+        }
+    }
+
+    private void writeToDatabase(String username, String offlinePresence, Date offlinePresenceDate) {
+        // delete existing offline presence (if any)
+        deleteOfflinePresenceFromDB(username);
+
+        // Insert data into the database.
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(INSERT_OFFLINE_PRESENCE);
+            pstmt.setString(1, username);
+            if (offlinePresence != null) {
+                DbConnectionManager.setLargeTextField(pstmt, 2, offlinePresence);
+            } else {
+                pstmt.setNull(2, Types.VARCHAR);
             }
-            catch (SQLException sqle) {
-                Log.error("Error storing offline presence of user: " + username, sqle);
-            }
-            finally {
-                DbConnectionManager.closeConnection(pstmt, con);
-            }
+            pstmt.setString(3, StringUtils.dateToMillis(offlinePresenceDate));
+            pstmt.execute();
+        } catch (SQLException sqle) {
+            Log.error("Error storing offline presence of user: " + username, sqle);
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -580,6 +573,23 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
             lock.unlock();
+        }
+    }
+
+    @Override
+    public void serverStarted() {
+    }
+
+    @Override
+    public void serverStopping() {
+        for (ClientSession session : XMPPServer.getInstance().getSessionManager().getSessions()) {
+            if (!session.isAnonymousUser()) {
+                try {
+                    writeToDatabase(session.getUsername(), null, new Date());
+                } catch (UserNotFoundException e) {
+                    Log.error(e.getMessage(), e);
+                }
+            }
         }
     }
 }

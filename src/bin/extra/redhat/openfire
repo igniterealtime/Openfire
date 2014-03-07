@@ -133,6 +133,10 @@ start() {
 	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfire
 
 	sleep 1 # allows prompt to return
+
+	PID=$(findPID)
+	echo $PID > $OPENFIRE_PIDFILE
+
 	cd $OLD_PWD
 }
 
@@ -140,18 +144,16 @@ stop() {
 	# Stop daemons.
 	echo -n "Shutting down openfire: "
 
-	PID=$(findPID)
-	if [ -n "$PID" ]; then
-		if [ -n "$FUNCTIONS_FOUND" ]; then
-			echo $PID > $OPENFIRE_PIDFILE
-			# delay copied from restart
-			killproc -p $OPENFIRE_PIDFILE -d 10
-			rm -f $OPENFIRE_PIDFILE
-		else
-			kill $PID
-		fi
+	if [ -f "$OPENFIRE_PIDFILE" ]; then
+		killproc -p $OPENFIRE_PIDFILE -d 10
+		rm -f $OPENFIRE_PIDFILE
 	else
-		echo "Openfire is not running."
+		PID=$(findPID)
+		if [ -n $PID ]; then
+			kill $PID
+		else
+			echo "Openfire is not running."
+		fi
 	fi
 	
 	RETVAL=$?

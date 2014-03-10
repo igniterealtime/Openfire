@@ -45,6 +45,12 @@ public class XmppResultSet
                     before = null;
                 }
             }
+						catch (NumberFormatException e)
+						{
+							if (setElement.elementText("before").isEmpty()) {
+								this.before = Long.valueOf(9223372036854775807L);
+							}
+						}
             catch (Exception e)
             {
                 // swallow

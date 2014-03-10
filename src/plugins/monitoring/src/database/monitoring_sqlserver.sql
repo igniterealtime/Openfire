@@ -1,7 +1,7 @@
 /* $Revision$   */
 /* $Date$       */
 
-INSERT INTO ofVersion (name, version) VALUES ('monitoring', 1);
+INSERT INTO ofVersion (name, version) VALUES ('monitoring', 2);
 
 CREATE TABLE ofConversation (
   conversationID        BIGINT         NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE ofMessageArchive (
    toJID             NVARCHAR(1024)  NOT NULL,
    toJIDResource     NVARCHAR(1024)  NULL,
    sentDate          BIGINT          NOT NULL,
-   body              NTEXT
+   body              NVARCHAR(MAX)
 );
 CREATE INDEX ofMessageArchive_con_idx ON ofMessageArchive (conversationID);
 

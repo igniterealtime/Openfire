@@ -1,7 +1,7 @@
 -- $Revision$
 -- $Date$
 
-INSERT INTO ofVersion (name, version) VALUES ('monitoring', 1);
+INSERT INTO ofVersion (name, version) VALUES ('monitoring', 2);
 
 CREATE TABLE ofConversation (
   conversationID        INTEGER        NOT NULL,

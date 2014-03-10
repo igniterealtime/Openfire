@@ -50,8 +50,10 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	public static final String SELECT_CONVERSATIONS = "SELECT DISTINCT " + "ofConversation.conversationID, " + "ofConversation.room, "
 			+ "ofConversation.isExternal, " + "ofConversation.startDate, " + "ofConversation.lastActivity, " + "ofConversation.messageCount, "
 			+ "ofConParticipant.joinedDate, " + "ofConParticipant.leftDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource, "
-			+ "ofConParticipant.nickname, " + "ofMessageArchive.fromJID, " + "ofMessageArchive.toJID, " + "ofMessageArchive.sentDate, "
-			+ "ofMessageArchive.body " + "FROM ofConversation "
+			+ "ofConParticipant.nickname, "
+			+ "case when ofConParticipant.bareJID=ofMessageArchive.fromJID then ofMessageArchive.fromJID else ofMessageArchive.toJID end as fromJID, "
+      + "case when ofConParticipant.bareJID=ofMessageArchive.toJID then ofMessageArchive.fromJID else ofMessageArchive.toJID end as toJID "
+			+ "FROM ofConversation "
 			+ "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
 			+ "INNER JOIN ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID";
 
@@ -193,15 +195,27 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			}
 			firstIndex = firstIndex != null ? firstIndex : 0;
 
-			limitSB.append(" LIMIT ").append(max);
-			limitSB.append(" OFFSET ").append(firstIndex);
+			if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
+				limitSB.append(" BETWEEN ").append(firstIndex+1);
+				limitSB.append(" AND ").append(firstIndex+max);
+			}
+			else {
+				limitSB.append(" LIMIT ").append(max);
+				limitSB.append(" OFFSET ").append(firstIndex);
+			}
 			xmppResultSet.setFirstIndex(firstIndex);
 		}
 
 		if (whereSB.length() != 0) {
 			querySB.append(" WHERE ").append(whereSB);
 		}
-		querySB.append(" ORDER BY ").append(CONVERSATION_ID);
+		if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
+			querySB.insert(0,"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY "+CONVERSATION_ID+") AS RowNum FROM ( ");
+			querySB.append(") ofConversation ) t2 WHERE RowNum");
+		}
+		else {
+			querySB.append(" ORDER BY ").append(CONVERSATION_ID);
+		}
 		querySB.append(limitSB);
 
 		Connection con = null;

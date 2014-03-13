@@ -59,6 +59,13 @@ public class ColibriProvider extends BaseProvider {
 
 		} else if ("expire".equals(action)) {
 			command = new ColibriExpireCommand(new JID(element.attributeValue("muc")));
+
+		} else if ("invite".equals(action)) {
+			command = new InviteCommand(new JID(element.attributeValue("muc")), toURI(element.attributeValue("from")), toURI(element.attributeValue("to")));
+
+		} else if ("uninvite".equals(action)) {
+			command = new UnInviteCommand(new JID(element.attributeValue("muc")), element.attributeValue("callid"));
+
 		}
 
         return command;

@@ -70,7 +70,19 @@
         JiveGlobals.setProperty(PluginImpl.PASSWORD_PROPERTY_NAME, password);	
         
 	String enabled = request.getParameter("enabled"); 	
-        JiveGlobals.setProperty(PluginImpl.RECORD_PROPERTY_NAME, enabled);        
+        JiveGlobals.setProperty(PluginImpl.RECORD_PROPERTY_NAME, enabled);    
+        
+	String authusername = request.getParameter("authusername"); 
+        JiveGlobals.setProperty("voicebridge.default.proxy.sipauthuser", authusername);	
+        
+	String sippassword = request.getParameter("sippassword"); 	
+        JiveGlobals.setProperty("voicebridge.default.proxy.sippassword", sippassword);	
+        
+	String server = request.getParameter("server"); 	
+        JiveGlobals.setProperty("voicebridge.default.proxy.sipserver", server); 
+        
+	String outboundproxy = request.getParameter("outboundproxy"); 	
+        JiveGlobals.setProperty("voicebridge.default.proxy.outboundproxy", outboundproxy);        
     }
 
 %>
@@ -93,12 +105,12 @@
         <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
             <thead>
             <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.title"/></th>
+                <th colspan="2"><fmt:message key="config.page.configuration.media.title"/></th>
             </tr>
             </thead>
             <tbody>
             <tr>
-                <td><label class="jive-label"><fmt:message key="config.page.configuration.min.port"/>:</label><br>
+                <td><fmt:message key="config.page.configuration.min.port"/><br>
                 </td>
                 <td align="left">
                     <input name="minport" type="text" maxlength="5" size="5"
@@ -106,15 +118,25 @@
                 </td>
             </tr>
             <tr>
-                <td><label class="jive-label"><fmt:message key="config.page.configuration.max.port"/>:</label><br>
+                <td><fmt:message key="config.page.configuration.max.port"/><br>
                 </td>
                 <td align="left">
                     <input name="maxport" type="text" maxlength="5" size="5"
                            value="<%=plugin.getMaxPort()%>"/>
                 </td>
             </tr>
+            </tbody>
+        </table> 
+        <p/>        
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+            <thead>
             <tr>
-                <td><label class="jive-label"><fmt:message key="config.page.configuration.username"/>:</label><br>
+                <th colspan="2"><fmt:message key="config.page.configuration.security.title"/></th>
+            </tr>
+            </thead>
+            <tbody>            
+            <tr>
+                <td><fmt:message key="config.page.configuration.username"/><br>
                 </td>
                 <td align="left">
                     <input name="username" type="text" maxlength="16" size="16"
@@ -122,13 +144,23 @@
                 </td>
             </tr>     
             <tr>
-                <td><label class="jive-label"><fmt:message key="config.page.configuration.password"/>:</label><br>
+                <td><fmt:message key="config.page.configuration.password"/><br>
                 </td>
                 <td align="left">
                     <input name="password" type="password" maxlength="16" size="16"
                            value="<%=JiveGlobals.getProperty(PluginImpl.PASSWORD_PROPERTY_NAME, "jitsi")%>"/>
                 </td>
-            </tr>  
+            </tr> 
+            </tbody>
+        </table> 
+        <p/>        
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+            <thead> 
+            <tr>
+                <th colspan="2"><fmt:message key="config.page.configuration.recording.title"/></th>
+            </tr>
+            </thead>
+            <tbody>             
 	    <tr>
 		    <td  nowrap colspan="2">
 			<input type="radio" value="false" name="enabled" <%= ("false".equals(JiveGlobals.getProperty(PluginImpl.RECORD_PROPERTY_NAME, "false")) ? "checked" : "") %>>
@@ -141,12 +173,66 @@
 			<b><fmt:message key="config.page.configuration.record.enabled" /></b> - <fmt:message key="config.page.configuration.record.enabled_description" />
 		    </td>
 	    </tr> 	    
-            <tr>
-                <th colspan="2"><input type="submit" name="update"
-                                       value="<fmt:message key="config.page.configuration.submit" />"></th>
-            </tr>
             </tbody>
         </table>
+        <p/>        
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+            <thead> 
+            <tr>
+                <th><fmt:message key="config.page.configuration.telephone.title"/></th>
+                <th><%= plugin.sipRegisterStatus %></th>
+            </tr>
+            </thead>
+            <tbody> 
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.authusername"/>
+		</td>
+		<td><input type="text" size="20" maxlength="100" name="authusername"
+			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", "") %>">
+		</td>
+	    </tr>
+
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.sippassword"/>
+		</td>
+		<td><input type="password" size="20" maxlength="100" name="sippassword"
+			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", "") %>">
+		</td>
+	    </tr>
+
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.server"/>
+		</td>
+		<td><input type="text" size="20" maxlength="100" name="server"
+			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.sipserver", "") %>">
+		</td>
+	    </tr>
+
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.outboundproxy"/>
+		</td>
+		<td><input type="text" size="20" maxlength="100" name="outboundproxy"
+			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", "") %>">
+		</td>
+	    </tr> 
+        </table>
+        <p/>
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+            <thead> 
+            <tr>
+                <th colspan="2"><fmt:message key="config.page.configuration.save.title"/></th>
+            </tr>
+            </thead>
+            <tbody> 	    
+            <tr>
+                <th colspan="2"><input type="submit" name="update" value="<fmt:message key="config.page.configuration.submit" />"><fmt:message key="config.page.configuration.restart.warning"/></th>
+            </tr>	    
+            </tbody>            
+        </table>            
     </form>
 </div>
 

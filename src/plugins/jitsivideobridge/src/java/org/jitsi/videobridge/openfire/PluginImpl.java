@@ -20,9 +20,6 @@ import javax.media.*;
 import javax.media.protocol.*;
 import javax.media.format.*;
 
-import org.jitsi.service.neomedia.*;
-import org.jitsi.util.*;
-import org.jitsi.videobridge.*;
 import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.*;
@@ -74,7 +71,9 @@ import org.jitsi.util.*;
 
 import org.ifsoft.*;
 import org.ifsoft.rtp.*;
+import org.ifsoft.sip.*;
 
+import net.sf.fmj.media.rtp.*;
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -85,6 +84,10 @@ import org.ifsoft.rtp.*;
  */
 public class PluginImpl  implements Plugin, PropertyEventListener
 {
+    /**
+     * SIP registration status.
+     */
+    public static String sipRegisterStatus = "";
     /**
      * The logger.
      */
@@ -133,6 +136,11 @@ public class PluginImpl  implements Plugin, PropertyEventListener
     public static final String MIN_PORT_NUMBER_PROPERTY_NAME = "org.jitsi.videobridge.media.MIN_PORT_NUMBER";
 
     /**
+     * The name of the property that contains the default SIP port.
+     */
+	public static final String SIP_PORT_PROPERTY_NAME = "org.jitsi.videobridge.sip.port.number";
+
+    /**
      * The minimum port number default value.
      */
     public static final int MIN_PORT_DEFAULT_VALUE = 50000;
@@ -141,6 +149,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * The maximum port number default value.
      */
     public static final int MAX_PORT_DEFAULT_VALUE = 60000;
+
 
     /**
      * The Jabber component which has been added to {@link #componentManager}
@@ -251,6 +260,25 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			}
 
 			createIQHandlers();
+
+			Properties properties = new Properties();
+			String hostName = XMPPServer.getInstance().getServerInfo().getHostname();
+			String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
+			String port = JiveGlobals.getProperty(SIP_PORT_PROPERTY_NAME, "5060");
+
+			properties.setProperty("com.voxbone.kelpie.hostname", hostName);
+			properties.setProperty("com.voxbone.kelpie.ip", hostName);
+			properties.setProperty("com.voxbone.kelpie.sip_port", port);
+
+			properties.setProperty("javax.sip.IP_ADDRESS", hostName);
+
+			properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "99");
+			properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
+			properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
+
+			new SipService(properties);
+
+			Log.info("Initialize SIP Stack at " + hostName + ":" + port);
 
 		}
 		catch(Exception e) {
@@ -717,6 +745,34 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 						reply.setError(PacketError.Condition.not_allowed);
 					}
 
+				} else if (object instanceof UnInviteCommand) {
+
+					UnInviteCommand uninvite = (UnInviteCommand) object;
+
+					String focusAgentName = "jitsi.videobridge." + uninvite.getMuc().getNode();
+
+					if (sessions.containsKey(focusAgentName))
+					{
+						FocusAgent focusAgent = sessions.get(focusAgentName);
+						focusAgent.uninviteNewParticipant(uninvite.getCallId(), reply);
+					} else {
+						reply.setError(PacketError.Condition.not_allowed);
+					}
+
+				} else if (object instanceof InviteCommand) {
+
+					InviteCommand invite = (InviteCommand) object;
+
+					String focusAgentName = "jitsi.videobridge." + invite.getMuc().getNode();
+
+					if (sessions.containsKey(focusAgentName))
+					{
+						FocusAgent focusAgent = sessions.get(focusAgentName);
+						focusAgent.inviteNewParticipant(invite.getFrom(), invite.getTo(), reply);
+					} else {
+						reply.setError(PacketError.Condition.not_allowed);
+					}
+
 				} else {
 					reply.setError(PacketError.Condition.not_allowed);
 				}
@@ -1090,10 +1146,13 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		private Recorder recorder = null;
 		private AudioMixingPushBufferDataSource outDataSource;
+		private SSRCFactoryImpl ssrcFactory = new SSRCFactoryImpl();
+    	private long initialLocalSSRC;
 
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Element> ssrcs = new ConcurrentHashMap<String, Element>();
+		public ConcurrentHashMap<String, CallSession> callSessions = new ConcurrentHashMap<String, CallSession>();
 
 		/**
 		 *
@@ -1287,7 +1346,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			}
 
 			Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
-			audioContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15");
+			audioContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15").addAttribute("rtp-level-relay-type", "mixer");
 
 			Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
 			videoContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15");
@@ -1342,6 +1401,100 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			if (participant != null)
 			{
 				participant.setNickname(nickName);
+			}
+		}
+
+
+		/**
+		 *
+		 *
+		 */
+		public void uninviteNewParticipant(String callId, IQ reply)
+		{
+			Log.info("uninviteNewParticipant " + callId);
+
+			CallSession cs = callSessions.remove(callId);
+
+			if (cs != null)
+			{
+				SipService.sendBye(cs);
+
+			} else {
+				reply.setError(PacketError.Condition.not_allowed);
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		public void inviteNewParticipant(URI fromUri, URI toUri, IQ reply)
+		{
+			Log.info("inviteNewParticipant " + fromUri + " " + toUri);
+
+			String from = fromUri.toString();
+			String to = toUri.toString();
+			String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
+
+			boolean toSip = to.indexOf("sip:") == 0 ;
+			boolean toPhone = to.indexOf("tel:") == 0;
+			boolean toXmpp = to.indexOf("xmpp:") == 0;
+
+			if (toSip)
+			{
+				from = "sip:jitsi-videobridge" + System.currentTimeMillis() + "@" + hostname;
+
+			} else if (toPhone){
+
+				String outboundProxy = JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", null);
+				String sipUsername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
+
+				if (outboundProxy != null && sipUsername != null)
+				{
+					to = "sip:" + to.substring(4) + "@" + outboundProxy;
+					from = "sip:" + sipUsername + "@" + outboundProxy;
+
+				} else {
+					reply.setError(PacketError.Condition.not_allowed);
+					return;
+				}
+
+			} else if (toXmpp){
+				reply.setError(PacketError.Condition.not_allowed);
+				return;
+
+			} else {
+				reply.setError(PacketError.Condition.not_allowed);
+				return;
+			}
+
+			Conference conference = null;
+			String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+
+			if (focusId != null)
+			{
+				conference = getVideoBridge().getConference(focusId, focusJid);
+			}
+
+			if (conference != null)
+			{
+				MediaService mediaService = LibJitsi.getMediaService();
+				MediaStream mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, mediaService.createSrtpControl(SrtpControlType.MIKEY));
+				mediaStream.setName("rayo-" + System.currentTimeMillis());
+				mediaStream.setSSRCFactory(ssrcFactory);
+				mediaStream.setDevice(conference.getOrCreateContent("audio").getMixer());
+
+				initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
+
+				CallSession cs = new CallSession(mediaStream, hostname);
+				callSessions.put(toUri.toString(), cs);
+
+				cs.jabberRemote = to;
+				cs.jabberLocal = from;
+
+				SipService.sendInvite(cs);
+
+			} else {
+				reply.setError(PacketError.Condition.not_allowed);
 			}
 		}
 
@@ -1423,6 +1576,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					recorder.done();
 					outDataSource.disconnect();
 					outDataSource.stop();
+
+					for (CallSession callSession : callSessions.values())
+					{
+						callSession.mediaStream.stop();
+						callSession.mediaStream.close();
+					}
+
+					callSessions.clear();
+
 				} catch (Exception e) {}
 
 				recorder = null;
@@ -1493,7 +1655,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void deliver(Packet packet) throws UnauthorizedException
 		{
-			Log.info("FocusAgent deliver\n" + packet + " " + getVideoBridge());
+			Log.info("FocusAgent deliver\n" + packet);
 
 			IQ iq = (IQ) packet;
 
@@ -1696,6 +1858,55 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		public Certificate[] getPeerCertificates() {
 			return null;
 		}
+
+		/**
+		 * Generates a new synchronization source (SSRC) identifier.
+		 *
+		 * @param
+		 * @param i the number of times that the method has been executed prior to
+		 * the current invocation
+		 * @return a randomly chosen <tt>int</tt> value which is to be utilized as a
+		 * new synchronization source (SSRC) identifier should it be found to be
+		 * globally unique within the associated RTP session or
+		 * <tt>Long.MAX_VALUE</tt> to cancel the operation
+		 */
+		private long ssrcFactoryGenerateSSRC(String cause, int i)
+		{
+			if (initialLocalSSRC != -1)
+			{
+				if (i == 0)
+					return (int) initialLocalSSRC;
+				else if (cause.equals(GenerateSSRCCause.REMOVE_SEND_STREAM.name()))
+					return Long.MAX_VALUE;
+			}
+			return ssrcFactory.doGenerateSSRC();
+		}
+
+		private class SSRCFactoryImpl implements SSRCFactory
+		{
+			private int i = 0;
+
+			/**
+			 * The <tt>Random</tt> instance used by this <tt>SSRCFactory</tt> to
+			 * generate new synchronization source (SSRC) identifiers.
+			 */
+			private final Random random = new Random();
+
+			public int doGenerateSSRC()
+			{
+				return random.nextInt();
+			}
+
+			/**
+			 * {@inheritDoc}
+			 */
+			@Override
+			public long generateSSRC(String cause)
+			{
+				return ssrcFactoryGenerateSSRC(cause, i++);
+			}
+		}
+
 
 	}
 }

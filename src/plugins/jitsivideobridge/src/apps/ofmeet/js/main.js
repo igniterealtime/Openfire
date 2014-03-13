@@ -8,6 +8,7 @@ var pdfShare = null;
 var pdfFrame = null;
 var pdfPage = "1";
 var altView = false;
+var sipUri = null;
 
 $(document).ready(function () 
 {
@@ -699,7 +700,7 @@ function handleOffer (from, offer)
 {
 	console.log("handleOffer", offer);
 
-	var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');		
+	var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');
 	var muc = $(offer).attr('muc');
 	var nick = $(offer).attr('nickname');
 	var participant = $(offer).attr('participant');
@@ -1254,7 +1255,72 @@ function goFullScreen()
 	  }
 	}
 }
-		
+
+function inviteParticipant()
+{
+    if (sipUri == null)
+    {
+	$.prompt('<h2>Enter SIP address or Telephone number to invite a person by phone</h2><input id="sipUri" type="text" placeholder="sip:name@domain or tel:nnnnnnnn" autofocus >',
+	{
+                title: "Invite Participant by Phone",
+            	persistent: false,
+            	buttons: { "Invite": true , "Cancel": false},
+            	defaultButton: 1,
+		loaded: function(event) {
+			document.getElementById('sipUri').select();
+		},
+		submit: function(e,v,m,f) 
+		{
+			if(v)
+			{
+				sipUri = document.getElementById('sipUri').value;
+				$("#invite").addClass("fa-border");
+				
+				connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'invite', muc: roomjid, from: "sip:" + roomjid, to: sipUri}),
+					function (res) {
+					    console.log('rayo colibri invite ok');
+					    $("#invite").removeClass("fa-spin");
+					},
+
+					function (err) {
+					    console.log('rayo colibri invite error', err);
+					}
+				);
+			}					 
+		}
+	}); 
+	
+    } else {
+    
+        $.prompt("Are you sure you would like to remove the Phone Participant?",
+                {
+                title: "Remove Participant by Phone",
+                buttons: { "Remove": true, "Cancel": false},
+                defaultButton: 1,
+                submit: function(e,v,m,f)
+                {
+			if(v)
+			{
+				$("#invite").removeClass("fa-border fa-spin");
+				
+				connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'uninvite', muc: roomjid, callId: sipUri}),
+					function (res) {
+					    console.log('rayo colibri uninvite ok');
+					    sipUri = null;
+					},
+
+					function (err) {
+					    console.log('rayo colibri uninvite error', err);
+					    sipUri = null;					    
+					}
+				);	
+			}
+            	}
+        });  
+    
+    }
+}
+
 function setEmoticons(body) 
 {
 	if (body)

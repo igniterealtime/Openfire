@@ -600,6 +600,17 @@ function rayoCallback(presence)
 	{
 		handleAddSSRC(from, this);	
 	});
+	
+	$(presence).find('inviteaccepted').each(function() 
+	{
+		$("#invite").removeClass("fa-spin");	
+	});
+	
+	$(presence).find('invitecompleted').each(function() 
+	{
+		$("#invite").removeClass("fa-border");	
+		$("#invite").removeClass("fa-spin");		
+	});	
 
 	return true;
 };
@@ -1279,7 +1290,6 @@ function inviteParticipant()
 				connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'invite', muc: roomjid, from: "sip:" + roomjid, to: sipUri}),
 					function (res) {
 					    console.log('rayo colibri invite ok');
-					    $("#invite").removeClass("fa-spin");
 					},
 
 					function (err) {
@@ -1300,9 +1310,7 @@ function inviteParticipant()
                 submit: function(e,v,m,f)
                 {
 			if(v)
-			{
-				$("#invite").removeClass("fa-border fa-spin");
-				
+			{				
 				connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'uninvite', muc: roomjid, callId: sipUri}),
 					function (res) {
 					    console.log('rayo colibri uninvite ok');

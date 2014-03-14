@@ -97,6 +97,12 @@ public class ColibriProvider extends BaseProvider {
 
         } else if (object instanceof UnmutedEvent) {
             createUnmutedEvent((UnmutedEvent) object, document);
+
+        } else if (object instanceof InviteAcceptedEvent) {
+            createInviteAcceptedEvent((InviteAcceptedEvent) object, document);
+
+        } else if (object instanceof InviteCompletedEvent) {
+            createInviteCompletedEvent((InviteCompletedEvent) object, document);
         }
     }
 
@@ -155,5 +161,17 @@ public class ColibriProvider extends BaseProvider {
     private void createUnmutedEvent(UnmutedEvent unmuted, Document document)
     {
         document.addElement(new QName("offmute", NAMESPACE));
+    }
+
+    private void createInviteAcceptedEvent(InviteAcceptedEvent accepted, Document document)
+    {
+        Element root = document.addElement(new QName("inviteaccepted", NAMESPACE));
+		root.addAttribute("callid", accepted.getCallId());
+    }
+
+    private void createInviteCompletedEvent(InviteCompletedEvent completed, Document document)
+    {
+        Element root = document.addElement(new QName("invitecompleted", NAMESPACE));
+		root.addAttribute("callid", completed.getCallId());
     }
 }

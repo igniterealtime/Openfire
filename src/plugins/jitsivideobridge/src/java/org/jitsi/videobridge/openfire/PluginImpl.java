@@ -1423,6 +1423,28 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				reply.setError(PacketError.Condition.not_allowed);
 			}
 		}
+
+		/**
+		 *
+		 *
+		 */
+		public void inviteEvent(boolean accepted, String callId, JID owner)
+		{
+			Presence presence = new Presence();
+			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
+			presence.setTo(owner);
+
+			if (accepted)
+			{
+				InviteAcceptedEvent event = new InviteAcceptedEvent(callId);
+				presence.getElement().add(colibriProvider.toXML(event));
+			} else {
+				InviteCompletedEvent event = new InviteCompletedEvent(callId);
+				presence.getElement().add(colibriProvider.toXML(event));
+			}
+			router.route(presence);
+		}
+
 		/**
 		 *
 		 *
@@ -1485,7 +1507,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 				initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
 
-				CallSession cs = new CallSession(mediaStream, hostname);
+				CallSession cs = new CallSession(mediaStream, hostname, reply.getTo(), this, toUri.toString());
 				callSessions.put(toUri.toString(), cs);
 
 				cs.jabberRemote = to;

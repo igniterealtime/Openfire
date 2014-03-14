@@ -526,8 +526,10 @@ public class VideoBridgeSipListener implements SipListener
 				{
 					Log.info("[[SIP]] Got in dialog bye");
 					CallSession cs = (CallSession) evt.getDialog().getApplicationData();
+
 					if (cs != null)
 					{
+						cs.sendBye();
 /*
 						Session sess = SessionManager.findCreateSession(cs.jabberLocal.getDomain(), cs.jabberRemote);
 						if (sess != null)
@@ -568,8 +570,10 @@ public class VideoBridgeSipListener implements SipListener
 					}
 
 					CallSession cs = (CallSession) evt.getDialog().getApplicationData();
+
 					if (cs != null)
 					{
+						cs.sendBye();
 /*
 						Session sess = SessionManager.findCreateSession(cs.jabberLocal.getDomain(), cs.jabberRemote);
 						if (sess != null)
@@ -870,6 +874,22 @@ public class VideoBridgeSipListener implements SipListener
 					}
 
 				}
+				else if (status == Response.PROXY_AUTHENTICATION_REQUIRED || status == Response.UNAUTHORIZED)
+				{
+					ClientTransaction clientTransaction = evt.getClientTransaction();
+
+					if (SipService.sipAccount != null)
+					{
+						try {
+							SipService.handleChallenge(resp, clientTransaction, SipService.sipAccount).sendRequest();
+
+						} catch (Exception e) {
+
+							Log.error("Proxy authentification failed", e);
+						}
+					}
+					return;
+				}
 				else if (status >= 400)
 				{
 					Log.info("[[SIP]] Invite failed, ending call");
@@ -883,19 +903,24 @@ public class VideoBridgeSipListener implements SipListener
 
 					CallSession cs = (CallSession) d.getApplicationData();
 					// terminate the jabber side if it hasn't been done already
-/*
-					if (cs != null && CallManager.getSession(cs.jabberSessionId) != null)
+
+					if (cs != null)
 					{
-						FromHeader fh = (FromHeader) resp.getHeader("From");
-						String dest = ((SipURI) fh.getAddress().getURI()).getUser();
+						cs.sendBye();
+/*
+						if (CallManager.getSession(cs.jabberSessionId) != null)
+						{
+							FromHeader fh = (FromHeader) resp.getHeader("From");
+							String dest = ((SipURI) fh.getAddress().getURI()).getUser();
 
-						JID destination = UriMappings.toJID(dest);
-						Session sess = SessionManager.findCreateSession(host, destination);
+							JID destination = UriMappings.toJID(dest);
+							Session sess = SessionManager.findCreateSession(host, destination);
 
-						sess.sendBye(cs);
-
-					}
+							sess.sendBye(cs);
+						}
 */
+					}
+
 				}
 			}
 			else if (method.equals(Request.NOTIFY))

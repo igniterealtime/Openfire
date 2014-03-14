@@ -141,30 +141,31 @@ public class SipService
 		sipAccount = new ProxyCredentials();
 
 		try {
-			String name = JiveGlobals.getProperty("voicebridge.default.proxy.name", "admin");
-			String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", name);
-			String sipusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipusername", name);
 			String authusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
-			String displayname = JiveGlobals.getProperty("voicebridge.default.proxy.sipdisplayname", name);
-			String password = JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", name);
 			String server = JiveGlobals.getProperty("voicebridge.default.proxy.sipserver", null);
-			String stunServer = JiveGlobals.getProperty("voicebridge.default.proxy.stunserver", localip);
-			String stunPort = JiveGlobals.getProperty("voicebridge.default.proxy.stunport");
-            String voicemail = JiveGlobals.getProperty("voicebridge.default.proxy.voicemail", name);
-            String outboundproxy = JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", localip);
 
-            sipAccount.setName(name);
-			sipAccount.setXmppUserName(username);
-			sipAccount.setUserName(sipusername);
-			sipAccount.setAuthUserName(authusername);
-			sipAccount.setUserDisplay(displayname);
-			sipAccount.setPassword(password.toCharArray());
-			sipAccount.setHost(server);
-            sipAccount.setProxy(outboundproxy);
-            sipAccount.setRealm(server);
-
-			if (authusername != null && server != null)
+			if (authusername != null && server != null && authusername.equals("") == false && server.equals("") == false)
 			{
+				String name = JiveGlobals.getProperty("voicebridge.default.proxy.name", "admin");
+				String username = JiveGlobals.getProperty("voicebridge.default.proxy.username", name);
+				String sipusername = JiveGlobals.getProperty("voicebridge.default.proxy.sipusername", name);
+				String displayname = JiveGlobals.getProperty("voicebridge.default.proxy.sipdisplayname", name);
+				String password = JiveGlobals.getProperty("voicebridge.default.proxy.sippassword", name);
+				String stunServer = JiveGlobals.getProperty("voicebridge.default.proxy.stunserver", localip);
+				String stunPort = JiveGlobals.getProperty("voicebridge.default.proxy.stunport", "3478");
+				String voicemail = JiveGlobals.getProperty("voicebridge.default.proxy.voicemail", name);
+				String outboundproxy = JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", localip);
+
+				sipAccount.setName(name);
+				sipAccount.setXmppUserName(username);
+				sipAccount.setUserName(sipusername);
+				sipAccount.setAuthUserName(authusername);
+				sipAccount.setUserDisplay(displayname);
+				sipAccount.setPassword(password.toCharArray());
+				sipAccount.setHost(server);
+				sipAccount.setProxy(outboundproxy);
+				sipAccount.setRealm(server);
+
 				Log.info(String.format("VoiceBridge adding SIP registration: %s with user %s host %s", sipAccount.getXmppUserName(), sipAccount.getUserName(), sipAccount.getHost()));
 				new RegisterProcessing(localip, server, sipAccount);
 			}

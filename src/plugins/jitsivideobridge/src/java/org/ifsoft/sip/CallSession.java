@@ -41,7 +41,11 @@ import org.slf4j.Logger;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
 import org.jitsi.videobridge.*;
+import org.jitsi.videobridge.openfire.*;
 import org.jitsi.service.libjitsi.*;
+
+import org.xmpp.packet.*;
+
 
 /**
  *
@@ -137,11 +141,20 @@ public class CallSession
 	public String jabberRemote;
 	public String jabberLocal;
 
-	public CallSession(MediaStream mediaStream, String host)
+	private PluginImpl.FocusAgent focusAgent;
+	private JID owner;
+	private String callId;
+
+
+	public CallSession(MediaStream mediaStream, String host, JID owner, PluginImpl.FocusAgent focusAgent, String callId)
 	{
 		Log.info("CallSession creation " + host);
 
 		this.mediaStream = mediaStream;
+		this.owner = owner;
+		this.focusAgent = focusAgent;
+		this.callId = callId;
+
 		internalCallId = "CS" + String.format("%08x", nextInternalCallId++);
 
 		offerPayloads.add(PAYLOAD_PCMU);
@@ -168,6 +181,7 @@ public class CallSession
 		try
 		{
 			mediaStream.stop();
+			focusAgent.inviteEvent(false, callId, owner);
 		}
 		finally
 		{
@@ -796,6 +810,8 @@ public class CallSession
 					}
 				}
 			}
+
+			focusAgent.inviteEvent(true, callId, owner);
 		}
 		catch (Exception e)
 		{

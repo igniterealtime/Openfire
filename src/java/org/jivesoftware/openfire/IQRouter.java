@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
@@ -376,9 +377,29 @@ public class IQRouter extends BasicModule {
                 }
             }
             else {
-                // JID is of the form <node@domain/resource> or belongs to a remote server
-                // or to an uninstalled component
-                routingTable.routePacket(recipientJID, packet, false);
+                ClientSession session = sessionManager.getSession(packet.getFrom());
+                boolean isAcceptable = true;
+                if (session instanceof LocalClientSession) {
+                    // Check if we could process IQ stanzas from the recipient.
+                    // If not, return a not-acceptable error as per XEP-0016:
+                    // If the user attempts to send an outbound stanza to a contact and that stanza type is blocked, the user's server MUST NOT route the stanza to the contact but instead MUST return a <not-acceptable/> error
+                    IQ dummyIQ = packet.createCopy();
+                    dummyIQ.setFrom(packet.getTo());
+                    dummyIQ.setTo(packet.getFrom());
+                    if (!((LocalClientSession) session).canProcess(dummyIQ)) {
+                        packet.setTo(session.getAddress());
+                        packet.setFrom((JID) null);
+                        packet.setError(PacketError.Condition.not_acceptable);
+                        session.process(packet);
+                        isAcceptable = false;
+                    }
+                }
+
+                if (isAcceptable) {
+                    // JID is of the form <node@domain/resource> or belongs to a remote server
+                    // or to an uninstalled component
+                    routingTable.routePacket(recipientJID, packet, false);
+                }
             }
         }
         catch (Exception e) {

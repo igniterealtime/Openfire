@@ -25,8 +25,11 @@ package org.jivesoftware.openfire;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.Session;
+   import org.jivesoftware.openfire.privacy.PrivacyList;
+   import org.jivesoftware.openfire.privacy.PrivacyListManager;
+   import org.jivesoftware.openfire.session.ClientSession;
+   import org.jivesoftware.openfire.session.LocalClientSession;
+   import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -109,13 +112,30 @@ public class MessageRouter extends BasicModule {
                     return;
                 }
 
-                try {
-                    // Deliver stanza to requested route
-                    routingTable.routePacket(recipientJID, packet, false);
+                boolean isAcceptable = true;
+                if (session instanceof LocalClientSession) {
+                    // Check if we could process messages from the recipient.
+                    // If not, return a not-acceptable error as per XEP-0016:
+                    // If the user attempts to send an outbound stanza to a contact and that stanza type is blocked, the user's server MUST NOT route the stanza to the contact but instead MUST return a <not-acceptable/> error
+                    Message dummyMessage = packet.createCopy();
+                    dummyMessage.setFrom(packet.getTo());
+                    dummyMessage.setTo(packet.getFrom());
+                    if (!((LocalClientSession) session).canProcess(dummyMessage)) {
+                        packet.setTo(session.getAddress());
+                        packet.setFrom((JID)null);
+                        packet.setError(PacketError.Condition.not_acceptable);
+                        session.process(packet);
+                        isAcceptable = false;
+                    }
                 }
-                catch (Exception e) {
-                	log.error("Failed to route packet: " + packet.toXML(), e);
-                    routingFailed(recipientJID, packet);
+                if (isAcceptable) {
+                    try {
+                        // Deliver stanza to requested route
+                        routingTable.routePacket(recipientJID, packet, false);
+                    } catch (Exception e) {
+                        log.error("Failed to route packet: " + packet.toXML(), e);
+                        routingFailed(recipientJID, packet);
+                    }
                 }
             }
             else {

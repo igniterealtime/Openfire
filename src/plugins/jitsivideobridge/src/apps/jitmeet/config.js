@@ -9,6 +9,10 @@ var config = {
 //  useIPv6: true, // ipv6 support. use at your own risk
     useNicks: false,
     bosh: 'https://btg199251:7443/http-bind/', // FIXME: use xep-0156 for that
+
+    desktopSharing: 'webrtc', // Desktop sharing method. Can be set to 'ext', 'webrtc' or false to disable.
+    chromeExtensionId: 'diibjkoicjeejcmhdnailmkgecihlobk', // Id of desktop streamer Chrome extension
+    minChromeExtVersion: '0.0.8', // Required version of Chrome extension
     
     getroomnode: function (path) 
     { 

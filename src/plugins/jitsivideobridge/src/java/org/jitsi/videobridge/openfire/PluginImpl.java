@@ -972,6 +972,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
+		private Vp8Accumulator vp8Accumulator;
+		/**
+		 *
+		 *
+		 */
+		private Integer lastSequenceNumber;
+		/**
+		 *
+		 *
+		 */
+		private Boolean sequenceNumberingViolated;
+		/**
+		 *
+		 *
+		 */
 		private String focusName;
 		/**
 		 *
@@ -1030,17 +1045,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 								public boolean accept(DatagramPacket p)
 								{
 									byte[] data = p.getData();
-
-									try{
-										RTPPacket packet = RTPPacket.parseBytes(BitAssistant.bytesToArray(data));
-										byte[] videoFrame = BitAssistant.bytesFromArray(packet.getPayload());
-
-										//Log.info("Video media " + " " + packet.getPayloadType() + " " + packet.getSequenceNumber() + " " + packet.getTimestamp() + " " + packet.getPayload());
-										if (recorder != null) recorder.write(videoFrame, 0, videoFrame.length);
-
-									} catch (Exception e) {
-
-									}
+									recordVideo(data);
 									return true;
 								}
 							};
@@ -1058,10 +1063,54 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
+		private void recordVideo(byte[] data)
+		{
+			Byte[] encodedFrame = null;
+			boolean isKeyframe = false;
+
+			try {
+				RTPPacket packet = RTPPacket.parseBytes(BitAssistant.bytesToArray(data));
+
+				if (packet != null)
+				{
+					Vp8Packet packet2 = Vp8Packet.parse(packet.getPayload());
+
+					if(packet2 == null) return;
+
+					vp8Accumulator.add(packet2);
+
+					if (packet.getMarker().booleanValue())
+					{
+						encodedFrame = Vp8Packet.depacketize(vp8Accumulator.getPackets());
+						isKeyframe = isKeyFrame(BitAssistant.bytesFromArray(encodedFrame)).booleanValue();
+						vp8Accumulator.reset();
+					}
+
+					if (recorder != null && encodedFrame != null)
+					{
+						Log.info("Video media " + " " + packet.getPayloadType() + " " + encodedFrame + " " + packet.getTimestamp() + " " + isKeyframe);
+						recorder.write(BitAssistant.bytesFromArray(encodedFrame), 0, encodedFrame.length, isKeyframe, packet.getTimestamp());
+					}
+
+				} else {
+					Log.error("recordVideo cannot parse packet data " + data);
+				}
+
+			} catch (Exception e) {
+				Log.error("Error writing video recording" , e);
+			}
+		}
+		/**
+		 *
+		 *
+		 */
 		public Participant(String nickname, JID user, String focusName) {
 			this.nickname = nickname;
 			this.user = user;
 			this.focusName = focusName;
+			this.sequenceNumberingViolated = Boolean.valueOf(false);
+			this.vp8Accumulator = new Vp8Accumulator();
+			this.lastSequenceNumber = Integer.valueOf(-1);
 		}
 		/**
 		 *
@@ -1105,10 +1154,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				mediaStream.addPropertyChangeListener(streamPropertyChangeListener);
 
 				String recordingPath = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo"  + File.separator + "video_recordings";
-				String fileName = "video-" + focusName + "-" + nickname + "-" + System.currentTimeMillis() + ".rtp";
+				String fileName = "video-" + focusName + "-" + nickname + "-" + System.currentTimeMillis() + ".webm";
 
 				try {
-					recorder = new Recorder(recordingPath, fileName, "rtp", false, 0, 0);
+					recorder = new Recorder(recordingPath, fileName, "webm", false, 0, 0);
 
 				} catch (Exception e) {
 					Log.error("Error creating video recording " + fileName + " " + recordingPath, e);
@@ -1132,6 +1181,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					recorder = null;
 				}
 			}
+		}
+
+		/**
+		 *
+		 *
+		 */
+		private Boolean isKeyFrame(byte encodedFrame[])
+		{
+			return Boolean.valueOf(encodedFrame != null && encodedFrame.length > 0 && (encodedFrame[0] & 1) == 0);
 		}
 	}
 
@@ -1759,7 +1817,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 											byte[] ulawData = new byte[data.length /2];
 											AudioConversion.linearToUlaw(data, 0, ulawData, 0);
 
-											if (recorder != null) recorder.write(ulawData, 0, ulawData.length);
+											if (recorder != null) recorder.write(ulawData, 0, ulawData.length, false, 0);
 
 										} catch (Exception e) {
 

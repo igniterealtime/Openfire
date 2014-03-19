@@ -15,6 +15,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import org.ebml.*;
+import org.ebml.io.*;
+import org.ebml.matroska.*;
+import org.ebml.util.*;
+
 import org.slf4j.*;
 import org.slf4j.Logger;
 
@@ -34,11 +39,16 @@ public class Recorder extends Thread
     private static String defaultRecordDirectory = ".";
     private String recordPath;
     private boolean recordRtp;
+    private boolean recordWebm;
+    private boolean recordAu;
     private static String fileSeparator = System.getProperty("file.separator");
     private boolean done;
 	private boolean pcmu;
 	private int sampleRate;
 	private int channels;
+	private long lastTimecode = 0;
+	private MatroskaFileWriter mFW;
+	private FileDataWriter iFW;
 
 
     public Recorder(String recordDirectory, String recordPath, String recordingType, boolean pcmu, int sampleRate, int channels) throws IOException
@@ -50,11 +60,20 @@ public class Recorder extends Thread
 
 		if (recordingType.equalsIgnoreCase("Rtp")) {
 			recordRtp = true;
-		} else if (recordingType.equalsIgnoreCase("Au") == false) {
+			openFile();
+
+		} else if (recordingType.equalsIgnoreCase("webm")) {
+			recordWebm = true;
+			openWebmFile();
+
+		} else if (recordingType.equalsIgnoreCase("Au")) {
+			recordAu = true;
+			openFile();
+
+		} else {
 			throw new IOException("Invalid recording type " + recordingType);
 		}
 
-		openFile();
 		start();
     }
 
@@ -90,34 +109,58 @@ public class Recorder extends Thread
     }
 
 
+    private void openWebmFile() throws IOException
+    {
+		iFW = new FileDataWriter(recordPath);
+		mFW = new MatroskaFileWriter(iFW);
+
+		mFW.writeEBMLHeader();
+		mFW.writeSegmentHeader();
+		mFW.writeSegmentInfo();
+
+		MatroskaFileTrack track = new MatroskaFileTrack();
+		track.TrackNo = (short)1;
+		track.TrackUID = new java.util.Random().nextLong();
+		track.TrackType = MatroskaDocType.track_video;
+		track.Name = "VP8";
+		track.Language = "und";
+		track.CodecID = "V_VP8";
+		track.DefaultDuration = 0;
+		track.Video_PixelWidth = 640;
+		track.Video_PixelHeight = 360;
+		track.CodecPrivate = new byte[0];
+
+		mFW.TrackList.add(track);
+		mFW.writeTracks();
+	}
+
     private void openFile() throws IOException {
         File recordFile = new File(recordPath);
 
         try {
-	    synchronized(this) {
-                if (recordFile.exists()) {
-		    recordFile.delete();
-                }
+			synchronized(this)
+			{
+					if (recordFile.exists()) {
+						recordFile.delete();
+					}
 
-                recordFile.createNewFile();
+					recordFile.createNewFile();
 
-                fo = new FileOutputStream(recordFile);
-                bo = new BufferedOutputStream(fo, BUFFER_SIZE);
+					fo = new FileOutputStream(recordFile);
+					bo = new BufferedOutputStream(fo, BUFFER_SIZE);
 
-                if (recordRtp == false) {
-                    writeAuHeader();
-                } else {
-                    /*
-                     * Write RTP header
-                     */
-                    byte[] buf = new byte[16];
-                    buf[0] = (byte) 0x52;  // R
-                    buf[1] = (byte) 0x54;  // T
-                    buf[2] = (byte) 0x50;  // P
+					if (recordRtp)
+					{
+						byte[] buf = new byte[16];
+						buf[0] = (byte) 0x52;  // R
+						buf[1] = (byte) 0x54;  // T
+						buf[2] = (byte) 0x50;  // P
 
-                    bo.write(buf, 0, buf.length);
-                }
-	    }
+						bo.write(buf, 0, buf.length);
+					} else {
+						writeAuHeader();
+					}
+			}
         } catch (IOException e) {
             fo = null;
             bo = null;
@@ -254,8 +297,10 @@ public class Recorder extends Thread
         public byte[] data;
 		public int offset;
         public int length;
+        public boolean keyframe;
+        public long timestamp;
 
-        public DataToWrite(byte[] data, int offset, int length)
+        public DataToWrite(byte[] data, int offset, int length, boolean keyframe, long timestamp)
         {
 			/*
 			 * We have to copy the data, otherwise caller could
@@ -264,6 +309,8 @@ public class Recorder extends Thread
 			this.data = new byte[length];
 			this.offset = offset;
 			this.length = length;
+			this.keyframe = keyframe;
+			this.timestamp = timestamp;
 
 			System.arraycopy(data, offset, this.data, 0, length);
         }
@@ -271,7 +318,7 @@ public class Recorder extends Thread
 
     private long lastWriteTime;
 
-    public void writePacket(byte[] data, int offset, int dataLength)
+    public void writePacket(byte[] data, int offset, int dataLength, boolean keyframe, long timestamp)
 	    throws IOException {
 
 	if (recordRtp) {
@@ -295,30 +342,34 @@ public class Recorder extends Thread
             buf[3] = (byte) (timeChange & 0xff);
 
 	    System.arraycopy(data, offset, buf, 4, dataLength);
-	    write(buf, 0, buf.length);
+	    write(buf, 0, buf.length, keyframe, timestamp);
+
+	} else if (recordWebm) {
+
 	} else {
-	    write(data, offset, dataLength);
+	    write(data, offset, dataLength, keyframe, timestamp);
 	}
     }
 
-    public void write(int[] data, int offset, int length) throws IOException {
-	byte[] byteData = new byte[length * 2];
+    public void write(int[] data, int offset, int length, boolean keyframe, long timestamp) throws IOException
+    {
+		byte[] byteData = new byte[length * 2];
 
-	for (int i = 0; i < length; i++) {
-	    byteData[(2 * i)] = (byte) ((data[i + offset] >> 8) & 0xff);
-	    byteData[(2 * i) + 1] = (byte) (data[i + offset] & 0xff);
-	}
+		for (int i = 0; i < length; i++) {
+			byteData[(2 * i)] = (byte) ((data[i + offset] >> 8) & 0xff);
+			byteData[(2 * i) + 1] = (byte) (data[i + offset] & 0xff);
+		}
 
-        write(byteData, 0, byteData.length);
+        write(byteData, 0, byteData.length, keyframe, timestamp);
     }
 
-    public void write(byte[] data, int offset, int length) throws IOException {
+    public void write(byte[] data, int offset, int length, boolean keyframe, long timestamp) throws IOException {
         if (done) {
             return;
         }
 
         synchronized(dataToWrite) {
-            dataToWrite.add(new DataToWrite(data, offset, length));
+            dataToWrite.add(new DataToWrite(data, offset, length, keyframe, timestamp));
             dataToWrite.notifyAll();
         }
     }
@@ -367,48 +418,89 @@ public class Recorder extends Thread
 
     private void writeData(DataToWrite d) {
         try {
-	    synchronized(this) {
-                bo.write(d.data, 0, d.length);
-		dataSize += d.length;
+	    	synchronized(this)
+	    	{
+				if (recordWebm)
+				{
+					long duration = 0;
+
+					if (d.keyframe || lastTimecode == 0)
+					{
+						if (lastTimecode > 0)
+						{
+							Log.info("writeData end cluster " + d.data);
+							duration = d.timestamp - lastTimecode;
+							mFW.endCluster();
+						}
+						Log.info("writeData start cluster " + d.timestamp);
+						mFW.startCluster(d.timestamp);
+					}
+
+					lastTimecode = d.timestamp;
+
+					MatroskaFileFrame frame = new MatroskaFileFrame();
+					frame.TrackNo = 1;
+					frame.Duration = duration;
+					frame.Timecode = d.timestamp;
+					frame.Reference = 0;
+					frame.KeyFrame = d.keyframe;
+					frame.Data = d.data;
+					mFW.addFrame(frame);
+
+					Log.info("writeData video " + d.data);
+
+				} else {
+                	bo.write(d.data, 0, d.length);
+					dataSize += d.length;
+				}
             }
         } catch (IOException e) {
             Log.error("Can't record to " + recordPath, e);
-	    done();
+	    	done();
         }
     }
 
     private void writeDataSize() {
         try {
-	    synchronized(this) {
-		if (bo != null) {
-		    bo.flush();
-                    bo.close();
-		    fo.flush();
-                    fo.close();
-		}
+			synchronized(this)
+			{
+				if (recordWebm)
+				{
+					mFW.endCluster();
+					iFW.close();
 
-		if (auHeader != null) {
-		    /*
-		     * Now write the data size in the auHeader
-		     */
-		    auHeader[8]  = (byte) ((dataSize >> 24) & 0xff);
-		    auHeader[9]  = (byte) ((dataSize >> 16) & 0xff);
-		    auHeader[10] = (byte) ((dataSize >> 8) & 0xff);
-		    auHeader[11] = (byte) (dataSize & 0xff);
+				} else {
+					if (bo != null) {
+						bo.flush();
+						bo.close();
+						fo.flush();
+						fo.close();
+					}
 
-		    try {
-                        RandomAccessFile raf = new RandomAccessFile(
-			    recordPath, "rw");
+					if (auHeader != null) {
+						/*
+						 * Now write the data size in the auHeader
+						 */
+						auHeader[8]  = (byte) ((dataSize >> 24) & 0xff);
+						auHeader[9]  = (byte) ((dataSize >> 16) & 0xff);
+						auHeader[10] = (byte) ((dataSize >> 8) & 0xff);
+						auHeader[11] = (byte) (dataSize & 0xff);
 
-		        raf.write(auHeader);
-			raf.close();
-		    } catch (FileNotFoundException e) {
-				Log.error("Unable to write data size to recording " + recordPath + " " + e.getMessage(), e);
-		    }
-		}
-	    }
+						try {
+							RandomAccessFile raf = new RandomAccessFile(
+							recordPath, "rw");
+
+							raf.write(auHeader);
+							raf.close();
+						} catch (FileNotFoundException e) {
+							Log.error("Unable to write data size to recording " + recordPath + " " + e.getMessage(), e);
+						}
+					}
+				}
+	    	}
+
         } catch (IOException e) {
-	    Log.error("Exception closing recording " + recordPath + " " + e.getMessage(), e);
+	    	Log.error("Exception closing recording " + recordPath + " " + e.getMessage(), e);
         }
     }
 

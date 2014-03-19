@@ -9,6 +9,8 @@ var pdfFrame = null;
 var pdfPage = "1";
 var altView = false;
 var sipUri = null;
+var notificationInterval = false;
+var unreadMessages = 0;
 
 $(document).ready(function () 
 {
@@ -55,12 +57,16 @@ $(document).ready(function ()
 
     $('#usermsg').keydown(function(event) 
     {
-        if (event.keyCode == 13) {
-            event.preventDefault();
-            var message = this.value;
-            $('#usermsg').val('').trigger('autosize.resize');
-            this.focus();
-            connection.emuc.sendMessage(message, nickname);
+        if (event.keyCode == 13) 
+        {
+		event.preventDefault();
+		var message = this.value;
+		$('#usermsg').val('').trigger('autosize.resize');
+		this.focus();
+		connection.emuc.sendMessage(message, nickname);
+            
+		unreadMessages = 0;
+		setVisualNotification(false);            
         }
     });
 
@@ -376,7 +382,10 @@ function getConstraints(um, resolution, bandwidth, fps)
     if (um.indexOf('screen') >= 0) {
 	window.RTC.rayo.constraints.video = {
 	    "mandatory": {
-		"chromeMediaSource": "screen"
+		"chromeMediaSource": "screen",
+		"maxWidth": window.screen.width,
+		"maxHeight": window.screen.height,
+		"maxFrameRate": "3"		
 	    }
 	};
     }
@@ -998,24 +1007,28 @@ function toggleScreenShare()
 
 function updateChatConversation(nick, message)
 {
-    var timestamp = new Date();
-    
-    //console.log("updateChatConversation", nick, message, timestamp);
-    
-    if (!nick) nick = "System";
-    
-    divClassName = "Out";
-    
-    if (nickname == nick)
-        divClassName = "In";    
+	var timestamp = new Date();
+
+	//console.log("updateChatConversation", nick, message, timestamp);
+
+	if (!nick) nick = "System";
+
+	divClassName = "Out";
+
+	if (nickname == nick) 
+		divClassName = "In";    
+	else {
+                unreadMessages++;
+                setVisualNotification(true);                
+	}
 
 	var content = '<div class="message message' + divClassName + '">' 
 		+'<span class="msgText">' + setEmoticons(message) + '</span>'
 		+'<span class="msgPerson">' + nick + '<span class="msgTime">&nbsp;-&nbsp;' + new Date().format("m-d-Y H:i:s") + '</span></span>'
 	    +'</div>'; 
-            
-    $('#ofmeet-log').append(content);
-    $('#ofmeet-log').animate({ scrollTop: $('#ofmeet-log')[0].scrollHeight}, 1000);	         
+
+	$('#ofmeet-log').append(content);
+	$('#ofmeet-log').animate({ scrollTop: $('#ofmeet-log')[0].scrollHeight}, 1000);	         
 }
 
 function buttonClick(id, classname) {
@@ -1361,24 +1374,55 @@ function setEmoticons(body)
 
 function linkify(inputText)
 {
-    var replacedText, replacePattern1, replacePattern2, replacePattern3;
-    
-    //URLs starting with http://, https://, or ftp://
-    replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-    replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
-    
-    //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-    replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-    replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
-    
-    //Change email addresses to mailto:: links.
-    replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
-    replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
-    
-    return replacedText;
+	var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+	//URLs starting with http://, https://, or ftp://
+	replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+	replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+	//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+	replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+	replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+
+	//Change email addresses to mailto:: links.
+	replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+	replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+
+	return replacedText;
 }
 
-Date.prototype.format = function(format) {
+function setVisualNotification(show) 
+{
+	var unreadMsgElement = document.getElementById('unreadMessages');
+
+	if (unreadMessages) {
+	    unreadMsgElement.innerHTML = unreadMessages.toString();
+
+	    var chatButtonElement = document.getElementById('chat').parentNode;
+	    var leftIndent = (Util.getTextWidth(chatButtonElement) - Util.getTextWidth(unreadMsgElement) - 5)/2;
+	    var topIndent = (Util.getTextHeight(chatButtonElement) - Util.getTextHeight(unreadMsgElement))/2 - 2;
+
+	    unreadMsgElement.setAttribute('style', 'top:' + topIndent + '; left:' + leftIndent +';');
+	}
+	else
+	    unreadMsgElement.innerHTML = '';
+
+	var glower = $('#chat');
+
+	if (show && !notificationInterval) {
+	    notificationInterval = window.setInterval(function() {
+		glower.toggleClass('active');
+	    }, 800);
+	}
+	else if (!show && notificationInterval) {
+	    window.clearInterval(notificationInterval);
+	    notificationInterval = false;
+	    glower.removeClass('active');
+	}
+}
+
+Date.prototype.format = function(format) 
+{
 	var returnStr = '';
 	var replace = Date.replaceChars;
 	for (var i = 0; i < format.length; i++) {

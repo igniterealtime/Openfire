@@ -12,6 +12,7 @@
     <script src="js/webrtc.sdp.js"></script>
     <script src="js/strophe-openfire.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/util.js"></script>
 
 	<link rel="shortcut icon" href="favicon.ico"/>
     <link rel="stylesheet" href="font-awesome-4.0.3/css/font-awesome.css">
@@ -36,7 +37,10 @@
             <div class="header_button_separator"></div>
             <a class="button" onclick="openLinkDialog();"><i title="Invite others" class="fa fa-link fa-lg"></i></a>
             <div class="header_button_separator"></div>
-            <a class="button" onclick='openChat();'><i id="chat" title="Open chat" class="fa fa-comments fa-lg"></i></a>
+            <span class="toolbar_span">
+                <a class="button" onclick='openChat();'><i id="chat" title="Open chat" class="fa fa-comments-o fa-lg"></i></a>
+                <span id="unreadMessages"></span>
+            </span>
             <div class="header_button_separator"></div>
             <a class="button" onclick='openPDFDialog();'><i id="pdf" title="Share PDF" class="fa fa-file fa-lg"></i></a>
             <div class="header_button_separator"></div>

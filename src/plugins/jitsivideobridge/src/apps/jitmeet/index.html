@@ -6,12 +6,16 @@
     <script src="libs/strophe/strophe.jingle.bundle.js?v=8"></script>
     <script src="libs/strophe/strophe.jingle.js?v=1"></script>
     <script src="libs/strophe/strophe.jingle.sdp.js?v=1"></script>
+    <script src="libs/strophe/strophe.jingle.sdp.util.js?v=1"></script>
+    <script src="libs/strophe/strophe.jingle.sessionbase.js?v=1"></script>
     <script src="libs/strophe/strophe.jingle.session.js?v=1"></script>
     <script src="libs/colibri/colibri.focus.js?v=8"></script><!-- colibri focus implementation -->
     <script src="libs/colibri/colibri.session.js?v=1"></script>
     <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script src="config.js"></script><!-- adapt to your needs, i.e. set hosts and bosh path -->
     <script src="muc.js?v=9"></script><!-- simple MUC library -->
     <script src="estos_log.js?v=2"></script><!-- simple stanza logger -->
+    <script src="desktopsharing.js?v=1"></script><!-- desktop sharing -->
     <script src="app.js?v=23"></script><!-- application logic -->
     <script src="chat.js?v=3"></script><!-- chat logic -->
     <script src="util.js?v=2"></script><!-- utility functions -->
@@ -22,9 +26,12 @@
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css?v=19"/>
     <link rel="stylesheet" href="css/jquery-impromptu.css?v=4">
     <link rel="stylesheet" href="css/modaldialog.css?v=3">
+    <!--
+        Link used for inline installation of chrome desktop streaming extension,
+        must contain the same extension id as defined in config.js -->
+    <link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/diibjkoicjeejcmhdnailmkgecihlobk">
     <script src="libs/jquery-impromptu.js"></script>
     <script src="libs/jquery.autosize.js"></script>
-    <script src="config.js"></script><!-- adapt to your needs, i.e. set hosts and bosh path -->
     <script src="libs/prezi_player.js?v=2"></script>
   </head>
   <body>
@@ -35,7 +42,7 @@
             <a class="button" onclick='buttonClick("#mute", "fa fa-microphone fa-lg fa fa-microphone-slash fa-lg");toggleAudio();'>
                 <i id="mute" title="Mute / unmute" class="fa fa-microphone fa-lg"></i></a>
             <div class="header_button_separator"></div>
-            <a class="button" onclick='buttonClick("#video", "fa fa-video-camera fa-lg fa fa-video-camera no-fa-video-camera fa-lg");toggleVideo();'>
+            <a class="button" onclick='buttonClick("#video");toggleVideo();'>
                 <i id="video" title="Start / stop camera" class="fa fa-video-camera fa-lg"></i></a>
             <div class="header_button_separator"></div>
             <a class="button" onclick="openLockDialog();"><i id="lockIcon" title="Lock/unlock room" class="fa fa-unlock fa-lg"></i></a>
@@ -53,6 +60,10 @@
                 <a class="button" onclick='Etherpad.toggleEtherpad(0);'><i title="Open shared document" class="fa fa-file-text fa-lg"></i></a>
             </span>
             <div class="header_button_separator"></div>
+            <span id="desktopsharing" style="display: none">
+                <a class="button" onclick="toggleScreenSharing();"><i title="Share screen" class="fa fa-desktop fa-lg"></i></a>
+                <div class="header_button_separator"></div>
+            </span>
             <a class="button" onclick='toggleFullScreen();'><i title="Enter / Exit Full Screen" class="fa fa-arrows-alt fa-lg"></i></a>
         </span>
     </div>
@@ -78,7 +89,8 @@
         <div id="remoteVideos">
             <span id="localVideoContainer" class="videocontainer">
                 <span id="localNick"></span>
-                <video id="localVideo" autoplay oncontextmenu="return false;" muted></video>
+                <!--<video id="localVideo" autoplay oncontextmenu="return false;" muted></video> - is now per stream generated -->
+                <audio id="localAudio" autoplay oncontextmenu="return false;" muted></audio>
                 <span class="focusindicator"></span>
             </span>
             <audio id="userJoined" src="sounds/joined.wav" preload="auto"></audio>
@@ -99,6 +111,7 @@
         <textarea id="usermsg" placeholder='Enter text...' autofocus></textarea>
     </div>
     <a id="downloadlog" onclick='dump(event.target);'><i title="Download support information" class="fa fa-cloud-download"></i></a>
+    <!-- Google Analytics -->
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -106,5 +119,6 @@
         ga('create', 'UA-319188-14', 'jit.si');
         ga('send', 'pageview');
     </script>
+    <!-- End Google Analytics -->
   </body>
 </html>

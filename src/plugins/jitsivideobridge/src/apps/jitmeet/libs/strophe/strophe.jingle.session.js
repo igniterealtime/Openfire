@@ -1,16 +1,16 @@
 /* jshint -W117 */
 // Jingle stuff
+JingleSession.prototype = Object.create(SessionBase.prototype);
 function JingleSession(me, sid, connection) {
+
+    SessionBase.call(this, connection, sid);
+
     this.me = me;
-    this.sid = sid;
-    this.connection = connection;
     this.initiator = null;
     this.responder = null;
     this.isInitiator = null;
     this.peerjid = null;
     this.state = null;
-    this.peerconnection = null;
-    this.remoteStream = null;
     this.localSDP = null;
     this.remoteSDP = null;
     this.localStreams = [];
@@ -35,10 +35,6 @@ function JingleSession(me, sid, connection) {
 
     this.reason = null;
 
-    this.addssrc = [];
-    this.removessrc = [];
-    this.pendingop = null;
-
     this.wait = true;
 }
 
@@ -54,16 +50,6 @@ JingleSession.prototype.initiate = function (peerjid, isInitiator) {
     this.initiator = isInitiator ? this.me : peerjid;
     this.responder = !isInitiator ? this.me : peerjid;
     this.peerjid = peerjid;
-    //console.log('create PeerConnection ' + JSON.stringify(this.ice_config));
-    try {
-        this.peerconnection = new RTCPeerconnection(this.ice_config,
-            this.pc_constraints);
-    } catch (e) {
-        console.error('Failed to create PeerConnection, exception: ',
-            e.message);
-        console.error(e);
-        return;
-    }
     this.hadstuncandidate = false;
     this.hadturncandidate = false;
     this.lasticecandidate = false;
@@ -71,13 +57,16 @@ JingleSession.prototype.initiate = function (peerjid, isInitiator) {
         self.sendIceCandidate(event.candidate);
     };
     this.peerconnection.onaddstream = function (event) {
-        self.remoteStream = event.stream;
         self.remoteStreams.push(event.stream);
         $(document).trigger('remotestreamadded.jingle', [event, self.sid]);
     };
     this.peerconnection.onremovestream = function (event) {
-        self.remoteStream = null;
-        // FIXME: remove from this.remoteStreams
+        // Remove the stream from remoteStreams
+        var streamIdx = self.remoteStreams.indexOf(event.stream);
+        if(streamIdx !== -1){
+            self.remoteStreams.splice(streamIdx, 1);
+        }
+        // FIXME: remotestreamremoved.jingle not defined anywhere(unused)
         $(document).trigger('remotestreamremoved.jingle', [event, self.sid]);
     };
     this.peerconnection.onsignalingstatechange = function (event) {
@@ -163,6 +152,22 @@ JingleSession.prototype.accept = function () {
             console.error('setLocalDescription failed', e);
         }
     );
+};
+
+/**
+ * Implements SessionBase.sendSSRCUpdate.
+ */
+JingleSession.prototype.sendSSRCUpdate = function(sdpMediaSsrcs, fromJid, isadd) {
+
+    var self = this;
+    console.log('tell', self.peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from' + self.me);
+
+    if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')){
+        console.log("Too early to send updates");
+        return;
+    }
+
+    this.sendSSRCUpdateIq(sdpMediaSsrcs, self.sid, self.initiator, self.peerjid, isadd);
 };
 
 JingleSession.prototype.terminate = function (reason) {
@@ -631,158 +636,6 @@ JingleSession.prototype.sendTerminate = function (reason, text) {
         window.clearInterval(this.statsinterval);
         this.statsinterval = null;
     }
-};
-
-
-JingleSession.prototype.addSource = function (elem) {
-    console.log('addssrc', new Date().getTime());
-    console.log('ice', this.peerconnection.iceConnectionState);
-    var sdp = new SDP(this.peerconnection.remoteDescription.sdp);
-
-    var self = this;
-    $(elem).each(function (idx, content) {
-        var name = $(content).attr('name');
-        var lines = '';
-        tmp = $(content).find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
-        tmp.each(function () {
-            var ssrc = $(this).attr('ssrc');
-            $(this).find('>parameter').each(function () {
-                lines += 'a=ssrc:' + ssrc + ' ' + $(this).attr('name');
-                if ($(this).attr('value') && $(this).attr('value').length)
-                    lines += ':' + $(this).attr('value');
-                lines += '\r\n';
-            });
-        });
-        sdp.media.forEach(function(media, idx) {
-            if (!SDPUtil.find_line(media, 'a=mid:' + name))
-                return;
-            sdp.media[idx] += lines;
-            if (!self.addssrc[idx]) self.addssrc[idx] = '';
-            self.addssrc[idx] += lines;
-        });
-        sdp.raw = sdp.session + sdp.media.join('');
-    });
-    this.modifySources();
-};
-
-JingleSession.prototype.removeSource = function (elem) {
-    console.log('removessrc', new Date().getTime());
-    console.log('ice', this.peerconnection.iceConnectionState);
-    var sdp = new SDP(this.peerconnection.remoteDescription.sdp);
-
-    var self = this;
-    $(elem).each(function (idx, content) {
-        var name = $(content).attr('name');
-        var lines = '';
-        tmp = $(content).find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]');
-        tmp.each(function () {
-            var ssrc = $(this).attr('ssrc');
-            $(this).find('>parameter').each(function () {
-                lines += 'a=ssrc:' + ssrc + ' ' + $(this).attr('name');
-                if ($(this).attr('value') && $(this).attr('value').length)
-                    lines += ':' + $(this).attr('value');
-                lines += '\r\n';
-            });
-        });
-        sdp.media.forEach(function(media, idx) {
-            if (!SDPUtil.find_line(media, 'a=mid:' + name))
-                return;
-            sdp.media[idx] += lines;
-            if (!self.removessrc[idx]) self.removessrc[idx] = '';
-            self.removessrc[idx] += lines;
-        });
-        sdp.raw = sdp.session + sdp.media.join('');
-    });
-    this.modifySources();
-};
-
-JingleSession.prototype.modifySources = function() {
-    var self = this;
-    if (this.peerconnection.signalingState == 'closed') return;
-    if (!(this.addssrc.length || this.removessrc.length || this.pendingop !== null)) return;
-    if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')) {
-        console.warn('modifySources not yet', this.peerconnection.signalingState, this.peerconnection.iceConnectionState);
-        this.wait = true;
-        window.setTimeout(function() { self.modifySources(); }, 250);
-        return;
-    }
-    if (this.wait) {
-        window.setTimeout(function() { self.modifySources(); }, 2500);
-        this.wait = false;
-        return;
-    }
-
-    var sdp = new SDP(this.peerconnection.remoteDescription.sdp);
-
-    // add sources
-    this.addssrc.forEach(function(lines, idx) {
-        sdp.media[idx] += lines;
-    });
-    this.addssrc = [];
-
-    // remove sources
-    this.removessrc.forEach(function(lines, idx) {
-        lines = lines.split('\r\n');
-        lines.pop(); // remove empty last element;
-        lines.forEach(function(line) {
-            sdp.media[idx] = sdp.media[idx].replace(line + '\r\n', '');
-        });
-    });
-    this.removessrc = [];
-
-    sdp.raw = sdp.session + sdp.media.join('');
-    this.peerconnection.setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}),
-        function() {
-            self.peerconnection.createAnswer(
-                function(modifiedAnswer) {
-                    // change video direction, see https://github.com/jitsi/jitmeet/issues/41
-                    if (self.pendingop !== null) {
-                        var sdp = new SDP(modifiedAnswer.sdp);
-                        if (sdp.media.length > 1) {
-                            switch(self.pendingop) {
-                                case 'mute':
-                                    sdp.media[1] = sdp.media[1].replace('a=sendrecv', 'a=recvonly');
-                                    break;
-                                case 'unmute':
-                                    sdp.media[1] = sdp.media[1].replace('a=recvonly', 'a=sendrecv');
-                                    break;
-                            }
-                            sdp.raw = sdp.session + sdp.media.join('');
-                            modifiedAnswer.sdp = sdp.raw;
-                        }
-                        self.pendingop = null;
-                    }
-
-                    self.peerconnection.setLocalDescription(modifiedAnswer,
-                        function() {
-                            //console.log('modified setLocalDescription ok');
-                            $(document).trigger('setLocalDescription.jingle', [self.sid]);
-                        },
-                        function(error) {
-                            console.log('modified setLocalDescription failed');
-                        }
-                    );
-                },
-                function(error) {
-                    console.log('modified answer failed');
-                }
-            );
-        },
-        function(error) {
-            console.log('modify failed');
-        }
-    );
-};
-
-// SDP-based mute by going recvonly/sendrecv
-// FIXME: should probably black out the screen as well
-JingleSession.prototype.hardMuteVideo = function (muted) {
-    this.pendingop = muted ? 'mute' : 'unmute';
-    this.modifySources();
-
-    this.connection.jingle.localStream.getVideoTracks().forEach(function (track) {
-        track.enabled = !muted;
-    });
 };
 
 JingleSession.prototype.sendMute = function (muted, content) {

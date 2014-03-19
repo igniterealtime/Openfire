@@ -4,12 +4,12 @@ var connection = null;
 var focus = null;
 var activecall = null;
 var RTC = null;
-var RTCPeerConnection = null;
 var nickname = null;
 var sharedKey = '';
 var roomUrl = null;
 var ssrc2jid = {};
 var localVideoSrc = null;
+var flipXLocalVideo = true;
 var preziPlayer = null;
 
 /* window.onbeforeunload = closePageWarning; */
@@ -23,7 +23,6 @@ function init() {
         window.location.href = 'chromeonly.html';
         return;
     }
-    RTCPeerconnection = TraceablePeerConnection;
 
     connection = new Strophe.Connection(document.getElementById('boshURL').value || config.bosh || '/http-bind');
 
@@ -49,16 +48,40 @@ function init() {
             if (config.useStunTurn) {
                 connection.jingle.getStunAndTurnCredentials();
             }
-            if (RTC.browser === 'firefox') {
-                getUserMediaWithConstraints(['audio']);
-            } else {
-                getUserMediaWithConstraints(['audio', 'video'], config.resolution || '360');
-            }
+            getUserMediaWithConstraints( ['audio'], audioStreamReady,
+                function(error){
+                    console.error('failed to obtain audio stream - stop', error);
+                });
             document.getElementById('connect').disabled = true;
         } else {
             console.log('status', status);
         }
     });
+}
+
+function audioStreamReady(stream) {
+
+    change_local_audio(stream);
+
+    if(RTC.browser !== 'firefox') {
+        getUserMediaWithConstraints( ['video'], videoStreamReady, videoStreamFailed, config.resolution || '360' );
+    } else {
+        doJoin();
+    }
+}
+
+function videoStreamReady(stream) {
+
+    change_local_video(stream, true);
+
+    doJoin();
+}
+
+function videoStreamFailed(error) {
+
+    console.warn("Failed to obtain video stream - continue anyway", error);
+
+    doJoin();
 }
 
 function doJoin() {
@@ -104,39 +127,57 @@ function doJoin() {
     connection.emuc.doJoin(roomjid);
 }
 
-$(document).bind('mediaready.jingle', function (event, stream) {
-    connection.jingle.localStream = stream;
-    RTC.attachMediaStream($('#localVideo'), stream);
-    document.getElementById('localVideo').autoplay = true;
-    document.getElementById('localVideo').volume = 0;
+function change_local_audio(stream) {
 
-    localVideoSrc = document.getElementById('localVideo').src;
-    updateLargeVideo(localVideoSrc, true, 0);
+    connection.jingle.localAudio = stream;
+    RTC.attachMediaStream($('#localAudio'), stream);
+    document.getElementById('localAudio').autoplay = true;
+    document.getElementById('localAudio').volume = 0;
+}
 
-    $('#localVideo').click(function () {
-        $(document).trigger("video.selected", [false]);
-        updateLargeVideo($(this).attr('src'), true, 0);
+function change_local_video(stream, flipX) {
 
-        $('video').each(function (idx, el) {
-            if (el.id.indexOf('mixedmslabel') !== -1) {
-                el.volume = 0;
-                el.volume = 1;
-            }
-        });
-    });
+    connection.jingle.localVideo = stream;
 
-    doJoin();
-});
+    var localVideo = document.createElement('video');
+    localVideo.id = 'localVideo_'+stream.id;
+    localVideo.autoplay = true;
+    localVideo.volume = 0; // is it required if audio is separated ?
+    localVideo.oncontextmenu = function () { return false; };
 
-$(document).bind('mediafailure.jingle', function () {
-    // FIXME
-});
+    var localVideoContainer = document.getElementById('localVideoContainer');
+    localVideoContainer.appendChild(localVideo);
+
+    var localVideoSelector = $('#' + localVideo.id);
+    // Add click handler
+    localVideoSelector.click(function () { handleVideoThumbClicked(localVideo.src); } );
+    // Add stream ended handler
+    stream.onended = function () {
+        localVideoContainer.removeChild(localVideo);
+        checkChangeLargeVideo(localVideo.src);
+    };
+    // Flip video x axis if needed
+    flipXLocalVideo = flipX;
+    if(flipX) {
+        localVideoSelector.addClass("flipVideoX");
+    }
+    // Attach WebRTC stream
+    RTC.attachMediaStream(localVideoSelector, stream);
+
+    localVideoSrc = localVideo.src;
+    updateLargeVideo(localVideoSrc, 0);
+}
 
 $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     function waitForRemoteVideo(selector, sid) {
+        if(selector.removed) {
+            console.warn("media removed before had started", selector);
+            return;
+        }
         var sess = connection.jingle.sessions[sid];
         if (data.stream.id === 'mixedmslabel') return;
         videoTracks = data.stream.getVideoTracks();
+        console.log("waiting..", videoTracks, selector[0]);
         if (videoTracks.length === 0 || selector[0].currentTime > 0) {
             RTC.attachMediaStream(selector, data.stream); // FIXME: why do i have to do this for FF?
             $(document).trigger('callactive.jingle', [selector, sid]);
@@ -180,7 +221,9 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
         }
     } else {
         if (data.stream.id !== 'mixedmslabel') {
-            console.warn('can not associate stream', data.stream.id, 'with a participant');
+            console.error('can not associate stream', data.stream.id, 'with a participant');
+            // We don't want to add it here since it will cause troubles
+            return;
         }
         // FIXME: for the mixed ms we dont need a video -- currently
         container = document.createElement('span');
@@ -188,8 +231,11 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
         remotes.appendChild(container);
         Util.playSoundNotification('userJoined');
     }
-    var vid = document.createElement('video');
-    var id = 'remoteVideo_' + sid + '_' + data.stream.id;
+
+    var isVideo = data.stream.getVideoTracks().length > 0;
+    var vid = isVideo ? document.createElement('video') : document.createElement('audio');
+    var id = (isVideo ? 'remoteVideo_' : 'remoteAudio_') + sid + '_' + data.stream.id;
+
     vid.id = id;
     vid.autoplay = true;
     vid.oncontextmenu = function () { return false; };
@@ -203,43 +249,84 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     var sel = $('#' + id);
     sel.hide();
     RTC.attachMediaStream(sel, data.stream);
-    waitForRemoteVideo(sel, sid);
+
+    if(isVideo) {
+        waitForRemoteVideo(sel, sid);
+    }
+
     data.stream.onended = function () {
         console.log('stream ended', this.id);
-        var src = $('#' + id).attr('src');
-        if (src === $('#largeVideo').attr('src')) {
-            // this is currently displayed as large
-            // pick the last visible video in the row
-            // if nobody else is left, this picks the local video
-            var pick = $('#remoteVideos>span[id!="mixedstream"]:visible:last>video').get(0);
-            // mute if localvideo
-            var isLocalVideo = false;
-            if (pick) {
-                 if (pick.src === localVideoSrc)
-                 isLocalVideo = true;
 
-                 updateLargeVideo(pick.src, isLocalVideo, pick.volume);
-            }
+        // Mark video as removed to cancel waiting loop(if video is removed before has started)
+        sel.removed = true;
+        sel.remove();
+
+        var audioCount = $('#'+container.id+'>audio').length;
+        var videoCount = $('#'+container.id+'>video').length;
+        if(!audioCount && !videoCount) {
+            console.log("Remove whole user");
+            // Remove whole container
+            container.remove();
+            Util.playSoundNotification('userLeft');
+            resizeThumbnails();
         }
-        $('#' + id).parent().remove();
-        Util.playSoundNotification('userLeft');
-        resizeThumbnails();
+
+        checkChangeLargeVideo(vid.src);
     };
-    sel.click(
-        function () {
-            $(document).trigger("video.selected", [false]);
-            updateLargeVideo($(this).attr('src'), false, 1);
-        }
-    );
+
+    // Add click handler
+    sel.click(function () { handleVideoThumbClicked(vid.src); });
+
     // an attempt to work around https://github.com/jitsi/jitmeet/issues/32
-    if (data.peerjid && sess.peerjid === data.peerjid &&
-            data.stream.getVideoTracks().length === 0 &&
-            connection.jingle.localStream.getVideoTracks().length > 0) {
+    if (isVideo
+        && data.peerjid && sess.peerjid === data.peerjid &&
+           data.stream.getVideoTracks().length === 0 &&
+           connection.jingle.localVideo.getVideoTracks().length > 0) {
         window.setTimeout(function() {
             sendKeyframe(sess.peerconnection);
         }, 3000);
     }
 });
+
+function handleVideoThumbClicked(videoSrc) {
+
+    $(document).trigger("video.selected", [false]);
+
+    updateLargeVideo(videoSrc, 1);
+
+    $('audio').each(function (idx, el) {
+        // We no longer mix so we check for local audio now
+        if(el.id != 'localAudio') {
+            el.volume = 0;
+            el.volume = 1;
+        }
+    });
+}
+
+/**
+ * Checks if removed video is currently displayed and tries to display another one instead.
+ * @param removedVideoSrc src stream identifier of the video.
+ */
+function checkChangeLargeVideo(removedVideoSrc){
+    if (removedVideoSrc === $('#largeVideo').attr('src')) {
+        // this is currently displayed as large
+        // pick the last visible video in the row
+        // if nobody else is left, this picks the local video
+        var pick = $('#remoteVideos>span[id!="mixedstream"]:visible:last>video').get(0);
+
+        if(!pick) {
+            console.info("Last visible video no longer exists");
+            pick = $('#remoteVideos>span[id!="mixedstream"]>video').get(0);
+        }
+
+        // mute if localvideo
+        if (pick) {
+            updateLargeVideo(pick.src, pick.volume);
+        } else {
+            console.warn("Failed to elect large video");
+        }
+    }
+}
 
 // an attempt to work around https://github.com/jitsi/jitmeet/issues/32
 function sendKeyframe(pc) {
@@ -355,7 +442,7 @@ $(document).bind('callactive.jingle', function (event, videoelem, sid) {
         videoelem.show();
         resizeThumbnails();
 
-        updateLargeVideo(videoelem.attr('src'), false, 1);
+        updateLargeVideo(videoelem.attr('src'), 1);
 
         showFocusIndicator();
     }
@@ -363,6 +450,8 @@ $(document).bind('callactive.jingle', function (event, videoelem, sid) {
 
 $(document).bind('callterminated.jingle', function (event, sid, reason) {
     // FIXME
+    focus = null;
+    activecall = null;
 });
 
 $(document).bind('setLocalDescription.jingle', function (event, sid) {
@@ -379,15 +468,27 @@ $(document).bind('setLocalDescription.jingle', function (event, sid) {
             var ssrc = SDPUtil.find_line(media, 'a=ssrc:').substring(7).split(' ')[0];
             newssrcs[type] = ssrc;
 
-            directions[type] = (SDPUtil.find_line(media, 'a=sendrecv') || SDPUtil.find_line(media, 'a=recvonly') || SDPUtil.find_line('a=sendonly') || SDPUtil.find_line('a=inactive') || 'a=sendrecv').substr(2);
+            directions[type] = (
+                SDPUtil.find_line(media, 'a=sendrecv')
+                || SDPUtil.find_line(media, 'a=recvonly')
+                || SDPUtil.find_line('a=sendonly')
+                || SDPUtil.find_line('a=inactive')
+                || 'a=sendrecv' ).substr(2);
         }
     });
     console.log('new ssrcs', newssrcs);
 
+    // Have to clear presence map to get rid of removed streams
+    connection.emuc.clearPresenceMedia();
     var i = 0;
     Object.keys(newssrcs).forEach(function (mtype) {
         i++;
-        connection.emuc.addMediaToPresence(i, mtype, newssrcs[mtype], directions[mtype]);
+        var type = mtype;
+        // Change video type to screen
+        if(mtype === 'video' && isUsingScreenStream) {
+            type = 'screen';
+        }
+        connection.emuc.addMediaToPresence(i, type, newssrcs[mtype], directions[mtype]);
     });
     if (i > 0) {
         connection.emuc.sendPresence();
@@ -422,7 +523,7 @@ $(document).bind('joined.muc', function (event, jid, info) {
 
 $(document).bind('entered.muc', function (event, jid, info, pres) {
     console.log('entered', jid, info);
-    console.log(focus);
+    console.log('is focus?' + focus ? 'true' : 'false');
 
     var videoSpanId = 'participant_' + Strophe.getResourceFromJid(jid);
     var container = addRemoteVideoContainer(videoSpanId);
@@ -489,12 +590,21 @@ $(document).bind('left.muc', function (event, jid) {
 });
 
 $(document).bind('presence.muc', function (event, jid, info, pres) {
+
+    // Remove old ssrcs coming from the jid
+    Object.keys(ssrc2jid).forEach(function(ssrc){
+       if(ssrc2jid[ssrc] == jid){
+           delete ssrc2jid[ssrc];
+       }
+    });
+
     $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
         //console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
         ssrc2jid[ssrc.getAttribute('ssrc')] = jid;
 
+        var type = ssrc.getAttribute('type');
         // might need to update the direction if participant just went from sendrecv to recvonly
-        if (ssrc.getAttribute('type') === 'video') {
+        if (type === 'video' || type === 'screen') {
             var el = $('#participant_'  + Strophe.getResourceFromJid(jid) + '>video');
             switch(ssrc.getAttribute('direction')) {
             case 'sendrecv':
@@ -502,7 +612,17 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
                 break;
             case 'recvonly':
                 el.hide();
+                // FIXME: Check if we have to change large video
+                //checkChangeLargeVideo(el);
                 break;
+            }
+            // Camera video or shared screen ?
+            if (type === 'screen') {
+                // Shared screen
+                //console.info("Have screen ssrc from "+jid, ssrc);
+            } else {
+                // Camera video
+                //console.info("Have camera ssrc from "+jid, ssrc);
             }
         }
     });
@@ -687,23 +807,27 @@ function isPresentationVisible() {
 /**
  * Updates the large video with the given new video source.
  */
-function updateLargeVideo(newSrc, localVideo, vol) {
+function updateLargeVideo(newSrc, vol) {
     console.log('hover in', newSrc);
 
     setPresentationVisible(false);
 
     if ($('#largeVideo').attr('src') !== newSrc) {
 
-        document.getElementById('largeVideo').volume = vol;
+        // FIXME: is it still required ? audio is separated
+        //document.getElementById('largeVideo').volume = vol;
 
         $('#largeVideo').fadeOut(300, function () {
             $(this).attr('src', newSrc);
 
+            // Screen stream is already rotated
+            var flipX = (newSrc === localVideoSrc) && flipXLocalVideo;
+
             var videoTransform = document.getElementById('largeVideo').style.webkitTransform;
-            if (localVideo && videoTransform !== 'scaleX(-1)') {
+            if (flipX && videoTransform !== 'scaleX(-1)') {
                 document.getElementById('largeVideo').style.webkitTransform = "scaleX(-1)";
             }
-            else if (!localVideo && videoTransform === 'scaleX(-1)') {
+            else if (!flipX && videoTransform === 'scaleX(-1)') {
                 document.getElementById('largeVideo').style.webkitTransform = "none";
             }
 
@@ -712,27 +836,34 @@ function updateLargeVideo(newSrc, localVideo, vol) {
     }
 }
 
+function getConferenceHandler() {
+    return focus ? focus : activecall;
+}
+
 function toggleVideo() {
-    if (!(connection && connection.jingle.localStream)) return;
-    var ismuted = false;
-    for (var idx = 0; idx < connection.jingle.localStream.getVideoTracks().length; idx++) {
-        ismuted = !connection.jingle.localStream.getVideoTracks()[idx].enabled;
+    if (!(connection && connection.jingle.localVideo)) return;
+
+    var sess = getConferenceHandler();
+    if (sess) {
+        sess.toggleVideoMute(
+            function(isMuted){
+                if(isMuted) {
+                    $('#video').removeClass("fa fa-video-camera fa-lg");
+                    $('#video').addClass("fa fa-video-camera no-fa-video-camera fa-lg");
+                } else {
+                    $('#video').removeClass("fa fa-video-camera no-fa-video-camera fa-lg");
+                    $('#video').addClass("fa fa-video-camera fa-lg");
+                }
+            }
+        );
     }
-    for (var idx = 0; idx < connection.jingle.localStream.getVideoTracks().length; idx++) {
-        connection.jingle.localStream.getVideoTracks()[idx].enabled = !connection.jingle.localStream.getVideoTracks()[idx].enabled;
-    }
-    var sess = focus || activecall;
-    if (!sess) {
-        return;
-    }
-    sess.pendingop = ismuted ? 'unmute' : 'mute';
-    sess.modifySources();
 }
 
 function toggleAudio() {
-    if (!(connection && connection.jingle.localStream)) return;
-    for (var idx = 0; idx < connection.jingle.localStream.getAudioTracks().length; idx++) {
-        connection.jingle.localStream.getAudioTracks()[idx].enabled = !connection.jingle.localStream.getAudioTracks()[idx].enabled;
+    if (!(connection && connection.jingle.localAudio)) return;
+    var localAudio = connection.jingle.localAudio;
+    for (var idx = 0; idx < localAudio.getAudioTracks().length; idx++) {
+        localAudio.getAudioTracks()[idx].enabled = !localAudio.getAudioTracks()[idx].enabled;
     }
 }
 
@@ -1132,6 +1263,8 @@ function showToolbar() {
 //        TODO: Enable settings functionality. Need to uncomment the settings button in index.html.
 //        $('#settingsButton').css({visibility:"visible"});
     }
+    // Set desktop sharing method
+    setDesktopSharing(config.desktopSharing);
 }
 
 /*
@@ -1170,6 +1303,10 @@ function showFocusIndicator() {
         var session = connection.jingle.sessions[Object.keys(connection.jingle.sessions)[0]];
         var focusId = 'participant_' + Strophe.getResourceFromJid(session.peerjid);
         var focusContainer = document.getElementById(focusId);
+        if(!focusContainer) {
+            console.error("No focus container!");
+            return;
+        }
         var indicatorSpan = $('#' + focusId + ' .focusindicator');
 
         if (!indicatorSpan || indicatorSpan.length === 0) {

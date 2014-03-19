@@ -23,7 +23,7 @@ public class BitAssistant
     {
         byte bytes[] = new byte[arrayList.size()];
         for(int i = 0; i < arrayList.size(); i++)
-            bytes[i] = ((Byte)arrayList.get(i)).byteValue();
+            if (arrayList.get(i) != null) bytes[i] = ((Byte)arrayList.get(i)).byteValue();
 
         return bytes;
     }
@@ -40,8 +40,9 @@ public class BitAssistant
     public static byte[] bytesFromArray(Byte array[])
     {
         byte bytes[] = new byte[array.length];
+
         for(int i = 0; i < array.length; i++)
-            bytes[i] = array[i].byteValue();
+            if (array[i] != null) bytes[i] = array[i].byteValue();
 
         return bytes;
     }

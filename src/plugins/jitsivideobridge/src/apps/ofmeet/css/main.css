@@ -89,6 +89,33 @@ html, body{
     border-left:1px solid #424242;
 }
 
+#chat {
+    font-size:1.65em;
+    -webkit-transition: all .5s ease-in-out;;
+       -moz-transition: all .5s ease-in-out;;
+            transition: all .5s ease-in-out;;
+}
+
+#chat.active {
+    -webkit-text-shadow: 0 0 10px #ffffff;
+    -moz-text-shadow: 0 0 10px #ffffff;
+    text-shadow: 0 0 10px #ffffff;
+    /* -webkit-transform: scale(1.1); */
+}
+
+.toolbar_span {
+    display: inline-block;
+    position: relative;
+}
+
+.toolbar_span>span {
+    display: inline-block;
+    position: absolute;
+    font-size: 7pt;
+    color: #ffffff;
+    text-align:center;
+    cursor: pointer;
+}
 
 .localuser {
     color: #087dba;

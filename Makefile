@@ -10,7 +10,7 @@ build-openfire:
 clean:
 	cd build && ant clean
 
-dbkg:
+dpkg:
 	cd build && ant installer.debian
 
 eclipse: .settings .classpath .project

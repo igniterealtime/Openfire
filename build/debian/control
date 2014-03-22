@@ -2,7 +2,7 @@ Source: openfire
 Section: net
 Priority: optional
 Maintainer: Ignite Realtime Community <admin@igniterealtime.org>
-Build-Depends: debhelper (>= 5), cdbs, patchutils, sun-java6-jdk | openjdk-6-jdk, ant
+Build-Depends: debhelper (>= 5), cdbs, patchutils, sun-java6-jdk | oracle-j2sdk1.7 | openjdk-6-jdk | openjdk-7-jdk, ant
 Standards-Version: 3.7.2
 Homepage: http://www.igniterealtime.org
 

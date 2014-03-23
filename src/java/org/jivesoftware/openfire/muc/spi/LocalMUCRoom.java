@@ -649,6 +649,10 @@ public class LocalMUCRoom implements MUCRoom {
                 Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.addElement("status").addAttribute("code", "100");
             }
+            if (joinPresence.getFrom().equals(joinPresence.getTo())) {
+                Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                frag.addElement("status").addAttribute("code", "110");
+            }
             if (isRoomNew) {
                 Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.addElement("status").addAttribute("code", "201");

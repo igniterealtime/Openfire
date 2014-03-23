@@ -38,6 +38,7 @@ public class Recorder extends Thread
     private static final int BUFFER_SIZE = 16 * 1024;
     private static String defaultRecordDirectory = ".";
     private String recordPath;
+    private String recordDirectory;
     private boolean recordRtp;
     private boolean recordWebm;
     private boolean recordAu;
@@ -51,9 +52,10 @@ public class Recorder extends Thread
 	private FileDataWriter iFW;
 
 
-    public Recorder(String recordDirectory, String recordPath, String recordingType, boolean pcmu, int sampleRate, int channels) throws IOException
+    public Recorder(String recordDirectory, String fileName, String recordingType, boolean pcmu, int sampleRate, int channels) throws IOException
     {
-		this.recordPath = getAbsolutePath(recordDirectory, recordPath);
+		this.recordPath = getAbsolutePath(recordDirectory, fileName);
+		this.recordDirectory = recordDirectory;
 		this.pcmu = pcmu;
 		this.sampleRate = sampleRate;
 		this.channels = channels;
@@ -123,6 +125,7 @@ public class Recorder extends Thread
 		track.TrackUID = new java.util.Random().nextLong();
 		track.TrackType = MatroskaDocType.track_video;
 		track.Name = "VP8";
+		track.CodecName = "VP8";
 		track.Language = "und";
 		track.CodecID = "V_VP8";
 		track.DefaultDuration = 0;
@@ -276,6 +279,8 @@ public class Recorder extends Thread
     }
 
     public void done() {
+		Log.info("Recorder done...");
+
         if (done) {
             return;
         }
@@ -426,13 +431,13 @@ public class Recorder extends Thread
 
 					if (d.keyframe || lastTimecode == 0)
 					{
-						if (lastTimecode > 0)
+						if (lastTimecode != 0)
 						{
-							Log.info("writeData end cluster " + d.data);
+							//Log.info("writeData end cluster " + d.data);
 							duration = d.timestamp - lastTimecode;
 							mFW.endCluster();
 						}
-						Log.info("writeData start cluster " + d.timestamp);
+						//Log.info("writeData start cluster " + d.timestamp);
 						mFW.startCluster(d.timestamp);
 					}
 
@@ -447,7 +452,7 @@ public class Recorder extends Thread
 					frame.Data = d.data;
 					mFW.addFrame(frame);
 
-					Log.info("writeData video " + d.data);
+					//Log.info("writeData video " + d.data);
 
 				} else {
                 	bo.write(d.data, 0, d.length);
@@ -518,5 +523,40 @@ public class Recorder extends Thread
     public static String getRecordingDirectory() {
         return defaultRecordDirectory;
     }
+
+    public void writeWebPImage(byte[] data, int offset, int length, long timestamp)
+    {
+		try {
+			Log.info("writeWebPImage " + length + " " + offset);
+			String outputFilename = recordPath.replace(".webm", timestamp + ".webp");
+			FileOutputStream oFS = new FileOutputStream(outputFilename);
+
+			oFS.write("RIFF".getBytes());
+			writeIntLE(oFS, length+12);
+
+			oFS.write("WEBPVP8".getBytes());
+			oFS.write(0x20);
+
+			writeIntLE(oFS, length);
+			oFS.write(data);
+			oFS.close();
+
+		} catch (Exception e) {
+			Log.error("writeWebPImage", e);
+		}
+	}
+
+	private void writeIntLE(FileOutputStream out, int value) {
+
+		try {
+			out.write(value & 0xFF);
+			out.write((value >> 8) & 0xFF);
+			out.write((value >> 16) & 0xFF);
+			out.write((value >> 24) & 0xFF);
+
+		} catch (Exception e) {
+			Log.error("writeIntLE", e);
+		}
+	}
 
 }

@@ -114,11 +114,11 @@ public class MatroskaFileWriter
     FloatElement durationElem = (FloatElement)doc.createElement(MatroskaDocType.Duration_Id);
     durationElem.setValue(Duration * 1000.0);
 
-    segmentInfoElem.addChildElement(dateElem);
+    //segmentInfoElem.addChildElement(dateElem);
     segmentInfoElem.addChildElement(timecodescaleElem);
-    segmentInfoElem.addChildElement(durationElem);
-    segmentInfoElem.addChildElement(writingAppElem);
     segmentInfoElem.addChildElement(muxingAppElem);
+    segmentInfoElem.addChildElement(writingAppElem);
+    segmentInfoElem.addChildElement(durationElem);
 
     segmentInfoElem.writeElement(ioDW);
   }
@@ -135,6 +135,9 @@ public class MatroskaFileWriter
       UnsignedIntegerElement trackNoElem = (UnsignedIntegerElement)doc.createElement(MatroskaDocType.TrackNumber_Id);
       trackNoElem.setValue(track.TrackNo);
 
+      UnsignedIntegerElement trackFlagLacingElem = (UnsignedIntegerElement)doc.createElement(MatroskaDocType.TrackFlagLacing_Id);
+      trackFlagLacingElem.setValue(0);
+
       UnsignedIntegerElement trackUIDElem = (UnsignedIntegerElement)doc.createElement(MatroskaDocType.TrackUID_Id);
       trackUIDElem.setValue(track.TrackUID);
 
@@ -150,6 +153,9 @@ public class MatroskaFileWriter
       StringElement trackCodecIDElem = (StringElement)doc.createElement(MatroskaDocType.TrackCodecID_Id);
       trackCodecIDElem.setValue(track.CodecID);
 
+      StringElement trackCodecName_IdElem = (StringElement)doc.createElement(MatroskaDocType.TrackCodecName_Id);
+      trackCodecName_IdElem.setValue(track.CodecName);
+
       BinaryElement trackCodecPrivateElem = (BinaryElement)doc.createElement(MatroskaDocType.TrackCodecPrivate_Id);
       trackCodecPrivateElem.setData(track.CodecPrivate);
 
@@ -158,12 +164,14 @@ public class MatroskaFileWriter
 
       trackEntryElem.addChildElement(trackNoElem);
       trackEntryElem.addChildElement(trackUIDElem);
-      trackEntryElem.addChildElement(trackTypeElem);
-      trackEntryElem.addChildElement(trackNameElem);
+      trackEntryElem.addChildElement(trackFlagLacingElem);
       trackEntryElem.addChildElement(trackLangElem);
       trackEntryElem.addChildElement(trackCodecIDElem);
-      trackEntryElem.addChildElement(trackCodecPrivateElem);
-      trackEntryElem.addChildElement(trackDefaultDurationElem);
+      trackEntryElem.addChildElement(trackCodecName_IdElem);
+      trackEntryElem.addChildElement(trackTypeElem);
+      //trackEntryElem.addChildElement(trackNameElem);
+      //trackEntryElem.addChildElement(trackCodecPrivateElem);
+     // trackEntryElem.addChildElement(trackDefaultDurationElem);
 
       // Now we add the audio/video dependant sub-elements
       if (track.TrackType == MatroskaDocType.track_video)
@@ -184,8 +192,8 @@ public class MatroskaFileWriter
 
         trackVideoElem.addChildElement(trackVideoPixelWidthElem);
         trackVideoElem.addChildElement(trackVideoPixelHeightElem);
-        trackVideoElem.addChildElement(trackVideoDisplayWidthElem);
-        trackVideoElem.addChildElement(trackVideoDisplayHeightElem);
+        //trackVideoElem.addChildElement(trackVideoDisplayWidthElem);
+        //trackVideoElem.addChildElement(trackVideoDisplayHeightElem);
 
         trackEntryElem.addChildElement(trackVideoElem);
       }
@@ -243,7 +251,7 @@ public class MatroskaFileWriter
   public void addFrame(MatroskaFileFrame frame)
   {
     MatroskaBlock simpleBlockElem = (MatroskaBlock)doc.createElement(MatroskaDocType.ClusterSimpleBlock_Id);
-    simpleBlockElem.setFrameData(frame.TrackNo, frame.Timecode - clusterTimecode, frame.Data);
+    simpleBlockElem.setFrameData(frame.TrackNo, frame.Timecode - clusterTimecode, frame.Data, frame.KeyFrame);
    	clusterElem.addChildElement(simpleBlockElem);
   }
 }

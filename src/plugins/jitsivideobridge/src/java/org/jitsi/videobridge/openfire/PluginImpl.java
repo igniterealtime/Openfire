@@ -70,7 +70,6 @@ import org.jitsi.service.libjitsi.*;
 import org.jitsi.util.*;
 
 import org.ifsoft.*;
-import org.ifsoft.rtp.*;
 import org.ifsoft.sip.*;
 
 import net.sf.fmj.media.rtp.*;
@@ -972,11 +971,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		private Vp8Accumulator vp8Accumulator;
-		/**
-		 *
-		 *
-		 */
 		private Integer lastSequenceNumber;
 		/**
 		 *
@@ -1018,6 +1012,11 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 */
 		private JID user;
+
+		private byte partial[];
+		private int lastseqnum = -1;
+    	private Participant me = this;
+    	private boolean snapshot = false;
 		/**
 		 *
 		 *
@@ -1036,24 +1035,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					if (newValue instanceof RTPConnectorInputStream)
 					{
 						String rtpConnectorPropertyName = propertyName.substring(prefix.length());
-						DatagramPacketFilter datagramPacketFilter = null;
 
 						if (rtpConnectorPropertyName.equals("dataInputStream"))
 						{
-							datagramPacketFilter = new DatagramPacketFilter()
-							{
-								public boolean accept(DatagramPacket p)
-								{
-									byte[] data = p.getData();
-									recordVideo(data);
-									return true;
-								}
-							};
-						}
+							Log.info("PropertyChangeListener " + rtpConnectorPropertyName);
 
-						if (datagramPacketFilter != null)
-						{
-							((RTPConnectorInputStream) newValue).addDatagramPacketFilter(datagramPacketFilter);
+							((RTPConnectorInputStream) newValue).videoRecorder = me;
 						}
 					}
 				}
@@ -1063,37 +1050,97 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		private void recordVideo(byte[] data)
+		public void recordData(RawPacket packet)
 		{
-			Byte[] encodedFrame = null;
-			boolean isKeyframe = false;
+			if (!snapshot) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
 
 			try {
-				RTPPacket packet = RTPPacket.parseBytes(BitAssistant.bytesToArray(data));
 
 				if (packet != null)
 				{
-					Vp8Packet packet2 = Vp8Packet.parse(packet.getPayload());
+					byte[] rtp = packet.getPayload();
 
-					if(packet2 == null) return;
+					if (rtp.length < 2) return;  //bad packet
 
-					vp8Accumulator.add(packet2);
+					int vp8Length = packet.getPayloadLength();
+					int payloadOffset = 0;
 
-					if (packet.getMarker().booleanValue())
-					{
-						encodedFrame = Vp8Packet.depacketize(vp8Accumulator.getPackets());
-						isKeyframe = isKeyFrame(BitAssistant.bytesFromArray(encodedFrame)).booleanValue();
-						vp8Accumulator.reset();
+					if (partial == null) {
+					  partial = new byte[0];
 					}
 
-					if (recorder != null && encodedFrame != null)
+					if (!snapshot) Log.info("expecting X R N S PartID");
+
+					byte x = rtp[payloadOffset];  //X R N S PartID
+					payloadOffset++;
+					vp8Length--;
+
+					if ((x & 0x80) != 0)
 					{
-						Log.info("Video media " + " " + packet.getPayloadType() + " " + encodedFrame + " " + packet.getTimestamp() + " " + isKeyframe);
-						recorder.write(BitAssistant.bytesFromArray(encodedFrame), 0, encodedFrame.length, isKeyframe, packet.getTimestamp());
+					  if (!snapshot) Log.info("found I L T RSV-A");
+					  byte ilt = rtp[payloadOffset];  //I L T RSV-A
+					  payloadOffset++;
+					  vp8Length--;
+
+					  if ((ilt & 0x80) != 0) {  //picture ID
+					  	if (!snapshot) Log.info("found picture ID");
+						payloadOffset++;
+						vp8Length--;
+					  }
+					  if ((ilt & 0x40) != 0) {  //TL0PICIDX
+					    if (!snapshot) Log.info("found TL0PICIDX");
+						payloadOffset++;
+						vp8Length--;
+					  }
+					  if ((ilt & 0x20) != 0) {  //TID RSV-B
+					    if (!snapshot) Log.info("found TID RSV-B");
+						payloadOffset++;
+						vp8Length--;
+					  }
 					}
 
+					if ((x & 0x10) != 0)	// start of partition
+					{
+					    if (!snapshot) Log.info("found start of partition " + x);
+					  	partial = new byte[0];
+				    }
+
+					int partialLength = partial.length;
+					partial = Arrays.copyOf(partial, partial.length + vp8Length);
+					System.arraycopy(rtp, payloadOffset, partial, partialLength, vp8Length);
+
+					int thisseqnum = packet.getSequenceNumber();
+
+					if (lastseqnum != -1 && thisseqnum != lastseqnum + 1) {
+					  if (!snapshot) Log.info("VP8:Received packet out of order, discarding frame.");
+					  partial = null;
+					  lastseqnum = -1;
+					  return;
+					}
+					lastseqnum = thisseqnum;
+
+					if (packet.isPacketMarked())
+					{
+						if (recorder != null && partial != null)
+						{
+							byte[] full = Arrays.copyOf(partial, partial.length);
+							boolean isKeyframe = (full[0] & 0x1) == 0;
+							if (!snapshot) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
+
+							recorder.write(full, 0, full.length, isKeyframe, packet.getTimestamp());
+
+							if (isKeyframe && snapshot == false)
+							{
+								recorder.writeWebPImage(full, 0, full.length, packet.getTimestamp());
+								snapshot = true;
+							}
+						}
+
+					  	partial = null;
+					  	lastseqnum = -1;
+					}
 				} else {
-					Log.error("recordVideo cannot parse packet data " + data);
+					Log.error("record video cannot parse packet data " + packet);
 				}
 
 			} catch (Exception e) {
@@ -1109,7 +1156,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			this.user = user;
 			this.focusName = focusName;
 			this.sequenceNumberingViolated = Boolean.valueOf(false);
-			this.vp8Accumulator = new Vp8Accumulator();
 			this.lastSequenceNumber = Integer.valueOf(-1);
 		}
 		/**
@@ -1179,17 +1225,9 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				{
 					recorder.done();
 					recorder = null;
+					snapshot = false;
 				}
 			}
-		}
-
-		/**
-		 *
-		 *
-		 */
-		private Boolean isKeyFrame(byte encodedFrame[])
-		{
-			return Boolean.valueOf(encodedFrame != null && encodedFrame.length > 0 && (encodedFrame[0] & 1) == 0);
 		}
 	}
 
@@ -1419,7 +1457,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		{
 			Log.info("expireColibriChannel " + participant + " " + focusId + " " + participant.audioChannelId + " " + participant.videoChannelId);
 
-			if (focusId != null && participant.audioChannelId != null && participant.videoChannelId != null)
+			if (focusId != null)
 			{
 				String nickname	= participant.getNickname();
 
@@ -1434,11 +1472,17 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				Element conferenceIq = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
 				conferenceIq.addAttribute("id", focusId);
 
-				Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
-				audioContent.addElement("channel").addAttribute("id", participant.audioChannelId).addAttribute("expire", "0");
+				if (participant.audioChannelId != null)
+				{
+					Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
+					audioContent.addElement("channel").addAttribute("id", participant.audioChannelId).addAttribute("expire", "0");
+				}
 
-				Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
-				videoContent.addElement("channel").addAttribute("id", participant.videoChannelId).addAttribute("expire", "0");
+				if (participant.videoChannelId != null)
+				{
+					Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
+					videoContent.addElement("channel").addAttribute("id", participant.videoChannelId).addAttribute("expire", "0");
+				}
 
 				router.route(iq);
 
@@ -1986,7 +2030,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				return ssrcFactoryGenerateSSRC(cause, i++);
 			}
 		}
-
 
 	}
 }

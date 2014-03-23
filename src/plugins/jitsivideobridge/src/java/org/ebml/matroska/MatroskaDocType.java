@@ -2,17 +2,17 @@
  * JEBML - Java library to read/write EBML/Matroska elements.
  * Copyright (C) 2004 Jory Stone <jebml@jory.info>
  * Based on Javatroska (C) 2002 John Cannon <spyder@matroska.org>
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -25,10 +25,10 @@ import java.util.*;
 
 /**
  * DocType for Matroska files.
- * This has all the element type id declares and also is in charge of 
+ * This has all the element type id declares and also is in charge of
  * creating the correct element classes from the type id.
  */
-public class MatroskaDocType implements DocType 
+public class MatroskaDocType implements DocType
 {
   // Custom Element Types
   static public short BLOCK_ELEMENT = (short)(ElementType.LAST_ELEMENT_TYPE + 1);
@@ -63,12 +63,14 @@ public class MatroskaDocType implements DocType
     static public byte [] Tracks_Id = {0x16, (byte)0x54, (byte)0xAE, (byte)0x6B};
       static public byte [] TrackEntry_Id = {(byte)0xAE};
         static public byte [] TrackNumber_Id = {(byte)0xD7};
-        static public byte [] TrackUID_Id = {0x73, (byte)0xC5};
+        static public byte [] TrackUID_Id = {0x63, (byte)0xC5};
         static public byte [] TrackType_Id = {(byte)0x83};
+        static public byte [] TrackFlagLacing_Id = {(byte)0x9C};
         static public byte [] TrackDefaultDuration_Id = {0x23, (byte)0xE3, (byte)0x83};
         static public byte [] TrackName_Id = {0x53, 0x6E};
         static public byte [] TrackLanguage_Id = {0x22, (byte)0xB5, (byte)0x9C};
         static public byte [] TrackCodecID_Id = {(byte)0x86};
+        static public byte [] TrackCodecName_Id = {0x25, (byte)0x86, (byte)0x88};
         static public byte [] TrackCodecPrivate_Id = {(byte)0x63, (byte)0xA2};
           static public byte [] TrackVideo_Id = {(byte)0xE0};
             static public byte [] PixelWidth_Id = {(byte)0xB0};
@@ -127,7 +129,7 @@ public class MatroskaDocType implements DocType
           static public byte [] ChapterAtomChapString_Id = {(byte)0x85};
           static public byte [] ChapterAtomChapLanguage_Id = {(byte)0x43, (byte)0x7C};
           static public byte [] ChapterAtomChapCountry_Id = {(byte)0x43, (byte)0x7E};
-  
+
   // Track Types
   static public byte track_video       = 0x01; ///< Rectangle-shaped non-transparent pictures aka video
   static public byte track_audio       = 0x02; ///< Anything you can hear
@@ -377,6 +379,14 @@ public class MatroskaDocType implements DocType
                                (ArrayList<ElementType>)null);
       level2.children.add(level3);
 
+      level3 = new ElementType("TrackFlagLacing",
+                               (short)3,
+                               TrackFlagLacing_Id,
+                               ElementType.UINTEGER_ELEMENT,
+                               (ArrayList<ElementType>)null);
+      level2.children.add(level3);
+
+
       level3 = new ElementType("TrackDefaultDuration",
                                (short)3,
                                TrackDefaultDuration_Id,
@@ -404,6 +414,14 @@ public class MatroskaDocType implements DocType
                                ElementType.ASCII_STRING_ELEMENT,
                                (ArrayList<ElementType>)null);
       level2.children.add(level3);
+
+      level3 = new ElementType("TrackCodecName",
+                               (short)3,
+                               TrackCodecName_Id,
+                               ElementType.ASCII_STRING_ELEMENT,
+                               (ArrayList<ElementType>)null);
+      level2.children.add(level3);
+
 
       level3 = new ElementType("TrackCodecPrivate",
                                (short)3,
@@ -662,7 +680,7 @@ public class MatroskaDocType implements DocType
 
       // Add ClusterBlockGroup Element
       level1.children.add(level2);
-      
+
 
       level2 = new ElementType("SimpleBlock",
               (short)2,
@@ -720,7 +738,7 @@ public class MatroskaDocType implements DocType
         (short)3,
         ChapterAtom_Id,
         ElementType.MASTER_ELEMENT,
-        new ArrayList<ElementType>());      
+        new ArrayList<ElementType>());
 
       level4 = new ElementType("ChapterAtomChapterUID",
         (short)4,
@@ -768,7 +786,7 @@ public class MatroskaDocType implements DocType
         (short)4,
         ChapterAtomChapterTrack_Id,
         ElementType.MASTER_ELEMENT,
-        new ArrayList<ElementType>());      
+        new ArrayList<ElementType>());
 
       level5 = new ElementType("ChapterAtomChapterTrackNumber",
         (short)5,
@@ -784,7 +802,7 @@ public class MatroskaDocType implements DocType
         (short)4,
         ChapterAtomChapterDisplay_Id,
         ElementType.MASTER_ELEMENT,
-        new ArrayList<ElementType>());      
+        new ArrayList<ElementType>());
 
       level5 = new ElementType("ChapterAtomChapString",
         (short)5,
@@ -848,24 +866,24 @@ public class MatroskaDocType implements DocType
     elem = type.createElement();
 
     if (elem == null) {
-      if (type.type == MatroskaDocType.BLOCK_ELEMENT) 
+      if (type.type == MatroskaDocType.BLOCK_ELEMENT)
       {
         elem = new MatroskaBlock(type.id);
-      } 
-      else if (type.type == MatroskaDocType.SEGMENT_ELEMENT) 
+      }
+      else if (type.type == MatroskaDocType.SEGMENT_ELEMENT)
       {
         elem = new MatroskaSegment(type.id);
       }
-      else if (type.type == MatroskaDocType.CLUSTER_ELEMENT) 
+      else if (type.type == MatroskaDocType.CLUSTER_ELEMENT)
       {
-        elem = new MatroskaCluster(type.id);        
-      } 
-      else if (type.type == ElementType.UNKNOWN_ELEMENT) 
+        elem = new MatroskaCluster(type.id);
+      }
+      else if (type.type == ElementType.UNKNOWN_ELEMENT)
       {
         elem = new BinaryElement(type.id);
 
-      } 
-      else 
+      }
+      else
       {
         throw new java.lang.RuntimeException("Error: Unknown Element Type");
       }
@@ -882,10 +900,10 @@ public class MatroskaDocType implements DocType
    * @return new Element sub-class, BinaryElement is the default.
    * @throws RuntimeException if the ElementType has an unknown type field.
    */
-  public Element createElement(byte [] type) 
+  public Element createElement(byte [] type)
   {
     ElementType elementType = getElements().findElement(type);
-    if (elementType == null) 
+    if (elementType == null)
     {
       elementType = new UnknownElementType(type);
     }

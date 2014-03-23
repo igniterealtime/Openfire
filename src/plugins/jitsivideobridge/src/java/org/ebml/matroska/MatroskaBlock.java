@@ -186,14 +186,18 @@ public MatroskaBlock(byte[] type) {
     return BlockTimecode;
   }
 
-  public void setFrameData(int trackNo, long timecode, byte [] frameData)
+  public void setFrameData(int trackNo, long timecode, byte [] frameData, boolean keyFrame)
   {
 		this.data = new byte[4 + frameData.length];
+		this.keyFrame = keyFrame;
+
+		byte flags = 0;
+		if (keyFrame) flags |= 128;
 
 		this.data[0] = (byte) (trackNo | 0x80);
 		this.data[1] = (byte) (timecode >> 8);
 		this.data[2] = (byte) (timecode & 0xff);
-		this.data[3] = 0;						// flags
+		this.data[3] = flags;						// flags
 
 		ArrayCopy.arraycopy(frameData, 0, this.data, 4, frameData.length);
 		setSize(4 + frameData.length);

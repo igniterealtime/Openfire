@@ -2,17 +2,17 @@
  * JEBML - Java library to read/write EBML/Matroska elements.
  * Copyright (C) 2004 Jory Stone <jebml@jory.info>
  * Based on Javatroska (C) 2002 John Cannon <spyder@matroska.org>
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -22,7 +22,7 @@ package org.ebml.matroska;
 /**
   * Matroska Track Class
   */
-public class MatroskaFileTrack 
+public class MatroskaFileTrack
 {
   public short TrackNo;
   public long TrackUID;
@@ -31,6 +31,7 @@ public class MatroskaFileTrack
   public String Name;
   public String Language;
   public String CodecID;
+  public String CodecName;
   public byte [] CodecPrivate;
 
   public short Video_PixelWidth;
@@ -46,7 +47,7 @@ public class MatroskaFileTrack
    * Converts the Track to String form
    * @return String form of MatroskaFileTrack data
    */
-  public String toString() 
+  public String toString()
   {
     String s = new String();
 
@@ -57,10 +58,11 @@ public class MatroskaFileTrack
     s += "\t\t" + "Name: " + Name + "\n";
     s += "\t\t" + "Language: " + Language + "\n";
     s += "\t\t" + "CodecID: " + CodecID + "\n";
+    s += "\t\t" + "CodecName: " + CodecName + "\n";
     if (CodecPrivate != null)
       s += "\t\t" + "CodecPrivate: " + CodecPrivate.length + " byte(s)" + "\n";
 
-    if (TrackType == MatroskaDocType.track_video) 
+    if (TrackType == MatroskaDocType.track_video)
     {
       s += "\t\t" + "PixelWidth: " + Video_PixelWidth + "\n";
       s += "\t\t" + "PixelHeight: " + Video_PixelHeight + "\n";
@@ -68,7 +70,7 @@ public class MatroskaFileTrack
       s += "\t\t" + "DisplayHeight: " + Video_DisplayHeight + "\n";
     }
 
-    if (TrackType == MatroskaDocType.track_audio) 
+    if (TrackType == MatroskaDocType.track_audio)
     {
       s += "\t\t" + "SamplingFrequency: " + Audio_SamplingFrequency + "\n";
       if (Audio_OutputSamplingFrequency != 0)

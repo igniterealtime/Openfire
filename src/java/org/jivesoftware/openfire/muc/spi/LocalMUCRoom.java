@@ -643,21 +643,7 @@ public class LocalMUCRoom implements MUCRoom {
         try {
             // Send the presence of this new occupant to existing occupants
             Presence joinPresence = joinRole.getPresence().createCopy();
-            if (canAnyoneDiscoverJID()) {
-                // // XEP-0045: Example 26.
-                // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
-                Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                frag.addElement("status").addAttribute("code", "100");
-            }
-            if (joinPresence.getFrom().equals(joinPresence.getTo())) {
-                Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                frag.addElement("status").addAttribute("code", "110");
-            }
-            if (isRoomNew) {
-                Element frag = joinPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                frag.addElement("status").addAttribute("code", "201");
-            }
-            broadcastPresence(joinPresence);
+            broadcastPresence(joinPresence, true);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -840,7 +826,7 @@ public class LocalMUCRoom implements MUCRoom {
             }
             else {
                 // Inform the rest of the room occupants that the user has left the room
-                broadcastPresence(presence);
+                broadcastPresence(presence, false);
             }
         }
         catch (Exception e) {
@@ -1051,7 +1037,7 @@ public class LocalMUCRoom implements MUCRoom {
             broadcast((Message)packet);
         }
         else if (packet instanceof Presence) {
-            broadcastPresence((Presence)packet);
+            broadcastPresence((Presence)packet, false);
         }
         else if (packet instanceof IQ) {
             IQ reply = IQ.createResultIQ((IQ) packet);
@@ -1088,8 +1074,9 @@ public class LocalMUCRoom implements MUCRoom {
      * room is semi-anon and the target occupant is not a moderator.
      *
      * @param presence the presence to broadcast.
+     * @param isJoinPresence If the presence is sent in the context of joining the room.
      */
-    private void broadcastPresence(Presence presence) {
+    private void broadcastPresence(Presence presence, boolean isJoinPresence) {
         if (presence == null) {
             return;
         }
@@ -1106,11 +1093,11 @@ public class LocalMUCRoom implements MUCRoom {
         }
 
         // Broadcast presence to occupants hosted by other cluster nodes
-        BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, presence);
+        BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, presence, isJoinPresence);
         CacheFactory.doClusterTask(request);
 
         // Broadcast presence to occupants connected to this JVM
-        request = new BroadcastPresenceRequest(this, presence);
+        request = new BroadcastPresenceRequest(this, presence, isJoinPresence);
         request.setOriginator(true);
         request.run();
     }
@@ -1138,7 +1125,30 @@ public class LocalMUCRoom implements MUCRoom {
                     frag.element("item").addAttribute("jid", null);
                 }
             }
-            occupant.send(presence);
+            // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
+            if (occupant.getPresence().getFrom().equals(presence.getTo())) {
+                Presence selfPresence = presence.createCopy();
+                Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                fragSelfPresence.addElement("status", "110");
+
+                // Only in the context of entering the room status code 100, 201 and 210 should be sent.
+                // http://xmpp.org/registrar/mucstatus.html
+                if (presenceRequest.isJoinPresence()) {
+                    boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
+                    if (canAnyoneDiscoverJID()) {
+                        // // XEP-0045: Example 26.
+                        // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+                        fragSelfPresence.addElement("status").addAttribute("code", "100");
+                    }
+                    if (isRoomNew) {
+                        fragSelfPresence.addElement("status").addAttribute("code", "201");
+                    }
+                }
+
+                occupant.send(selfPresence);
+            } else {
+                occupant.send(presence);
+            }
         }
     }
 
@@ -1716,7 +1726,7 @@ public class LocalMUCRoom implements MUCRoom {
         request.run();
 
         // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence().createCopy());
+        broadcastPresence(occupantRole.getPresence().createCopy(), false);
     }
 
     /**
@@ -1826,7 +1836,7 @@ public class LocalMUCRoom implements MUCRoom {
         request.run();
 
         // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence().createCopy());
+        broadcastPresence(occupantRole.getPresence().createCopy(), false);
     }
 
     public void nicknameChanged(ChangeNickname changeNickname) {
@@ -2064,7 +2074,7 @@ public class LocalMUCRoom implements MUCRoom {
             kickPresence(updatedPresence, actorJID);
             
             //Inform the other occupants that user has been kicked
-            broadcastPresence(updatedPresence);
+            broadcastPresence(updatedPresence, false);
         }
         return updatedPresence;
     }

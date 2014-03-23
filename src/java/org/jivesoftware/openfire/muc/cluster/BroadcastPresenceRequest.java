@@ -41,16 +41,23 @@ import java.io.ObjectOutput;
 public class BroadcastPresenceRequest extends MUCRoomTask {
     private Presence presence;
 
+    private boolean isJoinPresence;
+
     public BroadcastPresenceRequest() {
     }
 
-    public BroadcastPresenceRequest(LocalMUCRoom room, Presence message) {
+    public BroadcastPresenceRequest(LocalMUCRoom room, Presence message, boolean isJoinPresence) {
         super(room);
         this.presence = message;
+        this.isJoinPresence = isJoinPresence;
     }
 
     public Presence getPresence() {
         return presence;
+    }
+
+    public boolean isJoinPresence() {
+        return isJoinPresence;
     }
 
     public Object getResult() {

@@ -159,6 +159,7 @@ class XMLLightweightParser {
         // Add message to the complete message list
         if (msg != null) {
         	if (hasIllegalCharacterReferences(msg)) {
+                buffer = null;
         		throw new XMLNotWellFormedException("Illegal character reference found in: " + msg);
         	}
             msgs.add(msg);
@@ -177,17 +178,27 @@ class XMLLightweightParser {
     * Main reading method
     */
     public void read(ByteBuffer byteBuffer) throws Exception {
+        if (buffer == null) {
+            // exception was thrown before, avoid duplicate exception(s)
+            // "read" and discard remaining data
+            byteBuffer.position(byteBuffer.limit());
+            return;
+        }
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (buffer.length() > maxBufferSize) {
+            // purge the local buffer / free memory
+            buffer = null;
+            // processing the exception takes quite long
             throw new Exception("Stopped parsing never ending stanza");
         }
         CharBuffer charBuffer = CharBuffer.allocate(byteBuffer.capacity());
         encoder.reset();
         encoder.decode(byteBuffer.buf(), charBuffer, false);
         char[] buf = new char[charBuffer.position()];
-        charBuffer.flip();charBuffer.get(buf);
+        charBuffer.flip();
+        charBuffer.get(buf);
         int readChar = buf.length;
 
         // Just return if nothing was read
@@ -205,6 +216,7 @@ class XMLLightweightParser {
             if (ch < 0x20 && ch != 0x9 && ch != 0xA && ch != 0xD && ch != 0x0) {
                  //Unicode characters in the range 0x0000-0x001F other than 9, A, and D are not allowed in XML
                  //We need to allow the NULL character, however, for Flash XMLSocket clients to work.
+                buffer = null;
                 throw new XMLNotWellFormedException("Character is invalid in: " + ch);
             }
             if (isHighSurrogate) {
@@ -214,6 +226,7 @@ class XMLLightweightParser {
                 }
                 else {
                     // Trigger error. Found high surrogate not followed by low surrogate
+                    buffer = null;
                     throw new Exception("Found high surrogate not followed by low surrogate");
                 }
             }
@@ -222,6 +235,7 @@ class XMLLightweightParser {
             }
             else if (Character.isLowSurrogate(ch)) {
                 // Trigger error. Found low surrogate char without a preceding high surrogate
+                buffer = null;
                 throw new Exception("Found low surrogate char without a preceding high surrogate");
             }
             if (status == XMLLightweightParser.TAIL) {

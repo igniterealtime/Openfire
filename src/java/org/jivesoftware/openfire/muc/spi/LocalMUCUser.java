@@ -529,7 +529,9 @@ public class LocalMUCUser implements MUCUser {
                 else {
                     if (packet.isAvailable()) {
                         // A resource is required in order to join a room
-                        sendErrorPacket(packet, PacketError.Condition.bad_request);
+                        // http://xmpp.org/extensions/xep-0045.html#enter
+                        // If the user does not specify a room nickname (note the bare JID on the 'from' address in the following example), the service MUST return a <jid-malformed/> error
+                        sendErrorPacket(packet, PacketError.Condition.jid_malformed);
                     }
                     // TODO: send error message to user (can't send packets to group you haven't
                     // joined)

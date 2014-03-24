@@ -351,7 +351,7 @@ public class LocalMUCUser implements MUCUser {
                         sendErrorPacket(packet, PacketError.Condition.forbidden);
                     }
                     catch (NotFoundException e) {
-                        sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
+                        sendErrorPacket(packet, PacketError.Condition.item_not_found);
                     }
                     catch (ConflictException e) {
                         sendErrorPacket(packet, PacketError.Condition.conflict);

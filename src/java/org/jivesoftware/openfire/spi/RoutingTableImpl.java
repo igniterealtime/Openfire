@@ -233,7 +233,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         	// Packet sent to our domain.
             routed = routeToLocalDomain(jid, packet, fromServer);
         }
-        else if (jid.getDomain().contains(serverName)) {
+        else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
             // Packet sent to component hosted in this server
             routed = routeToComponent(jid, packet, routed);
         }

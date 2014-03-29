@@ -8,9 +8,25 @@ var nickname = null;
 var sharedKey = '';
 var roomUrl = null;
 var ssrc2jid = {};
+
+/**
+ * Indicates whether ssrc is camera video or desktop stream.
+ * FIXME: remove those maps
+ */
+var ssrc2videoType = {};
+var videoSrcToSsrc = {};
+
 var localVideoSrc = null;
 var flipXLocalVideo = true;
-var preziPlayer = null;
+var isFullScreen = false;
+var toolbarTimeout = null;
+var currentVideoWidth = null;
+var currentVideoHeight = null;
+/**
+ * Method used to calculate large video size.
+ * @type {function()}
+ */
+var getVideoSize;
 
 /* window.onbeforeunload = closePageWarning; */
 
@@ -48,15 +64,41 @@ function init() {
             if (config.useStunTurn) {
                 connection.jingle.getStunAndTurnCredentials();
             }
-            getUserMediaWithConstraints( ['audio'], audioStreamReady,
-                function(error){
-                    console.error('failed to obtain audio stream - stop', error);
-                });
+            obtainAudioAndVideoPermissions(function(){
+                getUserMediaWithConstraints( ['audio'], audioStreamReady,
+                    function(error){
+                        console.error('failed to obtain audio stream - stop', error);
+                    });
+            });
+
             document.getElementById('connect').disabled = true;
         } else {
             console.log('status', status);
         }
     });
+}
+
+/**
+ * HTTPS only:
+ * We first ask for audio and video combined stream in order to get permissions and not to ask twice.
+ * Then we dispose the stream and continue with separate audio, video streams(required for desktop sharing).
+ */
+function obtainAudioAndVideoPermissions(callback){
+    // This makes sense only on https sites otherwise we'll be asked for permissions every time
+    if(location.protocol !== 'https:') {
+        callback();
+        return;
+    }
+    // Get AV
+    getUserMediaWithConstraints(
+        ['audio', 'video'],
+        function(avStream) {
+            avStream.stop();
+            callback();
+        },
+        function(error){
+            console.error('failed to obtain audio/video stream - stop', error);
+        });
 }
 
 function audioStreamReady(stream) {
@@ -128,7 +170,6 @@ function doJoin() {
 }
 
 function change_local_audio(stream) {
-
     connection.jingle.localAudio = stream;
     RTC.attachMediaStream($('#localAudio'), stream);
     document.getElementById('localAudio').autoplay = true;
@@ -145,7 +186,7 @@ function change_local_video(stream, flipX) {
     localVideo.volume = 0; // is it required if audio is separated ?
     localVideo.oncontextmenu = function () { return false; };
 
-    var localVideoContainer = document.getElementById('localVideoContainer');
+    var localVideoContainer = document.getElementById('localVideoWrapper');
     localVideoContainer.appendChild(localVideo);
 
     var localVideoSelector = $('#' + localVideo.id);
@@ -169,25 +210,35 @@ function change_local_video(stream, flipX) {
 }
 
 $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
-    function waitForRemoteVideo(selector, sid) {
+    function waitForRemoteVideo(selector, sid, ssrc) {
         if(selector.removed) {
             console.warn("media removed before had started", selector);
             return;
         }
         var sess = connection.jingle.sessions[sid];
         if (data.stream.id === 'mixedmslabel') return;
-        videoTracks = data.stream.getVideoTracks();
+        var videoTracks = data.stream.getVideoTracks();
         console.log("waiting..", videoTracks, selector[0]);
         if (videoTracks.length === 0 || selector[0].currentTime > 0) {
             RTC.attachMediaStream(selector, data.stream); // FIXME: why do i have to do this for FF?
+
+            // FIXME: add a class that will associate peer Jid, video.src, it's ssrc and video type
+            //        in order to get rid of too many maps
+            if(ssrc) {
+                videoSrcToSsrc[sel.attr('src')] = ssrc;
+            } else {
+                console.warn("No ssrc given for video", sel);
+            }
+
             $(document).trigger('callactive.jingle', [selector, sid]);
             console.log('waitForremotevideo', sess.peerconnection.iceConnectionState, sess.peerconnection.signalingState);
         } else {
-            setTimeout(function () { waitForRemoteVideo(selector, sid); }, 250);
+            setTimeout(function () { waitForRemoteVideo(selector, sid, ssrc); }, 250);
         }
     }
     var sess = connection.jingle.sessions[sid];
 
+    var thessrc;
     // look up an associated JID for a stream id
     if (data.stream.id.indexOf('mixedmslabel') === -1) {
         var ssrclines = SDPUtil.find_lines(sess.peerconnection.remoteDescription.sdp, 'a=ssrc');
@@ -211,11 +262,7 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
         container  = document.getElementById(
                 'participant_' + Strophe.getResourceFromJid(data.peerjid));
         if (!container) {
-            console.warn('no container for', data.peerjid);
-            // create for now...
-            // FIXME: should be removed
-            container = addRemoteVideoContainer(
-                    'participant_' + Strophe.getResourceFromJid(data.peerjid));
+            console.error('no container for', data.peerjid);
         } else {
             //console.log('found container for', data.peerjid);
         }
@@ -239,7 +286,9 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     vid.id = id;
     vid.autoplay = true;
     vid.oncontextmenu = function () { return false; };
+
     container.appendChild(vid);
+
     // TODO: make mixedstream display:none via css?
     if (id.indexOf('mixedmslabel') !== -1) {
         container.id = 'mixedstream';
@@ -251,7 +300,7 @@ $(document).bind('remotestreamadded.jingle', function (event, data, sid) {
     RTC.attachMediaStream(sel, data.stream);
 
     if(isVideo) {
-        waitForRemoteVideo(sel, sid);
+        waitForRemoteVideo(sel, sid, thessrc);
     }
 
     data.stream.onended = function () {
@@ -295,8 +344,7 @@ function handleVideoThumbClicked(videoSrc) {
     updateLargeVideo(videoSrc, 1);
 
     $('audio').each(function (idx, el) {
-        // We no longer mix so we check for local audio now
-        if(el.id != 'localAudio') {
+        if (el.id.indexOf('mixedmslabel') !== -1) {
             el.volume = 0;
             el.volume = 1;
         }
@@ -317,6 +365,11 @@ function checkChangeLargeVideo(removedVideoSrc){
         if(!pick) {
             console.info("Last visible video no longer exists");
             pick = $('#remoteVideos>span[id!="mixedstream"]>video').get(0);
+            if(!pick) {
+                // Try local video
+                console.info("Fallback to local video...");
+                pick = $('#remoteVideos>span>span>video').get(0);
+            }
         }
 
         // mute if localvideo
@@ -450,8 +503,6 @@ $(document).bind('callactive.jingle', function (event, videoelem, sid) {
 
 $(document).bind('callterminated.jingle', function (event, sid, reason) {
     // FIXME
-    focus = null;
-    activecall = null;
 });
 
 $(document).bind('setLocalDescription.jingle', function (event, sid) {
@@ -525,16 +576,8 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
     console.log('entered', jid, info);
     console.log('is focus?' + focus ? 'true' : 'false');
 
-    var videoSpanId = 'participant_' + Strophe.getResourceFromJid(jid);
-    var container = addRemoteVideoContainer(videoSpanId);
-
-    if (info.displayName)
-        showDisplayName(videoSpanId, info.displayName);
-
-    var nickfield = document.createElement('span');
-    nickfield.appendChild(document.createTextNode(Strophe.getResourceFromJid(jid)));
-    container.appendChild(nickfield);
-    resizeThumbnails();
+    // Add Peer's container
+    ensurePeerContainerExists(jid);
 
     if (focus !== null) {
         // FIXME: this should prepare the video
@@ -549,11 +592,6 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
     else if (sharedKey) {
         updateLockButton();
     }
-
-    $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
-        //console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
-        ssrc2jid[ssrc.getAttribute('ssrc')] = jid;
-    });
 });
 
 $(document).bind('left.muc', function (event, jid) {
@@ -575,14 +613,10 @@ $(document).bind('left.muc', function (event, jid) {
     }
     else if (focus && Object.keys(connection.emuc.members).length === 0) {
         console.log('everyone left');
-        if (focus !== null) {
-            // FIXME: closing the connection is a hack to avoid some
-            // problemswith reinit
-            if (focus.peerconnection !== null) {
-                focus.peerconnection.close();
-            }
-            focus = new ColibriFocus(connection, config.hosts.bridge);
-        }
+        // FIXME: closing the connection is a hack to avoid some
+        // problemswith reinit
+        disposeConference();
+        focus = new ColibriFocus(connection, config.hosts.bridge);
     }
     if (connection.emuc.getPrezi(jid)) {
         $(document).trigger('presentationremoved.muc', [jid, connection.emuc.getPrezi(jid)]);
@@ -596,13 +630,19 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
        if(ssrc2jid[ssrc] == jid){
            delete ssrc2jid[ssrc];
        }
+       if(ssrc2videoType == jid){
+           delete  ssrc2videoType[ssrc];
+       }
     });
 
     $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
         //console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
-        ssrc2jid[ssrc.getAttribute('ssrc')] = jid;
+        var ssrcV = ssrc.getAttribute('ssrc');
+        ssrc2jid[ssrcV] = jid;
 
         var type = ssrc.getAttribute('type');
+        ssrc2videoType[ssrcV] = type;
+
         // might need to update the direction if participant just went from sendrecv to recvonly
         if (type === 'video' || type === 'screen') {
             var el = $('#participant_'  + Strophe.getResourceFromJid(jid) + '>video');
@@ -616,22 +656,16 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
                 //checkChangeLargeVideo(el);
                 break;
             }
-            // Camera video or shared screen ?
-            if (type === 'screen') {
-                // Shared screen
-                //console.info("Have screen ssrc from "+jid, ssrc);
-            } else {
-                // Camera video
-                //console.info("Have camera ssrc from "+jid, ssrc);
-            }
         }
     });
 
     if (info.displayName) {
-        if (jid === connection.emuc.myroomjid)
+        if (jid === connection.emuc.myroomjid) {
             showDisplayName('localVideoContainer', info.displayName + ' (me)');
-        else
+        } else {
+            ensurePeerContainerExists(jid);
             showDisplayName('participant_' + Strophe.getResourceFromJid(jid), info.displayName);
+        }
     }
 });
 
@@ -662,160 +696,15 @@ $(document).bind('passwordrequired.muc', function (event, jid) {
             });
 });
 
-/*
- * Presentation has been removed.
- */
-$(document).bind('presentationremoved.muc', function(event, jid, presUrl) {
-    console.log('presentation removed', presUrl);
-    var presId = getPresentationId(presUrl);
-    setPresentationVisible(false);
-    $('#participant_' + Strophe.getResourceFromJid(jid) + '_' + presId).remove();
-    $('#presentation>iframe').remove();
-    if (preziPlayer !== null) {
-        preziPlayer.destroy();
-        preziPlayer = null;
-    }
-});
-
-/*
- * Presentation has been added.
- */
-$(document).bind('presentationadded.muc', function (event, jid, presUrl, currentSlide) {
-    console.log("presentation added", presUrl);
-
-    var presId = getPresentationId(presUrl);
-    var elementId = 'participant_' + Strophe.getResourceFromJid(jid) + '_' + presId;
-
-    var container = addRemoteVideoContainer(elementId);
-    resizeThumbnails();
-
-    var controlsEnabled = false;
-    if (jid === connection.emuc.myroomjid)
-        controlsEnabled = true;
-
-    setPresentationVisible(true);
-    $('#largeVideoContainer').hover(
-        function (event) {
-            if (isPresentationVisible())
-                $('#reloadPresentation').css({display:'inline-block'});
-        },
-        function (event) {
-            if (!isPresentationVisible())
-                $('#reloadPresentation').css({display:'none'});
-            else {
-                var e = event.toElement || event.relatedTarget;
-
-                while(e && e.parentNode && e.parentNode !== window) {
-                    if (e.parentNode === this || e === this) {
-                        return false;
-                    }
-                    e = e.parentNode;
-                }
-                $('#reloadPresentation').css({display:'none'});
-            }
-        });
-
-    preziPlayer = new PreziPlayer(
-                'presentation',
-                {preziId: presId,
-                width: $('#largeVideoContainer').width(),
-                height: $('#largeVideoContainer').height(),
-                controls: controlsEnabled,
-                debug: true
-                });
-
-    $('#presentation>iframe').attr('id', preziPlayer.options.preziId);
-
-    preziPlayer.on(PreziPlayer.EVENT_STATUS, function(event) {
-        console.log("prezi status", event.value);
-        if (event.value === PreziPlayer.STATUS_CONTENT_READY) {
-            if (jid !== connection.emuc.myroomjid)
-                preziPlayer.flyToStep(currentSlide);
-        }
-    });
-
-    preziPlayer.on(PreziPlayer.EVENT_CURRENT_STEP, function(event) {
-        console.log("event value", event.value);
-        connection.emuc.addCurrentSlideToPresence(event.value);
-        connection.emuc.sendPresence();
-    });
-
-    $("#" + elementId).css('background-image','url(../images/avatarprezi.png)');
-    $("#" + elementId).click(
-        function () {
-            setPresentationVisible(true);
-        }
-    );
-});
-
-/*
- * Indicates presentation slide change.
- */
-$(document).bind('gotoslide.muc', function (event, jid, presUrl, current) {
-    if (preziPlayer) {
-        preziPlayer.flyToStep(current);
-    }
-});
-
-/**
- * Returns the presentation id from the given url.
- */
-function getPresentationId (presUrl) {
-    var presIdTmp = presUrl.substring(presUrl.indexOf("prezi.com/") + 10);
-    return presIdTmp.substring(0, presIdTmp.indexOf('/'));
-}
-
-/*
- * Reloads the current presentation.
- */
-function reloadPresentation() {
-    var iframe = document.getElementById(preziPlayer.options.preziId);
-    iframe.src = iframe.src;
-}
-
-/*
- * Shows/hides a presentation.
- */
-function setPresentationVisible(visible) {
-    if (visible) {
-        // Trigger the video.selected event to indicate a change in the large video.
-        $(document).trigger("video.selected", [true]);
-
-        $('#largeVideo').fadeOut(300, function () {
-            $('#largeVideo').css({visibility:'hidden'});
-            $('#presentation>iframe').fadeIn(300, function() {
-                $('#presentation>iframe').css({opacity:'1'});
-            });
-        });
-    }
-    else {
-        if ($('#presentation>iframe')) {
-            $('#presentation>iframe').fadeOut(300, function () {
-                $('#presentation>iframe').css({opacity:'0'});
-                $('#largeVideo').fadeIn(300, function() {
-                    $('#largeVideo').css({visibility:'visible'});
-                });
-            });
-        }
-    }
-}
-
-function isPresentationVisible() {
-    return ($('#presentation>iframe') !== null && $('#presentation>iframe').css('opacity') == 1);
-}
-
 /**
  * Updates the large video with the given new video source.
  */
 function updateLargeVideo(newSrc, vol) {
     console.log('hover in', newSrc);
 
-    setPresentationVisible(false);
+    if ($('#largeVideo').attr('src') != newSrc) {
 
-    if ($('#largeVideo').attr('src') !== newSrc) {
-
-        // FIXME: is it still required ? audio is separated
-        //document.getElementById('largeVideo').volume = vol;
+        var isVisible = $('#largeVideo').is(':visible');
 
         $('#largeVideo').fadeOut(300, function () {
             $(this).attr('src', newSrc);
@@ -831,8 +720,56 @@ function updateLargeVideo(newSrc, vol) {
                 document.getElementById('largeVideo').style.webkitTransform = "none";
             }
 
-            $(this).fadeIn(300);
+            // Change the way we'll be measuring large video
+            getVideoSize = isVideoSrcDesktop(newSrc) ? getVideoSizeFit : getVideoSizeCover;
+
+            if (isVisible)
+                $(this).fadeIn(300);
         });
+    }
+}
+
+/**
+ * Checks if video identified by given src is desktop stream.
+ * @param videoSrc eg. blob:https%3A//pawel.jitsi.net/9a46e0bd-131e-4d18-9c14-a9264e8db395
+ * @returns {boolean}
+ */
+function isVideoSrcDesktop(videoSrc){
+    // FIXME: fix this mapping mess...
+    // figure out if large video is desktop stream or just a camera
+    var isDesktop = false;
+    if(localVideoSrc === videoSrc) {
+        // local video
+        isDesktop = isUsingScreenStream;
+    } else {
+        // Do we have associations...
+        var videoSsrc = videoSrcToSsrc[videoSrc];
+        if(videoSsrc) {
+            var videoType = ssrc2videoType[videoSsrc];
+            if(videoType) {
+                // Finally there...
+                isDesktop = videoType === 'screen';
+            } else {
+                console.error("No video type for ssrc: " + videoSsrc);
+            }
+        } else {
+            console.error("No ssrc for src: " + videoSrc);
+        }
+    }
+    return isDesktop;
+}
+
+/**
+ * Shows/hides the large video.
+ */
+function setLargeVideoVisible(isVisible) {
+    if (isVisible) {
+        $('#largeVideo').css({visibility:'visible'});
+        $('#watermark').css({visibility:'visible'});
+    }
+    else {
+        $('#largeVideo').css({visibility:'hidden'});
+        $('#watermark').css({visibility:'hidden'});
     }
 }
 
@@ -857,6 +794,12 @@ function toggleVideo() {
             }
         );
     }
+    var sess = focus || activecall;
+    if (!sess) {
+        return;
+    }
+    sess.pendingop = ismuted ? 'unmute' : 'mute';
+    sess.modifySources();
 }
 
 function toggleAudio() {
@@ -867,47 +810,174 @@ function toggleAudio() {
     }
 }
 
-var resizeLarge = function () {
+/**
+ * Positions the large video.
+ *
+ * @param videoWidth the stream video width
+ * @param videoHeight the stream video height
+ */
+var positionLarge = function(videoWidth, videoHeight) {
+    var videoSpaceWidth = $('#videospace').width();
+    var videoSpaceHeight = window.innerHeight;
+
+    var videoSize = getVideoSize(   videoWidth,
+                                    videoHeight,
+                                    videoSpaceWidth,
+                                    videoSpaceHeight);
+
+    var largeVideoWidth = videoSize[0];
+    var largeVideoHeight = videoSize[1];
+
+    var videoPosition = getVideoPosition(   largeVideoWidth,
+                                            largeVideoHeight,
+                                            videoSpaceWidth,
+                                            videoSpaceHeight);
+
+    var horizontalIndent = videoPosition[0];
+    var verticalIndent = videoPosition[1];
+
+    positionVideo(  $('#largeVideo'),
+                    largeVideoWidth,
+                    largeVideoHeight,
+                    horizontalIndent, verticalIndent);
+};
+
+/**
+ * Returns an array of the video horizontal and vertical indents,
+ * so that if fits its parent.
+ *
+ * @return an array with 2 elements, the horizontal indent and the vertical
+ * indent
+ */
+var getVideoPosition = function (   videoWidth,
+                                    videoHeight,
+                                    videoSpaceWidth,
+                                    videoSpaceHeight) {
+    // Parent height isn't completely calculated when we position the video in
+    // full screen mode and this is why we use the screen height in this case.
+    // Need to think it further at some point and implement it properly.
+    var isFullScreen = document.fullScreen
+                        || document.mozFullScreen
+                        || document.webkitIsFullScreen; 
+    if (isFullScreen)
+        videoSpaceHeight = window.innerHeight;
+
+    var horizontalIndent = (videoSpaceWidth - videoWidth)/2;
+    var verticalIndent = (videoSpaceHeight - videoHeight)/2;
+
+    return [horizontalIndent, verticalIndent];
+};
+
+/**
+ * Returns an array of the video dimensions, so that it covers the screen.
+ * It leaves no empty areas, but some parts of the video might not be visible.
+ *
+ * @return an array with 2 elements, the video width and the video height
+ */
+function getVideoSizeCover(videoWidth,
+                           videoHeight,
+                           videoSpaceWidth,
+                           videoSpaceHeight) {
+    if (!videoWidth)
+        videoWidth = currentVideoWidth;
+    if (!videoHeight)
+        videoHeight = currentVideoHeight;
+
+    var aspectRatio = videoWidth / videoHeight;
+
+    var availableWidth = Math.max(videoWidth, videoSpaceWidth);
+    var availableHeight = Math.max(videoHeight, videoSpaceHeight);
+
+    if (availableWidth / aspectRatio < videoSpaceHeight) {
+        availableHeight = videoSpaceHeight;
+        availableWidth = availableHeight*aspectRatio;
+    }
+
+    if (availableHeight*aspectRatio < videoSpaceWidth) {
+        availableWidth = videoSpaceWidth;
+        availableHeight = availableWidth / aspectRatio;
+    }
+
+    return [availableWidth, availableHeight];
+}
+
+/**
+ * Returns an array of the video dimensions, so that it keeps it's aspect ratio and fits available area with it's
+ * larger dimension. This method ensures that whole video will be visible and can leave empty areas.
+ *
+ * @return an array with 2 elements, the video width and the video height
+ */
+function getVideoSizeFit(videoWidth,
+                                   videoHeight,
+                                   videoSpaceWidth,
+                                   videoSpaceHeight) {
+    if (!videoWidth)
+        videoWidth = currentVideoWidth;
+    if (!videoHeight)
+        videoHeight = currentVideoHeight;
+
+    var aspectRatio = videoWidth / videoHeight;
+
+    var availableWidth = Math.max(videoWidth, videoSpaceWidth);
+    var availableHeight = Math.max(videoHeight, videoSpaceHeight);
+
+    if (availableWidth / aspectRatio >= videoSpaceHeight) {
+        availableHeight = videoSpaceHeight;
+        availableWidth = availableHeight*aspectRatio;
+    }
+
+    if (availableHeight*aspectRatio >= videoSpaceWidth) {
+        availableWidth = videoSpaceWidth;
+        availableHeight = availableWidth / aspectRatio;
+    }
+
+    return [availableWidth, availableHeight];
+}
+
+/**
+ * Sets the size and position of the given video element.
+ *
+ * @param video the video element to position
+ * @param width the desired video width
+ * @param height the desired video height
+ * @param horizontalIndent the left and right indent
+ * @param verticalIndent the top and bottom indent
+ */
+function positionVideo( video,
+                        width,
+                        height,
+                        horizontalIndent,
+                        verticalIndent) {
+    video.width(width);
+    video.height(height);
+    video.css({  top: verticalIndent + 'px',
+                 bottom: verticalIndent + 'px',
+                 left: horizontalIndent + 'px',
+                 right: horizontalIndent + 'px'});
+}
+
+var resizeLargeVideoContainer = function () {
     Chat.resizeChat();
     var availableHeight = window.innerHeight;
-    var chatspaceWidth = $('#chatspace').is(":visible")
-                            ? $('#chatspace').width()
-                            : 0;
+    var availableWidth = Util.getAvailableVideoWidth();
 
-    var numvids = $('#remoteVideos>video:visible').length;
-    if (numvids < 5)
-        availableHeight -= 100; // min thumbnail height for up to 4 videos
-    else
-        availableHeight -= 50; // min thumbnail height for more than 5 videos
-
-    availableHeight -= 79; // padding + link ontop
-    var availableWidth = window.innerWidth - chatspaceWidth;
-    var aspectRatio = 16.0 / 9.0;
-    if (availableHeight < availableWidth / aspectRatio) {
-        availableWidth = Math.floor(availableHeight * aspectRatio);
-    }
     if (availableWidth < 0 || availableHeight < 0) return;
-    $('#largeVideo').parent().width(availableWidth);
-    $('#largeVideo').parent().height(availableWidth / aspectRatio);
 
-    if ($('#presentation>iframe')) {
-        $('#presentation>iframe').width(availableWidth);
-        $('#presentation>iframe').height(availableWidth / aspectRatio);
-    }
-
-    if ($('#etherpad>iframe')) {
-        $('#etherpad>iframe').width(availableWidth);
-        $('#etherpad>iframe').height(availableWidth / aspectRatio);
-    }
+    $('#videospace').width(availableWidth);
+    $('#videospace').height(availableHeight);
+    $('#largeVideoContainer').width(availableWidth);
+    $('#largeVideoContainer').height(availableHeight);
 
     resizeThumbnails();
 };
 
 function resizeThumbnails() {
-    // Calculate the available height, which is the inner window height minus 39px for the header
-    // minus 2px for the delimiter lines on the top and bottom of the large video,
-    // minus the 36px space inside the remoteVideos container used for highlighting shadow.
-    var availableHeight = window.innerHeight - $('#largeVideo').height() - 59;
+    // Calculate the available height, which is the inner window height minus
+    // 39px for the header minus 2px for the delimiter lines on the top and
+    // bottom of the large video, minus the 36px space inside the remoteVideos
+    // container used for highlighting shadow.
+    var availableHeight = 100;
+
     var numvids = $('#remoteVideos>span:visible').length;
 
     // Remove the 1px borders arround videos and the chat width.
@@ -932,10 +1002,25 @@ $(document).ready(function () {
     // Set the defaults for prompt dialogs.
     jQuery.prompt.setDefaults({persistent: false});
 
-    resizeLarge();
+    // Set default desktop sharing method
+    setDesktopSharing(config.desktopSharing);
+
+    // By default we cover the whole screen with video
+    getVideoSize = getVideoSizeCover;
+
+    resizeLargeVideoContainer();
     $(window).resize(function () {
-        resizeLarge();
+        resizeLargeVideoContainer();
+        positionLarge();
     });
+    // Listen for large video size updates
+    document.getElementById('largeVideo')
+        .addEventListener('loadedmetadata', function(e){
+            currentVideoWidth = this.videoWidth;
+            currentVideoHeight = this.videoHeight;
+            positionLarge(currentVideoWidth, currentVideoHeight);
+        });
+
     if (!$('#settings').is(':visible')) {
         console.log('init');
         init();
@@ -967,7 +1052,24 @@ $(window).bind('beforeunload', function () {
             }
         });
     }
+    disposeConference();
 });
+
+function disposeConference() {
+    var handler = getConferenceHandler();
+    if(handler && handler.peerconnection) {
+        // FIXME: probably removing streams is not required and close() should be enough
+        if(connection.jingle.localAudio) {
+            handler.peerconnection.removeStream(connection.jingle.localAudio);
+        }
+        if(connection.jingle.localVideo) {
+            handler.peerconnection.removeStream(connection.jingle.localVideo);
+        }
+        handler.peerconnection.close();
+    }
+    focus = null;
+    activecall = null;
+}
 
 function dump(elem, filename){
     elem = elem.parentNode;
@@ -999,14 +1101,14 @@ function dump(elem, filename){
     return false;
 }
 
-/*
+/**
  * Changes the style class of the element given by id.
  */
 function buttonClick(id, classname) {
     $(id).toggleClass(classname); // add the class to the clicked element
 }
 
-/*
+/**
  * Opens the lock room dialog.
  */
 function openLockDialog() {
@@ -1067,7 +1169,7 @@ function openLockDialog() {
     }
 }
 
-/*
+/**
  * Opens the invite link dialog.
  */
 function openLinkDialog() {
@@ -1083,7 +1185,7 @@ function openLinkDialog() {
              });
 }
 
-/*
+/**
  * Opens the settings dialog.
  */
 function openSettingsDialog() {
@@ -1124,110 +1226,7 @@ function openSettingsDialog() {
              });
 }
 
-/*
- * Opens the Prezi dialog, from which the user could choose a presentation to load.
- */
-function openPreziDialog() {
-    var myprezi = connection.emuc.getPrezi(connection.emuc.myroomjid);
-    if (myprezi) {
-        $.prompt("Are you sure you would like to remove your Prezi?",
-                {
-                title: "Remove Prezi",
-                buttons: { "Remove": true, "Cancel": false},
-                defaultButton: 1,
-                submit: function(e,v,m,f){
-                if(v)
-                {
-                    connection.emuc.removePreziFromPresence();
-                    connection.emuc.sendPresence();
-                }
-            }
-        });
-    }
-    else if (preziPlayer !== null) {
-        $.prompt("Another participant is already sharing a Prezi." +
-                "This conference allows only one Prezi at a time.",
-                 {
-                 title: "Share a Prezi",
-                 buttons: { "Ok": true},
-                 defaultButton: 0,
-                 submit: function(e,v,m,f){
-                    $.prompt.close();
-                 }
-                 });
-    }
-    else {
-        var openPreziState = {
-        state0: {
-            html:   '<h2>Share a Prezi</h2>' +
-                    '<input id="preziUrl" type="text" placeholder="e.g. http://prezi.com/wz7vhjycl7e6/my-prezi" autofocus>',
-            persistent: false,
-            buttons: { "Share": true , "Cancel": false},
-            defaultButton: 1,
-            submit: function(e,v,m,f){
-                e.preventDefault();
-                if(v)
-                {
-                    var preziUrl = document.getElementById('preziUrl');
-
-                    if (preziUrl.value)
-                    {
-                        var urlValue
-                            = encodeURI(Util.escapeHtml(preziUrl.value));
-
-                        if (urlValue.indexOf('http://prezi.com/') !== 0
-                            && urlValue.indexOf('https://prezi.com/') !== 0)
-                        {
-                            $.prompt.goToState('state1');
-                            return false;
-                        }
-                        else {
-                            var presIdTmp = urlValue.substring(urlValue.indexOf("prezi.com/") + 10);
-                            if (!Util.isAlphanumeric(presIdTmp)
-                                    || presIdTmp.indexOf('/') < 2) {
-                                $.prompt.goToState('state1');
-                                return false;
-                            }
-                            else {
-                                connection.emuc.addPreziToPresence(urlValue, 0);
-                                connection.emuc.sendPresence();
-                                $.prompt.close();
-                            }
-                        }
-                    }
-                }
-                else
-                    $.prompt.close();
-            }
-        },
-        state1: {
-            html:   '<h2>Share a Prezi</h2>' +
-                    'Please provide a correct prezi link.',
-            persistent: false,
-            buttons: { "Back": true, "Cancel": false },
-            defaultButton: 1,
-            submit:function(e,v,m,f) {
-                e.preventDefault();
-                if (v === 0)
-                    $.prompt.close();
-                else
-                    $.prompt.goToState('state0');
-            }
-        }
-        };
-
-        var myPrompt = jQuery.prompt(openPreziState);
-
-        myPrompt.on('impromptu:loaded', function(e) {
-                    document.getElementById('preziUrl').focus();
-                    });
-        myPrompt.on('impromptu:statechanged', function(e) {
-                    document.getElementById('preziUrl').focus();
-                    });
-    }
-}
-
-/*
+/**
  * Locks / unlocks the room.
  */
 function lockRoom(lock) {
@@ -1239,42 +1238,101 @@ function lockRoom(lock) {
     updateLockButton();
 }
 
-/*
+/**
  * Sets the shared key.
  */
 function setSharedKey(sKey) {
     sharedKey = sKey;
 }
 
-/*
+/**
  * Updates the lock button state.
  */
 function updateLockButton() {
-    buttonClick("#lockIcon", "fa fa-unlock fa-lg fa fa-lock fa-lg");
+    buttonClick("#lockIcon", "icon-security icon-security-locked");
 }
 
-/*
+/**
+ * Hides the toolbar.
+ */
+var hideToolbar = function() {
+
+    var isToolbarHover = false;
+    $('#header').find('*').each(function(){
+        var id = $(this).attr('id');
+        if ($("#" + id + ":hover").length > 0) {
+            isToolbarHover = true;
+        }
+    });
+
+    clearTimeout(toolbarTimeout);
+    toolbarTimeout = null;
+
+    if (!isToolbarHover) {
+        $('#header').hide("slide", { direction: "up", duration: 300});
+    }
+    else {
+        toolbarTimeout = setTimeout(hideToolbar, 2000);
+    }
+};
+
+/**
  * Shows the call main toolbar.
  */
 function showToolbar() {
-    $('#toolbar').css({visibility:"visible"});
-    if (focus !== null)
+    if (!$('#header').is(':visible')) {
+        $('#header').show("slide", { direction: "up", duration: 300});
+
+        if (toolbarTimeout) {
+            clearTimeout(toolbarTimeout);
+            toolbarTimeout = null;
+        }
+        toolbarTimeout = setTimeout(hideToolbar, 2000);
+    }
+
+    if (focus != null)
     {
 //        TODO: Enable settings functionality. Need to uncomment the settings button in index.html.
 //        $('#settingsButton').css({visibility:"visible"});
     }
-    // Set desktop sharing method
-    setDesktopSharing(config.desktopSharing);
+
+    // Show/hide desktop sharing button
+    showDesktopSharingButton();
 }
 
-/*
+/**
+ * Docks/undocks the toolbar.
+ *
+ * @param isDock indicates what operation to perform
+ */
+function dockToolbar(isDock) {
+    if (isDock) {
+        // First make sure the toolbar is shown.
+        if (!$('#header').is(':visible')) {
+            showToolbar();
+        }
+        // Then clear the time out, to dock the toolbar.
+        clearTimeout(toolbarTimeout);
+        toolbarTimeout = null;
+    }
+    else {
+        if (!$('#header').is(':visible')) {
+            showToolbar();
+        }
+        else {
+            toolbarTimeout = setTimeout(hideToolbar, 2000);
+        }
+    }
+}
+
+/**
  * Updates the room invite url.
  */
 function updateRoomUrl(newRoomUrl) {
     roomUrl = newRoomUrl;
 }
 
-/*
+/**
  * Warning to the user that the conference window is about to be closed.
  */
 function closePageWarning() {
@@ -1284,7 +1342,7 @@ function closePageWarning() {
         return "You are about to leave this conversation.";
 }
 
-/*
+/**
  * Shows a visual indicator for the focus of the conference.
  * Currently if we're not the owner of the conference we obtain the focus
  * from the connection.jingle.sessions.
@@ -1319,6 +1377,28 @@ function showFocusIndicator() {
     }
 }
 
+/**
+ * Checks if container for participant identified by given peerJid exists in the document and creates it eventually.
+ * @param peerJid peer Jid to check.
+ */
+function ensurePeerContainerExists(peerJid){
+
+    var peerResource = Strophe.getResourceFromJid(peerJid);
+    var videoSpanId = 'participant_' + peerResource;
+
+    if($('#'+videoSpanId).length > 0) {
+        return;
+    }
+
+    var container = addRemoteVideoContainer(videoSpanId);
+
+    var nickfield = document.createElement('span');
+    nickfield.className = "nick";
+    nickfield.appendChild(document.createTextNode(peerResource));
+    container.appendChild(nickfield);
+    resizeThumbnails();
+}
+
 function addRemoteVideoContainer(id) {
     var container = document.createElement('span');
     container.id = id;
@@ -1349,20 +1429,16 @@ function toggleFullScreen() {
 
         //Enter Full Screen
         if (fsElement.mozRequestFullScreen) {
-
             fsElement.mozRequestFullScreen();
         }
         else {
             fsElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
         }
-
     } else {
-
         //Exit Full Screen
         if (document.mozCancelFullScreen) {
             document.mozCancelFullScreen();
         } else {
-            document.webkitCancelFullScreen();
             document.webkitCancelFullScreen();
         }
     }
@@ -1457,10 +1533,48 @@ function showDisplayName(videoSpanId, displayName) {
     }
 }
 
+/**
+ * Creates the edit display name button.
+ * 
+ * @returns the edit button
+ */
 function createEditDisplayNameButton() {
     var editButton = document.createElement('a');
     editButton.className = 'displayname';
     editButton.innerHTML = '<i class="fa fa-pencil"></i>';
 
     return editButton;
+}
+
+/**
+ * Resizes and repositions videos in full screen mode.
+ */
+$(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange',
+        function() {
+            resizeLargeVideoContainer();
+            positionLarge();
+            isFullScreen = document.fullScreen
+                                || document.mozFullScreen
+                                || document.webkitIsFullScreen;
+
+            if (isFullScreen) {
+                setView("fullscreen");
+            }
+            else {
+                setView("default");
+            }
+});
+
+/**
+ * Sets the current view.
+ */
+function setView(viewName) {
+//    if (viewName == "fullscreen") {
+//        document.getElementById('videolayout_fullscreen').disabled  = false;
+//        document.getElementById('videolayout_default').disabled  = true;
+//    }
+//    else {
+//        document.getElementById('videolayout_default').disabled  = false;
+//        document.getElementById('videolayout_fullscreen').disabled  = true;
+//    }
 }

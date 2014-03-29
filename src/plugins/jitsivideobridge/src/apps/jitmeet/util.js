@@ -47,14 +47,14 @@ var Util = (function (my) {
     };
 
     /**
-     * Indicates if the given string is an alphanumeric string.
-     * Note that some special characters are also allowed (-, _ , /) for the
-     * purpose of checking URIs. (FIXME: This should maybe moved to another not
-     * so generic method in the future.)
+     * Returns the available video width.
      */
-    my.isAlphanumeric = function(unsafeText) {
-        var regex = /^[a-z0-9-_\/]+$/i;
-        return regex.test(unsafeText);
+    my.getAvailableVideoWidth = function() {
+        var chatspaceWidth = $('#chatspace').is(":visible")
+        ? $('#chatspace').width()
+        : 0;
+
+        return window.innerWidth - chatspaceWidth;
     };
 
     return my;

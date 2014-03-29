@@ -11,11 +11,18 @@ var altView = false;
 var sipUri = null;
 var notificationInterval = false;
 var unreadMessages = 0;
+var toolbarTimeout = null;
+var getVideoSize = null;
+var currentVideoWidth = null;
+var currentVideoHeight = null;
+
 
 $(document).ready(function () 
 {
     var storedDisplayName = window.localStorage.displayname;
     
+    getVideoSize = getVideoSizeCover;
+        
     if (storedDisplayName) {
         nickname = unescape(storedDisplayName);
         $("#localVideo").attr("title", nickname);        
@@ -76,8 +83,21 @@ $(document).ready(function ()
     
     $(window).resize(function () {
         resizeLarge();
+        positionLarge();        
     });
-    
+
+    document.getElementById('largeVideo').addEventListener('loadedmetadata', function(e)
+    {
+	currentVideoWidth = this.videoWidth;
+	currentVideoHeight = this.videoHeight;
+	positionLarge(currentVideoWidth, currentVideoHeight);
+    });
+
+    $(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange',
+	function() {
+	    resizeLarge();
+	    positionLarge();
+    });        
 
     RTCPeerconnection = RTC.peerconnection;
 
@@ -109,7 +129,7 @@ $(document).ready(function ()
 		getConstraints(['audio', 'video'], config.resolution);	
 	    	$("#screen").removeClass("fa-border");
 	    }
-	    showToolbar();
+	    //showToolbar();
 	    updateRoomUrl(window.location.href);		
 	    getUserMedia();
 	    
@@ -451,80 +471,131 @@ function getConstraints(um, resolution, bandwidth, fps)
 	if (!window.RTC.rayo.constraints.video) window.RTC.rayo.constraints.video = {mandatory: {}};// same behaviour as tru;
 	window.RTC.rayo.constraints.video.mandatory.minFrameRate = fps;
     }
-} 
+}  
 
-function goAltView()
+function positionLarge (videoWidth, videoHeight) 
 {
-	if (altView)
-	{
-		$("#altview").addClass("fa-stop");
-		$("#altview").removeClass("fa-th");
-		$('#largeVideo').css("display", "");
-		resizeLarge();	
+    var videoSpaceWidth = $('#videospace').width();
+    var videoSpaceHeight = window.innerHeight;
 
-	} else {
-		$("#altview").removeClass("fa-stop");
-		$("#altview").addClass("fa-th");
-		arrangeVideos();
-	}
+    var videoSize = getVideoSize(videoWidth, videoHeight, videoSpaceWidth, videoSpaceHeight);
 
-	altView = !altView;
+    var largeVideoWidth = videoSize[0];
+    var largeVideoHeight = videoSize[1];
+
+    var videoPosition = getVideoPosition(largeVideoWidth, largeVideoHeight, videoSpaceWidth, videoSpaceHeight);
+
+    var horizontalIndent = videoPosition[0];
+    var verticalIndent = videoPosition[1];
+
+    positionVideo(  $('#largeVideo'),largeVideoWidth, largeVideoHeight, horizontalIndent, verticalIndent);
+    
+    if (pdfFrame)
+    {
+    	$('#pdfViewer').height(largeVideoHeight);
+	$('#pdfViewer').width(largeVideoWidth);
+    }
+};
+
+function positionVideo( video, width, height, horizontalIndent, verticalIndent) 
+{
+    video.width(width);
+    video.height(height);
+    
+    video.css({  top: verticalIndent + 'px',
+                 bottom: verticalIndent + 'px',
+                 left: horizontalIndent + 'px',
+                 right: horizontalIndent + 'px'});
 }
 
-function arrangeVideos() 
-{	
-	
-	
-}     
+function getVideoPosition (   videoWidth, videoHeight, videoSpaceWidth, videoSpaceHeight) 
+{
+    // Parent height isn't completely calculated when we position the video in
+    // full screen mode and this is why we use the screen height in this case.
+    // Need to think it further at some point and implement it properly.
+    
+    var isFullScreen = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen; 
+    
+    if (isFullScreen)
+        videoSpaceHeight = window.innerHeight;
+
+    var horizontalIndent = (videoSpaceWidth - videoWidth)/2;
+    var verticalIndent = (videoSpaceHeight - videoHeight)/2;
+
+    return [horizontalIndent, verticalIndent];
+};
 
 function resizeLarge() 
 {
-        var availableHeight = window.innerHeight;
-        var numvids = $('#remoteVideos>video:visible').length;
-        
-        if (numvids < 5)
-            availableHeight -= 100; // min thumbnail height for up to 4 videos
-        else
-            availableHeight -= 50; // min thumbnail height for more than 5 videos
+    var availableHeight = window.innerHeight;
+    var availableWidth = getAvailableVideoWidth();
 
-        availableHeight -= 79; // padding + link ontop
-        var availableWidth = window.innerWidth;
-        var aspectRatio = 16.0 / 9.0;
-        if (availableHeight < availableWidth / aspectRatio) {
-            availableWidth = Math.floor(availableHeight * aspectRatio);
-        }
-        if (availableWidth < 0 || availableHeight < 0) return;
-        $('#largeVideo').width(availableWidth);
-        $('#largeVideo').height(availableWidth/aspectRatio);
-        
-        if (availableWidth <= 450) $('#chatspace').width(availableWidth);
-        
-        resizeThumbnails() ;
-        
+    if (availableWidth < 0 || availableHeight < 0) return;
+
+    $('#videospace').width(availableWidth);
+    $('#videospace').height(availableHeight);
+    $('#largeVideoContainer').width(availableWidth);
+    $('#largeVideoContainer').height(availableHeight);
+
+    resizeThumbnails();
 }
+
+function getAvailableVideoWidth() 
+{
+        var chatspaceWidth = $('#chatspace').is(":visible") ? $('#chatspace').width() : 0;
+        return window.innerWidth - chatspaceWidth;
+};
     
 function resizeThumbnails() 
 {
-	// Calculate the available height, which is the inner window height minus 39px for the header
-	// minus 4px for the delimiter lines on the top and bottom of the large video,
-	// minus the 36px space inside the remoteVideos container used for highlighting shadow.
-	var availableHeight = window.innerHeight - $('#largeVideo').height() - 79;
-	var numvids = $('#remoteVideos>video:visible').length;
-	// Remove the 1px borders arround videos.
-	var availableWinWidth = $('#remoteVideos').width() - numvids*2;
-	var availableWidth = availableWinWidth / numvids;
-	var aspectRatio = 16.0 / 9.0;
-	var maxHeight = Math.min(160, availableHeight);
-	var availableHeight = Math.min(maxHeight, availableWidth / aspectRatio);
-	if (availableHeight < availableWidth / aspectRatio) {
-	    availableWidth = Math.floor(availableHeight * aspectRatio);
-	}
-	// size videos so that while keeping AR and max height, we have a nice fit
-	$('#remoteVideos').height(availableHeight + 36); // add the 2*18px border used for highlighting shadow.
-	$('#remoteVideos>video:visible').width(availableWidth);
-	$('#remoteVideos>video:visible').height(availableHeight);
-	$('#remoteVideos>video:visible').css('position', 'relative');
-	$('#remoteVideos>video:visible').css({top: '18px', left: '0px', right: '0px', bottom: '0px'});	
+    // Calculate the available height, which is the inner window height minus
+    // 39px for the header minus 2px for the delimiter lines on the top and
+    // bottom of the large video, minus the 36px space inside the remoteVideos
+    // container used for highlighting shadow.
+    var availableHeight = 100;
+
+    var numvids = $('#remoteVideos>video:visible').length;
+
+    // Remove the 1px borders arround videos and the chat width.
+    var availableWinWidth = $('#remoteVideos').width() - 2 * numvids - 50;
+    var availableWidth = availableWinWidth / numvids;
+    var aspectRatio = 16.0 / 9.0;
+    var maxHeight = Math.min(160, availableHeight);
+    availableHeight = Math.min(maxHeight, availableWidth / aspectRatio);
+    if (availableHeight < availableWidth / aspectRatio) {
+        availableWidth = Math.floor(availableHeight * aspectRatio);
+    }
+
+    // size videos so that while keeping AR and max height, we have a nice fit
+    $('#remoteVideos').height(availableHeight);
+    $('#remoteVideos>video').width(availableWidth);
+    $('#remoteVideos>video').height(availableHeight);
+}
+
+function getVideoSizeCover(videoWidth, videoHeight, videoSpaceWidth, videoSpaceHeight) 
+{
+    if (!videoWidth)
+        videoWidth = currentVideoWidth;
+        
+    if (!videoHeight)
+        videoHeight = currentVideoHeight;
+
+    var aspectRatio = videoWidth / videoHeight;
+
+    var availableWidth = Math.max(videoWidth, videoSpaceWidth);
+    var availableHeight = Math.max(videoHeight, videoSpaceHeight);
+
+    if (availableWidth / aspectRatio < videoSpaceHeight) {
+        availableHeight = videoSpaceHeight;
+        availableWidth = availableHeight*aspectRatio;
+    }
+
+    if (availableHeight*aspectRatio < videoSpaceWidth) {
+        availableWidth = videoSpaceWidth;
+        availableHeight = availableWidth / aspectRatio;
+    }
+
+    return [availableWidth, availableHeight];
 }
 
 function urlParam(name)
@@ -1229,13 +1300,17 @@ function openChat() {
     var videospace = $('#videospace');
     var chatspaceWidth = chatspace.width();
 
+    $('#usermsg').focus(function(){
+    	resetVisualNotification();
+    });
+
     if (chatspace.css("opacity") == 1) {
         chatspace.animate({opacity: 0}, "fast");
         chatspace.animate({width: 0}, "slow");
         videospace.animate({right: 0, width:"100%"}, "slow");
     }
     else {
-        chatspace.animate({width: "23%"}, "slow");
+        chatspace.animate({width: "20%"}, "slow");
         chatspace.animate({opacity: 1}, "slow");
         videospace.animate({right:chatspaceWidth, width:"80%"}, "slow");
     }
@@ -1247,39 +1322,86 @@ function openChat() {
         $('#usermsg').focus();
 }
 
-function showToolbar() {
-    $('#toolbar').css({visibility:"visible"});
+function hideToolbar() 
+{
+    var isToolbarHover = false;
+    $('#header').find('*').each(function(){
+        var id = $(this).attr('id');
+        if ($("#" + id + ":hover").length > 0) {
+            isToolbarHover = true;
+        }
+    });
+
+    clearTimeout(toolbarTimeout);
+    toolbarTimeout = null;
+
+    if (!isToolbarHover) {
+        $('#header').hide("slide", { direction: "up", duration: 300});
+    }
+    else {
+        toolbarTimeout = setTimeout(hideToolbar, 2000);
+    }
+};
+
+
+function showToolbar() 
+{
+    if (!$('#header').is(':visible')) {
+        $('#header').show("slide", { direction: "up", duration: 300});
+
+        if (toolbarTimeout) {
+            clearTimeout(toolbarTimeout);
+            toolbarTimeout = null;
+        }
+        toolbarTimeout = setTimeout(hideToolbar, 2000);
+    }
+}
+
+
+function dockToolbar(isDock) {
+    if (isDock) {
+        // First make sure the toolbar is shown.
+        if (!$('#header').is(':visible')) {
+            showToolbar();
+        }
+        // Then clear the time out, to dock the toolbar.
+        clearTimeout(toolbarTimeout);
+        toolbarTimeout = null;
+    }
+    else {
+        if (!$('#header').is(':visible')) {
+            showToolbar();
+        }
+        else {
+            toolbarTimeout = setTimeout(hideToolbar, 2000);
+        }
+    }
 }
 
 function updateRoomUrl(newRoomUrl) {
     roomUrl = newRoomUrl;
 }
 
-function goFullScreen()
-{
-	var tag = "largeVideo";
-	
-	if (pdfFrame != null) tag = "pdfViewer";
-	
-	var videoElement = document.getElementById(tag);
+function toggleFullScreen() {
+    var fsElement = document.documentElement;
 
-	if (!document.mozFullScreen && !document.webkitFullScreen)
-	{
-	  if (videoElement.mozRequestFullScreen) {
-		videoElement.mozRequestFullScreen();
+    if (!document.mozFullScreen && !document.webkitIsFullScreen){
 
-	  } else {
-		videoElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-	  }
-
-	} else {
-
-	  if (document.mozCancelFullScreen) {
-		document.mozCancelFullScreen();
-	  } else {
-		document.webkitCancelFullScreen();
-	  }
-	}
+        //Enter Full Screen
+        if (fsElement.mozRequestFullScreen) {
+            fsElement.mozRequestFullScreen();
+        }
+        else {
+            fsElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+    } else {
+        //Exit Full Screen
+        if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else {
+            document.webkitCancelFullScreen();
+        }
+    }
 }
 
 function inviteParticipant()
@@ -1393,23 +1515,30 @@ function linkify(inputText)
 	return replacedText;
 }
 
+function resetVisualNotification()
+{
+	unreadMessages = 0;
+	setVisualNotification(false); 
+}
+
 function setVisualNotification(show) 
 {
 	var unreadMsgElement = document.getElementById('unreadMessages');
 
 	if (unreadMessages) {
-	    unreadMsgElement.innerHTML = unreadMessages.toString();
+	    unreadMsgElement.innerHTML = "&nbsp;" + unreadMessages.toString() + "&nbsp;";
 
-	    var chatButtonElement = document.getElementById('chat').parentNode;
-	    var leftIndent = (Util.getTextWidth(chatButtonElement) - Util.getTextWidth(unreadMsgElement) - 5)/2;
-	    var topIndent = (Util.getTextHeight(chatButtonElement) - Util.getTextHeight(unreadMsgElement))/2 - 2;
+            showToolbar();            
+	    var chatButtonElement = document.getElementById('chatButton').parentNode;
+	    var leftIndent = (Util.getTextWidth(chatButtonElement) - Util.getTextWidth(unreadMsgElement))/2 - 2;
+	    var topIndent = (Util.getTextHeight(chatButtonElement) - Util.getTextHeight(unreadMsgElement))/2 - 3;
 
-	    unreadMsgElement.setAttribute('style', 'top:' + topIndent + '; left:' + leftIndent +';');
+	    unreadMsgElement.setAttribute('style', 'top:' + topIndent + '; left:' + leftIndent +';background-color: red');
 	}
 	else
 	    unreadMsgElement.innerHTML = '';
 
-	var glower = $('#chat');
+	var glower = $('#chatButton');
 
 	if (show && !notificationInterval) {
 	    notificationInterval = window.setInterval(function() {

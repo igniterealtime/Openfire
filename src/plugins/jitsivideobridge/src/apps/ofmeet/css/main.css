@@ -2,84 +2,85 @@ html, body{
     margin:0px;
     height:100%;
     color: #424242;
-    font-family:'YanoneKaffeesatzLight',Verdana,Tahoma,Arial;
-	font-weight: 400;
-    background: #e9e9e9;
+    font-family:'Helvetica Neue', Helvetica, sans-serif;
+    font-weight: 400;
+    background: #363636;
+    overflow: hidden;
 }
 
+#unreadMessages {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}
 
 #videospace {
     display: block;
     position: absolute;
-    top: 39px;
+    top: 0px;
     left: 0px;
     right: 0px;
-    float: left;
 }
 
 #largeVideo {
-    display:block;
-    position:relative;
-    width:1280px;
-    height:720px;
-    margin-left:auto;
-    margin-right:auto;
-    z-index: 0;
+    overflow: hidden;
+    text-align: center;
 }
 
 
 #pdfViewer {
     display:block;
-    position:relative;
+    position:absolute;
     width:auto;
     height:auto;
+    z-index: 1;    
 }
 
 #remoteVideos {
     display:block;
-    position:relative;
-    text-align:center;
-    height:170px;
+    position:absolute;
+    text-align:right;
+    height:196px;
+    padding: 18px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width:auto;
     overflow: hidden;
     border:1px solid transparent;
-    font-size:0;
     z-index: 2;
 }
 
 #remoteVideos video {
-    position:relative;
-    top:18px;
-    height:160px;
-    width:auto;
-    z-index:0;
-    border:1px solid #FFFFFF;
-    background-repeat:no-repeat;
+    display: inline-block;
     background-image:url(../images/avatar1.png);
-    background-size: contain;    
+    background-size: contain; 
+    border-radius:8px;
+    border: 2px solid #212425;  
 }
 
 #remoteVideos video:hover {
+    width: 100%;
+    height: 100%;
+    content:"";
     cursor: pointer;
     cursor: hand;
     transform:scale(1.08, 1.08);
     -webkit-transform:scale(1.08, 1.08);
     transition-duration: 0.5s;
     -webkit-transition-duration: 0.5s;
-    background-color: #FFFFFF;
     -webkit-animation-name: greyPulse;
     -webkit-animation-duration: 2s;
     -webkit-animation-iteration-count: 1;
-    -webkit-box-shadow: 0 0 18px #515151;
-    border:1px solid #FFFFFF;
-    z-index: 10;
+    -webkit-box-shadow: 0 0 18px #388396;
+    border: 2px solid #388396;
+    z-index: 3;
 }
 
 #chatspace {
     display:block;
     position:absolute;
     float: right;
-    top: 40px;
+    top: 0px;
     bottom: 0px;
     right: 0px;
     width:450px;
@@ -166,11 +167,28 @@ html, body{
 }
 
 #header{
-	display:block;
+    display:none;
+    position:absolute;
     height:39px;
-    z-index: 1;
     text-align:center;
-    background-color:#087dba;
+    top:0;
+    left:0;
+    right:0;
+    z-index:20;
+}
+
+#toolbar {
+    display:inline-block;
+    position:relative;
+    margin-left:auto;
+    margin-right:auto;
+    height:39px;
+    width:auto;
+    overflow: hidden;
+    background: linear-gradient(to bottom, rgba(103,103,103,.65) , rgba(0,0,0,.65));
+    -webkit-box-shadow: 0 0 2px #000000, 0 0 10px #000000;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
 }
 
 #left {
@@ -196,15 +214,6 @@ html, body{
     z-index:1;
 }
 
-#toolbar {
-    display:block;
-    position:relative;
-    height:39px;
-    width:auto;
-    overflow: hidden;
-    z-index:0;
-    visibility: hidden;
-}
 
 .button {
     display: inline-block;

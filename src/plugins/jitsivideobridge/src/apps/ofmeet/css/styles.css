@@ -6,8 +6,6 @@ div#ofmeet {
     background-color: #F9F9F9;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
     display:block;
     position:relative;
     top: -100px;
@@ -17,7 +15,8 @@ div#ofmeet {
     font-size:14px;
     padding:5px;
     overflow:scroll;
-    visibility:hidden;    
+    visibility:hidden;   
+    overflow: hidden;    
 }
 
 
@@ -26,8 +25,8 @@ div#ofmeet div.ofmeet-clear {
 }
 
 div#ofmeet form {
-    margin: 0;
-    padding: 0;
+    margin: 10px;
+    padding: 10px;
 }
 
 div#ofmeet div#ofmeet-login {

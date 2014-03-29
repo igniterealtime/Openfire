@@ -263,7 +263,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			Properties properties = new Properties();
 			String hostName = XMPPServer.getInstance().getServerInfo().getHostname();
 			String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
-			String port = JiveGlobals.getProperty(SIP_PORT_PROPERTY_NAME, "5060");
+			String port = JiveGlobals.getProperty(SIP_PORT_PROPERTY_NAME, "5070");
 
 			properties.setProperty("com.voxbone.kelpie.hostname", hostName);
 			properties.setProperty("com.voxbone.kelpie.ip", hostName);
@@ -1016,7 +1016,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private byte partial[];
 		private int lastseqnum = -1;
     	private Participant me = this;
-    	private boolean snapshot = false;
+    	private int snapshot = 0;
 		/**
 		 *
 		 *
@@ -1052,7 +1052,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void recordData(RawPacket packet)
 		{
-			if (!snapshot) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
+			if (snapshot < 10) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
 
 			try {
 
@@ -1069,41 +1069,55 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					  partial = new byte[0];
 					}
 
-					if (!snapshot) Log.info("expecting X R N S PartID");
+					if (snapshot < 10) Log.info("expecting X R N S PartID");
 
 					byte x = rtp[payloadOffset];  //X R N S PartID
+
 					payloadOffset++;
 					vp8Length--;
 
-					if ((x & 0x80) != 0)
+					if ((x & 0x80) != 0)	// extened bits
 					{
-					  if (!snapshot) Log.info("found I L T RSV-A");
+					  if (snapshot < 10) Log.info("found I L T RSV-A");
 					  byte ilt = rtp[payloadOffset];  //I L T RSV-A
 					  payloadOffset++;
 					  vp8Length--;
 
 					  if ((ilt & 0x80) != 0) {  //picture ID
-					  	if (!snapshot) Log.info("found picture ID");
+					  	if (snapshot < 10) Log.info("found picture ID 1");
 						payloadOffset++;
 						vp8Length--;
+
+					  	byte m = rtp[payloadOffset];  //picture ID
+
+					  	if ((m & 0x80) != 0)
+					  	{
+					  		if (snapshot < 10) Log.info("found picture ID 2");
+							payloadOffset++;
+							vp8Length--;
+						}
 					  }
+
 					  if ((ilt & 0x40) != 0) {  //TL0PICIDX
-					    if (!snapshot) Log.info("found TL0PICIDX");
+					    if (snapshot < 10) Log.info("found TL0PICIDX");
 						payloadOffset++;
 						vp8Length--;
 					  }
-					  if ((ilt & 0x20) != 0) {  //TID RSV-B
-					    if (!snapshot) Log.info("found TID RSV-B");
+
+					  if ((ilt & 0x20) != 0 || (ilt & 0x10) != 0) {  //TID RSV-B
+					    if (snapshot < 10) Log.info("found TID RSV-B or keyframe index");
 						payloadOffset++;
 						vp8Length--;
 					  }
 					}
 
-					if ((x & 0x10) != 0)	// start of partition
+					if ((x & 0x10) != 0 && (x & 0x0f) == 0 && vp8Length >= 3)	// start of partition
 					{
-					    if (!snapshot) Log.info("found start of partition " + x);
+					    if (snapshot < 10) Log.info("found start of partition " + x);
 					  	partial = new byte[0];
 				    }
+
+					boolean isKeyframe = (rtp[payloadOffset] & 0x1) == 0;
 
 					int partialLength = partial.length;
 					partial = Arrays.copyOf(partial, partial.length + vp8Length);
@@ -1112,7 +1126,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					int thisseqnum = packet.getSequenceNumber();
 
 					if (lastseqnum != -1 && thisseqnum != lastseqnum + 1) {
-					  if (!snapshot) Log.info("VP8:Received packet out of order, discarding frame.");
+					  if (snapshot < 10) Log.info("VP8:Received packet out of order, discarding frame.");
 					  partial = null;
 					  lastseqnum = -1;
 					  return;
@@ -1124,15 +1138,14 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 						if (recorder != null && partial != null)
 						{
 							byte[] full = Arrays.copyOf(partial, partial.length);
-							boolean isKeyframe = (full[0] & 0x1) == 0;
-							if (!snapshot) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
+							if (snapshot < 10) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
 
 							recorder.write(full, 0, full.length, isKeyframe, packet.getTimestamp());
 
-							if (isKeyframe && snapshot == false)
+							if (isKeyframe && snapshot < 10)
 							{
 								recorder.writeWebPImage(full, 0, full.length, packet.getTimestamp());
-								snapshot = true;
+								snapshot++;
 							}
 						}
 
@@ -1225,7 +1238,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				{
 					recorder.done();
 					recorder = null;
-					snapshot = false;
+					snapshot = 0;
 				}
 			}
 		}
@@ -1383,7 +1396,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 							if (videoChannel != null)
 							{
-								participant.addMediaStream(videoChannel.getMediaStream());
+								// webm file creation not working yet
+								//participant.addMediaStream(videoChannel.getMediaStream());
 							}
 						}
 				}

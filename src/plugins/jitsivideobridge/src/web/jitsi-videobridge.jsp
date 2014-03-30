@@ -140,7 +140,7 @@
                 </td>
                 <td align="left">
                     <input name="username" type="text" maxlength="16" size="16"
-                           value="<%=JiveGlobals.getProperty(PluginImpl.USERNAME_PROPERTY_NAME, "jitsi")%>"/>
+                           value="<%=JiveGlobals.getProperty(PluginImpl.USERNAME_PROPERTY_NAME, "")%>"/>
                 </td>
             </tr>     
             <tr>
@@ -148,7 +148,7 @@
                 </td>
                 <td align="left">
                     <input name="password" type="password" maxlength="16" size="16"
-                           value="<%=JiveGlobals.getProperty(PluginImpl.PASSWORD_PROPERTY_NAME, "jitsi")%>"/>
+                           value="<%=JiveGlobals.getProperty(PluginImpl.PASSWORD_PROPERTY_NAME, "")%>"/>
                 </td>
             </tr> 
             </tbody>

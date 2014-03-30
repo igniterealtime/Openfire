@@ -130,7 +130,7 @@ public class Recorder extends Thread
 		track.CodecID = "V_VP8";
 		track.DefaultDuration = 0;
 		track.Video_PixelWidth = 640;
-		track.Video_PixelHeight = 360;
+		track.Video_PixelHeight = 480;
 		track.CodecPrivate = new byte[0];
 
 		mFW.TrackList.add(track);
@@ -433,11 +433,11 @@ public class Recorder extends Thread
 					{
 						if (lastTimecode != 0)
 						{
-							//Log.info("writeData end cluster " + d.data);
+							Log.info("writeData end cluster " + d.data);
 							duration = d.timestamp - lastTimecode;
 							mFW.endCluster();
 						}
-						//Log.info("writeData start cluster " + d.timestamp);
+						Log.info("writeData start cluster " + d.timestamp);
 						mFW.startCluster(d.timestamp);
 					}
 

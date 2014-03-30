@@ -4,6 +4,7 @@ var nickname = null;
 var roomUrl = null;
 var sharedKey = '';
 var screenShare = false;
+var screenToVideo = false;
 var pdfShare = null;
 var pdfFrame = null;
 var pdfPage = "1";
@@ -129,7 +130,7 @@ $(document).ready(function ()
 		getConstraints(['audio', 'video'], config.resolution);	
 	    	$("#screen").removeClass("fa-border");
 	    }
-	    //showToolbar();
+	    showToolbar();
 	    updateRoomUrl(window.location.href);		
 	    getUserMedia();
 	    
@@ -399,6 +400,7 @@ function getConstraints(um, resolution, bandwidth, fps)
     if (um.indexOf('audio') >= 0) {
 	window.RTC.rayo.constraints.audio = {};// same behaviour as true
     }
+    
     if (um.indexOf('screen') >= 0) {
 	window.RTC.rayo.constraints.video = {
 	    "mandatory": {
@@ -408,7 +410,8 @@ function getConstraints(um, resolution, bandwidth, fps)
 		"maxFrameRate": "3"		
 	    }
 	};
-    }
+    
+    } else
 
     if (resolution && window.RTC.rayo.constraints.video) 
     {
@@ -542,10 +545,11 @@ function resizeLarge()
 
 function getAvailableVideoWidth() 
 {
-        var chatspaceWidth = $('#chatspace').is(":visible") ? $('#chatspace').width() : 0;
+        var chatspaceWidth = $('#chatspace').css("opacity") == 1 ? $('#chatspace').width() : 0;
         return window.innerWidth - chatspaceWidth;
 };
-    
+  
+  
 function resizeThumbnails() 
 {
     // Calculate the available height, which is the inner window height minus
@@ -655,14 +659,13 @@ function doJoin() {
 	$('#nickname').css({visibility:"hidden"});
 	$('#ofmeet').css({visibility:'visible'});
 	$('#usermsg').css({visibility:'visible'});    
-	openChat();
     }
 }
 
  
 function rayoCallback(presence) 
 {
-	console.log("rayoCallback", presence);
+	console.log("rayoCallback start", presence);
 	
 	var from = $(presence).attr('from');		
 
@@ -692,6 +695,8 @@ function rayoCallback(presence)
 		$("#invite").removeClass("fa-spin");		
 	});	
 
+	console.log("rayoCallback end", presence);
+	
 	return true;
 };
 
@@ -707,31 +712,32 @@ function removeSSRC(from, removesource)
 
 	$(removesource).find('content').each(function() 
 	{		
-		var name = $(this).attr('name');
+		var name = $(this).attr('name');		
 		var ssrc = null;
 
 		$(this).find('source').each(function() 
-		{
+		{		
 		    ssrc = $(this).attr('ssrc');			    
 		});
 
 		if (ssrc != null)
-		{
-			var idx = (name == "audio" ? 0 : 1);
-			sdp.removeMediaLines(idx, 'a=ssrc:' + ssrc);
+		{	
+			var idx = (name == "audio" ? 0 : 1);			
+			if (!screenToVideo) sdp.removeMediaLines(idx, 'a=ssrc:' + ssrc);			
 		}
-	});
-
+		
+	});	
 	sdp.raw = sdp.session + sdp.media.join('');
 
 	//console.log("removeSSRC modified SDP", sdp.raw);
 
 	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
 
-		), function() {
+		), function() {		
 		    console.log('removeSSRC modify ok');		    
 
 		}, function(error) {
+		
 		    console.log('removeSSRC modify failed');
 	});
 };
@@ -791,9 +797,9 @@ function handleOffer (from, offer)
 {
 	console.log("handleOffer", offer);
 
-	//var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');
-	
+	//var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');	
 	var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\n');
+	
 	var muc = $(offer).attr('muc');
 	var nick = $(offer).attr('nickname');
 	var participant = $(offer).attr('participant');
@@ -1041,13 +1047,22 @@ function registerRayoEvents()
 	);
 }
 
-function unregisterRayoEvents()
-{	
-	window.RTC.rayo.localStream.stop();
-	
+function unregisterRayoEvents(constraints, resolution)
+{			
 	connection.sendIQ($iq({to: connection.domain, type: 'set'}).c('colibri', {xmlns: 'urn:xmpp:rayo:colibri:1', action: 'expire', muc: roomjid}),
 		function (res) {
 		    console.log('rayo colibri unregister set ok');
+		    window.RTC.rayo.localStream.stop();		    
+		    
+		    if (constraints)
+		    {
+		    	setTimeout(function()
+		    	{
+		    		screenToVideo = false;
+				getConstraints(constraints, resolution);		
+				getUserMedia();	
+			}, 1000);
+		    }
 		},
 
 		function (err) {
@@ -1064,16 +1079,14 @@ function toggleScreenShare()
 
 	if (screenShare)
 	{	
-		var screenDIV = document.getElementById("screenshare");
-		screenDIV.parentElement.removeChild(screenDIV);
+		screenToVideo = true;
+		unregisterRayoEvents(['audio', 'video'], config.resolution);		
 		$("#screen").removeClass("fa-border");
 
 	} else {
-		var url = "publish.html?r=" + videobridge + "&screen=true";
-		
-		$("body").append("<div id='screenshare'><iframe  style='display:none' src='" + url + "'></iframe></div>");
+		unregisterRayoEvents(['screen']);
 		$("#screen").addClass("fa-border");		
-	}
+	}	
 	
 	screenShare = !screenShare;
 }
@@ -1315,6 +1328,9 @@ function openChat() {
         videospace.animate({right:chatspaceWidth, width:"80%"}, "slow");
     }
     
+    resizeLarge();
+    positionLarge();    
+    
     // Request the focus in the nickname field or the chat input field.
     if ($('#nickinput').is(':visible'))
         $('#nickinput').focus();
@@ -1339,7 +1355,7 @@ function hideToolbar()
         $('#header').hide("slide", { direction: "up", duration: 300});
     }
     else {
-        toolbarTimeout = setTimeout(hideToolbar, 2000);
+        toolbarTimeout = setTimeout(hideToolbar, 5000);
     }
 };
 
@@ -1353,7 +1369,7 @@ function showToolbar()
             clearTimeout(toolbarTimeout);
             toolbarTimeout = null;
         }
-        toolbarTimeout = setTimeout(hideToolbar, 2000);
+        toolbarTimeout = setTimeout(hideToolbar, 5000);
     }
 }
 
@@ -1373,7 +1389,7 @@ function dockToolbar(isDock) {
             showToolbar();
         }
         else {
-            toolbarTimeout = setTimeout(hideToolbar, 2000);
+            toolbarTimeout = setTimeout(hideToolbar, 5000);
         }
     }
 }

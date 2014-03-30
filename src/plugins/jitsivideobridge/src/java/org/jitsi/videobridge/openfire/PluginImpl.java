@@ -255,7 +255,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 			if (username != null && "".equals(username) == false)
 			{
-				context.setSecurityHandler(basicAuth(username, password, "Private!"));
+				context.setSecurityHandler(basicAuth(username, password, "Videobridge"));
 			}
 
 			createIQHandlers();
@@ -350,7 +350,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
         ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
         csh.setAuthenticator(new BasicAuthenticator());
-        csh.setRealmName("myrealm");
+        csh.setRealmName(realm);
         csh.addConstraintMapping(cm);
         csh.setLoginService(l);
 
@@ -1017,6 +1017,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private int lastseqnum = -1;
     	private Participant me = this;
     	private int snapshot = 0;
+    	private boolean isKeyframe = false;
 		/**
 		 *
 		 *
@@ -1052,7 +1053,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void recordData(RawPacket packet)
 		{
-			if (snapshot < 10) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
+			if (snapshot < 1) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
 
 			try {
 
@@ -1069,7 +1070,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					  partial = new byte[0];
 					}
 
-					if (snapshot < 10) Log.info("expecting X R N S PartID");
+					if (snapshot < 1) Log.info("expecting X R N S PartID");
 
 					byte x = rtp[payloadOffset];  //X R N S PartID
 
@@ -1078,34 +1079,34 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 					if ((x & 0x80) != 0)	// extened bits
 					{
-					  if (snapshot < 10) Log.info("found I L T RSV-A");
+					  if (snapshot < 1) Log.info("found I L T RSV-A");
 					  byte ilt = rtp[payloadOffset];  //I L T RSV-A
 					  payloadOffset++;
 					  vp8Length--;
 
 					  if ((ilt & 0x80) != 0) {  //picture ID
-					  	if (snapshot < 10) Log.info("found picture ID 1");
+					  	byte m = rtp[payloadOffset];  //picture ID
+
+					  	if (snapshot < 1) Log.info("found picture ID 1");
 						payloadOffset++;
 						vp8Length--;
 
-					  	byte m = rtp[payloadOffset];  //picture ID
-
 					  	if ((m & 0x80) != 0)
 					  	{
-					  		if (snapshot < 10) Log.info("found picture ID 2");
+					  		if (snapshot < 1) Log.info("found picture ID 2");
 							payloadOffset++;
 							vp8Length--;
 						}
 					  }
 
 					  if ((ilt & 0x40) != 0) {  //TL0PICIDX
-					    if (snapshot < 10) Log.info("found TL0PICIDX");
+					    if (snapshot < 1) Log.info("found TL0PICIDX");
 						payloadOffset++;
 						vp8Length--;
 					  }
 
 					  if ((ilt & 0x20) != 0 || (ilt & 0x10) != 0) {  //TID RSV-B
-					    if (snapshot < 10) Log.info("found TID RSV-B or keyframe index");
+					    if (snapshot < 1) Log.info("found TID RSV-B or keyframe index");
 						payloadOffset++;
 						vp8Length--;
 					  }
@@ -1113,11 +1114,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 					if ((x & 0x10) != 0 && (x & 0x0f) == 0 && vp8Length >= 3)	// start of partition
 					{
-					    if (snapshot < 10) Log.info("found start of partition " + x);
+					    if (snapshot < 1) Log.info("found start of partition " + x);
 					  	partial = new byte[0];
+					  	isKeyframe = (rtp[payloadOffset] & 0x1) == 0;
 				    }
-
-					boolean isKeyframe = (rtp[payloadOffset] & 0x1) == 0;
 
 					int partialLength = partial.length;
 					partial = Arrays.copyOf(partial, partial.length + vp8Length);
@@ -1126,7 +1126,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 					int thisseqnum = packet.getSequenceNumber();
 
 					if (lastseqnum != -1 && thisseqnum != lastseqnum + 1) {
-					  if (snapshot < 10) Log.info("VP8:Received packet out of order, discarding frame.");
+					  if (snapshot < 1) Log.info("VP8:Received packet out of order, discarding frame.");
 					  partial = null;
 					  lastseqnum = -1;
 					  return;
@@ -1138,19 +1138,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 						if (recorder != null && partial != null)
 						{
 							byte[] full = Arrays.copyOf(partial, partial.length);
-							if (snapshot < 10) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
+							if (snapshot < 1) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
 
 							recorder.write(full, 0, full.length, isKeyframe, packet.getTimestamp());
 
-							if (isKeyframe && snapshot < 10)
+							if (isKeyframe && snapshot < 1)
 							{
 								recorder.writeWebPImage(full, 0, full.length, packet.getTimestamp());
 								snapshot++;
 							}
 						}
 
-					  	partial = null;
-					  	lastseqnum = -1;
+						partial = null;
+						lastseqnum = -1;
 					}
 				} else {
 					Log.error("record video cannot parse packet data " + packet);
@@ -1397,7 +1397,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 							if (videoChannel != null)
 							{
 								// webm file creation not working yet
-								//participant.addMediaStream(videoChannel.getMediaStream());
+								participant.addMediaStream(videoChannel.getMediaStream());
 							}
 						}
 				}
@@ -1456,10 +1456,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			}
 
 			Element audioContent = conferenceIq.addElement("content").addAttribute("name", "audio");
-			audioContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15").addAttribute("rtp-level-relay-type", "mixer");
+			audioContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15").addAttribute("rtp-level-relay-type", "mixer").addAttribute("endpoint", nickname);
 
 			Element videoContent = conferenceIq.addElement("content").addAttribute("name", "video");
-			videoContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15");
+			videoContent.addElement("channel").addAttribute("initiator", "true").addAttribute("expire", "15").addAttribute("endpoint", nickname);
 
 			router.route(iq);
 		}

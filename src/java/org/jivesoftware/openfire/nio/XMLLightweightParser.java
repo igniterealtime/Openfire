@@ -30,6 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.filter.codec.ProtocolDecoder;
+import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -191,7 +193,9 @@ class XMLLightweightParser {
             // purge the local buffer / free memory
             buffer = null;
             // processing the exception takes quite long
-            throw new Exception("Stopped parsing never ending stanza");
+            final ProtocolDecoderException ex = new ProtocolDecoderException("Stopped parsing never ending stanza");
+            ex.setHexdump("(redacted hex dump of never ending stanza)");
+            throw ex;
         }
         CharBuffer charBuffer = CharBuffer.allocate(byteBuffer.capacity());
         encoder.reset();

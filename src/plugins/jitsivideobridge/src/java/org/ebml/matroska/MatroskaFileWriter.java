@@ -88,10 +88,13 @@ public class MatroskaFileWriter
 
   public void writeSegmentHeader()
   {
-    MatroskaSegment segmentElem = (MatroskaSegment)doc.createElement(MatroskaDocType.Segment_Id);
+    //MatroskaSegment segmentElem = (MatroskaSegment)doc.createElement(MatroskaDocType.Segment_Id);
     //segmentElem.setSize(-1);
-    segmentElem.setUnknownSize(true);
-    segmentElem.writeHeaderData(ioDW);
+    //segmentElem.setUnknownSize(false);
+    //segmentElem.writeHeaderData(ioDW);
+
+    MasterElement ebmlHeaderElem = (MasterElement)doc.createElement(MatroskaDocType.Segment_Id);
+    ebmlHeaderElem.writeElement(ioDW);
   }
 
   public void writeSegmentInfo()

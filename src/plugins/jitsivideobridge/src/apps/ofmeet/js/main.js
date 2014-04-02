@@ -883,7 +883,7 @@ function handleOffer (from, offer)
 
 	//console.log("bridgeSDP.raw", bridgeSDP.raw);	
 
-   	window.RTC.rayo.pc[videobridge] = new window.RTC.peerconnection(null, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}, {googIPv6: config.useIPv6}]}); 
+   	window.RTC.rayo.pc[videobridge] = new window.RTC.peerconnection(config.iceServers, {'optional': [{'DtlsSrtpKeyAgreement': 'true'}, {googIPv6: config.useIPv6}]}); 
 
    
 	window.RTC.rayo.pc[videobridge].onicecandidate = function(event)

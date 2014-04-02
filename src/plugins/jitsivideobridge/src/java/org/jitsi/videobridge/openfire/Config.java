@@ -43,16 +43,22 @@ public class Config extends HttpServlet
 
 			ServletOutputStream out = response.getOutputStream();
 
+			String iceServers = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
+			String resolution = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "720");
+			String useNicks = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
+			String useIPv6 = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
+
 			out.println("var config = {");
 			out.println("    hosts: {");
 			out.println("        domain: '" + domain + "',");
 			out.println("        muc: 'conference." + domain + "',");
 			out.println("        bridge: 'jitsi-videobridge." + domain + "',");
 			out.println("    },");
-			out.println("    useIPv6: false,");
-			out.println("    useNicks: false,");
+			if (!iceServers.trim().equals("")) out.println("    iceServers: " + iceServers + ",");
+			out.println("    useIPv6: " + useIPv6 + ",");
+			out.println("    useNicks: " + useNicks + ",");
 			out.println("    useWebsockets: " + (websockets ? "true" : "false") + ",");
-			out.println("    resolution: '720',");
+			out.println("    resolution: '" + resolution + "',");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");
 

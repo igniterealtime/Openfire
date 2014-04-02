@@ -73,6 +73,7 @@ import org.ifsoft.*;
 import org.ifsoft.sip.*;
 
 import net.sf.fmj.media.rtp.*;
+import org.ifsoft.rtp.*;
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -1011,13 +1012,15 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		private JID user;
 
-		private byte partial[];
-		private int lastseqnum = -1;
+    	private Vp8Accumulator _accumulator = new Vp8Accumulator();
+    	private Integer _lastSequenceNumber =  Integer.valueOf(-1);
+    	private boolean _sequenceNumberingViolated = false;
+
     	private Participant me = this;
     	private int snapshot = 0;
-    	private boolean isKeyframe = false;
+		private JID user;
+
 		/**
 		 *
 		 *
@@ -1053,7 +1056,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void recordData(RawPacket packet)
 		{
-			if (snapshot < 1) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
+			//if (snapshot < 1) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
 
 			try {
 
@@ -1061,96 +1064,40 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				{
 					byte[] rtp = packet.getPayload();
 
-					if (rtp.length < 2) return;  //bad packet
+					if(!_sequenceNumberingViolated && _lastSequenceNumber.intValue() > -1 && Vp8Packet.getSequenceNumberDelta(packet.getSequenceNumber(), _lastSequenceNumber).intValue() > 1)
+						_sequenceNumberingViolated = true;
 
-					int vp8Length = packet.getPayloadLength();
-					int payloadOffset = 0;
+					_lastSequenceNumber = packet.getSequenceNumber();
+					Vp8Packet packet2 = Vp8Packet.parseBytes(rtp);
 
-					if (partial == null) {
-					  partial = new byte[0];
-					}
+					if(packet2 == null)	return;
 
-					if (snapshot < 1) Log.info("expecting X R N S PartID");
-
-					byte x = rtp[payloadOffset];  //X R N S PartID
-
-					payloadOffset++;
-					vp8Length--;
-
-					if ((x & 0x80) != 0)	// extened bits
-					{
-					  if (snapshot < 1) Log.info("found I L T RSV-A");
-					  byte ilt = rtp[payloadOffset];  //I L T RSV-A
-					  payloadOffset++;
-					  vp8Length--;
-
-					  if ((ilt & 0x80) != 0) {  //picture ID
-					  	byte m = rtp[payloadOffset];  //picture ID
-
-					  	if (snapshot < 1) Log.info("found picture ID 1");
-						payloadOffset++;
-						vp8Length--;
-
-					  	if ((m & 0x80) != 0)
-					  	{
-					  		if (snapshot < 1) Log.info("found picture ID 2");
-							payloadOffset++;
-							vp8Length--;
-						}
-					  }
-
-					  if ((ilt & 0x40) != 0) {  //TL0PICIDX
-					    if (snapshot < 1) Log.info("found TL0PICIDX");
-						payloadOffset++;
-						vp8Length--;
-					  }
-
-					  if ((ilt & 0x20) != 0 || (ilt & 0x10) != 0) {  //TID RSV-B
-					    if (snapshot < 1) Log.info("found TID RSV-B or keyframe index");
-						payloadOffset++;
-						vp8Length--;
-					  }
-					}
-
-					if ((x & 0x10) != 0 && (x & 0x0f) == 0 && vp8Length >= 3)	// start of partition
-					{
-					    if (snapshot < 1) Log.info("found start of partition " + x);
-					  	partial = new byte[0];
-					  	isKeyframe = (rtp[payloadOffset] & 0x1) == 0;
-				    }
-
-					int partialLength = partial.length;
-					partial = Arrays.copyOf(partial, partial.length + vp8Length);
-					System.arraycopy(rtp, payloadOffset, partial, partialLength, vp8Length);
-
-					int thisseqnum = packet.getSequenceNumber();
-
-					if (lastseqnum != -1 && thisseqnum != lastseqnum + 1) {
-					  if (snapshot < 1) Log.info("VP8:Received packet out of order, discarding frame.");
-					  partial = null;
-					  lastseqnum = -1;
-					  return;
-					}
-					lastseqnum = thisseqnum;
+					_accumulator.add(packet2);
+					byte encodedFrame[] = null;
 
 					if (packet.isPacketMarked())
 					{
-						if (recorder != null && partial != null)
+						encodedFrame = Vp8Packet.depacketize(_accumulator.getPackets());
+						boolean isKeyframe = encodedFrame != null && encodedFrame.length > 0 && (encodedFrame[0] & 1) == 0;
+
+						if(_sequenceNumberingViolated && isKeyframe)
+							_sequenceNumberingViolated = false;
+
+						_accumulator.reset();
+
+						if (recorder != null && encodedFrame != null && _sequenceNumberingViolated == false)
 						{
-							byte[] full = Arrays.copyOf(partial, partial.length);
-							if (snapshot < 1) Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + isKeyframe);
+							byte[] full = Arrays.copyOf(encodedFrame, encodedFrame.length);
 
 							recorder.write(full, 0, full.length, isKeyframe, packet.getTimestamp());
 
 							if (isKeyframe && snapshot < 1)
 							{
+								Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + packet.getTimestamp());
 								recorder.writeWebPImage(full, 0, full.length, packet.getTimestamp());
 								snapshot++;
 							}
 						}
-
-						partial = null;
-						lastseqnum = -1;
 					}
 				} else {
 					Log.error("record video cannot parse packet data " + packet);
@@ -1168,7 +1115,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 			this.nickname = nickname;
 			this.user = user;
 			this.focusName = focusName;
-			this.sequenceNumberingViolated = Boolean.valueOf(false);
+			this.sequenceNumberingViolated = false;
 			this.lastSequenceNumber = Integer.valueOf(-1);
 		}
 		/**

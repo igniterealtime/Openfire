@@ -122,7 +122,7 @@ public class Recorder extends Thread
 
 		MatroskaFileTrack track = new MatroskaFileTrack();
 		track.TrackNo = (short)1;
-		track.TrackUID = new java.util.Random().nextLong();
+		track.TrackUID = (long)1;
 		track.TrackType = MatroskaDocType.track_video;
 		track.Name = "VP8";
 		track.CodecName = "VP8";

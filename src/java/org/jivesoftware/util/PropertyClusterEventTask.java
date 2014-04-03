@@ -46,7 +46,7 @@ public class PropertyClusterEventTask implements ClusterTask {
         return task;
     }
 
-    public static PropertyClusterEventTask createDeteleTask(String key) {
+    public static PropertyClusterEventTask createDeleteTask(String key) {
         PropertyClusterEventTask task = new PropertyClusterEventTask();
         task.event = Type.deleted;
         task.key = key;

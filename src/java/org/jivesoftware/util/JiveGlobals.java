@@ -30,10 +30,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.TimerTask;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
@@ -51,13 +53,23 @@ import org.slf4j.LoggerFactory;
  * setting the home directory and path to the configuration file.<p>
  *
  * XML property names must be in the form <code>prop.name</code> - parts of the name must
- * be seperated by ".". The value can be any valid String, including strings with line breaks.
+ * be separated by ".". The value can be any valid String, including strings with line breaks.
  */
 public class JiveGlobals {
 
 	private static final Logger Log = LoggerFactory.getLogger(JiveGlobals.class);
 
     private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "openfire.xml";
+    
+    private static final String JIVE_SECURITY_FILENAME = "conf" + File.separator + "security.xml";
+    private static final String ENCRYPTED_PROPERTY_NAME_PREFIX = "encrypt.";
+    private static final String ENCRYPTED_PROPERTY_NAMES = ENCRYPTED_PROPERTY_NAME_PREFIX + "property.name";
+    private static final String ENCRYPTION_ALGORITHM = ENCRYPTED_PROPERTY_NAME_PREFIX + "algorithm";
+    private static final String ENCRYPTION_KEY_CURRENT = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.current";
+    private static final String ENCRYPTION_KEY_NEW = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.new";
+    private static final String ENCRYPTION_KEY_OLD = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.old";
+    private static final String ENCRYPTION_ALGORITHM_AES = "AES";
+    private static final String ENCRYPTION_ALGORITHM_BLOWFISH = "Blowfish";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -67,7 +79,8 @@ public class JiveGlobals {
 
     public static boolean failedLoading = false;
 
-    private static XMLProperties xmlProperties = null;
+    private static XMLProperties openfireProperties = null;
+    private static XMLProperties securityProperties = null;
     private static JiveProperties properties = null;
 
     private static Locale locale = null;
@@ -75,19 +88,22 @@ public class JiveGlobals {
     private static DateFormat dateFormat = null;
     private static DateFormat dateTimeFormat = null;
     private static DateFormat timeFormat = null;
+    
+    private static Encryptor propertyEncryptor = null;
+    private static String currentKey = null;
 
     /**
      * Returns the global Locale used by Jive. A locale specifies language
      * and country codes, and is used for internationalization. The default
-     * locale is system dependant - Locale.getDefault().
+     * locale is system dependent - Locale.getDefault().
      *
      * @return the global locale used by Jive.
      */
     public static Locale getLocale() {
         if (locale == null) {
-            if (xmlProperties != null) {
+            if (openfireProperties != null) {
                 String [] localeArray;
-                String localeProperty = xmlProperties.getProperty("locale");
+                String localeProperty = openfireProperties.getProperty("locale");
                 if (localeProperty != null) {
                     localeArray = localeProperty.split("_");
                 }
@@ -251,8 +267,8 @@ public class JiveGlobals {
      * @return the location of the home dir.
      */
     public static String getHomeDirectory() {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
         return home;
     }
@@ -297,16 +313,16 @@ public class JiveGlobals {
      * @return the property value specified by name.
      */
     public static String getXMLProperty(String name) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
 
         // home not loaded?
-        if (xmlProperties == null) {
+        if (openfireProperties == null) {
             return null;
         }
 
-        return xmlProperties.getProperty(name);
+        return openfireProperties.getProperty(name);
     }
 
     /**
@@ -329,16 +345,16 @@ public class JiveGlobals {
      * @return the property value specified by name.
      */
     public static String getXMLProperty(String name, String defaultValue) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
 
         // home not loaded?
-        if (xmlProperties == null) {
-            return null;
+        if (openfireProperties == null) {
+            return defaultValue;
         }
 
-        String value = xmlProperties.getProperty(name);
+        String value = openfireProperties.getProperty(name);
         if (value == null) {
             value = defaultValue;
         }
@@ -426,13 +442,13 @@ public class JiveGlobals {
      * @param value the value of the property being set.
      */
     public static void setXMLProperty(String name, String value) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
 
         // jiveHome not loaded?
-        if (xmlProperties != null) {
-            xmlProperties.setProperty(name, value);
+        if (openfireProperties != null) {
+            openfireProperties.setProperty(name, value);
         }
     }
 
@@ -453,12 +469,12 @@ public class JiveGlobals {
      * @param propertyMap a map of properties, keyed on property name.
      */
     public static void setXMLProperties(Map<String, String> propertyMap) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
 
-        if (xmlProperties != null) {
-            xmlProperties.setProperties(propertyMap);
+        if (openfireProperties != null) {
+            openfireProperties.setProperties(propertyMap);
         }
     }
 
@@ -485,16 +501,16 @@ public class JiveGlobals {
      * @return all child property values for the given parent.
      */
     public static List getXMLProperties(String parent) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
 
         // jiveHome not loaded?
-        if (xmlProperties == null) {
+        if (openfireProperties == null) {
             return Collections.EMPTY_LIST;
         }
 
-        String[] propNames = xmlProperties.getChildrenProperties(parent);
+        String[] propNames = openfireProperties.getChildrenProperties(parent);
         List<String> values = new ArrayList<String>();
         for (String propName : propNames) {
             String value = getXMLProperty(parent + "." + propName);
@@ -513,10 +529,10 @@ public class JiveGlobals {
      * @param name the name of the property to delete.
      */
     public static void deleteXMLProperty(String name) {
-        if (xmlProperties == null) {
-            loadSetupProperties();
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
         }
-        xmlProperties.deleteProperty(name);
+        openfireProperties.deleteProperty(name);
     }
 
     /**
@@ -762,22 +778,105 @@ public class JiveGlobals {
         if (isSetupMode()) {
             return;
         }
-        if (getXMLProperty(name) != null) {
-            if (getProperty(name) == null) {
-                Log.debug("JiveGlobals: Migrating XML property '"+name+"' into database.");
-                setProperty(name, getXMLProperty(name));
-                deleteXMLProperty(name);
-            }
-            else if (getProperty(name).equals(getXMLProperty(name))) {
-                Log.debug("JiveGlobals: Deleting duplicate XML property '"+name+"' that is already in database.");
-                deleteXMLProperty(name);
-            }
-            else if (!getProperty(name).equals(getXMLProperty(name))) {
-                Log.warn("Property '"+name+"' as specified in openfire.xml differs from what is stored in the database.  Please make property changes in the database instead of openfire.xml.");
-            }
-        }
+        openfireProperties.migrateProperty(name);
+    }
+    
+    /**
+     * Flags certain properties as being sensitive, based on
+     * property naming conventions. Values for matching property
+     * names are hidden from the Openfire console.
+     * 
+     * @param name The name of the property
+     * @returns True if the property is considered sensitive, otherwise false
+     */
+    public static boolean isPropertySensitive(String name) {
+    	
+    	return name != null && (
+    			name.toLowerCase().indexOf("passwd") > -1 || 
+                name.toLowerCase().indexOf("password") > -1 ||
+                name.toLowerCase().indexOf("cookiekey") > -1);
     }
 
+
+    /**
+     * Determines whether a property is configured for encryption.
+     * 
+     * @param name The name of the property
+     * @returns True if the property is stored using encryption, otherwise false
+     */
+    public static boolean isPropertyEncrypted(String name) {
+    	if (securityProperties == null) {
+    		loadSecurityProperties();
+    	}
+    	return	name != null && 
+    			!name.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX) &&
+    			securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true).contains(name);
+    }
+
+    /**
+     * Set the encryption status for the given property.
+     * 
+     * @param name The name of the property
+     * @param encrypt True to encrypt the property, false to decrypt
+     * @returns True if the property's encryption status changed, otherwise false
+     */
+    public static boolean setPropertyEncrypted(String name, boolean encrypt) {
+    	if (securityProperties == null) {
+    		loadSecurityProperties();
+    	}
+    	boolean propertyWasChanged;
+    	if (isPropertyEncrypted(name)) {
+    		propertyWasChanged = securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
+    	} else {
+    		propertyWasChanged = securityProperties.addToList(ENCRYPTED_PROPERTY_NAMES, name);
+    	}
+    	if (propertyWasChanged) {
+    		resetProperty(name);
+    	}
+    	return propertyWasChanged;
+    }
+
+    /**
+     * Fetches the current value of the property encryption key.
+     * 
+     * @returns The property encryption key
+     */
+    public static Encryptor getPropertyEncryptor() {
+    	if (securityProperties == null) {
+    		loadSecurityProperties();
+    	}
+    	if (propertyEncryptor == null) {
+    		String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+        	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(algorithm)) {
+        		propertyEncryptor = new AesEncryptor(currentKey);
+        	} else {
+        		propertyEncryptor = new Blowfish(currentKey);
+        	}
+    	}
+    	return propertyEncryptor;
+    }
+    
+    /**
+     * This method is called early during the setup process to
+     * set the algorithm for encrypting property values 
+     */
+    public static void setupPropertyEncryptionAlgorithm(String alg) {
+    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
+    		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
+    	} else {
+    		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_BLOWFISH);
+    	}
+    }
+    
+    /**
+     * This method is called early during the setup process to
+     * set a custom key for encrypting property values 
+     */
+    public static void setupPropertyEncryptionKey(String key) {
+    	currentKey = key;
+		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
+    }
+    
    /**
     * Allows the name of the local config file name to be changed. The
     * default is "openfire.xml".
@@ -789,7 +888,7 @@ public class JiveGlobals {
     }
 
     /**
-     * Returns the name of the local config file name.
+     * Returns the name of the local config file.
      *
      * @return the name of the config file.
      */
@@ -799,9 +898,9 @@ public class JiveGlobals {
 
     /**
      * Returns true if in setup mode. A false value means that setup has been completed
-     * or that a connection to the database was possible to properies stored in the
-     * datbase can be retrieved now. The latter means that once the database settings
-     * during the setup was done a connection to the datbase should be available thus
+     * or that a connection to the database was possible to properties stored in the
+     * database can be retrieved now. The latter means that once the database settings
+     * during the setup was done a connection to the database should be available thus
      * properties stored from a previous setup will be available.
      *
      * @return true if in setup mode.
@@ -832,11 +931,11 @@ public class JiveGlobals {
     }
 
     /**
-     * Loads properties if necessary. Property loading must be done lazily so
+     * Loads Openfire properties if necessary. Property loading must be done lazily so
      * that we give outside classes a chance to set <tt>home</tt>.
      */
-    private synchronized static void loadSetupProperties() {
-        if (xmlProperties == null) {
+    private synchronized static void loadOpenfireProperties() {
+        if (openfireProperties == null) {
             // If home is null then log that the application will not work correctly
             if (home == null && !failedLoading) {
                 failedLoading = true;
@@ -845,10 +944,10 @@ public class JiveGlobals {
                 msg.append("which will prevent the application from working correctly.\n\n");
                 System.err.println(msg.toString());
             }
-            // Create a manager with the full path to the xml config file.
+            // Create a manager with the full path to the Openfire config file.
             else {
                 try {
-                    xmlProperties = new XMLProperties(home + File.separator + getConfigName());
+                    openfireProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
                 catch (IOException ioe) {
                     Log.error(ioe.getMessage(), ioe);
@@ -856,5 +955,133 @@ public class JiveGlobals {
                 }
             }
         }
+    }
+
+    /**
+     * Lazy-loads the security configuration properties.
+     */
+    private synchronized static void loadSecurityProperties() {
+    	
+        if (securityProperties == null) {
+            // If home is null then log that the application will not work correctly
+            if (home == null && !failedLoading) {
+                failedLoading = true;
+                StringBuilder msg = new StringBuilder();
+                msg.append("Critical Error! The home directory has not been configured, \n");
+                msg.append("which will prevent the application from working correctly.\n\n");
+                System.err.println(msg.toString());
+                try { 
+                	securityProperties = new XMLProperties();
+                } catch (IOException ioe) {
+                	Log.error("Failed to setup default secuirty properties", ioe);
+                }
+                
+            }
+            // Create a manager with the full path to the security XML file.
+            else {
+                try {
+                	securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
+                    setupPropertyEncryption();
+                    TaskEngine.getInstance().schedule(new TimerTask() {
+                    	public void run() {
+                            // Migrate all secure XML properties into the database automatically
+                            for (String propertyName : securityProperties.getAllPropertyNames()) {
+                            	if (!propertyName.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX)) {
+                            		setPropertyEncrypted(propertyName, true);
+                            		securityProperties.migrateProperty(propertyName);
+                            	}
+                            }
+                    	}
+                    }, 1000);
+                }
+                catch (IOException ioe) {
+                    Log.error(ioe.getMessage(), ioe);
+                    failedLoading = true;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Setup the property encryption key, rewriting encrypted values as appropriate
+     */
+    private static void setupPropertyEncryption() {
+    	
+    	// get/set the current encryption key
+    	Encryptor keyEncryptor = new AesEncryptor();
+    	String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+    	if (encryptedKey ==  null || encryptedKey.isEmpty()) {
+    		currentKey = null;
+    	} else {
+    		currentKey = keyEncryptor.decrypt(encryptedKey);
+    	}
+    	
+    	// check to see if a new key has been defined
+    	String newKey = securityProperties.getProperty(ENCRYPTION_KEY_NEW, false);
+    	if (newKey != null) {
+    		
+    		Log.info("Detected new encryption key; updating encrypted properties");
+
+    		// if a new key has been provided, check to see if the old key matches 
+    		// the current key, otherwise log an error and ignore the new key
+    		String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_OLD);
+    		if (oldKey == null) {
+    			if (currentKey != null) {
+    				Log.warn("Old encryption key was not provided; ignoring new encryption key");
+    				return;
+    			}
+    		} else {
+    			if (!oldKey.equals(currentKey)) {
+    				Log.warn("Old encryption key does not match current encryption key; ignoring new encryption key");
+    				return;
+    			}
+    		}
+
+    		// load DB properties using the current key
+    		if (properties == null) {
+    			properties = JiveProperties.getInstance();
+    		}
+    		
+    		// load XML properties using the current key
+    		Map<String, String> openfireProps = new HashMap<String, String>();
+    		for (String xmlProp : openfireProperties.getAllPropertyNames()) {
+    			if (isPropertyEncrypted(xmlProp)) {
+    				openfireProps.put(xmlProp, openfireProperties.getProperty(xmlProp));
+    			}
+    		}
+    		
+    		// rewrite existing encrypted properties using new encryption key
+    		currentKey = newKey == null || newKey.isEmpty() ? null : newKey;
+    		propertyEncryptor = null;
+    		for (String propertyName : securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true)) {
+    			Log.info("Updating encrypted value for " + propertyName);
+    			if (openfireProps.containsKey(propertyName)) {
+    				openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
+    			} else if (!resetProperty(propertyName)) {
+    				Log.warn("Failed to reset encrypted property value for " + propertyName);
+    			};
+    		}
+    		securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
+    		securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);
+    	}
+	
+		// (re)write the encryption key to the security XML file
+		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, keyEncryptor.encrypt(currentKey));
+    }
+    
+    /**
+     * Read and re-write a given property to reset its encryption status
+     * @param propertyName
+     */
+    private static boolean resetProperty(String propertyName) {
+    	if (properties != null) {
+			String propertyValue = properties.get(propertyName);
+			if (propertyValue != null) {
+				properties.remove(propertyName);
+				properties.put(propertyName, propertyValue);
+				return true;
+			}
+    	}
+		return false;
     }
 }

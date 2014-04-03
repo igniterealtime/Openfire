@@ -26,12 +26,20 @@ import org.slf4j.LoggerFactory;
  * @author Markus Hahn <markus_hahn@gmx.net>
  * @author Gaston Dombiak
  */
-public class Blowfish {
+public class Blowfish implements Encryptor {
 
 	private static final Logger Log = LoggerFactory.getLogger(Blowfish.class);
 
     private BlowfishCBC m_bfish;
     private static Random m_rndGen = new Random();
+    private static final String DEFAULT_KEY = "Blowfish-CBC";
+
+    /**
+     * Creates a new Blowfish object using the default key
+     */
+    public Blowfish() {
+    	setKey(DEFAULT_KEY);
+    }
 
     /**
      * Creates a new Blowfish object using the specified key (oversized
@@ -40,19 +48,7 @@ public class Blowfish {
      * @param password the password (treated as a real unicode array)
      */
     public Blowfish(String password) {
-        // hash down the password to a 160bit key
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA1");
-            digest.update(password.getBytes());
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
-
-        // setup the encryptor (use a dummy IV)
-        m_bfish = new BlowfishCBC(digest.digest(), 0);
-        digest.reset();
+    	setKey(password);
     }
 
     /**
@@ -64,6 +60,7 @@ public class Blowfish {
      * @return encrypted string in binhex format
      */
     public String encryptString(String sPlainText) {
+    	if (sPlainText == null) { return null; }
         // get the IV
         long lCBCIV;
         synchronized (m_rndGen)
@@ -1484,5 +1481,36 @@ public class Blowfish {
 
         return sbuf.toString();
     }
+
+    // Encryptor interface 
+    
+	@Override
+	public String encrypt(String value) {
+		return this.encryptString(value);
+	}
+
+	@Override
+	public String decrypt(String value) {
+		return this.decryptString(value);
+	}
+
+	@Override
+	public void setKey(String key) {
+		
+		String password = key == null ? DEFAULT_KEY : key;
+        // hash down the password to a 160bit key
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA1");
+            digest.update(password.getBytes());
+        }
+        catch (Exception e) {
+            Log.error(e.getMessage(), e);
+        }
+
+        // setup the encryptor (use a dummy IV)
+        m_bfish = new BlowfishCBC(digest.digest(), 0);
+        digest.reset();
+	}
 }
 

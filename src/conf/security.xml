@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This file stores security-related properties needed by Openfire.
+  You may edit this file to manage encrypted properties and 
+  encryption configuration value. Note however that you should not
+  edit this file while Openfire is running, or it may be overwritten.
+  
+  It is important to note that Openfire will store encrypted property
+  values securely "at rest" (e.g. in the database or XML), but the 
+  values will be managed as clear text strings in memory at runtime for
+  interoperability and performance reasons. Encrypted property values
+  are not visible via the Openfire console, but they may be edited or 
+  deleted as needed.
+-->
+<security>
+
+  <encrypt>
+    <!-- This can be set to "AES" or "Blowfish" (default) at setup time -->
+    <algorithm>Blowfish</algorithm>
+    <key>
+      <!-- 
+        If this is a new server setup, you may set a custom encryption key
+        by setting a value for the <new /> encryption key element only.
+      
+        To change the encryption key, provide values for both new and old
+        encryption keys here. The "old" key must match the unencrypted value 
+        of the "current" key. The server will update the existing property
+        values in the database, re-encrypting them using the new key. After
+        the encrypted properties have been updated, the new key will itself
+        be encrypted and re-written into this file as <current />. 
+        
+        Note that if the current encryption key becomes invalid, any property
+        values secured by the original key will be inaccessible as well.
+        
+        The key value can be any string, and it will be hashed, filled, and/or
+        truncated to produce a compatible key for the corresponding algorithm.
+        Note that leading and trailing spaces will be ignored. A strong key 
+        will contain sixteen characters or more.
+
+        <old></old>
+        <new></new>
+       -->
+       <current />
+    </key>
+    <property>
+      <!-- 
+        This list includes the names of properties that have been marked for
+        encryption. Any XML properties (from openfire.xml) that are listed here 
+        will be encrypted automatically upon first use. Other properties 
+        (already in the database) can be added to this list at runtime via the 
+        "System Properties" page in the Openfire console.
+      -->
+      <name>database.defaultProvider.username</name>
+      <name>database.defaultProvider.password</name>
+      <name>ldap.adminDN</name>
+      <name>ldap.adminPassword</name>
+      <name>clearspace.uri</name>
+      <name>clearspace.sharedSecret</name>
+    </property>
+  </encrypt>
+  
+<!-- 
+  Any other property defined in this file will be treated as an encrypted
+  property. The value (in clear text) will be encrypted and migrated into 
+  the Openfire database during the next startup. The property name will 
+  be added to the list of encrypted properties and the clear text value 
+  will be removed from this file.
+  
+  <foo><bar>Secr3t$tr1ng!</bar></foo>
+-->
+
+</security>

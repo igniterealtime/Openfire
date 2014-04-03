@@ -19,6 +19,7 @@
  */
 package org.jivesoftware.util.cache;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -70,7 +71,7 @@ public class CacheFactory {
     
     private static String localCacheFactoryClass;
     private static String clusteredCacheFactoryClass;
-    private static CacheFactoryStrategy cacheFactoryStrategy;
+    private static CacheFactoryStrategy cacheFactoryStrategy = new DefaultLocalCacheStrategy();
     private static CacheFactoryStrategy localCacheFactoryStrategy;
     private static CacheFactoryStrategy clusteredCacheFactoryStrategy;
     private static Thread statsThread;
@@ -440,6 +441,8 @@ public class CacheFactory {
 	        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(
 	        			clusteredCacheFactoryClass, true,
 	        			getClusteredCacheStrategyClassLoader()).newInstance();
+	        } catch (NoClassDefFoundError e) {
+	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
 	        } catch (Exception e) {
 	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
 	        }
@@ -626,10 +629,18 @@ public class CacheFactory {
         }
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {
+        	if (log.isDebugEnabled()) {
+        		StringBuffer pluginLoaderDetails = new StringBuffer("Clustering plugin class loader: ");
+        		pluginLoaderDetails.append(pluginLoader.getClass().getName());
+        		for (URL url : pluginLoader.getURLs()) {
+        			pluginLoaderDetails.append("\n\t").append(url.toExternalForm());
+        		}
+        		log.debug(pluginLoaderDetails.toString());
+        	}
             return pluginLoader;
         }
         else {
-            log.debug("CacheFactory - Unable to find a Plugin that provides clustering support.");
+            log.warn("CacheFactory - Unable to find a Plugin that provides clustering support.");
             return Thread.currentThread().getContextClassLoader();
         }
     }

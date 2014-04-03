@@ -29,6 +29,8 @@
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
+    String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
+    String encryptionKey = ParamUtils.getParameter(request, "encryptionKey");
 
     boolean doContinue = request.getParameter("continue") != null;
 
@@ -55,6 +57,14 @@
             else if (securePort < 0) {
                 securePort = -1;
             }
+            
+            if (encryptionKey != null) {
+            // ensure the same key value was provided twice
+                String repeat = ParamUtils.getParameter(request, "encryptionKey1");
+                if (!encryptionKey.equals(repeat)) {
+                	errors.put("encryptionKey", "encryptionKey");
+                }
+            }
         } else {
             embeddedPort = -1;
             securePort = -1;
@@ -72,6 +82,9 @@
             xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
             session.setAttribute("xmlSettings", xmlSettings);
+
+            JiveGlobals.setupPropertyEncryptionAlgorithm(encryptionAlgorithm);
+            JiveGlobals.setupPropertyEncryptionKey(encryptionKey);
 
             // Successful, so redirect
             response.sendRedirect("setup-datasource-settings.jsp");
@@ -162,6 +175,31 @@
          <%  if (errors.get("securePort") != null) { %>
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_port" />
+            </span>
+        <%  } %>
+    </td>
+</tr>
+<tr valign="top">
+    <td width="1%" nowrap align="right">
+        <fmt:message key="setup.host.settings.encryption_algorithm" />
+    </td>
+    <td width="99%">
+        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_algorithm_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span><br /><br />
+        <input type="radio" name="encryptionAlgorithm" value="Blowfish" checked><fmt:message key="setup.host.settings.encryption_blowfish" /><br /><br />
+        <input type="radio" name="encryptionAlgorithm" value="AES"><fmt:message key="setup.host.settings.encryption_aes" /><br /><br />
+    </td>
+</tr>
+<tr valign="top">
+    <td width="1%" nowrap align="right">
+        <fmt:message key="setup.host.settings.encryption_key" />
+    </td>
+    <td width="99%">
+        <input type="password" size="50" name="encryptionKey" /><br /><br />
+        <input type="password" size="50" name="encryptionKey1" />
+        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_key_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+         <%  if (errors.get("encryptionKey") != null) { %>
+            <span class="jive-error-text">
+            <fmt:message key="setup.host.settings.encryption_key_invalid" />
             </span>
         <%  } %>
     </td>

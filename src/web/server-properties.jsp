@@ -63,6 +63,7 @@
     String propName = ParamUtils.getParameter(request,"propName");
     String propValue = ParamUtils.getParameter(request,"propValue",true);
     boolean edit = ParamUtils.getBooleanParameter(request,"edit");
+    boolean encrypt = ParamUtils.getBooleanParameter(request,"encrypt");
     boolean save = request.getParameter("save") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"del");
 
@@ -81,6 +82,16 @@
         }
     }
 
+    if (encrypt) {
+        if (propName != null) {
+            JiveGlobals.setPropertyEncrypted(propName, true);
+            // Log the event
+            webManager.logEvent("encrypted server property "+propName, null);
+            response.sendRedirect("server-properties.jsp?encryptsuccess=true");
+            return;
+        }
+    }
+
     Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (propName == null || "".equals(propName.trim()) || propName.startsWith("\"")) {
@@ -93,6 +104,7 @@
             errors.put("propValueLength","");
         }
         if (errors.size() == 0) {
+        	JiveGlobals.setPropertyEncrypted(propName, encrypt);
             JiveGlobals.setProperty(propName, propValue);
             // Log the event
             webManager.logEvent("set server property "+propName, propName+" = "+propValue);
@@ -166,6 +178,19 @@
     </table>
     </div><br>
 
+<%  } else if ("true".equals(request.getParameter("encryptsuccess"))) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="server.properties.encrypted" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
 <%  } %>
 
 <%  if (edit) { %>
@@ -205,8 +230,17 @@ function doedit(propName) {
     document.propform.action = document.propform.action + '#edit';
     document.propform.submit();
 }
+function doencrypt(propName) {
+    var doencrypt = confirm('<fmt:message key="server.properties.encrypt_confirm" />');
+    if (doencrypt) {
+	    document.propform.propName.value = propName;
+	    document.propform.encrypt.value = 'true';
+	    document.propform.action = document.propform.action + '#encrypt';
+	    document.propform.submit();
+	}
+}
 function dodelete(propName) {
-    var dodelete = confirm('Are you sure you want to delete this property?');
+    var dodelete = confirm('<fmt:message key="server.properties.delete_confirm" />');
     if (dodelete) {
         document.propform.propName.value = propName;
         document.propform.del.value = 'true';
@@ -221,6 +255,7 @@ function dodelete(propName) {
 
 <form action="server-properties.jsp" method="post" name="propform">
 <input type="hidden" name="edit" value="">
+<input type="hidden" name="encrypt" value="">
 <input type="hidden" name="del" value="">
 <input type="hidden" name="propName" value="">
 
@@ -239,6 +274,7 @@ function dodelete(propName) {
         <th nowrap><fmt:message key="server.properties.name" /></th>
         <th nowrap><fmt:message key="server.properties.value" /></th>
         <th style="text-align:center;"><fmt:message key="server.properties.edit" /></th>
+        <th style="text-align:center;"><fmt:message key="server.properties.encrypt" /></th>
         <th style="text-align:center;"><fmt:message key="global.delete" /></th>
     </tr>
 </thead>
@@ -269,9 +305,8 @@ function dodelete(propName) {
         </td>
         <td>
             <div class="hidebox" style="width:300px;">
-                <% if (n.toLowerCase().indexOf("passwd") > -1 || 
-                       n.toLowerCase().indexOf("password") > -1 ||
-                       n.toLowerCase().indexOf("cookiekey") > -1) { %>
+                <% if (JiveGlobals.isPropertyEncrypted(n) || 
+                       JiveGlobals.isPropertySensitive(n)) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
                 <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
@@ -282,6 +317,15 @@ function dodelete(propName) {
                 ><img src="images/edit-16x16.gif" width="16" height="16"
                       alt="<fmt:message key="server.properties.alt_edit" />" border="0"></a
                 >
+        </td>
+        <td align="center"><%
+          if (!JiveGlobals.isPropertyEncrypted(n)) { %>
+        	<a href="#"  onclick="doencrypt('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');" >
+        	<img src="images/add-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypt" />" border="0"></a><% 
+          } else { %>
+        	<img src="images/lock.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_encrypted" />" border="0"><%
+          } %> 
+        	
         </td>
         <td align="center"><a href="#" onclick="return dodelete('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/delete-16x16.gif" width="16" height="16"
@@ -345,6 +389,7 @@ function dodelete(propName) {
             <fmt:message key="server.properties.value" />:
         </td>
         <td>
+            <% if (JiveGlobals.isPropertyEncrypted(propName) || JiveGlobals.isPropertySensitive(propName)) { propValue = null; } %>
             <textarea cols="45" rows="5" name="propValue" wrap="virtual"><%= (propValue != null ? StringUtils.escapeHTMLTags(propValue, false) : "") %></textarea>
 
             <%  if (errors.containsKey("propValue")) { %>
@@ -356,6 +401,15 @@ function dodelete(propName) {
                 <br><span class="jive-error-text"><fmt:message key="server.properties.max_character" /></span>
 
             <%  } %>
+        </td>
+    </tr>
+    <tr valign="top">
+        <td>
+            <fmt:message key="server.properties.encryption" />:
+        </td>
+        <td>
+            <input type="radio" name="encrypt" value="true" <%= JiveGlobals.isPropertyEncrypted(propName) ? "checked" : "" %> /><fmt:message key="server.properties.encrypt_property_true"/><br/>
+            <input type="radio" name="encrypt" value="false" <%= JiveGlobals.isPropertyEncrypted(propName) ? "" : "checked" %>/><fmt:message key="server.properties.encrypt_property_false"/>
         </td>
     </tr>
 </tbody>

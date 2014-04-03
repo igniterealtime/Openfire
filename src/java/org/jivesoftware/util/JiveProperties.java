@@ -51,12 +51,7 @@ public class JiveProperties implements Map<String, String> {
     private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=? WHERE name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name LIKE ?";
 
-    private static class JivePropertyHolder {
-        private static final JiveProperties instance = new JiveProperties();
-        static {
-            instance.init();
-        }
-    }
+    private static JiveProperties instance = null;
 
     private Map<String, String> properties;
 
@@ -65,16 +60,19 @@ public class JiveProperties implements Map<String, String> {
      *
      * @return an instance of JiveProperties.
      */
-    public static JiveProperties getInstance() {
-        return JivePropertyHolder.instance;
+    public synchronized static JiveProperties getInstance() {
+    	if (instance == null) {
+    		JiveProperties props = new JiveProperties();
+    		props.init();
+    		instance = props;
+    	}
+        return instance;
     }
-
-    private JiveProperties() {
-    }
+    private JiveProperties() { }
 
     /**
      * For internal use only. This method allows for the reloading of all properties from the
-     * values in the datatabase. This is required since it's quite possible during the setup
+     * values in the database. This is required since it's quite possible during the setup
      * process that a database connection will not be available till after this class is
      * initialized. Thus, if there are existing properties in the database we will want to reload
      * this class after the setup process has been completed.
@@ -192,7 +190,7 @@ public class JiveProperties implements Map<String, String> {
         PropertyEventDispatcher.dispatchEvent((String)key, PropertyEventDispatcher.EventType.property_deleted, params);
 
         // Send update to other cluster members.
-        CacheFactory.doClusterTask(PropertyClusterEventTask.createDeteleTask((String) key));
+        CacheFactory.doClusterTask(PropertyClusterEventTask.createDeleteTask((String) key));
 
         return value;
     }
@@ -284,13 +282,14 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void insertProperty(String name, String value) {
+    	Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_PROPERTY);
             pstmt.setString(1, name);
-            pstmt.setString(2, value);
+            pstmt.setString(2, JiveGlobals.isPropertyEncrypted(name) ? encryptor.encrypt(value) : value);
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -302,12 +301,13 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void updateProperty(String name, String value) {
+    	Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, value);
+            pstmt.setString(1, JiveGlobals.isPropertyEncrypted(name) ? encryptor.encrypt(value) : value);
             pstmt.setString(2, name);
             pstmt.executeUpdate();
         }
@@ -337,6 +337,7 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void loadProperties() {
+    	Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -347,7 +348,17 @@ public class JiveProperties implements Map<String, String> {
             while (rs.next()) {
                 String name = rs.getString(1);
                 String value = rs.getString(2);
-                properties.put(name, value);
+                if (JiveGlobals.isPropertyEncrypted(name)) {
+                	try { 
+                		value = encryptor.decrypt(value); 
+                	} catch (Exception ex) {
+                    	Log.error("Failed to load encrypted property value for " + name, ex);
+                    	value = null;
+                	}
+                }
+                if (value != null) { 
+                	properties.put(name, value); 
+                }
             }
         }
         catch (Exception e) {
@@ -356,5 +367,9 @@ public class JiveProperties implements Map<String, String> {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+    }
+    
+    private Encryptor getEncryptor() {
+    	return JiveGlobals.getPropertyEncryptor();
     }
 }

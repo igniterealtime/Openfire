@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Version;
@@ -54,12 +55,11 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
      *      it hasn't been started).
      * @param connectionManager the object that keeps track of the active ports.
      */
-    public XMPPServerInfoImpl(String xmppDomain, String hostname, Version version, Date startDate, ConnectionManager connectionManager) {
+    public XMPPServerInfoImpl(String xmppDomain, String hostname, Version version, Date startDate) {
         this.xmppDomain = xmppDomain;
         this.hostname = hostname;
         this.ver = version;
         this.startDate = startDate;
-        this.connectionManager = connectionManager;
     }
 
     public Version getVersion() {
@@ -103,10 +103,10 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     public Collection<ServerPort> getServerPorts() {
         if (connectionManager == null) {
-            return Collections.emptyList();
+        	connectionManager = XMPPServer.getInstance().getConnectionManager();
         }
-        else {
-            return connectionManager.getPorts();
-        }
+        return (Collection<ServerPort>) (connectionManager == null ?
+        		Collections.emptyList() :
+        		connectionManager.getPorts());
     }
 }

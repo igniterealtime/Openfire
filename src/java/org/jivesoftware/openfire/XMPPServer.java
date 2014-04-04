@@ -334,12 +334,16 @@ public class XMPPServer {
     private void initialize() throws FileNotFoundException {
         locateOpenfire();
 
+        startDate = new Date();
+
         try {
             host = InetAddress.getLocalHost().getHostName();
         }
         catch (UnknownHostException ex) {
             Log.warn("Unable to determine local hostname.", ex);
-            host = "127.0.0.1";
+        }
+        if (host == null) {
+            host = "127.0.0.1";        	
         }
 
         version = new Version(3, 9, 2, Version.ReleaseStatus.Alpha, -1);
@@ -367,6 +371,10 @@ public class XMPPServer {
 
         org.jivesoftware.util.Log.setDebugEnabled(JiveGlobals.getXMLProperty("log.debug.enabled", false));
         
+        // Update server info
+        xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate);
+
+
         initialized = true;
     }
 
@@ -451,19 +459,12 @@ public class XMPPServer {
             finishSetup.start();
             // We can now safely indicate that setup has finished
             setupMode = false;
-
-            // Update server info
-            xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate, getConnectionManager());
         }
     }
 
     public void start() {
         try {
             initialize();
-
-            startDate = new Date();
-            // Store server info
-            xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate, getConnectionManager());
 
             // Create PluginManager now (but don't start it) so that modules may use it
             File pluginDir = new File(openfireHome, "plugins");

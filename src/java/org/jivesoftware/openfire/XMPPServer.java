@@ -561,6 +561,8 @@ public class XMPPServer {
         loadModule(InternalComponentManager.class.getName());
         loadModule(MultiUserChatManager.class.getName());
         loadModule(ClearspaceManager.class.getName());
+        loadModule(IQMessageCarbonsHandler.class.getName());
+
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());

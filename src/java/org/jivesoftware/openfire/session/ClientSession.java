@@ -146,4 +146,19 @@ public interface ClientSession extends Session {
      * @return the new number of conflicts detected on this session.
      */
     public int incrementConflictCount();
+
+    /**
+     * Indicates, whether message carbons are enabled.
+     *
+     * @return True, if message carbons are enabled.
+     */
+    boolean isMessageCarbonsEnabled();
+
+    /**
+     * Enables or disables <a href="http://xmpp.org/extensions/xep-0280.html">XEP-0280: Message Carbons</a> for this session.
+     *
+     * @param enabled True, if message carbons are enabled.
+     * @see <a href="hhttp://xmpp.org/extensions/xep-0280.html">XEP-0280: Message Carbons</a>
+     */
+    void setMessageCarbonsEnabled(boolean enabled);
 }

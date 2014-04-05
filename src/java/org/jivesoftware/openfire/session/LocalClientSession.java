@@ -74,6 +74,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     private static Map<String,String> allowedIPs = new HashMap<String,String>();
     private static Map<String,String> allowedAnonymIPs = new HashMap<String,String>();
 
+    private boolean messageCarbonsEnabled;
+
     /**
      * The authentication token for this session.
      */
@@ -811,6 +813,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public int incrementConflictCount() {
         conflictCount++;
         return conflictCount;
+    }
+
+    @Override
+    public boolean isMessageCarbonsEnabled() {
+        return messageCarbonsEnabled;
+    }
+
+    @Override
+    public void setMessageCarbonsEnabled(boolean enabled) {
+        messageCarbonsEnabled = true;
     }
 
     /**

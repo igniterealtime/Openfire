@@ -20,10 +20,14 @@
 
 package org.jivesoftware.openfire;
 
+   import java.util.List;
    import java.util.StringTokenizer;
 
-import org.jivesoftware.openfire.container.BasicModule;
-import org.jivesoftware.openfire.interceptor.InterceptorManager;
+   import org.dom4j.QName;
+   import org.jivesoftware.openfire.carbons.Sent;
+   import org.jivesoftware.openfire.container.BasicModule;
+   import org.jivesoftware.openfire.forward.Forwarded;
+   import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
    import org.jivesoftware.openfire.privacy.PrivacyList;
    import org.jivesoftware.openfire.privacy.PrivacyListManager;
@@ -85,6 +89,7 @@ public class MessageRouter extends BasicModule {
             throw new NullPointerException();
         }
         ClientSession session = sessionManager.getSession(packet.getFrom());
+
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
@@ -97,7 +102,7 @@ public class MessageRouter extends BasicModule {
                 }
 
                 // Check if the message was sent to the server hostname
-                if (recipientJID != null && recipientJID.getNode() == null && recipientJID.getResource() == null &&
+                if (recipientJID.getNode() == null && recipientJID.getResource() == null &&
                         serverName.equals(recipientJID.getDomain())) {
                     if (packet.getElement().element("addresses") != null) {
                         // Message includes multicast processing instructions. Ask the multicastRouter
@@ -129,12 +134,37 @@ public class MessageRouter extends BasicModule {
                     }
                 }
                 if (isAcceptable) {
+                    boolean isPrivate = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2")) != null;
                     try {
                         // Deliver stanza to requested route
                         routingTable.routePacket(recipientJID, packet, false);
                     } catch (Exception e) {
                         log.error("Failed to route packet: " + packet.toXML(), e);
                         routingFailed(recipientJID, packet);
+                    }
+
+                    // Sent carbon copies to other resources of the sender:
+                    // When a client sends a <message/> of type "chat"
+                    if (packet.getType() == Message.Type.chat && !isPrivate) { // && session.isMessageCarbonsEnabled() ??? // must the own session also be carbon enabled?
+                        List<JID> routes = routingTable.getRoutes(packet.getFrom().asBareJID(), null);
+                        for (JID route : routes) {
+                            // The sending server SHOULD NOT send a forwarded copy to the sending full JID if it is a Carbons-enabled resource.
+                            if (!route.equals(session.getAddress())) {
+                                ClientSession clientSession = sessionManager.getSession(route);
+                                if (clientSession != null && clientSession.isMessageCarbonsEnabled()) {
+                                    Message message = new Message();
+                                    // The wrapping message SHOULD maintain the same 'type' attribute value
+                                    message.setType(packet.getType());
+                                    // the 'from' attribute MUST be the Carbons-enabled user's bare JID
+                                    message.setFrom(packet.getFrom().asBareJID());
+                                    // and the 'to' attribute SHOULD be the full JID of the resource receiving the copy
+                                    message.setTo(route);
+                                    // The content of the wrapping message MUST contain a <sent/> element qualified by the namespace "urn:xmpp:carbons:2", which itself contains a <forwarded/> qualified by the namespace "urn:xmpp:forward:0" that contains the original <message/> stanza.
+                                    message.addExtension(new Sent(new Forwarded(packet)));
+                                    clientSession.process(message);
+                                }
+                            }
+                        }
                     }
                 }
             }

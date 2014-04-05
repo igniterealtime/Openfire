@@ -47,6 +47,8 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
 
     private long initialized = -1;
 
+    private boolean messageCarbonsEnabled;
+
     public RemoteClientSession(byte[] nodeID, JID address) {
         super(nodeID, address);
     }
@@ -151,6 +153,16 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
     public int incrementConflictCount() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.incrementConflictCount);
         return (Integer) doSynchronousClusterTask(task);
+    }
+
+    @Override
+    public boolean isMessageCarbonsEnabled() {
+        return messageCarbonsEnabled;
+    }
+
+    @Override
+    public void setMessageCarbonsEnabled(boolean enabled) {
+        messageCarbonsEnabled = true;
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {

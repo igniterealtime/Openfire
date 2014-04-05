@@ -20,13 +20,17 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
@@ -277,11 +281,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	private boolean routeToLocalDomain(JID jid, Packet packet,
 			boolean fromServer) {
 		boolean routed = false;
+        Element privateElement = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2"));
+        boolean isPrivate = privateElement != null;
+        // The receiving server and SHOULD remove the <private/> element before delivering to the recipient.
+        packet.getElement().remove(privateElement);
+
 		if (jid.getResource() == null) {
 		    // Packet sent to a bare JID of a user
 		    if (packet instanceof Message) {
 		        // Find best route of local user
-		        routed = routeToBareJID(jid, (Message) packet);
+		        routed = routeToBareJID(jid, (Message) packet, isPrivate);
 		    }
 		    else {
 		        throw new PacketException("Cannot route packet of type IQ or Presence to bare JID: " + packet.toXML());
@@ -298,11 +307,40 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())) {
 		        	Log.debug("Unable to route packet. Packet should only be sent to available sessions and the route is not available. {} ", packet.toXML());
 		            routed = false;
-		        }
-		        else {
-		            if (localRoutingTable.isLocalRoute(jid)) {
-		                // This is a route to a local user hosted in this node
-		                try {
+		        } else {
+                    if (localRoutingTable.isLocalRoute(jid)) {
+                        if (packet instanceof Message) {
+                            Message message = (Message) packet;
+                            if (message.getType() == Message.Type.chat && !isPrivate) {
+                                List<JID> routes = getRoutes(jid.asBareJID(), null);
+                                for (JID route : routes) {
+                                    // The receiving server MUST NOT send a forwarded copy to the full JID the original <message/> stanza was addressed to, as that recipient receives the original <message/> stanza.
+                                    if (!route.equals(jid)) {
+                                        ClientSession clientSession = getClientRoute(route);
+                                        if (clientSession.isMessageCarbonsEnabled()) {
+                                            Message carbon = new Message();
+                                            // The wrapping message SHOULD maintain the same 'type' attribute value;
+                                            carbon.setType(message.getType());
+                                            // the 'from' attribute MUST be the Carbons-enabled user's bare JID
+                                            carbon.setFrom(route.asBareJID());
+                                            // and the 'to' attribute MUST be the full JID of the resource receiving the copy
+                                            carbon.setTo(route);
+                                            // The content of the wrapping message MUST contain a <received/> element qualified by the namespace "urn:xmpp:carbons:2", which itself contains a <forwarded/> element qualified by the namespace "urn:xmpp:forward:0" that contains the original <message/>.
+                                            carbon.addExtension(new Received(new Forwarded(message)));
+
+                                            try {
+                                                localRoutingTable.getRoute(route.toString()).process(carbon);
+                                            } catch (UnauthorizedException e) {
+                                                Log.error("Unable to route packet " + packet.toXML(), e);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // This is a route to a local user hosted in this node
+                        try {
 		                    localRoutingTable.getRoute(jid.toString()).process(packet);
 		                    routed = true;
 		                } catch (UnauthorizedException e) {
@@ -333,9 +371,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	 *            the recipient of the packet to route.
 	 * @param packet
 	 *            the packet to route.
-	 * @param fromServer
-	 *            true if the packet was created by the server. This packets
-	 *            should always be delivered
 	 * @throws PacketException
 	 *             thrown if the packet is malformed (results in the sender's
 	 *             session being shutdown).
@@ -398,9 +433,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 	 *            the recipient of the packet to route.
 	 * @param packet
 	 *            the packet to route.
-	 * @param fromServer
-	 *            true if the packet was created by the server. This packets
-	 *            should always be delivered
 	 * @throws PacketException
 	 *             thrown if the packet is malformed (results in the sender's
 	 *             session being shutdown).
@@ -483,7 +515,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @param packet the message to send.
      * @return true if at least one target session was found
      */
-    private boolean routeToBareJID(JID recipientJID, Message packet) {
+    private boolean routeToBareJID(JID recipientJID, Message packet, boolean isPrivate) {
         List<ClientSession> sessions = new ArrayList<ClientSession>();
         // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
         for (JID address : getRoutes(recipientJID, packet.getFrom())) {
@@ -492,7 +524,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 sessions.add(session);
             }
         }
-        sessions = getHighestPrioritySessions(sessions);
+
         if (sessions.isEmpty()) {
             // No session is available so store offline
         	Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
@@ -503,6 +535,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             sessions.get(0).process(packet);
         }
         else {
+
+            // Check for message carbons enabled sessions and sent message to them.
+            for (ClientSession session : sessions) {
+                // Deliver to each session.
+                if (shouldSentToResource(session, packet, isPrivate)) {
+                    session.process(packet);
+                }
+            }
+
             // Many sessions have the highest priority (be smart now) :)
             if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
                 // Sort sessions by show value (e.g. away, xa)
@@ -555,17 +596,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         return o2.getLastActiveDate().compareTo(o1.getLastActiveDate());
                     }
                 });
-                // Deliver stanza to session with highest priority, highest show value and most recent activity
-                targets.get(0).process(packet);
+
+                // Make sure, we don't send the packet again, if it has already been sent by message carbons.
+                ClientSession session = targets.get(0);
+                if (!shouldSentToResource(session, packet, isPrivate)) {
+                    // Deliver stanza to session with highest priority, highest show value and most recent activity
+                    session.process(packet);
+                }
             }
             else {
                 // Deliver stanza to all connected resources with highest priority
+                sessions = getHighestPrioritySessions(sessions);
                 for (ClientSession session : sessions) {
-                    session.process(packet);
+                    // Make sure, we don't send the packet again, if it has already been sent by message carbons.
+                    if (!shouldSentToResource(session, packet, isPrivate)) {
+                        session.process(packet);
+                    }
                 }
             }
         }
         return true;
+    }
+
+    private boolean shouldSentToResource(ClientSession session, Message message, boolean isPrivate) {
+        return !isPrivate && session.isMessageCarbonsEnabled() && message.getType() == Message.Type.chat;
     }
 
     /**

@@ -1495,7 +1495,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		{
 			Presence presence = new Presence();
 			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
-			presence.setTo(owner);
 
 			if (accepted)
 			{
@@ -1505,7 +1504,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				InviteCompletedEvent event = new InviteCompletedEvent(callId);
 				presence.getElement().add(colibriProvider.toXML(event));
 			}
-			router.route(presence);
+
+			for (Participant participant : users.values())
+			{
+				presence.setTo(participant.getUser());
+				router.route(presence);
+			}
 		}
 
 		/**

@@ -1,12 +1,18 @@
-<html>
+<html itemscope itemtype="http://schema.org/Product" prefix="og: http://ogp.me/ns#">
   <head>
-    <title>WebRTC, meet the Jitsi Videobridge</title>
-    <script src="/jitsi/config"></script>
+    <title>Jitsi Videobridge meets WebRTC</title>
+    <meta property="og:title" content="Jitsi Meet"/>
+    <meta property="og:image" content="/images/jitsilogo.png"/>
+    <meta property="og:description" content="Join a WebRTC video conference powered by the Jitsi Videobridge"/>
+    <meta description="Join a WebRTC video conference powered by the Jitsi Videobridge"/>
+    <meta itemprop="name" content="Jitsi Meet"/>
+    <meta itemprop="description" content="Join a WebRTC video conference powered by the Jitsi Videobridge"/>
+    <meta itemprop="image" content="/images/jitsilogo.png"/>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="libs/strophe/strophe.jingle.adapter.js?v=1"></script><!-- strophe.jingle bundles -->
     <script src="libs/strophe/strophe.jingle.bundle.js?v=8"></script>
     <script src="libs/strophe/strophe.jingle.js?v=1"></script>
-    <script src="libs/strophe/strophe.jingle.sdp.js?v=1"></script>
+    <script src="libs/strophe/strophe.jingle.sdp.js?v=2"></script>
     <script src="libs/strophe/strophe.jingle.sdp.util.js?v=1"></script>
     <script src="libs/strophe/strophe.jingle.sessionbase.js?v=1"></script>
     <script src="libs/strophe/strophe.jingle.session.js?v=1"></script>
@@ -17,7 +23,7 @@
     <script src="muc.js?v=9"></script><!-- simple MUC library -->
     <script src="estos_log.js?v=2"></script><!-- simple stanza logger -->
     <script src="desktopsharing.js?v=1"></script><!-- desktop sharing -->
-    <script src="app.js?v=24"></script><!-- application logic -->
+    <script src="app.js?v=25"></script><!-- application logic -->
     <script src="chat.js?v=4"></script><!-- chat logic -->
     <script src="util.js?v=3"></script><!-- utility functions -->
     <script src="etherpad.js?v=7"></script><!-- etherpad plugin -->
@@ -27,12 +33,12 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <link rel="stylesheet" href="css/font.css"/>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css?v=20"/>
-    <link rel="stylesheet" type="text/css" media="screen" href="css/videolayout_default.css?v=1" id="videolayout_default"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="css/videolayout_default.css?v=3" id="videolayout_default"/>
     <link rel="stylesheet" href="css/jquery-impromptu.css?v=4">
     <link rel="stylesheet" href="css/modaldialog.css?v=3">
     <!--
         Link used for inline installation of chrome desktop streaming extension,
-        must contain the same extension id as defined in config.js -->
+        is updated automatically from the code with the value defined in config.js -->
     <link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/diibjkoicjeejcmhdnailmkgecihlobk">
     <script src="libs/jquery-impromptu.js"></script>
     <script src="libs/jquery.autosize.js"></script>

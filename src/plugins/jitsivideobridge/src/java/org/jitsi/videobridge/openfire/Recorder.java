@@ -428,7 +428,7 @@ public class Recorder extends Thread
 				if (recordWebm)
 				{
 					long duration = 0;
-
+/*
 					if (d.keyframe || lastTimecode == 0)
 					{
 						if (lastTimecode != 0)
@@ -453,6 +453,22 @@ public class Recorder extends Thread
 					mFW.addFrame(frame);
 
 					//Log.info("writeData video " + d.data);
+*/
+
+					duration = d.timestamp - lastTimecode;
+
+					mFW.startCluster(d.timestamp);
+					MatroskaFileFrame frame = new MatroskaFileFrame();
+					frame.TrackNo = 1;
+					frame.Duration = duration;
+					frame.Timecode = d.timestamp;
+					frame.Reference = 0;
+					frame.KeyFrame = d.keyframe;
+					frame.Data = d.data;
+					mFW.addFrame(frame);
+					mFW.endCluster();
+
+					lastTimecode = d.timestamp;
 
 				} else {
                 	bo.write(d.data, 0, d.length);

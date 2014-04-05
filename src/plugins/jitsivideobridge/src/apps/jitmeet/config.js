@@ -1,6 +1,6 @@
-config.desktopSharing = 'webrtc';	 			// Desktop sharing method. Can be set to 'ext', 'webrtc' or false to disable.
+config.desktopSharing = 'ext';	 				// Desktop sharing method. Can be set to 'ext', 'webrtc' or false to disable.
 config.chromeExtensionId = 'diibjkoicjeejcmhdnailmkgecihlobk'; 	// Id of desktop streamer Chrome extension
-config.minChromeExtVersion = '0.0.8'; 				// Required version of Chrome extension
+config.minChromeExtVersion = '0.1'; 				// Required version of Chrome extension
     
 config.getroomnode = function (path) 
 { 
@@ -19,4 +19,4 @@ config.getroomnode = function (path)
 		window.history.pushState('VideoChat', 'Room: ' + roomnode, path + "?r=" + roomnode);
 	}
 	return roomnode;    
-}    
+};  

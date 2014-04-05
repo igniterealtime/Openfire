@@ -220,7 +220,41 @@ $(document).bind('mediaready.rayo', function(event, stream)
 $(document).bind('mediafailure.rayo', function(error) {
 	console.error('mediafailure.rayo ' + error);	
 	window.location.href = 'webrtcrequired.html';	
-});    
+}); 
+
+
+$(document).bind('remoteaudiostreamremoved.rayo', function(event, data) 
+{
+	console.log('remoteaudiostreamremoved.rayo ', data);
+
+	var id = 'remoteVideo_' + data.stream.id;	
+	$('#' + id).remove();	
+	resizeThumbnails();	
+});
+	
+$(document).bind('remoteaudiostreamadded.rayo', function(event, data, nick) 
+{
+	console.log('remoteaudiostreamadded.rayo ', data, nick);
+	
+	var pos = nick.indexOf("(");
+	if (pos > -1) nick = nick.substring(0, pos);
+	
+	var id = 'remoteVideo_' + data.stream.id;
+
+	if (!document.getElementById(id))
+	{
+		var vid = document.createElement('video');
+		vid.id = id;
+		vid.autoplay = true;
+		vid.oncontextmenu = function() { return false; };
+		var remotes = document.getElementById('remoteVideos');
+		remotes.appendChild(vid);
+	}
+	var sel = $('#' + id);
+	sel.attr("title", unescape(nick) + " (Audio only)")
+	sel.show();
+	resizeThumbnails();	
+});
 
 $(document).bind('remotestreamadded.rayo', function(event, data, nick) 
 {
@@ -686,11 +720,21 @@ function rayoCallback(presence)
 	
 	$(presence).find('inviteaccepted').each(function() 
 	{
-		$("#invite").removeClass("fa-spin");	
+		var callid = $(this).attr("callid");
+		var streamId = callid.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+		
+		$(document).trigger('remoteaudiostreamadded.rayo', [{stream:{id:streamId}}, callid]);
+		
+		$("#invite").removeClass("fa-spin");
 	});
 	
 	$(presence).find('invitecompleted').each(function() 
 	{
+		var callid = $(this).attr("callid");
+		var streamId = $(this).attr("callid");	
+		var streamId = callid.replace(/[^A-Za-z0-9\+\/\=]/g, "");		
+		$(document).trigger('remoteaudiostreamremoved.rayo', [{stream:{id:streamId}}]);
+		
 		$("#invite").removeClass("fa-border");	
 		$("#invite").removeClass("fa-spin");		
 	});	
@@ -705,6 +749,8 @@ function removeSSRC(from, removesource)
 {		
 	console.log("removeSSRC input ssrc ", removesource);
 
+	var channelId = null;	
+	var foundSSRC = false;
 	var videobridge = $(removesource).attr('videobridge');							
 	var sdp = new SDP(window.RTC.rayo.pc[videobridge].remoteDescription.sdp);
 
@@ -715,6 +761,11 @@ function removeSSRC(from, removesource)
 		var name = $(this).attr('name');		
 		var ssrc = null;
 
+		$(this).find('channel').each(function() 
+		{
+			channelId = $(this).attr('id');
+		});
+		
 		$(this).find('source').each(function() 
 		{		
 		    ssrc = $(this).attr('ssrc');			    
@@ -723,23 +774,30 @@ function removeSSRC(from, removesource)
 		if (ssrc != null)
 		{	
 			var idx = (name == "audio" ? 0 : 1);			
-			if (!screenToVideo) sdp.removeMediaLines(idx, 'a=ssrc:' + ssrc);			
+			if (!screenToVideo) sdp.removeMediaLines(idx, 'a=ssrc:' + ssrc);
+			foundSSRC = true;
 		}
 		
-	});	
-	sdp.raw = sdp.session + sdp.media.join('');
-
-	//console.log("removeSSRC modified SDP", sdp.raw);
-
-	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
-
-		), function() {		
-		    console.log('removeSSRC modify ok');		    
-
-		}, function(error) {
-		
-		    console.log('removeSSRC modify failed');
 	});
+
+	$(document).trigger('remoteaudiostreamremoved.rayo', [{stream:{id:channelId}}]); 
+		
+	if (foundSSRC)	
+	{	
+		sdp.raw = sdp.session + sdp.media.join('');
+
+		//console.log("removeSSRC modified SDP", sdp.raw);
+
+		window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
+
+			), function() {		
+			    console.log('removeSSRC modify ok');		    
+
+			}, function(error) {
+
+			    console.log('removeSSRC modify failed');
+		});
+	}
 };
 
 
@@ -747,6 +805,8 @@ function handleAddSSRC(from, addsource)
 {
 	console.log("handleSSRC input ssrc ", addsource);
 
+	var foundSSRC = false;
+	var channelId = null;
 	var videobridge = $(addsource).attr('videobridge');
 	window.RTC.rayo.nickname = $(addsource).attr('nickname');
 	
@@ -759,6 +819,11 @@ function handleAddSSRC(from, addsource)
 		if (name == "audio") return;
 
 		var lines = '';
+		
+		$(this).find('channel').each(function() 
+		{
+			channelId = $(this).attr('id');
+		});
 
 		$(this).find('source').each(function() 
 		{
@@ -771,34 +836,62 @@ function handleAddSSRC(from, addsource)
 			    lines += ':' + $(this).attr('value');
 
 			lines += '\r\n';
+			foundSSRC = true;
 		    });				    
 		});
 
 		var idx = (name == "audio" ? 0 : 1);
 		sdp.media[idx] += lines;	
-	});
+	});	
+	
+	if (foundSSRC == false)	// NO SSRC, audio participant, show dummy face
+	{
+		$(document).trigger('remoteaudiostreamadded.rayo', [{stream:{id:channelId}}, window.RTC.rayo.nickname]);	
+	
+	} else {
+		sdp.raw = sdp.session + sdp.media.join('');
+		window.RTC.rayo.addssrc = true;
 
-	sdp.raw = sdp.session + sdp.media.join('');
+		window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
 
-	window.RTC.rayo.addssrc = true;
+			), function() {
+			    console.log('handleAddSSRC modify ok', window.RTC.rayo.pc[videobridge].signalingState);			    
 
-	window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
-
-		), function() {
-		    console.log('handleAddSSRC modify ok', window.RTC.rayo.pc[videobridge].signalingState);			    
-
-		}, function(error) {
-		    console.log('handleSSRC modify failed');
-	});
+			}, function(error) {
+			    console.log('handleSSRC modify failed');
+		});	
+	}	
 };
 
 	
 function handleOffer (from, offer) 
 {
 	console.log("handleOffer", offer);
+	
+	var audioDirection = "sendrecv";
+	var videoDirection = "sendrecv";	
+	
+	if (window.RTC.rayo.localStream.getVideoTracks().length == 0 )
+	{
+		videoDirection = "sendonly";
+	}
+	
+	if (window.RTC.rayo.localStream.getAudioTracks().length == 0)
+	{
+		audioDirection = "sendonly";
+	}
+	
+	var SDPHeader = "v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n";
+	var SDPVideo = "m=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=" + videoDirection + "\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\n";
+	var SDPAudio = "m=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=" + audioDirection + "\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\n";
 
-	//var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');	
-	var bridgeSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\n');
+
+	if (!config.recordVideo)
+	{
+		SDPVideo +="a=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n"
+	}
+
+	var bridgeSDP = new SDP(SDPHeader + SDPAudio + SDPVideo);
 	
 	var muc = $(offer).attr('muc');
 	var nick = $(offer).attr('nickname');
@@ -819,63 +912,58 @@ function handleOffer (from, offer)
 			var name = $(this).attr('name');
 			var channel = name == "audio" ? 0 : 1;				
 			
-			if ((window.RTC.rayo.localStream.getVideoTracks().length > 0 && name == "video") || (window.RTC.rayo.localStream.getAudioTracks().length > 0 && name == "audio"))
+			console.log("handleOffer track", name);						
+
+			$(this).find('channel').each(function() 
 			{
-				console.log("handleOffer track", name);						
+				channelId[channel] = $(this).attr('id');
 
-				$(this).find('channel').each(function() 
-				{
-					channelId[channel] = $(this).attr('id');
+				$(this).find('source').each(function() 
+				{	
+					var ssrc = $(this).attr('ssrc');
 
-					$(this).find('source').each(function() 
+					if (ssrc) 
+					{
+					    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'cname:mixed' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'label:mixedlabela0' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'msid:mixedmslabela0 mixedlabela0' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'mslabel:mixedmslabela0' + '\r\n';
+
+					} else {
+					    // make chrome happy... '3735928559' == 0xDEADBEEF
+					    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' + '\r\n';
+					    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' + '\r\n';
+					}							
+				});
+
+				$(this).find('transport').each(function() 
+				{	
+					var pwd = $(this).attr('pwd');
+					var ufrag = $(this).attr('ufrag');
+
+					if (ufrag) bridgeSDP.media[channel] += 'a=ice-ufrag:' + ufrag + '\r\n';
+					if (pwd) bridgeSDP.media[channel] += 'a=ice-pwd:' + pwd + '\r\n';
+
+					$(this).find('candidate').each(function() 
 					{	
-						var ssrc = $(this).attr('ssrc');
-
-						if (ssrc) 
-						{
-						    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'cname:mixed' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'label:mixedlabela0' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'msid:mixedmslabela0 mixedlabela0' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + ssrc + ' ' + 'mslabel:mixedmslabela0' + '\r\n';
-
-						} else {
-						    // make chrome happy... '3735928559' == 0xDEADBEEF
-						    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'cname:mixed' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'label:mixedlabelv0' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'msid:mixedmslabelv0 mixedlabelv0' + '\r\n';
-						    bridgeSDP.media[channel] += 'a=ssrc:' + '3735928559' + ' ' + 'mslabel:mixedmslabelv0' + '\r\n';
-						}							
+						bridgeSDP.media[channel] += SDPUtil.candidateFromJingle(this);						
 					});
 
-					$(this).find('transport').each(function() 
+					$(this).find('fingerprint').each(function() 
 					{	
-						var pwd = $(this).attr('pwd');
-						var ufrag = $(this).attr('ufrag');
+						var hash = $(this).attr('hash');
+						var setup  = $(this).attr('setup');
+						var fingerprint = $(this).text();
 
-						if (ufrag) bridgeSDP.media[channel] += 'a=ice-ufrag:' + ufrag + '\r\n';
-						if (pwd) bridgeSDP.media[channel] += 'a=ice-pwd:' + pwd + '\r\n';
+						if (hash && fingerprint) bridgeSDP.media[channel] += 'a=fingerprint:' + hash + ' ' + fingerprint + '\r\n';
+						if (setup) bridgeSDP.media[channel] += 'a=setup:' + setup + '\r\n';	
 
-						$(this).find('candidate').each(function() 
-						{	
-							bridgeSDP.media[channel] += SDPUtil.candidateFromJingle(this);						
-						});
-
-						$(this).find('fingerprint').each(function() 
-						{	
-							var hash = $(this).attr('hash');
-							var setup  = $(this).attr('setup');
-							var fingerprint = $(this).text();
-
-							if (hash && fingerprint) bridgeSDP.media[channel] += 'a=fingerprint:' + hash + ' ' + fingerprint + '\r\n';
-							if (setup) bridgeSDP.media[channel] += 'a=setup:' + setup + '\r\n';	
-
-						});							
-					});						
-				});
+					});							
+				});						
+			});
 				
-			} else {
-				bridgeSDP.media[channel] = null;
-			}
 		});				
 	});
 

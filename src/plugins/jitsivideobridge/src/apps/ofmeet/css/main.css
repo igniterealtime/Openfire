@@ -54,7 +54,7 @@ html, body{
     display: inline-block;
     background-image:url(../images/avatar1.png);
     background-size: contain; 
-    border-radius:8px;
+    border-radius:4px;
     border: 2px solid #212425;  
 }
 
@@ -254,8 +254,7 @@ a.button:hover {
     top: 7;
     width: 1px;
     height: 25px;
-    background: white;
-    background: -webkit-gradient(linear, 0 0, 0 100%, from(#087dba), to(#087dba), color-stop(50%, white));
+    background: #676767;
 }
 
 #right {

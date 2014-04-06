@@ -84,6 +84,7 @@ import org.ifsoft.rtp.*;
  */
 public class PluginImpl  implements Plugin, PropertyEventListener
 {
+	private static ConcurrentHashMap<String, FocusAgent> sessions;
     /**
      * SIP registration status.
      */
@@ -199,7 +200,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
     /**
 	 *
      */
-    private ComponentImpl componentImpl;
+    private static ComponentImpl componentImpl;
 
 
     public void destroyPlugin()
@@ -648,19 +649,64 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      *
      *
      */
-    public Videobridge getVideoBridge()
+    public static Videobridge getVideoBridge()
     {
         return componentImpl.getVideoBridge();
     }
-
     /**
+     *
+     *
+     */
+	public static CallSession findCreateSession(String from, String to, String destination)
+	{
+		CallSession session = null;
+		String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
+		String focusAgentName = "jitsi.videobridge." + to;
+
+		if (sessions.containsKey(focusAgentName))
+		{
+			FocusAgent focus = sessions.get(focusAgentName);
+
+			if (focus.callSessions.containsKey(from))
+			{
+				session = focus.callSessions.get(from);
+
+			} else {
+
+				Conference conference = null;
+				String focusJid = XMPPServer.getInstance().createJID(focusAgentName, focusAgentName).toString();
+
+				if (focus.focusId != null)
+				{
+					conference = getVideoBridge().getConference(focus.focusId, focusJid);
+				}
+
+				if (conference != null)
+				{
+					MediaService mediaService = LibJitsi.getMediaService();
+					MediaStream mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, mediaService.createSrtpControl(SrtpControlType.MIKEY));
+					mediaStream.setName("rayo-" + System.currentTimeMillis());
+					mediaStream.setSSRCFactory(focus.ssrcFactory);
+					mediaStream.setDevice(conference.getOrCreateContent("audio").getMixer());
+
+					session = new CallSession(mediaStream, hostname, focus, from);
+					focus.callSessions.put(to, session);
+
+					session.jabberRemote = to;
+					session.jabberLocal = from;
+				}
+			}
+		}
+
+		return session;
+	}
+    /*
      *
      *
      */
 
     private class ColibriIQHandler extends IQHandler implements MUCEventListener
     {
-		private ConcurrentHashMap<String, FocusAgent> sessions;
 		private ConcurrentHashMap<String, JID> registry;
 		private ConcurrentHashMap<String, Participant> pending;
 		private MultiUserChatManager mucManager;
@@ -1196,19 +1242,21 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		private SessionPacketRouter router;
 		private String focusName;
 		private JID roomJid;
-		private String focusId = null;
 		private int count = 0;
 		private LocalClientSession session;
 		private String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		private Recorder recorder = null;
 		private AudioMixingPushBufferDataSource outDataSource;
-		private SSRCFactoryImpl ssrcFactory = new SSRCFactoryImpl();
-    	private long initialLocalSSRC;
+
+		public String focusId = null;
+		public SSRCFactoryImpl ssrcFactory = new SSRCFactoryImpl();
 
 		public ConcurrentHashMap<String, Participant> users = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Participant> ids = new ConcurrentHashMap<String, Participant>();
 		public ConcurrentHashMap<String, Element> ssrcs = new ConcurrentHashMap<String, Element>();
 		public ConcurrentHashMap<String, CallSession> callSessions = new ConcurrentHashMap<String, CallSession>();
+
+    	private long initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
 
 		/**
 		 *
@@ -1491,7 +1539,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void inviteEvent(boolean accepted, String callId, JID owner)
+		public void inviteEvent(boolean accepted, String callId)
 		{
 			Presence presence = new Presence();
 			presence.setFrom(XMPPServer.getInstance().createJID(focusName, focusName));
@@ -1572,9 +1620,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				mediaStream.setSSRCFactory(ssrcFactory);
 				mediaStream.setDevice(conference.getOrCreateContent("audio").getMixer());
 
-				initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
-
-				CallSession cs = new CallSession(mediaStream, hostname, reply.getTo(), this, toUri.toString());
+				CallSession cs = new CallSession(mediaStream, hostname, this, toUri.toString());
 				callSessions.put(toUri.toString(), cs);
 
 				cs.jabberRemote = to;

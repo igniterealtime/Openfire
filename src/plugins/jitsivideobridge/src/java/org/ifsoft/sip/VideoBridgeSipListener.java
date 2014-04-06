@@ -59,6 +59,9 @@ import javax.sip.message.Response;
 import org.slf4j.*;
 import org.slf4j.Logger;
 
+import org.jitsi.videobridge.openfire.*;
+
+
 /**
  * Handles incoming sip requests/responses
  *
@@ -228,11 +231,12 @@ public class VideoBridgeSipListener implements SipListener
 						if (th.getTag() == null)
 						{
 							Log.info("[[SIP]] New Subscription, sending add request to user");
+/*
 							sub = new SipSubscription(req);
 							//sub.localTag = ((ToHeader) res.getHeader(ToHeader.NAME)).getTag();
 							((ToHeader) res.getHeader(ToHeader.NAME)).setTag(sub.localTag);
 							SipSubscriptionManager.addWatcher(dest, sub);
-/*
+
 							JID destination = UriMappings.toJID(dest);
 							JID source = new JID(src + "@" + host);
 
@@ -454,42 +458,42 @@ public class VideoBridgeSipListener implements SipListener
 			{
 				if (evt.getDialog() == null)
 				{
-					Log.info("[[SIP]] Got initial invite!");
 					FromHeader fh = (FromHeader) req.getHeader("From");
+					String from = ((SipURI) fh.getAddress().getURI()).getUser();
+
 					URI ruri = req.getRequestURI();
-
-					String src = ((SipURI) fh.getAddress().getURI()).getUser();
 					String dest = ((SipURI) ruri).getUser();
-/*
-					JID destination = UriMappings.toJID(dest);
-					if (destination != null)
+
+					ToHeader th = (ToHeader) req.getHeader("To");
+					String to = ((SipURI) th.getAddress().getURI()).getUser();
+
+					Log.info("[[SIP]] Got initial invite! " + from + " " + to + " " + dest);
+
+					ServerTransaction trans;
+					if (evt.getServerTransaction() == null)
 					{
-						Log.debug("[[SIP]] Attempting to send to destination: " + destination.toString());
+						trans = ((SipProvider) evt.getSource()).getNewServerTransaction(req);
+					}
+					else
+					{
+						trans = evt.getServerTransaction();
+					}
 
-						ServerTransaction trans;
-						if (evt.getServerTransaction() == null)
-						{
-							trans = ((SipProvider) evt.getSource()).getNewServerTransaction(req);
-						}
-						else
-						{
-							trans = evt.getServerTransaction();
-						}
+					Dialog dialog = SipService.sipProvider.getNewDialog(trans);
+					CallSession cs = PluginImpl.findCreateSession(from, to, dest);
 
-						Dialog dialog = SipService.sipProvider.getNewDialog(trans);
-						Session sess = SessionManager.findCreateSession(host, destination);
-						CallSession cs = new CallSession();
+					if (cs != null)
+					{
 						Log.info("[[SIP]] created call session : [[" + cs.internalCallId + "]]");
 						cs.parseInvite(req, dialog, trans);
 						dialog.setApplicationData(cs);
-						if (sess.startCall(cs, src, dest))
-						{
-							Response res = SipService.messageFactory.createResponse(Response.RINGING, req);
-							trans.sendResponse(res);
-							return;
-						}
+						Response res = SipService.messageFactory.createResponse(Response.RINGING, req);
+						trans.sendResponse(res);
+
+						SipService.acceptCall(cs);
+						return;
 					}
-*/
+
 				} else {
 					// SIP RE-INVITE (dumbstart implementation, ignores timers, etc)
 					Log.info("[[SIP]] Got a re-invite!");
@@ -586,6 +590,21 @@ public class VideoBridgeSipListener implements SipListener
 
 					return;
 				}
+			}
+			else if (req.getMethod().equals(Request.REGISTER))
+			{
+				Response res = SipService.messageFactory.createResponse(Response.OK, req);
+
+				if (evt.getServerTransaction() == null)
+				{
+					ServerTransaction tx = ((SipProvider) evt.getSource()).getNewServerTransaction(req);
+					tx.sendResponse(res);
+				}
+				else
+				{
+					evt.getServerTransaction().sendResponse(res);
+				}
+				return;
 			}
 
 			else if (req.getMethod().equals(Request.ACK))

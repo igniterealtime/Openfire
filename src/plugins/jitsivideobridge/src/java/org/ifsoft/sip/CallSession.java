@@ -142,16 +142,14 @@ public class CallSession
 	public String jabberLocal;
 
 	private PluginImpl.FocusAgent focusAgent;
-	private JID owner;
 	private String callId;
 
 
-	public CallSession(MediaStream mediaStream, String host, JID owner, PluginImpl.FocusAgent focusAgent, String callId)
+	public CallSession(MediaStream mediaStream, String host, PluginImpl.FocusAgent focusAgent, String callId)
 	{
 		Log.info("CallSession creation " + host);
 
 		this.mediaStream = mediaStream;
-		this.owner = owner;
 		this.focusAgent = focusAgent;
 		this.callId = callId;
 
@@ -181,7 +179,7 @@ public class CallSession
 		try
 		{
 			mediaStream.stop();
-			focusAgent.inviteEvent(false, callId, owner);
+			focusAgent.inviteEvent(false, callId);
 		}
 		finally
 		{
@@ -811,7 +809,7 @@ public class CallSession
 				}
 			}
 
-			focusAgent.inviteEvent(true, callId, owner);
+			focusAgent.inviteEvent(true, callId);
 		}
 		catch (Exception e)
 		{

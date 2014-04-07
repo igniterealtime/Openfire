@@ -36,14 +36,14 @@ import java.util.Iterator;
  *
  * @author Christian Schudt
  */
-public class IQMessageCarbonsHandler extends IQHandler implements ServerFeaturesProvider {
+public final class IQMessageCarbonsHandler extends IQHandler implements ServerFeaturesProvider {
 
     private static final String NAMESPACE = "urn:xmpp:carbons:2";
 
     private IQHandlerInfo info;
 
     public IQMessageCarbonsHandler() {
-        super("Message Carbons Handler");
+        super("XEP-0280: Message Carbons");
         info = new IQHandlerInfo("", NAMESPACE);
     }
 
@@ -66,9 +66,9 @@ public class IQMessageCarbonsHandler extends IQHandler implements ServerFeatures
                 return error;
             }
         } else {
-            // <forbidden/> if the server's policy forbids the client from enabling Carbons.
+            // if the request is from a client that is not hosted on this server.
             IQ error = IQ.createResultIQ(packet);
-            error.setError(PacketError.Condition.forbidden);
+            error.setError(PacketError.Condition.not_allowed);
             return error;
         }
     }
@@ -78,6 +78,7 @@ public class IQMessageCarbonsHandler extends IQHandler implements ServerFeatures
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }

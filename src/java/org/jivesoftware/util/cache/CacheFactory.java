@@ -419,7 +419,11 @@ public class CacheFactory {
 
     @SuppressWarnings("unchecked")
     private static <T extends Cache> T wrapCache(T cache, String name) {
-        cache = (T) new CacheWrapper(cache);
+    	if ("Routing Components Cache".equals(name)) {
+            cache = (T) new ComponentCacheWrapper(cache);
+    	} else {
+            cache = (T) new CacheWrapper(cache);
+    	}
         cache.setName(name);
 
         caches.put(name, cache);

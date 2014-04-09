@@ -446,7 +446,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             String id = xpp.getAttributeValue("", "id");
             // Get new stream features
             features = reader.parseDocument().getRootElement();
-            if (features != null && (features.element("mechanisms") != null || features.element("dialback") != null)) {
+            if (features != null) {
                 // Check if we can use stream compression
                 String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy", Connection.CompressionPolicy.disabled.toString());
                 Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
@@ -486,7 +486,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                                 }
                                 // Get new stream features
                                 features = reader.parseDocument().getRootElement();
-                                if (features == null || features.element("mechanisms") == null) {
+                                if (features == null) {
                                     log.debug("Error, EXTERNAL SASL was not offered.");
                                     return null;
                                 }

@@ -156,6 +156,7 @@ public class CallSession
 		internalCallId = "CS" + String.format("%08x", nextInternalCallId++);
 
 		offerPayloads.add(PAYLOAD_PCMU);
+		answerPayloads.add(PAYLOAD_PCMU);
 
 		try {
 			InetAddress bindAddr = InetAddress.getByName(host);
@@ -794,6 +795,7 @@ public class CallSession
 								if (bitRatePayload != null)
 								{
 									Payload p = new Payload(codec, name, clockRate, bitRatePayload.bitRate);
+
 									if (offer)
 									{
 										offerPayloads.add(p);

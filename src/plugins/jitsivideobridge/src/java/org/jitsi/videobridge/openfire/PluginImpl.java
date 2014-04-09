@@ -661,7 +661,11 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 	{
 		CallSession session = null;
 		String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
-		String focusAgentName = "jitsi.videobridge." + to;
+		String callerId = to;
+
+		if (callerId.indexOf("+") == 0) callerId = callerId.substring(1);
+
+		String focusAgentName = "jitsi.videobridge." + callerId;
 
 		if (sessions.containsKey(focusAgentName))
 		{
@@ -691,9 +695,6 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 					session = new CallSession(mediaStream, hostname, focus, from);
 					focus.callSessions.put(to, session);
-
-					session.jabberRemote = to;
-					session.jabberLocal = from;
 				}
 			}
 		}

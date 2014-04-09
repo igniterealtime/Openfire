@@ -485,14 +485,20 @@ public class VideoBridgeSipListener implements SipListener
 					if (cs != null)
 					{
 						Log.info("[[SIP]] created call session : [[" + cs.internalCallId + "]]");
-						cs.parseInvite(req, dialog, trans);
-						dialog.setApplicationData(cs);
 						Response res = SipService.messageFactory.createResponse(Response.RINGING, req);
 						trans.sendResponse(res);
 
+						cs.parseInvite(req, dialog, trans);
+						dialog.setApplicationData(cs);
 						SipService.acceptCall(cs);
-						return;
+
+					} else {
+
+						Response res = SipService.messageFactory.createResponse(Response.FORBIDDEN, req);
+						trans.sendResponse(res);
 					}
+
+					return;
 
 				} else {
 					// SIP RE-INVITE (dumbstart implementation, ignores timers, etc)

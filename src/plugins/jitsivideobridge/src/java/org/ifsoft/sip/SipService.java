@@ -133,7 +133,8 @@ public class SipService
 
 	public static String getLocalIP()
 	{
-		return localip;
+		ListeningPoint lp = sipProvider.getListeningPoint(ListeningPoint.UDP);
+		return lp.getIPAddress();
 	}
 
 	private void registerWithDefaultProxy()

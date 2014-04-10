@@ -65,41 +65,41 @@ open source <a href="http://www.hazelcast.org">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 3.1.5.
+The current Hazelcast release is version 3.1.7.
 </p>
 <h2>Installation</h2>
 <p>
 To create an Openfire cluster, you should have at least two Openfire servers,
-and each server must have the Hazelcast plugin installed. To install Hazelcast, 
-simply drop the hazelcast.jar into $OPENFIRE_HOME/plugins along with any other 
-plugins you may have installed. You may also use the Plugins page from the 
-admin console to install the plugin. Note that all servers in a given cluster 
-must be configured to share a single external database (not the Embedded DB). 
+and each server must have the Hazelcast plugin installed. To install Hazelcast,
+simply drop the hazelcast.jar into $OPENFIRE_HOME/plugins along with any other
+plugins you may have installed. You may also use the Plugins page from the
+admin console to install the plugin. Note that all servers in a given cluster
+must be configured to share a single external database (not the Embedded DB).
 </p>
 <p>
 By default during the Openfire startup/initialization process, the servers
 will discover each other by exchanging UDP (multicast) packets via a configurable
-IP address and port. However, be advised that many other initialization options 
-are available and may be used if your network does not support multicast 
+IP address and port. However, be advised that many other initialization options
+are available and may be used if your network does not support multicast
 communication (see <a href="#config">Configuration</a> below).
 </p>
-<p>After the Hazelcast plugin has been deployed to each of the servers, use the 
-radio button controls located on the Clustering page in the admin console to 
-activate/enable the cluster. You only need to enable clustering once; the change 
-will be propagated to the other servers automatically. After refreshing the 
-Clustering page you will be able to see all the servers that have successfully 
+<p>After the Hazelcast plugin has been deployed to each of the servers, use the
+radio button controls located on the Clustering page in the admin console to
+activate/enable the cluster. You only need to enable clustering once; the change
+will be propagated to the other servers automatically. After refreshing the
+Clustering page you will be able to see all the servers that have successfully
 joined the cluster.
 </p>
 <p>
-Note that Hazelcast and the earlier clustering plugins (clustering.jar and enterprise.jar) 
-are mutually exclusive. You will need to remove any existing older clustering plugin(s) 
+Note that Hazelcast and the earlier clustering plugins (clustering.jar and enterprise.jar)
+are mutually exclusive. You will need to remove any existing older clustering plugin(s)
 before installing Hazelcast into your Openfire server(s).
 </p>
 <p>
-With your cluster up and running, you will now want some form of load balancer to 
-distribute the connection load among the members of your Openfire cluster. There 
-are several commercial and open source alternatives for this. For example, 
-if you are using the HTTP/BOSH Openfire connector to connect to Openfire, 
+With your cluster up and running, you will now want some form of load balancer to
+distribute the connection load among the members of your Openfire cluster. There
+are several commercial and open source alternatives for this. For example,
+if you are using the HTTP/BOSH Openfire connector to connect to Openfire,
 the Apache web server (httpd) plus the corresponding proxy balancer module
 (<a href="http://httpd.apache.org/docs/current/mod/mod_proxy_balancer.html">mod_proxy_balancer</a>)
 could provide a workable solution. Some other popular options include the
@@ -109,9 +109,9 @@ could provide a workable solution. Some other popular options include the
 <p>
 A simple round-robin DNS configuration can help distribute XMPP connections across multiple
 Openfire servers in a cluster. While popular as a lightweight and low-cost way to provide
-basic scalability, note that this approach is not considered adequate for true load balancing 
-nor does it provide high availability (HA) from a client perspective. If you are evaluating 
-these options, you can <a href="http://en.wikipedia.org/wiki/Round-robin_DNS">read more here</a>. 
+basic scalability, note that this approach is not considered adequate for true load balancing
+nor does it provide high availability (HA) from a client perspective. If you are evaluating
+these options, you can <a href="http://en.wikipedia.org/wiki/Round-robin_DNS">read more here</a>.
 </p>
 <h2>Upgrading the Hazelcast Plugin</h2>
 <p>
@@ -134,7 +134,7 @@ same version of the plugin to prevent various errors and data synchronization is
 </ol>
 <li>Repeat these steps for the remaining servers in the cluster.</li>
 </ol>
-<h3>Option 2: Online</h3> 
+<h3>Option 2: Online</h3>
 <p><b>NOTE:</b> Using this approach you should be able to continue servicing
 XMPP connections during the upgrade.
 </p>
@@ -144,9 +144,9 @@ XMPP connections during the upgrade.
 <li>Upload the new Hazelcast plugin and confirm it is installed (refresh the page if necessary)</li>
 <li>Use the "Offline" steps above to upgrade and restart the remaining servers.</li>
 </ol>
-<h3>Option 3: Split-Brain</h3> 
+<h3>Option 3: Split-Brain</h3>
 <p><b>NOTE:</b> Use this approach if you only have access to the Openfire console.
-Note however that users may not be able to communicate with each other during the upgrade 
+Note however that users may not be able to communicate with each other during the upgrade
 (if they are connected to different servers).
 </p>
 <ol>
@@ -174,14 +174,14 @@ when running a synchronous task across members of the cluster.</li>
 <li><i>hazelcast.config.xml.filename</i> (hazelcast-cache-config.xml): Name
 of the Hazelcast configuration file. By overriding this value you can easily
 install a custom cache configuration file in the Hazelcast plugin /classes/
-directory, in the directory named via the <i>hazelcast.config.xml.directory</i> 
+directory, in the directory named via the <i>hazelcast.config.xml.directory</i>
 property (described below), or in the classpath of your own custom plugin.</li>
 <li><i>hazelcast.config.xml.directory</i> ({OPENFIRE_HOME}/conf): Directory
-that will be added to the plugin's classpath. This allows a custom Hazelcast 
+that will be added to the plugin's classpath. This allows a custom Hazelcast
 configuration file to be located outside the Openfire home directory.</li>
 <li><i>hazelcast.config.jmx.enabled</i> (false): Enables JMX support for
-the Hazelcast cluster if JMX has been enabled via the Openfire admin console. 
-Refer to the <a href="http://www.hazelcast.com/docs/2.5/manual/multi_html/ch06.html">
+the Hazelcast cluster if JMX has been enabled via the Openfire admin console.
+Refer to the <a href="http://www.hazelcast.com/docs/3.1/manual/multi_html/ch07.html">
 Hazelcast JMX docs</a> for additional information.</li>
 </ol>
 </p>
@@ -204,8 +204,8 @@ following alternative:
 &lt;join&gt;
     &lt;multicast enabled="false"/&gt;
     &lt;tcp-ip enabled="true"&gt;
-      &lt;hostname&gt;of-node-a.example.com:5701&lt;/hostname&gt;
-      &lt;hostname&gt;of-node-b.example.com:5701&lt;/hostname&gt;
+      &lt;member&gt;of-node-a.example.com:5701&lt;/member&gt;
+      &lt;member&gt;of-node-b.example.com:5701&lt;/member&gt;
     &lt;/tcp-ip&gt;
     &lt;aws enabled="false"/&gt;
 &lt;/join&gt;

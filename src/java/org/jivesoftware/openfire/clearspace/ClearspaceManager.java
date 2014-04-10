@@ -527,7 +527,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
      * @return true if Clearspace is being used as the backend of Openfire.
      */
     public static boolean isEnabled() {
-        return AuthFactory.getAuthProvider() instanceof ClearspaceAuthProvider;
+        return AuthFactory.isProviderInstanceOf(ClearspaceAuthProvider.class);
     }
 
     @Override

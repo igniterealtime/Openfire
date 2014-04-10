@@ -756,7 +756,7 @@ public class SASLAuthentication {
             if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
                 // Check if the user provider in use supports passwords retrieval. Accessing
                 // to the users passwords will be required by the CallbackHandler
-                if (!AuthFactory.getAuthProvider().supportsPasswordRetrieval()) {
+                if (!AuthFactory.supportsPasswordRetrieval()) {
                     it.remove();
                 }
             }

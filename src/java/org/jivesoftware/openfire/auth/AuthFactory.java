@@ -115,9 +115,31 @@ public class AuthFactory {
      * only provided for special-case logic.
      *
      * @return the current UserProvider.
+     * @deprecated Prefer using the corresponding factory method, rather than 
+     * 					invoking methods on the provider directly
      */
     public static AuthProvider getAuthProvider() {
         return authProvider;
+    }
+
+    /**
+     * Returns whether the currently-installed AuthProvider is instance of a specific class.
+     * @param c the class to compare with
+     * @return true - if the currently-installed AuthProvider is instance of c, false otherwise.
+     */
+    public static boolean isProviderInstanceOf(Class<?> c) {
+        return c.isInstance(authProvider);
+    }
+
+    /**
+     * Returns true if the currently installed {@link AuthProvider} supports password
+     * retrieval. Certain implementation utilize password hashes and other authentication
+     * mechanisms that do not require the original password.
+     *
+     * @return true if plain password retrieval is supported.
+     */
+    public static boolean supportsPasswordRetrieval() {
+        return authProvider.supportsPasswordRetrieval();
     }
 
     /**
@@ -155,6 +177,21 @@ public class AuthFactory {
             UnsupportedOperationException {
         return authProvider.getPassword(username.toLowerCase());
     }
+
+    /**
+     * Sets the users's password. This method should throw an UnsupportedOperationException
+     * if this operation is not supported by the backend user store.
+     *
+     * @param username the username of the user.
+     * @param password the new plaintext password for the user.
+     * @throws UserNotFoundException if the given user could not be loaded.
+     * @throws UnsupportedOperationException if the provider does not
+     *      support the operation (this is an optional operation).
+     */
+    public static void setPassword(String username, String password) throws UserNotFoundException, 
+    		UnsupportedOperationException, ConnectionException, InternalUnauthenticatedException {
+            authProvider.setPassword(username, password);
+        }
 
     /**
      * Authenticates a user with a username and plain text password and returns and

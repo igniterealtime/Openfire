@@ -40,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.ConnectionException;
+import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.util.StringUtils;
@@ -181,7 +183,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         try {
-            AuthFactory.getAuthProvider().setPassword(username, password);
+            AuthFactory.setPassword(username, password);
 
             // Fire event.
             Map<String,Object> params = new HashMap<String,Object>();
@@ -189,9 +191,13 @@ public class User implements Cacheable, Externalizable, Result {
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
         }
-        catch (UserNotFoundException unfe) {
-            Log.error(unfe.getMessage(), unfe);
-        }
+        catch (UserNotFoundException e) {
+            Log.error(e.getMessage(), e);
+        } catch (ConnectionException e) {
+            Log.error(e.getMessage(), e);
+		} catch (InternalUnauthenticatedException e) {
+            Log.error(e.getMessage(), e);
+		}
     }
 
     public String getName() {

@@ -90,7 +90,7 @@ public class AuthenticateUser extends AdHocCommand {
         }
 
         try {
-            AuthFactory.getAuthProvider().authenticate(user.getUsername(), password);
+        	AuthFactory.authenticate(user.getUsername(), password);
         }
         catch (UnauthorizedException e) {
             // Auth failed

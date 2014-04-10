@@ -152,13 +152,23 @@ public interface MUCRoom extends Externalizable, Result {
     MUCRole getRole();
 
     /**
-     * Obtain the role of a given user by nickname.
+     * Obtain the first role of a given user by nickname.
+     *
+     * @param nickname The nickname of the user you'd like to obtain (cannot be <tt>null</tt>)
+     * @return The user's role in the room
+     * @throws UserNotFoundException If there is no user with the given nickname
+     * @deprecated Prefer {@link #getOccupantsByNickname(String)} instead (a user may be connected more than once)
+     */
+    MUCRole getOccupant(String nickname) throws UserNotFoundException;
+
+    /**
+     * Obtain the roles of a given user by nickname. A user can be connected to a room more than once.
      *
      * @param nickname The nickname of the user you'd like to obtain (cannot be <tt>null</tt>)
      * @return The user's role in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
-    MUCRole getOccupant(String nickname) throws UserNotFoundException;
+    List<MUCRole> getOccupantsByNickname(String nickname) throws UserNotFoundException;
 
     /**
      * Obtain the roles of a given user in the room by his bare JID. A user can have several roles,

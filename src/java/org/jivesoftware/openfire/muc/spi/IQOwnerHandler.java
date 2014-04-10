@@ -237,15 +237,18 @@ public class IQOwnerHandler {
             for (final Element item : itemsList) {
                 try {
                     String affiliation = item.attributeValue("affiliation");
-                    JID jid;
                     if (hasJID) {
-                        jid = new JID(item.attributeValue("jid"));
+                        jids.put(new JID(item.attributeValue("jid")), affiliation);
                     } else {
                         // Get the bare JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        jid = room.getOccupant(nick).getUserAddress();
+                        for (MUCRole role : room.getOccupantsByNickname(nick)) {
+                        	JID jid = role.getUserAddress();
+                        	if (!jids.containsKey(jid)) {
+                        		jids.put(jid, affiliation);
+                        	}
+                        }
                     }
-                    jids.put(jid, affiliation);
                 }
                 catch (UserNotFoundException e) {
                     // Do nothing

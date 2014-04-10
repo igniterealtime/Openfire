@@ -247,7 +247,6 @@ public class IQAdminHandler {
         }
         else {
             // The client is modifying the list of moderators/members/participants/outcasts
-            JID jid;
             String nick;
             String target;
             boolean hasAffiliation = itemsList.get(0).attributeValue("affiliation") !=
@@ -262,59 +261,66 @@ public class IQAdminHandler {
                     item = (Element) anItem;
                     target = (hasAffiliation ? item.attributeValue("affiliation") : item
                             .attributeValue("role"));
+                    List<JID> jids = new ArrayList<JID>();
                     // jid could be of the form "full JID" or "bare JID" depending if we are
                     // going to change a role or an affiliation
                     if (hasJID) {
-                        jid = new JID(item.attributeValue("jid"));
+                        jids.add(new JID(item.attributeValue("jid")));
                         nick = null;
                     } else {
                         // Get the JID based on the requested nick
                         nick = item.attributeValue("nick");
-                        jid = room.getOccupant(nick).getUserAddress();
+                        for (MUCRole role : room.getOccupantsByNickname(nick)) {
+                        	if (!jids.contains(role.getUserAddress())) {
+                        		jids.add(role.getUserAddress());
+                        	}
+                        }
                     }
 
-                    if ("moderator".equals(target)) {
-                        // Add the user as a moderator of the room based on the full JID
-                        presences.add(room.addModerator(jid, senderRole));
-                    } else if ("owner".equals(target)) {
-                        presences.addAll(room.addOwner(jid, senderRole));
-                    } else if ("admin".equals(target)) {
-                        presences.addAll(room.addAdmin(jid, senderRole));
-                    } else if ("participant".equals(target)) {
-                        // Add the user as a participant of the room based on the full JID
-                        presences.add(room.addParticipant(jid,
-                                item.elementTextTrim("reason"),
-                                senderRole));
-                    } else if ("visitor".equals(target)) {
-                        // Add the user as a visitor of the room based on the full JID
-                        presences.add(room.addVisitor(jid, senderRole));
-                    } else if ("member".equals(target)) {
-                        // Add the user as a member of the room based on the bare JID
-                        boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
-                        presences.addAll(room.addMember(jid, nick, senderRole));
-                        // If the user had an affiliation don't send an invitation. Otherwise
-                        // send an invitation if the room is members-only and skipping invites
-                       // are not disabled system-wide xmpp.muc.skipInvite
-                        if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
-                            room.sendInvitation(jid, null, senderRole, null);
-                        }
-                    } else if ("outcast".equals(target)) {
-                        // Add the user as an outcast of the room based on the bare JID
-                        presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderRole));
-                    } else if ("none".equals(target)) {
-                        if (hasAffiliation) {
-                            // Set that this jid has a NONE affiliation based on the bare JID
-                            presences.addAll(room.addNone(jid, senderRole));
-                        } else {
-                            // Kick the user from the room
-                            if (MUCRole.Role.moderator != senderRole.getRole()) {
-                                throw new ForbiddenException();
+                    for (JID jid : jids) {
+                        if ("moderator".equals(target)) {
+                            // Add the user as a moderator of the room based on the full JID
+                            presences.add(room.addModerator(jid, senderRole));
+                        } else if ("owner".equals(target)) {
+                            presences.addAll(room.addOwner(jid, senderRole));
+                        } else if ("admin".equals(target)) {
+                            presences.addAll(room.addAdmin(jid, senderRole));
+                        } else if ("participant".equals(target)) {
+                            // Add the user as a participant of the room based on the full JID
+                            presences.add(room.addParticipant(jid,
+                                    item.elementTextTrim("reason"),
+                                    senderRole));
+                        } else if ("visitor".equals(target)) {
+                            // Add the user as a visitor of the room based on the full JID
+                            presences.add(room.addVisitor(jid, senderRole));
+                        } else if ("member".equals(target)) {
+                            // Add the user as a member of the room based on the bare JID
+                            boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
+                            presences.addAll(room.addMember(jid, nick, senderRole));
+                            // If the user had an affiliation don't send an invitation. Otherwise
+                            // send an invitation if the room is members-only and skipping invites
+                           // are not disabled system-wide xmpp.muc.skipInvite
+                            if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
+                                room.sendInvitation(jid, null, senderRole, null);
                             }
-                            presences.add(room.kickOccupant(jid, senderRole.getUserAddress(),
-                                    item.elementTextTrim("reason")));
+                        } else if ("outcast".equals(target)) {
+                            // Add the user as an outcast of the room based on the bare JID
+                            presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderRole));
+                        } else if ("none".equals(target)) {
+                            if (hasAffiliation) {
+                                // Set that this jid has a NONE affiliation based on the bare JID
+                                presences.addAll(room.addNone(jid, senderRole));
+                            } else {
+                                // Kick the user from the room
+                                if (MUCRole.Role.moderator != senderRole.getRole()) {
+                                    throw new ForbiddenException();
+                                }
+                                presences.add(room.kickOccupant(jid, senderRole.getUserAddress(),
+                                        item.elementTextTrim("reason")));
+                            }
+                        } else {
+                            reply.setError(PacketError.Condition.bad_request);
                         }
-                    } else {
-                        reply.setError(PacketError.Condition.bad_request);
                     }
                 }
                 catch (UserNotFoundException e) {

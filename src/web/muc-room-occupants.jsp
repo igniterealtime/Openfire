@@ -21,7 +21,8 @@
                  org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.util.ParamUtils,
                  java.net.URLEncoder,
-                 java.text.DateFormat"
+                 java.text.DateFormat,
+                 java.util.List"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
@@ -49,10 +50,12 @@
 
     // Kick nick specified
     if (kick != null) {
-        MUCRole role = room.getOccupant(nickName);
-        if (role != null) {
+        List<MUCRole> roles = room.getOccupantsByNickname(nickName);
+        if (roles != null && roles.size() > 0) {
             try {
-                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), "");
+            	for (MUCRole role : roles) {
+                    room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), "");
+            	}
                 // Log the event
                 webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect

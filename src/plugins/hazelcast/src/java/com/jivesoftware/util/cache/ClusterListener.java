@@ -457,7 +457,7 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
         }
 
         public void entryRemoved(EntryEvent event) {
-            if (event.getValue() == null && ((Collection)event.getOldValue()).isEmpty()) {
+            if (event == null || (event.getValue() == null && event.getOldValue() == null)) {
                 // Nothing to remove
                 return;
             }

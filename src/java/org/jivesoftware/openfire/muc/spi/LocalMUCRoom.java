@@ -805,8 +805,10 @@ public class LocalMUCRoom implements MUCRoom {
                 leaveRole.send(presence);
             }
             else {
-                // Inform the rest of the room occupants that the user has left the room
-                broadcastPresence(presence, false);
+            	if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
+                    // Inform the rest of the room occupants that the user has left the room
+                    broadcastPresence(presence, false);
+            	}
             }
         }
         catch (Exception e) {
@@ -1164,6 +1166,7 @@ public class LocalMUCRoom implements MUCRoom {
         if (messageRequest.isOriginator() && isLogEnabled()) {
             MUCRole senderRole = null;
             JID senderAddress;
+            // convert the MUC nickname/role JID back into a real user JID
             if (message.getFrom() != null && message.getFrom().getResource() != null) {
             	// get the first MUCRole for the sender
             	List<MUCRole> occupants = occupantsByNickname.get(message.getFrom().getResource().toLowerCase());

@@ -90,7 +90,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	private static final String CONVERSATION_COUNT = "SELECT COUNT(*) FROM ofConversation";
 	private static final String MESSAGE_COUNT = "SELECT COUNT(*) FROM ofMessageArchive";
 	private static final String DELETE_CONVERSATION_1 = "DELETE FROM ofMessageArchive WHERE conversationID=?";
-	private static final String DELETE_CONVERSATION_2 = "DELETE FROM ofConparticipant WHERE conversationID=?";
+	private static final String DELETE_CONVERSATION_2 = "DELETE FROM ofConParticipant WHERE conversationID=?";
 	private static final String DELETE_CONVERSATION_3 = "DELETE FROM ofConversation WHERE conversationID=?";
 
 	private static final int DEFAULT_IDLE_TIME = 10;

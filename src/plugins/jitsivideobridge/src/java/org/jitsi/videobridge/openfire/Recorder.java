@@ -427,6 +427,7 @@ public class Recorder extends Thread
 	    	{
 				if (recordWebm)
 				{
+           			Log.info("writeData " + d.timestamp);
 					long duration = 0;
 /*
 					if (d.keyframe || lastTimecode == 0)
@@ -487,7 +488,7 @@ public class Recorder extends Thread
 			{
 				if (recordWebm)
 				{
-					mFW.endCluster();
+					//mFW.endCluster();
 					iFW.close();
 
 				} else {

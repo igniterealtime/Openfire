@@ -37,6 +37,7 @@ public class MatroskaFileWriter
 {
   protected DataWriter ioDW;
   private MatroskaCluster clusterElem = null;
+  private MasterElement segmentElem = null;
   private long clusterTimecode;
   protected MatroskaDocType doc = new MatroskaDocType();
 
@@ -88,13 +89,23 @@ public class MatroskaFileWriter
 
   public void writeSegmentHeader()
   {
-    //MatroskaSegment segmentElem = (MatroskaSegment)doc.createElement(MatroskaDocType.Segment_Id);
-    //segmentElem.setSize(-1);
-    //segmentElem.setUnknownSize(false);
-    //segmentElem.writeHeaderData(ioDW);
 
-    MasterElement ebmlHeaderElem = (MasterElement)doc.createElement(MatroskaDocType.Segment_Id);
-    ebmlHeaderElem.writeElement(ioDW);
+    segmentElem = (MasterElement)doc.createElement(MatroskaDocType.Segment_Id);
+
+    MasterElement ebmlSeekHeadElem = (MasterElement)doc.createElement(MatroskaDocType.SeekHead_Id);
+
+    MasterElement ebmlSeekEntryElem1 = (MasterElement)doc.createElement(MatroskaDocType.SeekEntry_Id);
+    BinaryElement seekID1 = (BinaryElement)doc.createElement(MatroskaDocType.SeekID_Id);
+    seekID1.setData(MatroskaDocType.Tracks_Id);
+    UnsignedIntegerElement SeekPosition1 = (UnsignedIntegerElement)doc.createElement(MatroskaDocType.SeekPosition_Id);
+    SeekPosition1.setValue(0);
+    ebmlSeekEntryElem1.addChildElement(seekID1);
+    ebmlSeekEntryElem1.addChildElement(SeekPosition1);
+
+    ebmlSeekHeadElem.addChildElement(ebmlSeekEntryElem1);
+
+    segmentElem.addChildElement(ebmlSeekHeadElem);
+
   }
 
   public void writeSegmentInfo()
@@ -115,7 +126,8 @@ public class MatroskaFileWriter
     timecodescaleElem.setValue(TimecodeScale);
 
     FloatElement durationElem = (FloatElement)doc.createElement(MatroskaDocType.Duration_Id);
-    durationElem.setValue(Duration * 1000.0);
+    //durationElem.setValue(Duration * 1000.0);
+    durationElem.setValue(0);
 
     //segmentInfoElem.addChildElement(dateElem);
     segmentInfoElem.addChildElement(timecodescaleElem);
@@ -123,7 +135,9 @@ public class MatroskaFileWriter
     segmentInfoElem.addChildElement(writingAppElem);
     segmentInfoElem.addChildElement(durationElem);
 
-    segmentInfoElem.writeElement(ioDW);
+
+    //segmentInfoElem.writeElement(ioDW);
+    segmentElem.addChildElement(segmentInfoElem);
   }
 
   public void writeTracks()
@@ -227,7 +241,8 @@ public class MatroskaFileWriter
       tracksElem.addChildElement(trackEntryElem);
     }
 
-    tracksElem.writeElement(ioDW);
+    segmentElem.addChildElement(tracksElem);
+    segmentElem.writeElement(ioDW);
   }
 
   public void startCluster(long clusterTimecode)

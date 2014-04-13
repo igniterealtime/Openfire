@@ -64,6 +64,7 @@ public abstract class RTPConnectorInputStream
     protected boolean closed;
 
     public Participant videoRecorder;
+    public Participant audioScanner;
 
     /**
      * The <tt>DatagramPacketFilter</tt>s which allow dropping
@@ -412,6 +413,9 @@ public abstract class RTPConnectorInputStream
                         if (buffer != null)
                             buffer.setFlags(pkt.getFlags());
 
+                        if (videoRecorder != null) videoRecorder.recordData(pkt);
+                        if (audioScanner != null) audioScanner.scanData(pkt);
+
                     }
                 }
             }
@@ -550,9 +554,6 @@ public abstract class RTPConnectorInputStream
                                  */
                                 poolRawPacket(oldPkt);
                             }
-
-
-                        	if (videoRecorder != null) videoRecorder.recordData(pkt);
 
                             if ((transferHandler != null) && !closed)
                             {

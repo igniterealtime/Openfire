@@ -13,7 +13,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.util.jar.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.security.cert.Certificate;
 
 import javax.media.*;
@@ -156,19 +156,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * The Jabber component which has been added to {@link #componentManager}
      * i.e. Openfire.
      */
-    private Component component;
+    private Component component = null;
 
     /**
      * The <tt>ComponentManager</tt> to which the {@link #component} of this
      * <tt>Plugin</tt> has been added.
      */
-    private ComponentManager componentManager;
+    private ComponentManager componentManager = null;
 
     /**
      * The subdomain of the address of {@link #component} with which it has been
      * added to {@link #componentManager}.
      */
-    private String subdomain;
+    private String subdomain = null;
 
     /**
      * RAYO IQ Handler for colibri
@@ -202,10 +202,17 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      */
     private static ComponentImpl componentImpl;
 
+    /**
+	 *
+     */
+    private ExecutorService executorService;
+
 
     public void destroyPlugin()
     {
         PropertyEventDispatcher.removeListener(this);
+
+        executorService.shutdown();
 
         if ((componentManager != null) && (subdomain != null))
         {
@@ -234,7 +241,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * located
      * @see Plugin#initializePlugin(PluginManager, File)
      */
-    public void initializePlugin(PluginManager manager, File pluginDirectory)
+    public void initializePlugin(final PluginManager manager, final File pluginDirectory)
     {
         PropertyEventDispatcher.addListener(this);
 
@@ -242,94 +249,89 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_NAME", ".");
 		System.setProperty("org.jitsi.impl.neomedia.transform.srtp.SRTPCryptoContext.checkReplay", JiveGlobals.getProperty(CHECKREPLAY_PROPERTY_NAME, "false"));
 
+		executorService = Executors.newFixedThreadPool(2);
+
 		// start video conference web application
-
-		try {
-			String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "jitsi");
-			Log.info("Initialize Web App " + appName);
-
-			ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
-			WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
-			context.setWelcomeFiles(new String[]{"index.html"});
-
-			String username = JiveGlobals.getProperty(USERNAME_PROPERTY_NAME, null);
-			String password = JiveGlobals.getProperty(PASSWORD_PROPERTY_NAME, "jitsi");
-
-			if (username != null && "".equals(username) == false)
+		executorService.execute(new Runnable()
+		{
+			public void run()
 			{
-				context.setSecurityHandler(basicAuth(username, password, "Videobridge"));
+				try {
+					String appName = JiveGlobals.getProperty(VIDEO_CONFERENCE_PROPERTY_NAME, "jitsi");
+					Log.info("Initialize Web App " + appName);
+
+					ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
+					WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/" + appName);
+					context.setWelcomeFiles(new String[]{"index.html"});
+
+					String username = JiveGlobals.getProperty(USERNAME_PROPERTY_NAME, null);
+					String password = JiveGlobals.getProperty(PASSWORD_PROPERTY_NAME, "jitsi");
+
+					if (username != null && "".equals(username) == false)
+					{
+						context.setSecurityHandler(basicAuth(username, password, "Videobridge"));
+					}
+
+					createIQHandlers();
+
+					Properties properties = new Properties();
+					String hostName = XMPPServer.getInstance().getServerInfo().getHostname();
+					String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
+					String port = JiveGlobals.getProperty(SIP_PORT_PROPERTY_NAME, "5070");
+
+					properties.setProperty("com.voxbone.kelpie.hostname", hostName);
+					properties.setProperty("com.voxbone.kelpie.ip", hostName);
+					properties.setProperty("com.voxbone.kelpie.sip_port", port);
+
+					properties.setProperty("javax.sip.IP_ADDRESS", hostName);
+
+					properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "99");
+					properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
+					properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
+
+					new SipService(properties);
+
+					Log.info("Initialize SIP Stack at " + hostName + ":" + port);
+
+				}
+				catch(Exception e) {
+					Log.error( "Jitsi Videobridge web app initialize error", e);
+				}
+
+
+				// Let's check for custom configuration
+				String maxVal = JiveGlobals.getProperty(MAX_PORT_NUMBER_PROPERTY_NAME);
+				String minVal = JiveGlobals.getProperty(MIN_PORT_NUMBER_PROPERTY_NAME);
+
+				if(maxVal != null)
+					setIntProperty(
+						DefaultStreamConnector.MAX_PORT_NUMBER_PROPERTY_NAME,
+						maxVal);
+				if(minVal != null)
+					setIntProperty(
+						DefaultStreamConnector.MIN_PORT_NUMBER_PROPERTY_NAME,
+						minVal);
+
+				checkNatives();
+				checkRecordingFolder(pluginDirectory);
+
+				componentManager = ComponentManagerFactory.getComponentManager();
+				subdomain = ComponentImpl.SUBDOMAIN;
+				component = new ComponentImpl();
+				boolean added = false;
+
+				try
+				{
+					componentManager.addComponent(subdomain, component);
+					added = true;
+					componentImpl = (ComponentImpl) component;
+				}
+				catch (ComponentException ce)
+				{
+					ce.printStackTrace(System.err);
+				}
 			}
-
-			createIQHandlers();
-
-			Properties properties = new Properties();
-			String hostName = XMPPServer.getInstance().getServerInfo().getHostname();
-			String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
-			String port = JiveGlobals.getProperty(SIP_PORT_PROPERTY_NAME, "5070");
-
-			properties.setProperty("com.voxbone.kelpie.hostname", hostName);
-			properties.setProperty("com.voxbone.kelpie.ip", hostName);
-			properties.setProperty("com.voxbone.kelpie.sip_port", port);
-
-			properties.setProperty("javax.sip.IP_ADDRESS", hostName);
-
-			properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "99");
-			properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
-			properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
-
-			new SipService(properties);
-
-			Log.info("Initialize SIP Stack at " + hostName + ":" + port);
-
-		}
-		catch(Exception e) {
-			Log.error( "Jitsi Videobridge web app initialize error", e);
-		}
-
-
-        // Let's check for custom configuration
-        String maxVal = JiveGlobals.getProperty(MAX_PORT_NUMBER_PROPERTY_NAME);
-        String minVal = JiveGlobals.getProperty(MIN_PORT_NUMBER_PROPERTY_NAME);
-
-        if(maxVal != null)
-            setIntProperty(
-                DefaultStreamConnector.MAX_PORT_NUMBER_PROPERTY_NAME,
-                maxVal);
-        if(minVal != null)
-            setIntProperty(
-                DefaultStreamConnector.MIN_PORT_NUMBER_PROPERTY_NAME,
-                minVal);
-
-        checkNatives();
-        checkRecordingFolder(pluginDirectory);
-
-        ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
-        String subdomain = ComponentImpl.SUBDOMAIN;
-        Component component = new ComponentImpl();
-        boolean added = false;
-
-        try
-        {
-            componentManager.addComponent(subdomain, component);
-            added = true;
-            componentImpl = (ComponentImpl) component;
-        }
-        catch (ComponentException ce)
-        {
-            ce.printStackTrace(System.err);
-        }
-        if (added)
-        {
-            this.componentManager = componentManager;
-            this.subdomain = subdomain;
-            this.component = component;
-        }
-        else
-        {
-            this.componentManager = null;
-            this.subdomain = null;
-            this.component = null;
-        }
+		});
     }
 
     /**
@@ -1039,7 +1041,12 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public MediaStream mediaStream = null;
+		public MediaStream videoStream = null;
+		/**
+		 *
+		 *
+		 */
+		public MediaStream audioStream = null;
 		/**
 		 *
 		 *
@@ -1072,7 +1079,33 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		private PropertyChangeListener streamPropertyChangeListener = new PropertyChangeListener()
+		private PropertyChangeListener audioStreamPropertyChangeListener = new PropertyChangeListener()
+		{
+			public void propertyChange(PropertyChangeEvent ev)
+			{
+				String propertyName = ev.getPropertyName();
+				String prefix = MediaStreamImpl.class.getName() + ".rtpConnector.";
+
+				if (propertyName.startsWith(prefix))
+				{
+					Object newValue = ev.getNewValue();
+
+					if (newValue instanceof RTPConnectorInputStream)
+					{
+						String rtpConnectorPropertyName = propertyName.substring(prefix.length());
+
+						if (rtpConnectorPropertyName.equals("dataInputStream"))
+						{
+							Log.info("PropertyChangeListener " + rtpConnectorPropertyName);
+
+							((RTPConnectorInputStream) newValue).audioScanner = me;
+						}
+					}
+				}
+			}
+		};
+
+		private PropertyChangeListener videoStreamPropertyChangeListener = new PropertyChangeListener()
 		{
 			public void propertyChange(PropertyChangeEvent ev)
 			{
@@ -1101,57 +1134,106 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void recordData(RawPacket packet)
+		synchronized public void scanData(final RawPacket packet)
 		{
-			//if (snapshot < 1) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
+			//if (snapshot < 10) Log.info("scanData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
 
-			try {
+			if (packet != null)
+			{
+				final byte[] rtp = packet.getPayload();
+				final int sequenceNumber = packet.getSequenceNumber();
+				final boolean isMarked = packet.isPacketMarked();
+				final long timestamp = packet.getTimestamp();
+				final byte payloadType = packet.getPayloadType();
 
-				if (packet != null)
+				executorService.execute(new Runnable()
 				{
-					byte[] rtp = packet.getPayload();
-
-					if(!_sequenceNumberingViolated && _lastSequenceNumber.intValue() > -1 && Vp8Packet.getSequenceNumberDelta(packet.getSequenceNumber(), _lastSequenceNumber).intValue() > 1)
-						_sequenceNumberingViolated = true;
-
-					_lastSequenceNumber = packet.getSequenceNumber();
-					Vp8Packet packet2 = Vp8Packet.parseBytes(rtp);
-
-					if(packet2 == null)	return;
-
-					_accumulator.add(packet2);
-					byte encodedFrame[] = null;
-
-					if (packet.isPacketMarked())
+					public void run()
 					{
-						encodedFrame = Vp8Packet.depacketize(_accumulator.getPackets());
-						boolean isKeyframe = encodedFrame != null && encodedFrame.length > 0 && (encodedFrame[0] & 1) == 0;
+						try {
 
-						if(_sequenceNumberingViolated && isKeyframe)
-							_sequenceNumberingViolated = false;
+							//Log.info("Audio packet type " + payloadType);
 
-						_accumulator.reset();
 
-						if (recorder != null && encodedFrame != null && _sequenceNumberingViolated == false)
-						{
-							byte[] full = Arrays.copyOf(encodedFrame, encodedFrame.length);
-
-							recorder.write(full, 0, full.length, isKeyframe, packet.getTimestamp());
-
-							if (isKeyframe && snapshot < 1)
-							{
-								Log.info("recordData " + " " + packet.getPayloadType() + " " + full + " " + packet.getSequenceNumber() + " " + packet.getTimestamp());
-								recorder.writeWebPImage(full, 0, full.length, packet.getTimestamp());
-								snapshot++;
-							}
+						} catch (Exception e) {
+							Log.error("Error scanning audio", e);
 						}
 					}
-				} else {
-					Log.error("record video cannot parse packet data " + packet);
-				}
+				});
 
-			} catch (Exception e) {
-				Log.error("Error writing video recording" , e);
+			} else {
+				Log.error("scan audio cannot parse packet data " + packet);
+			}
+		}
+
+		/**
+		 *
+		 *
+		 */
+		synchronized public void recordData(final RawPacket packet)
+		{
+			//if (snapshot < 10) Log.info("transferData " + packet.getPayloadLength() + " " + packet.getHeaderLength()  + " " + packet.getExtensionLength());
+
+			if (packet != null)
+			{
+				final byte[] rtp = packet.getPayload();
+				final int sequenceNumber = packet.getSequenceNumber();
+				final boolean isMarked = packet.isPacketMarked();
+				final long timestamp = packet.getTimestamp();
+
+				//executorService.execute(new Runnable()
+				//{
+				//	public void run()
+				//	{
+						try {
+
+							synchronized (_accumulator)
+							{
+								if(!_sequenceNumberingViolated && _lastSequenceNumber.intValue() > -1 && Vp8Packet.getSequenceNumberDelta(sequenceNumber, _lastSequenceNumber).intValue() > 1)
+									_sequenceNumberingViolated = true;
+
+								_lastSequenceNumber = sequenceNumber;
+								Vp8Packet packet2 = Vp8Packet.parseBytes(rtp);
+
+								if(packet2 == null)	return;
+
+								_accumulator.add(packet2);
+								byte encodedFrame[] = null;
+
+								if (isMarked)
+								{
+									encodedFrame = Vp8Packet.depacketize(_accumulator.getPackets());
+									boolean isKeyframe = encodedFrame != null && encodedFrame.length > 0 && (encodedFrame[0] & 1) == 0;
+
+									if(_sequenceNumberingViolated && isKeyframe)
+										_sequenceNumberingViolated = false;
+
+									_accumulator.reset();
+
+									if (recorder != null && encodedFrame != null && _sequenceNumberingViolated == false)
+									{
+										byte[] full = Arrays.copyOf(encodedFrame, encodedFrame.length);
+
+										recorder.write(full, 0, full.length, isKeyframe, timestamp);
+
+										if (isKeyframe && snapshot < 1)
+										{
+											Log.info("recordData " + full + " " + sequenceNumber + " " + timestamp);
+											recorder.writeWebPImage(full, 0, full.length, timestamp);
+											snapshot++;
+										}
+									}
+								}
+							}
+
+						} catch (Exception e) {
+							Log.error("Error writing video recording" , e);
+						}
+				//	}
+				//});
+
+			} else {
+				Log.error("record video cannot parse packet data " + packet);
 			}
 		}
 		/**
@@ -1197,14 +1279,28 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 *
 		 *
 		 */
-		public void addMediaStream(MediaStream mediaStream)
+		public void setAudioStream(MediaStream mediaStream)
 		{
 			boolean recordMedia = "true".equals(JiveGlobals.getProperty(RECORD_PROPERTY_NAME, "false"));
 
 			if (recordMedia)
 			{
-				this.mediaStream = mediaStream;
-				mediaStream.addPropertyChangeListener(streamPropertyChangeListener);
+				audioStream = mediaStream;
+				audioStream.addPropertyChangeListener(audioStreamPropertyChangeListener);
+			}
+		}
+		/**
+		 *
+		 *
+		 */
+		public void setVideoStream(MediaStream mediaStream)
+		{
+			boolean recordMedia = "true".equals(JiveGlobals.getProperty(RECORD_PROPERTY_NAME, "false"));
+
+			if (recordMedia)
+			{
+				videoStream = mediaStream;
+				videoStream.addPropertyChangeListener(videoStreamPropertyChangeListener);
 
 				String recordingPath = JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" + File.separator + "rayo"  + File.separator + "video_recordings";
 				String fileName = "video-" + focusName + "-" + nickname + "-" + System.currentTimeMillis() + ".webm";
@@ -1224,9 +1320,14 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		 */
 		public void removeMediaStream()
 		{
-			if (this.mediaStream != null)
+			if (audioStream != null)
 			{
-				mediaStream.removePropertyChangeListener(streamPropertyChangeListener);
+				audioStream.removePropertyChangeListener(audioStreamPropertyChangeListener);
+			}
+
+			if (videoStream != null)
+			{
+				videoStream.removePropertyChangeListener(videoStreamPropertyChangeListener);
 
 				if (recorder != null)
 				{
@@ -1392,8 +1493,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 							if (videoChannel != null)
 							{
-								// webm file creation not working yet
-								participant.addMediaStream(videoChannel.getMediaStream());
+								participant.setVideoStream(videoChannel.getMediaStream());
 							}
 						}
 				}
@@ -1401,6 +1501,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				if ("audio".equals(content.attributeValue("name")))
 				{
 						participant.audioChannelId = channel.attributeValue("id");
+
+						String focusJid = XMPPServer.getInstance().createJID(focusName, focusName).toString();
+						Content vbContent = getVideoBridge().getConference(focusId, focusJid).getOrCreateContent("audio");
+
+						if (vbContent != null)
+						{
+							Channel audioChannel = vbContent.getChannel(participant.audioChannelId);
+
+							if (audioChannel != null)
+							{
+								participant.setAudioStream(audioChannel.getMediaStream());
+							}
+						}
 				}
 			}
 		}
@@ -1496,7 +1609,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 				router.route(iq);
 
-				if (participant.mediaStream != null)
+				if (participant.audioStream != null || participant.videoStream != null)
 				{
                 	participant.removeMediaStream();
 				}

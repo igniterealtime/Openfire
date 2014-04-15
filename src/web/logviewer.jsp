@@ -21,6 +21,7 @@
 <%@ page import="java.io.*,
                  org.jivesoftware.util.*,
                  java.text.*,
+                 java.net.URLEncoder,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.openfire.user.*,
                  java.util.*"
@@ -250,7 +251,7 @@ IFRAME {
 </style>
 
 <form action="logviewer.jsp" name="logViewer" method="get">
-<input type="hidden" name="log" value="<%= log %>">
+<input type="hidden" name="log" value="<%= StringUtils.escapeForXML(log) %>">
 
 <div class="logviewer">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -309,7 +310,7 @@ IFRAME {
             <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tr>
                 <td nowrap><fmt:message key="logviewer.log" /></td>
-                <td nowrap><b><%= logFile.getName() %></b> (<%= byteFormatter.format(logFile.length()) %>)</td>
+                <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>)</td>
                 <td width="96%" rowspan="3">&nbsp;</td>
                 <td nowrap><fmt:message key="logviewer.order" /></td>
                 <td nowrap>
@@ -446,7 +447,7 @@ IFRAME {
 
 <br><br>
 
-<iframe src="log.jsp?log=<%= log %>&mode=<%= mode %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
+<iframe src="log.jsp?log=<%= URLEncoder.encode(log) %>&mode=<%= URLEncoder.encode(mode) %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
     frameborder="0" height="400" width="100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
 
 </form>

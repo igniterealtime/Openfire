@@ -314,7 +314,7 @@
         <td class="jive-icon-label">
         <% if(add) { %>
         <fmt:message key="group.edit.not_update" />
-        <%= errorBuf %>
+        <%= StringUtils.escapeHTMLTags(errorBuf.toString()) %>
         <% } %>
         </td></tr>
     </tbody>
@@ -325,7 +325,7 @@
 	<div class="jive-horizontalRule"></div>
 
 <form name="ff" action="group-edit.jsp">
-<input type="hidden" name="group" value="<%= groupName %>"/>
+<input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>"/>
 
 
 	<!-- BEGIN group name and description -->
@@ -387,7 +387,7 @@
 
                 <div id="jive-roster" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
 	               <b><fmt:message key="group.edit.share_display_name" /></b>
-	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"><br>
+	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? StringUtils.escapeForXML(groupDisplayName) : "") %>"><br>
                        <%  if (errors.get("groupDisplayName") != null) { %>
                            <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span><br/>
                        <%  } %>
@@ -489,7 +489,7 @@
 		</p>
 
         <form action="group-edit.jsp" method="post" name="f">
-        <input type="hidden" name="group" value="<%= groupName %>">
+        <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
             <tr>
@@ -507,7 +507,7 @@
         <% } %>
 
         <form action="group-edit.jsp" method="post" name="main">
-        <input type="hidden" name="group" value="<%= groupName %>">
+        <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>
 	            <th>&nbsp;</th>
@@ -581,7 +581,7 @@
 
                     </td>
                     <% if (user != null) { %>
-                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
+                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
                     <% } else { %>
                     <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
                     <% } %>

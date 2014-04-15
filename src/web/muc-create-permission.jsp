@@ -121,7 +121,7 @@
 
 <p>
 <fmt:message key="muc.create.permission.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -166,7 +166,7 @@
 
 <!-- BEGIN 'Permission Policy' -->
 <form action="muc-create-permission.jsp?save" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.policy" />
 	</div>
@@ -205,7 +205,7 @@
 <%  if (mucService.isRoomCreationRestricted()) { %>
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.allowed_users" />
 	</div>

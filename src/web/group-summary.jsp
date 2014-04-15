@@ -178,7 +178,7 @@ document.searchForm.search.focus();
             <%= i %>
         </td>
         <td width="60%">
-            <a href="group-edit.jsp?group=<%= groupName %>"><%= StringUtils.escapeHTMLTags(group.getName()) %></a>
+            <a href="group-edit.jsp?group=<%= URLEncoder.encode(groupName,"UTF-8") %>"><%= StringUtils.escapeHTMLTags(group.getName()) %></a>
             <% if (group.getDescription() != null) { %>
             <br>
                 <span class="jive-description">
@@ -195,12 +195,12 @@ document.searchForm.search.focus();
         <%  // Only show edit and delete options if the groups aren't read-only.
             if (!webManager.getGroupManager().isReadOnly()) { %>
         <td width="1%" align="center">
-            <a href="group-edit.jsp?group=<%= groupName %>"
+            <a href="group-edit.jsp?group=<%= URLEncoder.encode(groupName,"UTF-8") %>"
              title=<fmt:message key="global.click_edit" />
             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
-            <a href="group-delete.jsp?group=<%= groupName %>"
+            <a href="group-delete.jsp?group=<%= URLEncoder.encode(groupName,"UTF-8") %>"
              title=<fmt:message key="global.click_delete" />
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
         </td>

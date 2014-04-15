@@ -23,6 +23,7 @@
                  org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.openfire.muc.NotAllowedException,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.IQ"
     errorPage="error.jsp"
 %>
@@ -250,10 +251,10 @@
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= userDisplay %>
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=owner"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=owner"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -282,10 +283,10 @@
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= userDisplay %>
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=admin"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=admin"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -316,10 +317,10 @@
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= userDisplay %><%=  nickname %>
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %><%=  StringUtils.escapeHTMLTags(nickname) %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=member"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=member"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -348,10 +349,10 @@
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= userDisplay %>
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= user %>&delete=true&affiliation=outcast"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=outcast"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

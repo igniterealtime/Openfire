@@ -15,7 +15,8 @@
 <%@ page errorPage="error.jsp" import="org.jivesoftware.util.ByteFormat,
                                        org.jivesoftware.util.Version,
                                        org.jivesoftware.openfire.XMPPServer,
-                                       org.jivesoftware.openfire.container.Plugin"
+                                       org.jivesoftware.openfire.container.Plugin,
+                                       org.jivesoftware.util.StringUtils"
     %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.update.AvailablePlugin" %>
@@ -284,38 +285,38 @@
 <tr id="<%= plugin.hashCode()%>">
     <td width="1%" class="line-bottom-border">
         <% if (plugin.getIcon() != null) { %>
-        <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
+        <img src="<%= StringUtils.escapeForXML(plugin.getIcon()) %>" width="16" height="16" alt="Plugin">
         <% }
         else { %>
         <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
         <% } %>
     </td>
     <td width="20%" nowrap class="line-bottom-border">
-        <%= (pluginName != null ? pluginName : "") %> &nbsp;
+        <%= (pluginName != null ? StringUtils.escapeHTMLTags(pluginName) : "") %> &nbsp;
     </td>
     <td nowrap valign="top" class="line-bottom-border">
         <% if (plugin.getReadme() != null) { %>
-        <a href="<%= plugin.getReadme() %>"
+        <a href="<%= StringUtils.escapeForXML(plugin.getReadme()) %>"
             ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
         <% }
         else { %> &nbsp; <% } %>
         <% if (plugin.getChangelog() != null) { %>
-        <a href="<%= plugin.getChangelog() %>"
+        <a href="<%= StringUtils.escapeForXML(plugin.getChangelog()) %>"
             ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
         <% }
         else { %> &nbsp; <% } %>
     </td>
     <td width="60%" class="line-bottom-border">
-        <%= pluginDescription != null ? pluginDescription : "" %>
+        <%= pluginDescription != null ? StringUtils.escapeHTMLTags(pluginDescription) : "" %>
     </td>
     <td width="5%" align="center" valign="top" class="line-bottom-border">
-        <%= pluginVersion != null ? pluginVersion : "" %>
+        <%= pluginVersion != null ? StringUtils.escapeHTMLTags(pluginVersion) : "" %>
     </td>
     <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
+        <%= pluginAuthor != null ? StringUtils.escapeHTMLTags(pluginAuthor) : "" %>  &nbsp;
     </td>
     <td width="15%" nowrap valign="top" class="line-bottom-border" align="right">
-        <%= fileSize %>
+        <%= StringUtils.escapeHTMLTags(fileSize) %>
     </td>
     <td width="1%" align="center" valign="top" class="line-bottom-border">
         <%
@@ -328,7 +329,7 @@
         <%
 
         %>
-        <a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><span id="<%= plugin.hashCode() %>-image"><img src="images/add-16x16.gif" width="16" height="16" border="0"
+        <a href="javascript:downloadPlugin('<%=StringUtils.escapeForXML(updateURL)%>', '<%= plugin.hashCode()%>')"><span id="<%= plugin.hashCode() %>-image"><img src="images/add-16x16.gif" width="16" height="16" border="0"
                                                                                                                                         alt="<fmt:message key="plugin.available.download" />"></span></a>
 
         <% } %>
@@ -336,9 +337,9 @@
 </tr>
 <tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
     <td width="1%" class="line-bottom-border">
-        <img src="<%= plugin.getIcon()%>" width="16" height="16" alt=""/>
+        <img src="<%= StringUtils.escapeForXML(plugin.getIcon())%>" width="16" height="16" alt=""/>
     </td>
-    <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
+    <td colspan="6" nowrap class="line-bottom-border"><%= StringUtils.escapeHTMLTags(plugin.getName())%> <fmt:message key="plugin.available.installation.success" /></td>
     <td class="line-bottom-border" align="center">
         <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
     </td>
@@ -367,38 +368,38 @@
 <tr id="<%= plugin.hashCode()%>">
     <td width="1%" class="line-bottom-border">
         <% if (plugin.getIcon() != null) { %>
-        <img src="<%= plugin.getIcon() %>" width="16" height="16" alt="Plugin">
+        <img src="<%= StringUtils.escapeForXML(plugin.getIcon()) %>" width="16" height="16" alt="Plugin">
         <% }
         else { %>
         <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
         <% } %>
     </td>
     <td width="20%" nowrap class="line-bottom-border">
-        <%= (pluginName != null ? pluginName : "") %> &nbsp;
+        <%= (pluginName != null ? StringUtils.escapeHTMLTags(pluginName) : "") %> &nbsp;
     </td>
     <td nowrap valign="top" class="line-bottom-border">
         <% if (plugin.getReadme() != null) { %>
-        <a href="<%= plugin.getReadme() %>"
+        <a href="<%= StringUtils.escapeForXML(plugin.getReadme()) %>"
             ><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
         <% }
         else { %> &nbsp; <% } %>
         <% if (plugin.getChangelog() != null) { %>
-        <a href="<%= plugin.getChangelog() %>"
+        <a href="<%= StringUtils.escapeForXML(plugin.getChangelog()) %>"
             ><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
         <% }
         else { %> &nbsp; <% } %>
     </td>
     <td width="60%" class="line-bottom-border">
-        <%= pluginDescription != null ? pluginDescription : "" %>
+        <%= pluginDescription != null ? StringUtils.escapeHTMLTags(pluginDescription) : "" %>
     </td>
     <td width="5%" align="center" valign="top" class="line-bottom-border">
-        <%= pluginVersion != null ? pluginVersion : "" %>
+        <%= pluginVersion != null ? StringUtils.escapeHTMLTags(pluginVersion) : "" %>
     </td>
     <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
+        <%= pluginAuthor != null ? StringUtils.escapeHTMLTags(pluginAuthor) : "" %>  &nbsp;
     </td>
     <td width="15%" nowrap valign="top" class="line-bottom-border">
-        <%= fileSize  %>
+        <%= StringUtils.escapeHTMLTags(fileSize)  %>
     </td>
     <td width="1%" align="center" valign="top" class="line-bottom-border">
         <%
@@ -409,16 +410,16 @@
         <%  }
         else { %>
 
-        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=updateURL%>', '<%= plugin.hashCode()%>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
+        <span id="<%= plugin.hashCode() %>-image"><a href="javascript:downloadPlugin('<%=StringUtils.escapeForXML(updateURL) %>', '<%= plugin.hashCode() %>')"><img src="images/add-16x16.gif" width="16" height="16" border="0"
                                                                                                                                         alt="<fmt:message key="plugin.available.download" />"></a></span>
         <% } %>
     </td>
 </tr>
 <tr id="<%= plugin.hashCode()%>-row" style="display:none;background: #E7FBDE;">
      <td width="1%" class="line-bottom-border">
-        <img src="<%= plugin.getIcon()%>" width="16" height="16" alt=""/>
+        <img src="<%= StringUtils.escapeForXML(plugin.getIcon())%>" width="16" height="16" alt=""/>
     </td>
-    <td colspan="6" nowrap class="line-bottom-border"><%= plugin.getName()%> <fmt:message key="plugin.available.installation.success" /></td>
+    <td colspan="6" nowrap class="line-bottom-border"><%= StringUtils.escapeHTMLTags(plugin.getName())%> <fmt:message key="plugin.available.installation.success" /></td>
     <td class="line-bottom-border" align="center">
         <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
     </td>
@@ -493,13 +494,13 @@
                     else { %> &nbsp; <% } %></p>
             </td>
             <td class="line-bottom-border">
-                <%= pluginDescription %>
+                <%= StringUtils.escapeHTMLTags(pluginDescription) %>
             </td>
             <td class="line-bottom-border">
-                <%= pluginVersion%>
+                <%= StringUtils.escapeHTMLTags(pluginVersion) %>
             </td>
             <td class="line-bottom-border">
-                <%= pluginAuthor%>
+                <%= StringUtils.escapeHTMLTags(pluginAuthor) %>
             </td>
         </tr>
         <% }%>

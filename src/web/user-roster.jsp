@@ -149,7 +149,7 @@
 
 <p>
 <fmt:message key="user.roster.info">
-    <fmt:param value="<%= "<b>"+JID.unescapeNode(username)+"</b>" %>" />
+    <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(JID.unescapeNode(username))+"</b>" %>" />
 </fmt:message>
 </p>
 
@@ -298,7 +298,7 @@
              ><%= rosterItem.getJid() %></a>
         </td>
         <td>
-            <%= (rosterItem.getNickname() != null ? rosterItem.getNickname() : "<i>None</i>") %>
+            <%= (rosterItem.getNickname() != null ? StringUtils.escapeHTMLTags(rosterItem.getNickname()) : "<i>None</i>") %>
         </td>
         <td>
             <%

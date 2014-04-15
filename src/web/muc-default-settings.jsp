@@ -149,7 +149,7 @@
 
 <p>
 <fmt:message key="muc.default.settings.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if (errors.size() > 0) { %>
@@ -182,7 +182,7 @@
 
 <!-- BEGIN 'Default Room Settings' -->
 <form action="muc-default-settings.jsp?save" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
         <fmt:message key="muc.default.settings.title" />
     </div>

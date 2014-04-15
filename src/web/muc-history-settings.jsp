@@ -115,7 +115,7 @@
 
 <p>
 <fmt:message key="groupchat.history.settings.introduction" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
@@ -135,7 +135,7 @@
 
 <!-- BEGIN 'History Settings' -->
 <form action="muc-history-settings.jsp" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.history.settings.legend" />
 	</div>

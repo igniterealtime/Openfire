@@ -156,7 +156,7 @@
 				<fmt:message key="system.email.mail_host" />:
 			</td>
 			<td nowrap>
-				<input type="text" name="host" value="<%= (host != null)?host:"" %>" size="40" maxlength="150">
+				<input type="text" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
 			</td>
 		</tr>
 
@@ -201,7 +201,7 @@
 				<fmt:message key="system.email.server_username" />:
 			</td>
 			<td nowrap>
-				<input type="text" name="server_username" value="<%= (username != null) ? username : "" %>" size="40" maxlength="150">
+				<input type="text" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
 			</td>
 		</tr>
 		<tr>

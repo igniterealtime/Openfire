@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.util.CertificateManager,
                 org.jivesoftware.util.ParamUtils,
+                org.jivesoftware.util.StringUtils,
                 org.jivesoftware.openfire.XMPPServer,
                 org.jivesoftware.openfire.net.SSLConfig,
                 java.io.ByteArrayInputStream,
@@ -114,7 +115,7 @@
           <td class="jive-icon-label">
           <fmt:message key="ssl.import.certificate.error.import" />
           <%  if (e != null && e.getMessage() != null) { %>
-              <fmt:message key="ssl.certificates.error_messenge" />: <%= e.getMessage() %>
+              <fmt:message key="ssl.certificates.error_messenge" />: <%= StringUtils.escapeHTMLTags(e.getMessage()) %>
           <%  } %>
           </td></tr>
       </tbody>

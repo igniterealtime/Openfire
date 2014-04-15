@@ -21,6 +21,7 @@
 <%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ComponentSession,
                  org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
@@ -86,7 +87,7 @@
             <fmt:message key="component.session.label.name" />
         </td>
         <td>
-            <%= componentSession.getExternalComponent().getName() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
         </td>
     </tr>
     <tr>
@@ -94,7 +95,7 @@
             <fmt:message key="component.session.label.category" />:
         </td>
         <td>
-            <%= componentSession.getExternalComponent().getCategory() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
         </td>
     </tr>
     <tr>
@@ -117,7 +118,7 @@
              <% }
             }
             %>
-            <%= componentSession.getExternalComponent().getType() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %>
         </td>
     </tr>
     <tr>
@@ -150,9 +151,9 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-            <%= componentSession.getHostAddress() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getHostAddress()) %>
             /
-            <%= componentSession.getHostName() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getHostName()) %>
         </td>
     </tr>
 </tbody>

@@ -17,6 +17,7 @@
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.user.*,
                  java.util.*,
+                 java.net.URLEncoder,
                  javax.mail.*,
                  javax.mail.internet.*"
     errorPage="error.jsp"
@@ -199,7 +200,7 @@ function checkClick(el) {
                     <%  if (mex instanceof AuthenticationFailedException) { %>
                     	<fmt:message key="system.emailtest.failure_authentication" />                        
                     <%  } else { %>
-                        (Message: <%= mex.getMessage() %>)
+                        (Message: <%= StringUtils.escapeHTMLTags(mex.getMessage()) %>)
                     <%  } %>
                 <%  } %>
             </td></tr>
@@ -229,7 +230,7 @@ function checkClick(el) {
             <%
                 } else {
             %>
-                <%= host %>:<%= JiveGlobals.getIntProperty("mail.smtp.port", 25)  %>
+                <%= StringUtils.escapeHTMLTags(host) %>:<%= JiveGlobals.getIntProperty("mail.smtp.port", 25)  %>
 
                 <%  if (JiveGlobals.getBooleanProperty("mail.smtp.ssl", false)) { %>
 
@@ -244,10 +245,10 @@ function checkClick(el) {
             <fmt:message key="system.emailtest.from" />:
         </td>
         <td>
-            <input type="hidden" name="from" value="<%= from %>">
+            <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%=user.getUsername()%>">Update Address</a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>">Update Address</a>)
             </span>
         </td>
     </tr>
@@ -256,7 +257,7 @@ function checkClick(el) {
             <fmt:message key="system.emailtest.to" />:
         </td>
         <td>
-            <input type="text" name="to" value="<%= ((to != null) ? to : "") %>"
+            <input type="text" name="to" value="<%= ((to != null) ? StringUtils.escapeForXML(to) : "") %>"
              size="40" maxlength="100">
         </td>
     </tr>
@@ -265,7 +266,7 @@ function checkClick(el) {
             <fmt:message key="system.emailtest.subject" />:
         </td>
         <td>
-            <input type="text" name="subject" value="<%= ((subject != null) ? subject : "") %>"
+            <input type="text" name="subject" value="<%= ((subject != null) ? StringUtils.escapeForXML(subject) : "") %>"
              size="40" maxlength="100">
         </td>
     </tr>
@@ -274,7 +275,7 @@ function checkClick(el) {
             <fmt:message key="system.emailtest.body" />:
         </td>
         <td>
-            <textarea name="body" cols="45" rows="5" wrap="virtual"><%= body %></textarea>
+            <textarea name="body" cols="45" rows="5" wrap="virtual"><%= StringUtils.escapeHTMLTags(body) %></textarea>
         </td>
     </tr>
     <tr>

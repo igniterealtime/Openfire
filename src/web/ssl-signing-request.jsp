@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.util.CertificateManager" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
 <%@ page import="java.security.KeyStore" %>
@@ -204,42 +205,42 @@
                     </td>
                     <td width="99%">
                         <input type="text" name="name" size="50" maxlength="75"
-                               value="<%= ((name!=null) ? name : "") %>" id="namef">
+                               value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>" id="namef">
                     </td>
                 </tr>
                 <tr>
                     <td width="1%" nowrap>
                         <label for="ouf"><fmt:message key="ssl.signing-request.organizational_unit"/>:</label></td>
                     <td width="99%">
-                        <input type="text" name="ou" size="50" maxlength="75" value="<%= ((organizationalUnit!=null) ? organizationalUnit : "") %>" id="ouf">
+                        <input type="text" name="ou" size="50" maxlength="75" value="<%= ((organizationalUnit!=null) ? StringUtils.escapeForXML(organizationalUnit) : "") %>" id="ouf">
                     </td>
                 </tr>
                 <tr>
                     <td width="1%" nowrap>
                         <label for="of"><fmt:message key="ssl.signing-request.organization"/>:</label></td>
                     <td width="99%">
-                        <input type="text" name="o" size="50" maxlength="75" value="<%= ((organization!=null) ? organization : "") %>" id="of">
+                        <input type="text" name="o" size="50" maxlength="75" value="<%= ((organization!=null) ? StringUtils.escapeForXML(organization) : "") %>" id="of">
                     </td>
                 </tr>
                 <tr>
                     <td width="1%" nowrap>
                         <label for="cityf"><fmt:message key="ssl.signing-request.city"/>:</label></td>
                     <td width="99%">
-                        <input type="text" name="city" size="50" maxlength="75" value="<%= ((city!=null) ? city : "") %>" id="cityf">
+                        <input type="text" name="city" size="50" maxlength="75" value="<%= ((city!=null) ? StringUtils.escapeForXML(city) : "") %>" id="cityf">
                     </td>
                 </tr>
                 <tr>
                     <td width="1%" nowrap>
                         <label for="statef"><fmt:message key="ssl.signing-request.state"/>:</label></td>
                     <td width="99%">
-                        <input type="text" name="state" size="30" maxlength="75" value="<%= ((state!=null) ? state : "") %>" id="statef">
+                        <input type="text" name="state" size="30" maxlength="75" value="<%= ((state!=null) ? StringUtils.escapeForXML(state) : "") %>" id="statef">
                     </td>
                 </tr>
                 <tr>
                     <td width="1%" nowrap>
                         <label for="countryf"><fmt:message key="ssl.signing-request.country"/>:</label></td>
                     <td width="99%">
-                        <input type="text" name="country" size="2" maxlength="2" value="<%= ((countryCode!=null) ? countryCode : "") %>" id="countryf">
+                        <input type="text" name="country" size="2" maxlength="2" value="<%= ((countryCode!=null) ? StringUtils.escapeForXML(countryCode) : "") %>" id="countryf">
                     </td>
                 </tr>
               <tr>

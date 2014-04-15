@@ -20,6 +20,7 @@
 <%@ page import="org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.openfire.group.GroupAlreadyExistsException,
                  org.jivesoftware.openfire.security.SecurityAuditManager,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.Log"
     errorPage="error.jsp"
 %>
@@ -188,7 +189,7 @@
 <form name="f" action="group-create.jsp" method="post">
 
    <% if (groupName != null) { %>
-    <input type="hidden" name="group" value="<%= groupName %>" id="existingName">
+    <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>" id="existingName">
    <% } %>
 
     <!-- BEGIN create group -->
@@ -213,7 +214,7 @@
         </td>
         <td width="99%">
             <input type="text" name="name" size="30" maxlength="75"
-             value="<%= ((name != null) ? name : "") %>" id="gname">
+             value="<%= ((name != null) ? StringUtils.escapeForXML(name) : "") %>" id="gname">
         </td>
     </tr>
 
@@ -238,7 +239,7 @@
         </td>
         <td width="99%">
             <textarea name="description" cols="30" rows="3" id="gdesc"
-             ><%= ((description != null) ? description : "") %></textarea>
+             ><%= ((description != null) ? StringUtils.escapeHTMLTags(description) : "") %></textarea>
         </td>
     </tr>
 

@@ -67,14 +67,14 @@
 
     <p>
     <fmt:message key="user.roster.delete.info">
-        <fmt:param value="<%= "<b>"+jid+"</b>" %>" />
-        <fmt:param value="<%= "<b>"+username+"</b>" %>" />
+        <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(jid)+"</b>" %>" />
+        <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(username)+"</b>" %>" />
     </fmt:message>
     </p>
 
     <form action="user-roster-delete.jsp">
-    <input type="hidden" name="username" value="<%= username %>">
-    <input type="hidden" name="jid" value="<%= jid %>">
+    <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
+    <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
     <input type="submit" name="delete" value="<fmt:message key="user.roster.delete.delete" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
     </form>

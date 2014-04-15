@@ -28,6 +28,7 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%><%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
@@ -185,7 +186,7 @@
             <fmt:message key="user.create.username" />:
         </td>
         <td>
-            <%= JID.unescapeNode(user.getUsername()) %>
+            <%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %>
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
@@ -241,7 +242,7 @@
                 </span>
 
             <%  } else { %>
-                <%= user.getName() %>
+                <%= StringUtils.escapeHTMLTags(user.getName()) %>
 
             <%  } %>
         </td>
@@ -257,7 +258,7 @@
                 </span>
 
             <%  } else { %>
-                <a href="mailto:<%= user.getEmail() %>"><%= user.getEmail() %></a>
+                <a href="mailto:<%= StringUtils.escapeForXML(user.getEmail()) %>"><%= StringUtils.escapeHTMLTags(user.getEmail()) %></a>
 
             <%  } %>
             &nbsp;
@@ -306,7 +307,7 @@
 <% if (user != null && !UserManager.getUserProvider().isReadOnly()) { %>
 
 <form action="user-edit-form.jsp">
-<input type="hidden" name="username" value="<%= user.getUsername() %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(user.getUsername()) %>">
 <input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
 

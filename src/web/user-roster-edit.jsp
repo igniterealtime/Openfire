@@ -18,6 +18,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
@@ -85,14 +86,14 @@
 
 <p>
 <fmt:message key="user.roster.edit.info">
-    <fmt:param value="<%= username %>"/>
+    <fmt:param value="<%= StringUtils.escapeForXML(username) %>"/>
 </fmt:message>
 </p>
 
 <form action="user-roster-edit.jsp">
 
-<input type="hidden" name="username" value="<%= username %>">
-<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
+<input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
 <input type="hidden" name="save" value="true">
 
 <fieldset>
@@ -105,7 +106,7 @@
                 <fmt:message key="user.roster.jid" />:
             </td>
             <td>
-                <%= jid %>
+                <%= StringUtils.escapeHTMLTags(jid) %>
             </td>
         </tr>
         <tr>
@@ -114,7 +115,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="nickname"
-                 value="<%= item.getNickname() %>">
+                 value="<%= StringUtils.escapeForXML(item.getNickname()) %>">
             </td>
         </tr>
         <tr>
@@ -131,7 +132,7 @@
                         if (count != 0) {
                             out.print(",");
                         }
-                        out.print(group);
+                        out.print(StringUtils.escapeForXML(group));
                         count++;
                     }
                 }
@@ -152,7 +153,7 @@
                             out.print(",");
                         }
                         out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
-                        out.print(group.getName());
+                        out.print(StringUtils.escapeForXML(group.getName()));
                         out.print("</a>");
                         count++;
                     }

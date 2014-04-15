@@ -7,6 +7,7 @@
 <%@ page import="java.io.*,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.auth.UnauthorizedException,
                  org.jivesoftware.openfire.user.UserNotFoundException,
                  org.jivesoftware.openfire.group.GroupNotFoundException"
@@ -54,7 +55,7 @@
 %>
     <fmt:message key="error.exception" />
     <pre>
-<%= sout.toString() %>
+<%= StringUtils.escapeHTMLTags(sout.toString()) %>
     </pre>
 
 <%  } %>

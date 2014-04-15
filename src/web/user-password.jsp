@@ -132,7 +132,7 @@
 </p>
 
 <form action="user-password.jsp" name="passform" method="post">
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="username" value="<%=StringUtils.escapeForXML(username) %>">
 
 <fieldset>
     <legend><fmt:message key="user.password.change" /></legend>
@@ -144,7 +144,7 @@
                 <fmt:message key="user.create.username" />:
             </td>
             <td class="c2">
-                <%= JID.unescapeNode(user.getUsername()) %>
+                <%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %>
             </td>
         </tr>
         <tr>

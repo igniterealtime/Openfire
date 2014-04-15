@@ -18,6 +18,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
@@ -84,7 +85,7 @@
 
 <p>
 <fmt:message key="user.roster.edit.info">
-    <fmt:param value="<%= username %>"/>
+    <fmt:param value="<%= StringUtils.escapeForXML(username) %>"/>
 </fmt:message>
 </p>
 
@@ -98,7 +99,7 @@
                 <fmt:message key="user.roster.jid" />:
             </td>
             <td>
-                <%= jid %>
+                <%= StringUtils.escapeHTMLTags(jid) %>
             </td>
         </tr>
         <tr>
@@ -106,7 +107,7 @@
                 <fmt:message key="user.roster.nickname" />:
             </td>
             <td>
-                <%= item.getNickname() %>
+                <%= StringUtils.escapeHTMLTags(item.getNickname()) %>
             </td>
         </tr>
         <tr>
@@ -122,7 +123,7 @@
                             if (count != 0) {
                                 out.print(",");
                             }
-                            out.print(group);
+                            out.print(StringUtils.escapeForXML(group));
                             count++;
                         }
                     }
@@ -146,7 +147,7 @@
                                 out.print(",");
                             }
                             out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
-                            out.print(group.getName());
+                            out.print(StringUtils.escapeForXML(group.getName()));
                             out.print("</a>");
                             count++;
                         }
@@ -162,7 +163,7 @@
                 <fmt:message key="user.roster.subscription" />:
             </td>
             <td>
-                <%= item.getSubStatus().getName() %>
+                <%= StringUtils.escapeHTMLTags(item.getSubStatus().getName()) %>
             </td>
         </tr>
     </tbody>
@@ -173,15 +174,15 @@
 <br><br>
 
 <form style="display: inline" action="user-roster-edit.jsp">
-<input type="hidden" name="jid" value="<%= jid %>">
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="submit" value="<fmt:message key="user.roster.edit" />">
 </form>
 
 <% if (sharedGroups.isEmpty()) { %>
 <form style="display: inline" action="user-roster-delete.jsp">
-<input type="hidden" name="jid" value="<%= jid %>">
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="submit" value="<fmt:message key="global.delete" />">
 </form>
 <% } %>

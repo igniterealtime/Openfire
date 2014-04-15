@@ -25,8 +25,10 @@
                  org.jivesoftware.openfire.component.ExternalComponentConfiguration,
                  org.jivesoftware.openfire.component.ExternalComponentManager,
                  org.jivesoftware.util.ModificationNotAllowedException,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils,
-                 java.util.Collection"
+                 java.util.Collection,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.HashMap" %>
@@ -243,7 +245,7 @@
         <tr>
             <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
             <td class="jive-icon-label">
-                <fmt:message key="component.settings.modification.denied" /> <%= operationFailedDetail != null ? operationFailedDetail : ""%>
+                <fmt:message key="component.settings.modification.denied" /> <%= operationFailedDetail != null ? StringUtils.escapeHTMLTags(operationFailedDetail) : ""%>
             </td>
         </tr>
     </tbody>
@@ -328,7 +330,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="70" name="defaultSecret"
-							 value="<%= ((defaultSecret != null) ? defaultSecret : "") %>">
+							 value="<%= ((defaultSecret != null) ? StringUtils.escapeForXML(defaultSecret) : "") %>">
 						</td>
 					</tr>
 					</table>
@@ -408,13 +410,13 @@
 					<%= count %>
 				</td>
 				<td>
-					<%= configuration.getSubdomain() %>
+					<%= StringUtils.escapeHTMLTags(configuration.getSubdomain()) %>
 				</td>
 				<td>
 					<%= configuration.getSecret() %>
 				</td>
 				<td align="center" style="border-right:1px #ccc solid;">
-					<a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= configuration.getSubdomain() %>'); } "
+					<a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('external-components-settings.jsp?deleteConf=<%= URLEncoder.encode(configuration.getSubdomain(),"UTF-8") %>'); } "
 					 title="<fmt:message key="global.click_delete" />"
 					 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
 				</td>

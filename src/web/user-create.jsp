@@ -213,14 +213,14 @@
 		<tr>
 			<td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
 			<td width="99%">
-				<input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
+				<input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>"
 				 id="usernametf" autocomplete="off">
 			</td>
 		</tr>
 		<tr>
 			<td width="1%" nowrap><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
 			<td width="99%">
-				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
+				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
 				 id="nametf">
 			</td>
 		</tr>
@@ -228,7 +228,7 @@
 			<td width="1%" nowrap>
 				<label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
 			<td width="99%">
-				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
+				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
 				 id="emailtf">
 			</td>
 		</tr>

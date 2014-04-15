@@ -116,7 +116,7 @@
     </select>
     &nbsp;&nbsp;
     <strong><fmt:message key="security.audit.viewer.username" /></strong>:
-    <input type="text" size="30" maxlength="150" name="username" value="<%= username != null ? username : "" %>"/>
+    <input type="text" size="30" maxlength="150" name="username" value="<%= username != null ? StringUtils.escapeForXML(username) : "" %>"/>
     <br/>
     <strong><fmt:message key="security.audit.viewer.date_range"/></strong>:
     <fmt:message key="security.audit.viewer.date_range.start"/>:
@@ -164,7 +164,7 @@
             <%= event.getMsgID() %>
         </td>
         <td width="10%">
-            <a href="user-properties.jsp?username=<%= URLEncoder.encode(event.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(event.getUsername()) %></a>
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(event.getUsername(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(event.getUsername())) %></a>
         </td>
         <td width="15%">
             <%= event.getNode() %>

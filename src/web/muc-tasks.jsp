@@ -137,7 +137,7 @@
 
 <p>
 <fmt:message key="muc.tasks.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if (kickSettingSuccess || logSettingSuccess) { %>
@@ -187,7 +187,7 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.user_setting" />
 	</div>
@@ -228,7 +228,7 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.conversation.logging" />
 	</div>

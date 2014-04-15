@@ -18,6 +18,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
@@ -424,7 +425,7 @@
     </thead>
     <tbody>
         <tr>
-            <td><%= room.getName() %></td>
+            <td><%= StringUtils.escapeHTMLTags(room.getName()) %></td>
             <% if (room.getOccupantsCount() == 0) { %>
             <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
             <% } else { %>
@@ -443,7 +444,7 @@
 <%  } %>
 <form action="muc-room-edit-form.jsp">
 <% if (!create) { %>
-    <input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
+    <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 <% } %>
 <input type="hidden" name="save" value="true">
 <input type="hidden" name="create" value="<%= create %>">
@@ -456,12 +457,12 @@
                 <% if (create) { %>
                 <tr>
                     <td><fmt:message key="muc.room.edit.form.room_id" />:</td>
-                    <td><input type="text" name="roomName" value="<%= roomName %>">
+                    <td><input type="text" name="roomName" value="<%= StringUtils.escapeForXML(roomName) %>">
                         <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
                         @<select name="mucName">
                         <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) { %>
                         <%      if (service.isHidden()) continue; %>
-                        <option value="<%= service.getServiceDomain() %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
+                        <option value="<%= StringUtils.escapeForXML(service.getServiceDomain()) %>"<%= service.getServiceDomain().equals(mucName) ? " selected='selected'" : "" %>><%= StringUtils.escapeHTMLTags(service.getServiceDomain()) %></option>
                         <% } %>
                         </select>
                         <% } else { %>
@@ -472,7 +473,7 @@
                                     // Private and hidden, skip it.
                                     continue;
                                 }
-                                out.print("<input type='hidden' name='mucName' value='"+service.getServiceDomain()+"'/>"+service.getServiceDomain());
+                                out.print("<input type='hidden' name='mucName' value='"+StringUtils.escapeForXML(service.getServiceDomain())+"'/>"+StringUtils.escapeHTMLTags(service.getServiceDomain()));
                                 break;
                             }
                         %>
@@ -482,22 +483,22 @@
                 <% } else { %>
                 <tr>
                    <td><fmt:message key="muc.room.edit.form.service" />:</td>
-                   <td><%= roomJID.getDomain() %></td>
+                   <td><%= StringUtils.escapeHTMLTags(roomJID.getDomain()) %></td>
                </tr>
                 <% } %>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.room_name" />:</td>
-                    <td><input type="text" name="roomconfig_roomname" value="<%= (naturalName == null ? "" : naturalName) %>">
+                    <td><input type="text" name="roomconfig_roomname" value="<%= (naturalName == null ? "" : StringUtils.escapeForXML(naturalName)) %>">
                     </td>
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.description" />:</td>
-                    <td><input name="roomconfig_roomdesc" value="<%= (description == null ? "" : description) %>" type="text" size="40">
+                    <td><input name="roomconfig_roomdesc" value="<%= (description == null ? "" : StringUtils.escapeForXML(description)) %>" type="text" size="40">
                     </td>
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.topic" />:</td>
-                    <td><input name="room_topic" value="<%= (roomSubject == null ? "" : roomSubject) %>" type="text" size="40">
+                    <td><input name="room_topic" value="<%= (roomSubject == null ? "" : StringUtils.escapeForXML(roomSubject)) %>" type="text" size="40">
                     </td>
                 </tr>
                  <tr>

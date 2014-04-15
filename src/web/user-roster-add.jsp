@@ -107,7 +107,7 @@
 
 <p>
     <fmt:message key="user.roster.add.info">
-        <fmt:param value="<%= username %>"/>
+        <fmt:param value="<%= StringUtils.escapeForXML(username) %>"/>
     </fmt:message>
 </p>
 
@@ -156,7 +156,7 @@
 
 <form name="f" action="user-roster-add.jsp" method="get">
 
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 
     <div class="jive-contentBoxHeader">
 		<fmt:message key="user.roster.add.new_item" />
@@ -167,7 +167,7 @@
 		<tr>
 			<td width="1%" nowrap><label for="jidtf"><fmt:message key="user.roster.jid" />:</label> *</td>
 			<td width="99%">
-				<input type="text" name="jid" size="30" maxlength="255" value="<%= ((jid!=null) ? jid : "") %>"
+				<input type="text" name="jid" size="30" maxlength="255" value="<%= ((jid!=null) ? StringUtils.escapeForXML(jid) : "") %>"
 				 id="jidtf">
 			</td>
 		</tr>
@@ -176,7 +176,7 @@
 				<label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label>
 			</td>
 			<td width="99%">
-				<input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? nickname : "") %>"
+				<input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? StringUtils.escapeForXML(nickname) : "") %>"
 				 id="nicknametf">
 			</td>
 		</tr>
@@ -184,7 +184,7 @@
 			<td width="1%" nowrap>
 				<label for="groupstf"><fmt:message key="user.roster.groups" />:</label></td>
 			<td width="99%">
-				<input type="text" name="groups" size="30" maxlength="255" value="<%= ((groups!=null) ? groups : "") %>"
+				<input type="text" name="groups" size="30" maxlength="255" value="<%= ((groups!=null) ? StringUtils.escapeForXML(groups) : "") %>"
 				 id="groupstf">
 			</td>
 		</tr>

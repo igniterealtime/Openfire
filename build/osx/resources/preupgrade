@@ -15,6 +15,9 @@ if [ -d /usr/local/openfire ]; then
 	if [ -f /usr/local/openfire/conf/openfire.xml ]; then
 		/bin/cp /usr/local/openfire/conf/openfire.xml /tmp/openfireInstallBackup/openfire.xml
 	fi
+	if [ -f /usr/local/openfire/conf/security.xml ]; then
+		/bin/cp /usr/local/openfire/conf/security.xml /tmp/openfireInstallBackup/security.xml
+	fi
 	if [ -f /usr/local/openfire/resources/security/keystore ]; then
 		/bin/cp /usr/local/openfire/resources/security/keystore /tmp/openfireInstallBackup/keystore
 	fi

@@ -22,5 +22,6 @@ install/openfire::
 	cp $(TARGET)/lib/log4j.xml $(ETCDIR)
 	cp -r $(TARGET)/resources/database $(OPENFIRE)/resources/database
 	cp $(TARGET)/conf/openfire.xml $(ETCDIR)
+	cp $(TARGET)/conf/security.xml $(ETCDIR)
 	cp -r $(TARGET)/resources/security $(ETCDIR)/security
 	cp -r $(TARGET)/plugins $(VARDIR)/plugins

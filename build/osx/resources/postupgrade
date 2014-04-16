@@ -3,6 +3,9 @@
 if [ -f /tmp/openfireInstallBackup/openfire.xml ]; then 
 	/bin/mv /tmp/openfireInstallBackup/openfire.xml /usr/local/openfire/conf/openfire.xml
 fi
+if [ -f /tmp/openfireInstallBackup/security.xml ]; then 
+	/bin/mv /tmp/openfireInstallBackup/security.xml /usr/local/openfire/conf/security.xml
+fi
 
 if [ -f /tmp/openfireInstallBackup/keystore ]; then
 	/bin/mv /tmp/openfireInstallBackup/keystore /usr/local/openfire/resources/security/keystore

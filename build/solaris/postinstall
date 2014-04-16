@@ -5,6 +5,10 @@ if [ -f /tmp/openfireInstallBackup/openfire.xml ]; then
         /bin/mv /tmp/openfireInstallBackup/openfire.xml /opt/openfire/conf/openfire.xml
 	/bin/chown daemon:daemon /opt/openfire/conf/openfire.xml
 fi
+if [ -f /tmp/openfireInstallBackup/security.xml ]; then
+        /bin/mv /tmp/openfireInstallBackup/security.xml /opt/openfire/conf/security.xml
+	/bin/chown daemon:daemon /opt/openfire/conf/security.xml
+fi
 
 if [ -f /tmp/openfireInstallBackup/keystore ]; then
         /bin/mv /tmp/openfireInstallBackup/keystore /opt/openfire/resources/security/keystore

@@ -8,6 +8,9 @@ if [ -d "/opt/openfire" ]; then
 	if [ -f /opt/openfire/conf/openfire.xml ]; then
 		/bin/cp -f /opt/openfire/conf/openfire.xml /tmp/openfireInstallBackup/openfire.xml
 	fi
+	if [ -f /opt/openfire/conf/security.xml ]; then
+		/bin/cp -f /opt/openfire/conf/security.xml /tmp/openfireInstallBackup/security.xml
+	fi
 	if [ -f /opt/openfire/resources/security/keystore ]; then
 		/bin/cp -f /opt/openfire/resources/security/keystore /tmp/openfireInstallBackup/keystore
 	fi

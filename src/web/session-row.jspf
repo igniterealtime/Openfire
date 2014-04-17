@@ -39,7 +39,7 @@
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
-        <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>
+        <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
     </td>
     <td nowrap>
             <% if (sess instanceof LocalClientSession) { %>
@@ -94,7 +94,7 @@
         <td width="46%">
             <%  if (_stat != null) { %>
 
-                <%= _stat %>
+                <%= StringUtils.escapeHTMLTags(_stat) %>
 
             <%  } else { %>
 
@@ -120,7 +120,7 @@
         <td width="46%">
             <%  if (_stat != null) { %>
 
-                <%= sess.getPresence().getStatus() %>
+                <%= StringUtils.escapeHTMLTags(sess.getPresence().getStatus()) %>
 
             <%  } else { %>
 
@@ -146,7 +146,7 @@
         <td width="46%">
             <%  if (_stat != null) { %>
 
-                <%= sess.getPresence().getStatus() %>
+                <%= StringUtils.escapeHTMLTags(sess.getPresence().getStatus()) %>
 
             <%  } else { %>
 

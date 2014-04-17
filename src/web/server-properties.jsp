@@ -298,7 +298,7 @@ function dodelete(propName) {
 
         <td>
             <div class="hidebox" style="width:200px;">
-                <span title="<%= StringUtils.escapeHTMLTags(n) %>">
+                <span title="<%= StringUtils.escapeForXML(n) %>">
                 <%= StringUtils.escapeHTMLTags(n) %>
                 </span>
             </div>
@@ -368,12 +368,12 @@ function dodelete(propName) {
         <td>
             <%  if (edit) { %>
 
-                <input type="hidden" name="propName" value="<%= StringUtils.escapeHTMLTags(propName) %>">
+                <input type="hidden" name="propName" value="<%= StringUtils.escapeForXML(propName) %>">
                 <%= StringUtils.escapeHTMLTags(propName) %>
 
             <%  } else { %>
 
-                <input type="text" name="propName" size="40" maxlength="100" value="<%= (propName != null ? StringUtils.escapeHTMLTags(propName) : "") %>">
+                <input type="text" name="propName" size="40" maxlength="100" value="<%= (propName != null ? StringUtils.escapeForXML(propName) : "") %>">
 
                 <%  if (errors.containsKey("propName")) { %>
 

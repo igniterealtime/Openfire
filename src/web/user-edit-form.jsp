@@ -18,6 +18,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder"
     errorPage="error.jsp"
@@ -141,7 +142,7 @@
 
 <form action="user-edit-form.jsp">
 
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="hidden" name="save" value="true">
 
 <fieldset>
@@ -154,7 +155,7 @@
                 <fmt:message key="user.create.username" />:
             </td>
             <td>
-                <%= JID.unescapeNode(user.getUsername()) %>
+                <%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %>
             </td>
         </tr>
         <tr>
@@ -163,7 +164,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="name"
-                 value="<%= user.getName() %>">
+                 value="<%= StringUtils.escapeForXML(user.getName()) %>">
             </td>
         </tr>
         <tr>
@@ -172,7 +173,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="email"
-                 value="<%= ((user.getEmail()!=null) ? user.getEmail() : "") %>">
+                 value="<%= ((user.getEmail()!=null) ? StringUtils.escapeForXML(user.getEmail()) : "") %>">
             </td>
         </tr>
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>

@@ -73,12 +73,12 @@
 
 <p>
 <fmt:message key="muc.service.delete.info" />
-<b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 <fmt:message key="muc.service.delete.detail" />
 </p>
 
 <form action="muc-service-delete.jsp">
-<input type="hidden" name="mucname" value="<%= mucname %>">
+<input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
 <fieldset>
     <legend><fmt:message key="muc.service.delete.destructon_title" /></legend>
@@ -90,7 +90,7 @@
                 <fmt:message key="muc.service.delete.service_name" />
             </td>
             <td>
-                <%= mucname %>
+                <%= StringUtils.escapeHTMLTags(mucname) %>
             </td>
         </tr>
         <tr>

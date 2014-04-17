@@ -17,6 +17,7 @@
   - limitations under the License.
 --%>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.io.File" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
@@ -261,7 +262,7 @@
 						</tr>
                         <tr>
                             <td>
-                                <input id="CORSDomains" type="text" size="80" name="CORSDomains" value="<%= serverManager.getCORSAllowOrigin() %>">
+                                <input id="CORSDomains" type="text" size="80" name="CORSDomains" value="<%= StringUtils.escapeForXML(serverManager.getCORSAllowOrigin()) %>">
                             </td>
                         </tr>
                     </table>
@@ -303,7 +304,7 @@
 								<label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label>
 							</td>
                             <td>
-                                <input id="XFFHeader" type="text" size="40" name="XFFHeader"  value="<%= xffHeader == null ? "" : xffHeader %>">
+                                <input id="XFFHeader" type="text" size="40" name="XFFHeader"  value="<%= xffHeader == null ? "" : StringUtils.escapeForXML(xffHeader) %>">
                             </td>
 						</tr>
 						<tr>
@@ -311,7 +312,7 @@
 								<label for="XFFServerHeader"><fmt:message key="httpbind.settings.xff.forwarded_server"/></label>
 							</td>
                             <td>
-                                <input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="<%= xffServerHeader == null ? "" : xffServerHeader %>">
+                                <input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="<%= xffServerHeader == null ? "" : StringUtils.escapeForXML(xffServerHeader) %>">
                             </td>
 						</tr>
 						<tr>
@@ -319,7 +320,7 @@
 								<label for="XFFHostHeader"><fmt:message key="httpbind.settings.xff.forwarded_host"/></label>
 							</td>
                             <td>
-                                <input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="<%= xffHostHeader == null ? "" : xffHostHeader %>">
+                                <input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="<%= xffHostHeader == null ? "" : StringUtils.escapeForXML(xffHostHeader) %>">
                             </td>
 						</tr>
 						<tr>
@@ -327,7 +328,7 @@
 								<label for="XFFHostName"><fmt:message key="httpbind.settings.xff.host_name"/></label>
 							</td>
                             <td>
-                                <input id="XFFHostName" type="text" size="40" name="XFFHostName" value="<%= xffHostName == null ? "" : xffHostName %>">
+                                <input id="XFFHostName" type="text" size="40" name="XFFHostName" value="<%= xffHostName == null ? "" : StringUtils.escapeForXML(xffHostName) %>">
                             </td>
 						</tr>
                     </table>

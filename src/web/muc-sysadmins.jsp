@@ -88,7 +88,7 @@
 
 <p>
 <fmt:message key="groupchat.admins.introduction" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= mucname %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
@@ -135,13 +135,13 @@
 
 <!-- BEGIN 'Administrators' -->
 <form action="muc-sysadmins.jsp?add" method="post">
-    <input type="hidden" name="mucname" value="<%= mucname %>" />
+    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.admins.legend" />
 	</div>
 	<div class="jive-contentBox">
 		<label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
-		<input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+		<input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? StringUtils.escapeForXML(userJID) : "") %>"
 		 id="userJIDtf">
 		<input type="submit" value="<fmt:message key="groupchat.admins.add" />">
 		<br><br>
@@ -171,10 +171,10 @@
 	            %>
 					<tr>
 						<td width="99%">
-							<%= userDisplay %>
+							<%= StringUtils.escapeHTMLTags(userDisplay) %>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-sysadmins.jsp?userJID=<%= user.toString() %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+							<a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="groupchat.admins.dialog.title" />"
 							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

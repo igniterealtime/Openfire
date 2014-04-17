@@ -24,6 +24,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.user.UserManager" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
@@ -95,7 +96,7 @@
 
 <p>
 <fmt:message key="user.delete.info" />
-<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a></b>
+<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a></b>
 <fmt:message key="user.delete.info1" />
 </p>
 
@@ -106,7 +107,7 @@
 </c:if>
 
 <form action="user-delete.jsp">
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="submit" name="delete" value="<fmt:message key="user.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>

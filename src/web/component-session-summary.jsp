@@ -22,6 +22,7 @@
                  org.jivesoftware.openfire.session.ComponentSession,
                  org.jivesoftware.openfire.session.Session,
                  org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
@@ -187,10 +188,10 @@
             <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
         </td>
         <td align="center" width="15%" nowrap>
-            <%= componentSession.getExternalComponent().getName() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
         </td>
         <td align="center" width="10%" nowrap>
-            <%= componentSession.getExternalComponent().getCategory() %>
+            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
         </td>
         <td align="center" width="10%" nowrap>
             <table border="0">
@@ -218,7 +219,7 @@
              <% }
                }
             %>
-            <td><%= componentSession.getExternalComponent().getType() %></td>
+            <td><%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %></td>
             </tr></table>
         </td>
         <%  Date creationDate = componentSession.getCreationDate();

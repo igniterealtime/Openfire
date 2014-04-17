@@ -1,5 +1,6 @@
 <%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%--
   -	$RCSfile$
@@ -193,7 +194,7 @@
             <table cellpadding="0" cellspacing="0" border="0">
             <tr>
                 <td class="icon"><img src="images/cache-16x16.gif" width="16" height="16" alt="" border="0"></td>
-                <td><%= cache.getName() %></td>
+                <td><%= StringUtils.escapeHTMLTags(cache.getName()) %></td>
             </tr>
             </table>
         </td>

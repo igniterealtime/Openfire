@@ -24,6 +24,7 @@
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 <%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
@@ -133,7 +134,7 @@
 
 <p>
 <fmt:message key="user.lockout.locked">
-    <fmt:param value="<%= "<b><a href='user-properties.jsp?username="+URLEncoder.encode(username, "UTF-8")+"'>"+JID.unescapeNode(username)+"</a></b>" %>"/>
+    <fmt:param value="<%= "<b><a href='user-properties.jsp?username="+URLEncoder.encode(username, "UTF-8")+"'>"+StringUtils.escapeHTMLTags(JID.unescapeNode(username))+"</a></b>" %>"/>
 </fmt:message>
 <% if (flag.getStartTime() != null) { %><fmt:message key="user.lockout.locked2"><fmt:param value="<%= flag.getStartTime().toString() %>"/></fmt:message> <% } %>
 <% if (flag.getStartTime() != null && flag.getEndTime() != null) { %> <fmt:message key="user.lockout.lockedand" /> <% } %> 
@@ -141,7 +142,7 @@
 </p>
 
 <form action="user-lockout.jsp">
-    <input type="hidden" name="username" value="<%= username %>">
+    <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
     <input type="submit" name="unlock" value="<fmt:message key="user.lockout.unlock" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
@@ -154,7 +155,7 @@
 
 <p>
 <fmt:message key="user.lockout.info" />
-<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><%= JID.unescapeNode(username) %></a></b>
+<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(username)) %></a></b>
 <fmt:message key="user.lockout.info1" />
 </p>
 
@@ -183,7 +184,7 @@
     <input type="radio" name="duration" value="-2" /> <fmt:message key="user.lockout.time.for" /> <input type="text" size="5" maxlength="10" name="duration_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
     <br />
     <% } %>
-    <input type="hidden" name="username" value="<%= username %>">
+    <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
     <input type="submit" name="lock" value="<fmt:message key="user.lockout.lock" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>

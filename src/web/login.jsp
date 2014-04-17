@@ -191,7 +191,7 @@
 
 <%  if (url != null) { try { %>
 
-    <input type="hidden" name="url" value="<%= url %>">
+    <input type="hidden" name="url" value="<%= StringUtils.escapeForXML(url) %>">
 
 <%  } catch (Exception e) { Log.error(e); } } %>
 

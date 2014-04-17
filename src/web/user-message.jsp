@@ -19,6 +19,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.openfire.user.User,
@@ -169,7 +170,7 @@ function updateSelect(el) {
 
 <form action="user-message.jsp" method="post" name="f">
 <% if(username != null){ %>
-<input type="hidden" name="username" value="<%= username %>">
+<input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <% } %>
 <input type="hidden" name="tabs" value="<%= tabs %>">
 <input type="hidden" name="send" value="true">

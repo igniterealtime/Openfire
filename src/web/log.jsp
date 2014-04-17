@@ -156,7 +156,7 @@
 
 <html>
 <head>
-    <title><%= log %></title>
+    <title><%= StringUtils.escapeHTMLTags(log) %></title>
     <meta name="decorator" content="none"/>
     <style type="text/css">
     .log TABLE {

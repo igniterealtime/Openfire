@@ -91,7 +91,7 @@
 
 <p>
 <fmt:message key="muc.room.summary.info" />
-<a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8")%>"><%= mucService.getServiceDomain() %></a>
+<a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(mucService.getServiceDomain()) %></a>
 <fmt:message key="muc.room.summary.info2" />
 </p>
 
@@ -128,7 +128,7 @@
         continue;
     }
 %>
-    <option value="<%= service.getServiceName() %>"<%= mucService.getServiceName().equals(service.getServiceName()) ? " selected='selected'" : "" %>><%= service.getServiceDomain() %></option>
+    <option value="<%= StringUtils.escapeForXML(service.getServiceName()) %>"<%= mucService.getServiceName().equals(service.getServiceName()) ? " selected='selected'" : "" %>><%= StringUtils.escapeHTMLTags(service.getServiceDomain()) %></option>
 <% } %>
     </select>
 <% } %>
@@ -144,7 +144,7 @@
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : mucname %>&start=<%= (i*range) %>"
+        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : URLEncoder.encode(mucname) %>&start=<%= (i*range) %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 
@@ -248,7 +248,7 @@
             String sep = ((i+1)<numPages) ? " " : "";
             boolean isCurrent = (i+1) == curPage;
     %>
-        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : mucname %>&start=<%= (i*range) %>"
+        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : URLEncoder.encode(mucname) %>&start=<%= (i*range) %>"
          class="<%= ((isCurrent) ? "jive-current" : "") %>"
          ><%= (i+1) %></a><%= sep %>
 

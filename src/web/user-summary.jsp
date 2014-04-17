@@ -230,13 +230,13 @@
             <%  } %>
         </td>
         <td width="23%">
-            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= JID.unescapeNode(user.getUsername()) %></a>
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a>
             <% if (isAdmin) { %><img src="/images/star-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
         <td width="33%">
-            <%= user.getName() %> &nbsp;
+            <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
         </td>
         <td width="15%">
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>

@@ -19,7 +19,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.LocaleUtils,
-                 org.jivesoftware.util.ParamUtils"
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils"
 %><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
@@ -196,7 +197,7 @@
             <%= i %>
         </td>
         <td width="23%">
-            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= JID.unescapeNode(service.getServiceName()) %></a>
+            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
         </td>
         <td width="33%">
             <%= service.getDescription() %> &nbsp;

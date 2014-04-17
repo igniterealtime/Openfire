@@ -20,6 +20,7 @@
 <%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%@ page import="org.jivesoftware.openfire.session.ComponentSession" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Date" %>
@@ -189,17 +190,17 @@
             <fmt:message key="clearspace.status.connected.table.label.hostname" />
         </td>
         <td>
-            <%= cs.getHostAddress() %>
+            <%= StringUtils.escapeHTMLTags(cs.getHostAddress()) %>
             /
-            <%= cs.getHostName() %>
+            <%= StringUtils.escapeHTMLTags(cs.getHostName()) %>
         </td>
     </tr>
         <% } else { %>
     <tr>
         <td>
-            <%= cs.getHostAddress() %>
+            <%= StringUtils.escapeHTMLTags(cs.getHostAddress()) %>
             /
-            <%= cs.getHostName() %>
+            <%= StringUtils.escapeHTMLTags(cs.getHostName()) %>
         </td>
     </tr>
         <% } %>

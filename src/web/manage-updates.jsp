@@ -23,6 +23,7 @@
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.update.UpdateManager,
                  java.util.HashMap,
@@ -233,7 +234,7 @@ else if (updateSucess) { %>
 							</td>
 							<td width="99%">
 								<input type="text" size="15" maxlength="70" name="proxyHost"
-								 value="<%= ((proxyHost != null) ? proxyHost : "") %>">
+								 value="<%= ((proxyHost != null) ? StringUtils.escapeForXML(proxyHost) : "") %>">
 							</td>
 						</tr>
 						<tr valign="top">

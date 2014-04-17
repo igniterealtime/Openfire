@@ -17,9 +17,10 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                   org.jivesoftware.openfire.XMPPServer,
-                   org.jivesoftware.openfire.audit.AuditManager,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.audit.AuditManager,
                  org.jivesoftware.openfire.user.UserNotFoundException,
+                 org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.JID,
                  java.io.File"
     errorPage="error.jsp"
@@ -226,7 +227,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="50" maxlength="150" name="logDir"
-							 value="<%= ((logDir != null) ? logDir : "") %>">
+							 value="<%= ((logDir != null) ? StringUtils.escapeForXML(logDir) : "") %>">
 
 						<%  if (errors.get("logDir") != null) { %>
 
@@ -361,7 +362,7 @@
 							<fmt:message key="audit.policy.ignore" />
 						</td>
 						<td width="99%">
-							<textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? ignore : "") %></textarea>
+							<textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? StringUtils.escapeHTMLTags(ignore) : "") %></textarea>
 							<%  if (errors.get("ignore") != null) { %>
 
 								<span class="jive-error-text">

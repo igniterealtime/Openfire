@@ -14,6 +14,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.LinkedHashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="java.io.IOException" %>
@@ -356,7 +357,7 @@
       <tr valign="top">
           <td id="rs<%=i%>" width="1" rowspan="1"><%= (i) %>.</td>
           <td>
-              <%= identities.toString() %> (<%= a %>)
+              <%= StringUtils.escapeHTMLTags(identities.toString()) %> (<%= StringUtils.escapeHTMLTags(a) %>)
           </td>
           <td>
               <% boolean expired = c.getNotAfter().before(new Date());
@@ -388,7 +389,7 @@
               <%= c.getPublicKey().getAlgorithm() %>
           </td>
           <td width="1" align="center">
-              <a href="ssl-certificates.jsp?alias=<%= a %>&type=server&delete=true"
+              <a href="ssl-certificates.jsp?alias=<%= URLEncoder.encode(a) %>&type=server&delete=true"
                title="<fmt:message key="global.click_delete" />"
                onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete" />');"
                ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -397,7 +398,7 @@
       <% if (isSigningPending) { %>
       <form action="ssl-certificates.jsp" method="post">
       <input name="importReply" type="hidden" value="true">
-      <input name="alias" type="hidden" value="<%= a%>">
+      <input name="alias" type="hidden" value="<%= StringUtils.escapeForXML(a)%>">
       <tr id="pk<%=i%>">
           <td colspan="6">
               <span class="jive-description">

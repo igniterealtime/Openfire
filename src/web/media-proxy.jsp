@@ -20,6 +20,7 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxySession" %>
@@ -292,7 +293,7 @@
                     <%= i %>
                 </td>
                 <td width="10%" align="left" valign="middle">
-                    <%=proxySession.getCreator()%>
+                    <%= StringUtils.escapeHTMLTags(proxySession.getCreator())%>
                 </td>
                 <td width="15%" align="left" valign="middle">
                     <%=proxySession.getHostA()%>:<%=proxySession.getLocalPortA()%>

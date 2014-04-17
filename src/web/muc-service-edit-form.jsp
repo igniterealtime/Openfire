@@ -17,7 +17,8 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
+<%@ page import="org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.AlreadyExistsException,
                  java.util.*"
     errorPage="error.jsp"
@@ -147,7 +148,7 @@
 <form action="muc-service-edit-form.jsp" method="post">
 <input type="hidden" name="save" value="true">
 <% if (!create) { %>
-<input type="hidden" name="mucname" value="<%= mucname %>">
+<input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 <% } else { %>
 <input type="hidden" name="create" value="true" />
 <% } %>
@@ -163,7 +164,7 @@
                 </td>
                 <td>
                     <% if (create) { %>
-                    <input type="text" size="30" maxlength="150" name="mucname" value="<%= (mucname != null ? mucname : "") %>">
+                    <input type="text" size="30" maxlength="150" name="mucname" value="<%= (mucname != null ? StringUtils.escapeForXML(mucname) : "") %>">
 
                     <%  if (errors.get("mucname") != null) { %>
 
@@ -173,7 +174,7 @@
 
                     <%  } %>
                     <% } else { %>
-                    <%= mucname %>
+                    <%= StringUtils.escapeHTMLTags(mucname) %>
                     <% } %>
                 </td>
             </tr>
@@ -182,7 +183,7 @@
                    <fmt:message key="groupchat.service.properties.label_service_description" />
                 </td>
                 <td>
-                    <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? mucdesc : "") %>">
+                    <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
                 </td>
             </tr>
         </table>

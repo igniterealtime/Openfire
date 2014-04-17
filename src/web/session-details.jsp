@@ -25,6 +25,7 @@
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.text.NumberFormat,
                  java.util.Collection"
     errorPage="error.jsp"
@@ -114,7 +115,7 @@
             <fmt:message key="session.details.session_id" />
         </td>
         <td>
-            <%= StringUtils.escapeForXML(address.toString()) %>
+            <%= StringUtils.escapeHTMLTags(address.toString()) %>
         </td>
     </tr>
     <tr>
@@ -125,11 +126,11 @@
             <%  String n = address.getNode(); %>
             <%  if (isAnonymous) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeHTMLTags(address.getResource()) %>
 
             <%  } else { %>
 
-                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= JID.unescapeNode(n) %></a>
+                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(n)) %></a>
                 - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
@@ -190,7 +191,7 @@
                 Presence.Show show = currentSess.getPresence().getShow();
                 String statusTxt = currentSess.getPresence().getStatus();
                 if (statusTxt != null) {
-                    statusTxt = " -- " + StringUtils.escapeForXML(statusTxt);
+                    statusTxt = " -- " + StringUtils.escapeHTMLTags(statusTxt);
                 }
                 else {
                     statusTxt = "";

@@ -88,12 +88,12 @@
 
 <p>
 <fmt:message key="muc.room.delete.info" />
-<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getJID().toBareJID() %></a></b>
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(room.getJID().toBareJID()) %></a></b>
 <fmt:message key="muc.room.delete.detail" />
 </p>
 
 <form action="muc-room-delete.jsp">
-<input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
+<input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 
 <fieldset>
     <legend><fmt:message key="muc.room.delete.destructon_title" /></legend>
@@ -105,7 +105,7 @@
                 <fmt:message key="muc.room.delete.room_id" />
             </td>
             <td>
-                <%= room.getJID().toBareJID() %>
+                <%= StringUtils.escapeHTMLTags(room.getJID().toBareJID()) %>
             </td>
         </tr>
         <tr>

@@ -1146,20 +1146,18 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				final long timestamp = packet.getTimestamp();
 				final byte payloadType = packet.getPayloadType();
 
-				executorService.execute(new Runnable()
-				{
-					public void run()
-					{
+				//executorService.execute(new Runnable()
+				//{
+				//	public void run()
+				//	{
 						try {
-
-							//Log.info("Audio packet type " + payloadType);
-
+							recorder.write(rtp, 0, rtp.length, true, timestamp, false);
 
 						} catch (Exception e) {
 							Log.error("Error scanning audio", e);
 						}
-					}
-				});
+				//	}
+				//});
 
 			} else {
 				Log.error("scan audio cannot parse packet data " + packet);
@@ -1214,7 +1212,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 									{
 										byte[] full = Arrays.copyOf(encodedFrame, encodedFrame.length);
 
-										recorder.write(full, 0, full.length, isKeyframe, timestamp);
+										recorder.write(full, 0, full.length, isKeyframe, timestamp, true);
 
 										if (isKeyframe && snapshot < 1)
 										{
@@ -1986,7 +1984,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 											byte[] ulawData = new byte[data.length /2];
 											AudioConversion.linearToUlaw(data, 0, ulawData, 0);
 
-											if (recorder != null) recorder.write(ulawData, 0, ulawData.length, false, 0);
+											if (recorder != null) recorder.write(ulawData, 0, ulawData.length, false, 0, false);
 
 										} catch (Exception e) {
 

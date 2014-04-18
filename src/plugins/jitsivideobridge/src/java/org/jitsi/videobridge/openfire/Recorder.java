@@ -15,17 +15,31 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.ebml.*;
-import org.ebml.io.*;
-import org.ebml.matroska.*;
-import org.ebml.util.*;
-
 import org.slf4j.*;
 import org.slf4j.Logger;
 
 import java.text.ParseException;
 
 import java.util.LinkedList;
+
+import com.google.libwebm.mkvmuxer.AudioTrack;
+import com.google.libwebm.mkvmuxer.Cues;
+import com.google.libwebm.mkvmuxer.MkvMuxer;
+import com.google.libwebm.mkvmuxer.MkvWriter;
+import com.google.libwebm.mkvmuxer.Segment;
+import com.google.libwebm.mkvmuxer.SegmentInfo;
+import com.google.libwebm.mkvmuxer.VideoTrack;
+import com.google.libwebm.mkvparser.Block;
+import com.google.libwebm.mkvparser.BlockEntry;
+import com.google.libwebm.mkvparser.Cluster;
+import com.google.libwebm.mkvparser.EbmlHeader;
+import com.google.libwebm.mkvparser.Frame;
+import com.google.libwebm.mkvparser.MkvReader;
+import com.google.libwebm.mkvparser.Track;
+import com.google.libwebm.mkvparser.Tracks;
+
+import com.google.libvpx.LibVpxEncConfig;
+import com.google.libvpx.Rational;
 
 /**
  * Write audio data to a file
@@ -47,9 +61,12 @@ public class Recorder extends Thread
 	private boolean pcmu;
 	private int sampleRate;
 	private int channels;
-	private long lastTimecode = 0;
-	private MatroskaFileWriter mFW;
-	private FileDataWriter iFW;
+	private MkvWriter mkvWriter = null;
+	private Segment muxerSegment = null;
+	private SegmentInfo muxerSegmentInfo = null;
+	private long newVideoTrackNumber = 0;
+	private long newAudioTrackNumber = 0;
+    private long timestamp = 0;
 
 
     public Recorder(String recordDirectory, String fileName, String recordingType, boolean pcmu, int sampleRate, int channels) throws IOException
@@ -113,28 +130,49 @@ public class Recorder extends Thread
 
     private void openWebmFile() throws IOException
     {
-		iFW = new FileDataWriter(recordPath);
-		mFW = new MatroskaFileWriter(iFW);
+		Log.info("openWebmFile");
 
-		mFW.writeEBMLHeader();
-		mFW.writeSegmentHeader();
-		mFW.writeSegmentInfo();
+		try {
 
-		MatroskaFileTrack track = new MatroskaFileTrack();
-		track.TrackNo = (short)1;
-		track.TrackUID = (long)1;
-		track.TrackType = MatroskaDocType.track_video;
-		track.Name = "VP8";
-		track.CodecName = "VP8";
-		track.Language = "und";
-		track.CodecID = "V_VP8";
-		track.DefaultDuration = 0;
-		track.Video_PixelWidth = 640;
-		track.Video_PixelHeight = 480;
-		track.CodecPrivate = new byte[0];
+			mkvWriter = new MkvWriter();
 
-		mFW.TrackList.add(track);
-		mFW.writeTracks();
+			if (!mkvWriter.open(recordPath)) {
+				Log.error("WebM Output name is invalid or error while opening." + recordPath);
+				return;
+			}
+
+			muxerSegment = new Segment();
+
+			if (!muxerSegment.init(mkvWriter)) {
+				Log.error("Could not initialize muxer segment." + recordPath);
+				return;
+			}
+
+			muxerSegmentInfo = muxerSegment.getSegmentInfo();
+			muxerSegmentInfo.setDuration(60 * 1000);
+			muxerSegmentInfo.setWritingApp("Jitsi Videobridge");
+
+			newVideoTrackNumber = muxerSegment.addVideoTrack(640, 480, 0);
+      		//muxerSegment.cuesTrack(newVideoTrackNumber);
+
+			if (newVideoTrackNumber == 0) {
+				Log.error("Could not add video track." + recordPath);
+			}
+/*
+			newAudioTrackNumber = muxerSegment.addAudioTrack(48000, 1, 0);
+      		muxerSegment.cuesTrack(newAudioTrackNumber);
+
+			if (newAudioTrackNumber == 0) {
+				Log.error("Could not add audio track." + recordPath);
+			}
+
+			muxerSegment.outputCues(true);
+*/
+			timestamp = 0;
+
+		} catch (Exception e) {
+			Log.error("openWebmFile failure " + recordPath, e);
+		}
 	}
 
     private void openFile() throws IOException {
@@ -304,8 +342,10 @@ public class Recorder extends Thread
         public int length;
         public boolean keyframe;
         public long timestamp;
+        public boolean isVideo;
 
-        public DataToWrite(byte[] data, int offset, int length, boolean keyframe, long timestamp)
+
+        public DataToWrite(byte[] data, int offset, int length, boolean keyframe, long timestamp, boolean isVideo)
         {
 			/*
 			 * We have to copy the data, otherwise caller could
@@ -316,6 +356,7 @@ public class Recorder extends Thread
 			this.length = length;
 			this.keyframe = keyframe;
 			this.timestamp = timestamp;
+			this.isVideo = isVideo;
 
 			System.arraycopy(data, offset, this.data, 0, length);
         }
@@ -347,12 +388,12 @@ public class Recorder extends Thread
             buf[3] = (byte) (timeChange & 0xff);
 
 	    System.arraycopy(data, offset, buf, 4, dataLength);
-	    write(buf, 0, buf.length, keyframe, timestamp);
+	    write(buf, 0, buf.length, keyframe, timestamp, false);
 
 	} else if (recordWebm) {
 
 	} else {
-	    write(data, offset, dataLength, keyframe, timestamp);
+	    write(data, offset, dataLength, keyframe, timestamp, false);
 	}
     }
 
@@ -365,16 +406,16 @@ public class Recorder extends Thread
 			byteData[(2 * i) + 1] = (byte) (data[i + offset] & 0xff);
 		}
 
-        write(byteData, 0, byteData.length, keyframe, timestamp);
+        write(byteData, 0, byteData.length, keyframe, timestamp, false);
     }
 
-    public void write(byte[] data, int offset, int length, boolean keyframe, long timestamp) throws IOException {
+    public void write(byte[] data, int offset, int length, boolean keyframe, long timestamp, boolean isVideo) throws IOException {
         if (done) {
             return;
         }
 
         synchronized(dataToWrite) {
-            dataToWrite.add(new DataToWrite(data, offset, length, keyframe, timestamp));
+            dataToWrite.add(new DataToWrite(data, offset, length, keyframe, timestamp, isVideo));
             dataToWrite.notifyAll();
         }
     }
@@ -421,55 +462,31 @@ public class Recorder extends Thread
 	writeDataSize();
     }
 
-    private void writeData(DataToWrite d) {
+    private void writeData(DataToWrite d)
+    {
         try {
 	    	synchronized(this)
 	    	{
 				if (recordWebm)
 				{
-           			Log.info("writeData " + d.timestamp);
-					long duration = 0;
-/*
-					if (d.keyframe || lastTimecode == 0)
+					if (muxerSegment != null)
 					{
-						if (lastTimecode != 0)
+						if (d.isVideo)
 						{
-							Log.info("writeData end cluster " + d.data);
-							duration = d.timestamp - lastTimecode;
-							mFW.endCluster();
-						}
-						Log.info("writeData start cluster " + d.timestamp);
-						mFW.startCluster(d.timestamp);
-					}
+							if (!muxerSegment.addFrame(d.data, newVideoTrackNumber, timestamp, d.keyframe)) {
+								Log.error("Could not add video frame." + recordPath);
+							}
 
-					lastTimecode = d.timestamp;
+							timestamp = timestamp + (1000000000 / 15);
 
-					MatroskaFileFrame frame = new MatroskaFileFrame();
-					frame.TrackNo = 1;
-					frame.Duration = duration;
-					frame.Timecode = d.timestamp;
-					frame.Reference = 0;
-					frame.KeyFrame = d.keyframe;
-					frame.Data = d.data;
-					mFW.addFrame(frame);
-
-					//Log.info("writeData video " + d.data);
+						} else {
+/*
+							if (!muxerSegment.addFrame(d.data, newAudioTrackNumber, d.timestamp * 1000000, true)) {
+								Log.error("Could not add audio frame." + recordPath);
+							}
 */
-
-					duration = d.timestamp - lastTimecode;
-
-					mFW.startCluster(d.timestamp);
-					MatroskaFileFrame frame = new MatroskaFileFrame();
-					frame.TrackNo = 1;
-					frame.Duration = duration;
-					frame.Timecode = d.timestamp;
-					frame.Reference = 0;
-					frame.KeyFrame = d.keyframe;
-					frame.Data = d.data;
-					mFW.addFrame(frame);
-					mFW.endCluster();
-
-					lastTimecode = d.timestamp;
+						}
+					}
 
 				} else {
                 	bo.write(d.data, 0, d.length);
@@ -482,14 +499,25 @@ public class Recorder extends Thread
         }
     }
 
-    private void writeDataSize() {
+    private void writeDataSize()
+    {
+		Log.info("writeDataSize");
+
         try {
 			synchronized(this)
 			{
 				if (recordWebm)
 				{
-					//mFW.endCluster();
-					iFW.close();
+					if (muxerSegment != null)
+					{
+						if (!muxerSegment.finalizeSegment()) {
+							Log.error("Finalization of segment failed." + recordPath);
+						}
+
+						if (mkvWriter != null) {
+							mkvWriter.close();
+						}
+					}
 
 				} else {
 					if (bo != null) {

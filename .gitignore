@@ -1,2 +1,13 @@
 target/
 work/
+
+# Ignore Intellij Idea project files
+*.iml
+*.ipr
+.idea
+atlassian-ide-plugin.xml
+
+# Ignore Eclipse project files
+.settings
+.project
+.classpath

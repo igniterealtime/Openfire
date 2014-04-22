@@ -83,7 +83,7 @@ import org.xmpp.resultsetmanagement.ResultSet;
  * the rooms after a period of time and to maintain a log of the conversation in the rooms that
  * require to log their conversations. The conversations log is saved to the database using a
  * separate process<p>
- *
+ * <p/>
  * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
  * the last occupant left the room. On the other hand, persistent rooms are always present in memory
  * even after the last occupant left the room. In order to keep memory clean of persistent rooms that
@@ -173,6 +173,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * locked room thinking that the room doesn't exist because the user didn't discover it before.
      */
     private boolean allowToDiscoverLockedRooms = true;
+
+    /**
+     * Flag that indicates if the service should provide information about non-public members-only
+     * rooms when handling service discovery requests.
+     */
+    private boolean allowToDiscoverMembersOnlyRooms = false;
 
     /**
      * Returns the permission policy for creating rooms. A true value means that not anyone can
@@ -839,6 +845,30 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
+     * Returns the flag that indicates if the service should provide information about non-public
+     * members-only rooms when handling service discovery requests.
+     *
+     * @return true if the service should provide information about non-public members-only rooms.
+     */
+    public boolean isAllowToDiscoverMembersOnlyRooms() {
+        return allowToDiscoverMembersOnlyRooms;
+    }
+
+    /**
+     * Sets the flag that indicates if the service should provide information about non-public
+     * members-only rooms when handling service discovery requests.
+     *
+     * @param allowToDiscoverMembersOnlyRooms
+     *         if the service should provide information about
+     *         non-public members-only rooms.
+     */
+    public void setAllowToDiscoverMembersOnlyRooms(boolean allowToDiscoverMembersOnlyRooms) {
+        this.allowToDiscoverMembersOnlyRooms = allowToDiscoverMembersOnlyRooms;
+        MUCPersistenceManager.setProperty(chatServiceName, "discover.membersOnly",
+                Boolean.toString(allowToDiscoverMembersOnlyRooms));
+    }
+
+    /**
      * Returns the flag that indicates if the service should provide information about locked rooms
      * when handling service discovery requests.
      *
@@ -954,6 +984,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         allowToDiscoverLockedRooms =
                 MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.locked", true);
+        allowToDiscoverMembersOnlyRooms =
+                MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.membersOnly", true);
         roomCreationRestricted =
                 MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.anyone", false);
         // Load the list of JIDs that are allowed to create a MUC room
@@ -1443,7 +1475,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 			// Answer all the public rooms as items
 			for (MUCRoom room : rooms.values())
 			{
-				if (canDiscoverRoom(room))
+				if (canDiscoverRoom(room, senderJID))
 				{
 					answer.add(new DiscoItem(room.getRole().getRoleAddress(),
 						room.getNaturalLanguageName(), null, null));
@@ -1453,7 +1485,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else if (name != null && node == null) {
             // Answer the room occupants as items if that info is publicly available
             MUCRoom room = getChatRoom(name);
-            if (room != null && canDiscoverRoom(room)) {
+            if (room != null && canDiscoverRoom(room, senderJID)) {
                 for (MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
                 	answer.add(new DiscoItem(role.getRoleAddress(), null, null, null));
@@ -1463,12 +1495,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return answer.iterator();
     }
 
-    private boolean canDiscoverRoom(MUCRoom room) {
+    private boolean canDiscoverRoom(MUCRoom room, JID senderJID) {
         // Check if locked rooms may be discovered
         if (!allowToDiscoverLockedRooms && room.isLocked()) {
             return false;
         }
-        return room.isPublicRoom();
+        if (!room.isPublicRoom()) {
+            if (!allowToDiscoverMembersOnlyRooms && room.isMembersOnly()) {
+                return false;
+            }
+            MUCRole.Affiliation affiliation = room.getAffiliation(senderJID.asBareJID());
+            if (affiliation != MUCRole.Affiliation.owner
+                    && affiliation != MUCRole.Affiliation.admin
+                    && affiliation != MUCRole.Affiliation.member) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

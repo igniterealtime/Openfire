@@ -31,6 +31,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,9 @@ import org.xmpp.packet.JID;
 public class MUCPersistenceManager {
 
 	private static final Logger Log = LoggerFactory.getLogger(MUCPersistenceManager.class);
+	
+	// property name for optional number of days to limit persistent MUC history during reload (OF-764)
+	private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -219,21 +223,28 @@ public class MUCPersistenceManager {
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
-            pstmt = con.prepareStatement(LOAD_HISTORY);
-            // Recreate the history until two days ago
-            long from = System.currentTimeMillis() - (86400000 * 2);
-            pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
-            pstmt.setLong(2, room.getID());
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                String senderJID = rs.getString(1);
-                String nickname = rs.getString(2);
-                Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
-                String subject = rs.getString(4);
-                String body = rs.getString(5);
-                // Recreate the history only for the rooms that have the conversation logging
-                // enabled
-                if (room.isLogEnabled()) {
+            // Recreate the history only for the rooms that have the conversation logging
+            // enabled
+            if (room.isLogEnabled()) {
+                pstmt = con.prepareStatement(LOAD_HISTORY);
+                // Reload the history, using "muc.history.reload.limit" (days) if present
+                long from = 0;
+                String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
+                if (reloadLimit != null) {
+                    // if the property is defined, but not numeric, default to 2 (days)
+                    int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
+                    Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
+                    from = System.currentTimeMillis() - (86400000 * reloadLimitDays);
+                }
+                pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+                pstmt.setLong(2, room.getID());
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    String senderJID = rs.getString(1);
+                    String nickname = rs.getString(2);
+                    Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
+                    String subject = rs.getString(4);
+                    String body = rs.getString(5);
                     room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
                             body);
                 }
@@ -534,7 +545,15 @@ public class MUCPersistenceManager {
             connection = DbConnectionManager.getConnection();
             statement = connection.prepareStatement(LOAD_ALL_HISTORY);
 
-            final long from = System.currentTimeMillis() - (86400000 * 2); // Recreate the history until two days ago
+            // Reload the history, using "muc.history.reload.limit" (days) if present
+            long from = 0;
+            String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
+            if (reloadLimit != null) {
+                // if the property is defined, but not numeric, default to 2 (days)
+                int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
+                Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
+                from = System.currentTimeMillis() - (86400000 * reloadLimitDays);
+            }
             statement.setLong(1, serviceID);
             statement.setString(2, StringUtils.dateToMillis(new Date(from)));
             resultSet = statement.executeQuery();
@@ -542,8 +561,8 @@ public class MUCPersistenceManager {
             while (resultSet.next()) {
                 try {
                     LocalMUCRoom room = rooms.get(resultSet.getLong(1));
-                    // Skip to the next position if the room does not exist
-                    if (room == null) {
+                    // Skip to the next position if the room does not exist or if history is disabled
+                    if (room == null || !room.isLogEnabled()) {
                         continue;
                     }
                     String senderJID = resultSet.getString(2);
@@ -551,10 +570,7 @@ public class MUCPersistenceManager {
                     Date sentDate    = new Date(Long.parseLong(resultSet.getString(4).trim()));
                     String subject   = resultSet.getString(5);
                     String body      = resultSet.getString(6);
-                    // Recreate the history only for the rooms that have the conversation logging enabled.
-                    if (room.isLogEnabled()) {
-                        room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body);
-                    }
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }

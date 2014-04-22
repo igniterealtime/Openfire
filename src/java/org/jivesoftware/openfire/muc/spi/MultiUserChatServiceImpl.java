@@ -365,7 +365,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void shutdown() {
-
+		stop();
     }
 
     public String getServiceDomain() {
@@ -1052,7 +1052,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    public void stop() {
+    private void stop() {
         XMPPServer.getInstance().getIQDiscoItemsHandler().removeServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().removeServerNodeInfoProvider(this.getServiceDomain());
         XMPPServer.getInstance().getServerItemsProviders().remove(this);
@@ -1067,10 +1067,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Do nothing if the service status has not changed
             return;
         }
-        XMPPServer server = XMPPServer.getInstance();
         if (!enabled) {
-            // Disable disco information
-            server.getIQDiscoItemsHandler().removeServerItemsProvider(this);
             // Stop the service/module
             stop();
         }
@@ -1081,8 +1078,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (enabled) {
             // Start the service/module
             start();
-            // Enable disco information
-            server.getIQDiscoItemsHandler().addServerItemsProvider(this);
         }
     }
 

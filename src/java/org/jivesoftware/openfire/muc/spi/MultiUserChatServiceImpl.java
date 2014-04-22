@@ -1223,7 +1223,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else if (name != null && node == null) {
             // Answer the identity of a given room
             MUCRoom room = getChatRoom(name);
-            if (room != null && canDiscoverRoom(room)) {
+            if (room != null) {
                 Element identity = DocumentHelper.createElement("identity");
                 identity.addAttribute("category", "conference");
                 identity.addAttribute("name", room.getNaturalLanguageName());
@@ -1266,10 +1266,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else if (name != null && node == null) {
             // Answer the features of a given room
             MUCRoom room = getChatRoom(name);
-            if (room != null && canDiscoverRoom(room)) {
+            if (room != null) {
                 features.add("http://jabber.org/protocol/muc");
-                // Always add public since only public rooms can be discovered
-                features.add("muc_public");
+                if (room.isPublicRoom()) {
+                    features.add("muc_public");
+                } else {
+                    features.add("muc_hidden");
+                }
                 if (room.isMembersOnly()) {
                     features.add("muc_membersonly");
                 }
@@ -1309,7 +1312,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (name != null && node == null) {
             // Answer the extended info of a given room
             MUCRoom room = getChatRoom(name);
-            if (room != null && canDiscoverRoom(room)) {
+            if (room != null) {
                 final DataForm dataForm = new DataForm(Type.result);
 
                 final FormField fieldType = dataForm.addField();

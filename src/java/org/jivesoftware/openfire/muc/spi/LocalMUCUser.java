@@ -369,7 +369,7 @@ public class LocalMUCUser implements MUCUser {
 
     public void process(IQ packet) {
         // Ignore IQs of type ERROR or RESULT sent to a room
-        if (IQ.Type.error == packet.getType()) {
+        if (IQ.Type.error == packet.getType() || IQ.Type.result == packet.getType()) {
             return;
         }
         lastPacketTime = System.currentTimeMillis();

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.IQ.Type;
 
 /**
  * Implements the XMPP Ping as defined by XEP-0199. This protocol offers an
@@ -55,7 +56,10 @@ public class IQPingHandler extends IQHandler implements ServerFeaturesProvider {
 	 */
 	@Override
 	public IQ handleIQ(IQ packet) {
-		return IQ.createResultIQ(packet);
+		if (packet.getType().equals(Type.get)) {
+			return IQ.createResultIQ(packet);
+		}
+		return null;
 	}
 
 	/*

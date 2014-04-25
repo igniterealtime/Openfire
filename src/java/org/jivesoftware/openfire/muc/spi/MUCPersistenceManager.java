@@ -206,14 +206,14 @@ public class MUCPersistenceManager {
             room.setLogEnabled(rs.getInt(16) == 1);
             room.setSubject(rs.getString(17));
             List<String> rolesToBroadcast = new ArrayList<String>();
-            String roles = Integer.toBinaryString(rs.getInt(18));
+            String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt(18)), 3);
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
-            if (roles.length() > 1 && roles.charAt(1) == '1') {
+            if (roles.charAt(1) == '1') {
                 rolesToBroadcast.add("participant");
             }
-            if (roles.length() > 2 && roles.charAt(2) == '1') {
+            if (roles.charAt(2) == '1') {
                 rolesToBroadcast.add("visitor");
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
@@ -510,14 +510,14 @@ public class MUCPersistenceManager {
                     room.setLogEnabled(resultSet.getInt(17) == 1);
                     room.setSubject(resultSet.getString(18));
                     List<String> rolesToBroadcast = new ArrayList<String>();
-                    String roles = Integer.toBinaryString(resultSet.getInt(19));
+                    String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt(19)), 3);
                     if (roles.charAt(0) == '1') {
                         rolesToBroadcast.add("moderator");
                     }
-                    if (roles.length() > 1 && roles.charAt(1) == '1') {
+                    if (roles.charAt(1) == '1') {
                         rolesToBroadcast.add("participant");
                     }
-                    if (roles.length() > 2 && roles.charAt(2) == '1') {
+                    if (roles.charAt(2) == '1') {
                         rolesToBroadcast.add("visitor");
                     }
                     room.setRolesToBroadcastPresence(rolesToBroadcast);

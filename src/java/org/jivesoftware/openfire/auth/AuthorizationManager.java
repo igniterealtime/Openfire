@@ -60,7 +60,6 @@ public class AuthorizationManager {
 
     private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<AuthorizationPolicy>();
     private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<AuthorizationMapping>();
-    private static AuthorizationManager instance = new AuthorizationManager();
 
     static {
         // Convert XML based provider setup to Database based
@@ -117,10 +116,6 @@ public class AuthorizationManager {
         }
     }
 
-    private AuthorizationManager() {
-
-    }
-
     /**
      * Returns the currently-installed AuthorizationProvider. Warning: You
      * should not be calling the AuthorizationProvider directly to perform
@@ -131,15 +126,6 @@ public class AuthorizationManager {
      */
     public static Collection<AuthorizationPolicy> getAuthorizationPolicies() {
         return authorizationPolicies;
-    }
-
-    /**
-     * Returns a singleton AuthorizationManager instance.
-     *
-     * @return a AuthorizationManager instance.
-     */
-    public static AuthorizationManager getInstance() {
-        return instance;
     }
 
     /**

@@ -1739,12 +1739,16 @@ public class PubSubEngine {
 
     public void shutdown(PubSubService service) {
     	PubSubPersistenceManager.shutdown();
-        // Stop executing ad-hoc commands
-        service.getManager().stop();
-        
-        // clear all nodes for this service, to remove circular references back to the service instance.
-		service.getNodes().clear(); // FIXME: this is an ugly hack. getNodes() is documented to return an unmodifiable collection (but does not).
+    	if (service != null) {
 
+    		if (service.getManager() != null) {
+		    	// Stop executing ad-hoc commands
+		        service.getManager().stop();
+    		}
+	        
+	        // clear all nodes for this service, to remove circular references back to the service instance.
+			service.getNodes().clear(); // FIXME: this is an ugly hack. getNodes() is documented to return an unmodifiable collection (but does not).
+    	}
     }
 
     /*******************************************************************************

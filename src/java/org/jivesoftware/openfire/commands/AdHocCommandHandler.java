@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.commands.admin.*;
 import org.jivesoftware.openfire.commands.admin.group.*;
 import org.jivesoftware.openfire.commands.admin.user.AddUser;
+import org.jivesoftware.openfire.commands.admin.user.DeleteUser;
 import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
 import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
@@ -213,6 +214,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new UpdateGroup());
         addCommand(new DeleteGroup());
         addCommand(new AddUser());
+        addCommand(new DeleteUser());
         addCommand(new AuthenticateUser());
         addCommand(new ChangeUserPassword());
         addCommand(new UserProperties());

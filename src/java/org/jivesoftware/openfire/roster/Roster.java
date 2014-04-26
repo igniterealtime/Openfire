@@ -159,6 +159,8 @@ public class Roster implements Cacheable, Externalizable {
                     if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
+                        item.setNickname(UserNameManager.getUserName(jid));
+                        broadcast(item, true);
                     } else {
                         item.addInvisibleSharedGroup(group);
                     }

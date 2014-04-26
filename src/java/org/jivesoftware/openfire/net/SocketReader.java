@@ -182,7 +182,7 @@ public abstract class SocketReader implements Runnable {
                 packet.getType();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence type", e);
+                Log.debug("Invalid presence (type): " + packet);
                 // The presence packet contains an invalid presence type so replace it with
                 // an available presence type
                 packet.setType(null);
@@ -192,7 +192,7 @@ public abstract class SocketReader implements Runnable {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence show", e);
+                Log.debug("Invalid presence (show): " + packet);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);

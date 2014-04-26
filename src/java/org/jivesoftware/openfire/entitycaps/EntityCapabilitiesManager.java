@@ -109,8 +109,8 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private Map<String, EntityCapabilities> verAttributes;
 
     private EntityCapabilitiesManager() {
-        entityCapabilitiesMap = CacheFactory.createCache("Entity Capabilities");
-        entityCapabilitiesUserMap = CacheFactory.createCache("Entity Capabilities Users");
+        entityCapabilitiesMap = CacheFactory.createLocalCache("Entity Capabilities");
+        entityCapabilitiesUserMap = CacheFactory.createLocalCache("Entity Capabilities Users");
         verAttributes = new HashMap<String, EntityCapabilities>();
     }
 

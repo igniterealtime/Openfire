@@ -116,6 +116,9 @@ public class AuthorizationManager {
         }
     }
 
+    // static utility class; do not instantiate
+    private AuthorizationManager() { }
+
     /**
      * Returns the currently-installed AuthorizationProvider. Warning: You
      * should not be calling the AuthorizationProvider directly to perform

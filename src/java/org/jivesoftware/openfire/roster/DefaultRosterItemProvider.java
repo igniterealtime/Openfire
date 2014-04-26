@@ -75,7 +75,9 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
      private static final String LOAD_ROSTER =
              "SELECT jid, rosterID, sub, ask, recv, nick FROM ofRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-            "SELECT rosterID,groupName FROM ofRosterGroups";
+             "SELECT rosterID,groupName FROM ofRosterGroups " +
+             "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
+             "WHERE username=? ORDER BY rosterID, rank";
 
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
@@ -267,14 +269,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             // Load the groups for the loaded contact
             if (!itemList.isEmpty()) {
-                StringBuilder sb = new StringBuilder(100);
-                sb.append(LOAD_ROSTER_ITEM_GROUPS).append(" WHERE rosterID IN (");
-                for (RosterItem item : itemList) {
-                    sb.append(item.getID()).append(",");
-                }
-                sb.setLength(sb.length()-1);
-                sb.append(") ORDER BY rosterID, rank");
-                pstmt = con.prepareStatement(sb.toString());
+            	pstmt = con.prepareStatement(LOAD_ROSTER_ITEM_GROUPS);
+            	pstmt.setString(1, username);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
                     itemsByID.get(rs.getLong(1)).getGroups().add(rs.getString(2));

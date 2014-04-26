@@ -19,6 +19,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -252,6 +253,10 @@ public class NIOConnection implements Connection {
 
             boolean errorDelivering = false;
             try {
+            	// OF-464: if the connection has been dropped, fail over to backupDeliverer (offline)
+            	if (!ioSession.isConnected()) {
+            		throw new IOException("Connection reset/closed by peer");
+            	}
                 XMLWriter xmlSerializer =
                         new XMLWriter(new ByteBufferWriter(buffer, encoder.get()), new OutputFormat());
                 xmlSerializer.write(packet.getElement());
@@ -263,7 +268,7 @@ public class NIOConnection implements Connection {
                 ioSession.write(buffer);
             }
             catch (Exception e) {
-                Log.debug("NIOConnection: Error delivering packet" + "\n" + this.toString(), e);
+                Log.debug("Error delivering packet:\n" + packet, e);
                 errorDelivering = true;
             }
             if (errorDelivering) {
@@ -298,6 +303,10 @@ public class NIOConnection implements Connection {
                 }
                 buffer.flip();
                 if (asynchronous) {
+                	// OF-464: handle dropped connections (no backupDeliverer in this case?)
+                	if (!ioSession.isConnected()) {
+                		throw new IOException("Connection reset/closed by peer");
+                	}
                     ioSession.write(buffer);
                 }
                 else {
@@ -310,7 +319,7 @@ public class NIOConnection implements Connection {
                 }
             }
             catch (Exception e) {
-                Log.debug("NIOConnection: Error delivering raw text" + "\n" + this.toString(), e);
+                Log.debug("Error delivering raw text:\n" + text, e);
                 errorDelivering = true;
             }
             // Close the connection if delivering text fails and we are already not closing the connection

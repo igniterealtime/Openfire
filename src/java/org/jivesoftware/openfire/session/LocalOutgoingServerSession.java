@@ -284,7 +284,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 break;
             }
             catch (UnknownHostException uhe) {
-            	Log.warn("Unkown host: " + realHostname);
+            	Log.warn("Unknown host: " + realHostname);
             } 
             catch (SocketTimeoutException ste) {
             	Log.error("Connection Timed out trying to connect to remote server: " + hostname +
@@ -392,7 +392,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                     "(DNS lookup: " + realHostname + ":" + realPort + "): ", e);
         }
         catch (UnknownHostException uhe) {
-        	Log.warn("Unkown host: " + realHostname);
+        	Log.warn("Unknown host: " + realHostname);
         } 
         catch (SocketTimeoutException ste) {
         	Log.error("Connection Timed out trying to connect to remote server: " + hostname +

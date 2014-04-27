@@ -202,14 +202,11 @@ case "$1" in
 	condrestart)
 		condrestart
 		;;
-	reload)
-		restart
-		;;
 	status) 
 		status
 		;;
 	*)
-		echo "Usage $0 {start|stop|restart|status|condrestart|reload}"
+		echo "Usage $0 {start|stop|restart|status|condrestart}"
 		RETVAL=1
 esac
 

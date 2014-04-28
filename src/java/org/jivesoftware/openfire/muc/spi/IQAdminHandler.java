@@ -249,8 +249,7 @@ public class IQAdminHandler {
             // The client is modifying the list of moderators/members/participants/outcasts
             String nick;
             String target;
-            boolean hasAffiliation = itemsList.get(0).attributeValue("affiliation") !=
-                    null;
+            boolean hasAffiliation;
 
             // Keep a registry of the updated presences
             List<Presence> presences = new ArrayList<Presence>(itemsList.size());
@@ -259,8 +258,9 @@ public class IQAdminHandler {
             for (Object anItem : itemsList) {
                 try {
                     item = (Element) anItem;
-                    target = (hasAffiliation ? item.attributeValue("affiliation") : item
-                            .attributeValue("role"));
+                    affiliation = item.attributeValue("affiliation");
+                    hasAffiliation = affiliation != null;
+                    target = (hasAffiliation ? affiliation : item.attributeValue("role"));
                     List<JID> jids = new ArrayList<JID>();
                     // jid could be of the form "full JID" or "bare JID" depending if we are
                     // going to change a role or an affiliation

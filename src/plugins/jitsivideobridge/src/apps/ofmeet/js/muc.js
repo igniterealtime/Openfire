@@ -78,21 +78,37 @@ Strophe.addConnectionPlugin('emuc', {
         $(document).trigger('left.muc', [from]);
         return true;
     },
+    
     onPresenceError: function (pres) {
         var from = pres.getAttribute('from');
         
         if ($(pres).find('>error[type="auth"]>not-authorized[xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"]').length) 
         {
             var ob = this;
-            window.setTimeout(function () {
-                var given = window.prompt('Password required');
-                
-                if (given != null) {
-                    ob.connection.send($pres({to: ob.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}).c('password').t(given));
-                } else {
-                    // user aborted
+            
+    	    $.prompt('<h2>Password required</h2><input id="lockKey" type="text" placeholder="shared key" autofocus>',
+            {
+                persistent: true,
+                buttons: { "Ok": true , "Cancel": false},
+                defaultButton: 1,
+                loaded: function(event) {
+                    document.getElementById('lockKey').focus();
+                },
+                submit: function(e,v,m,f){
+                    if(v)
+                    {
+                        var lockKey = document.getElementById('lockKey');
+
+                        if (lockKey.value !== null)
+                        {
+                        	var pres = $pres({to: ob.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}).c('password').t(lockKey.value);
+				ob.connection.send(pres);				
+				setTimeout(function(){ registerRayoEvents();}, 1000);
+                        }
+                    }
                 }
-            }, 50);
+            });        
+
         } else {
             console.warn('onPresError ', pres);
         }

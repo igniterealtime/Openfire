@@ -81,6 +81,8 @@ public class PluginServlet extends HttpServlet {
     static {
         servlets = new ConcurrentHashMap<String, GenericServlet>();
     }
+	
+	public static final String PLUGINS_WEBROOT = "/plugins/";
 
     @Override
 	public void init(ServletConfig config) throws ServletException {
@@ -226,6 +228,51 @@ public class PluginServlet extends HttpServlet {
         }
     }
 
+
+	/**
+	 * Registers a live servlet for a plugin programmatically, does not
+	 * initialize the servlet.
+	 * 
+	 * @param pluginManager the plugin manager
+	 * @param plugin the owner of the servlet
+	 * @param servlet the servlet.
+	 * @param relativeUrl the relative url where the servlet should be bound
+	 * @return the effective url that can be used to initialize the servlet
+	 */
+	public static String registerServlet(PluginManager pluginManager,
+			Plugin plugin, GenericServlet servlet, String relativeUrl)
+			throws ServletException {
+
+		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+		PluginServlet.pluginManager = pluginManager;
+		if (servlet == null) {
+			throw new ServletException("Servlet is missing");
+		}
+		String pluginServletUrl = pluginName + relativeUrl;
+		servlets.put(pluginName + relativeUrl, servlet);
+		return PLUGINS_WEBROOT + pluginServletUrl;
+		
+	}
+
+	/**
+	 * Unregister a live servlet for a plugin programmatically. Does not call
+	 * the servlet destroy method.
+	 * 
+	 * @param plugin the owner of the servlet
+	 * @param servletUrl the relative url where servlet has been bound
+	 * @return the unregistered servlet, so that it can be destroyed
+	 */
+	public static GenericServlet unregisterServlet(Plugin plugin, String url)
+			throws ServletException {
+		String pluginName = pluginManager.getPluginDirectory(plugin).getName();
+		if (url == null) {
+			throw new ServletException("Servlet URL is missing");
+		}
+		String fullUrl = pluginName + url;
+		GenericServlet servlet = servlets.remove(fullUrl);
+		return servlet;
+	}
+    
     /**
      * Handles a request for a JSP page. It checks to see if a servlet is mapped
      * for the JSP URL. If one is found, request handling is passed to it. If no

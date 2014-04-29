@@ -5,7 +5,7 @@ Release: 1
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{OPENFIRE_SOURCE}
 %ifnarch noarch
-Source1: jre-dist.tar.gz
+Source1: %{JRE_BUNDLE}
 %endif
 Group: Applications/Communications
 Vendor: Jive Software

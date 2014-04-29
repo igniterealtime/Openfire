@@ -1114,7 +1114,7 @@
             <equals arg1="${bundle.jre}" arg2="true"/>
             <then>
                 <!-- Include bundled jre -->
-                <copy todir="${target.rpm}/SOURCES" file="${basedir}/build/rpm/jre-dist.tar.gz" />
+                <copy todir="${target.rpm}/SOURCES" file="${jre.bundle.location}" />
             </then>
         </if>
         <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
@@ -1125,7 +1125,7 @@
             <then>
 	      <rpm specFile="openfire.spec"
 		  topDir="${target.rpm}"
-		  command="-ba --target i386 --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+		  command="-ba --target i386 --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
 		  failOnError="true"
 		  />
 

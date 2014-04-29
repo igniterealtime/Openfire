@@ -75,9 +75,9 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
      private static final String LOAD_ROSTER =
              "SELECT jid, rosterID, sub, ask, recv, nick FROM ofRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
-             "SELECT rosterID,groupName FROM ofRosterGroups " +
+             "SELECT ofRosterGroups.rosterID,groupName FROM ofRosterGroups " +
              "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
-             "WHERE username=? ORDER BY rosterID, rank";
+             "WHERE username=? ORDER BY ofRosterGroups.rosterID, rank";
 
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)

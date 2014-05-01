@@ -1,7 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: 3144 $
- * $Date: 2005-12-01 14:20:11 -0300 (Thu, 01 Dec 2005) $
  *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
@@ -346,7 +343,7 @@ public class XMPPServer {
             host = "127.0.0.1";        	
         }
 
-        version = new Version(3, 9, 2, Version.ReleaseStatus.Alpha, -1);
+        version = new Version(3, 9, 2, Version.ReleaseStatus.Release, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

@@ -162,6 +162,167 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.9.2 -- <span style="font-weight: normal;">May 1, 2014</span></h2>
+   
+<h2>Bug</h2>
+<ul>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-2'>OF-2</a>] -         LocalOutgoingServerSession logs connection failures over verbosely
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-24'>OF-24</a>] -         &quot;Issue with IQ subscription=&quot;remove&quot;
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-114'>OF-114</a>] -         Clearing cache can lock up MUC
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-183'>OF-183</a>] -         Bad-namespace prefix is actually invalid-namespace?
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-193'>OF-193</a>] -         Last logouts are not recorded when server is shut down
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-297'>OF-297</a>] -         fix: mutual roster deletion problem 
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-303'>OF-303</a>] -         fix Flexible Offline Message Retrieval (XEP-0013) support
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-455'>OF-455</a>] -         Some unicode pattern in status message can break the session connection
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-471'>OF-471</a>] -         Error integrity of the compressed stream
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-544'>OF-544</a>] -         MUC change affiliation/role - admin IQ item processing bug
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-562'>OF-562</a>] -         Broadcasting roles for MUC are not loaded correctly from DB
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-633'>OF-633</a>] -         Current OfflineMessageStore logic discards valid MUC invites
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-640'>OF-640</a>] -         log4j doesn&#39;t pick up ${openfireHome}
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-669'>OF-669</a>] -         Visually failed first login to Admin Console
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-686'>OF-686</a>] -         Anonymous registration permits name with javascript payload
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-687'>OF-687</a>] -         MUC topic permits javascript payloads
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-692'>OF-692</a>] -         Node column in ofSecurityAuditLog table should accept NULL entries
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-693'>OF-693</a>] -         openfire init script target reload should not call restart
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-699'>OF-699</a>] -         Race condition during cluster initialization (Hazelcast plugin)
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-705'>OF-705</a>] -         Admin console (XSS) vulnerability lets attacker change admin password or create new admin
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-706'>OF-706</a>] -         Openfire does not close the stream with a stream error if the namespace is not  &#39;http://etherx.jabber.org/streams&#39; 
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-717'>OF-717</a>] -         The BOSH implementation should include a &#39;from&#39; attribute in its session creation response.
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-720'>OF-720</a>] -         Roster deletion of userB by userA should not remove userA from userB&#39;s roster
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-722'>OF-722</a>] -         Openfire should save XEP-0184 delivery receipts as offline message
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-725'>OF-725</a>] -         Openfire must return a service-unavailable error when blocking an IQ of type get or set because of a privacy list. OF should return error if a message stanza is blocked
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-731'>OF-731</a>] -         HybridUserProvider does not initialize correctly
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-733'>OF-733</a>] -         OF should not silently close a connection, when receiving a message without &#39;to&#39; attribute
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-734'>OF-734</a>] -         Openfire cannot deal with SASL &lt;abort/&gt;
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-735'>OF-735</a>] -         Openfire should return &lt;invalid-mechanism/&gt; SASL failure, when requesting an unknown mechanism
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-741'>OF-741</a>] -         Debian Installer should allow Java7 as a prereq
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-742'>OF-742</a>] -         MUC Service sends &quot;disturbing&quot; service messages.
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-743'>OF-743</a>] -         MUC room does not return its identity or features, when querying for room info
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-745'>OF-745</a>] -         Use TLS-dialback even if that mechanism is not advertised
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-746'>OF-746</a>] -         Use update-alternatives to set JAVA_HOME on debian
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-751'>OF-751</a>] -         NPE on PubSubEngine#shutdown on server shutdown
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-753'>OF-753</a>] -         Improve init script to work with opensuse and fix logic with PID file
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-755'>OF-755</a>] -         Monitoring plugin database fixes
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-756'>OF-756</a>] -         Fix Postgres purge process error
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-757'>OF-757</a>] -         Allow s2s message of subdomain of XMPP domain when no components are found
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-759'>OF-759</a>] -         Update bundled postgresql driver to PostgreSQL 9.3 JDBC4 (build 1101)
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-760'>OF-760</a>] -         MUC service does not include &quot;self-presence&quot; status code 110
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-761'>OF-761</a>] -         OF must return &lt;jid-malformed/&gt; instead of &lt;bad-request/&gt; when joining a MUC room without nickname
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-769'>OF-769</a>] -         Fix typo in monitoring plugin
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-770'>OF-770</a>] -         CVE-2014-2741 Uncontrolled Resource Consumption with XMPP-Layer Compression
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-772'>OF-772</a>] -         IQ type=&quot;result&quot; getting java.lang.IllegalArgumentException
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-774'>OF-774</a>] -         Needless code in AuthorizationManager
+</li>
+</ul>
+        
+<h2>Improvement</h2>
+<ul>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-163'>OF-163</a>] -         fix RosterItemProvider.getItems() for Oracle
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-298'>OF-298</a>] -         EntityCapabilityManager should not use a clustered cache
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-309'>OF-309</a>] -         Privacy Lists drop messages silently
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-411'>OF-411</a>] -         Admin or owner should be able to join a room when it has reached maximum occupants number 
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-464'>OF-464</a>] -         Verify if there were packets pending to be sent and decide what to do with them
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-569'>OF-569</a>] -         Add deluser adhoc command
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-592'>OF-592</a>] -         build.xml_chmod_executables.patch
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-594'>OF-594</a>] -         PluginServlet.java_support_registering_servlets_programmatically.patch
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-729'>OF-729</a>] -         Upgrade Hazelcast plugin to latest release version (3.1.x)
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-730'>OF-730</a>] -         Migrate operational configuration properties from openfire.xml to DB
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-749'>OF-749</a>] -         Upgrade bouncycastle library from 1.49 to 1.50 to keep up with JitsiVideobridge
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-764'>OF-764</a>] -         Group chat history (MUC) should match configuration after server restart
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-771'>OF-771</a>] -         MUC service should flush recent history before shutting down
+</li>
+</ul>
+    
+<h2>New Feature</h2>
+<ul>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-125'>OF-125</a>] -         Restrict discovery of rooms based on users membership
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-206'>OF-206</a>] -         Add HybridUserProvider
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-347'>OF-347</a>] -         The domain should add support for Last Activity requests
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-638'>OF-638</a>] -         Add support for XEP-0202: Entity Time
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-682'>OF-682</a>] -         Add Portuguese translation
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-714'>OF-714</a>] -         Add ability to encrypt properties so they are encrypted in the db and do not appear in the admin console.
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-758'>OF-758</a>] -         Add support for XEP-0280 &quot;Message Carbons&quot;
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-775'>OF-775</a>] -         Improve logging of invalid presence show 
+</li>
+</ul>
+        
+<h2>Task</h2>
+<ul>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-728'>OF-728</a>] -         Update installation package with the latest Java JRE
+</li>
+</ul>
+
+<h2>Sub-task</h2>
+<ul>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-10'>OF-10</a>] -         Pubsub event message with SHIM information holding multiple subscriptions should have the name=&#39;SubID&#39;.
+</li>
+<li>[<a href='http://issues.igniterealtime.org/browse/OF-103'>OF-103</a>] -         [MUC] Allow nicknames to be used more than once in the same room
+</li>
+</ul>
 
 <h2>3.9.1 -- <span style="font-weight: normal;">Feb 6, 2014</span></h2>
 

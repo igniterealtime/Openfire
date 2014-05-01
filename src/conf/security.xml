@@ -52,10 +52,6 @@
       -->
       <name>database.defaultProvider.username</name>
       <name>database.defaultProvider.password</name>
-      <name>ldap.adminDN</name>
-      <name>ldap.adminPassword</name>
-      <name>clearspace.uri</name>
-      <name>clearspace.sharedSecret</name>
     </property>
   </encrypt>
   

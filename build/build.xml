@@ -467,6 +467,16 @@
     </target>
 
     <target name="-javadoc-impl" unless="no.javadoc">
+
+        <!-- Starting with Java8 Javadoc checks for valid html. We disable it only for Java8 because older verions doesn't know the property -->
+        <condition property="javadoc.additionalparams" value="-Xdoclint:none">
+            <contains string="${ant.java.version}" substring="1.8"/>
+        </condition>
+        <condition property="javadoc.additionalparams" value="">
+            <not>
+              <contains string="${ant.java.version}" substring="1.8"/>
+            </not>
+        </condition>
         <!-- Run javadoc over all source code -->
         <javadoc
                 packagenames="org.jivesoftware.*, org.xmpp.*"
@@ -474,6 +484,7 @@
                 windowtitle="Openfire ${version} Javadoc"
                 overview="${src.java.dir}/overview.html"
                 failonerror="yes"
+				additionalparam="${javadoc.additionalparams}"
                 >
             <sourcepath>
                 <path location="${src.java.dir}"/>

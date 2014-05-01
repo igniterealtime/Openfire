@@ -124,6 +124,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         do {
             try {
 	            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
+                config.setClassLoader(loader);
 	            config.setInstanceName("openfire");
 	            if (JMXManager.isEnabled() && HAZELCAST_JMX_ENABLED) {
 	            	config.setProperty("hazelcast.jmx", "true");

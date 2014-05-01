@@ -57,7 +57,7 @@
     RegistrationPlugin plugin = (RegistrationPlugin) webManager.getXMPPServer().getPluginManager().getPlugin("registration");
     ReCaptcha reCaptcha = null;
     if (plugin.reCaptchaEnabled()) {
-        reCaptcha = ReCaptchaFactory.newReCaptcha(
+        reCaptcha = ReCaptchaFactory.newSecureReCaptcha(
                 plugin.getReCaptchaPublicKey(),
                 plugin.getReCaptchaPrivateKey(),
                 plugin.reCaptchaNoScript());

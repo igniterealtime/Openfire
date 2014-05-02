@@ -42,22 +42,19 @@ import org.xmpp.packet.JID;
 
 /**
  * The JDBC user provider allows you to use an external database to define the users.
- * It is best used with the JDBCAuthProvider & JDBCGroupProvider to provide integration
+ * It is best used with the JDBCAuthProvider &amp; JDBCGroupProvider to provide integration
  * between your external system and Openfire. All data is treated as read-only so any
- * set operations will result in an exception.<p/>
- *
- * For the seach facility, the SQL will be constructed from the SQL in the <i>search</i>
+ * set operations will result in an exception.
+ * <p>For the seach facility, the SQL will be constructed from the SQL in the <i>search</i>
  * section below, as well as the <i>usernameField</i>, the <i>nameField</i> and the
- * <i>emailField</i>.<p/>
- *
- * To enable this provider, set the following in the system properties:<p/>
- *
+ * <i>emailField</i>.</p>
+ * <p>To enable this provider, set the following in the system properties:</p>
  * <ul>
  * <li><tt>provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider</tt></li>
  * </ul>
- *
+ * <p>
  * Then you need to set your driver, connection string and SQL statements:
- * <p/>
+ * </p>
  * <ul>
  * <li><tt>jdbcProvider.driver = com.mysql.jdbc.Driver</tt></li>
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>

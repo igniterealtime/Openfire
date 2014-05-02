@@ -100,21 +100,21 @@ import org.xmpp.packet.JID;
 /**
  * The main XMPP server that will load, initialize and start all the server's
  * modules. The server is unique in the JVM and could be obtained by using the
- * {@link #getInstance()} method.<p>
- * <p/>
+ * {@link #getInstance()} method.
+ * <p>
  * The loaded modules will be initialized and may access through the server other
  * modules. This means that the only way for a module to locate another module is
- * through the server. The server maintains a list of loaded modules.<p>
- * <p/>
+ * through the server. The server maintains a list of loaded modules.
+ * </p>
+ * <p>
  * After starting up all the modules the server will load any available plugin.
- * For more information see: {@link org.jivesoftware.openfire.container.PluginManager}.<p>
- * <p/>
- * A configuration file keeps the server configuration. This information is required for the
+ * For more information see: {@link org.jivesoftware.openfire.container.PluginManager}.
+ * </p>
+ * <p>A configuration file keeps the server configuration. This information is required for the
  * server to work correctly. The server assumes that the configuration file is named
  * <b>openfire.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
  * the configuration file must be located under the home folder. The server will try different
- * methods to locate the home folder.
- * <p/>
+ * methods to locate the home folder.</p>
  * <ol>
  * <li><b>system property</b> - The server will use the value defined in the <i>openfireHome</i>
  * system property.</li>

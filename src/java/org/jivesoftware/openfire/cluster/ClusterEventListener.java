@@ -30,14 +30,14 @@ public interface ClusterEventListener {
 
     /**
      * Notification event indicating that this JVM is now part of a cluster. At this point the
-     * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value.<p>
+     * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value.
      *
-     * When joining the cluster as the senior cluster member the {@link #markedAsSeniorClusterMember()}
-     * event will be sent right after this event.<p>
+     * <p>When joining the cluster as the senior cluster member the {@link #markedAsSeniorClusterMember()}
+     * event will be sent right after this event.</p>
      *
-     * At this point the CacheFactory holds clustered caches. That means that modifications
+     * <p>At this point the CacheFactory holds clustered caches. That means that modifications
      * to the caches will be reflected in the cluster. The clustered caches were just
-     * obtained from the cluster and no local cached data was automatically moved.<p>
+     * obtained from the cluster and no local cached data was automatically moved.</p>
      */
     void joinedCluster();
 

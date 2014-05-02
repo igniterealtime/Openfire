@@ -34,18 +34,17 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages sequences of unique ID's that get stored in the database. Database support for sequences
  * varies widely; some don't use them at all. Instead, we handle unique ID generation with a
- * combination VM/database solution.<p/>
- *
+ * combination VM/database solution.
+ * <p>
  * A special table in the database doles out blocks of unique ID's to each
- * virtual machine that interacts with Jive. This has the following consequences:
+ * virtual machine that interacts with Jive. This has the following consequences:</p>
  * <ul>
  * <li>There is no need to go to the database every time we want a new unique id.
  * <li>Multiple app servers can interact with the same db without id collision.
  * <li>The order of unique id's may not correspond to the creation date of objects.
  * <li>There can be gaps in ID's after server restarts since blocks will get "lost" if the block
  * size is greater than 1.
- * </ul><p/>
- *
+ * </ul>
  * Each sequence type that this class manages has a different block size value. Objects that aren't
  * created often have a block size of 1, while frequently created objects such as entries and
  * comments have larger block sizes.
@@ -95,10 +94,10 @@ public class SequenceManager {
 
     /**
      * Returns the next id for an object that has defined the annotation {@link JiveID}.
-     * The JiveID annotation value is the synonymous for the type integer.<p/>
+     * The JiveID annotation value is the synonymous for the type integer.<p>
      *
      * The annotation JiveID should contain the id type for the object (the same number you would
-     * use to call nextID(int type)). Example class definition:
+     * use to call nextID(int type)). Example class definition:</p>
      * <code>
      * \@JiveID(10)
      * public class MyClass {

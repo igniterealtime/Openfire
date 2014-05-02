@@ -28,9 +28,8 @@ import java.util.Iterator;
  * <p>
  * A <code>UserIdentitiesProvider</code> is responsible for providing the identities
  * of protocols supported by users. An example of a user identity is one
- * for PEP (XEP-0163): <identity category="pubsub" type="pep" />
- * <p/>
- * 
+ * for PEP (XEP-0163): {@code <identity category="pubsub" type="pep" />}
+ * </p>
  * <p>
  * When the server starts up, IQDiscoInfoHandler will request to all the services that implement
  * the UserIdentitiesProvider interface for their identities. Whenever a disco request is received

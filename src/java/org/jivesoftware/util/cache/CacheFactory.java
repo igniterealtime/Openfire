@@ -45,11 +45,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
- * depending on the clustering enabled setting and a user's license.<p>
- * <p/>
- * When clustered caching is turned on, cache usage statistics for all caches
+ * depending on the clustering enabled setting and a user's license.
+ *
+ * <p>When clustered caching is turned on, cache usage statistics for all caches
  * that have been created are periodically published to the clustered cache
- * named "opt-$cacheStats".
+ * named "opt-$cacheStats".</p>
  *
  */
 @SuppressWarnings("rawtypes")

@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  * Utility class for date/time format conversions as specified in
  * <a href="http://www.xmpp.org/extensions/xep-0082.html">XEP-0082</a> and
  * <a href="http://www.xmpp.org/extensions/xep-0090.html">XEP-0090</a> and
- * For Date -> String converstion FastDateFormat is used
+ * For Date -&gt; String converstion FastDateFormat is used
  * 
  */
 //@ThreadSafe
@@ -94,7 +94,7 @@ public class XMPPDateTimeFormat {
      * This method either returns a Date instance as result or it will return null or throw a ParseException
      * in case the String couldn't be parsed.
      * 
-     * @param dateStr the String that should be parsed
+     * @param dateString the String that should be parsed
      * @return the parsed date or null if the String could not be parsed
      * @throws ParseException
      */

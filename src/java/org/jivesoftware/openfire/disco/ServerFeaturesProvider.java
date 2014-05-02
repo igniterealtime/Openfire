@@ -25,13 +25,12 @@ import java.util.Iterator;
 /**
  * ServerFeaturesProviders are responsible for providing the features offered and supported
  * protocols by the SERVER. Example of server features are: jabber:iq:agents, jabber:iq:time, etc.
- * <p/>
- * <p/>
+ * <p>
  * When the server starts up, IQDiscoInfoHandler will request to all the services that implement
  * the ServerFeaturesProvider interface for their features. Whenever a disco request is received
  * IQDiscoInfoHandler will add to the provided information all the collected features. Therefore, a
  * service must implement this interface in order to offer/publish its features as part of the
- * server features.
+ * server features.</p>
  *
  * @author Gaston Dombiak
  */

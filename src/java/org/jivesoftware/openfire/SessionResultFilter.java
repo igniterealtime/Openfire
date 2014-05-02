@@ -27,14 +27,14 @@ import java.util.Date;
 /**
  * Filters and sorts lists of sessions. This allows for a very rich set of possible
  * queries that can be run on session data. Some examples are: "Show all sessions
- * started during the last hour by a certain user".<p>
- *
+ * started during the last hour by a certain user".
+ * <p>
  * The class also supports pagination of results with the setStartIndex(int)
  * and setNumResults(int) methods. If the start index is not set, it will
  * begin at index 0 (the start of results). If the number of results is not set,
- * it will be unbounded and return as many results as available.<p>
- *
- * Factory methods to create common queries are provided for convenience.
+ * it will be unbounded and return as many results as available.</p>
+ * <p>
+ * Factory methods to create common queries are provided for convenience.</p>
  *
  * @author Matt Tucker
  */
@@ -267,19 +267,20 @@ public class SessionResultFilter {
      * the time portion of the date is shown for brevity) <p>
      *
      * <table border="1">
+     * <caption></caption>
      * <tr><th>Date</th><th>Seconds</th><th>Result</th></tr>
      * <tr><td>1:37.48</td><td>5</td><td>1:37.45</td></tr>
      * <tr><td>1:37.48</td><td>10</td><td>1:37.40</td></tr>
-     * <tr><td>1:37.48</td><td>30</td><td>1:37.30</td</tr>
+     * <tr><td>1:37.48</td><td>30</td><td>1:37.30</td></tr>
      * <tr><td>1:37.48</td><td>60</td><td>1:37.00</td></tr>
      * <tr><td>1:37.48</td><td>120</td><td>1:36.00</td></tr>
-     * </table><p>
+     * </table>
      *
-     * This method is useful when calculating the last post in
+     * <p>This method is useful when calculating the last post in
      * a forum or the number of new messages from a given date. Using a rounded
      * date allows Jive to internally cache the results of the date query.
      * Here's an example that shows the last posted message in a forum accurate
-     * to the last 60 seconds:<p>
+     * to the last 60 seconds:</p>
      *
      * <pre>
      * SessionResultFilter filter = new SessionResultFilter();

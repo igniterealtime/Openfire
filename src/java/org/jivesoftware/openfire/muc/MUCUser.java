@@ -29,11 +29,12 @@ import org.xmpp.packet.Packet;
  * the chat server. Centralizing chat users to the Jabber entity that
  * sends and receives the chat messages allows us to create quality of
  * service, authorization, and resource decisions on a real-user basis.
- * <p/>
+ * <p>
  * Most chat users in a typical s2s scenario will not be local users.
  * </p><p>
  * MUCUsers play one or more roles in one or more chat rooms on the
  * server.
+ * </p>
  *
  * @author Gaston Dombiak
  */

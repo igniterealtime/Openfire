@@ -26,9 +26,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Dispatches lockout events. The following events are supported:
  * <ul>
- * <li><b>accountLocked</b> --> An account has been disabled/locked out.</li>
- * <li><b>accountUnlocked</b> --> An account has been enabled/unlocked.</li>
- * <li><b>lockedAccountDenied</b> --> A locked out account has been denied login.</li>
+ * <li><b>accountLocked</b> --&gt; An account has been disabled/locked out.</li>
+ * <li><b>accountUnlocked</b> --&gt; An account has been enabled/unlocked.</li>
+ * <li><b>lockedAccountDenied</b> --&gt; A locked out account has been denied login.</li>
  * </ul>
  * Use {@link #addListener(LockOutEventListener)} and {@link #removeListener(LockOutEventListener)}
  * to add or remove {@link LockOutEventListener}.

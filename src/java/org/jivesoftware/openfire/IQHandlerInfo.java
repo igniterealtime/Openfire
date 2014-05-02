@@ -23,7 +23,6 @@ package org.jivesoftware.openfire;
 /**
  * <p>A simple meta-data class that stores several related tools for
  * generic IQ protocol handling.</p>
- * <p/>
  * <p>To handle an IQ packet, the server needs to know:</p>
  * <ul>
  * <li>The fully qualified name of the iq sub-element. IQ packets are
@@ -32,7 +31,6 @@ package org.jivesoftware.openfire;
  * server (no 'to' attribute).</li>
  * <li>The IQ parser to use to generate the correct IQ packet.</li>
  * </ul>
- * <p/>
  * <p>We provide this information by having all IQHandlers report
  * their info. Interested parties can watch for IQHandlers in the service
  * lookup and build appropriate data structures on the current state of

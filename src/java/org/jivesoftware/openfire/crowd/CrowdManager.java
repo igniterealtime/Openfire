@@ -134,7 +134,6 @@ public class CrowdManager {
 	 * @param username
 	 * @param password
 	 * @throws RemoteException
-	 * @throws UnsupportedEncodingException 
 	 */
 	public void authenticate(String username, String password) throws RemoteException {
 		username = JID.unescapeNode(username);

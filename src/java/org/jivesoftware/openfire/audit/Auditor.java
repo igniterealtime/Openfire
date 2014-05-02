@@ -25,7 +25,6 @@ import org.xmpp.packet.Packet;
 
 /**
  * <p>Use auditors to audit events and messages on the server.</p>
- * <p/>
  * <p>All events and messages are sent to the auditor for recording.
  * The auditor will determine if auditing should take place, and what
  * to do with the data.</p>

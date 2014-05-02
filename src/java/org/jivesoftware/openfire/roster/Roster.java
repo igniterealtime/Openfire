@@ -62,7 +62,7 @@ import org.xmpp.packet.Presence;
 /**
  * <p>A roster is a list of users that the user wishes to know if they are online.</p>
  * <p>Rosters are similar to buddy groups in popular IM clients. The Roster class is
- * a representation of the roster data.<p/>
+ * a representation of the roster data.</p>
  *
  * <p>Updates to this roster is effectively a change to the user's roster. To reflect this,
  * the changes to this class will automatically update the persistently stored roster, as well as
@@ -571,7 +571,6 @@ public class Roster implements Cacheable, Externalizable {
 
     /**
      * <p>Broadcast the presence update to all subscribers of the roter.</p>
-     * <p/>
      * <p>Any presence change typically results in a broadcast to the roster members.</p>
      *
      * @param packet The presence packet to broadcast

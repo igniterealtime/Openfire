@@ -67,7 +67,7 @@ public interface PubSubService {
      * Returns a registry of the presence's show value of users that subscribed to a node of
      * the pubsub service and for which the node only delivers notifications for online users
      * or node subscriptions deliver events based on the user presence show value. Offline
-     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * users will not have an entry in the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key
      * is full JID of connected resource and value is show value of the last received presence.
      * 
      * @return a registry of the presence's show value of users that subscribed to a node

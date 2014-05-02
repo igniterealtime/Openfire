@@ -25,8 +25,8 @@ import java.util.*;
 /**
  * <p>A type safe enumeration object that is keyed by an Int
  * value for switch statements and storage in DBs.</p>
- * <p/>
- * <p>Used for indicating distinct states in a generic manner
+ * <p>
+ * Used for indicating distinct states in a generic manner
  * where each enum should have an associated int value. The
  * given int should be unique for each enum value as hashCode
  * and equals depends solely on the int value given. Most

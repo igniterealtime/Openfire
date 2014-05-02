@@ -27,16 +27,16 @@ import java.util.List;
 /**
  * Represents a form that could be use for gathering data as well as for reporting data
  * returned from a search.
- * <p/>
+ * <p>
  * The form could be of the following types:
+ * </p>
  * <ul>
- * <li>form -> Indicates a form to fill out.</li>
- * <li>submit -> The form is filled out, and this is the data that is being returned from
+ * <li>form -&gt; Indicates a form to fill out.</li>
+ * <li>submit -&gt; The form is filled out, and this is the data that is being returned from
  * the form.</li>
- * <li>cancel -> The form was cancelled. Tell the asker that piece of information.</li>
- * <li>result -> Data results being returned from a search, or some other query.</li>
+ * <li>cancel -&gt; The form was cancelled. Tell the asker that piece of information.</li>
+ * <li>result -&gt; Data results being returned from a search, or some other query.</li>
  * </ul>
- * <p/>
  * In case the form represents a search, the report will be structured in columns and rows. Use
  * {@link #addReportedField(FormField)} to set the columns of the report whilst the report's rows
  * can be configured using {@link #addItemFields(ArrayList)}.
@@ -54,7 +54,7 @@ public interface DataForm {
 
     /**
      * Sets the description of the data. It is similar to the title on a web page or an X window.
-     * You can put a <title/> on either a form to fill out, or a set of data results.
+     * You can put a {@code <title/>} on either a form to fill out, or a set of data results.
      *
      * @param title description of the data.
      */
@@ -71,16 +71,17 @@ public interface DataForm {
 
     /**
      * Returns the meaning of the data within the context. The data could be part of a form
-     * to fill out, a form submission or data results.<p>
-     * <p/>
+     * to fill out, a form submission or data results.
+     * <p>
      * Possible form types are:
+     * </p>
      * <ul>
-     * <li>form -> This packet contains a form to fill out. Display it to the user (if your
+     * <li>form -&gt; This packet contains a form to fill out. Display it to the user (if your
      * program can).</li>
-     * <li>submit -> The form is filled out, and this is the data that is being returned from
+     * <li>submit -&gt; The form is filled out, and this is the data that is being returned from
      * the form.</li>
-     * <li>cancel -> The form was cancelled. Tell the asker that piece of information.</li>
-     * <li>result -> Data results being returned from a search, or some other query.</li>
+     * <li>cancel -&gt; The form was cancelled. Tell the asker that piece of information.</li>
+     * <li>result -&gt; Data results being returned from a search, or some other query.</li>
      * </ul>
      *
      * @return the form's type.
@@ -89,7 +90,7 @@ public interface DataForm {
 
     /**
      * Returns the description of the data. It is similar to the title on a web page or an X
-     * window.  You can put a <title/> on either a form to fill out, or a set of data results.
+     * window.  You can put a {@code <title/>} on either a form to fill out, or a set of data results.
      *
      * @return description of the data.
      */

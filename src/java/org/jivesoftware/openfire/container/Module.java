@@ -26,23 +26,21 @@ import org.jivesoftware.openfire.XMPPServer;
  * Logical, server-managed entities must implement this interface. A module
  * represents an operational unit and may contain zero or more services
  * and rely on zero or more services that may be hosted by the container.
- * <p/>
+ * <p>
  * In order to be hosted in the Jive server container, all modules must:
  * </p>
  * <ul>
  * <li>Implement the Module interface</li>
  * <li>Have a public no-arg constructor</li>
  * </ul>
- * <p/>
- * The Jive container will run all modules through a simple lifecycle:
+ * <p>The Jive container will run all modules through a simple lifecycle:</p>
  * <pre>
- * constructor -> initialize() -> start() -> stop() -> destroy() -> finalizer
- *                    |<-----------------------|          ^
+ * constructor -&gt; initialize() -&gt; start() -&gt; stop() -&gt; destroy() -&gt; finalizer
+ *                    |&lt;-----------------------|          ^
  *                    |                                   |
- *                    V----------------------------------->
+ *                    V-----------------------------------&gt;
  * </pre>
- * </p>
- * <p/>
+ * <p>
  * The Module interface is intended to provide the simplest mechanism
  * for creating, deploying, and managing server modules.
  * </p>

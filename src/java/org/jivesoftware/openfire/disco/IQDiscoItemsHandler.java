@@ -57,8 +57,8 @@ import java.util.concurrent.locks.Lock;
  * IQDiscoItemsHandler is responsible for handling disco#items requests. This class holds a map with
  * the main entities and the associated DiscoItemsProvider. We are considering the host of the
  * recipient JIDs as main entities. It's the DiscoItemsProvider responsibility to provide the items
- * associated with the JID's name together with any possible requested node.<p>
- * <p/>
+ * associated with the JID's name together with any possible requested node.
+ * <p>
  * For example, let's have in the entities map the following entries: "localhost" and
  * "conference.localhost". Associated with each entry we have different DiscoItemsProvider. Now we
  * receive a disco#items request for the following JID: "room@conference.localhost" which is a disco
@@ -69,9 +69,10 @@ import java.util.concurrent.locks.Lock;
  * the list of existing occupants if that information is publicly available. Finally, after we have
  * collected all the items provided by the provider we will add them to the reply. On the other
  * hand, if no provider was found or the provider has no information for the requested name/node
- * then a not-found error will be returned.<p>
- * <p/>
+ * then a not-found error will be returned.</p>
+ * <p>
  * Publishing of client items is still not supported.
+ * </p>
  *
  * @author Gaston Dombiak
  */

@@ -38,7 +38,6 @@ import java.util.Iterator;
  * <li>For discovering PEP items of a user.</li>
  * <li>For discovering available resources of a user.</li>
  * </ul>
- * </p>
  *
  * @author Armando Jagucki
  */

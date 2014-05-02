@@ -175,7 +175,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      * Sets the maximum allowed character code that should be allowed
      * unescaped
      * such as 127 in US-ASCII (7 bit) or 255 in ISO-* (8 bit)
-     * or -1 to not escape any characters (other than the special XML characters like < > &)
+     * or -1 to not escape any characters (other than the special XML characters like &lt; &gt; &amp;)
      *
      * If this is not explicitly set then it is defaulted from the encoding.
      *

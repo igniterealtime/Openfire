@@ -25,10 +25,10 @@ import java.sql.SQLException;
 
 /**
  * Abstract class that defines the connection provider framework. Other classes
- * extend this abstract class to make connection to actual data sources.<p>
- * <p/>
+ * extend this abstract class to make connection to actual data sources.
+ * <p>
  * It is expected that each subclass be a JavaBean, so that properties of
- * the connection provider are exposed through bean introspection.
+ * the connection provider are exposed through bean introspection.</p>
  *
  * @author Jive Software
  */

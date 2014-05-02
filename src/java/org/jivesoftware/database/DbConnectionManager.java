@@ -329,8 +329,7 @@ public class DbConnectionManager {
      *      ...
      * } </pre>
      *
-     * @param rs the result set to close.
-     * @param stmt the statement to close.
+     * @param pstmt the statement to close.
      */
     public static void fastcloseStmt(PreparedStatement pstmt) throws SQLException
     {
@@ -357,8 +356,7 @@ public class DbConnectionManager {
      *      ...
      * } </pre>
      *
-     * @param rs the result set to close.
-     * @param stmt the statement to close.
+     * @param pstmt the statement to close.
      */
     public static void fastcloseStmt(ResultSet rs, PreparedStatement pstmt) throws SQLException
     {
@@ -402,7 +400,6 @@ public class DbConnectionManager {
      * Closes a statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of
      * your database logic, as in the following example:
-     * <p/>
      * <pre>
      * Connection con = null;
      * PrepatedStatment pstmt = null;
@@ -431,7 +428,6 @@ public class DbConnectionManager {
      * statements associated with the connection should be closed before calling this method.
      * This method should be called within the finally section of your database logic, as
      * in the following example:
-     * <p/>
      * <pre>
      * Connection con = null;
      * try {

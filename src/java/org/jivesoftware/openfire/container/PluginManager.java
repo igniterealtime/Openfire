@@ -67,9 +67,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
- * new plugins, and they are dynamically loaded.<p/>
+ * new plugins, and they are dynamically loaded.
  *
- * An instance of this class can be obtained using:<p/>
+ * <p>An instance of this class can be obtained using:</p>
  *
  * <tt>XMPPServer.getInstance().getPluginManager()</tt>
  *
@@ -575,9 +575,10 @@ public class PluginManager {
      * and not the name as given by the plugin meta-data. This method only removes
      * the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR
      * still exists after this method is called, the plugin will be started again the next
-     * time the plugin monitor process runs. This is useful for "restarting" plugins.<p>
-     * <p/>
+     * time the plugin monitor process runs. This is useful for "restarting" plugins.
+     * <p>
      * This method is called automatically when a plugin's JAR file is deleted.
+     * </p>
      *
      * @param pluginName the name of the plugin to unload.
      */

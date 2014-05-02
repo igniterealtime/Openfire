@@ -37,10 +37,10 @@ import org.slf4j.LoggerFactory;
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
  * and JAR files, then constructs a class loader for the resources found.
- * Resources are loaded as follows:<ul>
- * <p/>
- * <li>Any JAR files in the <tt>lib</tt> will be added to the classpath.
- * <li>Any files in the classes directory will be added to the classpath.
+ * Resources are loaded as follows:
+ * <ul>
+ * <li>Any JAR files in the <tt>lib</tt> will be added to the classpath.</li>
+ * <li>Any files in the classes directory will be added to the classpath.</li>
  * </ul>
  *
  * @author Derek DeMoro

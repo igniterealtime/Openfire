@@ -22,7 +22,7 @@ import org.xmpp.packet.JID;
  * addition, group search operations are disabled.
  * 
  * Subclasses may optionally implement these capabilities, and must also
- * at minimum implement the {@link GroupProvider.getGroup(String)} method.
+ * at minimum implement the {@link GroupProvider#getGroup(String)} method.
  *
  * @author Tom Evans
  */
@@ -253,7 +253,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * Returns a custom {@link Map} that updates the database whenever
      * a property value is added, changed, or deleted.
      * 
-     * @param name The target group
+     * @param group The target group
      * @return The properties for the given group
      */
     public PersistableMap<String,String> loadProperties(Group group) {

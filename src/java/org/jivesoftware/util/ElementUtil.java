@@ -34,7 +34,7 @@ import java.util.*;
  *     &lt;/Y&gt;
  * &lt;/X&gt;
  * </pre>
- * And X.Y.Z:key to anotherValue as:</p>
+ * <p>And X.Y.Z:key to anotherValue as:</p>
  * <pre>
  * &lt;X&gt;
  *     &lt;Y&gt;
@@ -143,9 +143,9 @@ public class ElementUtil {
      * Return all values who's path matches the given property name as a String array,
      * or an empty array if the if there are no children. You MAY NOT use the atttribute
      * markup (using a ':' in the last element name) with this call.
-     * <p/>
+     * <p>
      * getProperties() allows you to retrieve several values with the same property name.
-     * For example, consider the XML file entry:
+     * For example, consider the XML file entry:</p>
      * <pre>
      * &lt;foo&gt;
      *     &lt;bar&gt;

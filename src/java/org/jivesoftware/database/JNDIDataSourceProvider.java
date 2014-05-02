@@ -35,11 +35,11 @@ import org.slf4j.LoggerFactory;
  * An implementation of ConnectionProvider that utilizes a JDBC 2.0 DataSource
  * made available via JNDI. This is useful for application servers where a pooled
  * data connection is already provided so Jive can share the pool with the
- * other applications.<p>
- * <p/>
+ * other applications.
+ * <p>
  * The JNDI location of the DataSource stored as the Jive property
  * <code>database.JNDIProvider.name</code>. This can be overridden by setting
- * the provider's <code>name</code> property if required.
+ * the provider's <code>name</code> property if required.</p>
  *
  * @author <a href="mailto:joe@truemesh.com">Joe Walnes</a>
  * @see ConnectionProvider

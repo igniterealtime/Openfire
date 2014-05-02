@@ -46,10 +46,11 @@ import org.xmpp.packet.JID;
 public interface GroupProvider {
 
     /**
-     * Creates a group with the given name (optional operation).<p>
-     *
+     * Creates a group with the given name (optional operation).
+     * <p>
      * The provider is responsible for setting the creation date and
      * modification date to the current date/time.
+     * </p>
      *
      * @param name name of the group.
      * @return the newly created group.
@@ -131,7 +132,7 @@ public interface GroupProvider {
     /**
      * Returns an unmodifiable Collection of all shared groups in the system for a given user.
      * 
-     * @param JID The bare JID for the user (node@domain)
+     * @param user The bare JID for the user (node@domain)
      * @return unmodifiable Collection of all shared groups in the system for a given user.
      */
     Collection<String> getSharedGroupNames(JID user);

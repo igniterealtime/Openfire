@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Allows PreparedStatement information to be cached. A prepared statement consists of
  * a SQL statement containing bind variables as well as variable values. For example,
- * the SQL statement <tt>"SELECT * FROM person WHERE age > ?"</tt> would have the integer
+ * the SQL statement <tt>"SELECT * FROM person WHERE age &gt; ?"</tt> would have the integer
  * variable <tt>18</tt> (which replaces the "?" chracter) to find all adults. This class
  * encapsulates both the SQL string and bind variable values so that actual
  * PreparedStatement can be created from that information later.

@@ -27,12 +27,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Dispatches MUC events. The following events are supported:
  * <ul>
- * <li><b>occupantJoined</b> --> Someone joined a room.</li>
- * <li><b>occupantLeft</b> --> Someone left a room.</li>
- * <li><b>nicknameChanged</b> --> A nickname was changed in a room.</li>
- * <li><b>messageReceived</b> --> A message was received in a room.</li>
- * <li><b>roomCreated</b> --> A room was created.</li>
- * <li><b>roomDestryod</b> --> A room was destroyed.</li>
+ * <li><b>occupantJoined</b> --&gt; Someone joined a room.</li>
+ * <li><b>occupantLeft</b> --&gt; Someone left a room.</li>
+ * <li><b>nicknameChanged</b> --&gt; A nickname was changed in a room.</li>
+ * <li><b>messageReceived</b> --&gt; A message was received in a room.</li>
+ * <li><b>roomCreated</b> --&gt; A room was created.</li>
+ * <li><b>roomDestroyed</b> --&gt; A room was destroyed.</li>
  * </ul>
  * Use {@link #addListener(MUCEventListener)} and {@link #removeListener(MUCEventListener)}
  * to add or remove {@link MUCEventListener}.

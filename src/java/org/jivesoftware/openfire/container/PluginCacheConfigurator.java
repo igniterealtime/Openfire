@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A helper class to read cache configuration data for a plugin and register the defined caches with
  * the cache factory. Definitions should look something like this:
- * <code>
- *
+ * <pre>
+ * {@code
  * <cache-config>
  *     <cache-mapping>
  *           <cache-name>My Cache</cache-name>
@@ -57,8 +57,8 @@ import org.slf4j.LoggerFactory;
  *           </init-params>
  *     </cache-mapping>
  * </cache-config>
- *
- * </code>
+ * }
+ * </pre>
  */
 public class PluginCacheConfigurator {
 

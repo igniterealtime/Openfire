@@ -28,9 +28,8 @@ import java.util.Iterator;
  * <p>
  * A <code>ServerIdentitiesProvider</code> is responsible for providing the identities
  * of protocols supported by the SERVER. An example of a server identity is that
- * for PEP (XEP-0163): <identity category="pubsub" type="pep" />
- * <p/>
- * 
+ * for PEP (XEP-0163): {@code <identity category="pubsub" type="pep" />}
+ * </p>
  * <p>
  * When the server starts up, IQDiscoInfoHandler will request to all the services that implement
  * the ServerIdentitiesProvider interface for their identities. Whenever a disco request is received

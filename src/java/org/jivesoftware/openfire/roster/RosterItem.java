@@ -44,7 +44,6 @@ import java.util.*;
  * <p>The server doesn't need to know anything about roster groups so they are
  * not stored with easy retrieval or manipulation in mind. The important data
  * elements of a roster item (beyond the jid adddress of the roster entry) includes:</p>
- * <p/>
  * <ul>
  * <li>nick   - A nickname for the user when used in this roster</li>
  * <li>sub    - A subscription type: to, from, none, both</li>
@@ -508,7 +507,6 @@ public class RosterItem implements Cacheable, Externalizable {
 
     /**
      * <p>Update the cached item as a copy of the given item.</p>
-     * <p/>
      * <p>A convenience for getting the item and setting each attribute.</p>
      *
      * @param item The item who's settings will be copied into the cached copy

@@ -24,7 +24,7 @@ package org.jivesoftware.util.cache;
  * This specialized wrapper is used for the Components cache, which
  * should not be purged.
  * 
- * See {@link http://issues.igniterealtime.org/browse/OF-114} for more info.
+ * See <a href="http://issues.igniterealtime.org/browse/OF-114">OF-114</a> for more info.
  *
  */
 public class ComponentCacheWrapper<K, V> extends CacheWrapper<K, V> {

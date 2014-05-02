@@ -787,7 +787,7 @@ public class JiveGlobals {
      * names are hidden from the Openfire console.
      * 
      * @param name The name of the property
-     * @returns True if the property is considered sensitive, otherwise false
+     * @return True if the property is considered sensitive, otherwise false
      */
     public static boolean isPropertySensitive(String name) {
     	
@@ -802,7 +802,7 @@ public class JiveGlobals {
      * Determines whether a property is configured for encryption.
      * 
      * @param name The name of the property
-     * @returns True if the property is stored using encryption, otherwise false
+     * @return True if the property is stored using encryption, otherwise false
      */
     public static boolean isPropertyEncrypted(String name) {
     	if (securityProperties == null) {
@@ -818,7 +818,7 @@ public class JiveGlobals {
      * 
      * @param name The name of the property
      * @param encrypt True to encrypt the property, false to decrypt
-     * @returns True if the property's encryption status changed, otherwise false
+     * @return True if the property's encryption status changed, otherwise false
      */
     public static boolean setPropertyEncrypted(String name, boolean encrypt) {
     	if (securityProperties == null) {
@@ -839,7 +839,7 @@ public class JiveGlobals {
     /**
      * Fetches the current value of the property encryption key.
      * 
-     * @returns The property encryption key
+     * @return The property encryption key
      */
     public static Encryptor getPropertyEncryptor() {
     	if (securityProperties == null) {

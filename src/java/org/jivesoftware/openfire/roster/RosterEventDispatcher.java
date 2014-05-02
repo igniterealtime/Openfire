@@ -26,10 +26,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Dispatches roster events. The following events are supported:
  * <ul>
- * <li><b>rosterLoaded</b> --> A roster has just been loaded.</li>
- * <li><b>contactAdded</b> --> A contact has been added to a roster.</li>
- * <li><b>contactUpdated</b> --> A contact has been updated of a roster.</li>
- * <li><b>contactDeleted</b> --> A contact has been deleted from a roster.</li>
+ * <li><b>rosterLoaded</b> --&gt; A roster has just been loaded.</li>
+ * <li><b>contactAdded</b> --&gt; A contact has been added to a roster.</li>
+ * <li><b>contactUpdated</b> --&gt; A contact has been updated of a roster.</li>
+ * <li><b>contactDeleted</b> --&gt; A contact has been deleted from a roster.</li>
  * </ul>
  * Use {@link #addListener(RosterEventListener)} and {@link #removeListener(RosterEventListener)}
  * to add or remove {@link RosterEventListener}.

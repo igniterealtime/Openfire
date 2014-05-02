@@ -27,11 +27,11 @@ import java.util.Iterator;
 /**
  * A DiscoItemsProvider is responsible for providing the items associated with a JID's name and
  * node. For example, the room service could implement this interface in order to provide
- * the existing rooms as its items. In this case, the JID's name and node won't be used.<p>
- * <p/>
+ * the existing rooms as its items. In this case, the JID's name and node won't be used.
+ * <p>
  * The items to provide must have a JID attribute specifying the JID of the item and may possess a
  * name attribute specifying a natural-language name for the item. The node attribute is optional
- * and must be used only for items that aren't addressable as a JID.
+ * and must be used only for items that aren't addressable as a JID.</p>
  *
  * @author Gaston Dombiak
  */

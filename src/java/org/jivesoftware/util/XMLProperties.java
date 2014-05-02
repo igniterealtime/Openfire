@@ -65,7 +65,6 @@ import org.slf4j.LoggerFactory;
  *     &lt;/Y&gt;
  * &lt;/X&gt;
  * </pre>
- * <p/>
  * The XML file is passed in to the constructor and must be readable and
  * writable. Setting property values will automatically persist those value
  * to disk. The file encoding used is UTF-8.

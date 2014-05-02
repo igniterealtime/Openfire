@@ -46,7 +46,6 @@ import java.util.List;
  * <p>In almost all cases, the caller should not be concerned with what
  * handler is associated with a given node. Simply obtain the packet handler
  * and deliver the packet to the node, leaving the details up to the handler.</p>
- * <p/>
  * <p>Routes are matched using the stringprep rules given in the XMPP specification.
  * Wildcard routes for a particular name or resource is indicated by a null. E.g.
  * routing to any address at server.com should set the name to null, the host to
@@ -55,7 +54,6 @@ import java.util.List;
  * managers should add a route for both the generic user@server.com as well as
  * user@server.com/resource routes (knowing that one is an alias for the other
  * is the responsibility of the session or session manager).</p>
- * <p/>
  * <p>In order to accomodate broadcasts, you can also do partial matches by querying
  * all 'child' nodes of a particular node. The routing table contains a forest of
  * node trees. The node tree is arranged in the following heirarchy:</p>
@@ -81,7 +79,6 @@ import java.util.List;
  * getBestRoute() if you'd like to search for both the resource leaf route, as well as a valid user
  * branch for that node if no leaf exists.</li>
  * </ul>
- * <p/>
  * <p>Note: it is important that any component or action affecting routes
  * update the routing table immediately.</p>
  *

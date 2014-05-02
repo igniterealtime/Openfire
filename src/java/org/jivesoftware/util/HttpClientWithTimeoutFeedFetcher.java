@@ -62,8 +62,8 @@ import java.util.zip.GZIPInputStream;
  * which fixes a bug where users of the admin console who installed Clearspace
  * behind a proxy server would have to wait upwards of 5 minutes in order for the
  * HTTP connection to jivesoftware.com/blog/feed to timeout.
- * <p/>
- * See <a href="http://www.jivesoftware.com/issues/browse/CS-669">http://www.jivesoftware.com/issues/browse/CS-669</a>
+ *
+ * @see <a href="http://www.jivesoftware.com/issues/browse/CS-669">http://www.jivesoftware.com/issues/browse/CS-669</a>
  *
  */
 public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {

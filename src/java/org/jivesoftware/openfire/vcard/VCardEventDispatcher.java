@@ -27,9 +27,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Dispatches vCard events. The following events are supported:
  * <ul>
- * <li><b>VCardCreated</b> --> A VCard has been created.</li>
- * <li><b>VCardDeleted</b> --> A VCard has been deleted.</li>
- * <li><b>VCardUpdate</b> --> A VCard has been updated.</li>
+ * <li><b>VCardCreated</b> --&gt; A VCard has been created.</li>
+ * <li><b>VCardDeleted</b> --&gt; A VCard has been deleted.</li>
+ * <li><b>VCardUpdate</b> --&gt; A VCard has been updated.</li>
  * </ul>
  * Use {@link #addListener(org.jivesoftware.openfire.vcard.VCardListener)}
  * to add or remove {@link org.jivesoftware.openfire.vcard.VCardListener}.

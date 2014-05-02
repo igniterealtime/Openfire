@@ -24,7 +24,7 @@ import org.jivesoftware.openfire.XMPPServer;
 
 /**
  * A default Module implementation that basically avoids subclasses having to implement the whole
- * Module interface.</p>
+ * Module interface.
  *
  * @author Gaston Dombiak
  */
@@ -60,7 +60,6 @@ public class BasicModule implements Module {
 
     /**
      * <p>Initializes the basic module.</p>
-     * <p/>
      * <p>Inheriting classes that choose to override this method MUST
      * call this initialize() method before accessing BasicModule resources.</p>
      *
@@ -71,7 +70,6 @@ public class BasicModule implements Module {
 
     /**
      * <p>Starts the basic module.</p>
-     * <p/>
      * <p>Inheriting classes that choose to override this method MUST
      * call this start() method before accessing BasicModule resources.</p>
      *
@@ -83,7 +81,6 @@ public class BasicModule implements Module {
 
     /**
      * <p>Stops the basic module.</p>
-     * <p/>
      * <p>Inheriting classes that choose to override this method MUST
      * call this stop() method before accessing BasicModule resources.</p>
      */
@@ -92,7 +89,6 @@ public class BasicModule implements Module {
 
     /**
      * <p>Destroys the module.</p>
-     * <p/>
      * <p>Does nothing in the basic module.</p>
      */
     public void destroy() {

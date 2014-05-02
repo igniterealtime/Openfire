@@ -341,8 +341,8 @@ public final class GraphicUtils {
      * not be loaded, then <code>null</code> is returned.  Images loaded here
      * will be added to an internal cache based upon the full {@link URL} to
      * their location.
-     * <p/>
-     * <em>This method replaces legacy code from JDeveloper 3.x and earlier.</em>
+     * <p>
+     * <em>This method replaces legacy code from JDeveloper 3.x and earlier.</em></p>
      *
      * @see Class#getResource(String)
      * @see Toolkit#createImage(URL)

@@ -29,11 +29,12 @@ import java.util.Iterator;
 /**
  * A DiscoInfoProvider is responsible for providing information about a JID's name and its node. For
  * example, the room service could implement this interface in order to provide disco#info about
- * its rooms. In this case, the JID's name will be the room's name and node will be null.<p>
- * <p/>
+ * its rooms. In this case, the JID's name will be the room's name and node will be null.
+ * <p>
  * The information to provide has to include the entity's identity and the features offered and
  * protocols supported by the target entity. The identity will be provided as an Element that will
  * include the categoty, type and name attributes. Whilst the features will be just plain Strings.
+ * </p>
  *
  * @author Gaston Dombiak
  */

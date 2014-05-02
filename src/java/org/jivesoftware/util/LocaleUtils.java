@@ -256,13 +256,13 @@ public class LocaleUtils {
     /**
      * Returns a list of all available time zone's as a String [][]. The first
      * entry in each list item is the timeZoneID, and the second is the
-     * display name.<p>
-     * <p/>
+     * display name.
+     * <p>
      * The list of time zones attempts to be inclusive of all of the worlds
      * zones while being as concise as possible. For "en" language locales
      * the name is a friendly english name. For non-"en" language locales
      * the standard JDK name is used for the given Locale. The GMT+/- time
-     * is also included for readability.
+     * is also included for readability.</p>
      *
      * @return a list of time zones, as a tuple of the zime zone ID, and its
      *         display name.

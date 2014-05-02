@@ -29,9 +29,9 @@ import org.xmpp.packet.Presence;
  * Defines the permissions and actions that a MUCUser may use in
  * a particular room. Each MUCRole defines the relationship between
  * a MUCRoom and a MUCUser.
- * <p/>
+ * <p>
  * MUCUsers can play different roles in different chatrooms.
- *
+ * </p>
  * @author Gaston Dombiak
  */
 public interface MUCRole {
@@ -54,9 +54,10 @@ public interface MUCRole {
      * Call this method to promote or demote a user's role in a chatroom.
      * It is common for the chatroom or other chat room members to change
      * the role of users (a moderator promoting another user to moderator
-     * status for example).<p>
-     * <p/>
+     * status for example).
+     * <p>
      * Owning ChatUsers should have their membership roles updated.
+     * </p>
      *
      * @param newRole The new role that the user will play.
      * @throws NotAllowedException   Thrown if trying to change the moderator role to an owner or

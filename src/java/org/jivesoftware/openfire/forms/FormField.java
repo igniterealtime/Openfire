@@ -68,21 +68,20 @@ public interface FormField {
 
     /**
      * Sets an indicative of the format for the data to answer. Valid formats are:
-     * <p/>
      * <ul>
-     * <li>text-single -> single line or word of text
-     * <li>text-private -> instead of showing the user what they typed, you show ***** to
+     * <li>text-single -&gt; single line or word of text
+     * <li>text-private -&gt; instead of showing the user what they typed, you show ***** to
      * protect it
-     * <li>text-multi -> multiple lines of text entry
-     * <li>list-single -> given a list of choices, pick one
-     * <li>list-multi -> given a list of choices, pick one or more
-     * <li>boolean -> 0 or 1, true or false, yes or no. Default value is 0
-     * <li>fixed -> fixed for putting in text to show sections, or just advertise your web
+     * <li>text-multi -&gt; multiple lines of text entry
+     * <li>list-single -&gt; given a list of choices, pick one
+     * <li>list-multi -&gt; given a list of choices, pick one or more
+     * <li>boolean -&gt; 0 or 1, true or false, yes or no. Default value is 0
+     * <li>fixed -&gt; fixed for putting in text to show sections, or just advertise your web
      * site in the middle of the form
-     * <li>hidden -> is not given to the user at all, but returned with the questionnaire
-     * <li>jid-single -> Jabber ID - choosing a JID from your roster, and entering one based
+     * <li>hidden -&gt; is not given to the user at all, but returned with the questionnaire
+     * <li>jid-single -&gt; Jabber ID - choosing a JID from your roster, and entering one based
      * on the rules for a JID.
-     * <li>jid-multi -> multiple entries for JIDs
+     * <li>jid-multi -&gt; multiple entries for JIDs
      * </ul>
      *
      * @param type an indicative of the format for the data to answer.
@@ -107,9 +106,10 @@ public interface FormField {
     /**
      * Sets a description that provides extra clarification about the question. This information
      * could be presented to the user either in tool-tip, help button, or as a section of text
-     * before the question.<p>
-     * <p/>
+     * before the question.
+     * <p>
      * If the question is of type FIXED then the description should remain empty.
+     * </p>
      *
      * @param description provides extra clarification about the question.
      */
@@ -140,21 +140,20 @@ public interface FormField {
 
     /**
      * Returns an indicative of the format for the data to answer. Valid formats are:
-     * <p/>
      * <ul>
-     * <li>text-single -> single line or word of text
-     * <li>text-private -> instead of showing the user what they typed, you show ***** to
+     * <li>text-single -&gt; single line or word of text
+     * <li>text-private -&gt; instead of showing the user what they typed, you show ***** to
      * protect it
-     * <li>text-multi -> multiple lines of text entry
-     * <li>list-single -> given a list of choices, pick one
-     * <li>list-multi -> given a list of choices, pick one or more
-     * <li>boolean -> 0 or 1, true or false, yes or no. Default value is 0
-     * <li>fixed -> fixed for putting in text to show sections, or just advertise your web
+     * <li>text-multi -&gt; multiple lines of text entry
+     * <li>list-single -&gt; given a list of choices, pick one
+     * <li>list-multi -&gt; given a list of choices, pick one or more
+     * <li>boolean -&gt; 0 or 1, true or false, yes or no. Default value is 0
+     * <li>fixed -&gt; fixed for putting in text to show sections, or just advertise your web
      * site in the middle of the form
-     * <li>hidden -> is not given to the user at all, but returned with the questionnaire
-     * <li>jid-single -> Jabber ID - choosing a JID from your roster, and entering one based
+     * <li>hidden -&gt; is not given to the user at all, but returned with the questionnaire
+     * <li>jid-single -&gt; Jabber ID - choosing a JID from your roster, and entering one based
      * on the rules for a JID.
-     * <li>jid-multi -> multiple entries for JIDs
+     * <li>jid-multi -&gt; multiple entries for JIDs
      * </ul>
      *
      * @return format for the data to answer.
@@ -172,9 +171,10 @@ public interface FormField {
     /**
      * Returns a description that provides extra clarification about the question. This information
      * could be presented to the user either in tool-tip, help button, or as a section of text
-     * before the question.<p>
-     * <p/>
+     * before the question.
+     * <p>
      * If the question is of type FIXED then the description should remain empty.
+     * </p>
      *
      * @return description that provides extra clarification about the question.
      */

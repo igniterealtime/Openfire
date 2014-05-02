@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * and optional parameters, as follows:<p>
  *
  * <table border="1">
+ * <caption></caption>
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
  * <tr><td>{@link EventType#property_set property_set}</td><td>A param named <tt>value</tt> that
  *      has the value of the property set.</td></tr>

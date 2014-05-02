@@ -57,9 +57,9 @@ import java.io.File;
  *     &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
  *     &lt;licenseType&gt;gpl&lt;/licenseType&gt;
  * &lt;/plugin&gt;</pre>
- * <p/>
+ * <p>
  * Each plugin will be loaded in its own class loader, unless the plugin is configured
- * with a parent plugin.<p/>
+ * with a parent plugin.</p>
  *
  * Please see the Plugin Developer Guide (available with the
  * Openfire documentation) for additional details about plugin development.

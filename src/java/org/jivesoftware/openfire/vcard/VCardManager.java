@@ -104,11 +104,12 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
      * has no defined text then an empty string will be returned. However, if the property
      * does not exist then a <tt>null</tt> value will be answered. Advanced user systems can
      * use vCard information to link to user directory information or store other relevant
-     * user information.</p>
+     * user information.
+     * <p>
      * Note that many elements in the vCard may have the same path so the returned value in that
      * case will be the first found element. For instance, "ADR:STREET" may be present in
      * many addresses of the user. Use {@link #getVCard(String)} to get the whole vCard of
-     * the user.
+     * the user.</p>
      *
      * @param username The username of the user to return his vCard property.
      * @param name     The name of the vcard property to retrieve encoded with ':' to denote

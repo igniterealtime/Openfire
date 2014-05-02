@@ -45,7 +45,7 @@ public class JiveConstants {
      * a unified date/time format for XMPP.
      *
      * @deprecated Deprecated by the org.jivesoftware.util.XMPPDateTimeFormat class
-     * @see {@link org.jivesoftware.util.XMPPDateTimeFormat}
+     * @see org.jivesoftware.util.XMPPDateTimeFormat
      */
     @Deprecated
     public static final String XMPP_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -56,7 +56,7 @@ public class JiveConstants {
      * a specialized date format for historical XMPP usage.
      *
      * @deprecated Deprecated by the org.jivesoftware.util.XMPPDateTimeFormat class
-     * @see {@link org.jivesoftware.util.XMPPDateTimeFormat}
+     * @see org.jivesoftware.util.XMPPDateTimeFormat
      */
     @Deprecated
     public static final String XMPP_DELAY_DATETIME_FORMAT = "yyyyMMdd'T'HH:mm:ss";

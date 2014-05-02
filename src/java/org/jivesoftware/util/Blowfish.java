@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class that provides easy Blowfish encryption.<p>
+ * A class that provides easy Blowfish encryption.
  *
- * @author Markus Hahn <markus_hahn@gmx.net>
+ * @author Markus Hahn &lt;markus_hahn@gmx.net&gt;
  * @author Gaston Dombiak
  */
 public class Blowfish implements Encryptor {

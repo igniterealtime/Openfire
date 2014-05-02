@@ -19,13 +19,17 @@
 # Description:          Start/stop openfire jabber server
 ### END INIT INFO 
 
+# Include openfire defaults if available
+if [ -f /etc/default/openfire ] ; then
+	. /etc/default/openfire
+fi
 
 # Attempt to locate JAVA_HOME
 if [ -z $JAVA_HOME ]; then
  JAVA_HOME=$(LC_ALL=C update-alternatives --display java \
     | grep best \
     | grep -oe \/.*\/bin\/java \
-    | sed 's/\/jre\/.*//g')
+    | sed 's/\/bin\/java//g')
     echo "best java alternative in: "$JAVA_HOME
 fi
 
@@ -37,11 +41,6 @@ DAEMON_DIR=/usr/share/openfire
 DAEMON_LIB=${DAEMON_DIR}/lib
 
 test -x $JAVA || exit 1
-
-# Include openfire defaults if available
-if [ -f /etc/default/openfire ] ; then
-	. /etc/default/openfire
-fi
 
 DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
  -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\

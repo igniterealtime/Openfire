@@ -6,5 +6,9 @@
 # This is a POSIX shell fragment
 #
 
+# If you wish to override the auto-detected JAVA_HOME variable, uncomment
+# and change the following line.
+#JAVA_HOME=/usr/java/default
+
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS=""

@@ -165,6 +165,10 @@
                     xmppSettings.put("clearspace.certificate.accept-selfsigned", Boolean.toString(selfSigned));
                     xmppSettings.put("clearspace.certificate.verify.identity", Boolean.toString(verifyIdentity));
                     xmppSettings.put("clearspace.certificate.verify.validity", Boolean.toString(verifyValidity));
+
+                    JiveGlobals.setPropertyEncrypted("clearspace.uri", true);
+                    JiveGlobals.setPropertyEncrypted("clearspace.sharedSecret", true);
+
                     session.setAttribute("xmppSettings", xmppSettings);
                 }
                 if (initialSetup) {

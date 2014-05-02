@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Manages the AuthorizationProvider objects.
- * <p/>
+ * <p>
  * Overall description of the authentication and authorization process:
- * <p/>
+ * </p>
  * After a client connects, and indicates a desire to use SASL, the
  * SASLAuthentication object decides which SASL mechanisms to advertise,
  * and then performs the authentication. If authentication is successful,

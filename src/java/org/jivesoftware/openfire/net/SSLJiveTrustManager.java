@@ -33,14 +33,14 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Trust manager which accepts certificates without any validation
  * except date validation.
- * <p/>
+ * <p>
  * A skeleton placeholder for developers wishing to implement their own custom
  * trust manager. In future revisions we may expand the skeleton code if customers
- * request assistance in creating custom trust managers.
- * <p/>
+ * request assistance in creating custom trust managers.</p>
+ * <p>
  * You only need a trust manager if your server will require clients
  * to authenticated with the server (typically only the server authenticates
- * with the client).
+ * with the client).</p>
  *
  * @author Iain Shigeoka
  */

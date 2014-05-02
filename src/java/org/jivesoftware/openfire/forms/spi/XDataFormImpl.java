@@ -30,7 +30,7 @@ import org.dom4j.QName;
 /**
  * A concrete DataForm capable of sending itself to a writer and recover its state from an XMPP
  * stanza. XDataForms are packets of the form:
- * <code><pre>
+ * <pre><code>
  * &lt;x xmlns='jabber:x:data' type='{form-type}'&gt;
  * &lt;title/&gt;
  * &lt;instructions/&gt;
@@ -44,11 +44,10 @@ import org.dom4j.QName;
  *   &lt;option label='option-label'&gt;&lt;value&gt;option-value&lt;/value&gt;&lt;/option&gt;
  * &lt;/field&gt;
  * &lt;/x&gt;
- * </pre></code>
- * <p/>
- * An XDataFormImpl can contain zero or more XFormFieldImpl 'field' fragments.<p>
- * <p/>
- * To learn more follow this link: <a href="http://www.jabber.org/jeps/jep-0004.html">JEP-04</a>.
+ * </code></pre>
+ * An XDataFormImpl can contain zero or more XFormFieldImpl 'field' fragments.
+ * <p>
+ * To learn more follow this link: <a href="http://www.jabber.org/jeps/jep-0004.html">JEP-04</a>.</p>
  *
  * @author gdombiak
  * @deprecated replaced by {@link org.xmpp.forms.DataForm}

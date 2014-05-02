@@ -85,12 +85,11 @@ import org.xmpp.packet.Presence;
  * <p>
  *
  * <p>
- * This handler is used for the following namespaces:
+ * This handler is used for the following namespaces:</p>
  * <ul>
  * <li><i>http://jabber.org/protocol/pubsub</i></li>
  * <li><i>http://jabber.org/protocol/pubsub#owner</i></li>
  * </ul>
- * </p>
  *
  * @author Armando Jagucki
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com

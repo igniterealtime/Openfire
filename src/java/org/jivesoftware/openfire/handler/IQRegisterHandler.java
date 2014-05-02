@@ -60,14 +60,11 @@ import org.xmpp.packet.StreamError;
  * for registration. Return the registration form.
  * A 'set' query attempts to create a new user account
  * with information given in the registration form.
- * <p/>
  * <h2>Assumptions</h2>
  * This handler assumes that the request is addressed to the server.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
-
  * <h2>Compatibility</h2>
  * The current behavior is designed to emulate jabberd1.4. However
  * this behavior differs significantly from JEP-0078 (non-SASL registration).

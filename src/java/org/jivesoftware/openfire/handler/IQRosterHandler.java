@@ -54,21 +54,20 @@ import org.xmpp.packet.PacketError;
  * and iq:roster packets, while the client maintains the user
  * interface aspects of rosters such as organizing roster
  * entries into groups.
- * <p/>
+ * <p>
  * A 'get' query retrieves a snapshot of the roster.
  * A 'set' query updates the roster (typically with new group info).
  * The server sends 'set' updates asynchronously when roster
  * entries change status.
- * <p/>
+ * </p>
+ * <p>
  * Currently an empty implementation to allow usage with normal
- * clients. Future implementation needed.
- * <p/>
+ * clients. Future implementation needed.</p>
  * <h2>Assumptions</h2>
  * This handler assumes that the request is addressed to the server.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
  * <h2>Warning</h2>
  * There should be a way of determining whether a session has
  * authorization to access this feature. I'm not sure it is a good

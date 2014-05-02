@@ -37,8 +37,8 @@ import java.util.*;
  * This class adds jabber:iq:search combined with 'result set management'
  * functionality to the MUC service of Openfire.
  * 
- * @author Guus der Kinderen - Nimbuzz B.V. <guus@nimbuzz.com>
- * @author Giancarlo Frison - Nimbuzz B.V. <giancarlo@nimbuzz.com>
+ * @author Guus der Kinderen - Nimbuzz B.V. &lt;guus@nimbuzz.com&gt;
+ * @author Giancarlo Frison - Nimbuzz B.V. &lt;giancarlo@nimbuzz.com&gt;
  */
 public class IQMUCSearchHandler
 {
@@ -370,7 +370,7 @@ public class IQMUCSearchHandler
 
 	/**
 	 * Checks if the room may be included in search results. This is almost
-	 * identical to {@link MultiUserChatServiceImpl#canDiscoverRoom(MUCRoom room)},
+	 * identical to {@link MultiUserChatServiceImpl#canDiscoverRoom(org.jivesoftware.openfire.muc.MUCRoom, org.xmpp.packet.JID)},
 	 * but that method is private and cannot be re-used here.
 	 * 
 	 * @param room

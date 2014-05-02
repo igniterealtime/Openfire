@@ -37,13 +37,11 @@ import java.util.Iterator;
  * Implements the TYPE_IQ jabber:iq:time protocol (time info) as
  * as defined by JEP-0090. Allows Jabber entities to query each
  * other's local time.  The server will respond with its local time.
- * <p/>
  * <h2>Assumptions</h2>
  * This handler assumes that the time request is addressed to itself.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ time requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
  * <h2>Warning</h2>
  * There should be a way of determining whether a session has
  * authorization to access this feature. I'm not sure it is a good

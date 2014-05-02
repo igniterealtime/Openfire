@@ -23,12 +23,12 @@ package org.jivesoftware.openfire.auth;
 /**
  * This is the interface the used to provide default defualt authorization 
  * ID's when none was selected by the client.
- * <p/>
+ * <p>
  * Users that wish to integrate with their own authorization
  * system must implement this interface.
  * Register the class with Openfire in the <tt>openfire.xml</tt>
  * file.  An entry in that file would look like the following:
- * <p/>
+ * </p>
  * <pre>
  *   &lt;provider&gt;
  *     &lt;authorizationMapping&gt;

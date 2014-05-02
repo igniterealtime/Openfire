@@ -39,10 +39,10 @@ import org.xmpp.packet.PacketError;
 
 /**
  * IQ packets sent from Connection Managers themselves to the server will be handled by
- * instances of this class.<p>
- * <p/>
+ * instances of this class.
+ * <p>
  * This class will interact with {@link ConnectionMultiplexerManager} to create, close or
- * get client sessions.
+ * get client sessions.</p>
  *
  * @author Gaston Dombiak
  */

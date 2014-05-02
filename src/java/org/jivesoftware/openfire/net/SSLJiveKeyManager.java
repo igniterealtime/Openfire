@@ -34,10 +34,11 @@ import javax.net.ssl.X509KeyManager;
  * A skeleton placeholder for developers wishing to implement their own custom
  * key manager. In future revisions we may expand the skeleton code if customers
  * request assistance in creating custom key managers.
- * <p/>
+ * <p>
  * The key manager is an essential part of server SSL support. Typically you
  * will implement a custom key manager to retrieve certificates from repositories
  * that are not of standard Java types (e.g. obtaining them from LDAP or a JDBC database).
+ * </p>
  *
  * @author Iain Shigeoka
  */

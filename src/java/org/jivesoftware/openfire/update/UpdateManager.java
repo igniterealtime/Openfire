@@ -63,10 +63,10 @@ import org.xmpp.packet.Message;
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
  * will check every 48 hours for updates. Use the system property <tt>update.frequency</tt>
- * to set new values.<p>
- * <p/>
+ * to set new values.
+ * <p>
  * New versions of plugins can be downloaded and installed. However, new server releases
- * should be manually installed.
+ * should be manually installed.</p>
  *
  * @author Gaston Dombiak
  */

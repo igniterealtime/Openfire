@@ -42,25 +42,24 @@ import org.xmpp.packet.PacketError;
  * Implements the TYPE_IQ vcard-temp protocol. Clients
  * use this protocol to set and retrieve the vCard information
  * associated with someone's account.
- * <p/>
+ * <p>
  * A 'get' query retrieves the vcard for the addressee.
  * A 'set' query sets the vcard information for the sender's account.
- * <p/>
+ * </p>
+ * <p>
  * Currently an empty implementation to allow usage with normal
  * clients. Future implementation needed.
- * <p/>
+ * </p>
  * <h2>Assumptions</h2>
  * This handler assumes that the request is addressed to the server.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
  * <h2>Warning</h2>
  * There should be a way of determining whether a session has
  * authorization to access this feature. I'm not sure it is a good
  * idea to do authorization in each handler. It would be nice if
  * the framework could assert authorization policies across channels.
- * <p/>
  * <h2>Warning</h2>
  * I have noticed incompatibility between vCard XML used by Exodus and Psi.
  * There is a new vCard standard going through the JSF JEP process. We might

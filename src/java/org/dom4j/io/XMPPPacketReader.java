@@ -92,8 +92,7 @@ public class XMPPPacketReader {
 
     /**
      * <p>Reads a Document from the given URL or filename.</p>
-     * <p/>
-     * <p/>
+     * <p>
      * If the systemID contains a <code>':'</code> character then it is
      * assumed to be a URL otherwise its assumed to be a file name.
      * If you want finer grained control over this mechansim then please

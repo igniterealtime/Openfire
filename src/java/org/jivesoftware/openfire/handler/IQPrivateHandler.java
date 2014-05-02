@@ -38,19 +38,19 @@ import java.util.List;
  * use this protocol to store and retrieve arbitrary application
  * configuration information. Using the server for setting storage
  * allows client configurations to follow users where ever they go.
- * <p/>
+ * <p>
  * A 'get' query retrieves any stored data.
  * A 'set' query stores new data.
- * <p/>
+ * </p>
+ * <p>
  * Currently an empty implementation to allow usage with normal
  * clients. Future implementation needed.
- * <p/>
+ * </p>
  * <h2>Assumptions</h2>
  * This handler assumes that the request is addressed to the server.
  * An appropriate TYPE_IQ tag matcher should be placed in front of this
  * one to route TYPE_IQ requests not addressed to the server to
  * another channel (probably for direct delivery to the recipient).
- * <p/>
  * <h2>Warning</h2>
  * There should be a way of determining whether a session has
  * authorization to access this feature. I'm not sure it is a good

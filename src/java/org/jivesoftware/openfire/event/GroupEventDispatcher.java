@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * and optional parameters, as follows:<p>
  *
  * <table border="1">
+ * <caption></caption>
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
  * <tr><td>{@link EventType#group_created group_created}</td><td><i>None</i></td></tr>
  * <tr><td>{@link EventType#group_deleting group_deleting}</td><td><i>None</i></td></tr>
@@ -45,7 +46,9 @@ import org.slf4j.LoggerFactory;
  * <tr><td>{@link EventType#admin_removed admin_removed}</td><td>A param named <tt>admin</tt> with a String username
  *      as a payload</td></tr>
  * <tr valign="top"><td>{@link EventType#group_modified group_modified}</td><td>
- * <table><tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>
+ * <table>
+ *     <caption></caption>
+ * <tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>
  *      <tr><td colspan="3">Name modified</td></tr>
  *      <tr><td>&nbsp;</td><td>type</td><td>nameModified</td></tr>
  *      <tr><td>&nbsp;</td><td>originalValue</td><td><i>(Name before it was modified)</i>

@@ -23,7 +23,7 @@ package org.jivesoftware.openfire.auth;
 /**
  * This is the interface the AuthorizationManager uses to
  * conduct authorizations.
- * <p/>
+ * <p>
  * Users that wish to integrate with their own authorization
  * system must implement this interface, and are strongly
  * encouraged to extend either the AbstractAuthoriationPolicy
@@ -31,7 +31,7 @@ package org.jivesoftware.openfire.auth;
  * the admin console manage the classes more effectively.
  * Register the class with Openfire in the <tt>openfire.xml</tt>
  * file.  An entry in that file would look like the following:
- * <p/>
+ * </p>
  * <pre>
  *   &lt;provider&gt;
  *     &lt;authorization&gt;

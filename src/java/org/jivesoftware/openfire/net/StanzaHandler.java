@@ -316,11 +316,11 @@ public abstract class StanzaHandler {
     /**
      * Process the received IQ packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
-     * and after the packet was routed.<p>
-     * <p/>
+     * and after the packet was routed.
+     * <p>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
-     * another thread.
+     * another thread.</p>
      *
      * @param packet the received packet.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
@@ -334,11 +334,11 @@ public abstract class StanzaHandler {
     /**
      * Process the received Presence packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
-     * and after the packet was routed.<p>
-     * <p/>
+     * and after the packet was routed.
+     * <p>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
-     * another thread.
+     * another thread.</p>
      *
      * @param packet the received packet.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
@@ -352,11 +352,11 @@ public abstract class StanzaHandler {
     /**
      * Process the received Message packet. Registered
      * {@link org.jivesoftware.openfire.interceptor.PacketInterceptor} will be invoked before
-     * and after the packet was routed.<p>
-     * <p/>
+     * and after the packet was routed.
+     * <p>
      * Subclasses may redefine this method for different reasons such as modifying the sender
      * of the packet to avoid spoofing, rejecting the packet or even process the packet in
-     * another thread.
+     * another thread.</p>
      *
      * @param packet the received packet.
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
@@ -663,7 +663,7 @@ public abstract class StanzaHandler {
 	 *
 	 * Note that the value that is returned for this method can
 	 * change over time. For example, if no session has been established yet,
-	 * this method will return </tt>null</tt>, or, if resource binding occurs,
+	 * this method will return <tt>null</tt>, or, if resource binding occurs,
 	 * the returned value might change. Values obtained from this method are
 	 * therefore best <em>not</em> cached.
 	 *

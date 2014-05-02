@@ -48,25 +48,25 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
- * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
- *
+ * Read-only LDAP provider for vCards.Configuration consists of adding a provider:
+ * <p>
  * <tt>provider.vcard.className = org.jivesoftware.openfire.ldap.LdapVCardProvider</tt>
- *
- * and an xml vcard-mapping in the system properties.<p/>
- *
+ * </p>
+ * <p>and an xml vcard-mapping in the system properties.</p>
+ * <p>
  * The vcard attributes can be configured by adding an <code>attrs="attr1,attr2"</code>
- * attribute to the vcard elements.<p/>
- *
+ * attribute to the vcard elements.</p>
+ * <p>
  * Arbitrary text can be used for the element values as well as <code>MessageFormat</code>
  * style placeholders for the ldap attributes. For example, if you wanted to map the LDAP
  * attribute <code>displayName</code> to the vcard element <code>FN</code>, the xml
- * nippet would be:<br><pre>&lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;</pre><p/>
- *
+ * nippet would be:</p><br><pre>&lt;FN attrs=&quot;displayName&quot;&gt;{0}&lt;/FN&gt;</pre>
+ * <p>
  * The vCard XML must be escaped in CDATA and must also be well formed. It is the exact
  * XML this provider will send to a client after after stripping <code>attr</code> attributes
  * and populating the placeholders with the data retrieved from LDAP. This system should
  * be flexible enough to handle any client's vCard format. An example mapping follows.<br>
- *
+ * </p>
  * <tt>ldap.vcard-mapping =
  *        &lt;![CDATA[
  *    		&lt;vCard xmlns='vcard-temp'&gt;
@@ -104,11 +104,11 @@ import org.xmpp.packet.JID;
  *    		&lt;/vCard&gt;
  *        ]]&gt;
  * </tt>
- * <p/>
+ * <p>
  * An easy way to get the vcard format your client needs, assuming you've been
  * using the database store, is to do a <code>SELECT value FROM ofVCard WHERE
  * username='some_user'</code> in your favorite sql querier and paste the result
- * into the <code>vcard-mapping</code> (don't forget the CDATA).
+ * into the <code>vcard-mapping</code> (don't forget the CDATA).</p>
  *
  * @author rkelly
  */

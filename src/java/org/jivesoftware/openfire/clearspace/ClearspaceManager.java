@@ -112,7 +112,6 @@ import org.xmpp.packet.JID;
 /**
  * Centralized administration of Clearspace connections. The {@link #getInstance()} method
  * should be used to get an instance. The following properties configure this manager:
- * <p/>
  * <ul>
  * <li>clearspace.uri</li>
  * <li>clearspace.sharedSecret</li>

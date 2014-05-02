@@ -33,11 +33,14 @@ import org.slf4j.LoggerFactory;
  * and optional parameters, as follows:<p>
  *
  * <table border="1">
+ * <caption></caption>
  * <tr><th>Event Type</th><th>Extra Params</th></tr>
  * <tr><td>{@link EventType#user_created user_created}</td><td><i>None</i></td></tr>
  * <tr><td>{@link EventType#user_deleting user_deleting}</td><td><i>None</i></td></tr>
  * <tr valign="top"><td>{@link EventType#user_modified user_modified}</td><td>
- * <table><tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>
+ * <table>
+ * <caption></caption>
+ *      <tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>
  *      <tr><td colspan="3">Name modified</td></tr>
  *      <tr><td>&nbsp;</td><td>type</td><td>nameModified</td></tr>
  *      <tr><td>&nbsp;</td><td>originalValue</td><td><i>(Name before it was modified)</i></td></tr>

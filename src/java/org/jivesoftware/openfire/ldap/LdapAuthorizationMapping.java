@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * <li><tt>ldap.princField = k5login</tt></li>
  * <li><tt>ldap.princSearchFilter = princField={0}</tt></li>
  * </ul>
- * <p/>
+ * <p>
  * Each ldap object that represents a user is expcted to have exactly one of
  * ldap.usernameField and ldap.princField, and they are both expected to be unique
  * over the search base.  A search will be performed over all objects where 
@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * If more control over the search is needed, you can specify the mapSearchFilter
  * used to perform the LDAP query. 
  * This implementation requires that LDAP be configured, obviously.
- *
+ * </p>
  *
  * @author Jay Kline
  */

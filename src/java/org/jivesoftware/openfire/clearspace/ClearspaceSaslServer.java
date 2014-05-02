@@ -57,7 +57,7 @@ public class ClearspaceSaslServer implements SaslServer {
 
     /**
      * Evaluates the response data and generates a challenge.
-     * <p/>
+     * <p>
      * If a response is received from the client during the authentication
      * process, this method is called to prepare an appropriate next
      * challenge to submit to the client. The challenge is null if the
@@ -67,7 +67,7 @@ public class ClearspaceSaslServer implements SaslServer {
      * succeeded but challenge data needs to be processed by the client.
      * <tt>isComplete()</tt> should be called
      * after each call to <tt>evaluateResponse()</tt>,to determine if any further
-     * response is needed from the client.
+     * response is needed from the client.</p>
      *
      * @param response The non-null (but possibly empty) response sent
      *                 by the client.
@@ -156,11 +156,11 @@ public class ClearspaceSaslServer implements SaslServer {
      * the authentication exchange has negotiated integrity and/or privacy
      * as the quality of protection; otherwise,
      * an <tt>IllegalStateException</tt> is thrown.
-     * <p/>
+     * <p>
      * <tt>incoming</tt> is the contents of the SASL buffer as defined in RFC 2222
      * without the leading four octet field that represents the length.
      * <tt>offset</tt> and <tt>len</tt> specify the portion of <tt>incoming</tt>
-     * to use.
+     * to use.</p>
      *
      * @param incoming A non-null byte array containing the encoded bytes
      *                 from the client.
@@ -184,12 +184,12 @@ public class ClearspaceSaslServer implements SaslServer {
      * completed (i.e., when <tt>isComplete()</tt> returns true) and only if
      * the authentication exchange has negotiated integrity and/or privacy
      * as the quality of protection; otherwise, a <tt>SaslException</tt> is thrown.
-     * <p/>
+     * <p>
      * The result of this method
      * will make up the contents of the SASL buffer as defined in RFC 2222
      * without the leading four octet field that represents the length.
      * <tt>offset</tt> and <tt>len</tt> specify the portion of <tt>outgoing</tt>
-     * to use.
+     * to use.</p>
      *
      * @param outgoing A non-null byte array containing the bytes to encode.
      * @param offset   The starting position at <tt>outgoing</tt> of the bytes to use.

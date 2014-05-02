@@ -166,10 +166,10 @@ public class ClusterManager {
      * Triggers event indicating that this JVM is now part of a cluster. At this point the
      * {@link org.jivesoftware.openfire.XMPPServer#getNodeID()} holds the new nodeID value and
      * the old nodeID value is passed in case the listener needs it.<p>
-     * <p/>
+     * <p>
      * When joining the cluster as the senior cluster member the {@link #fireMarkedAsSeniorClusterMember()}
-     * event will be sent right after this event.<p>
-     * <p/>
+     * event will be sent right after this event.
+     * </p>
      * This event will be triggered in another thread. This will avoid potential deadlocks
      * in Coherence.
      *
@@ -256,16 +256,16 @@ public class ClusterManager {
     /**
      * Triggers event indicating that this JVM is now the senior cluster member. This
      * could either happen when initially joining the cluster or when the senior cluster
-     * member node left the cluster and this JVM was marked as the new senior cluster member.<p>
-     * <p/>
+     * member node left the cluster and this JVM was marked as the new senior cluster member.
+     * <p>
      * Moreover, in the case of a "split brain" scenario (ie. separated cluster islands) each
      * island will have its own senior cluster member. However, when the islands meet again there
      * could only be one senior cluster member so one of the senior cluster members will stop playing
      * that role. When that happens the JVM no longer playing that role will receive the
-     * {@link #fireLeftCluster()} and {@link #fireJoinedCluster(boolean)} events.<p>
-     * <p/>
+     * {@link #fireLeftCluster()} and {@link #fireJoinedCluster(boolean)} events.</p>
+     * <p>
      * This event will be triggered in another thread. This will avoid potential deadlocks
-     * in Coherence.
+     * in Coherence.</p>
      */
     public static void fireMarkedAsSeniorClusterMember() {
         try {

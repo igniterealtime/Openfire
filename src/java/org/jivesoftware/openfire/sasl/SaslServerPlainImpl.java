@@ -36,9 +36,9 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 /**
  * Implements the PLAIN server-side mechanism.
- * (<a href="http://www.ietf.org/rfc/rfc4616.txt">RFC 4616</a>)<br />
+ * (<a href="http://www.ietf.org/rfc/rfc4616.txt">RFC 4616</a>)<br>
  * <p>
- * client ----- {authzid, authcid, password} -----> server
+ * client ----- {authzid, authcid, password} -----&gt; server
  * </p>
  * Each paramater sent to the server is seperated by a null character
  * The authorization ID (authzid) may be empty.

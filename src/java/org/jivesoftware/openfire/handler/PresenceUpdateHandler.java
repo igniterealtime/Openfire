@@ -62,13 +62,15 @@ import org.xmpp.packet.Presence;
 /**
  * Implements the presence protocol. Clients use this protocol to
  * update presence and roster information.
- * <p/>
+ * <p>
  * The handler must properly detect the presence type, update the user's roster,
  * and inform presence subscribers of the session's updated presence
  * status. Presence serves many purposes in Jabber so this handler will
  * likely be the most complex of all handlers in the server.
- * <p/>
+ * </p>
+ * <p>
  * There are four basic types of presence updates:
+ * </p>
  * <ul>
  * <li>Simple presence updates - addressed to the server (or to address), these updates
  * are properly addressed by the server, and multicast to

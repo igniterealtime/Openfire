@@ -61,7 +61,7 @@ import com.cenqua.shaj.Shaj;
  *      If the value is not set, the machine's default domain will be used or standard OS
  *      auth will be used if the machine is not part of a domain. On Unix/Linux, this
  *      value specifies the PAM module to use for authentication. If the value is not set,
- *      the PAM module "other" will be used.
+ *      the PAM module "other" will be used.</i></li>
  * </ul>
  *
  * For more information about configuring the domain value and other aspects of Shaj,

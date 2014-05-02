@@ -112,7 +112,7 @@ public class PEPService implements PubSubService, Cacheable {
      * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
      * on the user presence show value. Offline users will not have an entry in
-     * the map. Note: Key-> bare JID and Value-> Map whose key is full JID of
+     * the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
     private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<String, Map<String, String>>();

@@ -54,6 +54,8 @@ import org.xmpp.packet.Message;
  * the effective size as it will appear in a transcript-update packet).
  *
  * Example of a transcript-update packet:
+ * <pre>
+ * {@code
  *     <iq type='set' to='clearspace.example.org' from='clearspace-conference.example.org'>
  *         <transcript-update xmlns='http://jivesoftware.com/clearspace'>
  *             <presence from='user1@example.org'>
@@ -88,7 +90,8 @@ import org.xmpp.packet.Message;
  *               ...
  *         </transcript-update>
  *     </iq>
- *
+ * }
+ * </pre>
  * @author Armando Jagucki
  */
 public class ClearspaceMUCTranscriptManager implements MUCEventListener {

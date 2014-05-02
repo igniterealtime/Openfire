@@ -38,12 +38,12 @@ import org.slf4j.LoggerFactory;
  * default trust manager or a standard keystore as specified in openfire.xml.
  * There is no default trust keystore provided with the Jive distribution as most
  * clients will not need to be authenticated with the server.
- * <p/>
+ * <p>
  * The Java Keystore (JKS) takes a single password which must apply to both the
  * keystore and the key itself. Users may specify another keystore type and keystore
  * location. Alternatively, don't set a keystore type to use the JVM defaults and
  * configure your JVMs security files (see your JVM documentation) to plug in
- * any TrustManagerFactory provider.
+ * any TrustManagerFactory provider.</p>
  *
  * @author Iain Shigeoka
  */

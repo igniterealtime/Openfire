@@ -37,12 +37,12 @@ public interface Result {
 	 * Returns a unique identifier for this Result. Each element in a ResultSet
 	 * must have a distinct UIDs. 
 	 * 
-	 * XEP-0059 says: <quote>(...) the UIDs are
+	 * XEP-0059 says: <i>(...) the UIDs are
 	 * unique in the context of all possible members of the full result set.
 	 * Each UID MAY be based on part of the content of its associated item (...)
 	 * or on an internal table index. Another possible method is to serialize
 	 * the XML of the item and then hash it to generate the UID. Note: The
-	 * requesting entity MUST treat all UIDs as opaque.</quote>
+	 * requesting entity MUST treat all UIDs as opaque.</i>
 	 * 
 	 * @return Unique ID of the Result
 	 */

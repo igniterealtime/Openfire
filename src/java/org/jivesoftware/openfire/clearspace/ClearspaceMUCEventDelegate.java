@@ -208,8 +208,8 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 
     /**
      * This event will be triggered when an entity attempts to destroy a room.
-     * <p/>
-     * Returns true if the user is allowed to destroy the room.
+     * <p>
+     * Returns true if the user is allowed to destroy the room.</p>
      *
      * @param roomName the name of the MUC room being destroyed.
      * @param userjid  the JID of the user attempting to destroy the room.

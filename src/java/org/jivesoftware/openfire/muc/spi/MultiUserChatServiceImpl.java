@@ -82,14 +82,14 @@ import org.xmpp.resultsetmanagement.ResultSet;
  * responsible for responding Multi-User Chat disco requests as well as removing inactive users from
  * the rooms after a period of time and to maintain a log of the conversation in the rooms that
  * require to log their conversations. The conversations log is saved to the database using a
- * separate process<p>
- * <p/>
+ * separate process.
+ * <p>
  * Temporary rooms are held in memory as long as they have occupants. They will be destroyed after
  * the last occupant left the room. On the other hand, persistent rooms are always present in memory
  * even after the last occupant left the room. In order to keep memory clean of persistent rooms that
  * have been forgotten or abandoned this class includes a clean up process. The clean up process
  * will remove from memory rooms that haven't had occupants for a while. Moreover, forgotten or
- * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.
+ * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.</p>
  *
  * @author Gaston Dombiak
  */

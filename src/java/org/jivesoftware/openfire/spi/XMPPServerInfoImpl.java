@@ -53,7 +53,6 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
      * @param version the server's version number.
      * @param startDate the server's last start time (can be null indicating
      *      it hasn't been started).
-     * @param connectionManager the object that keeps track of the active ports.
      */
     public XMPPServerInfoImpl(String xmppDomain, String hostname, Version version, Date startDate) {
         this.xmppDomain = xmppDomain;

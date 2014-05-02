@@ -1,5 +1,4 @@
 package org.jivesoftware.openfire.clearspace;
-
 /**
  * Provides a method to encode any string into a URL-safe
  * form.
@@ -8,7 +7,7 @@ package org.jivesoftware.openfire.clearspace;
  * encoded as %HH escapes.
  *
  * Created: 17 April 1997
- * Author: Bert Bos <bert@w3.org>
+ * Author: Bert Bos &lt;bert@w3.org&gt;
  *
  * URLUTF8Encoder: http://www.w3.org/International/URLUTF8Encoder.java
  *
@@ -22,7 +21,6 @@ package org.jivesoftware.openfire.clearspace;
  *
  * [1] http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
  */
-
 public class URLUTF8Encoder
 {
 

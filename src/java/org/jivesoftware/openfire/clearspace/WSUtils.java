@@ -92,12 +92,15 @@ public class WSUtils {
 
     /**
      * Parse REST responses of the type String[], that are XML of the form:
-     * <p/>
+     * <pre>
+     * {@code
      * <something>
      * <return>text1</return>
      * <return>text2</return>
      * <return>text3</return>
      * </something>
+     * }
+     * </pre>
      *
      * @param element Element from REST response to be parsed.
      * @return An array of strings from the REST response.
@@ -114,12 +117,15 @@ public class WSUtils {
 
     /**
      * Parse REST responses of the type String[] that represent usernames, that are XML of the form:
-     * <p/>
+     * <pre>
+     * {@code
      * <something>
      * <return>text1</return>
      * <return>text2</return>
      * <return>text3</return>
      * </something>
+     * }
+     * </pre>
      *
      * @param element Element from REST response to be parsed.
      * @return An array of strings from the REST response.

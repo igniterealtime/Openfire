@@ -2088,7 +2088,7 @@ public class LocalMUCRoom implements MUCRoom {
      */
     private void kickPresence(Presence kickPresence, JID actorJID) {
         // Get the role(s) to kick
-        List<MUCRole> occupants = occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase());
+        List<MUCRole> occupants = new ArrayList<MUCRole>(occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase()));
         for (MUCRole kickedRole : occupants) {
             kickPresence = kickPresence.createCopy();
             // Add the actor's JID that kicked this user from the room

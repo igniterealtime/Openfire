@@ -55,6 +55,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveInitialLdapContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -1920,7 +1921,7 @@ public class LdapManager {
                         result = result.substring(0,result.length()-suffixToTrim.length());
                     }
                     // Add this to the result.
-                    results.add(result);
+                    results.add(JID.escapeNode(result));
                 }
                 // Examine the paged results control response
                 Control[] controls = ctx.getResponseControls();
@@ -1977,7 +1978,7 @@ public class LdapManager {
                             result = result.substring(0,result.length()-suffixToTrim.length());
                         }
                         // Add this to the result.
-                        results.add(result);
+                        results.add(JID.escapeNode(result));
                     }
                     // Examine the paged results control response
                     Control[] controls = ctx2.getResponseControls();

@@ -20,20 +20,15 @@
 
 package org.jivesoftware.openfire;
 
-   import java.util.List;
-   import java.util.StringTokenizer;
-
-   import org.dom4j.QName;
-   import org.jivesoftware.openfire.carbons.Sent;
-   import org.jivesoftware.openfire.container.BasicModule;
-   import org.jivesoftware.openfire.forward.Forwarded;
-   import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.dom4j.QName;
+import org.jivesoftware.openfire.carbons.Sent;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.forward.Forwarded;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-   import org.jivesoftware.openfire.privacy.PrivacyList;
-   import org.jivesoftware.openfire.privacy.PrivacyListManager;
-   import org.jivesoftware.openfire.session.ClientSession;
-   import org.jivesoftware.openfire.session.LocalClientSession;
-   import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -42,6 +37,9 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * <p>Route message packets throughout the server.</p>
@@ -145,7 +143,7 @@ public class MessageRouter extends BasicModule {
 
                     // Sent carbon copies to other resources of the sender:
                     // When a client sends a <message/> of type "chat"
-                    if (packet.getType() == Message.Type.chat && !isPrivate) { // && session.isMessageCarbonsEnabled() ??? // must the own session also be carbon enabled?
+                    if (packet.getType() == Message.Type.chat && !isPrivate && session != null) { // && session.isMessageCarbonsEnabled() ??? // must the own session also be carbon enabled?
                         List<JID> routes = routingTable.getRoutes(packet.getFrom().asBareJID(), null);
                         for (JID route : routes) {
                             // The sending server SHOULD NOT send a forwarded copy to the sending full JID if it is a Carbons-enabled resource.

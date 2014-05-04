@@ -102,7 +102,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      */
     private boolean usingServerDialback = true;
 
-    private static final List<String> TOP_LEVEL_DOMAINS = Arrays.asList("com", "net", "org", "gov", "edu");
+    private static final List<String> TOP_LEVEL_DOMAINS = Arrays.asList("com", "net", "org", "gov", "edu", "biz", "info",
+            "de", "at", "ch", "li", "uk", "fr", "pl", "nl", "cn", "eu");
 
     /**
      * Creates a new outgoing connection to the specified hostname if no one exists. The port of

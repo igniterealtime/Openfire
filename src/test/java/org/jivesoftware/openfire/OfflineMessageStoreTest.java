@@ -1,9 +1,11 @@
 package org.jivesoftware.openfire;
 
-import junit.framework.Assert;
 import org.junit.Test;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketExtension;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This tests the business rules for storing messages as described in <a href="http://xmpp.org/extensions/xep-0160.html#types">3. Handling of Message Types</a>.
@@ -17,7 +19,7 @@ public class OfflineMessageStoreTest {
         // XEP-0160: "groupchat" message types SHOULD NOT be stored offline
         Message message = new Message();
         message.setType(Message.Type.groupchat);
-        Assert.assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -25,7 +27,7 @@ public class OfflineMessageStoreTest {
         // XEP-0160: "headline" message types SHOULD NOT be stored offline
         Message message = new Message();
         message.setType(Message.Type.headline);
-        Assert.assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -33,7 +35,7 @@ public class OfflineMessageStoreTest {
         // XEP-0160: "error" message types SHOULD NOT be stored offline,
         Message message = new Message();
         message.setType(Message.Type.error);
-        Assert.assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -41,10 +43,10 @@ public class OfflineMessageStoreTest {
         // XEP-0160: Messages with a 'type' attribute whose value is "normal" (or messages with no 'type' attribute) SHOULD be stored offline.
         Message message = new Message();
         message.setType(Message.Type.normal);
-        Assert.assertTrue(OfflineMessageStore.shouldStoreMessage(message));
+        assertTrue(OfflineMessageStore.shouldStoreMessage(message));
 
         Message message2 = new Message();
-        Assert.assertTrue(OfflineMessageStore.shouldStoreMessage(message2));
+        assertTrue(OfflineMessageStore.shouldStoreMessage(message2));
     }
 
     @Test
@@ -52,7 +54,7 @@ public class OfflineMessageStoreTest {
         // XEP-0160: "chat" message types SHOULD be stored offline unless they only contain chat state notifications
         Message message = new Message();
         message.setType(Message.Type.chat);
-        Assert.assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -61,7 +63,7 @@ public class OfflineMessageStoreTest {
         Message message = new Message();
         message.setType(Message.Type.chat);
         message.setBody(" ");
-        Assert.assertTrue(OfflineMessageStore.shouldStoreMessage(message));
+        assertTrue(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -70,7 +72,7 @@ public class OfflineMessageStoreTest {
         message.setType(Message.Type.chat);
         PacketExtension chatState = new PacketExtension("composing", "http://jabber.org/protocol/chatstates");
         message.addExtension(chatState);
-        Assert.assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
     }
 
     @Test
@@ -81,6 +83,6 @@ public class OfflineMessageStoreTest {
         message.addExtension(chatState);
         PacketExtension packetExtension2 = new PacketExtension("received", "urn:xmpp:receipts");
         message.addExtension(packetExtension2);
-        Assert.assertTrue(OfflineMessageStore.shouldStoreMessage(message));
+        assertTrue(OfflineMessageStore.shouldStoreMessage(message));
     }
 }

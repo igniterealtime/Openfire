@@ -22,10 +22,14 @@ package org.jivesoftware.util;
 
 import java.io.ByteArrayInputStream;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class XMLPropertiesTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
+public class XMLPropertiesTest {
+
+    @Test
     public void testAttributes() throws Exception {
         String xml = "<root><foo></foo></root>";
         XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
@@ -35,6 +39,7 @@ public class XMLPropertiesTest extends TestCase {
         assertEquals(props.getAttribute("foo","bar"), "test123");
     }
 
+    @Test
     public void testGetProperty() throws Exception {
         XMLProperties props = new XMLProperties(
                 "./resources/org/jivesoftware/util/XMLProperties.test01.xml");
@@ -44,6 +49,7 @@ public class XMLPropertiesTest extends TestCase {
         assertNull(props.getProperty("nothing.something"));
     }
 
+    @Test
     public void testGetChildPropertiesIterator() throws Exception {
         XMLProperties props = new XMLProperties(
                 "./resources/org/jivesoftware/util/XMLProperties.test02.xml");
@@ -59,6 +65,7 @@ public class XMLPropertiesTest extends TestCase {
         }
     }
 
+    @Test
     public void testGetPropertyWithXMLEntity() throws Exception {
         String xml = "<root><foo>foo&amp;bar</foo></root>";
         XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));

@@ -1,10 +1,13 @@
 package org.jivesoftware.util;
 
 import java.util.UUID;
-import junit.framework.TestCase;
 import org.junit.Test;
 
-public class AesEncryptorTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
+public class AesEncryptorTest {
 
 	@Test
 	public void testEncryptionUsingDefaultKey() {
@@ -47,15 +50,10 @@ public class AesEncryptorTest extends TestCase {
 
 	@Test
 	public void testEncryptionForNullString() {
-		
-		String test = null;
-		
 		Encryptor encryptor = new AesEncryptor();
 		
-		String b64Encrypted = encryptor.encrypt(test);
+		String b64Encrypted = encryptor.encrypt(null);
 		
 		assertNull(b64Encrypted);
-		
 	}
-
 }

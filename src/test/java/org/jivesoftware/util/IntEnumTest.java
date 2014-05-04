@@ -19,22 +19,27 @@
  */
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Simple test of the int enum class.
  *
  * @author Iain Shigeoka
  */
-public class IntEnumTest extends TestCase {
+public class IntEnumTest {
 
     /**
-     * Create a test case with a given name.
-     *
-     * @param name The name of the test
+     * Tests the IntEnum's enforcement of unique int values for each enum type
      */
-    public IntEnumTest (String name){
-        super(name);
+    @Test
+    public void testStaticEnumUniqueEnforcement(){
+        IntEnum e = new IntEnum("plain",1);
+        IntEnum.register(e);
+        new TestIntEnum("test",1); // auto registers the same value - does it clash with super class?
+        assertEquals("plain",IntEnum.getEnumFromInt(IntEnum.class,1).getName());
+        assertEquals("test",TestIntEnum.getTypeFromInt(1).getName());
     }
 
     static public class TestIntEnum extends IntEnum{
@@ -45,15 +50,5 @@ public class IntEnumTest extends TestCase {
         public static TestIntEnum getTypeFromInt(int value){
             return (TestIntEnum) getEnumFromInt(TestIntEnum.class,value);
         }
-    }
-    /**
-     * Tests the IntEnum's enforcement of unique int values for each enum type
-     */
-    public void testStaticEnumUniqueEnforcement(){
-        IntEnum e = new IntEnum("plain",1);
-        IntEnum.register(e);
-        new TestIntEnum("test",1); // auto registers the same value - does it clash with super class?
-        assertEquals("plain",IntEnum.getEnumFromInt(IntEnum.class,1).getName());
-        assertEquals("test",TestIntEnum.getTypeFromInt(1).getName());
     }
 }

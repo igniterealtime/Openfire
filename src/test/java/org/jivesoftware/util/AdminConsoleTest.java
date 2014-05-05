@@ -14,21 +14,19 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Iterator;
 
-import junit.framework.TestCase;
-
 import org.dom4j.Element;
 import org.jivesoftware.admin.AdminConsole;
+import org.junit.After;
+import org.junit.Test;
 
-public class AdminConsoleTest extends TestCase {
+import static org.junit.Assert.*;
 
-    public AdminConsoleTest() {
-
-    }
+public class AdminConsoleTest {
 
     /**
      * Resets the admin console internal data structures.
      */
-    @Override
+    @After
 	public void tearDown() throws Exception {
         Class c = AdminConsole.class;
         Method init = c.getDeclaredMethod("load", (Class[])null);
@@ -36,6 +34,7 @@ public class AdminConsoleTest extends TestCase {
         init.invoke((Object)null, (Object[])null);
     }
 
+    @Test
     public void testGetGlobalProps() throws Exception {
         String name = AdminConsole.getAppName();
         String image = AdminConsole.getLogoImage();
@@ -43,6 +42,7 @@ public class AdminConsoleTest extends TestCase {
         assertEquals("images/header-title.gif", image);
     }
 
+    @Test
     public void testModifyGlobalProps() throws Exception {
         // Add a new stream to the AdminConsole:
         String filename = TestUtils.prepareFilename(
@@ -56,6 +56,7 @@ public class AdminConsoleTest extends TestCase {
         assertEquals("foo.gif", img);
     }
 
+    @Test
     public void testNewTabs() throws Exception {
         // Add a new stream to the AdminConsole:
         String filename = TestUtils.prepareFilename(
@@ -67,8 +68,8 @@ public class AdminConsoleTest extends TestCase {
         assertNotNull(tabs);
         assertTrue(tabs.size() > 0);
         boolean found = false;
-        for (Iterator iter=tabs.iterator(); iter.hasNext(); ) {
-            Element tab = (Element)iter.next();
+        for (Object tab1 : tabs) {
+            Element tab = (Element) tab1;
             if ("foobar".equals(tab.attributeValue("id"))) {
                 found = true;
                 assertEquals("Foo Bar", tab.attributeValue("name"));
@@ -80,6 +81,7 @@ public class AdminConsoleTest extends TestCase {
         }
     }
 
+    @Test
     public void testTabOverwrite() throws Exception {
         // Add a new stream to the AdminConsole:
         String filename = TestUtils.prepareFilename(
@@ -88,8 +90,8 @@ public class AdminConsoleTest extends TestCase {
         AdminConsole.addModel("test3", in);
         in.close();
         boolean found = false;
-        for (Iterator tabs=AdminConsole.getModel().selectNodes("//tab").iterator(); tabs.hasNext(); ) {
-            Element tab = (Element)tabs.next();
+        for (Object o : AdminConsole.getModel().selectNodes("//tab")) {
+            Element tab = (Element) o;
             if ("server".equals(tab.attributeValue("id"))) {
                 found = true;
                 assertEquals("New Server Title", tab.attributeValue("name"));

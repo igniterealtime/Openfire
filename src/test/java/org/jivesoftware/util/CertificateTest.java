@@ -5,18 +5,21 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Basic tests for code used by CertificateManager.
  *
  * @author Gaston Dombiak
  */
-public class CertificateTest extends TestCase {
+public class CertificateTest {
 
     /**
      * Verify that all CN elements are found.
      */
+    @Test
     public void testCN() {
         Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
         String text = "EMAILADDRESS=XXXXX@scifi.com, CN=scifi.com, CN=jabber.scifi.com, OU=Domain validated only, O=XX, L=Skx, C=SE";

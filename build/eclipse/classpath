@@ -43,8 +43,6 @@
 	<classpathentry kind="lib" path="build/lib/dist/postgres.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/servlet.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/slf4j-log4j12.jar"/>
-	<classpathentry kind="lib" path="build/lib/hamcrest-api.jar"/>
-	<classpathentry kind="lib" path="build/lib/hamcrest-library.jar"/>
 	<classpathentry kind="lib" path="build/lib/i4jruntime.jar"/>
 	<classpathentry kind="lib" path="build/lib/jasper-compiler.jar"/>
 	<classpathentry kind="lib" path="build/lib/jasper-runtime.jar"/>

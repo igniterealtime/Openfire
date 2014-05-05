@@ -1,14 +1,15 @@
 package org.jivesoftware.admin;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-/**
- * 
- */
-public class AuthCheckFilterTest extends TestCase {
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class AuthCheckFilterTest {
 
     // login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp
 
+    @Test
     public void testExcludeRules() {
         assertFalse(AuthCheckFilter.testURLPassesExclude("blahblah/login.jsp", "login.jsp"));
         assertTrue(AuthCheckFilter.testURLPassesExclude("login.jsp", "login.jsp"));

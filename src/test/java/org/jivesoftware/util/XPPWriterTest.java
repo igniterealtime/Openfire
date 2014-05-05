@@ -19,26 +19,21 @@
  */
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * <p>Test the writing of dom4j documents using the XPP serializer.</p>
  *
  * @author Iain Shigeoka
  */
-public class XPPWriterTest extends TestCase {
-    /**
-     * <p>Create a new test with the given name.</p>
-     *
-     * @param name The name of the test
-     */
-    public XPPWriterTest(String name){
-        super(name);
-    }
+public class XPPWriterTest {
 
     /**
      * <p>Run a standard config document through a round trip and compare.</p>
      */
+    @Test
+    @Ignore
     public void testRoundtrip(){
         // NOTE: disabling this test case until we get resources working again.
         /*

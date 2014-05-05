@@ -7,17 +7,21 @@
 
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
-
+import org.junit.Test;
 import org.xmpp.packet.JID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test cases for the JID class.
  *
  * @author Gaston Dombiak
  */
-public class JIDTest extends TestCase {
+public class JIDTest {
 
+    @Test
     public void testDomain() {
         new JID("mycomapny.com");
         new JID("wfink-adm");
@@ -39,6 +43,7 @@ public class JIDTest extends TestCase {
         assertTrue("A domain with _ was accepted", failed);
     }
 
+    @Test
     public void testUsernames() {
         new JID("john@mycomapny.com");
         new JID("john_paul@mycomapny.com");
@@ -52,6 +57,7 @@ public class JIDTest extends TestCase {
         assertTrue("A username with spaces was accepted", failed);
     }
 
+    @Test
     public void testCompare() {
         JID jid1 = new JID("john@mycomapny.com");
         JID jid2 = new JID("john@mycomapny.com");

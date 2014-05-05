@@ -9,15 +9,17 @@
  */
 package org.jivesoftware.util;
 
-import junit.framework.TestCase;
-
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Daniel Henninger
  */
-public class LDAPTest extends TestCase {
+public class LDAPTest {
 
+    @Test
     public void testEncloseDN() {
         String before = "ou=Jive Software\\, Inc,dc=support,dc=jive,dc=com";
         String after = "ou=\"Jive Software, Inc\",dc=\"support\",dc=\"jive\",dc=\"com\"";

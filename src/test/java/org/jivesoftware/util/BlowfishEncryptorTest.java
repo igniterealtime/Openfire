@@ -2,11 +2,13 @@ package org.jivesoftware.util;
 
 import java.util.UUID;
 
-import junit.framework.TestCase;
-
 import org.junit.Test;
 
-public class BlowfishEncryptorTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
+public class BlowfishEncryptorTest {
 
 	@Test
 	public void testEncryptionUsingDefaultKey() {
@@ -49,15 +51,10 @@ public class BlowfishEncryptorTest extends TestCase {
 
 	@Test
 	public void testEncryptionForNullString() {
-		
-		String test = null;
-		
-		Encryptor encryptor = new Blowfish();
-		
-		String b64Encrypted = encryptor.encrypt(test);
-		
-		assertNull(b64Encrypted);
-		
-	}
+        Encryptor encryptor = new Blowfish();
 
+        String b64Encrypted = encryptor.encrypt(null);
+
+        assertNull(b64Encrypted);
+    }
 }

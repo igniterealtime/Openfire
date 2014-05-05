@@ -67,7 +67,7 @@ public class PubSubPersistenceManager {
     		"FROM ofPubsubNode WHERE leaf=1 AND persistItems=1 AND maxItems > 0";
     
     private static final String PURGE_FOR_SIZE =
-    		"DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+    		"DELETE FROM ofPubsubItem LEFT JOIN " +
 			"(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
 			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +

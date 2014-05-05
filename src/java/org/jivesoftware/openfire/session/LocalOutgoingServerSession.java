@@ -293,6 +293,8 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             catch (Exception e) {
                 Log.warn("Error trying to connect to remote server: " + hostname +
                         "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+            } 
+            finally {
                 try {
                     if (socket != null) {
                         socket.close();

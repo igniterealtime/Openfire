@@ -48,9 +48,6 @@
 	<classpathentry kind="lib" path="build/lib/i4jruntime.jar"/>
 	<classpathentry kind="lib" path="build/lib/jasper-compiler.jar"/>
 	<classpathentry kind="lib" path="build/lib/jasper-runtime.jar"/>
-	<classpathentry kind="lib" path="build/lib/jmock-junit4.jar"/>
-	<classpathentry kind="lib" path="build/lib/jmock-legacy.jar"/>
-	<classpathentry kind="lib" path="build/lib/jmock.jar"/>
 	<classpathentry kind="lib" path="build/lib/junit.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/commons-codec.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/commons-httpclient.jar"/>

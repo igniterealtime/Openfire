@@ -650,7 +650,7 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // If the room has just been created send the "room locked until configuration is
         // confirmed" message
-        if (isLocked()) {
+        if (!isRoomNew && isLocked()) {
             // http://xmpp.org/extensions/xep-0045.html#enter-locked
             Presence presenceItemNotFound = new Presence(Presence.Type.error);
             presenceItemNotFound.setError(PacketError.Condition.item_not_found);

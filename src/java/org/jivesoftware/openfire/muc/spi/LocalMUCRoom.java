@@ -1117,7 +1117,7 @@ public class LocalMUCRoom implements MUCRoom {
             if (occupant.getPresence().getFrom().equals(presence.getTo())) {
                 Presence selfPresence = presence.createCopy();
                 Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                fragSelfPresence.addElement("status", "110");
+                fragSelfPresence.addElement("status").addAttribute("code", "110");
 
                 // Only in the context of entering the room status code 100, 201 and 210 should be sent.
                 // http://xmpp.org/registrar/mucstatus.html

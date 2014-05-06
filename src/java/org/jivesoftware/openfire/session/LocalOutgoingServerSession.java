@@ -26,11 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -105,6 +101,9 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
      * Flag that indicates if the session was created using server-dialback.
      */
     private boolean usingServerDialback = true;
+
+    private static final List<String> TOP_LEVEL_DOMAINS = Arrays.asList("com", "net", "org", "gov", "edu", "biz", "info",
+            "de", "at", "ch", "li", "uk", "fr", "pl", "nl", "cn", "eu");
 
     /**
      * Creates a new outgoing connection to the specified hostname if no one exists. The port of
@@ -200,11 +199,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         while (index > -1 && index < hostname.length()) {
                             String newHostname = hostname.substring(index + 1);
                             String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                            if ("com".equals(newHostname) || "net".equals(newHostname) ||
-                                    "org".equals(newHostname) ||
-                                    "gov".equals(newHostname) ||
-                                    "edu".equals(newHostname) ||
-                                    serverName.equals(newHostname)) {
+                            if (TOP_LEVEL_DOMAINS.contains(newHostname) || serverName.equals(newHostname)) {
                                 return false;
                             }
                             session = createOutgoingSession(domain, newHostname, port);

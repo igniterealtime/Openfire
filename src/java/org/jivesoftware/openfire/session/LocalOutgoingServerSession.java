@@ -284,14 +284,14 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             }
             catch (Exception e) {
                 Log.warn("Error trying to connect to remote server: " + hostname +
-                        "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                        "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
                 try {
                     if (socket != null) {
                         socket.close();
                     }
                 }
                 catch (IOException ex) {
-                    Log.debug("Additional exception while trying to close socket when connection to remote server failed.", ex);
+                    Log.debug("Additional exception while trying to close socket when connection to remote server failed: " + ex.toString());
                 }
             }
         }
@@ -383,7 +383,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         catch (SSLHandshakeException e) {
             Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
                     "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
-                    ")", e);
+                    "):" + e.toString());
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -391,7 +391,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         }
         catch (XmlPullParserException e) {
             Log.warn("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -399,7 +399,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         }
         catch (Exception e) {
             Log.error("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
+                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -708,7 +708,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             }
         }
         catch (Exception e) {
-            Log.warn("Error returning error to sender. Original packet: " + packet, e);
+            Log.error("Error returning error to sender. Original packet: " + packet, e);
         }
     }
 

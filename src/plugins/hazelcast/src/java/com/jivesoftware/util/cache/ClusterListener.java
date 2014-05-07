@@ -640,10 +640,8 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
                 seniorClusterMember = true;
                 ClusterManager.fireMarkedAsSeniorClusterMember();
             }
-
-            if (CacheFactory.isSeniorClusterMember()) {
-                cleanupNode(NodeID.getInstance(nodeID));
-            }
+            cleanupNode(NodeID.getInstance(nodeID));
+            
             // Remove traces of directed presences sent from local entities to handlers that no longer exist.
             // At this point c2s sessions are gone from the routing table so we can identify expired sessions
             XMPPServer.getInstance().getPresenceUpdateHandler().removedExpiredPresences();

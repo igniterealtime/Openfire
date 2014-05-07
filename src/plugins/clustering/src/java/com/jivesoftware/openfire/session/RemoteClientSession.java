@@ -162,7 +162,7 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
 
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
-        messageCarbonsEnabled = true;
+        messageCarbonsEnabled = enabled;
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {

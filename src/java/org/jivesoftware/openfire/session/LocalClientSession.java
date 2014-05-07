@@ -822,7 +822,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
     public void setMessageCarbonsEnabled(boolean enabled) {
-        messageCarbonsEnabled = true;
+        messageCarbonsEnabled = enabled;
     }
 
     /**

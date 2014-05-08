@@ -42,6 +42,7 @@
 <%@ page import="java.net.URL" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -61,11 +62,11 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>
 
-<%! long lastRRSFecth = 0;
+<%! long lastRSSFetch = 0;
     SyndFeed lastBlogFeed = null;
     SyndFeed lastReleaseFeed = null;
-    String blogFeedRSS = "http://www.igniterealtime.org/community/blogs/ignite/feeds/posts";
-    String releaseFeedRSS = "http://www.igniterealtime.org/community/community/feeds/messages?community=2017";
+    String blogFeedRSS = "https://community.igniterealtime.org/blogs/ignite/feeds/posts";
+    String releaseFeedRSS = "https://community.igniterealtime.org/community/feeds/messages?community=2017";
 
 %>
 <% // Get parameters //
@@ -378,7 +379,7 @@
             <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
             <h4><fmt:message key="index.cs_blog" /></h4>
             <% long nowTime = System.currentTimeMillis();
-                if (lastBlogFeed == null || lastReleaseFeed == null || nowTime - lastRRSFecth > 21600000) {
+                if (lastBlogFeed == null || lastReleaseFeed == null || nowTime - lastRSSFetch > 21600000) {
 
                     FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
                     FeedFetcher feedFetcher = new HttpClientWithTimeoutFeedFetcher(feedInfoCache);
@@ -387,10 +388,10 @@
                         lastBlogFeed = feedFetcher.retrieveFeed(new URL(blogFeedRSS));
                         lastReleaseFeed = feedFetcher.retrieveFeed(new URL(releaseFeedRSS));
 
-                        lastRRSFecth = nowTime;
+                        lastRSSFetch = nowTime;
                     }
                     catch (Exception ioe) {
-                        // ignore
+                    	LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed: " + ioe);
                     }
                 }
 

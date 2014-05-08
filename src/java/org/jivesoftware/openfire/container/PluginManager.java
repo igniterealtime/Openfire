@@ -297,11 +297,9 @@ public class PluginManager {
                 // required to run.
                 Element minServerVersion = (Element)pluginXML.selectSingleNode("/plugin/minServerVersion");
                 if (minServerVersion != null) {
-                    String requiredVersion = minServerVersion.getTextTrim();
-                    Version version = XMPPServer.getInstance().getServerInfo().getVersion();
-                    String hasVersion = version.getMajor() + "." + version.getMinor() + "." +
-                        version.getMicro();
-                    if (hasVersion.compareTo(requiredVersion) < 0) {
+                    Version requiredVersion = new Version(minServerVersion.getTextTrim());
+                    Version currentVersion = XMPPServer.getInstance().getServerInfo().getVersion();
+                    if (requiredVersion.isNewerThan(currentVersion)) {
                         String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
                             "server version " + requiredVersion;
                         Log.warn(msg);

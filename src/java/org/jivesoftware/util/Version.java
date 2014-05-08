@@ -19,12 +19,14 @@
 
 package org.jivesoftware.util;
 
+import java.util.StringTokenizer;
+
 /**
  * Holds version information for Openfire.
  *
  * @author Iain Shigeoka
  */
-public class Version {
+public class Version implements Comparable<Version> {
 
     /**
      * The major number (ie 1.x.x).
@@ -70,23 +72,30 @@ public class Version {
         this.micro = micro;
         this.status = status;
         this.statusVersion = statusVersion;
-        if (status != null) {
-            if (status == ReleaseStatus.Release) {
-                versionString = major + "." + minor + "." + micro;
-            }
-            else {
-                if (statusVersion >= 0) {
-                    versionString = major + "." + minor + "." + micro + " " + status.toString() +
-                            " " + statusVersion;
-                }
-                else {
-                    versionString = major + "." + minor + "." + micro + " " + status.toString();
-                }
-            }
-        }
-        else {
-            versionString = major + "." + minor + "." + micro;
-        }
+    }
+    
+    /**
+     * Create a new version from a simple version string (e.g. "3.9.3")
+     * 
+     * @param source the version string
+     */
+    public Version(String source) {
+    	// initialize the defaults
+    	major = minor = micro = 0;
+    	status = ReleaseStatus.Release;
+    	statusVersion = -1;
+    	
+    	if (source != null) {
+        	StringTokenizer parser = new StringTokenizer(source, ".");
+    		try {
+    			major = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
+    			minor = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
+    			micro = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
+    		}
+    		catch (NumberFormatException nfe) {
+    			// ignore bad version
+    		}
+    	}  	
     }
 
     /**
@@ -96,6 +105,26 @@ public class Version {
      * @return The version as a string
      */
     public String getVersionString() {
+    	if (versionString == null) {
+            if (status != null) {
+                if (status == ReleaseStatus.Release) {
+                    versionString = major + "." + minor + "." + micro;
+                }
+                else {
+                    if (statusVersion >= 0) {
+                        versionString = major + "." + minor + "." + micro + " " + status.toString() +
+                                " " + statusVersion;
+                    }
+                    else {
+                        versionString = major + "." + minor + "." + micro + " " + status.toString();
+                    }
+                }
+            }
+            else {
+                versionString = major + "." + minor + "." + micro;
+            }
+    		
+    	}
         return versionString;
     }
 
@@ -136,7 +165,7 @@ public class Version {
     }
 
     /**
-     * Obtain the status relase number for this product. For example, if
+     * Obtain the status release number for this product. For example, if
      * the release status is <strong>alpha</strong> the release may be <strong>5</strong>
      * resulting in a release status of <strong>Alpha 5</strong>.
      *
@@ -164,4 +193,22 @@ public class Version {
             return status;
         }
     }
+    
+    /**
+     * Convenience method for comparing versions
+     * 
+     * @param otherVersion a verion to comapr against
+     */
+    public boolean isNewerThan(Version otherVersion) {
+    	return this.compareTo(otherVersion) > 0;
+    }
+
+	@Override
+	public int compareTo(Version that) {
+		
+		long thisVersion = (this.getMicro()*10) + (this.getMinor()*1000) + (this.getMajor()*100000);
+		long thatVersion = (that.getMicro()*10) + (that.getMinor()*1000) + (that.getMajor()*100000);
+		
+		return thisVersion == thatVersion ? 0 : thisVersion > thatVersion ? 1 : -1;
+	}
 }

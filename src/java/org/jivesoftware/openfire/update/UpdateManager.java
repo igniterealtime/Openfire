@@ -54,6 +54,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Version;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -337,10 +338,11 @@ public class UpdateManager extends BasicModule {
             }
         }
         // Remove plugins that require a newer server version
-        String serverVersion = XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
+        Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
         for (Iterator<AvailablePlugin> it=plugins.iterator(); it.hasNext();) {
             AvailablePlugin plugin = it.next();
-            if (serverVersion.compareTo(plugin.getMinServerVersion()) < 0) {
+            Version pluginMinServerVersion = new Version(plugin.getMinServerVersion());
+            if (pluginMinServerVersion.isNewerThan(currentServerVersion)) {
                 it.remove();
             }
         }
@@ -618,21 +620,24 @@ public class UpdateManager extends BasicModule {
         // Reset list of plugins that need to be updated
         pluginUpdates = new ArrayList<Update>();
         XMPPServer server = XMPPServer.getInstance();
+        Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
         // Compare local plugins versions with latest ones
         for (Plugin plugin : server.getPluginManager().getPlugins()) {
             String pluginName = server.getPluginManager().getName(plugin);
             AvailablePlugin latestPlugin = availablePlugins.get(pluginName);
-            String currentVersion = server.getPluginManager().getVersion(plugin);
-            if (latestPlugin != null &&
-                    latestPlugin.getLatestVersion().compareTo(currentVersion) > 0) {
-                // Check if the update can run in the current version of the server
-                String serverVersion =
-                        XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
-                if (serverVersion.compareTo(latestPlugin.getMinServerVersion()) >= 0) {
-                    Update update = new Update(pluginName, latestPlugin.getLatestVersion(),
-                            latestPlugin.getChangelog(), latestPlugin.getURL());
-                    pluginUpdates.add(update);
-                }
+
+            if (latestPlugin != null) {
+				Version currentPluginVersion = new Version(server.getPluginManager().getVersion(plugin));
+				Version latestPluginVersion = new Version(latestPlugin.getLatestVersion());
+            	if (latestPluginVersion.isNewerThan(currentPluginVersion)) {
+					// Check if the update can run in the current version of the server
+					Version pluginMinServerVersion = new Version(latestPlugin.getMinServerVersion());
+					if (!pluginMinServerVersion.isNewerThan(currentServerVersion)) {
+						Update update = new Update(pluginName, latestPlugin.getLatestVersion(),
+								latestPlugin.getChangelog(), latestPlugin.getURL());
+						pluginUpdates.add(update);
+					}
+				}
             }
         }
     }
@@ -789,14 +794,13 @@ public class UpdateManager extends BasicModule {
         // Parse info and recreate update information (if still required)
         Element openfire = xmlResponse.getRootElement().element("openfire");
         if (openfire != null) {
-            String latestVersion = openfire.attributeValue("latest");
+            Version latestVersion = new Version(openfire.attributeValue("latest"));
             String changelog = openfire.attributeValue("changelog");
             String url = openfire.attributeValue("url");
             // Check if current server version is correct
-            String serverVersion =
-                    XMPPServer.getInstance().getServerInfo().getVersion().getVersionString();
-            if (serverVersion.compareTo(latestVersion) < 0) {
-                serverUpdate = new Update("Openfire", latestVersion, changelog, url);
+            Version curentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
+            if (latestVersion.isNewerThan(curentServerVersion)) {
+                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), changelog, url);
             }
         }
     }

@@ -539,11 +539,13 @@ public class UpdateManager extends BasicModule {
         Element openfire = xmlResponse.element("openfire");
         if (openfire != null) {
             // A new version of openfire was found
-            String latestVersion = openfire.attributeValue("latest");
-            String changelog = openfire.attributeValue("changelog");
-            String url = openfire.attributeValue("url");
-            // Keep information about the available server update
-            serverUpdate = new Update("Openfire", latestVersion, changelog, url);
+            Version latestVersion = new Version(openfire.attributeValue("latest"));
+            if (latestVersion.isNewerThan(XMPPServer.getInstance().getServerInfo().getVersion())) {
+                String changelog = openfire.attributeValue("changelog");
+                String url = openfire.attributeValue("url");
+                // Keep information about the available server update
+                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), changelog, url);
+            }
         }
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && serverUpdate != null) {
@@ -798,8 +800,8 @@ public class UpdateManager extends BasicModule {
             String changelog = openfire.attributeValue("changelog");
             String url = openfire.attributeValue("url");
             // Check if current server version is correct
-            Version curentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
-            if (latestVersion.isNewerThan(curentServerVersion)) {
+            Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
+            if (latestVersion.isNewerThan(currentServerVersion)) {
                 serverUpdate = new Update("Openfire", latestVersion.getVersionString(), changelog, url);
             }
         }

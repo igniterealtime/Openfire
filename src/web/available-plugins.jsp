@@ -438,12 +438,15 @@
 
 <%
     final XMPPServer server = XMPPServer.getInstance();
-    Version version = server.getServerInfo().getVersion();
+    Version serverVersion = server.getServerInfo().getVersion();
     List<Plugin> outdatedPlugins = new ArrayList<Plugin>();
     for (Plugin plugin : server.getPluginManager().getPlugins()) {
         String pluginVersion = server.getPluginManager().getMinServerVersion(plugin);
-        if (pluginVersion != null && pluginVersion.compareTo(version.getVersionString()) > 0) {
-            outdatedPlugins.add(plugin);
+        if (pluginVersion != null) {
+        	Version pluginMinServerVersion = new Version(pluginVersion);
+        	if (pluginMinServerVersion.isNewerThan(serverVersion)) {
+                outdatedPlugins.add(plugin);
+        	}
         }
     }
 

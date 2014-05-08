@@ -20,38 +20,6 @@
     </description>
 
     <!-- ======================================================================================= -->
-    <!-- GLOBAL TASKDEFs                                                                         -->
-    <!-- ======================================================================================= -->
-
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/ant-contrib.jar"/>
-        </classpath>
-    </taskdef>
-    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/xmltask.jar"/>
-        </classpath>
-    </taskdef>
-    <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
-        </classpath>
-    </taskdef>
-    <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
-        <classpath>
-            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
-        </classpath>
-    </taskdef>
-    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
-        <classpath>
-            <pathelement location="${basedir}/build/lib/ant-jive-edition.jar"/>
-            <pathelement location="${basedir}/build/lib/qdox.jar"/>
-        </classpath>
-    </typedef>
-
-
-    <!-- ======================================================================================= -->
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
@@ -71,6 +39,7 @@
     <property name="docs.dir" value="${basedir}/documentation"/>
     <property name="web.dir" value="${src.dir}/web"/>
     <property name="spank.dir" value="${src.dir}/spank"/>
+    <property name="lib.ant.dir" value="${basedir}/build/lib/ant"/>
     <property name="lib.build.dir" value="${basedir}/build/lib"/>
     <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
@@ -152,6 +121,10 @@
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
     <!-- ======================================================================================= -->
 
+    <path id="ant.dependencies">
+        <fileset dir="${lib.ant.dir}" includes="*.jar" />
+    </path>
+    
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <fileset dir="${lib.merge.dir}" includes="*.jar"/>
@@ -201,6 +174,26 @@
         <include name="**/favicon.ico"/>
         <include name="**/*.js"/>
     </patternset>
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFs                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
+        <classpath refid="ant.dependencies" />
+    </typedef>
 
     <!-- ======================================================================================= -->
     <!-- TARGETs                                                                                 -->

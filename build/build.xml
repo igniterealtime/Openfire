@@ -60,7 +60,7 @@
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
-	<property name="pack200.enabled" value="true"/>
+    <property name="pack200.enabled" value="true"/>
 
     <property name="overlay.dir"   value="${basedir}/custom"/>
     <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
@@ -123,6 +123,7 @@
 
     <path id="ant.dependencies">
         <fileset dir="${lib.ant.dir}" includes="*.jar" />
+        <fileset dir="${ant.home}/lib" includes="ant.jar" />
     </path>
     
     <path id="javadoc.dependencies">
@@ -138,6 +139,7 @@
 
     <path id="jspc.dependencies">
         <path refid="compile.dependencies"/>
+        <path refid="ant.dependencies"/>
         <fileset dir="${lib.web.dir}" includes="*.jar"/>
     </path>
 

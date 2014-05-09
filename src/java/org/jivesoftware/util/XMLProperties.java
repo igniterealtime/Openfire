@@ -684,6 +684,7 @@ public class XMLProperties {
         // .. then write to disk.
         saveProperties();
 
+        JiveGlobals.setPropertyEncrypted(name, false);
         // Generate event.
         Map<String, Object> params = Collections.emptyMap();
         PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.xml_property_deleted, params);

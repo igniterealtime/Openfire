@@ -82,16 +82,6 @@
         }
     }
 
-    if (encrypt) {
-        if (propName != null) {
-            JiveGlobals.setPropertyEncrypted(propName, true);
-            // Log the event
-            webManager.logEvent("encrypted server property "+propName, null);
-            response.sendRedirect("server-properties.jsp?encryptsuccess=true");
-            return;
-        }
-    }
-
     Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (propName == null || "".equals(propName.trim()) || propName.startsWith("\"")) {
@@ -113,16 +103,26 @@
         }
     }
 
+    if (encrypt) {
+        if (propName != null) {
+            JiveGlobals.setPropertyEncrypted(propName, true);
+            // Log the event
+            webManager.logEvent("encrypted server property "+propName, null);
+            response.sendRedirect("server-properties.jsp?encryptsuccess=true");
+            return;
+        }
+    }
+
+    if (edit) {
+        propValue = JiveGlobals.getProperty(propName);
+    }
+
     List<String> properties = JiveGlobals.getPropertyNames();
     Collections.sort(properties, new Comparator<String>() {
         public int compare(String s1, String s2) {
             return s1.toLowerCase().compareTo(s2.toLowerCase());
         }
     });
-
-    if (edit) {
-        propValue = JiveGlobals.getProperty(propName);
-    }
 %>
 
 <html>
@@ -425,11 +425,6 @@ function dodelete(propName) {
 </div>
 
 </form>
-
-<br><br><br><br><br><br>
-<br><br><br><br><br><br>
-<br><br><br><br><br><br>
-<br><br><br><br><br><br>
 
     </body>
 </html>

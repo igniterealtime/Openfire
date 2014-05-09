@@ -765,6 +765,7 @@ public class JiveGlobals {
             properties = JiveProperties.getInstance();
         }
         properties.remove(name);
+        setPropertyEncrypted(name, false);
     }
 
     /**
@@ -825,10 +826,10 @@ public class JiveGlobals {
     		loadSecurityProperties();
     	}
     	boolean propertyWasChanged;
-    	if (isPropertyEncrypted(name)) {
-    		propertyWasChanged = securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
-    	} else {
+    	if (encrypt) {
     		propertyWasChanged = securityProperties.addToList(ENCRYPTED_PROPERTY_NAMES, name);
+    	} else {
+    		propertyWasChanged = securityProperties.removeFromList(ENCRYPTED_PROPERTY_NAMES, name);
     	}
     	if (propertyWasChanged) {
     		resetProperty(name);

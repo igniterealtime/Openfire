@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin>
+    <author>igniterealtime.org</author>
+    <class>org.ifsoft.nodejs.openfire.PluginImpl</class>
+    <description>Integrates NodeJs Applications with Openfire.</description>
+    <licenseType>Apache 2.0</licenseType>
+    <minServerVersion>3.8.2</minServerVersion>
+    <name>NodeJ</name>
+    <version>0.0.1</version>
+
+   <adminconsole>
+        <tab id="tab-server">
+            <sidebar id="siderbar-nodejs"
+                     name="${plugin.title}">
+                <item id="nodejs-settings"
+                      name="${plugin.title}"
+                      description="${plugin.title.description}"
+                      url="nodejs.jsp"/>
+            </sidebar>
+        </tab>
+    </adminconsole> 
+</plugin>

@@ -109,7 +109,7 @@
                        JiveGlobals.isPropertySensitive(n)) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
-                <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
+                <span title="<%= ("".equals(p) ? "&nbsp;" : p) %>"><%= ("".equals(p) ? "&nbsp;" : p) %></span>
                 <% } %>
             </div>
         </td>
@@ -119,7 +119,7 @@
                        JiveGlobals.isPropertySensitive(n)) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
-                <span title="<%= ("".equals(p) ? "&nbsp;" : p) %>"><%= ("".equals(p) ? "&nbsp;" : p) %></span>
+                <span title="<%= ("".equals(h) ? "&nbsp;" : h) %>"><%= ("".equals(h) ? "&nbsp;" : h) %></span>
                 <% } %>
             </div>
         </td>                

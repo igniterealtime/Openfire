@@ -14,6 +14,7 @@ public class NodeThread implements Runnable {
 	private Thread thread = null;
 	private Process nodeProcess = null;
 	private BufferedReader input = null;
+	private BufferedReader error = null;
 
 
 	public NodeThread()
@@ -31,6 +32,7 @@ public class NodeThread implements Runnable {
 			Log.info("Started Node");
 
       		input = new BufferedReader (new InputStreamReader(nodeProcess.getInputStream()));
+      		error = new BufferedReader (new InputStreamReader(nodeProcess.getErrorStream()));
 			Log.info("Started Node Console Reader");
 
 		} catch (Exception e) {
@@ -54,8 +56,15 @@ public class NodeThread implements Runnable {
 				String line = input.readLine();
 
 			  	while (line != null) {
-					Log.info("Node: " + line);
+					Log.info(line);
 					line = input.readLine();
+			  	}
+
+				line = error.readLine();
+
+			  	while (line != null) {
+					Log.error(line);
+					line = error.readLine();
 			  	}
 
      		  	Thread.sleep(500);

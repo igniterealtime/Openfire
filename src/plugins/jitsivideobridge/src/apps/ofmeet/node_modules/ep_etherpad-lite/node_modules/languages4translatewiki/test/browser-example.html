@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+    <title>Test languages module</title>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script src="../languages.min.js"></script>
+    <style>
+    body {
+        background-color: #eee;
+    }
+    .centrador {
+        width:700px;
+        margin:10px auto;
+        border:1px solid #ccc;
+        padding:20px;
+        background-color:#fff;
+    }
+    </style>
+</head>
+<body>
+    <div class="centrador">
+        <h1>Test languages module (Browser client side)</h1>
+        <hr />
+        <div id="test"></div>
+    </div> <!-- .centrador-->
+    <script>
+        var num_languages = 0,
+        text = '';
+
+        // languages.getAllLanguageCode() return an array of all ISO 639-1 language code supported
+        var langscodes = languages.getAllLanguageCode();
+        // iterate this array
+        for (num_languages=0; num_languages<langscodes.length; num_languages++) {
+            // save in text variable a string representation of the object return by languages.getLanguageInfo(langcode)
+            var langcode = langscodes[num_languages];
+            text+='<b>'+langcode+'</b> '+JSON.stringify(languages.getLanguageInfo(langcode))+'<br />';
+        }
+        // save the number of languages supported
+        text = '<h2>Languages supported: '+num_languages+'</h2>'+text;
+        // write the test result in DOM element with id='test'
+        document.getElementById('test').innerHTML = text;
+    </script>
+</body>
+</html>

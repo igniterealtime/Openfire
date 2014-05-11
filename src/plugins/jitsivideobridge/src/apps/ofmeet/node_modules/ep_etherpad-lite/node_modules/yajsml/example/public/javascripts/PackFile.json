@@ -1,0 +1,10 @@
+{
+  "jquery": [
+    "jquery"
+  , "jquery.js"
+  , "mustache"
+  , "mustache.js"
+  , "underscore"
+  , "underscore.js"
+  ]
+}

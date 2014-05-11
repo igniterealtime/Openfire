@@ -15,8 +15,16 @@ function goto(page)
 	PDFJS.getDocument('/jitsi/proxy?url=' + pdfDoc).then(function(p) {
 		pdf = p;
 		doPage(page, true);		
-		window.parent.pfdReady();
+		window.parent.pfdReady();		
+		if (jitsiTogetherJS) jitsiTogetherJS();
 	});
+}
+
+function toggleTogether()
+{
+	var task = !TogetherJS.running
+    	TogetherJS();
+    	return task;
 }
 
 function nextPage()
@@ -75,6 +83,7 @@ window.onhashchange = function()
 {
 	page = window.location.hash.substring(1);
 	doPage(page, false);
+
 }
 
 

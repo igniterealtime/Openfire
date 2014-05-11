@@ -1,0 +1,4 @@
+Apps/
+swagger-ui-*/
+.gitmodules
+*-project

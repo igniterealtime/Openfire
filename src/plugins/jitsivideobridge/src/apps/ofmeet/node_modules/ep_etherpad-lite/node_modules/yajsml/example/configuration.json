@@ -1,0 +1,8 @@
+{
+  "rootPath": "/javascripts/:version/src"
+, "rootURI": "https://raw.github.com/cweider/yajsml/:version/example/public/javascripts/src"
+, "libraryPath": "/javascripts/:version/lib"
+, "libraryURI": "https://raw.github.com/cweider/yajsml/:version/example/public/javascripts/lib"
+, "manifest": "https://raw.github.com/cweider/yajsml/:version/example/public/javascripts/PackFile.json"
+, "minify": false
+}

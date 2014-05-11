@@ -63,6 +63,15 @@
             }
         }
         
+	String checkReplay = request.getParameter("checkreplay"); 
+        JiveGlobals.setProperty(PluginImpl.CHECKREPLAY_PROPERTY_NAME, checkReplay);
+        
+	String localAddress = request.getParameter("localaddress"); 
+        JiveGlobals.setProperty(PluginImpl.NAT_HARVESTER_LOCAL_ADDRESS, localAddress);
+
+	String publicAddress = request.getParameter("publicaddress"); 
+        JiveGlobals.setProperty(PluginImpl.NAT_HARVESTER_PUBLIC_ADDRESS, publicAddress);
+        
 	String username = request.getParameter("username"); 
         JiveGlobals.setProperty(PluginImpl.USERNAME_PROPERTY_NAME, username);	
         
@@ -116,7 +125,7 @@
 <div class="jive-table">
     <form action="jitsi-videobridge.jsp" method="post">
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead> 
             <tr>
                 <th colspan="2"><fmt:message key="config.page.configuration.ofmeet.title"/></th>
@@ -152,7 +161,7 @@
 		    <fmt:message key="config.page.configuration.ofmeet.iceservers"/>
 		</td>
 		<td><input type="text" size="50" maxlength="100" name="iceservers"
-			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "") %>">
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "") %>" placeholder="{ 'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }] }">
 		</td>
 	    </tr>	
 	    <tr>
@@ -167,7 +176,7 @@
         </table>
     </p>
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead>
             <tr>
                 <th colspan="2"><fmt:message key="config.page.configuration.media.title"/></th>
@@ -190,11 +199,39 @@
                            value="<%=plugin.getMaxPort()%>"/>
                 </td>
             </tr>
+            <tr>
+                <td><fmt:message key="config.page.configuration.local.ip.address"/><br>
+                </td>
+                <td align="left">
+                    <input name="localaddress" type="text" maxlength="20" size="15"
+                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_LOCAL_ADDRESS, "")%>"/>
+                </td>
+            </tr>
+            <tr>
+                <td><fmt:message key="config.page.configuration.public.ip.address"/><br>
+                </td>
+                <td align="left">
+                    <input name="publicaddress" type="text" maxlength="20" size="15"
+                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_PUBLIC_ADDRESS, "")%>"/>
+                </td>
+            </tr>            
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="checkreplay" <%= ("false".equals(JiveGlobals.getProperty(PluginImpl.CHECKREPLAY_PROPERTY_NAME, "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.checkreplay.disabled" /></b> - <fmt:message key="config.page.configuration.checkreplay.disabled_description" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="checkreplay" <%= ("true".equals(JiveGlobals.getProperty(PluginImpl.CHECKREPLAY_PROPERTY_NAME, "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.checkreplay.enabled" /></b> - <fmt:message key="config.page.configuration.checkreplay.enabled_description" />
+		    </td>
+	    </tr>             
             </tbody>
         </table> 
      </p>   
      <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead>
             <tr>
                 <th colspan="2"><fmt:message key="config.page.configuration.security.title"/></th>
@@ -221,7 +258,7 @@
         </table> 
     </p>
     <p>        
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead> 
             <tr>
                 <th colspan="2"><fmt:message key="config.page.configuration.recording.title"/></th>
@@ -244,7 +281,7 @@
         </table>
     </p> 
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead> 
             <tr>
                 <th><fmt:message key="config.page.configuration.telephone.title"/></th>
@@ -290,7 +327,7 @@
         </table>
    </p>
    <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="50%">
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead> 
             <tr>
                 <th colspan="2"><fmt:message key="config.page.configuration.save.title"/></th>

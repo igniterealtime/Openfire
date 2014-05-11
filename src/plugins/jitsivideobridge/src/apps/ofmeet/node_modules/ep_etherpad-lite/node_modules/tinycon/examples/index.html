@@ -1,0 +1,17 @@
+<html>
+	<head>
+		<link rel="icon" href="favicon.ico">
+		<title>Tinycon</title>
+		<script src="tinycon.js"></script>
+		<script>
+		  var icon = require('tinycon');
+			var count = 0;
+			setInterval(function(){
+				if (++count > 99) count = 0;
+				icon.setBubble(count);
+			}, 1000);
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

@@ -1,0 +1,29 @@
+--- gen-nodejs/Cassandra.js	2012-04-02 17:03:15.000000000 +0200
++++ Cassandra.js	2012-04-02 17:00:26.000000000 +0200
+@@ -3,7 +3,7 @@
+ //
+ // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
+ //
+-var Thrift = require('thrift').Thrift;
++var Thrift = require('helenus-thrift').Thrift;
+ 
+ var ttypes = require('./cassandra_types');
+ //HELPER FUNCTIONS AND STRUCTURES
+@@ -516,7 +516,7 @@
+   output.writeStructBegin('Cassandra_get_slice_args');
+   if (this.key) {
+     output.writeFieldBegin('key', Thrift.Type.STRING, 1);
+-    output.writeString(this.key);
++    output.writeString(new Buffer(this.key, 'binary'));
+     output.writeFieldEnd();
+   }
+   if (this.column_parent) {
+@@ -2909,7 +2909,7 @@
+       if (this.mutation_map.hasOwnProperty(kiter289))
+       {
+         var viter290 = this.mutation_map[kiter289];
+-        output.writeString(kiter289);
++        output.writeString(new Buffer(kiter289, 'binary'));
+         output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.LIST, Thrift.objectLength(viter290));
+         for (var kiter291 in viter290)
+         {

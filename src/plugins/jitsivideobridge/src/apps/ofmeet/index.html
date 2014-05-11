@@ -46,16 +46,24 @@
             <div class="header_button_separator"></div>
             <a class="button" onclick='openPDFDialog();'><i id="pdf" title="Share PDF" class="fa fa-file fa-lg"></i></a>
             <div class="header_button_separator"></div>
-            <a class="button" onclick='toggleFullScreen();'><i id="fullscreen" title="Full Screen" class="fa fa-arrows-alt fa-lg"></i></a>
+            <a class="button" onclick='toggleTogether();'><i id="together" title="Toggle collaboration" class="fa fa-share-square-o fa-lg"></i></a>
+            <div class="header_button_separator"></div>
+            <a class="button" onclick='toggleCoApps();'><i id="coapps" title="Co-Applications" class="fa fa-th-large fa-lg"></i></a>
+            <div class="header_button_separator"></div>
+            <a class="button" onclick='toggleEtherpad();' style="display: none" id="etherpadButton"><i id="etherpad" title="Open shared document" class="fa fa-file-text-o fa-lg"></i></a>
             <div class="header_button_separator"></div>
             <a class="button" onclick='inviteParticipant();'><i id="invite" title="Invite Participant" class="fa fa-phone fa-lg"></i></a>
+            <div class="header_button_separator"></div>
+            <a class="button" onclick='toggleFullScreen();'><i id="fullscreen" title="Full Screen" class="fa fa-arrows-alt fa-lg"></i></a>
+            <div class="header_button_separator"></div>
+
         </span>
     </div>
 
     <div id="videospace" onmousemove="showToolbar();">
         <div class="fade_line"></div>
         <video id="largeVideo" onDblClick="toggleFullScreen();" autoplay oncontextmenu="return false;"></video>
-        <iframe id="pdfViewer" style="display:none"></iframe>
+        <iframe id="appViewer" style="display:none"></iframe>
         <div class="fade_line"></div>
         <div id="remoteVideos">
             <video id="localVideo" autoplay oncontextmenu="return false;" muted/>

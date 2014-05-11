@@ -102,7 +102,8 @@ Strophe.addConnectionPlugin('emuc', {
                         if (lockKey.value !== null)
                         {
                         	var pres = $pres({to: ob.myroomjid }).c('x', {xmlns: 'http://jabber.org/protocol/muc'}).c('password').t(lockKey.value);
-				ob.connection.send(pres);				
+				ob.connection.send(pres);
+				
 				setTimeout(function(){ registerRayoEvents();}, 1000);
                         }
                     }
@@ -123,7 +124,7 @@ Strophe.addConnectionPlugin('emuc', {
         this.connection.send(msg);
     },
     onMessage: function (msg) {
-    	console.log('onMessage', $(msg))
+    	//console.log('onMessage', $(msg))
     	
         var txt = $(msg).find('>body').text();
         // TODO: <subject/>
@@ -135,6 +136,14 @@ Strophe.addConnectionPlugin('emuc', {
             return true;            
         }
         
+	$(msg).find('appshare').each(function() 
+	{
+		var action = $(this).attr('action');
+		var url = $(this).attr('url');
+		
+		handleAppShare(action, url);	
+	});
+	
 	$(msg).find('pdfshare').each(function() 
 	{
 		var action = $(this).attr('action');
@@ -143,14 +152,50 @@ Strophe.addConnectionPlugin('emuc', {
 		handlePdfShare(action, url);	
 	});
 	
+	$(msg).find('etherpadshare').each(function() 
+	{
+		var action = $(this).attr('action');
+		var url = $(this).attr('url');
+		
+		handleEtherpadShare(action, url);	
+	});	
+	
+	$(msg).find('togetherjs').each(function() 
+	{
+		var myNick = escape(getNickname());
+		
+		if ($(msg).attr('from').indexOf(myNick) == -1)
+		{
+			handleTogetherJsgGet($(this).text());	
+		}
+	});	
+	
         return true;
     },
+    appShare: function(action, url) {
+    	console.log("emuc.appShare", url, action)
+        var msg = $msg({to: this.roomjid, type: 'groupchat'});
+        msg.c('appshare', {xmlns: 'http://igniterealtime.org/protocol/appshare', action: action, url: url}).up();
+        this.connection.send(msg);        
+    },    
     pdfShare: function(action, url) {
     	console.log("emuc.pdfShare", url, action)
         var msg = $msg({to: this.roomjid, type: 'groupchat'});
         msg.c('pdfshare', {xmlns: 'http://igniterealtime.org/protocol/pdfshare', action: action, url: url}).up();
         this.connection.send(msg);        
     },
+    etherpadShare: function(action, url) {
+    	console.log("emuc.etherpadShare", url, action)
+        var msg = $msg({to: this.roomjid, type: 'groupchat'});
+        msg.c('etherpadshare', {xmlns: 'http://igniterealtime.org/protocol/etherpadshare', action: action, url: url}).up();
+        this.connection.send(msg);        
+    },  
+    togetherJsgSet: function(payload) {
+    	//console.log("emuc.togetherJsgSet", payload)
+        var msg = $msg({to: this.roomjid, type: 'groupchat'});
+        msg.c('togetherjs', {xmlns: 'http://igniterealtime.org/protocol/togetherjs'}).t(payload);
+        this.connection.send(msg);        
+    },     
     lockRoom: function (key) {
         //http://xmpp.org/extensions/xep-0045.html#roomconfig
         var ob = this;

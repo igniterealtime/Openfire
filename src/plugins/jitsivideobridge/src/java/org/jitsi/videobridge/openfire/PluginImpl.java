@@ -102,6 +102,14 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      * The name of the property that contains the name of video conference application
      */
     public static final String CHECKREPLAY_PROPERTY_NAME = "org.jitsi.videobridge.video.srtpcryptocontext.checkreplay";
+    /**
+     * The name of the property that contains the name of video conference application
+     */
+    public static final String NAT_HARVESTER_LOCAL_ADDRESS = "org.jitsi.videobridge.nat.harvester.local.address";
+    /**
+     * The name of the property that contains the name of video conference application
+     */
+    public static final String NAT_HARVESTER_PUBLIC_ADDRESS = "org.jitsi.videobridge.nat.harvester.public.address";
 
     /**
      * The name of the property that contains the name of video conference application
@@ -249,6 +257,19 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_NAME", ".");
 		System.setProperty("org.jitsi.impl.neomedia.transform.srtp.SRTPCryptoContext.checkReplay", JiveGlobals.getProperty(CHECKREPLAY_PROPERTY_NAME, "false"));
 
+		String localAddress = JiveGlobals.getProperty(NAT_HARVESTER_LOCAL_ADDRESS, null);
+		String publicAddress = JiveGlobals.getProperty(NAT_HARVESTER_PUBLIC_ADDRESS, null);
+
+		if (localAddress != null && !"".equals(localAddress))
+		{
+			System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_LOCAL_ADDRESS", localAddress);
+		}
+
+		if (publicAddress != null && !"".equals(publicAddress))
+		{
+			System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_PUBLIC_ADDRESS", publicAddress);
+		}
+
 		executorService = Executors.newFixedThreadPool(2);
 
 		// start video conference web application
@@ -329,6 +350,16 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				catch (ComponentException ce)
 				{
 					ce.printStackTrace(System.err);
+				}
+
+				boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
+
+				if (nodejs)
+				{
+					Log.info("Found NodeJs Plugin. Starting Etherpad");
+
+					JiveGlobals.setProperty("js.jitsivideobridge.etherpad.path", pluginDirectory.getAbsolutePath() + File.separator + "apps" + File.separator + "ofmeet");
+					JiveGlobals.setProperty("js.jitsivideobridge.etherpad", "node_modules/ep_etherpad-lite/node/server.js");
 				}
 			}
 		});

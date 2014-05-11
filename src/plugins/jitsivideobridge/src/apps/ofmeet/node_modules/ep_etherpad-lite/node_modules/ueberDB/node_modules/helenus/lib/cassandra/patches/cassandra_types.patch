@@ -1,0 +1,98 @@
+--- gen-nodejs/cassandra_types.js	2012-04-02 17:03:15.000000000 +0200
++++ cassandra_types.js	2012-04-02 16:55:40.000000000 +0200
+@@ -3,7 +3,7 @@
+ //
+ // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
+ //
+-var Thrift = require('thrift').Thrift;
++var Thrift = require('helenus-thrift').Thrift;
+ var ttypes = module.exports = {};
+ ttypes.ConsistencyLevel = {
+ 'ONE' : 1,
+@@ -108,22 +108,22 @@
+ 
+ Column.prototype.write = function(output) {
+   output.writeStructBegin('Column');
+-  if (this.name) {
++  if (this.name !== null) {
+     output.writeFieldBegin('name', Thrift.Type.STRING, 1);
+     output.writeString(this.name);
+     output.writeFieldEnd();
+   }
+-  if (this.value) {
++  if (this.value !== null) {
+     output.writeFieldBegin('value', Thrift.Type.STRING, 2);
+     output.writeString(this.value);
+     output.writeFieldEnd();
+   }
+-  if (this.timestamp) {
++  if (this.timestamp !== null) {
+     output.writeFieldBegin('timestamp', Thrift.Type.I64, 3);
+     output.writeI64(this.timestamp);
+     output.writeFieldEnd();
+   }
+-  if (this.ttl) {
++  if (this.ttl !== null) {
+     output.writeFieldBegin('ttl', Thrift.Type.I32, 4);
+     output.writeI32(this.ttl);
+     output.writeFieldEnd();
+@@ -992,22 +992,22 @@
+ 
+ SliceRange.prototype.write = function(output) {
+   output.writeStructBegin('SliceRange');
+-  if (this.start) {
++  if (this.start !== null) {
+     output.writeFieldBegin('start', Thrift.Type.STRING, 1);
+     output.writeString(this.start);
+     output.writeFieldEnd();
+   }
+-  if (this.finish) {
++  if (this.finish !== null) {
+     output.writeFieldBegin('finish', Thrift.Type.STRING, 2);
+     output.writeString(this.finish);
+     output.writeFieldEnd();
+   }
+-  if (this.reversed) {
++  if (this.reversed !== null) {
+     output.writeFieldBegin('reversed', Thrift.Type.BOOL, 3);
+     output.writeBool(this.reversed);
+     output.writeFieldEnd();
+   }
+-  if (this.count) {
++  if (this.count !== null) {
+     output.writeFieldBegin('count', Thrift.Type.I32, 4);
+     output.writeI32(this.count);
+     output.writeFieldEnd();
+@@ -1173,7 +1173,7 @@
+     output.writeString(this.column_name);
+     output.writeFieldEnd();
+   }
+-  if (this.op) {
++  if (this.op !== null) {
+     output.writeFieldBegin('op', Thrift.Type.I32, 2);
+     output.writeI32(this.op);
+     output.writeFieldEnd();
+@@ -1278,12 +1278,12 @@
+     output.writeListEnd();
+     output.writeFieldEnd();
+   }
+-  if (this.start_key) {
++  if (this.start_key !== null) {
+     output.writeFieldBegin('start_key', Thrift.Type.STRING, 2);
+     output.writeString(this.start_key);
+     output.writeFieldEnd();
+   }
+-  if (this.count) {
++  if (this.count !== null) {
+     output.writeFieldBegin('count', Thrift.Type.I32, 3);
+     output.writeI32(this.count);
+     output.writeFieldEnd();
+@@ -2216,7 +2216,7 @@
+     output.writeString(this.validation_class);
+     output.writeFieldEnd();
+   }
+-  if (this.index_type) {
++  if (this.index_type !== null) {
+     output.writeFieldBegin('index_type', Thrift.Type.I32, 3);
+     output.writeI32(this.index_type);
+     output.writeFieldEnd();

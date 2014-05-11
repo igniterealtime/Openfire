@@ -6,7 +6,9 @@ var sharedKey = '';
 var screenShare = false;
 var screenToVideo = false;
 var pdfShare = null;
-var pdfFrame = null;
+var etherpadShare = null;
+var appShare = null;
+var appFrame = null;
 var pdfPage = "1";
 var altView = false;
 var sipUri = null;
@@ -108,8 +110,8 @@ $(document).ready(function ()
     	connection = new Strophe.Connection(config.bosh);
     	
     connection.resource = Math.random().toString(36).substr(2, 20);
-    connection.rawInput = function (data) { console.log('RECV: ' + data); };
-    connection.rawOutput = function (data) { console.log('SEND: ' + data); };
+    //connection.rawInput = function (data) { console.log('RECV: ' + data); };
+    //connection.rawOutput = function (data) { console.log('SEND: ' + data); };
     
     var jid = config.hosts.domain;
 
@@ -148,6 +150,16 @@ $(window).bind('beforeunload', function ()
     {
 	connection.emuc.pdfShare("destroy", pdfShare);    
     }
+
+    if (etherpadShare != null)
+    {
+	connection.emuc.etherpadShare("destroy", etherpadShare);    
+    }    
+    
+    if (appShare != null)
+    {
+	connection.emuc.appShare("destroy", appShare);    
+    } 
     
     if (connection && connection.connected) {
     	unregisterRayoEvents();	
@@ -187,6 +199,16 @@ $(window).bind('entered.muc', function (event, from, member)
 	if (pdfShare)
 	{					
 		connection.emuc.pdfShare("create", pdfShare + "&control=false#" + pdfPage);
+	}
+	
+	if (etherpadShare)
+	{					
+		connection.emuc.etherpadShare("create", etherpadShare);
+	}
+	
+	if (appShare)
+	{					
+		connection.emuc.appShare("create", appShare);
 	}	
 });
 
@@ -322,7 +344,7 @@ $(document).bind('remotestreamadded.rayo', function(event, data, nick)
 		    });
 		}
 		
-		if (pdfFrame != null)
+		if (appFrame != null)
 		{			
 			$("#largeVideo").css("display", "none");
 		}
@@ -526,14 +548,9 @@ function positionLarge (videoWidth, videoHeight)
     var verticalIndent = videoPosition[1];
 
     positionVideo(  $('#largeVideo'),largeVideoWidth, largeVideoHeight, horizontalIndent, verticalIndent);
-    
-    if (pdfFrame)
-    {
-    	$('#pdfViewer').height(largeVideoHeight);
-	$('#pdfViewer').width(largeVideoWidth);
-    }
 };
 
+    	
 function positionVideo( video, width, height, horizontalIndent, verticalIndent) 
 {
     video.width(width);
@@ -571,10 +588,10 @@ function resizeLarge()
 
     $('#videospace').width(availableWidth);
     $('#videospace').height(availableHeight);
-    $('#largeVideoContainer').width(availableWidth);
-    $('#largeVideoContainer').height(availableHeight);
-
-    resizeThumbnails();
+    $('#largeVideo').width(availableWidth);
+    $('#largeVideo').height(availableHeight);
+    
+    resizeThumbnails();    
 }
 
 function getAvailableVideoWidth() 
@@ -605,9 +622,18 @@ function resizeThumbnails()
     }
 
     // size videos so that while keeping AR and max height, we have a nice fit
-    $('#remoteVideos').height(availableHeight);
+    $('#remoteVideos').height(availableHeight);		
     $('#remoteVideos>video').width(availableWidth);
-    $('#remoteVideos>video').height(availableHeight);
+    $('#remoteVideos>video').height(availableHeight); 
+    
+
+    if (appFrame)
+    {
+    	console.log('resize app frame', $('#remoteVideos').height());
+    	
+    	$('#appViewer').height( $('#largeVideo').height() - $('#remoteVideos').height() - 30);
+	$('#appViewer').width( $('#largeVideo').width());
+    }     
 }
 
 function getVideoSizeCover(videoWidth, videoHeight, videoSpaceWidth, videoSpaceHeight) 
@@ -1272,6 +1298,257 @@ function lockRoom(lock) {
     buttonClick("#lockIcon", "fa fa-unlock fa-lg fa fa-lock fa-lg");
 }
 
+
+function toggleCoApps() 
+{
+    if (appShare) 
+    {
+        $.prompt("Are you sure you would like to remove your shared applicationt",
+                {
+                title: "Remove application sharing",
+                buttons: { "Remove": true, "Cancel": false},
+                defaultButton: 1,
+                submit: function(e,v,m,f)
+                {
+			if(v)
+			{
+				connection.emuc.appShare("destroy", appShare);
+				appStop(appShare);
+				appShare = null;
+				
+				$("#coapps").removeClass("fa-spin fa-border");	
+			}
+            	}
+        });
+    }
+    else if (appFrame != null) {
+        $.prompt("Another participant is already sharing an application, presentation or document. This conference allows only one application, presentation or document at a time.",
+                 {
+                 f: "Share an application",
+                 buttons: { "Ok": true},
+                 defaultButton: 0,
+                 submit: function(e,v,m,f)
+                 {
+                    $.prompt.close();
+                 }
+        });
+    }
+    else {
+	$.prompt('<h2>Are you sure you would like to share an application?</h2><select id="appName"><option value="drawing">Drawing</option><option value="todo">Todo List</option></select>',
+	{
+                title: "Share an application",
+            	persistent: false,
+            	buttons: { "Share": true , "Cancel": false},
+            	defaultButton: 1,            	
+		submit: function(e,v,m,f) 
+		{
+			if(v)
+			{
+				var app = document.getElementById('appName').value;
+				
+				if (app)
+				{
+					appShare = "togetherjs/apps/" + app + "/index.html#&togetherjs=" + Strophe.getNodeFromJid(roomjid);	
+					appStart(appShare);
+					connection.emuc.appShare("create", appShare);
+				}
+			}					 
+		}
+	});    
+    }
+}
+
+function appReady()
+{
+	if (appFrame != null)
+	{
+		console.log("appReady");
+		$("#appViewer").css("display", "block");		
+		resizeThumbnails() 
+		$("#largeVideo").css("display", "none");
+		$("#coapps").removeClass("fa-spin");
+		
+		if (appShare) $("#coapps").addClass("fa-border");
+	}
+}
+
+
+function appStart(url)
+{
+	console.log("appStart", url);	
+	appFrame = document.getElementById("appViewer");
+	appFrame.contentWindow.location.href = window.location.protocol + "//" + window.location.host + "/jitsi/apps/ofmeet/" + url;
+	$("#coapps").addClass("fa-spin");
+}
+
+function appStop(url)
+{
+	console.log("appStop", url);	
+	$("#coapps").removeClass("fa-border fa-spin");		
+	$("#largeVideo").css("display", "block");
+	$("#appViewer").css("display", "none");	
+	
+	if (appFrame)
+	{
+		appFrame.contentWindow.togetherStop();
+		appFrame.contentWindow.location.href = "about:blank";
+		appFrame = null;	
+	}
+}
+
+function handleAppShare(action, url)
+{
+	console.log("handleAppShare", url, action);
+	
+	if (appShare == null)
+	{
+		if (appFrame == null) 
+		{
+			if (action == "create") appStart(url);		
+		
+		} else {
+
+			if (action == "destroy") appStop(url);	
+		}
+	}
+}
+
+
+function toggleEtherpad() 
+{
+    if (etherpadShare) 
+    {
+        $.prompt("Are you sure you would like to remove your document",
+                {
+                title: "Remove document sharing",
+                buttons: { "Remove": true, "Cancel": false},
+                defaultButton: 1,
+                submit: function(e,v,m,f)
+                {
+			if(v)
+			{
+				connection.emuc.etherpadShare("destroy", etherpadShare);
+				etherpadStop(etherpadShare);
+				etherpadShare = null;
+				
+				$("#etherpad").removeClass("fa-spin fa-border");	
+			}
+            	}
+        });
+    }
+    else if (appFrame != null) {
+        $.prompt("Another participant is already sharing an application, presentation or document. This conference allows only one presentation or document at a time.",
+                 {
+                 f: "Share a document",
+                 buttons: { "Ok": true},
+                 defaultButton: 0,
+                 submit: function(e,v,m,f)
+                 {
+                    $.prompt.close();
+                 }
+        });
+    }
+    else {
+	$.prompt('<h2>Co-edit a document</h2><input id="padName" type="text" placeholder="enter a document name" autofocus >',
+	{
+                title: "Share a document",
+            	persistent: false,
+            	buttons: { "Share": true , "Cancel": false},
+            	defaultButton: 1,
+		loaded: function(event) {
+			document.getElementById('padName').select();
+		},
+		submit: function(e,v,m,f) 
+		{
+			if(v)
+			{
+				etherpadShare = document.getElementById('padName').value;
+		
+				if (etherpadShare)
+				{	
+					etherpadStart(etherpadShare);
+					connection.emuc.etherpadShare("create", etherpadShare);
+				}
+			}					 
+		}
+	});    
+    }
+}
+
+
+function etherpadReady()
+{
+	if (appFrame != null)
+	{
+		console.log("etherpadReady");
+		$("#appViewer").css("display", "block");		
+		resizeThumbnails() 
+		$("#largeVideo").css("display", "none");
+		$("#etherpad").removeClass("fa-spin");
+		
+		if (etherpadShare) $("#etherpad").addClass("fa-border");
+	}
+}
+
+
+function etherpadStart(url)
+{
+	console.log("etherpadStart", url);	
+	appFrame = document.getElementById("appViewer");
+	appFrame.contentWindow.location.href = window.location.protocol + "//" + window.location.hostname + ":8080/p/" + url;
+	$("#etherpad").addClass("fa-spin");
+	
+	setTimeout(function() {etherpadReady();}, 1000);
+}
+
+function etherpadStop(url)
+{
+	console.log("etherpadStop", url);	
+	$("#etherpad").removeClass("fa-border fa-spin");		
+	$("#largeVideo").css("display", "block");
+	$("#appViewer").css("display", "none");	
+	
+	if (appFrame)
+	{
+		//appFrame.contentWindow.togetherStop();
+		appFrame.contentWindow.location.href = "about:blank";
+		appFrame = null;	
+	}
+}
+
+function handleEtherpadShare(action, url)
+{
+	console.log("handleEtherpadShare", url, action);
+	
+	if (etherpadShare == null)
+	{
+		if (appFrame == null) 
+		{
+			if (action == "create") etherpadStart(url);		
+		
+		} else {
+
+			if (action == "destroy") etherpadStop(url);	
+		}
+	}
+}
+
+function handleTogetherJsgGet(payload)
+{
+	if (appFrame != null) 
+	{
+		//console.log("handleTogetherJsgGet", payload);	
+		appFrame.contentWindow.togetherGet(payload);
+	}
+}
+
+function togetherSet(payload)
+{
+	//console.log("togetherSet", payload);	
+	connection.emuc.togetherJsgSet(payload);
+}
+
+
 function openPDFDialog() 
 {
     if (pdfShare) 
@@ -1294,10 +1571,10 @@ function openPDFDialog()
             	}
         });
     }
-    else if (pdfFrame != null) {
-        $.prompt("Another participant is already sharing a Presentation. This conference allows only one Presentation at a time.",
+    else if (appFrame != null) {
+        $.prompt("Another participant is already sharing an application, presentation or document. This conference allows only one presentation or document at a time.",
                  {
-                 f: "Share a PDF Prsentation",
+                 f: "Share a PDF Presentation",
                  buttons: { "Ok": true},
                  defaultButton: 0,
                  submit: function(e,v,m,f)
@@ -1307,9 +1584,9 @@ function openPDFDialog()
         });
     }
     else {
-	$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" placeholder="e.g. http://www.ge.com/battery/resources/pdf/CraigIrwin.pdf" autofocus >',
+	$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" value="http://mi.eng.cam.ac.uk/~cipolla/archive/Presentations/MakingPresentations.pdf" placeholder="e.g. http://www.ge.com/battery/resources/pdf/CraigIrwin.pdf" autofocus >',
 	{
-                title: "Share a PDF Prsentation",
+                title: "Share a PDF Presentation",
             	persistent: false,
             	buttons: { "Share": true , "Cancel": false},
             	defaultButton: 1,
@@ -1333,14 +1610,34 @@ function openPDFDialog()
     }
 }
 
+function getNickname()
+{
+	return nickname;
+}
+
+function toggleTogether()
+{
+	if (appFrame != null)
+	{
+		var flag = appFrame.contentWindow.toggleTogether();
+		
+		if (flag)
+		{
+			$("#together").addClass("fa-border");
+		} else {
+			$("#together").removeClass("fa-border");
+		}
+	
+	}
+}
+
 function pfdReady()
 {
-	if (pdfFrame != null)
+	if (appFrame != null)
 	{
 		console.log("pdfReady");
-		$("#pdfViewer").css("display", "block");
-		$('#pdfViewer').height($('#largeVideo').height());
-		$('#pdfViewer').width($('#largeVideo').width());
+		$("#appViewer").css("display", "block");
+		resizeThumbnails() 
 		$("#largeVideo").css("display", "none");
 		$("#pdf").removeClass("fa-spin");
 		if (pdfShare) $("#pdf").addClass("fa-border");
@@ -1351,8 +1648,8 @@ function pfdReady()
 function pdfStart(url)
 {
 	console.log("pdfStart", url);	
-	pdfFrame = document.getElementById("pdfViewer");
-	pdfFrame.contentWindow.location.href = "/jitsi/apps/ofmeet/pdf/index.html?pdf=" + url;
+	appFrame = document.getElementById("appViewer");
+	appFrame.contentWindow.location.href = "/jitsi/apps/ofmeet/pdf/index.html?pdf=" + url + "&room=" + Strophe.getNodeFromJid(roomjid);
 	$("#pdf").addClass("fa-spin");
 }
 
@@ -1361,8 +1658,15 @@ function pdfStop(url)
 	console.log("pdfStop", url);	
 	$("#pdf").removeClass("fa-border fa-spin");		
 	$("#largeVideo").css("display", "block");
-	$("#pdfViewer").css("display", "none");	
-	pdfFrame = null;
+	$("#appViewer").css("display", "none");	
+	$("#together").removeClass("fa-border");	
+
+	if (appFrame)
+	{
+		//appFrame.contentWindow.togetherStop();
+		appFrame.contentWindow.location.href = "about:blank";
+		appFrame = null;	
+	}
 }
 
 function pfdGoto(page)
@@ -1383,14 +1687,14 @@ function handlePdfShare(action, url)
 	
 	if (pdfShare == null)
 	{
-		if (pdfFrame == null) 
+		if (appFrame == null) 
 		{
 			if (action == "create") pdfStart(url);		
 		
 		} else {
 
 			if (action == "destroy") pdfStop(url);	
-			if (action == "goto") pdfFrame.contentWindow.location.href = "/jitsi/apps/ofmeet/pdf/index.html?pdf=" + url;
+			if (action == "goto") appFrame.contentWindow.location.href = "/jitsi/apps/ofmeet/pdf/index.html?pdf=" + url;
 		}
 	}
 }
@@ -1450,6 +1754,11 @@ function hideToolbar()
 
 function showToolbar() 
 {
+    if (config.useNodeJs)
+    {
+    	$('#etherpadButton').css("display", '');
+    }	
+    
     if (!$('#header').is(':visible')) {
         $('#header').show("slide", { direction: "up", duration: 300});
 

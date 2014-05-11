@@ -27,12 +27,12 @@ html, body{
 }
 
 
-#pdfViewer {
+#appViewer {
     display:block;
     position:absolute;
     width:auto;
     height:auto;
-    z-index: 1;    
+    z-index: 10;    
 }
 
 #remoteVideos {
@@ -47,7 +47,7 @@ html, body{
     width:auto;
     overflow: hidden;
     border:1px solid transparent;
-    z-index: 2;
+    z-index: 12;
 }
 
 #remoteVideos video {
@@ -73,7 +73,7 @@ html, body{
     -webkit-animation-iteration-count: 1;
     -webkit-box-shadow: 0 0 18px #388396;
     border: 2px solid #388396;
-    z-index: 3;
+    z-index: 13;
 }
 
 #chatspace {

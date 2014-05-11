@@ -38,6 +38,7 @@ public class Config extends HttpServlet
 			String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			boolean websockets = XMPPServer.getInstance().getPluginManager().getPlugin("websockets") != null;
+			boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
 
 			writeHeader(response);
 
@@ -60,6 +61,7 @@ public class Config extends HttpServlet
 			out.println("    useNicks: " + useNicks + ",");
 			out.println("    recordVideo: " + recordVideo + ",");
 			out.println("    useWebsockets: " + (websockets ? "true" : "false") + ",");
+			out.println("    useNodeJs: " + (nodejs ? "true" : "false") + ",");
 			out.println("    resolution: '" + resolution + "',");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");

@@ -1,0 +1,12 @@
+{
+  "name": "YajsmlExample"
+, "description": "An example of how to use Yajsml"
+, "keywords": ["commonjs", "require", "loader"]
+, "author": "Chad Weider"
+, "dependencies": {
+    "connect": "1.8.5"
+  , "connect-cors": "0.5.0"
+  , "request": "2.9"
+  }
+, "version": "1.0.1"
+}

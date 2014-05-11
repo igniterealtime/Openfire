@@ -1,0 +1,19 @@
+    <section class="suite">
+      <h1>JSON.minify</h1>
+      <dl>
+        <dt>define</dt>
+        <dd><pre><code>JSON.minify.should.be.ok;</code></pre></dd>
+        <dt>in-memory string</dt>
+        <dd><pre><code>var json = '{&quot;key&quot;:&quot;value&quot;}';
+var res = JSON.minify(json);
+JSON.parse(res).key.should.equal('value');</code></pre></dd>
+        <dt>comment.json</dt>
+        <dd><pre><code>var json = fs.readFileSync(__dirname + '/comment.json', 'utf8');
+var res = JSON.parse(JSON.minify(json));
+res.foo.should.equal('bar');</code></pre></dd>
+        <dt>comment.json</dt>
+        <dd><pre><code>var json = fs.readFileSync(__dirname + '/plain.json', 'utf8');
+var res = JSON.parse(JSON.minify(json));
+res.foo.should.equal('bar');</code></pre></dd>
+      </dl>
+    </section>

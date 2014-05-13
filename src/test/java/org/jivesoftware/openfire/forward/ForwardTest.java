@@ -17,7 +17,10 @@ public class ForwardTest {
         message.setBody("Tests");
 
         Forwarded forwarded = new Forwarded(message);
-        String xml = forwarded.getElement().asXML();
-        assertEquals("<forwarded xmlns=\"urn:xmpp:forward:0\"><message xmlns=\"jabber:client\" type=\"chat\"><body>Tests</body></message></forwarded>", xml);
+        Forwarded forwarded2 = new Forwarded(message);
+        String xml1 = forwarded.getElement().asXML();
+        String xml2 = forwarded2.getElement().asXML();
+        assertEquals("<forwarded xmlns=\"urn:xmpp:forward:0\"><message xmlns=\"jabber:client\" type=\"chat\"><body>Tests</body></message></forwarded>", xml1);
+        assertEquals("<forwarded xmlns=\"urn:xmpp:forward:0\"><message xmlns=\"jabber:client\" type=\"chat\"><body>Tests</body></message></forwarded>", xml2);
     }
 }

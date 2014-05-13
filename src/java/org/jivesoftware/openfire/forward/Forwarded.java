@@ -12,15 +12,16 @@ public class Forwarded extends PacketExtension {
     public Forwarded(Message message) {
         super("forwarded", "urn:xmpp:forward:0");
 
-        message.getElement().setQName(QName.get("message", "jabber:client"));
+        Message copy = message.createCopy();
 
-        for (Object element : message.getElement().elements()) {
+        copy.getElement().setQName(QName.get("message", "jabber:client"));
+
+        for (Object element : copy.getElement().elements()) {
             if (element instanceof Element) {
                 Element el = (Element) element;
                 el.setQName(QName.get(el.getName(), "jabber:client"));
             }
         }
-
-        element.add(message.getElement());
+        element.add(copy.getElement());
     }
 }

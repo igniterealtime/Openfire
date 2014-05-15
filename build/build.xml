@@ -181,7 +181,7 @@
     <!-- GLOBAL TASKDEFs                                                                         -->
     <!-- ======================================================================================= -->
 
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
         <classpath refid="ant.dependencies" />
     </taskdef>
     <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">

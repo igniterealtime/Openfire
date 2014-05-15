@@ -332,7 +332,6 @@
              inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
-        <copy file="${ant.home}/lib/ant.jar" todir="${jar.dest.dir}"></copy>
 
         <!-- Retrieve each plugin -->
         <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make.
@@ -1650,7 +1649,6 @@
 
         <javac
                 destdir="${anttools.target.dir}/classes"
-                includeAntRuntime="no"
                 debug="on"
                 source="1.4"
                 >
@@ -1664,10 +1662,10 @@
         <jar jarfile="${anttools.target.dir}/ant-subdirtask.jar">
             <fileset dir="${anttools.target.dir}/classes" includes="**/*.class"/>
         </jar>
- 
+
         <taskdef name="subdirinfo" classname="org.jivesoftware.ant.SubDirInfoTask">
             <classpath>
-                <pathelement location="${basedir}/build/lib/ant-subdirtask.jar"/>
+                <pathelement location="${anttools.target.dir}/ant-subdirtask.jar"/>
             </classpath>
         </taskdef>
     </target>

@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="src/plugins/broadcast/src/java"/>
 	<classpathentry kind="src" path="src/plugins/clientControl/src/java"/>
-	<classpathentry kind="src" path="src/plugins/clustering/src/java"/>
 	<classpathentry kind="src" path="src/plugins/contentFilter/src/java"/>
 	<classpathentry kind="src" path="src/plugins/dbaccess/src/java"/>
 	<classpathentry kind="src" path="src/plugins/emailListener/src/java"/>
@@ -18,7 +17,6 @@
 	<classpathentry kind="src" path="src/plugins/presence/src/java"/>
 	<classpathentry kind="src" path="src/plugins/registration/src/java"/>
 	<classpathentry kind="src" path="src/plugins/search/src/java"/>
-	<classpathentry kind="src" path="src/plugins/sip/src/java"/>
 	<classpathentry kind="src" path="src/plugins/subscription/src/java"/>
 	<classpathentry kind="src" path="src/plugins/userCreation/src/java"/>
 	<classpathentry kind="src" path="src/plugins/userImportExport/src/java"/>
@@ -26,15 +24,12 @@
 	<classpathentry kind="src" path="src/plugins/xmldebugger/src/java"/>
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/test/throttletest/src"/>
-	<classpathentry kind="src" path="src/tools/anttask"/>
-	<classpathentry kind="lib" path="build/lib/ant-contrib.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant-jive-edition.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant-subdirtask.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant/ant-contrib.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant/ant-jive-edition.jar"/>
+	<classpathentry kind="lib" path="work/tools/ant-subdirtask.jar"/>
 	<classpathentry kind="lib" path="build/lib/cglib-nodep.jar"/>
 	<classpathentry kind="lib" path="build/lib/commons-el.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/activation.jar"/>
-	<classpathentry kind="lib" path="build/lib/dist/bouncycastle.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/hsqldb.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/jdic.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/jtds.jar"/>
@@ -89,15 +84,15 @@
 	<classpathentry kind="lib" path="build/lib/merge/tinder.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="lib" path="build/lib/objenesis.jar"/>
-	<classpathentry kind="lib" path="build/lib/pack200task.jar"/>
-	<classpathentry kind="lib" path="build/lib/qdox.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant/pack200task.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant/qdox.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/commons-lang-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/mina-core-1.1.7-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/mina-filter-compression-1.1.7-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/mina-filter-ssl-1.1.7-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/slf4j-api-1.5.8-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/slf4j-log4j12-1.5.8-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/xmltask.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant/xmltask.jar"/>
 	<classpathentry kind="lib" path="src/plugins/clientControl/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/lucene.jar"/>
@@ -148,5 +143,10 @@
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/dwr.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/plugins/stunserver/lib/jstun-0.6.1.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty-jmx.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/mina-integration-jmx.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/bcpg-jdk15on.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/bcpkix-jdk15on.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/bcprov-jdk15on.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

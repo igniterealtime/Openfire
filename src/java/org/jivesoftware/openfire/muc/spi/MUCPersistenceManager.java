@@ -229,7 +229,6 @@ public class MUCPersistenceManager {
                 pstmt = con.prepareStatement(LOAD_HISTORY);
                 // Reload the history, using "muc.history.reload.limit" (days); defaults to 2
                 int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
                 long from = System.currentTimeMillis() - (86400000 * reloadLimitDays);
                 pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
                 pstmt.setLong(2, room.getID());

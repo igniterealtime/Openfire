@@ -618,7 +618,7 @@
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>
                 <path refid="test.dependencies"/>
-                <pathelement path="${test.dest.dir}/resources"/>
+                <pathelement path="${test.dest.dir}"/>
                 <pathelement path="${test.classes.dest.dir}"/>
             </classpath>
 

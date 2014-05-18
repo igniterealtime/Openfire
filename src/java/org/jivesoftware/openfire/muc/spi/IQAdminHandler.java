@@ -264,12 +264,11 @@ public class IQAdminHandler {
                     List<JID> jids = new ArrayList<JID>();
                     // jid could be of the form "full JID" or "bare JID" depending if we are
                     // going to change a role or an affiliation
+                    nick = item.attributeValue("nick");
                     if (hasJID) {
                         jids.add(new JID(item.attributeValue("jid")));
-                        nick = null;
                     } else {
                         // Get the JID based on the requested nick
-                        nick = item.attributeValue("nick");
                         for (MUCRole role : room.getOccupantsByNickname(nick)) {
                         	if (!jids.contains(role.getUserAddress())) {
                         		jids.add(role.getUserAddress());

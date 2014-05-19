@@ -681,8 +681,8 @@ public class LocalMUCRoom implements MUCRoom {
      * @return boolean
      */
     private boolean canJoinRoom(LocalMUCUser user){
-    	boolean isOwner = owners.contains(user.getAddress().toBareJID());
-    	boolean isAdmin = admins.contains(user.getAddress().toBareJID());
+    	boolean isOwner = owners.contains(user.getAddress().asBareJID());
+    	boolean isAdmin = admins.contains(user.getAddress().asBareJID());
     	return (!isDestroyed && (!hasOccupancyLimit() || isAdmin || isOwner || (getOccupantsCount() < getMaxUsers())));
     }
 
@@ -740,7 +740,7 @@ public class LocalMUCRoom implements MUCRoom {
         } else {
         	// sanity check; make sure the nickname is owned by the same JID
         	if (occupants.size() > 0) {
-        		String existingJID = occupants.get(0).getUserAddress().toBareJID();
+        		JID existingJID = occupants.get(0).getUserAddress().asBareJID();
         		if (!bareJID.equals(existingJID)) {
         			Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
         			return;

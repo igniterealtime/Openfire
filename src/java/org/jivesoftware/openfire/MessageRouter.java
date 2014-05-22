@@ -253,6 +253,9 @@ public class MessageRouter extends BasicModule {
             Message msg = (Message)packet;
             if (msg.getType().equals(Message.Type.chat)) {
                 routingTable.routePacket(recipient.asBareJID(), packet, false);
+            } else {
+                // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
+                messageStrategy.storeOffline((Message) packet);
             }
         } else {
             // Just store the message offline

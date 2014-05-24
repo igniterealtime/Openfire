@@ -33,20 +33,24 @@ import javax.management.remote.JMXPrincipal;
 import javax.management.remote.JMXServiceURL;
 import javax.security.auth.Subject;
 
-import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.jmx.ConnectorServer;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.admin.AdminManager;
@@ -91,7 +95,7 @@ public class AdminConsolePlugin implements Plugin {
      */
     public AdminConsolePlugin() {
         contexts = new ContextHandlerCollection();
-        
+
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
@@ -108,27 +112,36 @@ public class AdminConsolePlugin implements Plugin {
 
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
-        adminServer = new Server();
-        if (JMXManager.isEnabled()) {
-        	JMXManager jmx = JMXManager.getInstance();
-        	adminServer.getContainer().addEventListener(jmx.getContainer());
-        	adminServer.addBean(jmx.getContainer());
-        }
+
         final QueuedThreadPool tp = new QueuedThreadPool(254);
         tp.setName("Jetty-QTP-AdminConsole");
-        adminServer.setThreadPool(tp);
-        
-        // Do not send Jetty info in HTTP headers
-        adminServer.setSendServerVersion(false);
+
+        adminServer = new Server(tp);
+
+        if (JMXManager.isEnabled()) {
+        	JMXManager jmx = JMXManager.getInstance();
+        	//((Container) adminServer).getContainer().addEventListener(jmx.getContainer());
+        	// http://stackoverflow.com/questions/16688288/enable-jmx-in-embedded-jetty
+
+        	adminServer.addBean(jmx.getContainer());
+        }
+
+        ServerConnector httpConnector = null;
+		ServerConnector httpsConnector = null;
+		HttpConfiguration httpConfig = null;
 
         // Create connector for http traffic if it's enabled.
         if (adminPort > 0) {
-            Connector httpConnector = new SelectChannelConnector();
+			httpConfig = new HttpConfiguration();
+
+        	// Do not send Jetty info in HTTP headers
+			httpConfig.setSendServerVersion( false );
+            httpConnector = new ServerConnector(adminServer, new HttpConnectionFactory(httpConfig));
             // Listen on a specific network interface if it has been set.
             String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
             httpConnector.setPort(adminPort);
-            httpConnector.setStatsOn(JMXManager.isEnabled());
+            //httpConnector.setStatsOn(JMXManager.isEnabled());
             adminServer.addConnector(httpConnector);
         }
 
@@ -141,21 +154,36 @@ public class AdminConsolePlugin implements Plugin {
                         XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
-             
-                final SslContextFactory sslContextFactory = new SslContextFactory(SSLConfig.getKeystoreLocation());
+
+                final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setTrustStorePassword(SSLConfig.gets2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
-                sslContextFactory.setTrustStore(SSLConfig.gets2sTruststoreLocation());
+                sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
                 sslContextFactory.setNeedClientAuth(false);
                 sslContextFactory.setWantClientAuth(false);
                 sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
                 sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
-                
-                final SslSelectChannelConnector httpsConnector = new SslSelectChannelConnector(sslContextFactory);
+
+				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+				{
+					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
+
+				} else {
+					HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+					httpsConfig.setSecureScheme("https");
+					httpsConfig.setSecurePort(adminSecurePort);
+					httpsConfig.addCustomizer(new SecureRequestCustomizer());
+
+					HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(httpsConfig);
+					SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString());
+
+                	httpsConnector = new ServerConnector(adminServer, sslConnectionFactory, httpConnectionFactory);
+				}
+
                 String bindInterface = getBindInterface();
                 httpsConnector.setHost(bindInterface);
                 httpsConnector.setPort(adminSecurePort);
-                httpsConnector.setStatsOn(JMXManager.isEnabled());
+                //httpsConnector.setStatsOn(JMXManager.isEnabled());
                 adminServer.addConnector(httpsConnector);
 
                 sslEnabled = true;
@@ -164,6 +192,7 @@ public class AdminConsolePlugin implements Plugin {
         catch (Exception e) {
             Log.error(e.getMessage(), e);
         }
+
 
         // Make sure that at least one connector was registered.
         if (adminServer.getConnectors() == null || adminServer.getConnectors().length == 0) {
@@ -330,13 +359,19 @@ public class AdminConsolePlugin implements Plugin {
                 getBindInterface();
         boolean isPlainStarted = false;
         boolean isSecureStarted = false;
+        boolean isSPDY = false;
+
         for (Connector connector : adminServer.getConnectors()) {
-            if (connector.getPort() == adminPort) {
+            if (((ServerConnector) connector).getPort() == adminPort) {
                 isPlainStarted = true;
             }
-            else if (connector.getPort() == adminSecurePort) {
+            else if (((ServerConnector) connector).getPort() == adminSecurePort) {
                 isSecureStarted = true;
             }
+
+           	if (connector instanceof HTTPSPDYServerConnector) {
+				isSPDY = true;
+			}
         }
 
         if (isPlainStarted && isSecureStarted) {
@@ -344,10 +379,10 @@ public class AdminConsolePlugin implements Plugin {
                     "  http://" + hostname + ":" +
                     adminPort + System.getProperty("line.separator") +
                     "  https://" + hostname + ":" +
-                    adminSecurePort);
+                    adminSecurePort + (isSPDY ? " (SPDY)" : ""));
         }
         else if (isSecureStarted) {
-            log(listening + " https://" + hostname + ":" + adminSecurePort);
+            log(listening + " https://" + hostname + ":" + adminSecurePort + (isSPDY ? " (SPDY)" : ""));
         }
         else if (isPlainStarted) {
             log(listening + " http://" + hostname + ":" + adminPort);

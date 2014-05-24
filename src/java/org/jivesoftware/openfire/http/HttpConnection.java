@@ -22,7 +22,9 @@ package org.jivesoftware.openfire.http;
 
 import org.jivesoftware.util.JiveConstants;
 import org.eclipse.jetty.continuation.Continuation;
-import org.eclipse.jetty.util.log.Log;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.cert.X509Certificate;
 
@@ -34,14 +36,15 @@ import java.security.cert.X509Certificate;
  * @author Alexander Wenckus
  */
 public class HttpConnection {
-	
+
+    private static final Logger Log = LoggerFactory.getLogger(HttpConnection.class);
     private static final String RESPONSE_BODY = "response-body";
     private static final String CONNECTION_CLOSED = "connection closed";
 
     private final long requestId;
     private final X509Certificate[] sslCertificates;
     private final boolean isSecure;
-    
+
     private String body;
     private HttpSession session;
     private Continuation continuation;
@@ -182,10 +185,10 @@ public class HttpConnection {
     public HttpSession getSession() {
         return session;
     }
-    
+
     /**
-     * Returns the peer certificates for this connection. 
-     * 
+     * Returns the peer certificates for this connection.
+     *
      * @return the peer certificates for this connection or null.
      */
     public X509Certificate[] getPeerCertificates() {
@@ -195,11 +198,11 @@ public class HttpConnection {
     void setContinuation(Continuation continuation) {
         this.continuation = continuation;
     }
-    
+
     public boolean isSuspended() {
     	return continuation != null && continuation.isSuspended();
     }
-    
+
     public boolean isExpired() {
     	return continuation != null && continuation.isExpired();
     }

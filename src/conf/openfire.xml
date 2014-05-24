@@ -33,4 +33,12 @@
         <interface></interface>
     </network>
     -->
+
+    <!-- SPDY  Protocol is npn. 
+    	(note: npn does not work with Java 8) -->
+    <!--     
+    <spdy> 
+    	<protocol>npn</protocol> 
+    </spdy> 
+    -->
 </jive>

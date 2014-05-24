@@ -27,19 +27,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -70,35 +75,35 @@ public final class HttpBindManager {
     public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
 
     public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 7443;
-    
+
     public static final String HTTP_BIND_THREADS = "httpbind.client.processing.threads";
 
     public static final int HTTP_BIND_THREADS_DEFAULT = 254;
-    
+
 	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
-    
+
 	private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
-    
+
 	private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
-    
+
 	private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
-	
+
 	private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
-    
+
     // http binding CORS default properties
-    
+
     public static final String HTTP_BIND_CORS_ENABLED = "httpbind.CORS.enabled";
-    
+
     public static final boolean HTTP_BIND_CORS_ENABLED_DEFAULT = true;
-    
+
     public static final String HTTP_BIND_CORS_ALLOW_ORIGIN = "httpbind.CORS.domains";
-    
+
     public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT = "*";
-    
+
     public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = "PROPFIND, PROPPATCH, COPY, MOVE, DELETE, MKCOL, LOCK, UNLOCK, PUT, GETLIB, VERSION-CONTROL, CHECKIN, CHECKOUT, UNCHECKOUT, REPORT, UPDATE, CANCELUPLOAD, HEAD, OPTIONS, GET, POST";
-    
+
     public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Overwrite, Destination, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control";
-    
+
     public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
 
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
@@ -119,10 +124,10 @@ public final class HttpBindManager {
     private HttpSessionManager httpSessionManager;
 
     private ContextHandlerCollection contexts;
-    
+
     // is all orgin allowed flag
     private boolean allowAllOrigins;
-    
+
     public static HttpBindManager getInstance() {
         return instance;
     }
@@ -130,7 +135,7 @@ public final class HttpBindManager {
     private HttpBindManager() {
         // JSP 2.0 uses commons-logging, so also override that implementation.
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
-        
+
         JiveGlobals.migrateProperty(HTTP_BIND_ENABLED);
         JiveGlobals.migrateProperty(HTTP_BIND_PORT);
         JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT);
@@ -146,7 +151,7 @@ public final class HttpBindManager {
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
         contexts = new ContextHandlerCollection();
-        
+
         // setup the cache for the allowed origins
         this.setupAllowedOriginsMap();
     }
@@ -194,11 +199,13 @@ public final class HttpBindManager {
     private void createConnector(int port) {
         httpConnector = null;
         if (port > 0) {
-            SelectChannelConnector connector = new SelectChannelConnector();
+			HttpConfiguration httpConfig = new HttpConfiguration();
+			configureProxiedConnector(httpConfig);
+            ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
+
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
             connector.setPort(port);
-            configureProxiedConnector(connector);
             httpConnector = connector;
         }
     }
@@ -213,16 +220,16 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                final SslContextFactory sslContextFactory = new SslContextFactory(SSLConfig.getKeystoreLocation());
+                final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setTrustStorePassword(SSLConfig.getc2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
-                sslContextFactory.setTrustStore(SSLConfig.getc2sTruststoreLocation());
+                sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
                 sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
                 sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
 
                 // Set policy for checking client certificates
                 String certPol = JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled");
-                if(certPol.equals("needed")) {                    
+                if(certPol.equals("needed")) {
                 	sslContextFactory.setNeedClientAuth(true);
                 	sslContextFactory.setWantClientAuth(true);
                 } else if(certPol.equals("wanted")) {
@@ -232,11 +239,25 @@ public final class HttpBindManager {
                 	sslContextFactory.setNeedClientAuth(false);
                 	sslContextFactory.setWantClientAuth(false);
                 }
-                
-                final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+
+ 				HttpConfiguration httpsConfig = new HttpConfiguration();
+				httpsConfig.setSecureScheme("https");
+				httpsConfig.setSecurePort(securePort);
+ 				configureProxiedConnector(httpsConfig);
+ 				httpsConfig.addCustomizer(new SecureRequestCustomizer());
+
+ 				ServerConnector sslConnector = null;
+
+				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+				{
+					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
+				} else {
+
+					sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"),
+																	   new HttpConnectionFactory(httpsConfig));
+				}
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
-                configureProxiedConnector(sslConnector);
                 httpsConnector = sslConnector;
             }
         }
@@ -244,34 +265,37 @@ public final class HttpBindManager {
             Log.error("Error creating SSL connector for Http bind", e);
         }
     }
-    
-    private void configureProxiedConnector(AbstractConnector connector) {
+
+    private void configureProxiedConnector(HttpConfiguration httpConfig) {
         // Check to see if we are deployed behind a proxy
         // Refer to http://docs.codehaus.org/display/JETTY/Configuring+Connectors
         if (isXFFEnabled()) {
-        	connector.setForwarded(true);
+        	//connector.setForwarded(true);
+        	ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
         	// default: "X-Forwarded-For"
         	String forwardedForHeader = getXFFHeader();
         	if (forwardedForHeader != null) {
-        		connector.setForwardedForHeader(forwardedForHeader);
+        		customizer.setForwardedForHeader(forwardedForHeader);
         	}
         	// default: "X-Forwarded-Server"
         	String forwardedServerHeader = getXFFServerHeader();
         	if (forwardedServerHeader != null) {
-        		connector.setForwardedServerHeader(forwardedServerHeader);
+        		customizer.setForwardedServerHeader(forwardedServerHeader);
         	}
         	// default: "X-Forwarded-Host"
         	String forwardedHostHeader = getXFFHostHeader();
         	if (forwardedHostHeader != null) {
-        		connector.setForwardedHostHeader(forwardedHostHeader);
+        		customizer.setForwardedHostHeader(forwardedHostHeader);
         	}
         	// default: none
         	String hostName = getXFFHostName();
         	if (hostName != null) {
-        		connector.setHostHeader(hostName);
+        		customizer.setHostHeader(hostName);
         	}
+
+        	httpConfig.addCustomizer(customizer);
         }
-        connector.setStatsOn(JMXManager.isEnabled());
+        //connector.setStatsOn(JMXManager.isEnabled());
    }
 
     private String getBindInterface() {
@@ -325,10 +349,10 @@ public final class HttpBindManager {
     public String getJavaScriptUrl() {
         return "http://" + XMPPServer.getInstance().getServerInfo().getXMPPDomain() + ":" +
                 bindPort + "/scripts/";
-    }   
+    }
 
     // http binding CORS support start
-    
+
     private void setupAllowedOriginsMap() {
         String originString = getCORSAllowOrigin();
         if (originString.equals(HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT)) {
@@ -343,20 +367,20 @@ public final class HttpBindManager {
             }
         }
     }
-    
+
     public boolean isCORSEnabled() {
         return JiveGlobals.getBooleanProperty(HTTP_BIND_CORS_ENABLED, HTTP_BIND_CORS_ENABLED_DEFAULT);
     }
-    
+
     public void setCORSEnabled(Boolean value) {
         if (value != null)
             JiveGlobals.setProperty(HTTP_BIND_CORS_ENABLED, String.valueOf(value));
     }
-    
+
     public String getCORSAllowOrigin() {
         return JiveGlobals.getProperty(HTTP_BIND_CORS_ALLOW_ORIGIN , HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
     }
-    
+
     public void setCORSAllowOrigin(String origins) {
         if (origins == null || origins.trim().length() == 0)
              origins = HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT;
@@ -366,29 +390,29 @@ public final class HttpBindManager {
         JiveGlobals.setProperty(HTTP_BIND_CORS_ALLOW_ORIGIN, origins);
         setupAllowedOriginsMap();
     }
-    
+
     public boolean isAllOriginsAllowed() {
         return allowAllOrigins;
     }
-    
+
     public boolean isThisOriginAllowed(String origin) {
         return HTTP_BIND_ALLOWED_ORIGINS.get(origin) != null;
     }
-    
+
     // http binding CORS support end
 
     public boolean isXFFEnabled() {
         return JiveGlobals.getBooleanProperty(HTTP_BIND_FORWARDED, false);
     }
-    
+
     public void setXFFEnabled(boolean enabled) {
         JiveGlobals.setProperty(HTTP_BIND_FORWARDED, String.valueOf(enabled));
     }
-    
+
     public String getXFFHeader() {
         return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_FOR);
     }
-    
+
     public void setXFFHeader(String header) {
     	if (header == null || header.trim().length() == 0) {
     		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
@@ -396,11 +420,11 @@ public final class HttpBindManager {
     		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
     	}
     }
-    
+
     public String getXFFServerHeader() {
         return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_SERVER);
     }
-    
+
     public void setXFFServerHeader(String header) {
     	if (header == null || header.trim().length() == 0) {
     		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
@@ -408,11 +432,11 @@ public final class HttpBindManager {
     		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
     	}
     }
-    
+
     public String getXFFHostHeader() {
         return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST);
     }
-    
+
     public void setXFFHostHeader(String header) {
     	if (header == null || header.trim().length() == 0) {
     		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
@@ -420,11 +444,11 @@ public final class HttpBindManager {
     		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
     	}
     }
-    
+
     public String getXFFHostName() {
         return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST_NAME);
     }
-    
+
     public void setXFFHostName(String name) {
     	if (name == null || name.trim().length() == 0) {
     		JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
@@ -432,7 +456,7 @@ public final class HttpBindManager {
     		JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
     	}
     }
-    
+
     public void setHttpBindEnabled(boolean isEnabled) {
         JiveGlobals.setProperty(HTTP_BIND_ENABLED, String.valueOf(isEnabled));
     }
@@ -491,17 +515,17 @@ public final class HttpBindManager {
      * @param securePort the port to start the TLS (secure) HTTP Bind service on.
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
-        httpBindServer = new Server();
+        final QueuedThreadPool tp = new QueuedThreadPool(JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
+        tp.setName("Jetty-QTP-BOSH");
+
+        httpBindServer = new Server(tp);
         if (JMXManager.isEnabled()) {
         	JMXManager jmx = JMXManager.getInstance();
-        	httpBindServer.getContainer().addEventListener(jmx.getContainer());
+        	//httpBindServer.getContainer().addEventListener(jmx.getContainer());
+        	// http://stackoverflow.com/questions/16688288/enable-jmx-in-embedded-jetty
         	httpBindServer.addBean(jmx.getContainer());
         }
-        final QueuedThreadPool tp = new QueuedThreadPool(
-        		JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
-        tp.setName("Jetty-QTP-BOSH");
-        httpBindServer.setThreadPool(tp);
-        
+
         createConnector(port);
         createSSLConnector(securePort);
         if (httpConnector == null && httpsConnector == null) {
@@ -706,7 +730,7 @@ public final class HttpBindManager {
             }
             else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
                 setSecureHttpBindPort(HTTP_BIND_SECURE_PORT_DEFAULT);
-            }        
+            }
         }
 
         public void xmlPropertySet(String property, Map<String, Object> params) {

@@ -31,64 +31,64 @@ public class JMXManager {
     private static final String XMPP_JMX_ENABLED = "xmpp.jmx.enabled";
 	private static final String XMPP_JMX_SECURE = "xmpp.jmx.secure";
 	private static final String XMPP_JMX_PORT = "xmpp.jmx.port";
-	
+
 	public static final int DEFAULT_PORT = Registry.REGISTRY_PORT;
-	
+
 	private static JMXManager instance = null;
-	
+
     private MBeanContainer mbContainer;
     private ConnectorServer jmxServer;
 
     /**
-     * Returns true if the JMX connector is configured to require 
+     * Returns true if the JMX connector is configured to require
      * Openfire admin credentials. This option can be configured via
      * the admin console or by setting the following system property:
      * <pre>
      *    xmpp.jmx.secure=false (default: true)
      * </pre>
-     * 
+     *
      * @return true if the JMX connector requires authentication
      */
     public static boolean isSecure() {
 		return JiveGlobals.getBooleanProperty(XMPP_JMX_SECURE, true);
 	}
-    
+
     public static void setSecure(boolean secure) {
         JiveGlobals.setProperty("xmpp.jmx.secure", String.valueOf(secure));
     }
 
     /**
-     * Returns the port number for the JMX connector. This option can 
-     * be configured via the admin console or by setting the following 
+     * Returns the port number for the JMX connector. This option can
+     * be configured via the admin console or by setting the following
      * system property:
      * <pre>
      *    xmpp.jmx.port=[port] (default: 1099)
      * </pre>
-     * 
+     *
      * @return Port number for the JMX connector
      */
 	public static int getPort() {
 		return JiveGlobals.getIntProperty(XMPP_JMX_PORT, DEFAULT_PORT);
 	}
-	
+
 	public static void setPort(int port) {
 	    JiveGlobals.setProperty("xmpp.jmx.port", String.valueOf(port));
 	}
 
     /**
-     * Returns true if JMX support is enabled. This option can be 
-     * configured via the admin console or by setting the following 
+     * Returns true if JMX support is enabled. This option can be
+     * configured via the admin console or by setting the following
      * system property:
      * <pre>
      *    xmpp.jmx.enabled=true (default: false)
      * </pre>
-     * 
+     *
      * @return true if JMX support is enabled
      */
 	public static boolean isEnabled() {
 		return JiveGlobals.getBooleanProperty(XMPP_JMX_ENABLED, false);
 	}
-	
+
 	public static void setEnabled(boolean enabled) {
 	    JiveGlobals.setProperty("xmpp.jmx.enabled", String.valueOf(enabled));
 	}
@@ -104,10 +104,10 @@ public class JMXManager {
 	}
 
 	private void start() {
-		
+
 		setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
-		getContainer().addBean(org.eclipse.jetty.util.log.Log.getLog());
-		
+		//getContainer().addBean(org.eclipse.jetty.util.log.Log.getLog());
+
 		int jmxPort = JMXManager.getPort();
 		String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
 		Map<String, Object> env = new HashMap<String, Object>();
@@ -146,16 +146,16 @@ public class JMXManager {
     	        }
     		});
 		}
-		
+
 		try {
-			jmxServer = new ConnectorServer(new JMXServiceURL("rmi", null, jmxPort, jmxUrl), 
+			jmxServer = new ConnectorServer(new JMXServiceURL("rmi", null, jmxPort, jmxUrl),
 					env, "org.eclipse.jetty.jmx:name=rmiconnectorserver");
 			jmxServer.start();
 		} catch (Exception e) {
 			Log.error("Failed to start JMX connector", e);
 		}
 	}
-	
+
 	public MBeanContainer getContainer() {
 		return mbContainer;
 	}

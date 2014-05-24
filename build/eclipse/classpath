@@ -1,32 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
-	<classpathentry kind="src" path="src/plugins/broadcast/src/java"/>
-	<classpathentry kind="src" path="src/plugins/clientControl/src/java"/>
-	<classpathentry kind="src" path="src/plugins/contentFilter/src/java"/>
-	<classpathentry kind="src" path="src/plugins/dbaccess/src/java"/>
-	<classpathentry kind="src" path="src/plugins/emailListener/src/java"/>
-	<classpathentry kind="src" path="src/plugins/fastpath/src/java"/>
-	<classpathentry kind="src" path="src/plugins/gojara/src/java"/>
-	<classpathentry kind="src" path="src/plugins/jingleNodes/src/java"/>
-	<classpathentry kind="src" path="src/plugins/kraken/src/java"/>
-	<classpathentry kind="src" path="src/plugins/loadStats/src/java"/>
-	<classpathentry kind="src" path="src/plugins/monitoring/src/java"/>
-	<classpathentry kind="src" path="src/plugins/motd/src/java"/>
-	<classpathentry kind="src" path="src/plugins/packetFilter/src/java"/>
-	<classpathentry kind="src" path="src/plugins/presence/src/java"/>
-	<classpathentry kind="src" path="src/plugins/registration/src/java"/>
-	<classpathentry kind="src" path="src/plugins/search/src/java"/>
-	<classpathentry kind="src" path="src/plugins/subscription/src/java"/>
-	<classpathentry kind="src" path="src/plugins/userCreation/src/java"/>
-	<classpathentry kind="src" path="src/plugins/userImportExport/src/java"/>
-	<classpathentry kind="src" path="src/plugins/userservice/src/java"/>
-	<classpathentry kind="src" path="src/plugins/xmldebugger/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/broadcast/target/classes" path="src/plugins/broadcast/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/clientControl/target/classes" path="src/plugins/clientControl/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/contentFilter/target/classes" path="src/plugins/contentFilter/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/dbaccess/target/classes" path="src/plugins/dbaccess/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/emailListener/target/classes" path="src/plugins/emailListener/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/fastpath/target/classes" path="src/plugins/fastpath/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/gojara/target/classes" path="src/plugins/gojara/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/jingleNodes/target/classes" path="src/plugins/jingleNodes/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/justmarried/target/classes" path="src/plugins/justmarried/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/kraken/target/classes" path="src/plugins/kraken/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/loadStats/target/classes" path="src/plugins/loadStats/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/monitoring/target/classes" path="src/plugins/monitoring/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/motd/target/classes" path="src/plugins/motd/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/nodejs/target/classes" path="src/plugins/nodejs/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/packetFilter/target/classes" path="src/plugins/packetFilter/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/presence/target/classes" path="src/plugins/presence/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/registration/target/classes" path="src/plugins/registration/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/search/target/classes" path="src/plugins/search/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/stunserver/target/classes" path="src/plugins/stunserver/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/subscription/target/classes" path="src/plugins/subscription/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/userCreation/target/classes" path="src/plugins/userCreation/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/userImportExport/target/classes" path="src/plugins/userImportExport/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/userservice/target/classes" path="src/plugins/userservice/src/java"/>
+	<classpathentry kind="src" output="work/plugins-dev/xmldebugger/target/classes" path="src/plugins/xmldebugger/src/java"/>
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/test/throttletest/src"/>
 	<classpathentry kind="lib" path="build/lib/ant/ant-contrib.jar"/>
 	<classpathentry kind="lib" path="build/lib/ant/ant-jive-edition.jar"/>
-	<classpathentry kind="lib" path="work/tools/ant-subdirtask.jar"/>
 	<classpathentry kind="lib" path="build/lib/cglib-nodep.jar"/>
 	<classpathentry kind="lib" path="build/lib/commons-el.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/activation.jar"/>
@@ -141,12 +143,12 @@
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-fileupload.jar"/>
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-io.jar"/>
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/dwr.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="src/plugins/stunserver/lib/jstun-0.6.1.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-jmx.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/mina-integration-jmx.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcpg-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcpkix-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcprov-jdk15on.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="work/classes"/>
 </classpath>

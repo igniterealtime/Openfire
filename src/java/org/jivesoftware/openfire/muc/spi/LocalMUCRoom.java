@@ -94,7 +94,7 @@ import org.xmpp.packet.Presence;
  * rooms will be loaded by each cluster node when starting up. Not persistent rooms will be copied
  * from the senior cluster member. All room occupants will be copied from the senior cluster member
  * too.
- * 
+ *
  * @author Gaston Dombiak
  */
 public class LocalMUCRoom implements MUCRoom {
@@ -676,25 +676,25 @@ public class LocalMUCRoom implements MUCRoom {
 
     /**
      * Can a user join this room
-     * 
+     *
      * @param user the user attempting to join this room
      * @return boolean
      */
     private boolean canJoinRoom(LocalMUCUser user){
-    	boolean isOwner = owners.contains(user.getAddress().toBareJID());
-    	boolean isAdmin = admins.contains(user.getAddress().toBareJID());
+    	boolean isOwner = owners.contains(user.getAddress().asBareJID());
+    	boolean isAdmin = admins.contains(user.getAddress().asBareJID());
     	return (!isDestroyed && (!hasOccupancyLimit() || isAdmin || isOwner || (getOccupantsCount() < getMaxUsers())));
     }
 
     /**
      * Does this room have an occupancy limit?
-     * 
+     *
      * @return boolean
      */
     private boolean hasOccupancyLimit(){
     	return getMaxUsers() != 0;
     }
-    
+
     /**
      * Sends presence of existing occupants to new occupant.
      *
@@ -740,7 +740,7 @@ public class LocalMUCRoom implements MUCRoom {
         } else {
         	// sanity check; make sure the nickname is owned by the same JID
         	if (occupants.size() > 0) {
-        		String existingJID = occupants.get(0).getUserAddress().toBareJID();
+        		JID existingJID = occupants.get(0).getUserAddress().asBareJID();
         		if (!bareJID.equals(existingJID)) {
         			Log.warn(MessageFormat.format("Conflict detected; {0} requested nickname '{1}'; already being used by {2}", bareJID, nickname, existingJID));
         			return;
@@ -871,7 +871,7 @@ public class LocalMUCRoom implements MUCRoom {
         leaveRole.destroy();
         // Update the tables of occupants based on the bare and full JID
         JID bareJID = userAddress.asBareJID();
-        
+
         String nickname = leaveRole.getNickname();
     	List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
         if (occupants != null) {
@@ -1036,7 +1036,7 @@ public class LocalMUCRoom implements MUCRoom {
 
     /**
      * Checks the role of the sender and returns true if the given presence should be broadcasted
-     * 
+     *
      * @param presence The presence to check
      * @return true if the presence should be broadcast to the rest of the room
      */
@@ -1280,7 +1280,7 @@ public class LocalMUCRoom implements MUCRoom {
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin or
      *         if trying to ban an owner or an administrator.
      */
-    private List<Presence> changeOccupantAffiliation(JID jid, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
+    private List<Presence> changeOccupantAffiliation(MUCRole senderRole, JID jid, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
             throws NotAllowedException {
         List<Presence> presences = new ArrayList<Presence>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
@@ -1291,6 +1291,10 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Collect all the updated presences of these roles
         for (MUCRole role : roles) {
+// TODO
+//            if (!isPrivilegedToChangeAffiliationAndRole(senderRole.getAffiliation(), senderRole.getRole(), role.getAffiliation(), role.getRole(), newAffiliation, newRole)) {
+//                throw new NotAllowedException();
+//            }
             // Update the presence with the new affiliation and role
             if (role.isLocal()) {
                 role.setAffiliation(newAffiliation);
@@ -1331,6 +1335,10 @@ public class LocalMUCRoom implements MUCRoom {
     private Presence changeOccupantRole(JID jid, MUCRole.Role newRole) throws NotAllowedException {
         // Try looking the role in the bare JID list
         MUCRole role = occupantsByFullJID.get(jid);
+// TODO
+//            if (!isPrivilegedToChangeAffiliationAndRole(senderRole.getAffiliation(), senderRole.getRole(), role.getAffiliation(), role.getRole(), newAffiliation, newRole)) {
+//                throw new NotAllowedException();
+//            }
         if (role != null) {
             if (role.isLocal()) {
                 // Update the presence with the new role
@@ -1356,6 +1364,33 @@ public class LocalMUCRoom implements MUCRoom {
             }
         }
         return null;
+    }
+
+    static boolean isPrivilegedToChangeAffiliationAndRole(MUCRole.Affiliation actorAffiliation, MUCRole.Role actorRole, MUCRole.Affiliation occupantAffiliation, MUCRole.Role occupantRole, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole) {
+        switch (actorAffiliation) {
+            case owner:
+                // An owner has all privileges
+                return true;
+            case admin:
+                // If affiliation has not changed
+                if (occupantAffiliation == newAffiliation) {
+                    // Only check, if the admin wants to modify an owner (e.g. revoke an owner's moderator role).
+                    return occupantAffiliation != MUCRole.Affiliation.owner;
+                } else {
+                    // An admin is not allowed to modify the admin or owner list.
+                    return occupantAffiliation != MUCRole.Affiliation.owner && newAffiliation != MUCRole.Affiliation.admin && newAffiliation != MUCRole.Affiliation.owner;
+                }
+            default:
+                // Every other affiliation (member, none, outcast) is not allowed to change anything, except he's a moderator and he doesn't want to change affiliations.
+                if (actorRole == MUCRole.Role.moderator && occupantAffiliation == newAffiliation) {
+                    // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than themselves
+                    // (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
+                    if (occupantRole == MUCRole.Role.moderator && newRole != MUCRole.Role.moderator) {
+                        return occupantAffiliation != MUCRole.Affiliation.owner && occupantAffiliation != MUCRole.Affiliation.admin;
+                    }
+                }
+                return false;
+        }
     }
 
     public void addFirstOwner(JID bareJID) {
@@ -1401,7 +1436,7 @@ public class LocalMUCRoom implements MUCRoom {
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.owner));
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(jid, MUCRole.Affiliation.owner,
+            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.owner,
                     MUCRole.Role.moderator);
         }
         catch (NotAllowedException e) {
@@ -1458,7 +1493,7 @@ public class LocalMUCRoom implements MUCRoom {
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.admin));
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(jid, MUCRole.Affiliation.admin,
+            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.admin,
                     MUCRole.Role.moderator);
         }
         catch (NotAllowedException e) {
@@ -1530,7 +1565,7 @@ public class LocalMUCRoom implements MUCRoom {
         CacheFactory.doClusterTask(new AddMember(this, jid.toBareJID(), (nickname == null ? "" : nickname)));
         // Update the presence with the new affiliation and inform all occupants
         try {
-            return changeOccupantAffiliation(jid, MUCRole.Affiliation.member,
+            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.member,
                     MUCRole.Role.participant);
         }
         catch (NotAllowedException e) {
@@ -1591,7 +1626,7 @@ public class LocalMUCRoom implements MUCRoom {
         // Update the presence with the new affiliation and inform all occupants
         // actorJID will be null if the room itself (ie. via admin console) made the request
         JID actorJID = senderRole.getUserAddress();
-        List<Presence> updatedPresences = changeOccupantAffiliation(
+        List<Presence> updatedPresences = changeOccupantAffiliation(senderRole,
                 jid,
                 MUCRole.Affiliation.outcast,
                 MUCRole.Role.none);
@@ -1666,7 +1701,7 @@ public class LocalMUCRoom implements MUCRoom {
             else {
                 newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
             }
-            updatedPresences = changeOccupantAffiliation(bareJID, MUCRole.Affiliation.none, newRole);
+            updatedPresences = changeOccupantAffiliation(senderRole, bareJID, MUCRole.Affiliation.none, newRole);
             if (isMembersOnly() && wasMember) {
                 // If the room is members-only, remove the user from the room including a status
                 // code of 321 to indicate that the user was removed because of an affiliation
@@ -1753,7 +1788,7 @@ public class LocalMUCRoom implements MUCRoom {
                 }
                 else {
                     Log.error(MessageFormat.format("Ignoring update of local occupant with info from a remote occupant. "
-                    		+ "Occupant nickname: {0} new role: {1} new affiliation: {2}", 
+                    		+ "Occupant nickname: {0} new role: {1} new affiliation: {2}",
                     		update.getNickname(), update.getRole(), update.getAffiliation()));
                 }
             }
@@ -2070,7 +2105,7 @@ public class LocalMUCRoom implements MUCRoom {
 
             // Effectively kick the occupant from the room
             kickPresence(updatedPresence, actorJID);
-            
+
             //Inform the other occupants that user has been kicked
             broadcastPresence(updatedPresence, false);
         }

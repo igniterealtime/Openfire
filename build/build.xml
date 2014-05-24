@@ -9,7 +9,7 @@
     Build Requirements:
 
         * Ant 1.6 or 1.7 (including optional tasks)
-        * JDK 1.5 or higher
+        * JDK 1.7 or higher
         * jUnit in your Ant or Java classpath
 -->
 
@@ -27,6 +27,9 @@
     <property name="version.minor" value="10"/>
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
+
+	<property name="javac.source" value="1.7"/>
+	<property name="javac.target" value="1.7"/>
     <property name="dist.prefix" value="openfire"/>
 
     <property file="${basedir}/build/build.properties"/>
@@ -181,7 +184,7 @@
     <!-- GLOBAL TASKDEFs                                                                         -->
     <!-- ======================================================================================= -->
 
-    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
         <classpath refid="ant.dependencies" />
     </taskdef>
     <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
@@ -219,8 +222,6 @@
         <condition property="java.not.ok" value="true">
             <not>
                 <or>
-                    <contains string="${ant.java.version}" substring="1.5"/>
-                    <contains string="${ant.java.version}" substring="1.6"/>
                     <contains string="${ant.java.version}" substring="1.7"/>
                     <contains string="${ant.java.version}" substring="1.8"/>
                 </or>
@@ -265,8 +266,8 @@
                 destdir="${compile.dir}"
                 includeAntRuntime="no"
                 debug="on"
-                source="1.5"
-                target="1.5"
+                source="${javac.source}"
+                target="${javac.target}"
                 >
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
@@ -285,8 +286,8 @@
                         destdir="${overlay.compile.dir}"
                         includeAntRuntime="no"
                         debug="on"
-                        source="1.5"
-                        target="1.5"
+                        source="${javac.source}"
+                        target="${javac.target}"
                         >
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
@@ -332,7 +333,6 @@
              inheritAll="false" inheritRefs="false"/>
 
         <copy file="${java.home}/../lib/tools.jar" todir="${jar.dest.dir}"></copy>
-        <copy file="${ant.home}/lib/ant.jar" todir="${jar.dest.dir}"></copy>
 
         <!-- Retrieve each plugin -->
         <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make.
@@ -491,7 +491,7 @@
             <classpath>
                 <path refid="javadoc.dependencies"/>
             </classpath>
-            <link offline="true" href="http://java.sun.com/j2se/1.5.0/docs/api/"
+            <link offline="true" href="http://docs.oracle.com/javase/7/docs/api/"
                   packagelistLoc="${javadoc.src.dir}/jdk15"/>
         </javadoc>
     </target>
@@ -544,8 +544,8 @@
                 destdir="${jspc.classes.dest.dir}"
                 includeAntRuntime="no"
                 debug="on"
-                source="1.5"
-                target="1.5"
+                source="${javac.source}"
+                target="${javac.target}"
                 includes="org/jivesoftware/openfire/admin/**/*.java"
                 >
             <src path="${jspc.java.dest.dir}"/>
@@ -594,8 +594,8 @@
                 destdir="${test.classes.dest.dir}"
                 includeAntRuntime="no"
                 debug="on"
-                source="1.5"
-                target="1.5"
+                source="${javac.source}"
+                target="${javac.target}"
                 >
             <src path="${src.test.java.dir}"/>
             <patternset refid="test.sources"/>
@@ -618,7 +618,7 @@
             <!-- We must add our own classes to the classpath for testing -->
             <classpath>
                 <path refid="test.dependencies"/>
-                <pathelement path="${test.dest.dir}/resources"/>
+                <pathelement path="${test.dest.dir}"/>
                 <pathelement path="${test.classes.dest.dir}"/>
             </classpath>
 
@@ -1330,8 +1330,8 @@
                         destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
                         includeAntRuntime="no"
                         debug="on"
-                        source="1.5"
-                        target="1.5"
+                        source="${javac.source}"
+                        target="${javac.target}"
                         >
                     <src path="@{pluginsrc}/@{plugin}/src/java"/>
                     <classpath>
@@ -1370,7 +1370,7 @@
                             destdir="@{pluginlib}/classes"
                             includeAntRuntime="no"
                             debug="on"
-                            source="1.5"
+                            source="${javac.source}"
                             includes="**/*.java"
                         >
                             <src path="@{pluginlib}/source"/>
@@ -1538,8 +1538,8 @@
                                 destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
                                 includeAntRuntime="no"
                                 debug="on"
-                                source="1.5"
-                                target="1.5"
+                                source="${javac.source}"
+                                target="${javac.target}"
                                 >
                             <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                             <classpath>
@@ -1650,9 +1650,8 @@
 
         <javac
                 destdir="${anttools.target.dir}/classes"
-                includeAntRuntime="no"
                 debug="on"
-                source="1.4"
+                source="${javac.source}"
                 >
             <src path="${anttools.src.dir}"/>
             <patternset refid="compile.sources"/>
@@ -1664,10 +1663,10 @@
         <jar jarfile="${anttools.target.dir}/ant-subdirtask.jar">
             <fileset dir="${anttools.target.dir}/classes" includes="**/*.class"/>
         </jar>
- 
+
         <taskdef name="subdirinfo" classname="org.jivesoftware.ant.SubDirInfoTask">
             <classpath>
-                <pathelement location="${basedir}/build/lib/ant-subdirtask.jar"/>
+                <pathelement location="${anttools.target.dir}/ant-subdirtask.jar"/>
             </classpath>
         </taskdef>
     </target>

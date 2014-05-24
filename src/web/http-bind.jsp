@@ -148,7 +148,7 @@
 } %>
 
 <form action="http-bind.jsp" method="post">
-    
+
     <div class="jive-contentBox" style="-moz-border-radius: 3px;">
         <table cellpadding="3" cellspacing="0" border="0">
             <tbody>
@@ -176,6 +176,7 @@
                                     <input id="port" type="text" size="5" maxlength="10" name="port"
                                            value="<%=port%>" />
                                 </td>
+                                <td>( <%=serverManager.getHttpBindUnsecureAddress()%> )</td>
                             </tr>
                             <tr>
                                 <td>
@@ -186,6 +187,7 @@
                                     <input id="securePort" type="text" size="5" maxlength="10" name="securePort"
                                            value="<%=securePort%>" />
                                 </td>
+                                <td>( <%=serverManager.getHttpBindSecureAddress()%> )</td>
                             </tr>
                         </table>
                     </td>

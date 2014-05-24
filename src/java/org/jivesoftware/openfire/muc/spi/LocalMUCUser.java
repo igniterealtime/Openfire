@@ -503,7 +503,8 @@ public class LocalMUCUser implements MUCUser {
                             sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                         catch (RoomLockedException e) {
-                            sendErrorPacket(packet, PacketError.Condition.recipient_unavailable);
+                            // If a user attempts to enter a room while it is "locked" (i.e., before the room creator provides an initial configuration and therefore before the room officially exists), the service MUST refuse entry and return an <item-not-found/> error to the user
+                            sendErrorPacket(packet, PacketError.Condition.item_not_found);
                         }
                         catch (ForbiddenException e) {
                             sendErrorPacket(packet, PacketError.Condition.forbidden);

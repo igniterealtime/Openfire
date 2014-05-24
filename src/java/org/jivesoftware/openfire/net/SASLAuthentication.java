@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -80,6 +81,9 @@ import org.slf4j.LoggerFactory;
 public class SASLAuthentication {
 
 	private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
+
+    // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
+    private static final Pattern BASE64_ENCODED = Pattern.compile("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -301,9 +305,14 @@ public class SASLAuthentication {
 
                             // evaluateResponse doesn't like null parameter
                             byte[] token = new byte[0];
-                            if (doc.getText().length() > 0) {
+                            String value = doc.getTextTrim();
+                            if (value.length() > 0) {
+                                if (!BASE64_ENCODED.matcher(value).matches()) {
+                                    authenticationFailed(session, Failure.INCORRECT_ENCODING);
+                                    return Status.failed;
+                                }
                                 // If auth request includes a value then validate it
-                                token = StringUtils.decodeBase64(doc.getText().trim());
+                                token = StringUtils.decodeBase64(value);
                                 if (token == null) {
                                     token = new byte[0];
                                 }
@@ -354,6 +363,10 @@ public class SASLAuthentication {
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
+                            if (!BASE64_ENCODED.matcher(response).matches()) {
+                                authenticationFailed(session, Failure.INCORRECT_ENCODING);
+                                return Status.failed;
+                            }
                             try {
                                 if (ssComplete) {
                                     authenticationSuccessful(session, ss.getAuthorizationID(),

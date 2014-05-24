@@ -603,11 +603,11 @@ public abstract class StanzaHandler {
                     ". Connection: " + connection);
         }
         // Validate the stream namespace
-        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
+        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace()) && !"http://www.jabber.com/streams/flash".equals(xpp.getNamespace())) {
             // Include the invalid-namespace in the response
             streamError = new StreamError(StreamError.Condition.invalid_namespace);
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid_namespace in stream header. Namespace: " +
+            Log.warn("Closing session due to invalid namespace in stream header. Namespace: " +
                     xpp.getNamespace() + ". Connection: " + connection);
 
         }
@@ -619,7 +619,7 @@ public abstract class StanzaHandler {
             // "or the content namespace declared as the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server")."
             streamError = new StreamError(StreamError.Condition.invalid_namespace);
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid_namespace in stream header. Prefix: " +
+            Log.warn("Closing session due to invalid namespace in stream header. Prefix: " +
                     xpp.getNamespace(null) + ". Connection: " + connection);
         }
 

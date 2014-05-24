@@ -73,6 +73,7 @@ xmltask.jar                         | 1.11                                      
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 
 
+
 Notes
 -----
 1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn

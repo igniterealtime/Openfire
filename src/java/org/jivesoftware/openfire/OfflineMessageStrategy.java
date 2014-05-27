@@ -119,13 +119,13 @@ public class OfflineMessageStrategy extends BasicModule {
                 if (message.getType() == Message.Type.normal || message.getType() == Message.Type.groupchat || message.getType() == Message.Type.headline) {
                     if (type == Type.bounce) {
                         bounce(message);
+                        return;
                     } else {
                         return;
                     }
                 }
                 // For a message stanza of type "error", the server MUST silently ignore the stanza.
                 else if (message.getType() == Message.Type.error) {
-                    // For a message stanza of type "error", the server MUST silently ignore the stanza.
                     return;
                 }
             }

@@ -595,7 +595,7 @@ public class Launcher {
                     // Just for fun. Show no matter what for two seconds.
                     Thread.sleep(2000);
 
-                    copy(plugin.toURL(), tempPluginsFile);
+                    copy(plugin.toURI().toURL(), tempPluginsFile);
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);

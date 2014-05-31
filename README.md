@@ -28,6 +28,8 @@ Resources
 - Bug Tracker: http://issues.igniterealtime.org/browse/OF
 - Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
 
+[![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)
+
 Ignite Realtime
 ===============
 

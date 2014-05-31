@@ -409,7 +409,7 @@ public class PluginManager {
 
                         if (classes.exists()) {
                             dev.setClassesDir(classes);
-                            pluginLoader.addURLFile(classes.getAbsoluteFile().toURL());
+                            pluginLoader.addURLFile(classes.getAbsoluteFile().toURI().toURL());
                         }
                     }
                 }

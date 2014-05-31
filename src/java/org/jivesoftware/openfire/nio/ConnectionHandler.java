@@ -144,7 +144,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             // PIO-524: Determine stream:error message.
             final StreamError error;
             if (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) {
-            	error = new StreamError(StreamError.Condition.xml_not_well_formed);
+            	error = new StreamError(StreamError.Condition.not_well_formed);
             } else {
             	error = new StreamError(StreamError.Condition.internal_server_error);
             }

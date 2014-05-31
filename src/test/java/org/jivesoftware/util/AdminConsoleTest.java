@@ -17,6 +17,7 @@ import java.util.Iterator;
 import org.dom4j.Element;
 import org.jivesoftware.admin.AdminConsole;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -35,6 +36,7 @@ public class AdminConsoleTest {
     }
 
     @Test
+    @Ignore
     public void testGetGlobalProps() throws Exception {
         String name = AdminConsole.getAppName();
         String image = AdminConsole.getLogoImage();

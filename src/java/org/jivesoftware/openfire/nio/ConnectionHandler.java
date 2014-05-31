@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.mina.common.IdleStatus;
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -92,7 +92,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // removing connections without warning.
         final int idleTime = getMaxIdleTime() / 2;
         if (idleTime > 0) {
-            session.setIdleTime(IdleStatus.READER_IDLE, idleTime);
+            session.getConfig().setIdleTime(IdleStatus.READER_IDLE, idleTime);
         }
     }
 
@@ -151,7 +151,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
             connection.deliverRawText(error.toXML());
-            session.close();
+            session.close(true);
         }
         else {
             Log.error("ConnectionHandler reports unexpected exception for session: " + session, cause);

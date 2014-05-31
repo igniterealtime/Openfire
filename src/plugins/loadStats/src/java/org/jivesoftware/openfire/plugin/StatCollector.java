@@ -20,16 +20,19 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import org.apache.mina.common.ExecutorThreadModel;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
+
+import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.management.MINAStatCollector;
-import org.apache.mina.transport.socket.nio.SocketAcceptor;
+import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -47,6 +50,9 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author Gaston Dombiak
  */
 public class StatCollector extends TimerTask {
+
+    private static final Logger Log = LoggerFactory.getLogger(StatCollector.class);
+
     private boolean headerPrinter = false;
     private List<String> content = new ArrayList<String>();
     private SocketAcceptor socketAcceptor;
@@ -80,13 +86,17 @@ public class StatCollector extends TimerTask {
             sb.append(DbConnectionManager.getConnectionProvider().toString());
             sb.append(',');
             // Add info about the thread pool that process incoming requests
-            ExecutorThreadModel threadModel = (ExecutorThreadModel) socketAcceptor.getDefaultConfig().getThreadModel();
-            ThreadPoolExecutor executor = (ThreadPoolExecutor) threadModel.getExecutor();
+            ExecutorFilter executorFilter = (ExecutorFilter) socketAcceptor.getFilterChain().get(EXECUTOR_FILTER_NAME);
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) executorFilter.getExecutor();
             sb.append(executor.getCorePoolSize());
             sb.append(',');
             sb.append(executor.getActiveCount());
             sb.append(',');
-            sb.append(executor.getQueue().size());
+            try {
+                sb.append(executor.getQueue().size());
+            } catch (UnsupportedOperationException e) {
+                sb.append(-1);
+            }
             sb.append(',');
             sb.append(executor.getCompletedTaskCount());
             // Add info about number of connected sessions

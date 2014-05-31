@@ -95,7 +95,7 @@ The following parameters can be passed into the request:<p>
 </tr>
 <tr>
     <td class="name">type</td><td>Required</td><td>The admin service required.
-    Possible values are 'add', 'delete', 'update', 'enable', 'disable', 'add_roster', 'update_roster', 'delete_roster'.</td>
+    Possible values are 'add', 'delete', 'update', 'enable', 'disable', 'add_roster', 'update_roster', 'delete_roster', 'grouplist', 'usergrouplist'.</td>
 </tr>
 <tr>
     <td class="name">secret</td><td>Required</td>
@@ -240,6 +240,37 @@ http://example.com:9090/plugins/userService/userservice?type=delete_roster&secre
 </form>
 </ul>
 
+The following example gets all groups
+
+<ul>
+<form>
+<textarea cols=65 rows=6 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=grouplist&secret=bigsecret
+Which replies an XML group list formatted like this:
+<result>
+    <groupname>group1</groupname>
+    <groupname>group2</groupname>
+</result>
+</textarea>
+</form>
+</ul>
+
+The following example gets all groups for a specific user
+
+<ul>
+<form>
+<textarea cols=65 rows=6 wrap=virtual>
+http://example.com:9090/plugins/userService/userservice?type=usergrouplist&secret=bigsecret&username=kafka
+Which replies an XML group list formatted like this:
+<result>
+    <groupname>usergroup1</groupname>
+    <groupname>usergroup2</groupname>
+</result>
+</textarea>
+</form>
+</ul>
+
+
 <br><br>
 * When sending double characters (Chinese/Japanese/Korean etc) you should URLEncode the string as utf8.<br>
 In Java this is done like this<br>
@@ -250,7 +281,7 @@ URLEncoder.encode(username, "UTF-8"));
 <h2>Server Reply</h2>
 
 The server will reply to all User Service requests with an XML result page.
-If the request was processed successfully the return will be a "result" element with a text body of "OK".
+If the request was processed successfully the return will be a "result" element with a text body of "OK", or an XML grouplist formatted like in the example for "grouplist" and "usergrouplist" above.
 If the request was unsuccessful, the return will be an "error" element with a text body of one of the following error strings.
 <p>
 

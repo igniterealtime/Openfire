@@ -329,6 +329,35 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
     }
 
     /**
+    * Returns all group names or an empty collection.
+    * 
+    */
+    public Collection<String> getAllGroups(){
+        Collection<Group> groups = GroupManager.getInstance().getGroups();
+        Collection<String> groupNames = new ArrayList<String>();
+        for(Group group : groups)
+        {
+            groupNames.add(group.getName());
+        }
+        return groupNames;
+    }
+
+    /**
+    * Returns all group names or an empty collection for specific user
+    * 
+    */
+    public Collection<String> getUserGroups(String username) throws UserNotFoundException{
+        User user = getUser(username);
+        Collection<Group> groups = GroupManager.getInstance().getGroups(user);
+        Collection<String> groupNames = new ArrayList<String>();
+        for(Group group : groups)
+        {
+            groupNames.add(group.getName());
+        }
+        return groupNames;
+    }
+
+    /**
      * Returns the secret key that only valid requests should know.
      *
      * @return the secret key.

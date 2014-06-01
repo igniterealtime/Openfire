@@ -540,7 +540,7 @@ public final class HttpBindManager {
         }
 
         createBoshHandler(contexts, "/http-bind");
-        createCrossDomainHandler(contexts, "/");
+        createCrossDomainHandler(contexts, "/crossdomain.xml");
         loadStaticDirectory(contexts);
 
         HandlerCollection collection = new HandlerCollection();
@@ -557,7 +557,7 @@ public final class HttpBindManager {
     private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
-        context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"/crossdomain.xml");
+        context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");
     }
 
     private void loadStaticDirectory(ContextHandlerCollection contexts) {

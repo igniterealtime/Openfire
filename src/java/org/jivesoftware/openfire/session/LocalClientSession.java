@@ -117,13 +117,13 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     static {
         // Fill out the allowedIPs with the system property
-        String allowed = JiveGlobals.getProperty("xmpp.client.login.allowed", "");
+        String allowed = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_ALLOWED, "");
         StringTokenizer tokens = new StringTokenizer(allowed, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
             allowedIPs.put(address, "");
         }
-        String allowedAnonym = JiveGlobals.getProperty("xmpp.client.login.allowedAnonym", "");
+        String allowedAnonym = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, "");
         tokens = new StringTokenizer(allowedAnonym, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
@@ -368,7 +368,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public static void setAllowedIPs(Map<String, String> allowed) {
         allowedIPs = allowed;
         if (allowedIPs.isEmpty()) {
-            JiveGlobals.deleteProperty("xmpp.client.login.allowed");
+            JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ALLOWED);
         }
         else {
             // Iterate through the elements in the map.
@@ -380,7 +380,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             while (iter.hasNext()) {
                 buf.append(", ").append(iter.next());
             }
-            JiveGlobals.setProperty("xmpp.client.login.allowed", buf.toString());
+            JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ALLOWED, buf.toString());
         }
     }
 
@@ -393,7 +393,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public static void setAllowedAnonymIPs(Map<String, String> allowed) {
         allowedAnonymIPs = allowed;
         if (allowedAnonymIPs.isEmpty()) {
-            JiveGlobals.deleteProperty("xmpp.client.login.allowedAnonym");
+            JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED);
         }
         else {
             // Iterate through the elements in the map.
@@ -405,7 +405,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             while (iter.hasNext()) {
                 buf.append(", ").append(iter.next());
             }
-            JiveGlobals.setProperty("xmpp.client.login.allowedAnonym", buf.toString());
+            JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, buf.toString());
         }
     }
 
@@ -420,7 +420,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public static SocketConnection.TLSPolicy getTLSPolicy() {
         // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty("xmpp.client.tls.policy", Connection.TLSPolicy.optional.toString());
+        String policyName = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_POLICY, Connection.TLSPolicy.optional.toString());
         SocketConnection.TLSPolicy tlsPolicy;
         try {
             tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
@@ -441,7 +441,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param policy whether TLS is mandatory, optional or is disabled.
      */
     public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
-        JiveGlobals.setProperty("xmpp.client.tls.policy", policy.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Client.TLS_POLICY, policy.toString());
     }
 
     /**
@@ -452,7 +452,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public static SocketConnection.CompressionPolicy getCompressionPolicy() {
         // Set the Compression policy stored as a system property
         String policyName = JiveGlobals
-                .getProperty("xmpp.client.compression.policy", Connection.CompressionPolicy.optional.toString());
+                .getProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString());
         SocketConnection.CompressionPolicy compressionPolicy;
         try {
             compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
@@ -469,7 +469,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param policy whether compression is optional or is disabled.
      */
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
-        JiveGlobals.setProperty("xmpp.client.compression.policy", policy.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, policy.toString());
     }
 
     /**

@@ -21,6 +21,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 
 import javax.net.ssl.SSLEngine;
@@ -139,10 +140,10 @@ public class TLSStreamHandler {
         }
         else if (needClientAuth) {
             // Only REQUIRE client authentication if we are fully verifying certificates
-            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
-                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
+            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
+                    JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
                     !JiveGlobals
-                            .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
+                            .getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false))
             {
                 tlsEngine.setNeedClientAuth(true);
             }

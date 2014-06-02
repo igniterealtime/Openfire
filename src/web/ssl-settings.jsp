@@ -26,6 +26,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -85,15 +86,15 @@
 
             // Enable TLS and disable server dialback
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-            JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
-            JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
+            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
+            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
         } else if ("notreq".equals(serverSecurityRequired)) {
             // User selected that security for s2s is NOT required
 
             // Enable TLS and enable server dialback
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-            JiveGlobals.setProperty("xmpp.server.tls.enabled", "true");
-            JiveGlobals.setProperty("xmpp.server.dialback.enabled", "true");
+            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
+            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
         } else if ("custom".equals(serverSecurityRequired)) {
             // User selected custom server authentication
 
@@ -104,23 +105,24 @@
                 XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
 
                 // Enable or disable server dialback
-                JiveGlobals.setProperty("xmpp.server.dialback.enabled", dialbackEnabled ? "true" : "false");
+                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, dialbackEnabled ? "true" : "false");
 
                 // Enable or disable TLS for s2s connections
-                JiveGlobals.setProperty("xmpp.server.tls.enabled", tlsEnabled ? "true" : "false");
+                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, tlsEnabled ? "true" : "false");
             } else {
                 XMPPServer.getInstance().getConnectionManager().enableServerListener(false);
                 // Disable server dialback
-                JiveGlobals.setProperty("xmpp.server.dialback.enabled", "false");
+                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
 
                 // Disable TLS for s2s connections
-                JiveGlobals.setProperty("xmpp.server.tls.enabled", "false");
+                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "false");
             }
         }
         ServerDialback.setEnabledForSelfSigned(selfSigned);
         success = true;
         // Log the event
-        webManager.logEvent("updated SSL configuration", "xmpp.server.dialback.enabled = "+JiveGlobals.getProperty("xmpp.server.dialback.enabled")+"\nxmpp.server.tls.enabled = "+JiveGlobals.getProperty("xmpp.server.tls.enabled"));
+        webManager.logEvent("updated SSL configuration", ConnectionSettings.Server.DIALBACK_ENABLED + " = "+JiveGlobals.getProperty(ConnectionSettings.Server.DIALBACK_ENABLED)+
+                "\n"+ ConnectionSettings.Server.TLS_ENABLED+" = "+JiveGlobals.getProperty(ConnectionSettings.Server.TLS_ENABLED));
     }
 
     // Set page vars
@@ -146,8 +148,8 @@
                 LocalClientSession.getTLSPolicy().toString();
     }
 
-    boolean tlsEnabled = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
-    boolean dialbackEnabled = JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+    boolean tlsEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
+    boolean dialbackEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
     if (tlsEnabled) {
         if (dialbackEnabled) {
             serverSecurityRequired = "notreq";

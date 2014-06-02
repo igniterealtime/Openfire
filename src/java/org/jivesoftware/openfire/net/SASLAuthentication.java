@@ -51,6 +51,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
@@ -549,7 +550,7 @@ public class SASLAuthentication {
             // Flag that indicates if certificates of the remote server should be validated.
             // Disabling certificate validation is not recommended for production environments.
             boolean verify =
-                    JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
+                    JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true);
             if (!verify) {
                 authenticationSuccessful(session, hostname, null);
                 return Status.authenticated;

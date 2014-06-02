@@ -30,6 +30,7 @@ import java.util.List;
 import javax.net.ssl.X509TrustManager;
 
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -100,7 +101,7 @@ public class ServerTrustManager implements X509TrustManager {
 
         // Flag that indicates if certificates of the remote server should be validated. Disabling
         // certificate validation is not recommended for production environments.
-        boolean verify = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
+        boolean verify = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true);
         if (verify) {
             int nSize = x509Certificates.length;
             if (Log.isDebugEnabled()) {
@@ -112,7 +113,7 @@ public class ServerTrustManager implements X509TrustManager {
 
             List<String> peerIdentities = CertificateManager.getPeerIdentities(x509Certificates[0]);
 
-            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true)) {
+            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true)) {
                 Log.debug("Verifying certificate chain...");
 
                 // Working down the chain, for every certificate in the chain,
@@ -147,7 +148,7 @@ public class ServerTrustManager implements X509TrustManager {
                 }
             }
 
-            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.root", true)) {
+            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_ROOT_VERIFY, true)) {
                 Log.debug("Verifying certificate chain root certificate...");
                 // Verify that the the last certificate in the chain was issued
                 // by a third-party that the client trusts.
@@ -157,7 +158,7 @@ public class ServerTrustManager implements X509TrustManager {
                     // Keep track if the other peer presented a self-signed certificate
                     connection.setUsingSelfSignedCertificate(!trusted && nSize == 1);
                     if (!trusted && nSize == 1 && JiveGlobals
-                            .getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false))
+                            .getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false))
                     {
                         Log.warn("Accepting self-signed certificate of remote server: " +
                                 peerIdentities);
@@ -192,7 +193,7 @@ public class ServerTrustManager implements X509TrustManager {
                 throw new CertificateException("target verification failed of " + peerIdentities);
             }
 
-            if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.validity", true)) {
+            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY, true)) {
                 Log.debug("Verifying certificate chain validity (by date)...");
 
                 // For every certificate in the chain, verify that the certificate
@@ -210,7 +211,7 @@ public class ServerTrustManager implements X509TrustManager {
     }
 
     public X509Certificate[] getAcceptedIssuers() {
-        if (JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false)) {
+        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
             // Answer an empty list since we accept any issuer
             return new X509Certificate[0];
         }

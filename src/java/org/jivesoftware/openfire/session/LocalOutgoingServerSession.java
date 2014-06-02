@@ -255,7 +255,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             int port) {
 
         String localDomainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-        boolean useTLS = JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true);
+        boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
         RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
         if (configuration != null) {
             // TODO Use the specific TLS configuration for this remote server
@@ -427,9 +427,9 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
             log.debug("Negotiating TLS...");
-            boolean needed = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true) &&
-                    		 JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify.chain", true) &&
-                    		 !JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+            boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
+                    		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
+                    		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
             connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
             log.debug("TLS negotiation was successful.");
 
@@ -448,7 +448,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             features = reader.parseDocument().getRootElement();
             if (features != null) {
                 // Check if we can use stream compression
-                String policyName = JiveGlobals.getProperty("xmpp.server.compression.policy", Connection.CompressionPolicy.disabled.toString());
+                String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString());
                 Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
                 if (Connection.CompressionPolicy.optional == compressionPolicy) {
                     // Verify if the remote server supports stream compression

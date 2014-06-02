@@ -29,6 +29,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -109,7 +110,7 @@ public class RemoteServerManager {
     public static boolean canAccess(String domain) {
         // If s2s is disabled then it is not possible to send packets to remote servers or
         // receive packets from remote servers
-        if (!JiveGlobals.getBooleanProperty("xmpp.server.socket.active", true)) {
+        if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true)) {
             return false;
         }
 
@@ -162,7 +163,7 @@ public class RemoteServerManager {
      *         data from a remote server.
      */
     public static int getSocketTimeout() {
-        return JiveGlobals.getIntProperty("xmpp.server.read.timeout", 120000);
+        return JiveGlobals.getIntProperty(ConnectionSettings.Server.SOCKET_READ_TIMEOUT, 120000);
     }
 
     /**
@@ -298,13 +299,13 @@ public class RemoteServerManager {
      * @return the remote port to connect for the specified remote server.
      */
     public static int getPortForServer(String domain) {
-        int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
+        int port = JiveGlobals.getIntProperty(ConnectionSettings.Server.PORT, ConnectionManager.DEFAULT_SERVER_PORT);
         RemoteServerConfiguration config = getConfiguration(domain);
         if (config != null) {
             port = config.getRemotePort();
             if (port == 0) {
                 port = JiveGlobals
-                        .getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
+                        .getIntProperty(ConnectionSettings.Server.PORT, ConnectionManager.DEFAULT_SERVER_PORT);
             }
         }
         return port;
@@ -322,7 +323,7 @@ public class RemoteServerManager {
      */
     public static PermissionPolicy getPermissionPolicy() {
         try {
-            return PermissionPolicy.valueOf(JiveGlobals.getProperty("xmpp.server.permission",
+            return PermissionPolicy.valueOf(JiveGlobals.getProperty(ConnectionSettings.Server.PERMISSION_SETTINGS,
                     PermissionPolicy.blacklist.toString()));
         }
         catch (Exception e) {
@@ -341,7 +342,7 @@ public class RemoteServerManager {
      * @param policy the new PermissionPolicy to use.
      */
     public static void setPermissionPolicy(PermissionPolicy policy) {
-        JiveGlobals.setProperty("xmpp.server.permission", policy.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Server.PERMISSION_SETTINGS, policy.toString());
         // Check if the connected servers can remain connected to the server
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {

@@ -46,6 +46,7 @@ import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
@@ -128,7 +129,7 @@ public class ServerDialback {
      * @return true if server dialback is enabled.
      */
     public static boolean isEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
     }
 
     /**
@@ -143,7 +144,7 @@ public class ServerDialback {
      * certificate.
      */
     public static boolean isEnabledForSelfSigned() {
-        return JiveGlobals.getBooleanProperty("xmpp.server.certificate.accept-selfsigned", false);
+        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
     }
 
     /**
@@ -158,7 +159,7 @@ public class ServerDialback {
      * certificate.
      */
     public static void setEnabledForSelfSigned(boolean enabled) {
-        JiveGlobals.setProperty("xmpp.server.certificate.accept-selfsigned", Boolean.toString(enabled));
+        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, Boolean.toString(enabled));
     }
 
     /**

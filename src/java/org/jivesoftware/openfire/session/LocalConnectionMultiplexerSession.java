@@ -64,12 +64,12 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
     static {
         // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty("xmpp.multiplex.tls.policy",
+        String policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.TLS_POLICY,
                 Connection.TLSPolicy.disabled.toString());
         tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
 
         // Set the Compression policy stored as a system property
-        policyName = JiveGlobals.getProperty("xmpp.multiplex.compression.policy",
+        policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS,
                 Connection.CompressionPolicy.disabled.toString());
         compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
     }
@@ -331,7 +331,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
         tlsPolicy = policy;
-        JiveGlobals.setProperty("xmpp.multiplex.tls.policy", tlsPolicy.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Multiplex.TLS_POLICY, tlsPolicy.toString());
     }
 
     /**
@@ -350,7 +350,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
         compressionPolicy = policy;
-        JiveGlobals.setProperty("xmpp.multiplex.compression.policy", compressionPolicy.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS, compressionPolicy.toString());
     }
 
 }

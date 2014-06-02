@@ -321,7 +321,7 @@
 				<td width="99%">
 						<label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
 						 <input type="text" name="idletime" size="5" maxlength="5"
-							 onclick="this.form.closeEnabled[1].checked=true;"
+							 onclick="this.form.closeEnabled[0].checked=true;"
 							 value="<%= webManager.getSessionManager().getServerSessionIdleTime() == -1 ? 30 : webManager.getSessionManager().getServerSessionIdleTime() / 1000 / 60 %>">
 						 <fmt:message key="global.minutes" />.
 				</td>

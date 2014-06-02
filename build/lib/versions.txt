@@ -16,16 +16,25 @@ dom4j.jar                           | 1.6.1                                     
 concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5                         | Apache 2.0
 dbutil.jar                          | Jive Code, no release version.                               | GPL
 hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
-jetty-continuation.jar              | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-http.jar                      | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-io.jar                        | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-security.jar                  | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-server.jar                    | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-servlet.jar                   | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-util.jar                      | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-webapp.jar                    | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-websocket.jar                 | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
-jetty-xml.jar                       | Jetty 7.5.4.v20111024                                        | Apache 2.0, Eclipse 1.0
+jetty-continuation.jar              | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-http.jar                      | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-io.jar                        | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-security.jar                  | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-server.jar                    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-servlet.jar                   | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-util.jar                      | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-webapp.jar                    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-websocket.jar                 | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-xml.jar                       | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+spdy-client.jar                     | Jetty 9.1.5.v20140505 (see #3)                               | Apache 2.0, Eclipse 1.0
+spdy-core.jar                       | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+spdy-http.jar               	    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+spdy-http-common.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+spdy-server.jar                     | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+websocket-api.jar                   | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+websocket-common.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+websocket-server.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+websocket-servlet.jar               | Jetty 9.1.5.v20140505 					   | Apache 2.0, Eclipse 1.0
 jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)                                         |
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)                                         |
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1
@@ -64,7 +73,9 @@ xmltask.jar                         | 1.11                                      
 xpp3.jar                            | XPP_3 1.1.4c                                                 | BSD (http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt)
 
 
+
 Notes
 -----
 1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn
 2) mina-filter-ssl - applied patch to resize buffers OF-496 DIRMINA-914. Source code used: https://git-wip-us.apache.org/repos/asf?p=mina.git;a=commit;h=dd6395befe672d7bdb210b28b1b81592a3dc5e64
+3) npn-boot-1.1.7.v20140316.jar added to dist folder

@@ -22,7 +22,9 @@ package org.jivesoftware.openfire.http;
 
 import org.jivesoftware.util.JiveConstants;
 import org.eclipse.jetty.continuation.Continuation;
-import org.eclipse.jetty.util.log.Log;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.cert.X509Certificate;
 
@@ -34,7 +36,8 @@ import java.security.cert.X509Certificate;
  * @author Alexander Wenckus
  */
 public class HttpConnection {
-	
+
+    private static final Logger Log = LoggerFactory.getLogger(HttpConnection.class);
     private static final String RESPONSE_BODY = "response-body";
     private static final String CONNECTION_CLOSED = "connection closed";
 

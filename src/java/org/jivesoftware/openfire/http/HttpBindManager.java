@@ -27,19 +27,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -194,11 +199,13 @@ public final class HttpBindManager {
     private void createConnector(int port) {
         httpConnector = null;
         if (port > 0) {
-            SelectChannelConnector connector = new SelectChannelConnector();
+			HttpConfiguration httpConfig = new HttpConfiguration();
+			configureProxiedConnector(httpConfig);
+            ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
+
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
             connector.setPort(port);
-            configureProxiedConnector(connector);
             httpConnector = connector;
         }
     }
@@ -213,10 +220,10 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                final SslContextFactory sslContextFactory = new SslContextFactory(SSLConfig.getKeystoreLocation());
+                final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setTrustStorePassword(SSLConfig.getc2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
-                sslContextFactory.setTrustStore(SSLConfig.getc2sTruststoreLocation());
+                sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
                 sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
                 sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
 
@@ -232,11 +239,25 @@ public final class HttpBindManager {
                 	sslContextFactory.setNeedClientAuth(false);
                 	sslContextFactory.setWantClientAuth(false);
                 }
-                
-                final SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+
+ 				HttpConfiguration httpsConfig = new HttpConfiguration();
+				httpsConfig.setSecureScheme("https");
+				httpsConfig.setSecurePort(securePort);
+ 				configureProxiedConnector(httpsConfig);
+ 				httpsConfig.addCustomizer(new SecureRequestCustomizer());
+
+ 				ServerConnector sslConnector = null;
+
+				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+				{
+					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
+				} else {
+
+					sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"),
+																	   new HttpConnectionFactory(httpsConfig));
+				}
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
-                configureProxiedConnector(sslConnector);
                 httpsConnector = sslConnector;
             }
         }
@@ -244,34 +265,35 @@ public final class HttpBindManager {
             Log.error("Error creating SSL connector for Http bind", e);
         }
     }
-    
-    private void configureProxiedConnector(AbstractConnector connector) {
+
+    private void configureProxiedConnector(HttpConfiguration httpConfig) {
         // Check to see if we are deployed behind a proxy
         // Refer to http://docs.codehaus.org/display/JETTY/Configuring+Connectors
         if (isXFFEnabled()) {
-        	connector.setForwarded(true);
+        	ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
         	// default: "X-Forwarded-For"
         	String forwardedForHeader = getXFFHeader();
         	if (forwardedForHeader != null) {
-        		connector.setForwardedForHeader(forwardedForHeader);
+        		customizer.setForwardedForHeader(forwardedForHeader);
         	}
         	// default: "X-Forwarded-Server"
         	String forwardedServerHeader = getXFFServerHeader();
         	if (forwardedServerHeader != null) {
-        		connector.setForwardedServerHeader(forwardedServerHeader);
+        		customizer.setForwardedServerHeader(forwardedServerHeader);
         	}
         	// default: "X-Forwarded-Host"
         	String forwardedHostHeader = getXFFHostHeader();
         	if (forwardedHostHeader != null) {
-        		connector.setForwardedHostHeader(forwardedHostHeader);
+        		customizer.setForwardedHostHeader(forwardedHostHeader);
         	}
         	// default: none
         	String hostName = getXFFHostName();
         	if (hostName != null) {
-        		connector.setHostHeader(hostName);
+        		customizer.setHostHeader(hostName);
         	}
+
+        	httpConfig.addCustomizer(customizer);
         }
-        connector.setStatsOn(JMXManager.isEnabled());
    }
 
     private String getBindInterface() {
@@ -491,17 +513,15 @@ public final class HttpBindManager {
      * @param securePort the port to start the TLS (secure) HTTP Bind service on.
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
-        httpBindServer = new Server();
+        final QueuedThreadPool tp = new QueuedThreadPool(JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
+        tp.setName("Jetty-QTP-BOSH");
+
+        httpBindServer = new Server(tp);
         if (JMXManager.isEnabled()) {
         	JMXManager jmx = JMXManager.getInstance();
-        	httpBindServer.getContainer().addEventListener(jmx.getContainer());
         	httpBindServer.addBean(jmx.getContainer());
         }
-        final QueuedThreadPool tp = new QueuedThreadPool(
-        		JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
-        tp.setName("Jetty-QTP-BOSH");
-        httpBindServer.setThreadPool(tp);
-        
+
         createConnector(port);
         createSSLConnector(securePort);
         if (httpConnector == null && httpsConnector == null) {

@@ -173,9 +173,9 @@
     </orderEntry>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module-library">
-      <library name="servlet.jar">
+      <library name="servlet-api.jar">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../openfire/build/lib/dist/servlet.jar!/" />
+          <root url="jar://$MODULE_DIR$/../openfire/build/lib/dist/servlet-api.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

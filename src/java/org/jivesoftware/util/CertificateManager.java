@@ -223,10 +223,11 @@ public class CertificateManager {
      * Decide whether or not to trust the given supplied certificate chain, returning the
      * End Entity Certificate in this case where it can, and null otherwise.
      * A self-signed certificate will, for example, return null.
-     * For certain failures, we SHOULD generate an exception - revocations and the like.
+     * For certain failures, we SHOULD generate an exception - revocations and the like,
+     * but we currently do not.
      *
      * @param certChain an array of X509Certificate where the first one is the endEntityCertificate.
-     * @return a boolean indicating whether the endEntityCertificate should be trusted.
+     * @return trusted end-entity certificate, or null.
      */
     public static X509Certificate getEndEntityCertificate(Certificate chain[],
             KeyStore certStore, KeyStore trustStore) {
@@ -235,7 +236,7 @@ public class CertificateManager {
         }
         X509Certificate first = (X509Certificate) chain[0];
         if (chain.length == 1
-                && first.getSubjectDN().equals(first.getIssuerDN())) {
+                && first.getSubjectX500Principal().equals(first.getIssuerX500Principal())) {
             // Chain is single cert, and self-signed.
             try {
                 if (trustStore.getCertificateAlias(first) != null) {
@@ -243,7 +244,7 @@ public class CertificateManager {
                     return first;
                 }
             } catch (KeyStoreException e) {
-                // Ignore.
+                Log.warn("Keystore error while looking for self-signed cert; assuming untrusted.");
             }
             return null;
         }
@@ -299,7 +300,7 @@ public class CertificateManager {
                 ls.add((X509Certificate) chain[i]);
             }
             for (X509Certificate last = ls.get(ls.size() - 1); !last
-                    .getIssuerDN().equals(last.getSubjectDN()); last = ls
+                    .getIssuerX500Principal().equals(last.getSubjectX500Principal()); last = ls
                     .get(ls.size() - 1)) {
                 X509CertSelector sel = new X509CertSelector();
                 sel.setSubject(last.getIssuerX500Principal());
@@ -319,6 +320,7 @@ public class CertificateManager {
         } catch (CertPathValidatorException e) {
             Log.warn("Path validator: " + e.getMessage());
         } catch (Exception e) {
+            Log.warn("Unkown exception while validating certificate chain: " + e.getMessage());
         }
         return null;
     }

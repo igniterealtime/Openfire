@@ -182,37 +182,8 @@ public class SASLAuthentication {
         if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
             return "";
         }
-        StringBuilder sb = new StringBuilder(195);
-        sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        if (session instanceof IncomingServerSession) {
-            // Server connections don't follow the same rules as clients
-            if (session.isSecure()) {
-                boolean usingSelfSigned = true;
-
-                try {
-                    X509Certificate trusted = CertificateManager.getEndEntityCertificate(session.getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
-                    usingSelfSigned = trusted == null;
-                } catch (IOException ex) {
-                    Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Proceeding as if it is.", ex);
-                    usingSelfSigned = true;
-                }
-                
-                if (!usingSelfSigned) {
-                    // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer is not
-                    // using a self-signed certificate
-                    sb.append("<mechanism>EXTERNAL</mechanism>");
-                }
-            }
-        }
-        else {
-            for (String mech : getSupportedMechanisms()) {
-                sb.append("<mechanism>");
-                sb.append(mech);
-                sb.append("</mechanism>");
-            }
-        }
-        sb.append("</mechanisms>");
-        return sb.toString();
+        Element mechs = getSASLMechanismsElement(session);
+        return mechs.asXML();
     }
 
     public static Element getSASLMechanismsElement(Session session) {
@@ -230,7 +201,7 @@ public class SASLAuthentication {
                     X509Certificate trusted = CertificateManager.getEndEntityCertificate(((LocalSession)session).getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
                     usingSelfSigned = trusted == null;
                 } catch (IOException ex) {
-                    Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Proceeding as if it is.", ex);
+                    Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Treating as untrusted.", ex);
                     usingSelfSigned = true;
                 }
                 if (!usingSelfSigned) {

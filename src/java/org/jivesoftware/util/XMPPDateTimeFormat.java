@@ -158,7 +158,7 @@ public class XMPPDateTimeFormat {
      * CCYY-MM-DDThh:mm:ss.sssZ
      * 
      * @param date
-     * @return
+     * @return String
      */
     public static String format(Date date) {
         return FAST_FORMAT.format(date);
@@ -170,7 +170,7 @@ public class XMPPDateTimeFormat {
      * CCYYMMDDThh:mm:ss
      * 
      * @param date
-     * @return
+     * @return String
      */
     public static String formatOld(Date date) {
         return FAST_FORMAT_OLD.format(date);

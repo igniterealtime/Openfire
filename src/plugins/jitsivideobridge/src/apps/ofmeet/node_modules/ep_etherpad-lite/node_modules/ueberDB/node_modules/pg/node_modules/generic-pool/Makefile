@@ -1,4 +1,0 @@
-all:
-
-check:
-	npm test

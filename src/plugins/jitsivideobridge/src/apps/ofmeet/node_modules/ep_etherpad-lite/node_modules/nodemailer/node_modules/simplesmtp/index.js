@@ -1,8 +1,0 @@
-var packageData = require("./package.json");
-
-// expose the API to the world
-module.exports.createServer = require("./lib/server.js");
-module.exports.createSimpleServer = require("./lib/simpleserver.js");
-module.exports.connect = require("./lib/client.js");
-module.exports.createClientPool = require("./lib/pool.js");
-module.exports.version = packageData.version;

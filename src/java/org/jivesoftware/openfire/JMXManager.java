@@ -104,10 +104,8 @@ public class JMXManager {
 	}
 
 	private void start() {
-		
+
 		setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
-		getContainer().addBean(org.eclipse.jetty.util.log.Log.getLog());
-		
 		int jmxPort = JMXManager.getPort();
 		String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
 		Map<String, Object> env = new HashMap<String, Object>();

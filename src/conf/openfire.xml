@@ -33,4 +33,14 @@
         <interface></interface>
     </network>
     -->
+
+    <!-- SPDY  Protocol is npn. 
+    	(note: npn does not work with Java 8) 
+    	add -Xbootclasspath/p:/OPENFIRE_HOME/lib/npn-boot.jar to .vmoptions file    -->
+
+    <!--     
+    <spdy> 
+    	<protocol>npn</protocol> 
+    </spdy> 
+    -->
 </jive>

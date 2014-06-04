@@ -130,24 +130,29 @@ public class OfflineMessageStrategy extends BasicModule {
                 }
             }
 
-            if (type == Type.bounce) {
+            switch (type) {
+            case bounce:
                 bounce(message);
-            }
-            else if (type == Type.store) {
+                break;
+            case store:
                 store(message);
-            }
-            else if (type == Type.store_and_bounce) {
+                break;
+            case store_and_bounce:
                 if (underQuota(message)) {
                     store(message);
                 }
                 else {
                     bounce(message);
                 }
-            }
-            else if (type == Type.store_and_drop) {
+                break;
+            case store_and_drop:
                 if (underQuota(message)) {
                     store(message);
                 }
+                break;
+            case drop:
+                // Drop essentially means silently ignore/do nothing
+                break;
             }
         }
     }

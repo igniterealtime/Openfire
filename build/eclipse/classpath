@@ -38,7 +38,7 @@
 	<classpathentry kind="lib" path="build/lib/dist/mail.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/mysql.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/postgres.jar"/>
-	<classpathentry kind="lib" path="build/lib/dist/servlet.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/servlet-api.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/slf4j-log4j12.jar"/>
 	<classpathentry kind="lib" path="build/lib/i4jruntime.jar"/>
 	<classpathentry kind="lib" path="build/lib/jasper-compiler.jar"/>

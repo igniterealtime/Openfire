@@ -562,7 +562,7 @@ public class PluginServlet extends HttpServlet {
         File openfireRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
         File openfireLib = new File(openfireRoot, "target//lib");
 
-        classpath.append(openfireLib.getAbsolutePath()).append("//servlet.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//servlet-api.jar;");
         classpath.append(openfireLib.getAbsolutePath()).append("//openfire.jar;");
         classpath.append(openfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
         classpath.append(openfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");

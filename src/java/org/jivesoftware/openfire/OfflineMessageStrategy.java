@@ -117,12 +117,12 @@ public class OfflineMessageStrategy extends BasicModule {
                 // For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza
                 // or (b) return an error stanza to the sender, which SHOULD be <service-unavailable/>.
                 if (message.getType() == Message.Type.normal || message.getType() == Message.Type.groupchat || message.getType() == Message.Type.headline) {
+                    // Depending on the OfflineMessageStragey, we may silently ignore or bounce
                     if (type == Type.bounce) {
                         bounce(message);
-                        return;
-                    } else {
-                        return;
                     }
+                    // Either bounce or silently ignore, never store such messages
+                    return;
                 }
                 // For a message stanza of type "error", the server MUST silently ignore the stanza.
                 else if (message.getType() == Message.Type.error) {
@@ -130,24 +130,29 @@ public class OfflineMessageStrategy extends BasicModule {
                 }
             }
 
-            if (type == Type.bounce) {
+            switch (type) {
+            case bounce:
                 bounce(message);
-            }
-            else if (type == Type.store) {
+                break;
+            case store:
                 store(message);
-            }
-            else if (type == Type.store_and_bounce) {
+                break;
+            case store_and_bounce:
                 if (underQuota(message)) {
                     store(message);
                 }
                 else {
                     bounce(message);
                 }
-            }
-            else if (type == Type.store_and_drop) {
+                break;
+            case store_and_drop:
                 if (underQuota(message)) {
                     store(message);
                 }
+                break;
+            case drop:
+                // Drop essentially means silently ignore/do nothing
+                break;
             }
         }
     }

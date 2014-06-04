@@ -86,12 +86,7 @@ public class OfflineMessageStrategy extends BasicModule {
                     !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 return;
             }
-            // Do not store messages of type groupchat, error or headline as specified in JEP-160
-            if (Message.Type.groupchat == message.getType() ||
-                    Message.Type.error == message.getType() ||
-                    Message.Type.headline == message.getType()) {
-                return;
-            }
+
             // Do not store messages if communication is blocked
             PrivacyList list =
                     PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
@@ -101,6 +96,38 @@ public class OfflineMessageStrategy extends BasicModule {
                 result.setError(PacketError.Condition.service_unavailable);
                 XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), result, true);
                 return;
+            }
+
+            // 8.5.2.  localpart@domainpart
+            // 8.5.2.2.  No Available or Connected Resources
+            if (recipientJID.getResource() == null) {
+                if (message.getType() == Message.Type.headline || message.getType() == Message.Type.error) {
+                    // For a message stanza of type "headline" or "error", the server MUST silently ignore the message.
+                    return;
+                }
+                // // For a message stanza of type "groupchat", the server MUST return an error to the sender, which SHOULD be <service-unavailable/>.
+                else if (message.getType() == Message.Type.groupchat) {
+                    bounce(message);
+                    return;
+                }
+            } else {
+                // 8.5.3.  localpart@domainpart/resourcepart
+                // 8.5.3.2.1.  Message
+
+                // For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza
+                // or (b) return an error stanza to the sender, which SHOULD be <service-unavailable/>.
+                if (message.getType() == Message.Type.normal || message.getType() == Message.Type.groupchat || message.getType() == Message.Type.headline) {
+                    if (type == Type.bounce) {
+                        bounce(message);
+                        return;
+                    } else {
+                        return;
+                    }
+                }
+                // For a message stanza of type "error", the server MUST silently ignore the stanza.
+                else if (message.getType() == Message.Type.error) {
+                    return;
+                }
             }
 
             if (type == Type.bounce) {
@@ -168,8 +195,8 @@ public class OfflineMessageStrategy extends BasicModule {
         try {
             // Generate a rejection response to the sender
             Message errorResponse = message.createCopy();
-            errorResponse.setError(new PacketError(PacketError.Condition.item_not_found,
-                    PacketError.Type.continue_processing));
+            // return an error stanza to the sender, which SHOULD be <service-unavailable/>
+            errorResponse.setError(PacketError.Condition.service_unavailable);
             errorResponse.setFrom(message.getTo());
             errorResponse.setTo(message.getFrom());
             // Send the response

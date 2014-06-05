@@ -44,6 +44,7 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.CollectionCertStoreParameters;
@@ -235,6 +236,12 @@ public class CertificateManager {
             return null;
         }
         X509Certificate first = (X509Certificate) chain[0];
+        try {
+            first.checkValidity();
+        } catch(CertificateException e) {
+            Log.warn("EE Certificate not valid: " + e.getMessage());
+            return null;
+        }
         if (chain.length == 1
                 && first.getSubjectX500Principal().equals(first.getIssuerX500Principal())) {
             // Chain is single cert, and self-signed.

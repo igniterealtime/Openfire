@@ -196,15 +196,14 @@ public class SASLAuthentication {
         if (session instanceof IncomingServerSession) {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
-                boolean usingSelfSigned = true;
+                boolean haveTrustedCertificate = false;
                 try {
                     X509Certificate trusted = CertificateManager.getEndEntityCertificate(((LocalSession)session).getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
-                    usingSelfSigned = trusted == null;
+                    haveTrustedCertificate = trusted != null;
                 } catch (IOException ex) {
                     Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Treating as untrusted.", ex);
-                    usingSelfSigned = true;
                 }
-                if (!usingSelfSigned) {
+                if (haveTrustedCertificate) {
                     // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
                     Element mechanism = mechs.addElement("mechanism");
                     mechanism.setText("EXTERNAL");

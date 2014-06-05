@@ -3,8 +3,8 @@ Name                                |  Version                                  
 ant.jar                             | Jetty 6.1.0 (1.6.5)                                          | Apache 2.0
 ant-contrib.jar                     | 1.0b1                                                        | Apache 2.0
 ant-subdirtask.jar                  | Revision 1.4 (CVS)                                           |
-bcpg-jdk15on.jar                    | 1.50	                                                   | See http://www.bouncycastle.org/licence.html
-bcpkix-jdk15on.jar                  | 1.50	                                                   | See http://www.bouncycastle.org/licence.html
+bcpg-jdk15on.jar                    | 1.50                                                         | See http://www.bouncycastle.org/licence.html
+bcpkix-jdk15on.jar                  | 1.50                                                         | See http://www.bouncycastle.org/licence.html
 bcprov-jdk15on.jar                  | 1.50                                                         | See http://www.bouncycastle.org/licence.html
 cglib.jar                           | 2.1.3 (JMock 2.1.0)                                          |
 commons-lang.jar                    | 2.3                                                          | Apache 2.0
@@ -28,13 +28,13 @@ jetty-websocket.jar                 | Jetty 9.1.5.v20140505                     
 jetty-xml.jar                       | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 spdy-client.jar                     | Jetty 9.1.5.v20140505 (see #3)                               | Apache 2.0, Eclipse 1.0
 spdy-core.jar                       | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
-spdy-http.jar               	    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+spdy-http.jar                       | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 spdy-http-common.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 spdy-server.jar                     | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 websocket-api.jar                   | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 websocket-common.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 websocket-server.jar                | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
-websocket-servlet.jar               | Jetty 9.1.5.v20140505 					   | Apache 2.0, Eclipse 1.0
+websocket-servlet.jar               | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jasper-compiler.jar                 | Jetty 6.1.0 (5.5.15)                                         |
 jasper-runtime.jar                  | Jetty 6.1.0 (5.5.15)                                         |
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1
@@ -58,15 +58,15 @@ mina-filter-ssl.jar                 | 1.1.8-SNAPSHOT (see note #2)              
 mysql.jar                           | 5.1.30                                                       | GPL
 objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
 pack200task.jar                     | August 5, 2004                                               | LGPL
-postgres.jar                        | 9.3-1101.jdbc4                                                | BSD (http://jdbc.postgresql.org/license.html)
+postgres.jar                        | 9.3-1101.jdbc4                                               | BSD (http://jdbc.postgresql.org/license.html)
 proxool.jar                         | 0.9.0RC3+ (see note #1)                                      | Apache 1.1 (http://proxool.sourceforge.net/licence.html)
 rome.jar                            | 0.9                                                          | Apache 2.0
 rome-fetcher.jar                    | 0.9                                                          | Apache 2.0
 servlet-api.jar                     | 3.1 - from Jetty 9.1.5.v20140505                             |
 shaj.jar                            | 0.5                                                          | Apache 2.0
 sitemesh.jar                        | 2.2.1                                                        | Apache 1.1
-slf4j-api                           | 1.5.8                                                        | http://www.slf4j.org/license.html
-slf4j-log4j12                       | 1.5.8                                                        | http://www.slf4j.org/license.html
+slf4j-api                           | 1.7.7                                                        | http://www.slf4j.org/license.html
+slf4j-log4j12                       | 1.7.7                                                        | http://www.slf4j.org/license.html
 standard.jar                        | Jakarta standard taglib 1.1.2                                |
 tinder.jar                          | 1.3.0-SNAPSHOT (Bamboo nightly build 960, SVN revision 13509)| Apache 2.0
 xmltask.jar                         | 1.11                                                         | Apache 1.1

@@ -7,7 +7,15 @@ public final class ConnectionSettings {
 
     public static final class Client {
 
+        public static final String SOCKET_ACTIVE = "xmpp.socket.plain.active";
+        public static final String PORT = "xmpp.socket.plain.port";
+        public static final String IDLE_TIMEOUT = "xmpp.client.idle";
+        public static final String KEEP_ALIVE_PING = "xmpp.client.idle.ping";
+
         public static final String TLS_POLICY = "xmpp.client.tls.policy";
+        public static final String OLD_SSLPORT = "xmpp.socket.ssl.port";
+        public static final String ENABLE_OLD_SSLPORT = "xmpp.socket.ssl.active";
+        public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.client.cert.policy";
 
         public static final String COMPRESSION_SETTINGS = "xmpp.client.compression.policy";
         public static final String LOGIN_ALLOWED = "xmpp.client.login.allowed";
@@ -20,7 +28,8 @@ public final class ConnectionSettings {
     public static final class Server {
 
         public static final String SOCKET_ACTIVE = "xmpp.server.socket.active";
-        public static final String PORT = "xmpp.server.socket.remotePort";
+        public static final String PORT = "xmpp.server.socket.port";
+        public static final String REMOTE_SERVER_PORT = "xmpp.server.socket.remotePort";
         public static final String SOCKET_READ_TIMEOUT = "xmpp.server.read.timeout";
 
         public static final String QUEUE_MAX_THREADS = "xmpp.server.outgoing.max.threads";
@@ -43,10 +52,19 @@ public final class ConnectionSettings {
     }
 
     public static final class Multiplex {
+        public static final String SOCKET_ACTIVE = "xmpp.multiplex.socket.active";
+        public static final String PORT = "xmpp.multiplex.socket.port";
+
         public static final String TLS_POLICY = "xmpp.multiplex.tls.policy";
         public static final String COMPRESSION_SETTINGS = "xmpp.multiplex.compression.policy";
 
         private Multiplex() {
         }
+    }
+
+    public static final class Component {
+        public static final String SOCKET_ACTIVE = "xmpp.component.socket.active";
+        public static final String PORT = "xmpp.component.socket.port";
+
     }
 }

@@ -56,6 +56,7 @@ import org.eclipse.jetty.security.*;
 import org.eclipse.jetty.security.authentication.*;
 
 import org.dom4j.*;
+import org.jitsi.videobridge.xmpp.*;
 import org.jitsi.videobridge.*;
 import org.jitsi.impl.neomedia.*;
 import org.jitsi.impl.neomedia.format.*;
@@ -1518,7 +1519,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 						if (vbContent != null)
 						{
-							Channel videoChannel = vbContent.getChannel(participant.videoChannelId);
+							RtpChannel videoChannel = (RtpChannel) vbContent.getChannel(participant.videoChannelId);
 
 							if (videoChannel != null)
 							{
@@ -1536,7 +1537,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 						if (vbContent != null)
 						{
-							Channel audioChannel = vbContent.getChannel(participant.audioChannelId);
+							RtpChannel audioChannel = (RtpChannel) vbContent.getChannel(participant.audioChannelId);
 
 							if (audioChannel != null)
 							{

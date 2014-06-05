@@ -527,7 +527,6 @@ public class XMPPServer {
         loadModule(VCardManager.class.getName());
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
-        loadModule(IQSessionEstablishmentHandler.class.getName());
         loadModule(IQAuthHandler.class.getName());
         loadModule(IQPingHandler.class.getName());
         loadModule(IQPrivateHandler.class.getName());

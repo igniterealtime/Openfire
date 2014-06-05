@@ -171,9 +171,6 @@ public class HttpSession extends LocalClientSession {
                 new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));
         elements.add(bind);
 
-        Element session = DocumentHelper.createElement(new QName("session",
-                new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
-        elements.add(session);
         return elements;
     }
 

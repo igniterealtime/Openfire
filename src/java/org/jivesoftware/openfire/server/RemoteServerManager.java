@@ -299,13 +299,13 @@ public class RemoteServerManager {
      * @return the remote port to connect for the specified remote server.
      */
     public static int getPortForServer(String domain) {
-        int port = JiveGlobals.getIntProperty(ConnectionSettings.Server.PORT, ConnectionManager.DEFAULT_SERVER_PORT);
+        int port = JiveGlobals.getIntProperty(ConnectionSettings.Server.REMOTE_SERVER_PORT, ConnectionManager.DEFAULT_SERVER_PORT);
         RemoteServerConfiguration config = getConfiguration(domain);
         if (config != null) {
             port = config.getRemotePort();
             if (port == 0) {
                 port = JiveGlobals
-                        .getIntProperty(ConnectionSettings.Server.PORT, ConnectionManager.DEFAULT_SERVER_PORT);
+                        .getIntProperty(ConnectionSettings.Server.REMOTE_SERVER_PORT, ConnectionManager.DEFAULT_SERVER_PORT);
             }
         }
         return port;

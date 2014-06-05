@@ -31,6 +31,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -88,14 +89,16 @@
 			response.sendRedirect("client-connections-settings.jsp?success=true");
 			
 			if (!idleDisco) {
-            	JiveGlobals.setProperty("xmpp.client.idle", "-1");
+            	JiveGlobals.setProperty(ConnectionSettings.Client.IDLE_TIMEOUT, "-1");
 			} else {
-            	JiveGlobals.setProperty("xmpp.client.idle", String.valueOf(clientIdle));
+            	JiveGlobals.setProperty(ConnectionSettings.Client.IDLE_TIMEOUT, String.valueOf(clientIdle));
 			}
-            JiveGlobals.setProperty("xmpp.client.idle.ping", String.valueOf(pingIdleClients));
+            JiveGlobals.setProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, String.valueOf(pingIdleClients));
             // Log the events
-            webManager.logEvent("set server property xmpp.client.idle", "xmpp.client.idle = "+clientIdle);
-            webManager.logEvent("set server property xmpp.client.idle.ping", "xmpp.client.idle.ping = "+pingIdleClients);
+            webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT,
+                    ConnectionSettings.Client.IDLE_TIMEOUT + " = " + clientIdle);
+            webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING
+                    , ConnectionSettings.Client.KEEP_ALIVE_PING + " = " + pingIdleClients);
 
 			return;
         }
@@ -103,8 +106,8 @@
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();
-        clientIdle = JiveGlobals.getIntProperty("xmpp.client.idle", 6*60*1000);
-        pingIdleClients = JiveGlobals.getBooleanProperty("xmpp.client.idle.ping", true);
+        clientIdle = JiveGlobals.getIntProperty(ConnectionSettings.Client.IDLE_TIMEOUT, 6*60*1000);
+        pingIdleClients = JiveGlobals.getBooleanProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, true);
     }
 %>
 

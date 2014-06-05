@@ -101,8 +101,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         serversCache = CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME);
         routingTable = XMPPServer.getInstance().getRoutingTable();
         // Create a pool of threads that will process queued packets.
-        int maxThreads = JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_MAX_THREADS, 20);
-        int queueSize = JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50);
+        int maxThreads = ConnectionSettings.Server.QUEUE_MAX_THREADS.get();
+        int queueSize = ConnectionSettings.Server.QUEUE_SIZE.get();
         if (maxThreads < 10) {
             // Ensure that the max number of threads in the pool is at least 10
             maxThreads = 10;

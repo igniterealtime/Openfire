@@ -523,9 +523,7 @@ public class SASLAuthentication {
             // Check if certificate validation is disabled for s2s
             // Flag that indicates if certificates of the remote server should be validated.
             // Disabling certificate validation is not recommended for production environments.
-            boolean verify =
-                    JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true);
-            if (!verify) {
+            if (!ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY.get()) {
                 authenticationSuccessful(session, hostname, null);
                 return Status.authenticated;
             }

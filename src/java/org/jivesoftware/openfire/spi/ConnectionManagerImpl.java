@@ -468,10 +468,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                         new java.security.SecureRandom());
 
                 SSLFilter sslFilter = new SSLFilter(sslContext);
-                if (JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("needed")) {
+                if ("needed".equals(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY.get())) {
                     sslFilter.setNeedClientAuth(true);
                 }
-                else if(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("wanted")) {
+                else if("wanted".equals(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY.get())) {
                     sslFilter.setWantClientAuth(true);
                 }
                 sslSocketAcceptor.getFilterChain().addFirst("tls", sslFilter);
@@ -587,20 +587,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
         if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Client.SOCKET_ACTIVE, "true");
+            ConnectionSettings.Client.SOCKET_ACTIVE.set(true);
             // Start the port listener for clients
             createClientListeners();
             startClientListeners(localIPAddress);
         }
         else {
-            JiveGlobals.setProperty(ConnectionSettings.Client.SOCKET_ACTIVE, "false");
+            ConnectionSettings.Client.SOCKET_ACTIVE.set(false);
             // Stop the port listener for clients
             stopClientListeners();
         }
     }
 
     public boolean isClientListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.SOCKET_ACTIVE, true);
+        return ConnectionSettings.Client.SOCKET_ACTIVE.get();
     }
 
     public void enableClientSSLListener(boolean enabled) {
@@ -609,13 +609,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
         if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, "true");
+            ConnectionSettings.Client.ENABLE_OLD_SSLPORT.set(true);
             // Start the port listener for secured clients
             createClientSSLListeners();
             startClientSSLListeners(localIPAddress);
         }
         else {
-            JiveGlobals.setProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, "false");
+            ConnectionSettings.Client.ENABLE_OLD_SSLPORT.set(false);
             // Stop the port listener for secured clients
             stopClientSSLListeners();
         }
@@ -623,10 +623,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public boolean isClientSSLListenerEnabled() {
         try {
-            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getKeyStore().size() > 0;
-        } catch (KeyStoreException e) {
-            return false;
-        } catch (IOException e) {
+            return ConnectionSettings.Client.ENABLE_OLD_SSLPORT.get() && SSLConfig.getKeyStore().size() > 0;
+        } catch (KeyStoreException | IOException e) {
+            Log.warn("Exception on keystore occured: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -637,20 +636,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
         if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Component.SOCKET_ACTIVE, "true");
+            ConnectionSettings.Component.SOCKET_ACTIVE.set(true);
             // Start the port listener for external components
             createComponentListener();
             startComponentListener();
         }
         else {
-            JiveGlobals.setProperty(ConnectionSettings.Component.SOCKET_ACTIVE, "false");
+            ConnectionSettings.Component.SOCKET_ACTIVE.set(false);
             // Stop the port listener for external components
             stopComponentListener();
         }
     }
 
     public boolean isComponentListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Component.SOCKET_ACTIVE, false);
+        return ConnectionSettings.Component.SOCKET_ACTIVE.get();
     }
 
     public void enableServerListener(boolean enabled) {
@@ -659,20 +658,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
         if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Server.SOCKET_ACTIVE, "true");
+            ConnectionSettings.Server.SOCKET_ACTIVE.set(true);
             // Start the port listener for s2s communication
             createServerListener(localIPAddress);
             startServerListener();
         }
         else {
-            JiveGlobals.setProperty(ConnectionSettings.Server.SOCKET_ACTIVE, "false");
+            ConnectionSettings.Server.SOCKET_ACTIVE.set(false);
             // Stop the port listener for s2s communication
             stopServerListener();
         }
     }
 
     public boolean isServerListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true);
+        return ConnectionSettings.Server.SOCKET_ACTIVE.get();
     }
 
     public void enableConnectionManagerListener(boolean enabled) {
@@ -681,20 +680,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
         if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, "true");
+            ConnectionSettings.Multiplex.SOCKET_ACTIVE.set(true);
             // Start the port listener for s2s communication
             createConnectionManagerListener();
             startConnectionManagerListener(localIPAddress);
         }
         else {
-            JiveGlobals.setProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, "false");
+            ConnectionSettings.Multiplex.SOCKET_ACTIVE.set(false);
             // Stop the port listener for s2s communication
             stopConnectionManagerListener();
         }
     }
 
     public boolean isConnectionManagerListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, false);
+        return ConnectionSettings.Multiplex.SOCKET_ACTIVE.get();
     }
 
     public void setClientListenerPort(int port) {
@@ -702,7 +701,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Ignore new setting
             return;
         }
-        JiveGlobals.setProperty(ConnectionSettings.Client.PORT, String.valueOf(port));
+        ConnectionSettings.Client.PORT.set(port);
         // Stop the port listener for clients
         stopClientListeners();
         if (isClientListenerEnabled()) {
@@ -717,7 +716,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public int getClientListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.PORT, DEFAULT_PORT);
+        return ConnectionSettings.Client.PORT.get();
     }
 
     public SocketAcceptor getSSLSocketAcceptor() {
@@ -729,7 +728,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Ignore new setting
             return;
         }
-        JiveGlobals.setProperty(ConnectionSettings.Client.OLD_SSLPORT, String.valueOf(port));
+        ConnectionSettings.Client.OLD_SSLPORT.set(port);
         // Stop the port listener for secured clients
         stopClientSSLListeners();
         if (isClientSSLListenerEnabled()) {
@@ -740,7 +739,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public int getClientSSLListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.OLD_SSLPORT, DEFAULT_SSL_PORT);
+        return ConnectionSettings.Client.OLD_SSLPORT.get();
     }
 
     public void setComponentListenerPort(int port) {
@@ -748,7 +747,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Ignore new setting
             return;
         }
-        JiveGlobals.setProperty(ConnectionSettings.Component.PORT, String.valueOf(port));
+        ConnectionSettings.Component.PORT.set(port);
         // Stop the port listener for external components
         stopComponentListener();
         if (isComponentListenerEnabled()) {
@@ -763,7 +762,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public int getComponentListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Component.PORT, DEFAULT_COMPONENT_PORT);
+        return ConnectionSettings.Component.PORT.get();
     }
 
     public void setServerListenerPort(int port) {
@@ -771,7 +770,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Ignore new setting
             return;
         }
-        JiveGlobals.setProperty(ConnectionSettings.Server.PORT, String.valueOf(port));
+        ConnectionSettings.Server.PORT.set(port);
         // Stop the port listener for s2s communication
         stopServerListener();
         if (isServerListenerEnabled()) {
@@ -782,7 +781,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public int getServerListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Server.PORT, DEFAULT_SERVER_PORT);
+        return ConnectionSettings.Server.PORT.get();
     }
 
     public SocketAcceptor getMultiplexerSocketAcceptor() {
@@ -794,7 +793,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Ignore new setting
             return;
         }
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.PORT, String.valueOf(port));
+        ConnectionSettings.Multiplex.PORT.set(port);
         // Stop the port listener for connection managers
         stopConnectionManagerListener();
         if (isConnectionManagerListenerEnabled()) {
@@ -805,7 +804,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     public int getConnectionManagerListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Multiplex.PORT, DEFAULT_MULTIPLEX_PORT);
+        return ConnectionSettings.Multiplex.PORT.get();
     }
 
     // #####################################################################

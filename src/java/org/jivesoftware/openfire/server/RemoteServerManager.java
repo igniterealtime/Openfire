@@ -26,12 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -110,7 +108,7 @@ public class RemoteServerManager {
     public static boolean canAccess(String domain) {
         // If s2s is disabled then it is not possible to send packets to remote servers or
         // receive packets from remote servers
-        if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true)) {
+        if (!ConnectionSettings.Server.SOCKET_ACTIVE.get()) {
             return false;
         }
 
@@ -163,7 +161,7 @@ public class RemoteServerManager {
      *         data from a remote server.
      */
     public static int getSocketTimeout() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Server.SOCKET_READ_TIMEOUT, 120000);
+        return ConnectionSettings.Server.SOCKET_READ_TIMEOUT.get();
     }
 
     /**
@@ -299,16 +297,14 @@ public class RemoteServerManager {
      * @return the remote port to connect for the specified remote server.
      */
     public static int getPortForServer(String domain) {
-        int port = JiveGlobals.getIntProperty(ConnectionSettings.Server.REMOTE_SERVER_PORT, ConnectionManager.DEFAULT_SERVER_PORT);
         RemoteServerConfiguration config = getConfiguration(domain);
         if (config != null) {
-            port = config.getRemotePort();
-            if (port == 0) {
-                port = JiveGlobals
-                        .getIntProperty(ConnectionSettings.Server.REMOTE_SERVER_PORT, ConnectionManager.DEFAULT_SERVER_PORT);
+            final int port = config.getRemotePort();
+            if (port != 0) {
+                return port;
             }
         }
-        return port;
+        return ConnectionSettings.Server.REMOTE_SERVER_PORT.get();
     }
 
     /**
@@ -322,14 +318,7 @@ public class RemoteServerManager {
      *         connect to the server.
      */
     public static PermissionPolicy getPermissionPolicy() {
-        try {
-            return PermissionPolicy.valueOf(JiveGlobals.getProperty(ConnectionSettings.Server.PERMISSION_SETTINGS,
-                    PermissionPolicy.blacklist.toString()));
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-            return PermissionPolicy.blacklist;
-        }
+       return ConnectionSettings.Server.PERMISSION_SETTINGS.get();
     }
 
     /**
@@ -342,7 +331,7 @@ public class RemoteServerManager {
      * @param policy the new PermissionPolicy to use.
      */
     public static void setPermissionPolicy(PermissionPolicy policy) {
-        JiveGlobals.setProperty(ConnectionSettings.Server.PERMISSION_SETTINGS, policy.toString());
+        ConnectionSettings.Server.PERMISSION_SETTINGS.set(policy);
         // Check if the connected servers can remain connected to the server
         for (String hostname : SessionManager.getInstance().getIncomingServers()) {
             if (!canAccess(hostname)) {

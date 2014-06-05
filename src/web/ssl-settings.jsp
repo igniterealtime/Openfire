@@ -21,8 +21,7 @@
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.server.ServerDialback,
-                 org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.JiveGlobals"
+                 org.jivesoftware.openfire.session.LocalClientSession"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -86,15 +85,15 @@
 
             // Enable TLS and disable server dialback
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
+            ConnectionSettings.Server.TLS_ENABLED.set(true);
+            ConnectionSettings.Server.DIALBACK_ENABLED.set(false);
         } else if ("notreq".equals(serverSecurityRequired)) {
             // User selected that security for s2s is NOT required
 
             // Enable TLS and enable server dialback
             XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
+            ConnectionSettings.Server.TLS_ENABLED.set(true);
+            ConnectionSettings.Server.DIALBACK_ENABLED.set(true);
         } else if ("custom".equals(serverSecurityRequired)) {
             // User selected custom server authentication
 
@@ -105,24 +104,24 @@
                 XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
 
                 // Enable or disable server dialback
-                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, dialbackEnabled ? "true" : "false");
+                ConnectionSettings.Server.DIALBACK_ENABLED.set(dialbackEnabled);
 
                 // Enable or disable TLS for s2s connections
-                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, tlsEnabled ? "true" : "false");
+                ConnectionSettings.Server.TLS_ENABLED.set(tlsEnabled);
             } else {
                 XMPPServer.getInstance().getConnectionManager().enableServerListener(false);
                 // Disable server dialback
-                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
+                ConnectionSettings.Server.DIALBACK_ENABLED.set(false);
 
                 // Disable TLS for s2s connections
-                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "false");
+                ConnectionSettings.Server.TLS_ENABLED.set(false);
             }
         }
         ServerDialback.setEnabledForSelfSigned(selfSigned);
         success = true;
         // Log the event
-        webManager.logEvent("updated SSL configuration", ConnectionSettings.Server.DIALBACK_ENABLED + " = "+JiveGlobals.getProperty(ConnectionSettings.Server.DIALBACK_ENABLED)+
-                "\n"+ ConnectionSettings.Server.TLS_ENABLED+" = "+JiveGlobals.getProperty(ConnectionSettings.Server.TLS_ENABLED));
+        webManager.logEvent("updated SSL configuration", ConnectionSettings.Server.DIALBACK_ENABLED + " = "+ConnectionSettings.Server.DIALBACK_ENABLED.get()+
+                "\n"+ ConnectionSettings.Server.TLS_ENABLED+" = "+ConnectionSettings.Server.TLS_ENABLED.get());
     }
 
     // Set page vars
@@ -148,9 +147,8 @@
                 LocalClientSession.getTLSPolicy().toString();
     }
 
-    boolean tlsEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
-    boolean dialbackEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
-    if (tlsEnabled) {
+    final boolean dialbackEnabled = ConnectionSettings.Server.DIALBACK_ENABLED.get();
+    if (ConnectionSettings.Server.TLS_ENABLED.get()) {
         if (dialbackEnabled) {
             serverSecurityRequired = "notreq";
             dialback = "available";

@@ -89,11 +89,11 @@
 			response.sendRedirect("client-connections-settings.jsp?success=true");
 			
 			if (!idleDisco) {
-            	JiveGlobals.setProperty(ConnectionSettings.Client.IDLE_TIMEOUT, "-1");
+                ConnectionSettings.Client.IDLE_TIMEOUT.set(-1);
 			} else {
-            	JiveGlobals.setProperty(ConnectionSettings.Client.IDLE_TIMEOUT, String.valueOf(clientIdle));
+                ConnectionSettings.Client.IDLE_TIMEOUT.set(clientIdle);
 			}
-            JiveGlobals.setProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, String.valueOf(pingIdleClients));
+            ConnectionSettings.Client.KEEP_ALIVE_PING.set(pingIdleClients);
             // Log the events
             webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT,
                     ConnectionSettings.Client.IDLE_TIMEOUT + " = " + clientIdle);
@@ -106,8 +106,8 @@
         sslEnabled = connectionManager.isClientSSLListenerEnabled();
         port = connectionManager.getClientListenerPort();
         sslPort = connectionManager.getClientSSLListenerPort();
-        clientIdle = JiveGlobals.getIntProperty(ConnectionSettings.Client.IDLE_TIMEOUT, 6*60*1000);
-        pingIdleClients = JiveGlobals.getBooleanProperty(ConnectionSettings.Client.KEEP_ALIVE_PING, true);
+        clientIdle = ConnectionSettings.Client.IDLE_TIMEOUT.get();
+        pingIdleClients = ConnectionSettings.Client.KEEP_ALIVE_PING.get();
     }
 %>
 

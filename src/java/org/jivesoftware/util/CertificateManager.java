@@ -227,7 +227,9 @@ public class CertificateManager {
      * For certain failures, we SHOULD generate an exception - revocations and the like,
      * but we currently do not.
      *
-     * @param certChain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @param chain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @param certStore a keystore containing untrusted certificates (including ICAs, etc).
+     * @param trustStore a keystore containing Trust Anchors (most-trusted CA certificates).
      * @return trusted end-entity certificate, or null.
      */
     public static X509Certificate getEndEntityCertificate(Certificate chain[],
@@ -255,7 +257,7 @@ public class CertificateManager {
             }
             return null;
         }
-        ArrayList<Object> all_certs = new ArrayList<Object>();
+        final List<Certificate> all_certs = new ArrayList<Certificate>();
         try {
             // First, load up certStore contents into a CertStore.
             // It's a mystery why these objects are different.
@@ -278,7 +280,7 @@ public class CertificateManager {
                     all_certs.add(cert);
                 }
             }
-            // Finally, add all the certs in the chain except the first:
+            // Finally, add all the certs in the chain:
             for (int i = 0; i < chain.length; ++i) {
                 all_certs.add(chain[i]);
             }

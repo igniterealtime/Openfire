@@ -182,43 +182,8 @@ public class SASLAuthentication {
         if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
             return "";
         }
-        StringBuilder sb = new StringBuilder(195);
-        sb.append("<mechanisms xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        if (session instanceof IncomingServerSession) {
-            // Server connections don't follow the same rules as clients
-            if (session.isSecure()) {
-                boolean usingSelfSigned;
-                final Certificate[] chain = session.getConnection().getLocalCertificates();
-                if (chain == null || chain.length == 0) {
-                	usingSelfSigned = true;
-                } else {
-                	try {
-						usingSelfSigned = CertificateManager.isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) chain[0]);
-					} catch (KeyStoreException ex) {
-						Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
-						usingSelfSigned = true;
-					} catch (IOException ex) {
-						Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
-						usingSelfSigned = true;
-					}
-                }
-                
-                if (!usingSelfSigned) {
-                    // Offer SASL EXTERNAL only if TLS has already been negotiated and we are not
-                    // using a self-signed certificate
-                    sb.append("<mechanism>EXTERNAL</mechanism>");
-                }
-            }
-        }
-        else {
-            for (String mech : getSupportedMechanisms()) {
-                sb.append("<mechanism>");
-                sb.append(mech);
-                sb.append("</mechanism>");
-            }
-        }
-        sb.append("</mechanisms>");
-        return sb.toString();
+        Element mechs = getSASLMechanismsElement(session);
+        return mechs.asXML();
     }
 
     public static Element getSASLMechanismsElement(Session session) {
@@ -229,11 +194,20 @@ public class SASLAuthentication {
         Element mechs = DocumentHelper.createElement(new QName("mechanisms",
                 new Namespace("", "urn:ietf:params:xml:ns:xmpp-sasl")));
         if (session instanceof IncomingServerSession) {
-            // Server connections dont follow the same rules as clients
+            // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
-                // Offer SASL EXTERNAL only if TLS has already been negotiated
-                Element mechanism = mechs.addElement("mechanism");
-                mechanism.setText("EXTERNAL");
+                boolean haveTrustedCertificate = false;
+                try {
+                    X509Certificate trusted = CertificateManager.getEndEntityCertificate(((LocalSession)session).getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+                    haveTrustedCertificate = trusted != null;
+                } catch (IOException ex) {
+                    Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Treating as untrusted.", ex);
+                }
+                if (haveTrustedCertificate) {
+                    // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
+                    Element mechanism = mechs.addElement("mechanism");
+                    mechanism.setText("EXTERNAL");
+                }
             }
         }
         else {
@@ -546,7 +520,7 @@ public class SASLAuthentication {
             }
     
             hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
-            // Check if cerificate validation is disabled for s2s
+            // Check if certificate validation is disabled for s2s
             // Flag that indicates if certificates of the remote server should be validated.
             // Disabling certificate validation is not recommended for production environments.
             boolean verify =
@@ -557,19 +531,24 @@ public class SASLAuthentication {
             }
             // Check that hostname matches the one provided in a certificate
             Connection connection = session.getConnection();
-            
-            for (Certificate certificate : connection.getPeerCertificates()) {
-                for (String identity : CertificateManager.getPeerIdentities((X509Certificate) certificate)) {
-                    // Verify that either the identity is the same as the hostname, or for wildcarded
-                    // identities that the hostname ends with .domainspecified or -is- domainspecified.
-                    if ((identity.startsWith("*.")
-                         && (hostname.endsWith(identity.replace("*.", "."))
-                             || hostname.equals(identity.replace("*.", ""))))
-                            || hostname.equals(identity)) {
-                        authenticationSuccessful(session, hostname, null);
-                        return Status.authenticated;
+            try {
+                X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+
+                if (trusted != null) {
+                    for (String identity : CertificateManager.getPeerIdentities(trusted)) {
+                        // Verify that either the identity is the same as the hostname, or for wildcarded
+                        // identities that the hostname ends with .domainspecified or -is- domainspecified.
+                        if ((identity.startsWith("*.")
+                             && (hostname.endsWith(identity.replace("*.", "."))
+                                 || hostname.equals(identity.replace("*.", ""))))
+                                || hostname.equals(identity)) {
+                            authenticationSuccessful(session, hostname, null);
+                            return Status.authenticated;
+                        }
                     }
                 }
+            } catch(IOException e) {
+                /// Keystore problem.
             }
 
         }

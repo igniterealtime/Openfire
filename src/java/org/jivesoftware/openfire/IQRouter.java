@@ -120,8 +120,7 @@ public class IQRouter extends BasicModule {
                                     "urn:ietf:params:xml:ns:xmpp-bind"
                                             .equals(packet.getChildElement().getNamespaceURI())))) {
                 handle(packet);
-            }
-            else {
+            } else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_authorized);

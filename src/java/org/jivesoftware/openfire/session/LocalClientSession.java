@@ -674,9 +674,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return true if the offline messages of the user should be sent to the user when the user
      *         becomes online.
+     * @see <a href="http://www.xmpp.org/extensions/xep-0160.html">XEP-0160: Best Practices for Handling Offline Messages</a>
      */
     public boolean canFloodOfflineMessages() {
-        if(offlineFloodStopped) {
+        // XEP-0160: When the recipient next sends non-negative available presence to the server, the server delivers the message to the resource that has sent that presence.
+        if(offlineFloodStopped || presence.getPriority() < 0) {
             return false;
         }
         String username = getAddress().getNode();

@@ -208,7 +208,7 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
      * @param urlStr
      * @param method
      * @param feed
-     * @return
+     * @return SyndFeedInfo
      * @throws MalformedURLException
      */
     private SyndFeedInfo buildSyndFeedInfo(URL feedUrl, String urlStr, HttpMethod method, SyndFeed feed, int statusCode) throws MalformedURLException {
@@ -253,7 +253,7 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
     /**
 	 * @param urlStr
 	 * @param method
-	 * @return
+	 * @return SyndFeed or None
 	 * @throws IOException
 	 * @throws HttpException
 	 * @throws FetcherException

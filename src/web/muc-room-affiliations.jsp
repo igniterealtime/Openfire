@@ -82,22 +82,14 @@
                     userJID = username + rest.trim();
                 }
                 IQ iq = new IQ(IQ.Type.set);
-                if ("owner".equals(affiliation) || "admin".equals(affiliation)) {
-                    Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
-                    Element item = frag.addElement("item");
-                    item.addAttribute("affiliation", affiliation);
-                    item.addAttribute("jid", userJID);
-                    // Send the IQ packet that will modify the room's configuration
-                    room.getIQOwnerHandler().handleIQ(iq, room.getRole());
-                }
-                else if ("member".equals(affiliation) || "outcast".equals(affiliation)) {
-                    Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#admin");
-                    Element item = frag.addElement("item");
-                    item.addAttribute("affiliation", affiliation);
-                    item.addAttribute("jid", userJID);
-                    // Send the IQ packet that will modify the room's configuration
-                    room.getIQAdminHandler().handleIQ(iq, room.getRole());
-                }
+
+                Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#admin");
+                Element item = frag.addElement("item");
+                item.addAttribute("affiliation", affiliation);
+                item.addAttribute("jid", userJID);
+                // Send the IQ packet that will modify the room's configuration
+                room.getIQAdminHandler().handleIQ(iq, room.getRole());
+
                 // Log the event
                 webManager.logEvent("set MUC affilation to "+affiliation+" for "+userJID+" in "+roomName, null);
                 // done, return

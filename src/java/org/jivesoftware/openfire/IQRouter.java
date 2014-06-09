@@ -326,6 +326,16 @@ public class IQRouter extends BasicModule {
                 routingTable.routePacket(recipientJID, packet, false);
                 return;
             }
+
+            // RFC 6121 8.5.1.  No Such User http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser
+            // If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
+            // If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
+            if (recipientJID != null && recipientJID.getNode() != null && serverName.equals(recipientJID.getDomain()) && !userManager.isRegisteredUser(recipientJID.getNode()) && (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType())) {
+                // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
+                sendErrorPacket(packet, PacketError.Condition.service_unavailable);
+                return;
+            }
+
             if (isLocalServer(recipientJID)) {
                 // Let the server handle the Packet
                 Element childElement = packet.getChildElement();

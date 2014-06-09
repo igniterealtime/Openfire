@@ -117,7 +117,7 @@
         item.addAttribute("jid", userJID);
         try {
         // Send the IQ packet that will modify the room's configuration
-        room.getIQOwnerHandler().handleIQ(iq, room.getRole());
+        room.getIQAdminHandler().handleIQ(iq, room.getRole());
         // done, return
         response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;

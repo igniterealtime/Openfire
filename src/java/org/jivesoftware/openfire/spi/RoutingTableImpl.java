@@ -525,29 +525,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
-        if (sessions.isEmpty()) {
+        // Get the sessions with non-negative priority for message carbons processing.
+        List<ClientSession> nonNegativePrioritySessions = getNonNegativeSessions(sessions, 0);
+
+        // Get the highest priority sessions for normal processing.
+        List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
+
+        // Check for message carbons enabled sessions and send the message to them.
+        for (ClientSession session : nonNegativePrioritySessions) {
+            // Deliver to each session, if is message carbons enabled.
+            if (shouldCarbonCopyToResource(session, packet, isPrivate)) {
+                session.process(packet);
+            }
+        }
+
+        if (highestPrioritySessions.isEmpty()) {
             // No session is available so store offline
         	Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
             return false;
         }
-        else if (sessions.size() == 1) {
-            // Found only one session so deliver message
-            sessions.get(0).process(packet);
+        else if (highestPrioritySessions.size() == 1) {
+            // Found only one session so deliver message (if it hasn't already been processed because it has message carbons enabled)
+            if (!shouldCarbonCopyToResource(highestPrioritySessions.get(0), packet, isPrivate)) {
+                highestPrioritySessions.get(0).process(packet);
+            }
         }
         else {
-
-            // Check for message carbons enabled sessions and sent message to them.
-            for (ClientSession session : sessions) {
-                // Deliver to each session.
-                if (shouldSentToResource(session, packet, isPrivate)) {
-                    session.process(packet);
-                }
-            }
-
             // Many sessions have the highest priority (be smart now) :)
             if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
                 // Sort sessions by show value (e.g. away, xa)
-                Collections.sort(sessions, new Comparator<ClientSession>() {
+                Collections.sort(highestPrioritySessions, new Comparator<ClientSession>() {
 
                     public int compare(ClientSession o1, ClientSession o2) {
                         int thisVal = getShowValue(o1);
@@ -580,8 +587,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
                 // Get same sessions with same max show value
                 List<ClientSession> targets = new ArrayList<ClientSession>();
-                Presence.Show showFilter = sessions.get(0).getPresence().getShow();
-                for (ClientSession session : sessions) {
+                Presence.Show showFilter = highestPrioritySessions.get(0).getPresence().getShow();
+                for (ClientSession session : highestPrioritySessions) {
                     if (session.getPresence().getShow() == showFilter) {
                         targets.add(session);
                     }
@@ -599,17 +606,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
                 // Make sure, we don't send the packet again, if it has already been sent by message carbons.
                 ClientSession session = targets.get(0);
-                if (!shouldSentToResource(session, packet, isPrivate)) {
+                if (!shouldCarbonCopyToResource(session, packet, isPrivate)) {
                     // Deliver stanza to session with highest priority, highest show value and most recent activity
                     session.process(packet);
                 }
             }
             else {
-                // Deliver stanza to all connected resources with highest priority
-                sessions = getHighestPrioritySessions(sessions);
-                for (ClientSession session : sessions) {
+                for (ClientSession session : highestPrioritySessions) {
                     // Make sure, we don't send the packet again, if it has already been sent by message carbons.
-                    if (!shouldSentToResource(session, packet, isPrivate)) {
+                    if (!shouldCarbonCopyToResource(session, packet, isPrivate)) {
                         session.process(packet);
                     }
                 }
@@ -618,7 +623,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return true;
     }
 
-    private boolean shouldSentToResource(ClientSession session, Message message, boolean isPrivate) {
+    private boolean shouldCarbonCopyToResource(ClientSession session, Message message, boolean isPrivate) {
         return !isPrivate && session.isMessageCarbonsEnabled() && message.getType() == Message.Type.chat;
     }
 
@@ -638,14 +643,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 highest = priority;
             }
         }
-        // Answer an empty collection if all have negative priority
-        if (highest == Integer.MIN_VALUE) {
+        // Get sessions that have the highest priority
+        return getNonNegativeSessions(sessions, highest);
+    }
+
+    /**
+     * Gets the non-negative session from a minimal priority.
+     *
+     * @param sessions The sessions.
+     * @param min      The minimal priority.
+     * @return The filtered sessions.
+     */
+    private List<ClientSession> getNonNegativeSessions(List<ClientSession> sessions, int min) {
+        if (min < 0) {
             return Collections.emptyList();
         }
-        // Get sessions that have the highest priority
+        // Get sessions with priority >= min
         List<ClientSession> answer = new ArrayList<ClientSession>(sessions.size());
         for (ClientSession session : sessions) {
-            if (session.getPresence().getPriority() == highest) {
+            if (session.getPresence().getPriority() >= min) {
                 answer.add(session);
             }
         }

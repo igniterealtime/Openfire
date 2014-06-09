@@ -134,13 +134,15 @@ public class IQAdminHandler {
         // Check if the client is requesting or changing the list of moderators/members/etc.
         if (!hasJID && !hasNick) {
             // The client is requesting the list of moderators/members/participants/outcasts
+
+            // Create the result that will hold an item for each
+            // moderator/member/participant/outcast
+            Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#admin");
+
             for (Object anItem : itemsList) {
                 item = (Element) anItem;
                 affiliation = item.attributeValue("affiliation");
                 roleAttribute = item.attributeValue("role");
-                // Create the result that will hold an item for each
-                // moderator/member/participant/outcast
-                Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#admin");
 
                 Element metaData;
                 if ("outcast".equals(affiliation)) {

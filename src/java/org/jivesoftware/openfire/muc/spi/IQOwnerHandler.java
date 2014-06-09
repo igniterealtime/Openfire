@@ -130,23 +130,17 @@ public class IQOwnerHandler {
                 room.destroyRoom(alternateJID, destroyElement.elementTextTrim("reason"));
             }
             else {
-                List<Element> itemsList = element.elements("item");
-                if (!itemsList.isEmpty()) {
-                    handleItemsElement(itemsList, role, reply);
+                // If no element was included in the query element then answer the
+                // configuration form
+                if (!element.elementIterator().hasNext()) {
+                    refreshConfigurationFormValues();
+                    reply.setChildElement(probeResult.createCopy());
                 }
+                // An unknown and possibly incorrect element was included in the query
+                // element so answer a BAD_REQUEST error
                 else {
-                    // If no element was included in the query element then answer the
-                    // configuration form
-                    if (!element.elementIterator().hasNext()) {
-                        refreshConfigurationFormValues();
-                        reply.setChildElement(probeResult.createCopy());
-                    }
-                    // An unknown and possibly incorrect element was included in the query
-                    // element so answer a BAD_REQUEST error
-                    else {
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.bad_request);
-                    }
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.bad_request);
                 }
             }
         }
@@ -154,161 +148,6 @@ public class IQOwnerHandler {
             // Send a reply only if the sender of the original packet was from a real JID. (i.e. not
             // a packet generated locally)
             router.route(reply);
-        }
-    }
-
-    /**
-     * Handles packets that includes item elements. Depending on the item's attributes the
-     * interpretation of the request may differ. For example, an item that only contains the
-     * "affiliation" attribute is requesting the list of owners or admins. Whilst if the item
-     * contains the affiliation together with a jid means that the client is changing the
-     * affiliation of the requested jid.
-     *
-     * @param itemsList  the list of items sent by the client.
-     * @param senderRole the role of the user that sent the items.
-     * @param reply      the iq packet that will be sent back as a reply to the client's request.
-     * @throws ForbiddenException if the user does not have enough permissions.
-     * @throws ConflictException If the room was going to lose all of its owners.
-     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
-     */
-    private void handleItemsElement(List<Element> itemsList, MUCRole senderRole, IQ reply)
-            throws ForbiddenException, ConflictException, CannotBeInvitedException {
-        boolean hasJID = itemsList.get(0).attributeValue("jid") != null;
-        boolean hasNick = itemsList.get(0).attributeValue("nick") != null;
-        // Check if the client is requesting or changing the list of owners/admin
-        if (!hasJID && !hasNick) {
-            // The client is requesting the list of owners or admins
-            for (final Element item : itemsList) {
-                String affiliation = item.attributeValue("affiliation");
-                // Create the result that will hold an item for each owner or admin
-                Element result = reply.setChildElement("query", "http://jabber.org/protocol/muc#owner");
-
-                // muc#owner shouldn't be used as namespace for owner and admin
-                // listings according to the newest versions of XEP-0045
-                // this code remains here for backwards compatibility
-                if ("owner".equals(affiliation)) {
-                    // The client is requesting the list of owners
-                    Element ownerMetaData;
-                    MUCRole role;
-                    for (JID jid : room.getOwners()) {
-                        ownerMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
-                        ownerMetaData.addAttribute("affiliation", "owner");
-                        ownerMetaData.addAttribute("jid", jid.toString());
-                        // Add role and nick to the metadata if the user is in the room
-                        try {
-                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            role = roles.get(0);
-                            ownerMetaData.addAttribute("role", role.getRole().toString());
-                            ownerMetaData.addAttribute("nick", role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing
-                        }
-                    }
-                } else if ("admin".equals(affiliation)) {
-                    // The client is requesting the list of admins
-                    Element adminMetaData;
-                    MUCRole role;
-                    for (JID jid : room.getAdmins()) {
-                        adminMetaData = result.addElement("item", "http://jabber.org/protocol/muc#owner");
-                        adminMetaData.addAttribute("affiliation", "admin");
-                        adminMetaData.addAttribute("jid", jid.toString());
-                        // Add role and nick to the metadata if the user is in the room
-                        try {
-                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            role = roles.get(0);
-                            adminMetaData.addAttribute("role", role.getRole().toString());
-                            adminMetaData.addAttribute("nick", role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing
-                        }
-                    }
-                } else {
-                    reply.setError(PacketError.Condition.bad_request);
-                }
-            }
-        }
-        else {
-            // The client is modifying the list of owners or admins
-            Map<JID,String> jids = new HashMap<JID,String>();
-            String nick;
-            // Collect the new affiliations for the specified jids
-            for (final Element item : itemsList) {
-                try {
-                    String affiliation = item.attributeValue("affiliation");
-                    if (hasJID) {
-                        jids.put(new JID(item.attributeValue("jid")), affiliation);
-                    } else {
-                        // Get the bare JID based on the requested nick
-                        nick = item.attributeValue("nick");
-                        for (MUCRole role : room.getOccupantsByNickname(nick)) {
-                        	JID jid = role.getUserAddress();
-                        	if (!jids.containsKey(jid)) {
-                        		jids.put(jid, affiliation);
-                        	}
-                        }
-                    }
-                }
-                catch (UserNotFoundException e) {
-                    // Do nothing
-                }
-            }
-
-            // Keep a registry of the updated presences
-            List<Presence> presences = new ArrayList<Presence>(jids.size());
-
-            room.lock.readLock().lock();
-            try {
-                // Check if all the existing owners are being removed
-                if (jids.keySet().containsAll(room.owners)) {
-                    // Answer a conflict error if we are only removing ALL the owners
-                    if (!jids.containsValue("owner")) {
-                        throw new ConflictException();
-                    }
-                }
-
-                room.lock.readLock().unlock();
-                try {
-                    for (JID jid : jids.keySet()) {
-                        String targetAffiliation = jids.get(jid);
-                        // muc#owner shouldn't be used as namespace for owner and admin
-                        // changes according to the newest versions of XEP-0045
-                        // this code remains here for backwards compatibility
-                        if ("owner".equals(targetAffiliation)) {
-                            // Add the new user as an owner of the room
-                            presences.addAll(room.addOwner(jid, senderRole));
-                        } else if ("admin".equals(targetAffiliation)) {
-                            // Add the new user as an admin of the room
-                            presences.addAll(room.addAdmin(jid, senderRole));
-                        } else if ("member".equals(targetAffiliation)) {
-                            // Add the new user as a member of the room
-                            boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
-                            presences.addAll(room.addMember(jid, null, senderRole));
-                            // If the user had an affiliation don't send an invitation. Otherwise
-                            // send an invitation if the room is members-only and skipping invites
-                            // are not disabled system-wide xmpp.muc.skipInvite
-                            if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
-                                room.sendInvitation(jid, null, senderRole, null);
-                            }
-                        } else if ("none".equals(targetAffiliation)) {
-                            // Set that this jid has a NONE affiliation
-                            presences.addAll(room.addNone(jid, senderRole));
-                        }
-                    }
-                }
-                finally {
-                    room.lock.readLock().lock();
-                }
-            }
-            finally {
-                room.lock.readLock().unlock();
-            }
-
-            // Send the updated presences to the room occupants
-            for (Presence presence : presences) {
-                room.send(presence);
-            }
         }
     }
 

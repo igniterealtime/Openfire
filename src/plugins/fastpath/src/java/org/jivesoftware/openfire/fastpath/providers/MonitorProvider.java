@@ -107,7 +107,7 @@ public class MonitorProvider implements WorkgroupProvider {
                 iqPacket.setTo(roomName);
                 iqPacket.setFrom(workgroup.getFullJID());
 
-                Element query = iqPacket.setChildElement("query", "http://jabber.org/protocol/muc#owner");
+                Element query = iqPacket.setChildElement("query", "http://jabber.org/protocol/muc#admin");
                 Element item = query.addElement("item");
                 item.addAttribute("affiliation", "owner");
                 item.addAttribute("jid", packet.getFrom().toBareJID());

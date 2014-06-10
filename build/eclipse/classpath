@@ -31,7 +31,6 @@
 	<classpathentry kind="lib" path="build/lib/ant/ant-jive-edition.jar"/>
 	<classpathentry kind="lib" path="build/lib/cglib-nodep.jar"/>
 	<classpathentry kind="lib" path="build/lib/commons-el.jar"/>
-	<classpathentry kind="lib" path="build/lib/dist/activation.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/hsqldb.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/jdic.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/jtds.jar"/>

@@ -11,3 +11,6 @@ atlassian-ide-plugin.xml
 .settings
 .project
 .classpath
+
+# Ignore MacOSX files
+.DS_Store

@@ -528,6 +528,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get the sessions with non-negative priority for message carbons processing.
         List<ClientSession> nonNegativePrioritySessions = getNonNegativeSessions(sessions, 0);
 
+        if (nonNegativePrioritySessions.isEmpty()) {
+            // No session is available so store offline
+            Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
+            return false;
+        }
+
         // Get the highest priority sessions for normal processing.
         List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
 
@@ -539,12 +545,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
-        if (highestPrioritySessions.isEmpty()) {
-            // No session is available so store offline
-        	Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
-            return false;
-        }
-        else if (highestPrioritySessions.size() == 1) {
+        if (highestPrioritySessions.size() == 1) {
             // Found only one session so deliver message (if it hasn't already been processed because it has message carbons enabled)
             if (!shouldCarbonCopyToResource(highestPrioritySessions.get(0), packet, isPrivate)) {
                 highestPrioritySessions.get(0).process(packet);

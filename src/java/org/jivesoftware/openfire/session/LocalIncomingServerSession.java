@@ -368,7 +368,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         }
         
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
-            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
+            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
         }
         
         return sb.toString();

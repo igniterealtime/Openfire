@@ -528,29 +528,14 @@ public class SASLAuthentication {
             if (!verify) {
                 authenticationSuccessful(session, hostname, null);
                 return Status.authenticated;
-            }
-            // Check that hostname matches the one provided in a certificate
-            Connection connection = session.getConnection();
-            try {
-                X509Certificate trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
-
-                if (trusted != null) {
-                    for (String identity : CertificateManager.getPeerIdentities(trusted)) {
-                        // Verify that either the identity is the same as the hostname, or for wildcarded
-                        // identities that the hostname ends with .domainspecified or -is- domainspecified.
-                        if ((identity.startsWith("*.")
-                             && (hostname.endsWith(identity.replace("*.", "."))
-                                 || hostname.equals(identity.replace("*.", ""))))
-                                || hostname.equals(identity)) {
-                            authenticationSuccessful(session, hostname, null);
-                            return Status.authenticated;
-                        }
-                    }
+            } else if(verifyCertificates(session.getConnection().getPeerCertificates(), hostname)) {
+                authenticationSuccessful(session, hostname, null);
+                LocalIncomingServerSession s = (LocalIncomingServerSession)session;
+                if (s != null) {
+                    s.tlsAuth();
                 }
-            } catch(IOException e) {
-                /// Keystore problem.
+                return Status.authenticated;
             }
-
         }
         else if (session instanceof LocalClientSession) {
             // Client EXTERNALL login
@@ -616,6 +601,28 @@ public class SASLAuthentication {
         }
         authenticationFailed(session, Failure.NOT_AUTHORIZED);
         return Status.failed;
+    }
+
+    public static boolean verifyCertificates(Certificate[] chain, String hostname) {
+        try {
+            X509Certificate trusted = CertificateManager.getEndEntityCertificate(chain, SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+
+            if (trusted != null) {
+                for (String identity : CertificateManager.getPeerIdentities(trusted)) {
+                    // Verify that either the identity is the same as the hostname, or for wildcarded
+                    // identities that the hostname ends with .domainspecified or -is- domainspecified.
+                    if ((identity.startsWith("*.")
+                         && (hostname.endsWith(identity.replace("*.", "."))
+                             || hostname.equals(identity.replace("*.", ""))))
+                            || hostname.equals(identity)) {
+                        return true;
+                    }
+                }
+            }
+        } catch(IOException e) {
+            Log.warn("Keystore issue while verifying certificate chain: {}", e.getMessage());
+        }
+        return false;
     }
 
     private static Status doSharedSecretAuthentication(LocalSession session, Element doc)
@@ -686,6 +693,7 @@ public class SASLAuthentication {
             // Add the validated domain as a valid domain. The remote server can
             // now send packets from this address
             ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
+            Log.info("Inbound Server {} authenticated (via TLS)", username);
         }
     }
 

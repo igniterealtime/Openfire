@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -534,15 +535,23 @@ public class ServerDialback {
                 }
             }
             if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
-                // Remote server already has a IncomingServerSession created
-                connection.deliverRawText(
-                        new StreamError(StreamError.Condition.not_authorized).toXML());
-                // Close the underlying connection
-                connection.close();
+                dialbackError(recipient, hostname, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.cancel, "Incoming session already exists"));
                 Log.debug("ServerDialback: RS - Error, incoming connection already exists from: " + hostname);
                 return false;
             }
             else {
+                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname)) {
+                    // If the remote host passes strong auth, just skip the dialback.
+                    Log.debug("ServerDialback: RS - Sending key verification result to OS: " + hostname);
+                    sb = new StringBuilder();
+                    sb.append("<db:result");
+                    sb.append(" from=\"").append(recipient).append("\"");
+                    sb.append(" to=\"").append(hostname).append("\"");
+                    sb.append(" type=\"valid\"");
+                    sb.append("/>");
+                    connection.deliverRawText(sb.toString());
+                    return true;
+                }
                 String key = doc.getTextTrim();
 
                 // Get a list of real hostnames and try to connect using DNS lookup of the specified domain

@@ -44,6 +44,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration;
@@ -173,55 +174,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                         // Notify the SessionManager that a new session has been created
                         sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                         return true;
-                    } else {
-                        // Ensure that the hostname is not an IP address (i.e. contains chars)
-                        if (!pattern.matcher(hostname).find()) {
-                            return false;
-                        }
-                        // Check if hostname is a subdomain of an existing outgoing session
-                        for (String otherHost : sessionManager.getOutgoingServers()) {
-                            if (hostname.contains(otherHost)) {
-                                session = sessionManager.getOutgoingServerSession(otherHost);
-                                // Add the new hostname to the found session
-                                session.addHostname(hostname);
-                                return true;
-                            }
-                        }
-                        // Try to establish a connection to candidate hostnames. Iterate on the
-                        // substring after the . and try to establish a connection. If a
-                        // connection is established then the same session will be used for
-                        // sending packets to the "candidate hostname" as well as for the
-                        // requested hostname (i.e. the subdomain of the candidate hostname)
-                        // This trick is useful when remote servers haven't registered in their
-                        // DNSs an entry for their subdomains
-                        int index = hostname.indexOf('.');
-                        while (index > -1 && index < hostname.length()) {
-                            String newHostname = hostname.substring(index + 1);
-                            String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                            if ("com".equals(newHostname) || "net".equals(newHostname) ||
-                                    "org".equals(newHostname) ||
-                                    "gov".equals(newHostname) ||
-                                    "edu".equals(newHostname) ||
-                                    serverName.equals(newHostname)) {
-                                return false;
-                            }
-                            session = createOutgoingSession(domain, newHostname, port);
-                            if (session != null) {
-                                // Add the validated domain as an authenticated domain
-                                session.addAuthenticatedDomain(domain);
-                                // Add the new hostname to the list of names that the server may have
-                                session.addHostname(hostname);
-                                // Add the new hostname to the found session
-                                session.addHostname(newHostname);
-                                // Notify the SessionManager that a new session has been created
-                                sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
-                                return true;
-                            } else {
-                                index = hostname.indexOf('.', index + 1);
-                            }
-                        }
-                        return false;
                     }
+                } else {
+                    Log.warn("Fail to connect to {} for {}", hostname, domain);
+                    return false;
                 }
             }
             // A session already exists. The session was established using server dialback so
@@ -427,11 +383,25 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
             log.debug("Negotiating TLS...");
-            boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
-                    		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
-                    		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-            connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+            try {
+                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
+                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
+                        		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+                connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+            } catch(Exception e) {
+                log.debug("Got an exception whilst negotiating TLS: " + e.getMessage());
+                throw e;
+            }
             log.debug("TLS negotiation was successful.");
+            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname)) {
+                log.debug("X.509/PKIX failure on outbound session");
+                if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                    log.debug("Will continue with dialback.");
+                } else {
+                    log.warn("No TLS auth, but TLS auth required.");
+                    return null;
+                }
+            }
 
             // TLS negotiation was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
@@ -461,6 +431,10 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                             if ("zlib".equals(method.getTextTrim())) {
                                 zlibSupported = true;
                             }
+                        }
+                        if (zlibSupported) {
+                            log.debug("Suppressing request to perform compression; unsupported in this version.");
+                            zlibSupported = false;
                         }
                         if (zlibSupported) {
                             log.debug("Requesting stream compression (zlib).");
@@ -506,38 +480,32 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
 
                 // Bookkeeping: determine what functionality the remote server offers.
                 boolean saslEXTERNALoffered = false;
-                if (features.element("mechanisms") != null) {
-                    Iterator<Element> it = features.element("mechanisms").elementIterator();
-                    while (it.hasNext()) {
-                        Element mechanism = it.next();
-                        if ("EXTERNAL".equals(mechanism.getTextTrim())) {
-                        	saslEXTERNALoffered = true;
-                        	break;
+                if (features != null) {
+                    if (features.element("mechanisms") != null) {
+                        Iterator<Element> it = features.element("mechanisms").elementIterator();
+                        while (it.hasNext()) {
+                            Element mechanism = it.next();
+                            if ("EXTERNAL".equals(mechanism.getTextTrim())) {
+                            	saslEXTERNALoffered = true;
+                            	break;
+                            }
                         }
                     }
                 }
                 final boolean dialbackOffered = features.element("dialback") != null;
-                final boolean usesSelfSigned = connection.isUsingSelfSignedCertificate();
                 
                 log.debug("Offering dialback functionality: {}",dialbackOffered);
                 log.debug("Offering EXTERNAL SASL: {}", saslEXTERNALoffered);
-                log.debug("Is using a self-signed certificate: {}", usesSelfSigned);
                 
-                // Skip SASL EXTERNAL and use server dialback over TLS when using self-signed certificates
                 LocalOutgoingServerSession result = null;
-                if (usesSelfSigned) {
-                	log.debug("As remote server is using self-signed certificate, SASL EXTERNAL is skipped. Attempting dialback over TLS instead.");
-                	result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
-                } else {
-                	// first, try SASL
-                	if (saslEXTERNALoffered) {
-                		result = attemptSASLexternal(connection, xpp, reader, domain, hostname, id, openingStream);
-                	}
-                	if (result == null) {
-                		// SASL unavailable or failed, try dialback.
-                		result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
-                	}
-                }
+            	// first, try SASL
+            	if (saslEXTERNALoffered) {
+            		result = attemptSASLexternal(connection, xpp, reader, domain, hostname, id, openingStream);
+            	}
+            	if (result == null) {
+            		// SASL unavailable or failed, try dialback.
+            		result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
+            	}
                 
                 return result;
             }
@@ -585,9 +553,11 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             log.debug("EXTERNAL SASL was successful.");
             // SASL was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
-
+            
             // Reset the parser
-            xpp.resetInput();
+            //xpp.resetInput();
+            //             // Reset the parser to use the new secured reader
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), CHARSET));
             // Skip the opening stream sent by the server
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();

@@ -195,4 +195,11 @@ public interface Session extends RoutableChannelHandler {
      * @return true if the socket remains valid, false otherwise.
      */
     public boolean validate();
+    
+    /**
+     * Returns the TLS cipher suite name, if any.
+     * Always returns a valid string, though the string may be "NONE"
+     * @return cipher suite name.
+     */
+    public String getCipherSuiteName();
 }

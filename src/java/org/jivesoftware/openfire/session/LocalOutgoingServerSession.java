@@ -88,7 +88,7 @@ import com.jcraft.jzlib.ZInputStream;
  *
  * @author Gaston Dombiak
  */
-public class LocalOutgoingServerSession extends LocalSession implements OutgoingServerSession {
+public class LocalOutgoingServerSession extends LocalServerSession implements OutgoingServerSession {
 
 	private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
@@ -100,10 +100,6 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
     private Collection<String> authenticatedDomains = new HashSet<String>();
     private final Collection<String> hostnames = new HashSet<String>();
     private OutgoingServerSocketReader socketReader;
-    /**
-     * Flag that indicates if the session was created using server-dialback.
-     */
-    private boolean usingServerDialback = true;
 
     /**
      * Creates a new outgoing connection to the specified hostname if no one exists. The port of
@@ -708,9 +704,5 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
 	public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
-    }
-
-    public boolean isUsingServerDialback() {
-        return usingServerDialback;
     }
 }

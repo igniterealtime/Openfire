@@ -68,7 +68,7 @@ import org.xmpp.packet.Packet;
  *
  * @author Gaston Dombiak
  */
-public class LocalIncomingServerSession extends LocalSession implements IncomingServerSession {
+public class LocalIncomingServerSession extends LocalServerSession implements IncomingServerSession {
 	
 	private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
 
@@ -372,5 +372,9 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         }
         
         return sb.toString();
+    }
+    
+    public void tlsAuth() {
+        usingServerDialback = false;
     }
 }

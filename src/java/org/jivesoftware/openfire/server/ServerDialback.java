@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -663,7 +664,8 @@ public class ServerDialback {
             stream.append("<stream:stream");
             stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             stream.append(" xmlns=\"jabber:server\"");
-            stream.append(" xmlns:db=\"jabber:server:dialback\">");
+            stream.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.append(" version=\"1.0\">");
             writer.write(stream.toString());
             writer.flush();
 
@@ -671,6 +673,23 @@ public class ServerDialback {
             XmlPullParser xpp = reader.getXPPParser();
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
+            }
+            if (xpp.getAttributeValue("", "version").equals("1.0")) {
+                Document doc;
+                try {
+                    doc = reader.parseDocument();
+                } catch (DocumentException e) {
+                    // TODO Auto-generated catch block
+                    Log.warn("XML Error!", e);
+                    return VerifyResult.error;
+                }
+                Element features = doc.getRootElement();
+                Element starttls = features.element("starttls");
+                if (starttls != null) {
+                    if (starttls.element("required") != null) {
+                        Log.error("TLS required for db:verify but cannot yet do this.");
+                    }
+                }
             }
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
                 Log.debug("ServerDialback: RS - Asking AS to verify dialback key for id" + streamID);

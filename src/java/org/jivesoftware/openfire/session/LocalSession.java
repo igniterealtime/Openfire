@@ -21,6 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.SSLSession;
+
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -28,6 +30,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.TLSStreamHandler;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -386,5 +390,23 @@ public abstract class LocalSession implements Session {
      */
     public boolean isUsingSelfSignedCertificate() {
         return conn.isUsingSelfSignedCertificate();
+    }
+
+    /**
+     * Returns a String representing the Cipher Suite Name, or "NONE".
+     * @return String
+     */
+    public String getCipherSuiteName() {
+        SocketConnection s = (SocketConnection)getConnection();
+        if (s != null) {
+            TLSStreamHandler t = s.getTLSStreamHandler();
+            if (t != null) {
+                SSLSession ssl = t.getSSLSession();
+                if (ssl != null) {
+                    return ssl.getCipherSuite();
+                }
+            }
+        }
+        return "NONE";
     }
 }

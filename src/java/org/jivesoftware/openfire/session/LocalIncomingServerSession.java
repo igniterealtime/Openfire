@@ -68,7 +68,7 @@ import org.xmpp.packet.Packet;
  *
  * @author Gaston Dombiak
  */
-public class LocalIncomingServerSession extends LocalSession implements IncomingServerSession {
+public class LocalIncomingServerSession extends LocalServerSession implements IncomingServerSession {
 	
 	private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
 
@@ -368,9 +368,13 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
         }
         
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
-            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
+            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
         }
         
         return sb.toString();
+    }
+    
+    public void tlsAuth() {
+        usingServerDialback = false;
     }
 }

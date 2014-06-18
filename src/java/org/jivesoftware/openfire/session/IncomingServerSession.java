@@ -43,7 +43,7 @@ import java.util.Collection;
  *
  * @author Gaston Dombiak
  */
-public interface IncomingServerSession extends Session {
+public interface IncomingServerSession extends ServerSession {
 
     /**
      * Returns a collection with all the domains, subdomains and virtual hosts that where

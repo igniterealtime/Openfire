@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -64,14 +63,10 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
     static {
         // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.TLS_POLICY,
-                Connection.TLSPolicy.disabled.toString());
-        tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
+        tlsPolicy = ConnectionSettings.Multiplex.TLS_POLICY.get();
 
         // Set the Compression policy stored as a system property
-        policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS,
-                Connection.CompressionPolicy.disabled.toString());
-        compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+        compressionPolicy = ConnectionSettings.Multiplex.COMPRESSION_SETTINGS.get();
     }
 
     public static LocalConnectionMultiplexerSession createSession(String serverName, XmlPullParser xpp, Connection connection)
@@ -331,7 +326,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
         tlsPolicy = policy;
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.TLS_POLICY, tlsPolicy.toString());
+        ConnectionSettings.Multiplex.TLS_POLICY.set(policy);
     }
 
     /**
@@ -350,7 +345,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
         compressionPolicy = policy;
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS, compressionPolicy.toString());
+        ConnectionSettings.Multiplex.COMPRESSION_SETTINGS.set(policy);
     }
 
 }

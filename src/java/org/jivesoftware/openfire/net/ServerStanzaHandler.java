@@ -25,7 +25,6 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -109,9 +108,9 @@ public class ServerStanzaHandler extends StanzaHandler {
 	void startTLS() throws Exception {
         // TODO Finish implementation. We need to get the name of the remote server if we want to validate certificates of the remote server that requested TLS
 
-        boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
-                JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
-                !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+        boolean needed = ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY.get() &&
+                ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY.get() &&
+                !ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS.get();
         connection.startTLS(false, "IMPLEMENT_ME", needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
     }
     @Override

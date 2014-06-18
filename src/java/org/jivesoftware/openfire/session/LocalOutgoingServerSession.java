@@ -46,11 +46,9 @@ import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
-import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -255,12 +253,12 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             int port) {
 
         String localDomainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-        boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
-        RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
-        if (configuration != null) {
+        //boolean useTLS = ConnectionSettings.Server.TLS_ENABLED.get();
+        //RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
+        //if (configuration != null) {
             // TODO Use the specific TLS configuration for this remote server
             //useTLS = configuration.isTLSEnabled();
-        }
+        //}
 
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
         String realHostname = null;
@@ -340,7 +338,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
                 Element features = reader.parseDocument().getRootElement();
                 if (features != null) {
                     // Check if TLS is enabled
-                    if (useTLS && features.element("starttls") != null) {
+                    if (ConnectionSettings.Server.TLS_ENABLED.get() && features.element("starttls") != null) {
                         // Secure the connection with TLS and authenticate using SASL
                         LocalOutgoingServerSession answer;
                         answer = secureAndAuthenticate(hostname, connection, reader, openingStream,
@@ -427,9 +425,9 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
             log.debug("Negotiating TLS...");
-            boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
-                    		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
-                    		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+            boolean needed = ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY.get() &&
+                    		 ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY.get() &&
+                    		 !ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS.get();
             connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
             log.debug("TLS negotiation was successful.");
 
@@ -448,9 +446,7 @@ public class LocalOutgoingServerSession extends LocalSession implements Outgoing
             features = reader.parseDocument().getRootElement();
             if (features != null) {
                 // Check if we can use stream compression
-                String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString());
-                Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
-                if (Connection.CompressionPolicy.optional == compressionPolicy) {
+                if (Connection.CompressionPolicy.optional == ConnectionSettings.Server.COMPRESSION_SETTINGS.get()) {
                     // Verify if the remote server supports stream compression
                     Element compression = features.element("compression");
                     if (compression != null) {

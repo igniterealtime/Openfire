@@ -129,7 +129,7 @@ public class ServerDialback {
      * @return true if server dialback is enabled.
      */
     public static boolean isEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
+        return ConnectionSettings.Server.DIALBACK_ENABLED.get();
     }
 
     /**
@@ -144,7 +144,7 @@ public class ServerDialback {
      * certificate.
      */
     public static boolean isEnabledForSelfSigned() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+        return ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS.get();
     }
 
     /**
@@ -159,7 +159,7 @@ public class ServerDialback {
      * certificate.
      */
     public static void setEnabledForSelfSigned(boolean enabled) {
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, Boolean.toString(enabled));
+        ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS.set(enabled);
     }
 
     /**

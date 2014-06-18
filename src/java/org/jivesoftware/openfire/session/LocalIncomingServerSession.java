@@ -156,11 +156,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
             }
 
             // Indicate the compression policy to use for this connection
-            String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS,
-                    Connection.CompressionPolicy.disabled.toString());
-            Connection.CompressionPolicy compressionPolicy =
-                    Connection.CompressionPolicy.valueOf(policyName);
-            connection.setCompressionPolicy(compressionPolicy);
+            connection.setCompressionPolicy(ConnectionSettings.Server.COMPRESSION_SETTINGS.get());
 
             StringBuilder sb = new StringBuilder();
             
@@ -169,7 +165,7 @@ public class LocalIncomingServerSession extends LocalSession implements Incoming
             	// Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
                 sb.append("<stream:features>");
 
-	            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
+	            if (ConnectionSettings.Server.TLS_ENABLED.get()) {
 	                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
 	                if (!ServerDialback.isEnabled()) {
 	                    // Server dialback is disabled so TLS is required

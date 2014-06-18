@@ -20,7 +20,7 @@ users should:
 1. Create a forums account (only e-mail is a requirement, you can skip all the other fields).
 2. Login to a forum account
 3. Press New in your toolbar and choose Discussion
-4. Choose the [Openfire Dev forum](http://community.igniterealtime.org/community/developers/openfire) of Openfire and add the tag 'bug_report' to your new post
+4. Choose the [Openfire Dev forum](http://community.igniterealtime.org/community/developers/openfire_dev) of Openfire and add the tag 'bug_report' to your new post
 
 Please search for your issues in the bug tracker before reporting.
 

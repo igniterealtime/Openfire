@@ -946,7 +946,7 @@ function handleOffer (from, offer)
 
 				$(this).find('source').each(function() 
 				{	
-					var ssrc = $(this).attr('ssrc');
+					var ssrc = $(this).attr('ssrc');					
 
 					if (ssrc) 
 					{

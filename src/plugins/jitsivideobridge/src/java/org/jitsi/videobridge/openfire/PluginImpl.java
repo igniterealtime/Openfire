@@ -1519,7 +1519,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 						if (vbContent != null)
 						{
-							RtpChannel videoChannel = (RtpChannel) vbContent.getChannel(participant.videoChannelId);
+							Channel videoChannel = (Channel) vbContent.getChannel(participant.videoChannelId);
 
 							if (videoChannel != null)
 							{
@@ -1537,7 +1537,7 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 
 						if (vbContent != null)
 						{
-							RtpChannel audioChannel = (RtpChannel) vbContent.getChannel(participant.audioChannelId);
+							Channel audioChannel = (Channel) vbContent.getChannel(participant.audioChannelId);
 
 							if (audioChannel != null)
 							{

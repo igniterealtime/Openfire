@@ -214,10 +214,25 @@ public abstract class RTPConnectorInputStream
         if (pkt == null)
             pkt = new RawPacket();
 
-        pkt.setBuffer(datagramPacket.getData());
+        byte[] buffer = pkt.getBuffer();
+        int length = datagramPacket.getLength();
+        if (buffer == null || buffer.length < length)
+        {
+            buffer = new byte[length];
+            pkt.setBuffer(buffer);
+        }
+
+        System.arraycopy(
+                datagramPacket.getData(),
+                datagramPacket.getOffset(),
+                buffer,
+                0,
+                length);
+
+        pkt.setBuffer(buffer);
+        pkt.setOffset(0);
+        pkt.setLength(length);
         pkt.setFlags(0);
-        pkt.setLength(datagramPacket.getLength());
-        pkt.setOffset(datagramPacket.getOffset());
 
         pkts[0] = pkt;
         return pkts;

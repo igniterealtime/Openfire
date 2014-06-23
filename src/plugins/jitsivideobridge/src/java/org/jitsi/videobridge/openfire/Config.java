@@ -46,6 +46,8 @@ public class Config extends HttpServlet
 
 			String iceServers = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
 			String resolution = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "720");
+			String audioBandwidth = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64");
+			String videoBandwidth = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512");
 			String useNicks = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
 			String useIPv6 = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
 			String recordVideo = JiveGlobals.getProperty("org.jitsi.videobridge.media.record", "true");
@@ -63,6 +65,8 @@ public class Config extends HttpServlet
 			out.println("    useWebsockets: " + (websockets ? "true" : "false") + ",");
 			out.println("    useNodeJs: " + (nodejs ? "true" : "false") + ",");
 			out.println("    resolution: '" + resolution + "',");
+			out.println("    audioBandwidth: '" + audioBandwidth + "',");
+			out.println("    videoBandwidth: '" + videoBandwidth + "',");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");
 

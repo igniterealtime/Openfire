@@ -104,7 +104,12 @@
         
 	String resolution = request.getParameter("resolution"); 	
         JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.resolution", resolution);                 
+
+	String audiobandwidth = request.getParameter("audiobandwidth"); 	
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", audiobandwidth);   
         
+	String videobandwidth = request.getParameter("videobandwidth"); 	
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", videobandwidth);         
     }
 
 %>
@@ -170,6 +175,22 @@
 		</td>
 		<td><input type="text" size="10" maxlength="100" name="resolution"
 			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "720") %>">
+		</td>
+	    </tr>
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.ofmeet.audio.bandwidth"/>
+		</td>
+		<td><input type="text" size="10" maxlength="100" name="audiobandwidth"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64") %>">
+		</td>
+	    </tr>
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.ofmeet.video.bandwidth"/>
+		</td>
+		<td><input type="text" size="10" maxlength="100" name="videobandwidth"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512") %>">
 		</td>
 	    </tr>	    
             </tbody>

@@ -35,10 +35,23 @@ import java.util.Collection;
 public class RemoteIncomingServerSession extends RemoteSession implements IncomingServerSession {
 
     private String localDomain;
+    private long usingServerDialback = -1;
 
     public RemoteIncomingServerSession(byte[] nodeID, String streamID) {
         super(nodeID, null);
         this.streamID = new BasicStreamID(streamID);
+    }
+
+    public String getCipherSuiteName() {
+        return "NONE";
+    }
+
+    public boolean isUsingServerDialback() {
+        if (usingServerDialback == -1) {
+            ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isUsingServerDialback);
+            usingServerDialback = (Boolean) doSynchronousClusterTask(task) ? 1 : 0;
+        }
+        return usingServerDialback == 1;
     }
 
     public JID getAddress() {

@@ -674,7 +674,8 @@ public class ServerDialback {
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
             }
-            if (xpp.getAttributeValue("", "version").equals("1.0")) {
+            if ((xpp.getAttributeValue("", "version") != null) &&
+                (xpp.getAttributeValue("", "version").equals("1.0"))) {
                 Document doc;
                 try {
                     doc = reader.parseDocument();

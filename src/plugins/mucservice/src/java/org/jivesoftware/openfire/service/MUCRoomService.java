@@ -21,7 +21,6 @@ import org.jivesoftware.openfire.plugin.MUCRoomController;
 public class MUCRoomService {
 
 	@GET
-	@Path("/")
 	@Produces(MediaType.APPLICATION_XML)
 	public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
@@ -45,7 +44,6 @@ public class MUCRoomService {
 	}
 
 	@POST
-	@Path("/")
 	public void createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {

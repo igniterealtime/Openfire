@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.jivesoftware.openfire.entity.MUCRoomEntity;
 import org.jivesoftware.openfire.exception.MUCServiceException;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.xmpp.packet.JID;
 
 /**
  * The Class MUCRoomController.
@@ -119,7 +121,8 @@ public class MUCRoomController {
 	 * @throws MUCServiceException
 	 *             the mUC service exception
 	 */
-	public void createChatRoom(String serviceName, String owner, MUCRoomEntity mucRoomEntity) throws MUCServiceException {
+	public void createChatRoom(String serviceName, String owner, MUCRoomEntity mucRoomEntity)
+			throws MUCServiceException {
 		try {
 			createRoom(mucRoomEntity, serviceName, owner);
 		} catch (NotAllowedException e) {
@@ -147,13 +150,14 @@ public class MUCRoomController {
 		try {
 			// If the room name is different throw exception
 			if (!roomName.equals(mucRoomEntity.getRoomName())) {
-				throw new MUCServiceException("Could not update the channel. The room name is different to the entity room name.", roomName,
+				throw new MUCServiceException(
+						"Could not update the channel. The room name is different to the entity room name.", roomName,
 						"IllegalArgumentException");
 			}
-			
-//			Set modification date
+
+			// Set modification date
 			mucRoomEntity.setModificationDate(new Date());
-			
+
 			createRoom(mucRoomEntity, serviceName, owner);
 		} catch (NotAllowedException e) {
 			throw new MUCServiceException("Could not update the channel", roomName, "NotAllowedException");
@@ -176,7 +180,7 @@ public class MUCRoomController {
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(mucRoomEntity.getRoomName(), XMPPServer.getInstance().createJID(owner, null));
 
-//		Set values
+		// Set values
 		room.setNaturalLanguageName(mucRoomEntity.getNaturalName());
 		room.setSubject(mucRoomEntity.getSubject());
 		room.setDescription(mucRoomEntity.getDescription());
@@ -195,11 +199,10 @@ public class MUCRoomController {
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
 
-//		Set room presence broadcast
 		room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
-		
-//		Set creation date
-		if(mucRoomEntity.getCreationDate() != null) {
+
+		// Set creation date
+		if (mucRoomEntity.getCreationDate() != null) {
 			room.setCreationDate(mucRoomEntity.getCreationDate());
 		} else {
 			room.setCreationDate(new Date());
@@ -216,7 +219,7 @@ public class MUCRoomController {
 	public MUCRoomEntity convertToMUCRoomEntity(MUCRoom room) {
 		MUCRoomEntity mucRoomEntity = new MUCRoomEntity(room.getNaturalLanguageName(), room.getName(),
 				room.getDescription());
-		
+
 		mucRoomEntity.setCanAnyoneDiscoverJID(room.canAnyoneDiscoverJID());
 		mucRoomEntity.setCanChangeNickname(room.canChangeNickname());
 		mucRoomEntity.setCanOccupantsChangeSubject(room.canOccupantsChangeSubject());
@@ -232,11 +235,25 @@ public class MUCRoomController {
 		mucRoomEntity.setMembersOnly(room.isMembersOnly());
 		mucRoomEntity.setModerated(room.isModerated());
 
-		mucRoomEntity.setCreationDate(room.getCreationDate());
-		mucRoomEntity.setModificationDate(room.getModificationDate());
+		mucRoomEntity.setOwners(convertJIDsToStringList(room.getOwners()));
+		mucRoomEntity.setAdmins(convertJIDsToStringList(room.getAdmins()));
+		mucRoomEntity.setMembers(convertJIDsToStringList(room.getMembers()));
+		mucRoomEntity.setOutcasts(convertJIDsToStringList(room.getOutcasts()));
 
 		mucRoomEntity.setBroadcastPresenceRoles(room.getRolesToBroadcastPresence());
 
+		mucRoomEntity.setCreationDate(room.getCreationDate());
+		mucRoomEntity.setModificationDate(room.getModificationDate());
+
 		return mucRoomEntity;
 	}
- }
+
+	private ArrayList<String> convertJIDsToStringList(Collection<JID> collection) {
+		ArrayList<String> result = new ArrayList<String>();
+
+		for (JID jid : collection) {
+			result.add(jid.toBareJID());
+		}
+		return result;
+	}
+}

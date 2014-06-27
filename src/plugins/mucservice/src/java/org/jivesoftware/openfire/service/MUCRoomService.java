@@ -17,11 +17,11 @@ import org.jivesoftware.openfire.entity.MUCRoomEntity;
 import org.jivesoftware.openfire.exception.MUCServiceException;
 import org.jivesoftware.openfire.plugin.MUCRoomController;
 
-@Path("mucservice")
+@Path("mucservice/chatrooms")
 public class MUCRoomService {
 
 	@GET
-	@Path("/chatrooms")
+	@Path("/")
 	@Produces(MediaType.APPLICATION_XML)
 	public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
@@ -30,7 +30,7 @@ public class MUCRoomService {
 	}
 
 	@GET
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	@Produces(MediaType.APPLICATION_XML)
 	public MUCRoomEntity getMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
@@ -38,14 +38,14 @@ public class MUCRoomService {
 	}
 
 	@DELETE
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	public void deleteMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
 		MUCRoomController.getInstance().deleteChatRoom(roomName, serviceName);
 	}
 
 	@POST
-	@Path("/chatrooms")
+	@Path("/")
 	public void createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
@@ -53,12 +53,11 @@ public class MUCRoomService {
 	}
 
 	@PUT
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	public void udpateMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
 		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, owner, mucRoomEntity);
 	}
-
 }

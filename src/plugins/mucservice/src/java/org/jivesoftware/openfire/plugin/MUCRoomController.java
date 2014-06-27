@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -71,7 +72,7 @@ public class MUCRoomController {
 	 *            the service name
 	 * @return the chat room
 	 * @throws MUCServiceException
-	 *             the mUC service exception
+	 *             the MUC service exception
 	 */
 	public MUCRoomEntity getChatRoom(String roomName, String serviceName) throws MUCServiceException {
 		MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
@@ -93,7 +94,7 @@ public class MUCRoomController {
 	 * @param serviceName
 	 *            the service name
 	 * @throws MUCServiceException
-	 *             the mUC service exception
+	 *             the MUC service exception
 	 */
 	public void deleteChatRoom(String roomName, String serviceName) throws MUCServiceException {
 		MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
@@ -114,7 +115,7 @@ public class MUCRoomController {
 	 * @param owner
 	 *            the owner
 	 * @param mucRoomEntity
-	 *            the muc room entity
+	 *            the MUC room entity
 	 * @throws MUCServiceException
 	 *             the mUC service exception
 	 */
@@ -137,18 +138,22 @@ public class MUCRoomController {
 	 * @param owner
 	 *            the owner
 	 * @param mucRoomEntity
-	 *            the muc room entity
+	 *            the MUC room entity
 	 * @throws MUCServiceException
 	 *             the mUC service exception
 	 */
 	public void updateChatRoom(String roomName, String serviceName, String owner, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
 		try {
-			// If the roomname is different throw exception
+			// If the room name is different throw exception
 			if (!roomName.equals(mucRoomEntity.getRoomName())) {
-				throw new MUCServiceException("Could not update the channel", roomName,
-						"The roomname is different to the entity room name");
+				throw new MUCServiceException("Could not update the channel. The room name is different to the entity room name.", roomName,
+						"IllegalArgumentException");
 			}
+			
+//			Set modification date
+			mucRoomEntity.setModificationDate(new Date());
+			
 			createRoom(mucRoomEntity, serviceName, owner);
 		} catch (NotAllowedException e) {
 			throw new MUCServiceException("Could not update the channel", roomName, "NotAllowedException");
@@ -159,7 +164,7 @@ public class MUCRoomController {
 	 * Creates the room.
 	 * 
 	 * @param mucRoomEntity
-	 *            the muc room entity
+	 *            the MUC room entity
 	 * @param serviceName
 	 *            the service name
 	 * @param owner
@@ -171,6 +176,7 @@ public class MUCRoomController {
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(mucRoomEntity.getRoomName(), XMPPServer.getInstance().createJID(owner, null));
 
+//		Set values
 		room.setNaturalLanguageName(mucRoomEntity.getNaturalName());
 		room.setSubject(mucRoomEntity.getSubject());
 		room.setDescription(mucRoomEntity.getDescription());
@@ -182,7 +188,6 @@ public class MUCRoomController {
 		room.setCanOccupantsChangeSubject(mucRoomEntity.isCanOccupantsChangeSubject());
 		room.setCanOccupantsInvite(mucRoomEntity.isCanOccupantsInvite());
 		room.setChangeNickname(mucRoomEntity.isCanChangeNickname());
-		room.setCreationDate(mucRoomEntity.getCreationDate());
 		room.setModificationDate(mucRoomEntity.getModificationDate());
 		room.setLogEnabled(mucRoomEntity.isLogEnabled());
 		room.setLoginRestrictedToNickname(mucRoomEntity.isLoginRestrictedToNickname());
@@ -190,19 +195,28 @@ public class MUCRoomController {
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
 
+//		Set room presence broadcast
 		room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
+		
+//		Set creation date
+		if(mucRoomEntity.getCreationDate() != null) {
+			room.setCreationDate(mucRoomEntity.getCreationDate());
+		} else {
+			room.setCreationDate(new Date());
+		}
 	}
 
 	/**
-	 * Convert to muc room entity.
+	 * Convert to MUC room entity.
 	 * 
 	 * @param room
 	 *            the room
-	 * @return the mUC room entity
+	 * @return the MUC room entity
 	 */
 	public MUCRoomEntity convertToMUCRoomEntity(MUCRoom room) {
 		MUCRoomEntity mucRoomEntity = new MUCRoomEntity(room.getNaturalLanguageName(), room.getName(),
 				room.getDescription());
+		
 		mucRoomEntity.setCanAnyoneDiscoverJID(room.canAnyoneDiscoverJID());
 		mucRoomEntity.setCanChangeNickname(room.canChangeNickname());
 		mucRoomEntity.setCanOccupantsChangeSubject(room.canOccupantsChangeSubject());
@@ -225,5 +239,4 @@ public class MUCRoomController {
 
 		return mucRoomEntity;
 	}
-
-}
+ }

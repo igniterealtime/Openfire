@@ -172,7 +172,7 @@
     <input type="radio" name="startdelay" value="60" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1hour" /><br />
     <input type="radio" name="startdelay" value="1440" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1day" /><br />
     <input type="radio" name="startdelay" value="10080" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1week" /><br />
-    <input type="radio" name="startdelay" value="-2" /> <fmt:message key="user.lockout.time.in" /> <input type="text" size="5" maxlength="10" name="starydelay_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
+    <input type="radio" name="startdelay" value="-2" /> <fmt:message key="user.lockout.time.in" /> <input type="text" size="5" maxlength="10" name="startdelay_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
     <br />
     <% } %>
     <% if (LockOutManager.getLockOutProvider().isTimeoutSupported()) { %>

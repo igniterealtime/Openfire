@@ -9,13 +9,17 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.entity.MUCChannelType;
 import org.jivesoftware.openfire.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.entity.MUCRoomEntity;
+import org.jivesoftware.openfire.entity.ParticipantEntities;
+import org.jivesoftware.openfire.entity.ParticipantEntity;
 import org.jivesoftware.openfire.exception.MUCServiceException;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.xmpp.packet.JID;
 
+// TODO: Auto-generated Javadoc
 /**
  * The Class MUCRoomController.
  */
@@ -178,7 +182,7 @@ public class MUCRoomController {
 
 	/**
 	 * Creates the room.
-	 * 
+	 *
 	 * @param mucRoomEntity
 	 *            the MUC room entity
 	 * @param serviceName
@@ -187,10 +191,13 @@ public class MUCRoomController {
 	 *            the owner
 	 * @throws NotAllowedException
 	 *             the not allowed exception
-	 * @throws ConflictException 
-	 * @throws ForbiddenException 
+	 * @throws ForbiddenException
+	 *             the forbidden exception
+	 * @throws ConflictException
+	 *             the conflict exception
 	 */
-	public void createRoom(MUCRoomEntity mucRoomEntity, String serviceName, String owner) throws NotAllowedException, ForbiddenException, ConflictException {
+	public void createRoom(MUCRoomEntity mucRoomEntity, String serviceName, String owner) throws NotAllowedException,
+			ForbiddenException, ConflictException {
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(mucRoomEntity.getRoomName(), XMPPServer.getInstance().createJID(owner, null));
 
@@ -214,16 +221,16 @@ public class MUCRoomController {
 		room.setModerated(mucRoomEntity.isModerated());
 
 		room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
-		
+
 		// Set all roles
 		room.addAdmins(convertStringsToJIDs(mucRoomEntity.getAdmins()), room.getRole());
 		room.addOwners(convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
-		
-		for(String memberJid : mucRoomEntity.getMembers()) {
+
+		for (String memberJid : mucRoomEntity.getMembers()) {
 			room.addMember(new JID(memberJid), null, room.getRole());
 		}
 
-		for(String outcastJid : mucRoomEntity.getOutcasts()) {
+		for (String outcastJid : mucRoomEntity.getOutcasts()) {
 			room.addOutcast(new JID(outcastJid), null, room.getRole());
 		}
 
@@ -233,6 +240,35 @@ public class MUCRoomController {
 		} else {
 			room.setCreationDate(new Date());
 		}
+	}
+
+	/**
+	 * Gets the room participants.
+	 *
+	 * @param roomName
+	 *            the room name
+	 * @param serviceName
+	 *            the service name
+	 * @return the room participants
+	 */
+	public ParticipantEntities getRoomParticipants(String roomName, String serviceName) {
+		ParticipantEntities participantEntities = new ParticipantEntities();
+		List<ParticipantEntity> participants = new ArrayList<ParticipantEntity>();
+
+		Collection<MUCRole> serverParticipants = XMPPServer.getInstance().getMultiUserChatManager()
+				.getMultiUserChatService(serviceName).getChatRoom(roomName).getParticipants();
+
+		for (MUCRole role : serverParticipants) {
+			ParticipantEntity participantEntity = new ParticipantEntity();
+			participantEntity.setJid(role.getRoleAddress().toFullJID());
+			participantEntity.setRole(role.getRole().name());
+			participantEntity.setAffiliation(role.getAffiliation().name());
+
+			participants.add(participantEntity);
+		}
+
+		participantEntities.setParticipants(participants);
+		return participantEntities;
 	}
 
 	/**
@@ -274,6 +310,13 @@ public class MUCRoomController {
 		return mucRoomEntity;
 	}
 
+	/**
+	 * Convert jids to string list.
+	 *
+	 * @param jids
+	 *            the jids
+	 * @return the array list< string>
+	 */
 	private ArrayList<String> convertJIDsToStringList(Collection<JID> jids) {
 		ArrayList<String> result = new ArrayList<String>();
 
@@ -282,7 +325,14 @@ public class MUCRoomController {
 		}
 		return result;
 	}
-	
+
+	/**
+	 * Convert strings to jids.
+	 *
+	 * @param jids
+	 *            the jids
+	 * @return the list<jid>
+	 */
 	private List<JID> convertStringsToJIDs(List<String> jids) {
 		List<JID> result = new ArrayList<JID>();
 

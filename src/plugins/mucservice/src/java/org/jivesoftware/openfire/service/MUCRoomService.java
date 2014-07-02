@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import org.jivesoftware.openfire.entity.MUCChannelType;
 import org.jivesoftware.openfire.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.entity.MUCRoomEntity;
+import org.jivesoftware.openfire.entity.ParticipantEntities;
 import org.jivesoftware.openfire.exception.MUCServiceException;
 import org.jivesoftware.openfire.plugin.MUCRoomController;
 
@@ -57,5 +58,13 @@ public class MUCRoomService {
 			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
 		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, owner, mucRoomEntity);
+	}
+
+	@GET
+	@Path("/{roomName}/participants")
+	@Produces(MediaType.APPLICATION_XML)
+	public ParticipantEntities getMUCRoomParticipants(@PathParam("roomName") String roomName,
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
+		return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
 	}
 }

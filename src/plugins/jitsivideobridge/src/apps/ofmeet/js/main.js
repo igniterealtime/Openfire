@@ -875,7 +875,7 @@ function handleAddSSRC(from, addsource)
 		$(document).trigger('remoteaudiostreamadded.rayo', [{stream:{id:channelId}}, window.RTC.rayo.nickname]);	
 	
 	} else {
-		sdp.raw = sdp.session + sdp.media.join('');
+		sdp.raw = setBandwidth(sdp.session + sdp.media.join(''));
 		window.RTC.rayo.addssrc = true;
 
 		window.RTC.rayo.pc[videobridge].setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}		
@@ -889,6 +889,12 @@ function handleAddSSRC(from, addsource)
 	}	
 };
 
+function setBandwidth(sdp) 
+{
+	sdp = sdp.replace(/a=mid:audio\r\n/g, 'a=mid:audio\r\nb=AS:' + config.audioBandwidth + '\r\n');
+	sdp = sdp.replace(/a=mid:video\r\n/g, 'a=mid:video\r\nb=AS:' + config.videoBandwidth + '\r\n');
+	return sdp;
+}
 	
 function handleOffer (from, offer) 
 {
@@ -908,8 +914,8 @@ function handleOffer (from, offer)
 	}
 	
 	var SDPHeader = "v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n";
-	var SDPVideo = "m=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=" + videoDirection + "\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\n";
-	var SDPAudio = "m=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=" + audioDirection + "\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\n";
+	var SDPVideo = "m=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\nb=AS:" + config.videoBandwidth + "\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=" + videoDirection + "\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\n";
+	var SDPAudio = "m=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\nb=AS:" + config.audioBandwidth + "\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=" + audioDirection + "\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\n";
 
 
 	if (!config.recordVideo)

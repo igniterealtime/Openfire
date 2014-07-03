@@ -43,6 +43,10 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         super(nodeID, address);
     }
 
+    public String getCipherSuiteName() {
+        return "NONE";
+    }
+
     public Collection<String> getAuthenticatedDomains() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getAuthenticatedDomains);
         return (Collection<String>) doSynchronousClusterTask(task);

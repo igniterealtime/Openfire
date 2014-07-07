@@ -1106,9 +1106,7 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			</tr>
 			<tr>
 				<th colspan="1" class="confluenceTh">Return value</th>
-				<td colspan="1" class="confluenceTd"><p>
-						<span>Chatrooms</span>
-					</p></td>
+				<td colspan="1" class="confluenceTd">Chatrooms</td>
 			</tr>
 		</tbody>
 	</table>
@@ -1124,21 +1122,16 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			<tr>
 				<td class="confluenceTd">servicename</td>
 				<td class="confluenceTd">@QueryParam</td>
-				<td class="confluenceTd">The name of the <span
-					style="line-height: 1.4285715;background-color: transparent;">Group
-						Chat Service</span></td>
+				<td class="confluenceTd">The name of the Group Chat Service</td>
 				<td colspan="1" class="confluenceTd">conference</td>
 			</tr>
 			<tr>
 				<td colspan="1" class="confluenceTd"><p>type</p></td>
 				<td colspan="1" class="confluenceTd"><span>@QueryParam</span></td>
-				<td colspan="1" class="confluenceTd"><p>
-						<strong>public</strong>: Only as "<span>List Room in
-							Directory" set rooms.</span>
+				<td colspan="1" class="confluenceTd"><p><strong>public</strong>: Only as "List Room in Directory" set rooms
 					</p>
-					<p>
-						<strong>all</strong>: All rooms.
-					</p></td>
+					<p><strong>all</strong>: All rooms.</p>
+				</td>
 				<td colspan="1" class="confluenceTd">public</td>
 			</tr>
 			<tr>
@@ -1189,7 +1182,7 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			</tr>
 			<tr>
 				<th colspan="1" class="confluenceTh">Return value</th>
-				<td colspan="1" class="confluenceTd"><p>Chatroom</p></td>
+				<td colspan="1" class="confluenceTd">Chatroom</td>
 			</tr>
 		</tbody>
 	</table>
@@ -1232,19 +1225,23 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 		<span><strong>GET</strong>&nbsp;<span class="nolink"><span
 				class="nolink"><span class="nolink">http://example.org:9090/plugins/mucservice/chatrooms/test</span>?servicename=privateconf</span></span></span>
 	</p>
+	
 	<h2>
-		<span>POST&nbsp;</span><span>/mucservice/chatrooms</span>
+		<span style="color: rgb(54,95,145);">GET&nbsp;</span><span
+			style="color: rgb(54,95,145);">/mucservice/chatrooms/{roomName}/participants</span>
 	</h2>
-	<p>Endpoint to create a new chat room.</p>
+	<p>
+		<span>Endpoint to get all participants with a role of specified room.</span>
+	</p>
 	<table class="confluenceTable">
 		<tbody>
 			<tr>
 				<th colspan="1" class="confluenceTh">Payload</th>
-				<td colspan="1" class="confluenceTd">Chatroom</td>
+				<td colspan="1" class="confluenceTd">none</td>
 			</tr>
 			<tr>
 				<th colspan="1" class="confluenceTh">Return value</th>
-				<td colspan="1" class="confluenceTd"><p>void</p></td>
+				<td colspan="1" class="confluenceTd">Participants</td>
 			</tr>
 		</tbody>
 	</table>
@@ -1258,11 +1255,55 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 				<th colspan="1" class="confluenceTh">Default value</th>
 			</tr>
 			<tr>
-				<td colspan="1" class="confluenceTd">owner</td>
-				<td colspan="1" class="confluenceTd">@<span>QueryParam</span></td>
-				<td colspan="1" class="confluenceTd">Username of the chat room
-					owner</td>
-				<td colspan="1" class="confluenceTd">admin</td>
+				<td colspan="1" class="confluenceTd">roomname</td>
+				<td colspan="1" class="confluenceTd">@Path</td>
+				<td colspan="1" class="confluenceTd">Exact room name</td>
+				<td colspan="1" class="confluenceTd">&nbsp;</td>
+			</tr>
+			<tr>
+				<td class="confluenceTd">servicename</td>
+				<td class="confluenceTd">@QueryParam</td>
+				<td class="confluenceTd">The name of the Group Chat Service</td>
+				<td colspan="1" class="confluenceTd">conference</td>
+			</tr>
+		</tbody>
+	</table>
+	<h3>
+		<span>Examples</span>
+	</h3>
+	<p>
+		<span><strong>Header</strong>:&nbsp;<span>Authorization:&nbsp;Basic
+				YWRtaW46MTIzNDU=</span></span>
+	</p>
+	<p>
+		<span><strong>GET</strong> <span class="nolink"><span
+				class="nolink">http://example.org:9090/plugins/mucservice/chatrooms/room1/participants</span></span></span>
+	</p>
+	
+	<h2>
+		<span>POST&nbsp;</span><span>/mucservice/chatrooms</span>
+	</h2>
+	<p>Endpoint to create a new chat room.</p>
+	<table class="confluenceTable">
+		<tbody>
+			<tr>
+				<th colspan="1" class="confluenceTh">Payload</th>
+				<td colspan="1" class="confluenceTd">Chatroom</td>
+			</tr>
+			<tr>
+				<th colspan="1" class="confluenceTh">Return value</th>
+				<td colspan="1" class="confluenceTd">void</td>
+			</tr>
+		</tbody>
+	</table>
+	<h3>Possible parameters</h3>
+	<table class="confluenceTable">
+		<tbody>
+			<tr>
+				<th class="confluenceTh">Parameter</th>
+				<th class="confluenceTh">Parameter Type</th>
+				<th class="confluenceTh">Description</th>
+				<th colspan="1" class="confluenceTh">Default value</th>
 			</tr>
 			<tr>
 				<td class="confluenceTd">servicename</td>
@@ -1310,9 +1351,11 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
         &lt;maxUsers&gt;0&lt;/maxUsers&gt;
         &lt;membersOnly&gt;false&lt;/membersOnly&gt;
         &lt;moderated&gt;false&lt;/moderated&gt;
-        &lt;modificationDate&gt;2014-02-12T15:52:37.603+01:00&lt;/modificationDate&gt;
         &lt;naturalName&gt;global-1&lt;/naturalName&gt;
-		&lt;password&gt;test&lt;/password&gt;
+        &lt;owners&gt;
+        	&lt;owner>admin@localhost&lt;owner&gt;
+        &lt;owners&gt;
+        &lt;password&gt;test&lt;/password&gt;
         &lt;persistent&gt;true&lt;/persistent&gt;
         &lt;publicRoom&gt;true&lt;/publicRoom&gt;
         &lt;registrationEnabled&gt;false&lt;/registrationEnabled&gt;
@@ -1331,7 +1374,7 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			</tr>
 			<tr>
 				<th colspan="1" class="confluenceTh">Return value</th>
-				<td colspan="1" class="confluenceTd"><p>void</p></td>
+				<td colspan="1" class="confluenceTd">void</td>
 			</tr>
 		</tbody>
 	</table>
@@ -1371,7 +1414,6 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 		<strong><strong>DELETE&nbsp;</strong></strong><span class="nolink"><span
 			class="nolink"><span class="nolink">http://example.org:9090/plugins/mucservice/chatrooms</span></span>/testroom?servicename=privateconf</span>
 	</p>
-	<p>&nbsp;</p>
 	<div>
 		<h2>PUT /mucservice/chatrooms/{roomName}</h2>
 		<p>Endpoint to update a chat room.</p>
@@ -1383,7 +1425,7 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 				</tr>
 				<tr>
 					<th colspan="1" class="confluenceTh">Return value</th>
-					<td colspan="1" class="confluenceTd"><p>void</p></td>
+					<td colspan="1" class="confluenceTd">void</td>
 				</tr>
 			</tbody>
 		</table>
@@ -1403,16 +1445,9 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 					<td colspan="1" class="confluenceTd">&nbsp;</td>
 				</tr>
 				<tr>
-					<td colspan="1" class="confluenceTd">owner</td>
-					<td colspan="1" class="confluenceTd">@QueryParam</td>
-					<td colspan="1" class="confluenceTd">Username of the chat room
-						owner</td>
-					<td colspan="1" class="confluenceTd">admin</td>
-				</tr>
-				<tr>
 					<td class="confluenceTd">servicename</td>
 					<td class="confluenceTd">@QueryParam</td>
-					<td class="confluenceTd">The name of the Group Chat Service.</td>
+					<td class="confluenceTd">The name of the Group Chat Service</td>
 					<td colspan="1" class="confluenceTd">conference</td>
 				</tr>
 			</tbody>
@@ -1436,7 +1471,20 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			<tbody>
 				<tr>
 					<td class="wysiwyg-macro-body"><pre>    &lt;chatRoom&gt;
+        &lt;admins&gt;
+        	&lt;admin>admin@localhost&lt;/admin&gt;
+    	&lt;/admins&gt;
         &lt;broadcastPresenceRoles/&gt;
+        &lt;members&gt;
+        	 &lt;member>member1@localhost&lt;member&gt;
+        	 &lt;member>member2@localhost&lt;/member&gt;
+    	&lt;/members&gt;
+    	&lt;outcasts&gt;
+    		&lt;outcast>outcast1@localhost&lt;outcast&gt;
+    	&lt;outcasts&gt;
+    	&lt;owners&gt;
+    		&lt;owner>owner@localhost&lt;owner&gt;
+   	&lt;owners&gt;
         &lt;canAnyoneDiscoverJID&gt;false&lt;/canAnyoneDiscoverJID&gt;
         &lt;canChangeNickname&gt;false&lt;/canChangeNickname&gt;
         &lt;canOccupantsChangeSubject&gt;false&lt;/canOccupantsChangeSubject&gt;
@@ -1448,9 +1496,8 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
         &lt;maxUsers&gt;0&lt;/maxUsers&gt;
         &lt;membersOnly&gt;false&lt;/membersOnly&gt;
         &lt;moderated&gt;false&lt;/moderated&gt;
-        &lt;modificationDate&gt;2014-02-12T15:52:38.603+01:00&lt;/modificationDate&gt;
         &lt;naturalName&gt;global-2&lt;/naturalName&gt;
-		&lt;password&gt;test&lt;/password&gt;
+        &lt;password&gt;test&lt;/password&gt;
         &lt;persistent&gt;true&lt;/persistent&gt;
         &lt;publicRoom&gt;true&lt;/publicRoom&gt;
         &lt;registrationEnabled&gt;false&lt;/registrationEnabled&gt;
@@ -1460,8 +1507,55 @@ c.addFilter(new HTTPBasicAuthFilter(user, password));</pre></td>
 			</tbody>
 		</table>
 	</div>
-	<p>&nbsp;</p>
-
+	<h2>
+		<span style="color: rgb(54,95,145);">GET&nbsp;</span><span
+			style="color: rgb(54,95,145);">/mucservice/status</span>
+	</h2>
+	<p>
+		<span>Endpoint to get basic information over the chat server.</span>
+	</p>
+	<table class="confluenceTable">
+		<tbody>
+			<tr>
+				<th colspan="1" class="confluenceTh">Payload</th>
+				<td colspan="1" class="confluenceTd">none</td>
+			</tr>
+			<tr>
+				<th colspan="1" class="confluenceTh">Return value</th>
+				<td colspan="1" class="confluenceTd">Status</td>
+			</tr>
+		</tbody>
+	</table>
+	<h3>
+		<span>Examples</span>
+	</h3>
+	<p>
+		<span><strong>Header</strong>:&nbsp;<span>Authorization:&nbsp;Basic
+				YWRtaW46MTIzNDU=</span></span>
+	</p>
+	<p>
+		<span><strong>GET</strong> <span class="nolink"><span
+				class="nolink">http://example.org:9090/plugins/mucservice/status</span></span></span>
+	</p>
+	<p><strong>Response:</strong></p>
+		<table class="wysiwyg-macro" data-macro-name="code"
+			data-macro-parameters="language=xml"
+			style="background-image: url(/confluence/plugins/servlet/confluence/placeholder/macro-heading?definition=e2NvZGU6bGFuZ3VhZ2U9eG1sfQ&amp;locale=en_GB&amp;version=2); background-repeat: no-repeat;"
+			data-macro-body-type="PLAIN_TEXT">
+			<tbody>
+				<tr>
+					<td class="wysiwyg-macro-body"><pre>
+&lt;status&gt;
+    &lt;activeDatabaseConnections>0&lt;/activeDatabaseConnections&gt;
+    &lt;activeSessions>0&lt;/activeSessions&gt;
+    &lt;hostname>Redeyes-Main&lt;/hostname&gt;
+    &lt;maxDatabaseConnections>25&lt;/maxDatabaseConnections&gt;
+    &lt;openfireVersion>3.9.3&lt;/openfireVersion&gt;
+    &lt;xmppDomain>redeyes-main&lt;/xmppDomain&gt;
+&lt;/status&gt;</pre></td>
+				</tr>
+			</tbody>
+		</table>
 
 </body>
 </html>

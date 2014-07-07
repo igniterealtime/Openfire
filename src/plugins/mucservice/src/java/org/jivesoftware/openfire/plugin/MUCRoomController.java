@@ -18,10 +18,8 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.utils.MUCRoomUtils;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class MUCRoomController.
  */
@@ -119,11 +117,9 @@ public class MUCRoomController {
 
 	/**
 	 * Creates the chat room.
-	 * 
+	 *
 	 * @param serviceName
 	 *            the service name
-	 * @param owner
-	 *            the owner
 	 * @param mucRoomEntity
 	 *            the MUC room entity
 	 * @throws MUCServiceException
@@ -146,13 +142,11 @@ public class MUCRoomController {
 
 	/**
 	 * Update chat room.
-	 * 
+	 *
 	 * @param roomName
 	 *            the room name
 	 * @param serviceName
 	 *            the service name
-	 * @param owner
-	 *            the owner
 	 * @param mucRoomEntity
 	 *            the MUC room entity
 	 * @throws MUCServiceException
@@ -188,8 +182,6 @@ public class MUCRoomController {
 	 *            the MUC room entity
 	 * @param serviceName
 	 *            the service name
-	 * @param owner
-	 *            the owner
 	 * @throws NotAllowedException
 	 *             the not allowed exception
 	 * @throws ForbiddenException
@@ -318,42 +310,34 @@ public class MUCRoomController {
 	 *
 	 * @param room
 	 *            the room
-	 * @param owner
-	 *            the owner
 	 * @param mucRoomEntity
+	 *            the muc room entity
 	 * @throws ForbiddenException
 	 *             the forbidden exception
+	 * @throws NotAllowedException
+	 *             the not allowed exception
 	 * @throws ConflictException
 	 *             the conflict exception
-	 * @throws NotAllowedException
 	 */
 	private void setRoles(MUCRoom room, MUCRoomEntity mucRoomEntity) throws ForbiddenException, NotAllowedException,
 			ConflictException {
 		List<JID> roles = new ArrayList<JID>();
 		Collection<JID> owners = new ArrayList<JID>();
-
-		for (JID jid : room.getOwners()) {
-			Log.error("room.getOwners: " + jid.toBareJID());
-		}
+		Collection<JID> existingOwners = new ArrayList<JID>();
 
 		List<JID> mucRoomEntityOwners = MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners());
 		owners.addAll(room.getOwners());
 
+		// Find same owners
 		for (JID jid : owners) {
 			if (mucRoomEntityOwners.contains(jid)) {
-				owners.remove(jid);
+				existingOwners.add(jid);
 			}
 		}
 
-		for (JID jid : MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners())) {
-			Log.error("mucRoomEntity.getOwners: " + jid.toBareJID());
-		}
-
+		// Don't delete the same owners
+		owners.removeAll(existingOwners);
 		room.addOwners(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
-
-		for (JID jid : room.getOwners()) {
-			Log.error("room.getOwners2: " + jid.toBareJID());
-		}
 
 		// Collect all roles to reset
 		roles.addAll(owners);

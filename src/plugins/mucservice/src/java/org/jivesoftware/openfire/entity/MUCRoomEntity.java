@@ -35,6 +35,14 @@ public class MUCRoomEntity {
 
 	private List<String> broadcastPresenceRoles;
 
+	private List<String> owners;
+
+	private List<String> admins;
+
+	private List<String> members;
+
+	private List<String> outcasts;
+
 	public MUCRoomEntity() {
 	}
 
@@ -170,12 +178,6 @@ public class MUCRoomEntity {
 		this.canOccupantsInvite = canOccupantsInvite;
 	}
 
-	@XmlElement(name = "broadcastPresenceRole")
-	@XmlElementWrapper(name = "broadcastPresenceRoles")
-	public List<String> getBroadcastPresenceRoles() {
-		return broadcastPresenceRoles;
-	}
-
 	public void setBroadcastPresenceRoles(List<String> broadcastPresenceRoles) {
 		this.broadcastPresenceRoles = broadcastPresenceRoles;
 	}
@@ -224,4 +226,51 @@ public class MUCRoomEntity {
 	public void setModerated(boolean moderated) {
 		this.moderated = moderated;
 	}
+
+	@XmlElement(name = "broadcastPresenceRole")
+	@XmlElementWrapper(name = "broadcastPresenceRoles")
+	public List<String> getBroadcastPresenceRoles() {
+		return broadcastPresenceRoles;
+	}
+
+	@XmlElementWrapper(name = "owners")
+	@XmlElement(name = "owner")
+	public List<String> getOwners() {
+		return owners;
+	}
+
+	public void setOwners(List<String> owners) {
+		this.owners = owners;
+	}
+
+	@XmlElementWrapper(name = "members")
+	@XmlElement(name = "member")
+	public List<String> getMembers() {
+		return members;
+	}
+
+	public void setMembers(List<String> members) {
+		this.members = members;
+	}
+
+	@XmlElementWrapper(name = "outcasts")
+	@XmlElement(name = "outcast")
+	public List<String> getOutcasts() {
+		return outcasts;
+	}
+
+	public void setOutcasts(List<String> outcasts) {
+		this.outcasts = outcasts;
+	}
+
+	@XmlElementWrapper(name = "admins")
+	@XmlElement(name = "admin")
+	public List<String> getAdmins() {
+		return admins;
+	}
+
+	public void setAdmins(List<String> admins) {
+		this.admins = admins;
+	}
+
 }

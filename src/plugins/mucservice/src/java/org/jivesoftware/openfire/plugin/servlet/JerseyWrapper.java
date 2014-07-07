@@ -8,6 +8,7 @@ import javax.servlet.ServletException;
 
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.service.MUCRoomService;
+import org.jivesoftware.openfire.service.StatusService;
 
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
@@ -46,6 +47,7 @@ public class JerseyWrapper extends ServletContainer {
 		prc.getProperties().put("com.sun.jersey.spi.container.ContainerRequestFilters",
 				"org.jivesoftware.openfire.plugin.servlet.AuthFilter");
 		prc.getClasses().add(MUCRoomService.class);
+		prc.getClasses().add(StatusService.class);
 		prc.getClasses().add(RESTExceptionMapper.class);
 	}
 

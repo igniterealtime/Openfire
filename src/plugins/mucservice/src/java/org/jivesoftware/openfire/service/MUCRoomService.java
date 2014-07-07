@@ -46,18 +46,16 @@ public class MUCRoomService {
 
 	@POST
 	public void createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
-			throws MUCServiceException {
-		MUCRoomController.getInstance().createChatRoom(serviceName, owner, mucRoomEntity);
+			MUCRoomEntity mucRoomEntity) throws MUCServiceException {
+		MUCRoomController.getInstance().createChatRoom(serviceName, mucRoomEntity);
 	}
 
 	@PUT
 	@Path("/{roomName}")
 	public void udpateMUCRoom(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
-		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, owner, mucRoomEntity);
+		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, mucRoomEntity);
 	}
 
 	@GET

@@ -17,6 +17,8 @@ import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.utils.MUCRoomUtils;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
 // TODO: Auto-generated Javadoc
@@ -127,10 +129,9 @@ public class MUCRoomController {
 	 * @throws MUCServiceException
 	 *             the mUC service exception
 	 */
-	public void createChatRoom(String serviceName, String owner, MUCRoomEntity mucRoomEntity)
-			throws MUCServiceException {
+	public void createChatRoom(String serviceName, MUCRoomEntity mucRoomEntity) throws MUCServiceException {
 		try {
-			createRoom(mucRoomEntity, serviceName, owner);
+			createRoom(mucRoomEntity, serviceName);
 		} catch (NotAllowedException e) {
 			throw new MUCServiceException("Could not create the channel", mucRoomEntity.getRoomName(),
 					"NotAllowedException");
@@ -157,7 +158,7 @@ public class MUCRoomController {
 	 * @throws MUCServiceException
 	 *             the mUC service exception
 	 */
-	public void updateChatRoom(String roomName, String serviceName, String owner, MUCRoomEntity mucRoomEntity)
+	public void updateChatRoom(String roomName, String serviceName, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
 		try {
 			// If the room name is different throw exception
@@ -170,7 +171,7 @@ public class MUCRoomController {
 			// Set modification date
 			mucRoomEntity.setModificationDate(new Date());
 
-			createRoom(mucRoomEntity, serviceName, owner);
+			createRoom(mucRoomEntity, serviceName);
 		} catch (NotAllowedException e) {
 			throw new MUCServiceException("Could not update the channel", roomName, "NotAllowedException");
 		} catch (ForbiddenException e) {
@@ -196,10 +197,21 @@ public class MUCRoomController {
 	 * @throws ConflictException
 	 *             the conflict exception
 	 */
-	public void createRoom(MUCRoomEntity mucRoomEntity, String serviceName, String owner) throws NotAllowedException,
+	private void createRoom(MUCRoomEntity mucRoomEntity, String serviceName) throws NotAllowedException,
 			ForbiddenException, ConflictException {
+
+		// Set owner
+		JID owner = XMPPServer.getInstance().createJID("admin", null);
+		if (mucRoomEntity.getOwners() != null && mucRoomEntity.getOwners().size() > 0) {
+			owner = new JID(mucRoomEntity.getOwners().get(0));
+		} else {
+			List<String> owners = new ArrayList<String>();
+			owners.add(owner.toBareJID());
+			mucRoomEntity.setOwners(owners);
+		}
+
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
-				.getChatRoom(mucRoomEntity.getRoomName(), XMPPServer.getInstance().createJID(owner, null));
+				.getChatRoom(mucRoomEntity.getRoomName(), owner);
 
 		// Set values
 		room.setNaturalLanguageName(mucRoomEntity.getNaturalName());
@@ -223,16 +235,7 @@ public class MUCRoomController {
 		room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
 
 		// Set all roles
-		room.addAdmins(convertStringsToJIDs(mucRoomEntity.getAdmins()), room.getRole());
-		room.addOwners(convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
-
-		for (String memberJid : mucRoomEntity.getMembers()) {
-			room.addMember(new JID(memberJid), null, room.getRole());
-		}
-
-		for (String outcastJid : mucRoomEntity.getOutcasts()) {
-			room.addOutcast(new JID(outcastJid), null, room.getRole());
-		}
+		setRoles(room, mucRoomEntity);
 
 		// Set creation date
 		if (mucRoomEntity.getCreationDate() != null) {
@@ -297,10 +300,10 @@ public class MUCRoomController {
 		mucRoomEntity.setMembersOnly(room.isMembersOnly());
 		mucRoomEntity.setModerated(room.isModerated());
 
-		mucRoomEntity.setOwners(convertJIDsToStringList(room.getOwners()));
-		mucRoomEntity.setAdmins(convertJIDsToStringList(room.getAdmins()));
-		mucRoomEntity.setMembers(convertJIDsToStringList(room.getMembers()));
-		mucRoomEntity.setOutcasts(convertJIDsToStringList(room.getOutcasts()));
+		mucRoomEntity.setOwners(MUCRoomUtils.convertJIDsToStringList(room.getOwners()));
+		mucRoomEntity.setAdmins(MUCRoomUtils.convertJIDsToStringList(room.getAdmins()));
+		mucRoomEntity.setMembers(MUCRoomUtils.convertJIDsToStringList(room.getMembers()));
+		mucRoomEntity.setOutcasts(MUCRoomUtils.convertJIDsToStringList(room.getOutcasts()));
 
 		mucRoomEntity.setBroadcastPresenceRoles(room.getRolesToBroadcastPresence());
 
@@ -311,34 +314,64 @@ public class MUCRoomController {
 	}
 
 	/**
-	 * Convert jids to string list.
+	 * Reset roles.
 	 *
-	 * @param jids
-	 *            the jids
-	 * @return the array list< string>
+	 * @param room
+	 *            the room
+	 * @param owner
+	 *            the owner
+	 * @param mucRoomEntity
+	 * @throws ForbiddenException
+	 *             the forbidden exception
+	 * @throws ConflictException
+	 *             the conflict exception
+	 * @throws NotAllowedException
 	 */
-	private ArrayList<String> convertJIDsToStringList(Collection<JID> jids) {
-		ArrayList<String> result = new ArrayList<String>();
+	private void setRoles(MUCRoom room, MUCRoomEntity mucRoomEntity) throws ForbiddenException, NotAllowedException,
+			ConflictException {
+		List<JID> roles = new ArrayList<JID>();
+		Collection<JID> owners = new ArrayList<JID>();
 
-		for (JID jid : jids) {
-			result.add(jid.toBareJID());
+		for (JID jid : room.getOwners()) {
+			Log.error("room.getOwners: " + jid.toBareJID());
 		}
-		return result;
-	}
 
-	/**
-	 * Convert strings to jids.
-	 *
-	 * @param jids
-	 *            the jids
-	 * @return the list<jid>
-	 */
-	private List<JID> convertStringsToJIDs(List<String> jids) {
-		List<JID> result = new ArrayList<JID>();
+		List<JID> mucRoomEntityOwners = MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners());
+		owners.addAll(room.getOwners());
 
-		for (String jidString : jids) {
-			result.add(new JID(jidString));
+		for (JID jid : owners) {
+			if (mucRoomEntityOwners.contains(jid)) {
+				owners.remove(jid);
+			}
 		}
-		return result;
+
+		for (JID jid : MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners())) {
+			Log.error("mucRoomEntity.getOwners: " + jid.toBareJID());
+		}
+
+		room.addOwners(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
+
+		for (JID jid : room.getOwners()) {
+			Log.error("room.getOwners2: " + jid.toBareJID());
+		}
+
+		// Collect all roles to reset
+		roles.addAll(owners);
+		roles.addAll(room.getAdmins());
+		roles.addAll(room.getMembers());
+		roles.addAll(room.getOutcasts());
+
+		for (JID jid : roles) {
+			room.addNone(jid, room.getRole());
+		}
+
+		room.addOwners(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
+		room.addAdmins(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getAdmins()), room.getRole());
+		for (String memberJid : mucRoomEntity.getMembers()) {
+			room.addMember(new JID(memberJid), null, room.getRole());
+		}
+		for (String outcastJid : mucRoomEntity.getOutcasts()) {
+			room.addOutcast(new JID(outcastJid), null, room.getRole());
+		}
 	}
 }

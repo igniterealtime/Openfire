@@ -14,14 +14,14 @@ import javax.ws.rs.core.MediaType;
 import org.jivesoftware.openfire.entity.MUCChannelType;
 import org.jivesoftware.openfire.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.entity.MUCRoomEntity;
+import org.jivesoftware.openfire.entity.ParticipantEntities;
 import org.jivesoftware.openfire.exception.MUCServiceException;
 import org.jivesoftware.openfire.plugin.MUCRoomController;
 
-@Path("mucservice")
+@Path("mucservice/chatrooms")
 public class MUCRoomService {
 
 	@GET
-	@Path("/chatrooms")
 	@Produces(MediaType.APPLICATION_XML)
 	public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
@@ -30,7 +30,7 @@ public class MUCRoomService {
 	}
 
 	@GET
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	@Produces(MediaType.APPLICATION_XML)
 	public MUCRoomEntity getMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
@@ -38,27 +38,31 @@ public class MUCRoomService {
 	}
 
 	@DELETE
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	public void deleteMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
 		MUCRoomController.getInstance().deleteChatRoom(roomName, serviceName);
 	}
 
 	@POST
-	@Path("/chatrooms")
 	public void createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
-			throws MUCServiceException {
-		MUCRoomController.getInstance().createChatRoom(serviceName, owner, mucRoomEntity);
+			MUCRoomEntity mucRoomEntity) throws MUCServiceException {
+		MUCRoomController.getInstance().createChatRoom(serviceName, mucRoomEntity);
 	}
 
 	@PUT
-	@Path("/chatrooms/{roomName}")
+	@Path("/{roomName}")
 	public void udpateMUCRoom(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
-			@DefaultValue("admin") @QueryParam("owner") String owner, MUCRoomEntity mucRoomEntity)
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
-		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, owner, mucRoomEntity);
+		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, mucRoomEntity);
 	}
 
+	@GET
+	@Path("/{roomName}/participants")
+	@Produces(MediaType.APPLICATION_XML)
+	public ParticipantEntities getMUCRoomParticipants(@PathParam("roomName") String roomName,
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
+		return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
+	}
 }

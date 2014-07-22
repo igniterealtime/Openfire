@@ -282,7 +282,7 @@ function addEmailContact() {
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="groupenabled" <%=(groupEnabled) ? "checked" : "" %>></td>
-            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="webenabled" <%=(webEnabled) ? "checked" : "" %>></td>

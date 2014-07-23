@@ -1,7 +1,7 @@
 Openfire
 ========
 
-[![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)  [![Project Stats](https://www.ohloh.net/p/Openfire/widgets/project_thin_badge.gif)](https://www.ohloh.net/p/Openfire)
+[![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)  [![Project Stats](https://www.openhub.net/p/Openfire/widgets/project_thin_badge.gif)](https://www.openhub.net/p/Openfire)
 
 About
 -----

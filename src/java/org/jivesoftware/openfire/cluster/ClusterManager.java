@@ -51,25 +51,6 @@ public class ClusterManager {
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>(10000);
     private static Thread dispatcher;
 
-    static {
-        // Listen for clustering property changes (e.g. enabled/disabled)
-        PropertyEventDispatcher.addListener(new PropertyEventListener() {
-			public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
-			public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
-			public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
-			public void xmlPropertySet(String property, Map<String, Object> params) {
-		        if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
-		            if (Boolean.parseBoolean((String) params.get("value"))) {
-		                // Reload/sync all Jive properties
-		            	JiveProperties.getInstance().init();
-		            	ClusterManager.startup();
-		            } else {
-		            	ClusterManager.shutdown();
-		            }
-		        }
-			}
-        });
-    }
     
     /**
      * Instantiate and start the cluster event dispatcher thread
@@ -313,12 +294,14 @@ public class ClusterManager {
             if (isClusteringEnabled() && isClusteringStarted()) {
                 return;
             }
+            ClusterManager.startup();
         }
         else {
             // Check that clustering is disabled
             if (!isClusteringEnabled()) {
                 return;
             }
+            ClusterManager.shutdown();
         }
         // set the clustering property (listener will start/stop as needed)
         JiveGlobals.setXMLProperty(CLUSTER_PROPERTY_NAME, Boolean.toString(enabled));

@@ -118,7 +118,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @param hostname the hostname of the remote server.
      * @return True if the domain was authenticated by the remote server.
      */
-    public static boolean authenticateDomain(String domain, String hostname) {
+    public static boolean authenticateDomain(final String domain, final String hostname) {
         if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
             // Do nothing if the target hostname is empty, null or contains whitespaces
             return false;
@@ -158,19 +158,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
             if (session == null) {
                 int port = RemoteServerManager.getPortForServer(hostname);
-                // No session was found to the remote server so make sure that only one is created
-                session = sessionManager.getOutgoingServerSession(hostname);
-                if (session == null) {
-                    session = createOutgoingSession(domain, hostname, port);
-                    if (session != null) {
-                        // Add the validated domain as an authenticated domain
-                        session.addAuthenticatedDomain(domain);
-                        // Add the new hostname to the list of names that the server may have
-                        session.addHostname(hostname);
-                        // Notify the SessionManager that a new session has been created
-                        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
-                        return true;
-                    }
+                session = createOutgoingSession(domain, hostname, port);
+                if (session != null) {
+                    // Add the validated domain as an authenticated domain
+                    session.addAuthenticatedDomain(domain);
+                    // Add the new hostname to the list of names that the server may have
+                    session.addHostname(hostname);
+                    // Notify the SessionManager that a new session has been created
+                    sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                    return true;
                 } else {
                     Log.warn("Fail to connect to {} for {}", hostname, domain);
                     return false;

@@ -431,7 +431,7 @@ public class ServerDialback {
                         Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was successful.", hostname, recipient);
                         // Create a server Session for the remote server
                         LocalIncomingServerSession session = sessionManager.
-                                createIncomingServerSession(connection, streamID);
+                                createIncomingServerSession(connection, streamID, hostname);
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
                         // Set the domain or subdomain of the local server used when

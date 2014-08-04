@@ -193,13 +193,17 @@ public class SASLAuthentication {
 
         Element mechs = DocumentHelper.createElement(new QName("mechanisms",
                 new Namespace("", "urn:ietf:params:xml:ns:xmpp-sasl")));
-        if (session instanceof IncomingServerSession) {
+        if (session instanceof LocalIncomingServerSession) {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
                 boolean haveTrustedCertificate = false;
                 try {
-                    X509Certificate trusted = CertificateManager.getEndEntityCertificate(((LocalSession)session).getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+                    LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
+                    X509Certificate trusted = CertificateManager.getEndEntityCertificate(svr.getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
                     haveTrustedCertificate = trusted != null;
+                    if (trusted != null && svr.getDefaultIdentity() != null) {
+                        haveTrustedCertificate = verifyCertificate(trusted, svr.getDefaultIdentity());
+                    }
                 } catch (IOException ex) {
                     Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Treating as untrusted.", ex);
                 }
@@ -520,6 +524,28 @@ public class SASLAuthentication {
             }
     
             hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
+            if (hostname.length() == 0) {
+                hostname = null;
+            }
+            try {
+                LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
+                String defHostname = svr.getDefaultIdentity();
+                if (hostname == null) {
+                    hostname = defHostname;
+                } else if (!hostname.equals(defHostname)) {
+                    // Mismatch; really odd.
+                    Log.info("SASLAuthentication rejected from='{}' and authzid='{}'", hostname, defHostname);
+                    authenticationFailed(session, Failure.NOT_AUTHORIZED);
+                    return Status.failed; 
+                }
+            } catch(Exception e) {
+                // Erm. Nothing?
+            }
+            if (hostname == null) {
+                Log.info("No authzid supplied for anonymous session.");
+                authenticationFailed(session, Failure.NOT_AUTHORIZED);
+                return Status.failed;
+            }
             // Check if certificate validation is disabled for s2s
             // Flag that indicates if certificates of the remote server should be validated.
             // Disabling certificate validation is not recommended for production environments.
@@ -552,9 +578,18 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            for (Certificate certificate : connection.getPeerCertificates()) {
-                principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)certificate));
+            X509Certificate trusted;
+            try {
+                trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+            } catch (IOException e) {
+                trusted = null;
             }
+            if (trusted == null) {
+                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but EE cert untrusted.");
+                authenticationFailed(session, Failure.NOT_AUTHORIZED);
+                return Status.failed;
+            }
+            principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)trusted));
 
             if(principals.size() == 1) {
                 principal = principals.get(0);
@@ -602,22 +637,27 @@ public class SASLAuthentication {
         authenticationFailed(session, Failure.NOT_AUTHORIZED);
         return Status.failed;
     }
+    
+    public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
+        for (String identity : CertificateManager.getPeerIdentities(trustedCert)) {
+            // Verify that either the identity is the same as the hostname, or for wildcarded
+            // identities that the hostname ends with .domainspecified or -is- domainspecified.
+            if ((identity.startsWith("*.")
+                 && (hostname.endsWith(identity.replace("*.", "."))
+                     || hostname.equals(identity.replace("*.", ""))))
+                    || hostname.equals(identity)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static boolean verifyCertificates(Certificate[] chain, String hostname) {
         try {
             X509Certificate trusted = CertificateManager.getEndEntityCertificate(chain, SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
 
             if (trusted != null) {
-                for (String identity : CertificateManager.getPeerIdentities(trusted)) {
-                    // Verify that either the identity is the same as the hostname, or for wildcarded
-                    // identities that the hostname ends with .domainspecified or -is- domainspecified.
-                    if ((identity.startsWith("*.")
-                         && (hostname.endsWith(identity.replace("*.", "."))
-                             || hostname.equals(identity.replace("*.", ""))))
-                            || hostname.equals(identity)) {
-                        return true;
-                    }
-                }
+                return verifyCertificate(trusted, hostname);
             }
         } catch(IOException e) {
             Log.warn("Keystore issue while verifying certificate chain: {}", e.getMessage());

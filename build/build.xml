@@ -148,6 +148,10 @@
         <fileset dir="${lib.web.dir}" includes="*.jar"/>
     </path>
 
+    <path id="custom.dependencies">
+        <fileset dir="${overlay.lib.dir}" includes="*.jar"/>
+    </path>
+
     <path id="test.dependencies">
         <path refid="compile.dependencies"/>
         <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
@@ -280,6 +284,18 @@
             </classpath>
         </of.javac>
 
+        <available file="${overlay.lib.dir}" type="dir" property="overlay.lib.found"/>
+        <if>
+            <equals arg1="${overlay.lib.found}" arg2="true"/>
+            <then>
+                <mkdir dir="${jar.dest.dir}"/>
+                <copy todir="${jar.dest.dir}" overwrite="true">
+                    <fileset dir="${overlay.lib.dir}" includes="*.*"/>
+                </copy>
+            </then>
+            <else><echo>No custom lib here </echo></else>
+        </if>
+
         <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
         <if>
             <equals arg1="${overlay.source.found}" arg2="true"/>
@@ -293,6 +309,7 @@
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
                     <classpath>
+                        <path refid="custom.dependencies"/>
                         <path refid="compile.dependencies"/>
                         <path location="${compile.dir}"/>
                     </classpath>
@@ -300,18 +317,6 @@
 
             </then>
             <else><echo>Nothing to compile from custom here </echo></else>
-        </if>
-
-        <available file="${overlay.lib.dir}" type="dir" property="overlay.lib.found"/>
-        <if>
-            <equals arg1="${overlay.lib.found}" arg2="true"/>
-            <then>
-                <mkdir dir="${jar.dest.dir}"/>
-                <copy todir="${jar.dest.dir}" overwrite="true">
-                    <fileset dir="${overlay.lib.dir}" includes="*.*"/>
-                </copy>
-            </then>
-            <else><echo>No custom lib here </echo></else>
         </if>
     </target>
 

@@ -85,6 +85,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * many connections from the same remote server to the same local domain.
      */
     private String localDomain = null;
+    
+    /**
+     * Default domain, as supplied in stream header typically.
+     */
+    private String fromDomain = null;
 
     /**
      * Creates a new session that will receive packets. The new session will be authenticated
@@ -105,6 +110,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         XmlPullParser xpp = reader.getXPPParser();
                 
         String version = xpp.getAttributeValue("", "version");
+        String fromDomain = xpp.getAttributeValue("", "from");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
         
         try {
@@ -112,7 +118,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             StreamID streamID = SessionManager.getInstance().nextStreamID();
             // Create a server Session for the remote server
             LocalIncomingServerSession session =
-                    SessionManager.getInstance().createIncomingServerSession(connection, streamID);
+                    SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
 
             // Send the stream header
             StringBuilder openingStream = new StringBuilder();
@@ -121,6 +127,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(serverName).append("\"");
+            if (fromDomain != null) {
+                openingStream.append(" to=\"").append(fromDomain).append("\"");
+            }
             openingStream.append(" id=\"").append(streamID).append("\"");
             
             // OF-443: Not responding with a 1.0 version in the stream header when federating with older
@@ -184,7 +193,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 	            if (ServerDialback.isEnabled()) {
 	                // Also offer server dialback (when TLS is not required). Server dialback may be offered
 	                // after TLS has been negotiated and a self-signed certificate is being used
-	                sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"/>");
+	                sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
 	            }
 
 	            sb.append("</stream:features>");
@@ -204,8 +213,13 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
 
-    public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID) {
+    public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
         super(serverName, connection, streamID);
+        this.fromDomain = fromDomain;
+    }
+    
+    public String getDefaultIdentity() {
+        return this.fromDomain;
     }
 
     @Override
@@ -255,7 +269,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public boolean isValidDomain(String domain) {
         // Check if the specified domain is contained in any of the validated domains
         for (String validatedDomain : getValidatedDomains()) {
-            if (domain.contains(validatedDomain)) {
+            if (domain.equals(validatedDomain)) {
                 return true;
             }
         }

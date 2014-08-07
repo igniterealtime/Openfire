@@ -372,9 +372,10 @@ public class NIOConnection implements Connection {
             filter.setWantClientAuth(true);
         }
         // TODO Temporary workaround (placing SSLFilter before ExecutorFilter) to avoid deadlock. Waiting for
-        // MINA devs feedback
-        ioSession.getFilterChain().addBefore("org.apache.mina.common.ExecutorThreadModel", "tls", filter);
-        //ioSession.getFilterChain().addAfter("org.apache.mina.common.ExecutorThreadModel", "tls", filter);
+        // MINA devs feedback. Note that ExecutorFilter is flanked by ReadThrottleFilterBuilder and we must not
+        // get in between them.
+        ioSession.getFilterChain().addBefore("org.apache.mina.filter.ReadThrottleFilterBuilder.add", "tls", filter);
+        //ioSession.getFilterChain().addAfter("org.apache.mina.filter.ReadThrottleFilterBuilder.release", "tls", filter);
         ioSession.setAttribute(SSLFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
         if (!clientMode) {
             // Indicate the client that the server is ready to negotiate TLS

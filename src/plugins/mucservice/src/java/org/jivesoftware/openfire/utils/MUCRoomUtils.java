@@ -25,8 +25,8 @@ public class MUCRoomUtils {
 	 *            the jids
 	 * @return the array list< string>
 	 */
-	public static ArrayList<String> convertJIDsToStringList(Collection<JID> jids) {
-		ArrayList<String> result = new ArrayList<String>();
+	public static List<String> convertJIDsToStringList(Collection<JID> jids) {
+		List<String> result = new ArrayList<String>();
 
 		for (JID jid : jids) {
 			result.add(jid.toBareJID());

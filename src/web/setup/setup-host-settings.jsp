@@ -29,6 +29,7 @@
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
+    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", true);
     String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
     String encryptionKey = ParamUtils.getParameter(request, "encryptionKey");
 
@@ -75,7 +76,7 @@
 
             xmppSettings.put("xmpp.domain", domain);
             xmppSettings.put("xmpp.socket.ssl.active", "" + sslEnabled);
-            xmppSettings.put("xmpp.auth.anonymous", "true");
+            xmppSettings.put("xmpp.auth.anonymous", "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
 
             Map<String, String> xmlSettings = new HashMap<String, String>();
@@ -94,10 +95,10 @@
 
     // Load the current values:
     if (!doContinue) {
-        domain = JiveGlobals.getProperty("xmpp.domain");
+        domain = JiveGlobals.getXMLProperty("xmpp.domain");
         embeddedPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         securePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
-        sslEnabled = JiveGlobals.getBooleanProperty("xmpp.socket.ssl.active", true);
+        sslEnabled = JiveGlobals.getXMLProperty("xmpp.socket.ssl.active", true);
 
         // If the domain is still blank, guess at the value:
         if (domain == null) {

@@ -68,6 +68,8 @@
     <property name="overlay.dir"   value="${basedir}/custom"/>
     <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
     <property name="overlay.web.dir"   value="${overlay.dir}/webapp"/>
+    <property name="overlay.lib.dir"   value="${overlay.dir}/lib"/>
+    <property name="overlay.conf.dir"   value="${overlay.dir}/conf"/>
     <property name="overlay.properties.file"   value="overlay.properties"/>
     <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>    
 
@@ -144,6 +146,10 @@
         <path refid="compile.dependencies"/>
         <path refid="ant.dependencies"/>
         <fileset dir="${lib.web.dir}" includes="*.jar"/>
+    </path>
+
+    <path id="custom.dependencies">
+        <fileset dir="${overlay.lib.dir}" includes="*.jar"/>
     </path>
 
     <path id="test.dependencies">
@@ -278,11 +284,22 @@
             </classpath>
         </of.javac>
 
+        <available file="${overlay.lib.dir}" type="dir" property="overlay.lib.found"/>
+        <if>
+            <equals arg1="${overlay.lib.found}" arg2="true"/>
+            <then>
+                <mkdir dir="${jar.dest.dir}"/>
+                <copy todir="${jar.dest.dir}" overwrite="true">
+                    <fileset dir="${overlay.lib.dir}" includes="*.*"/>
+                </copy>
+            </then>
+            <else><echo>No custom lib here </echo></else>
+        </if>
+
         <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
         <if>
             <equals arg1="${overlay.source.found}" arg2="true"/>
             <then>
-
                 <mkdir dir="${overlay.compile.dir}"/>
                 <of.javac
                         destdir="${overlay.compile.dir}"
@@ -292,6 +309,7 @@
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
                     <classpath>
+                        <path refid="custom.dependencies"/>
                         <path refid="compile.dependencies"/>
                         <path location="${compile.dir}"/>
                     </classpath>
@@ -300,7 +318,6 @@
             </then>
             <else><echo>Nothing to compile from custom here </echo></else>
         </if>
-
     </target>
 
     <!-- i18n ================================================================================== -->
@@ -640,6 +657,17 @@
         <copy todir="${target.openfireHome}">
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
         </copy>
+
+        <available file="${overlay.conf.dir}" type="dir" property="overlay.conf.found"/>
+        <if>
+            <equals arg1="${overlay.conf.found}" arg2="true"/>
+            <then>
+                <copy todir="${target.openfireHome}" overwrite="true">
+                    <fileset dir="${overlay.dir}" includes="conf/**/*.*"/>
+                </copy>
+            </then>
+            <else><echo>No custom config here </echo></else>
+        </if>
 
         <!-- Copy database scripts -->
         <if>

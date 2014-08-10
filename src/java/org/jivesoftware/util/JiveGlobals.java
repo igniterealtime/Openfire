@@ -534,7 +534,7 @@ public class JiveGlobals {
 
         // jiveHome not loaded?
         if (openfireProperties == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         return openfireProperties.getAllPropertyNames();

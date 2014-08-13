@@ -390,6 +390,14 @@ public class XMPPServer {
             name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
             xmppServerInfo.setXMPPDomain(name);
 
+            // Iterate through all the provided XML properties and set the ones that haven't
+            // already been touched by setup prior to this method being called.
+            for (String propName : (List<String>)JiveGlobals.getXMLPropertyNames()) {
+                if (JiveGlobals.getProperty(propName) == null) {
+                    JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+                }
+            }
+
             // Update certificates (if required)
             try {
                 // Check if keystore already has certificates for current domain

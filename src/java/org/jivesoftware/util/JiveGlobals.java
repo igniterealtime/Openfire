@@ -523,6 +523,24 @@ public class JiveGlobals {
     }
 
     /**
+     * Return all property names as a list of strings, or an empty list if jiveHome has not been loaded.
+     *
+     * @return all child property for the given parent.
+     */
+    public static List<String> getXMLPropertyNames() {
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+
+        // jiveHome not loaded?
+        if (openfireProperties == null) {
+            return Collections.emptyList();
+        }
+
+        return openfireProperties.getAllPropertyNames();
+    }
+
+    /**
      * Deletes a locale property. If the property doesn't exist, the method
      * does nothing.
      *

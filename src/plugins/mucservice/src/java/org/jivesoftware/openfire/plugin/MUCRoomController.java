@@ -162,9 +162,6 @@ public class MUCRoomController {
 						"IllegalArgumentException");
 			}
 
-			// Set modification date
-			mucRoomEntity.setModificationDate(new Date());
-
 			createRoom(mucRoomEntity, serviceName);
 		} catch (NotAllowedException e) {
 			throw new MUCServiceException("Could not update the channel", roomName, "NotAllowedException");
@@ -203,7 +200,7 @@ public class MUCRoomController {
 		}
 
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
-				.getChatRoom(mucRoomEntity.getRoomName(), owner);
+				.getChatRoom(mucRoomEntity.getRoomName().toLowerCase(), owner);
 
 		// Set values
 		room.setNaturalLanguageName(mucRoomEntity.getNaturalName());
@@ -234,6 +231,18 @@ public class MUCRoomController {
 			room.setCreationDate(mucRoomEntity.getCreationDate());
 		} else {
 			room.setCreationDate(new Date());
+		}
+
+		// Set modification date
+		if (mucRoomEntity.getModificationDate() != null) {
+			room.setModificationDate(mucRoomEntity.getModificationDate());
+		} else {
+			room.setModificationDate(new Date());
+		}
+
+		// Save the room to the DB if the room should be persistant
+		if (room.isPersistent()) {
+			room.saveToDB();
 		}
 	}
 
@@ -350,12 +359,18 @@ public class MUCRoomController {
 		}
 
 		room.addOwners(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getOwners()), room.getRole());
-		room.addAdmins(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getAdmins()), room.getRole());
-		for (String memberJid : mucRoomEntity.getMembers()) {
-			room.addMember(new JID(memberJid), null, room.getRole());
+		if (mucRoomEntity.getAdmins() != null) {
+			room.addAdmins(MUCRoomUtils.convertStringsToJIDs(mucRoomEntity.getAdmins()), room.getRole());
 		}
-		for (String outcastJid : mucRoomEntity.getOutcasts()) {
-			room.addOutcast(new JID(outcastJid), null, room.getRole());
+		if (mucRoomEntity.getMembers() != null) {
+			for (String memberJid : mucRoomEntity.getMembers()) {
+				room.addMember(new JID(memberJid), null, room.getRole());
+			}
+		}
+		if (mucRoomEntity.getOutcasts() != null) {
+			for (String outcastJid : mucRoomEntity.getOutcasts()) {
+				room.addOutcast(new JID(outcastJid), null, room.getRole());
+			}
 		}
 	}
 }

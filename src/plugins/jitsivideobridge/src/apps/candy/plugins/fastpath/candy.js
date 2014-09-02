@@ -69,9 +69,10 @@ CandyShop.Fastpath = (function(self, Candy, $) {
 			var name = Strophe.getNodeFromJid(jid);
 			var chatRoom = 'workgroup-' + name + "@conference." + connection.domain;
 
+			connection.send($pres({to: jid}).c('agent-status', {'xmlns': "http://jabber.org/protocol/workgroup"}));				    	
 			Candy.Core.Action.Jabber.Room.Join(chatRoom);	
 			
-			connection.send($pres({to: jid}).c('agent-status', {'xmlns': "http://jabber.org/protocol/workgroup"}));				    	
+			connection.send($pres({to: jid}).c("status").t("Online").up().c("priority").t("1"));						
 			connection.sendIQ($iq({type: 'get', to: jid}).c('agent-status-request', {xmlns: "http://jabber.org/protocol/workgroup"}));
 
 		    });
@@ -206,6 +207,7 @@ CandyShop.Fastpath = (function(self, Candy, $) {
 				var workGroup = 'workgroup-' + nick + "@conference." + connection.domain;		
 				var free = true;
 				var count, oldest, waitTime, status
+				var room = Candy.View.Pane.Room.getPane(workGroup, '.message-pane')
 
 				presence.find('count').each(function() 
 				{
@@ -233,10 +235,10 @@ CandyShop.Fastpath = (function(self, Candy, $) {
 					console.log('notify-queue message  to ' + workGroup);	
 
 					var text = "There are " + count + " caller(s) waiting for as long as " + waitTime + " seconds";
-					Candy.View.Pane.Message.show(workGroup, nick, text);							
+					if (room) Candy.View.Pane.Message.show(workGroup, nick, text);							
 				}
 
-				if (free) Candy.View.Pane.Message.show(workGroup, nick, "No waiting conversations");				
+				if (free && room) Candy.View.Pane.Message.show(workGroup, nick, "No waiting conversations");				
 
 			});	
 		}

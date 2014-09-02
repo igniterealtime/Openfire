@@ -1936,6 +1936,8 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		{
 			Log.info("FocusAgent deliver\n" + packet);
 
+			if (packet instanceof IQ == false) return;
+
 			IQ iq = (IQ) packet;
 
 			if (iq.getType() == IQ.Type.result)

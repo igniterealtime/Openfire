@@ -904,87 +904,96 @@ CandyShop.Videobridge = (function(self, Candy, $) {
 		$(document).trigger('mediafailure.rayo');
 	    }    
     };
-
+    
     var getConstraints = function(um, resolution, bandwidth, fps) 
     {
-    	console.log("getConstraints", um, resolution, bandwidth, fps);
-    	
-	    window.RTC.rayo.constraints = {audio: false, video: false};
+	console.log("getConstraints", um, resolution, bandwidth, fps);
 
-	    if (um.indexOf('video') >= 0) {
-		window.RTC.rayo.constraints.video = {mandatory: {}};// same behaviour as true
-	    }
-	    if (um.indexOf('audio') >= 0) {
+	window.RTC.rayo.constraints = {audio: false, video: false};
+
+	if (um.indexOf('video') >= 0) {
+		window.RTC.rayo.constraints.video = { mandatory: {}, optional: [] };// same behaviour as true
+	}
+	if (um.indexOf('audio') >= 0) {
 		window.RTC.rayo.constraints.audio = {};// same behaviour as true
-	    }
-	    if (um.indexOf('screen') >= 0) {
+	}
+
+	if (um.indexOf('screen') >= 0) {
 		window.RTC.rayo.constraints.video = {
 		    "mandatory": {
-			"chromeMediaSource": "screen"
-		    }
+			"chromeMediaSource": "screen",
+			"googLeakyBucket": true,		
+			"maxWidth": window.screen.width,
+			"maxHeight": window.screen.height,
+			"maxFrameRate": "3"		
+		    },
+		    optional: []	    
 		};
-	    }
 
-	    if (resolution && !window.RTC.rayo.constraints.video) {
-		window.RTC.rayo.constraints.video = {mandatory: {}};// same behaviour as true
-	    }
-	    // see https://code.google.com/p/chromium/issues/detail?id=143631#c9 for list of supported resolutions
-	    switch (resolution) {
-	    // 16:9 first
-	    case '1080':
-	    case 'fullhd':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 1920;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 1080;
-		window.RTC.rayo.constraints.video.mandatory.minAspectRatio = 1.77;
-		break;
-	    case '720':
-	    case 'hd':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 1280;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 720;
-		window.RTC.rayo.constraints.video.mandatory.minAspectRatio = 1.77;
-		break;
-	    case '360':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 640;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 360;
-		window.RTC.rayo.constraints.video.mandatory.minAspectRatio = 1.77;
-		break;
-	    case '180':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 180;
-		window.RTC.rayo.constraints.video.mandatory.minAspectRatio = 1.77;
-		break;
+	} else
+
+		if (resolution && window.RTC.rayo.constraints.video) 
+		{
+		window.RTC.rayo.constraints.video = { mandatory: {}, optional: [] };// same behaviour as true
+		// see https://code.google.com/p/chromium/issues/detail?id=143631#c9 for list of supported resolutions
+		switch (resolution) {
+		// 16:9 first
+		case '1080':
+		case 'fullhd':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 1920;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 1080;
+			window.RTC.rayo.constraints.video.optional.push({ minAspectRatio: 1.77 });
+			break;
+		case '720':
+		case 'hd':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 1280;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 720;
+			window.RTC.rayo.constraints.video.optional.push({ minAspectRatio: 1.77 });
+			break;
+		case '360':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 640;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 360;
+			window.RTC.rayo.constraints.video.optional.push({ minAspectRatio: 1.77 });
+			break;
+		case '180':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 180;
+			window.RTC.rayo.constraints.video.optional.push({ minAspectRatio: 1.77 });
+			break;
 		// 4:3
-	    case '960':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 960;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 720;
-		break;
-	    case '640':
-	    case 'vga':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 640;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 480;
-		break;
-	    case '320':
-		window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
-		window.RTC.rayo.constraints.video.mandatory.minHeight = 240;
-		break;
-	    default:
-		if (navigator.userAgent.indexOf('Android') != -1) {
-		    window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
-		    window.RTC.rayo.constraints.video.mandatory.minHeight = 240;
-		    window.RTC.rayo.constraints.video.mandatory.maxFrameRate = 15;
+		case '960':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 960;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 720;
+			break;
+		case '640':
+		case 'vga':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 640;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 480;
+			break;
+		case '320':
+			window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
+			window.RTC.rayo.constraints.video.mandatory.minHeight = 240;
+			break;
+		default:
+			if (navigator.userAgent.indexOf('Android') != -1) {
+			    window.RTC.rayo.constraints.video.mandatory.minWidth = 320;
+			    window.RTC.rayo.constraints.video.mandatory.minHeight = 240;
+			    window.RTC.rayo.constraints.video.mandatory.maxFrameRate = 15;
+			}
+			break;
 		}
-		break;
-	    }
+	}
 
-	    if (bandwidth) { // doesn't work currently, see webrtc issue 1846
-		if (!window.RTC.rayo.constraints.video) window.RTC.rayo.constraints.video = {mandatory: {}};//same behaviour as true
+	if (bandwidth) { // doesn't work currently, see webrtc issue 1846
+		if (!window.RTC.rayo.constraints.video) window.RTC.rayo.constraints.video = { mandatory: {}, optional: [] };//same behaviour as true
 		window.RTC.rayo.constraints.video.optional = [{bandwidth: bandwidth}];
-	    }
-	    if (fps) { // for some cameras it might be necessary to request 30fps
+	}
+	if (fps) { // for some cameras it might be necessary to request 30fps
 		// so they choose 30fps mjpg over 10fps yuy2
-		if (!window.RTC.rayo.constraints.video) window.RTC.rayo.constraints.video = {mandatory: {}};// same behaviour as tru;
+		if (!window.RTC.rayo.constraints.video) window.RTC.rayo.constraints.video = { mandatory: {}, optional: [] };// same behaviour as tru;
 		window.RTC.rayo.constraints.video.mandatory.minFrameRate = fps;
-	    }
-    }    
+	}
+    }  
+    
     return self;
 }(CandyShop.Videobridge || {}, Candy, jQuery));    

@@ -45,6 +45,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -166,6 +167,10 @@ public class HttpSession extends LocalClientSession {
             method.setText("zlib");
 
             elements.add(compression);
+        }
+        if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
+            elements.add(DocumentHelper.createElement(new QName("register",
+                    new Namespace("", "http://jabber.org/features/iq-register"))));
         }
         Element bind = DocumentHelper.createElement(new QName("bind",
                 new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));

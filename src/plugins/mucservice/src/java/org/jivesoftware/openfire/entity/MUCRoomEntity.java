@@ -6,8 +6,14 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "chatRoom")
+@XmlType(propOrder = { "roomName", "naturalName", "description", "password", "subject", "creationDate",
+		"modificationDate", "maxUsers", "persistent", "publicRoom", "registrationEnabled", "canAnyoneDiscoverJID",
+		"canOccupantsChangeSubject", "canOccupantsInvite", "canChangeNickname", "logEnabled",
+		"loginRestrictedToNickname", "membersOnly", "moderated", "broadcastPresenceRoles", "owners", "admins",
+		"members", "outcasts" })
 public class MUCRoomEntity {
 
 	private String roomName;

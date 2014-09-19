@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>MUC Service Plugin</title>
+<title>MUC Service Plugin Readme</title>
 <style type="text/css">
 article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}
 audio,canvas,video{display:inline-block}
@@ -1224,17 +1224,84 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 </style>
 
 </head>
-<body><div class="container"><h1 id="muc-service-plugin">MUC Service Plugin</h1>
+<body><div class="container"><h1 id="muc-service-plugin-readme">MUC Service Plugin Readme</h1>
+
+<p>MUC Service is a plugin to manage the chat rooms over the REST/HTTP interface. <br>
+It is possible to get a XML based overview over all or filtered chat rooms and also to Create / Update / Delete chat rooms and there user roles.</p>
 
 <hr>
 
-<p>MUC Service is a plugin to manage the chat rooms over the REST/HTTP interface. <br>
-It is possible to get a XML based overview over all or filtered chat rooms and also to Create / Update / Delete chat rooms.</p>
+<p><div class="toc"><div class="toc">
+<ul>
+<li><a href="#muc-service-plugin-readme">MUC Service Plugin Readme</a><ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#explanation-of-rest">Explanation of REST</a></li>
+<li><a href="#basic-http-authentication">Basic HTTP Authentication</a></li>
+<li><a href="#data-types">Data types</a><ul>
+<li><a href="#chatroom">Chatroom</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#chat-room-related-rest-endpoints">Chat room related REST Endpoints</a><ul>
+<li><a href="#get-mucservicechatrooms">GET /mucservice/chatrooms</a><ul>
+<li><a href="#possible-parameters">Possible parameters</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul>
+</li>
+<li><a href="#get-mucservicechatroomsroomname">GET /mucservice/chatrooms/{roomName}</a><ul>
+<li><a href="#possible-parameters-1">Possible parameters</a></li>
+<li><a href="#examples-1">Examples</a></li>
+</ul>
+</li>
+<li><a href="#get-mucservicechatroomsroomnameparticipants">GET /mucservice/chatrooms/{roomName}/participants</a><ul>
+<li><a href="#possible-parameters-2">Possible parameters</a></li>
+<li><a href="#examples-2">Examples</a></li>
+</ul>
+</li>
+<li><a href="#post-mucservicechatrooms">POST /mucservice/chatrooms</a><ul>
+<li><a href="#possible-parameters-3">Possible parameters</a></li>
+<li><a href="#examples-3">Examples</a></li>
+</ul>
+</li>
+<li><a href="#delete-mucservicechatroomsroomname">DELETE /mucservice/chatrooms/{roomName}</a><ul>
+<li><a href="#possible-parameters-4">Possible parameters</a></li>
+<li><a href="#examples-4">Examples</a></li>
+</ul>
+</li>
+<li><a href="#put-mucservicechatroomsroomname">PUT /mucservice/chatrooms/{roomName}</a><ul>
+<li><a href="#possible-parameters-5">Possible parameters</a></li>
+<li><a href="#examples-5">Examples</a></li>
+</ul>
+</li>
+<li><a href="#post-mucservicechatroomsroomnamerolesjid">POST /mucservice/chatrooms/{roomName}/{roles}/{jid}</a><ul>
+<li><a href="#possible-parameters-6">Possible parameters</a></li>
+<li><a href="#examples-6">Examples</a></li>
+</ul>
+</li>
+<li><a href="#delete-mucservicechatroomsroomnamerolesjid">DELETE /mucservice/chatrooms/{roomName}/{roles}/{jid}</a><ul>
+<li><a href="#possible-parameters-7">Possible parameters</a></li>
+<li><a href="#examples-7">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</p>
+
+
+
+<h2 id="installation">Installation</h2>
+
+<p>Copy the file, “mucservice.jar” into the plugins directory of your Openfire installation. The plugin will then be automatically deployed. </p>
+
+
 
 <h2 id="explanation-of-rest">Explanation of REST</h2>
 
-<p>To provide a standard way of accessing the data the MUC Service <br>
-        is using REST.</p>
+<p>To provide a standard way of accessing the data the MUC Service is using REST.</p>
 
 <table>
 <thead>
@@ -1262,9 +1329,9 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
-<h2 id="chat-room-related-rest-endpoints">Chat room related REST Endpoints</h2>
 
-<h3 id="basic-http-authentication">Basic HTTP Authentication</h3>
+
+<h2 id="basic-http-authentication">Basic HTTP Authentication</h2>
 
 <p>All REST Endpoint are secured by <a href="http://en.wikipedia.org/wiki/Basic_access_authentication">Basic HTTP Authentication.</a></p>
 
@@ -1278,12 +1345,152 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
     c.addFilter(new HTTPBasicAuthFilter(user, password)); <br>
 </code></p>
 
+
+
+<h2 id="data-types">Data types</h2>
+
+
+
+<h3 id="chatroom">Chatroom</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Optional</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>roomName</td>
+  <td>No</td>
+  <td>The name/id of the room. Can only contains lowercase and alphanumeric characters.</td>
+</tr>
+<tr>
+  <td>naturalName</td>
+  <td>No</td>
+  <td>Also the name of the room, but can contains non alphanumeric characters. It’s mainly used for users while discovering rooms hosted by the Multi-User Chat service.</td>
+</tr>
+<tr>
+  <td>description</td>
+  <td>No</td>
+  <td>Description text of the room.</td>
+</tr>
+<tr>
+  <td>password</td>
+  <td>Yes</td>
+  <td>The password that the user must provide to enter the room</td>
+</tr>
+<tr>
+  <td>creationDate</td>
+  <td>Yes</td>
+  <td>The date when the room was created. Will be automatically set by creation. Example: 2014-07-10T09:49:12.411+02:00</td>
+</tr>
+<tr>
+  <td>modificationDate</td>
+  <td>Yes</td>
+  <td>The last date when the room’s configuration was modified. If the room’s configuration  was never modified then the initial value will be the same as the creation date. Will be automatically set by update. Example: 2014-07-10T09:49:12.411+02:00</td>
+</tr>
+<tr>
+  <td>maxUsers</td>
+  <td>Yes</td>
+  <td>the maximum number of occupants that can be simultaneously in the room. 0 means unlimited number of occupants.</td>
+</tr>
+<tr>
+  <td>persistent</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. Persistent rooms are saved to the database to make their configurations persistent together with the affiliation of the users. Otherwise the room will be destroyed if the last occupant leave the room.</td>
+</tr>
+<tr>
+  <td>publicRoom</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if the room is searchable and visible through service discovery.</td>
+</tr>
+<tr>
+  <td>registrationEnabled</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if users are allowed to register with the room. By default, room registration is enabled.</td>
+</tr>
+<tr>
+  <td>canAnyoneDiscoverJID</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if every presence packet will include the JID of every occupant.</td>
+</tr>
+<tr>
+  <td>canOccupantsChangeSubject</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if participants are allowed to change the room’s subject.</td>
+</tr>
+<tr>
+  <td>canOccupantsInvite</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if occupants can invite other users to the room. If the room does not require an invitation to enter (i.e. is not members-only) then any occupant can send invitations. On the other hand, if the room is members-only and occupants cannot send invitation then only the room owners and admins are allowed to send invitations.</td>
+</tr>
+<tr>
+  <td>canChangeNickname</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if room occupants are allowed to change their nicknames in the room. By default, occupants are allowed to change their nicknames.</td>
+</tr>
+<tr>
+  <td>logEnabled</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if the room’s conversation is being logged. If logging is activated the room conversation will be saved to the database every couple of minutes. The saving frequency is the same for all the rooms and can be configured by changing the property “xmpp.muc.tasks.log.timeout”.</td>
+</tr>
+<tr>
+  <td>loginRestrictedToNickname</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if registered users can only join the room using their registered nickname. By default, registered users can join the room using any nickname.</td>
+</tr>
+<tr>
+  <td>membersOnly</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if the room requires an invitation to enter. That is if the room is members-only.</td>
+</tr>
+<tr>
+  <td>moderated</td>
+  <td>Yes</td>
+  <td>Can be “true” or “false”. True if the room in which only those with “voice” may send messages to all occupants.</td>
+</tr>
+<tr>
+  <td>broadcastPresenceRoles</td>
+  <td>Yes</td>
+  <td>The list of roles of which presence will be broadcasted to the rest of the occupants.</td>
+</tr>
+<tr>
+  <td>owners</td>
+  <td>Yes</td>
+  <td>A collection with the current list of owners. The collection contains the bareJID of the users with owner affiliation.</td>
+</tr>
+<tr>
+  <td>admins</td>
+  <td>Yes</td>
+  <td>A collection with the current list of admins. The collection contains the bareJID of the users with admin affiliation.</td>
+</tr>
+<tr>
+  <td>members</td>
+  <td>Yes</td>
+  <td>A collection with the current list of room members. The collection contains the bareJID of the users with member affiliation. If the room is not members-only then the list  will contain the users that registered with the room and therefore they may have reserved a nickname.</td>
+</tr>
+<tr>
+  <td>outcasts</td>
+  <td>Yes</td>
+  <td>A collection with the current list of outcast users. An outcast user is not allowed to join the room again. The collection contains the bareJID of the users with outcast affiliation.</td>
+</tr>
+</tbody></table>
+
+
+<h1 id="chat-room-related-rest-endpoints">Chat room related REST Endpoints</h1>
+
+
+
 <h2 id="get-mucservicechatrooms">GET /mucservice/chatrooms</h2>
 
 <p>Endpoint to get all chat rooms</p>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Chatrooms</p>
+
+
 
 <h3 id="possible-parameters">Possible parameters</h3>
 
@@ -1317,6 +1524,8 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples">Examples</h3>
 
 <p><strong>Header</strong>: Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -1329,12 +1538,16 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 
 <p><strong>GET</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms?search=test">http://example.org:9090/plugins/mucservice/chatrooms?search=test</a></p>
 
+
+
 <h2 id="get-mucservicechatroomsroomname">GET /mucservice/chatrooms<span>/{roomName}</span></h2>
 
 <p>Endpoint to get information over specific chat room</p>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Chatroom</p>
+
+
 
 <h3 id="possible-parameters-1">Possible parameters</h3>
 
@@ -1362,6 +1575,8 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples-1">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -1370,12 +1585,16 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 
 <p><strong>GET</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/test?servicename=privateconf">http://example.org:9090/plugins/mucservice/chatrooms/test?servicename=privateconf</a></p>
 
+
+
 <h2 id="get-mucservicechatroomsroomnameparticipants">GET /mucservice/chatrooms/{roomName}/participants</h2>
 
 <p>Endpoint to get all participants with a role of specified room.</p>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Participants</p>
+
+
 
 <h3 id="possible-parameters-2">Possible parameters</h3>
 
@@ -1403,18 +1622,24 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples-2">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
 
 <p><strong>GET</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/room1/participants">http://example.org:9090/plugins/mucservice/chatrooms/room1/participants</a></p>
 
+
+
 <h2 id="post-mucservicechatrooms">POST /mucservice/chatrooms</h2>
 
 <p>Endpoint to create a new chat room.</p>
 
 <p><strong>Payload:</strong> Chatroom <br>
-<strong>Return value:</strong> void</p>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
+
+
 
 <h3 id="possible-parameters-3">Possible parameters</h3>
 
@@ -1436,6 +1661,8 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples-3">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -1444,42 +1671,68 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 
 <p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms">http://example.org:9090/plugins/mucservice/chatrooms</a></p>
 
-<p><strong>Payload:</strong></p>
+<p><strong>Payload Example 1 (required parameters):</strong></p>
 
-<pre class="prettyprint prettyprinted"><code><span class="pln">    </span><span class="tag">&lt;chatRoom&gt;</span><span class="pln">
-        </span><span class="tag">&lt;broadcastPresenceRoles&gt;</span><span class="pln">
-            </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">moderator</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
-            </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">participant</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
-            </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">visitor</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/broadcastPresenceRoles&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canAnyoneDiscoverJID&gt;</span><span class="pln">false</span><span class="tag">&lt;/canAnyoneDiscoverJID&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canChangeNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/canChangeNickname&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canOccupantsChangeSubject&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsChangeSubject&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canOccupantsInvite&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsInvite&gt;</span><span class="pln">
-        </span><span class="tag">&lt;creationDate&gt;</span><span class="pln">2014-02-12T15:52:37.592+01:00</span><span class="tag">&lt;/creationDate&gt;</span><span class="pln">
-        </span><span class="tag">&lt;description&gt;</span><span class="pln">Global Chat Room</span><span class="tag">&lt;/description&gt;</span><span class="pln">
-        </span><span class="tag">&lt;logEnabled&gt;</span><span class="pln">true</span><span class="tag">&lt;/logEnabled&gt;</span><span class="pln">
-        </span><span class="tag">&lt;loginRestrictedToNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/loginRestrictedToNickname&gt;</span><span class="pln">
-        </span><span class="tag">&lt;maxUsers&gt;</span><span class="pln">0</span><span class="tag">&lt;/maxUsers&gt;</span><span class="pln">
-        </span><span class="tag">&lt;membersOnly&gt;</span><span class="pln">false</span><span class="tag">&lt;/membersOnly&gt;</span><span class="pln">
-        </span><span class="tag">&lt;moderated&gt;</span><span class="pln">false</span><span class="tag">&lt;/moderated&gt;</span><span class="pln">
-        </span><span class="tag">&lt;naturalName&gt;</span><span class="pln">global-1</span><span class="tag">&lt;/naturalName&gt;</span><span class="pln">
-        </span><span class="tag">&lt;owners&gt;</span><span class="pln">
-            </span><span class="tag">&lt;owner&gt;</span><span class="pln">admin@localhost</span><span class="tag">&lt;/owner&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/owners&gt;</span><span class="pln">
-        </span><span class="tag">&lt;password&gt;</span><span class="pln">test</span><span class="tag">&lt;/password&gt;</span><span class="pln">
-        </span><span class="tag">&lt;persistent&gt;</span><span class="pln">true</span><span class="tag">&lt;/persistent&gt;</span><span class="pln">
-        </span><span class="tag">&lt;publicRoom&gt;</span><span class="pln">true</span><span class="tag">&lt;/publicRoom&gt;</span><span class="pln">
-        </span><span class="tag">&lt;registrationEnabled&gt;</span><span class="pln">false</span><span class="tag">&lt;/registrationEnabled&gt;</span><span class="pln">
-        </span><span class="tag">&lt;roomName&gt;</span><span class="pln">global</span><span class="tag">&lt;/roomName&gt;</span><span class="pln">
-    </span><span class="tag">&lt;/chatRoom&gt;</span></code></pre><div class="se-section-delimiter"></div>
+
+
+<pre class="prettyprint prettyprinted"><code><span class="tag">&lt;chatRoom&gt;</span><span class="pln">
+    </span><span class="tag">&lt;naturalName&gt;</span><span class="pln">global-1</span><span class="tag">&lt;/naturalName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;roomName&gt;</span><span class="pln">global</span><span class="tag">&lt;/roomName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;description&gt;</span><span class="pln">Global Chat Room</span><span class="tag">&lt;/description&gt;</span><span class="pln">
+</span><span class="tag">&lt;/chatRoom&gt;</span></code></pre>
+
+<p><strong>Payload Example 2 (available parameters):</strong></p>
+
+
+
+<pre class="prettyprint prettyprinted"><code><span class="tag">&lt;chatRoom&gt;</span><span class="pln">
+    </span><span class="tag">&lt;roomName&gt;</span><span class="pln">global</span><span class="tag">&lt;/roomName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;naturalName&gt;</span><span class="pln">global-2</span><span class="tag">&lt;/naturalName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;description&gt;</span><span class="pln">Global Chat Room</span><span class="tag">&lt;/description&gt;</span><span class="pln">
+    </span><span class="tag">&lt;creationDate&gt;</span><span class="pln">2014-02-12T15:52:37.592+01:00</span><span class="tag">&lt;/creationDate&gt;</span><span class="pln">
+    </span><span class="tag">&lt;modificationDate&gt;</span><span class="pln">2014-09-12T15:35:54.702+02:00</span><span class="tag">&lt;/modificationDate&gt;</span><span class="pln">
+    </span><span class="tag">&lt;maxUsers&gt;</span><span class="pln">0</span><span class="tag">&lt;/maxUsers&gt;</span><span class="pln">
+    </span><span class="tag">&lt;persistent&gt;</span><span class="pln">true</span><span class="tag">&lt;/persistent&gt;</span><span class="pln">
+    </span><span class="tag">&lt;publicRoom&gt;</span><span class="pln">true</span><span class="tag">&lt;/publicRoom&gt;</span><span class="pln">
+    </span><span class="tag">&lt;registrationEnabled&gt;</span><span class="pln">false</span><span class="tag">&lt;/registrationEnabled&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canAnyoneDiscoverJID&gt;</span><span class="pln">false</span><span class="tag">&lt;/canAnyoneDiscoverJID&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canOccupantsChangeSubject&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsChangeSubject&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canOccupantsInvite&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsInvite&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canChangeNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/canChangeNickname&gt;</span><span class="pln">
+    </span><span class="tag">&lt;logEnabled&gt;</span><span class="pln">true</span><span class="tag">&lt;/logEnabled&gt;</span><span class="pln">
+    </span><span class="tag">&lt;loginRestrictedToNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/loginRestrictedToNickname&gt;</span><span class="pln">
+    </span><span class="tag">&lt;membersOnly&gt;</span><span class="pln">false</span><span class="tag">&lt;/membersOnly&gt;</span><span class="pln">
+    </span><span class="tag">&lt;moderated&gt;</span><span class="pln">false</span><span class="tag">&lt;/moderated&gt;</span><span class="pln">
+    </span><span class="tag">&lt;broadcastPresenceRoles&gt;</span><span class="pln">
+        </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">moderator</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
+        </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">participant</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
+        </span><span class="tag">&lt;broadcastPresenceRole&gt;</span><span class="pln">visitor</span><span class="tag">&lt;/broadcastPresenceRole&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/broadcastPresenceRoles&gt;</span><span class="pln">
+    </span><span class="tag">&lt;owners&gt;</span><span class="pln">
+        </span><span class="tag">&lt;owner&gt;</span><span class="pln">owner@localhost</span><span class="tag">&lt;/owner&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/owners&gt;</span><span class="pln">
+    </span><span class="tag">&lt;admins&gt;</span><span class="pln">
+        </span><span class="tag">&lt;admin&gt;</span><span class="pln">admin@localhost</span><span class="tag">&lt;/admin&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/admins&gt;</span><span class="pln">
+    </span><span class="tag">&lt;members&gt;</span><span class="pln">
+        </span><span class="tag">&lt;member&gt;</span><span class="pln">member2@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
+        </span><span class="tag">&lt;member&gt;</span><span class="pln">member1@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/members&gt;</span><span class="pln">
+    </span><span class="tag">&lt;outcasts&gt;</span><span class="pln">
+        </span><span class="tag">&lt;outcast&gt;</span><span class="pln">outcast1@localhost</span><span class="tag">&lt;/outcast&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/outcasts&gt;</span><span class="pln">
+</span><span class="tag">&lt;/chatRoom&gt;</span></code></pre>
+
+
 
 <h2 id="delete-mucservicechatroomsroomname">DELETE /mucservice/chatrooms/{roomName}</h2>
 
 <p>Endpoint to delete a chat room.</p>
 
-<p><strong>Payload:</strong> void <br>
-<strong>Return value:</strong> void</p>
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
 
 <h3 id="possible-parameters-4">Possible parameters</h3>
 
@@ -1507,6 +1760,8 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples-4">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -1515,12 +1770,16 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 
 <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/testroom?servicename=privateconf">http://example.org:9090/plugins/mucservice/chatrooms/testroom?servicename=privateconf</a></p>
 
+
+
 <h2 id="put-mucservicechatroomsroomname">PUT /mucservice/chatrooms/{roomName}</h2>
 
 <p>Endpoint to update a chat room.</p>
 
 <p><strong>Payload:</strong> Chatroom <br>
-<strong>Return value:</strong> void</p>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
 
 <h3 id="possible-parameters-5">Possible parameters</h3>
 
@@ -1548,6 +1807,8 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 </tbody></table>
 
 
+
+
 <h3 id="examples-5">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -1558,37 +1819,214 @@ It is possible to get a XML based overview over all or filtered chat rooms and a
 
 <p><strong>Payload:</strong></p>
 
-<pre class="prettyprint prettyprinted"><code><span class="pln">    </span><span class="tag">&lt;chatRoom&gt;</span><span class="pln">
-        </span><span class="tag">&lt;admins&gt;</span><span class="pln">
-            </span><span class="tag">&lt;admin&gt;</span><span class="pln">admin@localhost</span><span class="tag">&lt;/admin&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/admins&gt;</span><span class="pln">
-        </span><span class="tag">&lt;broadcastPresenceRoles/&gt;</span><span class="pln">
-        </span><span class="tag">&lt;members&gt;</span><span class="pln">
-             </span><span class="tag">&lt;member&gt;</span><span class="pln">member1@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
-             </span><span class="tag">&lt;member&gt;</span><span class="pln">member2@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/members&gt;</span><span class="pln">
-        </span><span class="tag">&lt;outcasts&gt;</span><span class="pln">
-            </span><span class="tag">&lt;outcast&gt;</span><span class="pln">outcast1@localhost</span><span class="tag">&lt;/outcast&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/outcasts&gt;</span><span class="pln">
-        </span><span class="tag">&lt;owners&gt;</span><span class="pln">
-            </span><span class="tag">&lt;owner&gt;</span><span class="pln">owner@localhost</span><span class="tag">&lt;/owner&gt;</span><span class="pln">
-        </span><span class="tag">&lt;/owners&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canAnyoneDiscoverJID&gt;</span><span class="pln">false</span><span class="tag">&lt;/canAnyoneDiscoverJID&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canChangeNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/canChangeNickname&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canOccupantsChangeSubject&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsChangeSubject&gt;</span><span class="pln">
-        </span><span class="tag">&lt;canOccupantsInvite&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsInvite&gt;</span><span class="pln">
-        </span><span class="tag">&lt;creationDate&gt;</span><span class="pln">2014-02-12T15:52:37.592+01:00</span><span class="tag">&lt;/creationDate&gt;</span><span class="pln">
-        </span><span class="tag">&lt;description&gt;</span><span class="pln">Global Chat Room edit</span><span class="tag">&lt;/description&gt;</span><span class="pln">
-        </span><span class="tag">&lt;logEnabled&gt;</span><span class="pln">true</span><span class="tag">&lt;/logEnabled&gt;</span><span class="pln">
-        </span><span class="tag">&lt;loginRestrictedToNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/loginRestrictedToNickname&gt;</span><span class="pln">
-        </span><span class="tag">&lt;maxUsers&gt;</span><span class="pln">0</span><span class="tag">&lt;/maxUsers&gt;</span><span class="pln">
-        </span><span class="tag">&lt;membersOnly&gt;</span><span class="pln">false</span><span class="tag">&lt;/membersOnly&gt;</span><span class="pln">
-        </span><span class="tag">&lt;moderated&gt;</span><span class="pln">false</span><span class="tag">&lt;/moderated&gt;</span><span class="pln">
-        </span><span class="tag">&lt;naturalName&gt;</span><span class="pln">global-2</span><span class="tag">&lt;/naturalName&gt;</span><span class="pln">
-        </span><span class="tag">&lt;password&gt;</span><span class="pln">test</span><span class="tag">&lt;/password&gt;</span><span class="pln">
-        </span><span class="tag">&lt;persistent&gt;</span><span class="pln">true</span><span class="tag">&lt;/persistent&gt;</span><span class="pln">
-        </span><span class="tag">&lt;publicRoom&gt;</span><span class="pln">true</span><span class="tag">&lt;/publicRoom&gt;</span><span class="pln">
-        </span><span class="tag">&lt;registrationEnabled&gt;</span><span class="pln">false</span><span class="tag">&lt;/registrationEnabled&gt;</span><span class="pln">
-        </span><span class="tag">&lt;roomName&gt;</span><span class="pln">global</span><span class="tag">&lt;/roomName&gt;</span><span class="pln">
-    </span><span class="tag">&lt;/chatRoom&gt;</span></code></pre></div></body>
+
+
+<pre class="prettyprint prettyprinted"><code><span class="tag">&lt;chatRoom&gt;</span><span class="pln">
+    </span><span class="tag">&lt;roomName&gt;</span><span class="pln">global</span><span class="tag">&lt;/roomName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;naturalName&gt;</span><span class="pln">global-2</span><span class="tag">&lt;/naturalName&gt;</span><span class="pln">
+    </span><span class="tag">&lt;description&gt;</span><span class="pln">Global Chat Room edit</span><span class="tag">&lt;/description&gt;</span><span class="pln">
+    </span><span class="tag">&lt;password&gt;</span><span class="pln">test</span><span class="tag">&lt;/password&gt;</span><span class="pln">
+    </span><span class="tag">&lt;creationDate&gt;</span><span class="pln">2014-02-12T15:52:37.592+01:00</span><span class="tag">&lt;/creationDate&gt;</span><span class="pln">
+    </span><span class="tag">&lt;modificationDate&gt;</span><span class="pln">2014-09-12T14:20:56.286+02:00</span><span class="tag">&lt;/modificationDate&gt;</span><span class="pln">
+    </span><span class="tag">&lt;maxUsers&gt;</span><span class="pln">0</span><span class="tag">&lt;/maxUsers&gt;</span><span class="pln">
+    </span><span class="tag">&lt;persistent&gt;</span><span class="pln">true</span><span class="tag">&lt;/persistent&gt;</span><span class="pln">
+    </span><span class="tag">&lt;publicRoom&gt;</span><span class="pln">true</span><span class="tag">&lt;/publicRoom&gt;</span><span class="pln">
+    </span><span class="tag">&lt;registrationEnabled&gt;</span><span class="pln">false</span><span class="tag">&lt;/registrationEnabled&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canAnyoneDiscoverJID&gt;</span><span class="pln">false</span><span class="tag">&lt;/canAnyoneDiscoverJID&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canOccupantsChangeSubject&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsChangeSubject&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canOccupantsInvite&gt;</span><span class="pln">false</span><span class="tag">&lt;/canOccupantsInvite&gt;</span><span class="pln">
+    </span><span class="tag">&lt;canChangeNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/canChangeNickname&gt;</span><span class="pln">
+    </span><span class="tag">&lt;logEnabled&gt;</span><span class="pln">true</span><span class="tag">&lt;/logEnabled&gt;</span><span class="pln">
+    </span><span class="tag">&lt;loginRestrictedToNickname&gt;</span><span class="pln">false</span><span class="tag">&lt;/loginRestrictedToNickname&gt;</span><span class="pln">
+    </span><span class="tag">&lt;membersOnly&gt;</span><span class="pln">false</span><span class="tag">&lt;/membersOnly&gt;</span><span class="pln">
+    </span><span class="tag">&lt;moderated&gt;</span><span class="pln">false</span><span class="tag">&lt;/moderated&gt;</span><span class="pln">
+    </span><span class="tag">&lt;broadcastPresenceRoles/&gt;</span><span class="pln">
+    </span><span class="tag">&lt;owners&gt;</span><span class="pln">
+        </span><span class="tag">&lt;owner&gt;</span><span class="pln">owner@localhost</span><span class="tag">&lt;/owner&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/owners&gt;</span><span class="pln">
+    </span><span class="tag">&lt;admins&gt;</span><span class="pln">
+        </span><span class="tag">&lt;admin&gt;</span><span class="pln">admin@localhost</span><span class="tag">&lt;/admin&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/admins&gt;</span><span class="pln">
+    </span><span class="tag">&lt;members&gt;</span><span class="pln">
+        </span><span class="tag">&lt;member&gt;</span><span class="pln">member2@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
+        </span><span class="tag">&lt;member&gt;</span><span class="pln">member1@localhost</span><span class="tag">&lt;/member&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/members&gt;</span><span class="pln">
+    </span><span class="tag">&lt;outcasts&gt;</span><span class="pln">
+        </span><span class="tag">&lt;outcast&gt;</span><span class="pln">outcast1@localhost</span><span class="tag">&lt;/outcast&gt;</span><span class="pln">
+    </span><span class="tag">&lt;/outcasts&gt;</span><span class="pln">
+</span><span class="tag">&lt;/chatRoom&gt;</span></code></pre>
+
+
+
+<h2 id="post-mucservicechatroomsroomnamerolesjid">POST /mucservice/chatrooms/{roomName}/{roles}/{jid}</h2>
+
+<p>Endpoint to add a new user role to a room.</p>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
+
+
+
+<h3 id="possible-parameters-6">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>roomname</td>
+  <td>@Path</td>
+  <td>Exact room name</td>
+  <td></td>
+</tr>
+<tr>
+  <td>jid</td>
+  <td>@Path</td>
+  <td>JID of the owner (username@xmppDomain)</td>
+  <td></td>
+</tr>
+<tr>
+  <td>roles</td>
+  <td>@Path</td>
+  <td>Available roles: <br><strong>owners</strong>  <br> <strong>admins</strong> <br> <strong>members</strong> <br> <strong>outcasts</strong></td>
+  <td></td>
+</tr>
+<tr>
+  <td>servicename</td>
+  <td>@QueryParam</td>
+  <td>The name of the Group Chat Service</td>
+  <td>conference</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-6">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>Header:</strong> Content-Type application/xml</p>
+
+<p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost</a></p>
+
+<p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/admins/admin@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/admins/admin@localhost</a></p>
+
+<p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/members/member@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/members/member@localhost</a></p>
+
+<p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/outcasts/outcast@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/outcasts/outcast@localhost</a></p>
+
+<p><strong>POST</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost?servicename=privateconf">http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost?servicename=privateconf</a></p>
+
+
+
+<h2 id="delete-mucservicechatroomsroomnamerolesjid">DELETE /mucservice/chatrooms/{roomName}/{roles}/{jid}</h2>
+
+<p>Endpoint to remove a room user role.</p>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
+
+<h3 id="possible-parameters-7">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>roomname</td>
+  <td>@Path</td>
+  <td>Exact room name</td>
+  <td></td>
+</tr>
+<tr>
+  <td>jid</td>
+  <td>@Path</td>
+  <td>JID of the owner (username@xmppDomain)</td>
+  <td></td>
+</tr>
+<tr>
+  <td>roles</td>
+  <td>@Path</td>
+  <td>Available roles: <br><strong>owners</strong>  <br> <strong>admins</strong> <br> <strong>members</strong> <br> <strong>outcasts</strong></td>
+  <td></td>
+</tr>
+<tr>
+  <td>servicename</td>
+  <td>@QueryParam</td>
+  <td>The name of the Group Chat Service</td>
+  <td>conference</td>
+</tr>
+</tbody></table>
+
+<h3 id="examples-7">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>Header:</strong> Content-Type application/xml</p>
+
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost</a></p>
+
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/admins/admin@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/admins/admin@localhost</a></p>
+
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/members/member@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/members/member@localhost</a></p>
+
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/outcasts/outcast@localhost">http://example.org:9090/plugins/mucservice/chatrooms/global/outcasts/outcast@localhost</a></p>
+
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost?servicename=privateconf">http://example.org:9090/plugins/mucservice/chatrooms/global/owners/owner@localhost?servicename=privateconf</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div></body>
 </html>

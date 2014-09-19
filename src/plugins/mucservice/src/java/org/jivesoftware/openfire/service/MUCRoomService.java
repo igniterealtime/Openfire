@@ -10,6 +10,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.jivesoftware.openfire.entity.MUCChannelType;
 import org.jivesoftware.openfire.entity.MUCRoomEntities;
@@ -39,30 +41,33 @@ public class MUCRoomService {
 
 	@DELETE
 	@Path("/{roomName}")
-	public void deleteMUCRoom(@PathParam("roomName") String roomName,
+	public Response deleteMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
 		MUCRoomController.getInstance().deleteChatRoom(roomName, serviceName);
+		return Response.status(Status.OK).build();
 	}
 
 	@POST
-	public void createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+	public Response createMUCRoom(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			MUCRoomEntity mucRoomEntity) throws MUCServiceException {
 		MUCRoomController.getInstance().createChatRoom(serviceName, mucRoomEntity);
+		return Response.status(Status.CREATED).build();
 	}
 
 	@PUT
 	@Path("/{roomName}")
-	public void udpateMUCRoom(@PathParam("roomName") String roomName,
+	public Response udpateMUCRoom(@PathParam("roomName") String roomName,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName, MUCRoomEntity mucRoomEntity)
 			throws MUCServiceException {
 		MUCRoomController.getInstance().updateChatRoom(roomName, serviceName, mucRoomEntity);
+		return Response.status(Status.OK).build();
 	}
 
 	@GET
 	@Path("/{roomName}/participants")
 	@Produces(MediaType.APPLICATION_XML)
 	public ParticipantEntities getMUCRoomParticipants(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws MUCServiceException {
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName) {
 		return MUCRoomController.getInstance().getRoomParticipants(roomName, serviceName);
 	}
 }

@@ -18,6 +18,8 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.utils.MUCRoomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -25,6 +27,8 @@ import org.xmpp.packet.JID;
  */
 public class MUCRoomController {
 
+	/** The Constant LOG. */
+	private static final Logger LOG = LoggerFactory.getLogger(MUCRoomController.class);
 	/** The Constant INSTANCE. */
 	public static final MUCRoomController INSTANCE = new MUCRoomController();
 
@@ -106,7 +110,7 @@ public class MUCRoomController {
 	 */
 	public void deleteChatRoom(String roomName, String serviceName) throws MUCServiceException {
 		MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
-				.getChatRoom(roomName);
+				.getChatRoom(roomName.toLowerCase());
 
 		if (chatRoom != null) {
 			chatRoom.destroyRoom(null, null);
@@ -221,8 +225,12 @@ public class MUCRoomController {
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
 
-		room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
-
+		// Set broadcast presence roles
+		if (mucRoomEntity.getBroadcastPresenceRoles() != null) {
+			room.setRolesToBroadcastPresence(mucRoomEntity.getBroadcastPresenceRoles());
+		} else {
+			room.setRolesToBroadcastPresence(new ArrayList<String>());
+		}
 		// Set all roles
 		setRoles(room, mucRoomEntity);
 
@@ -371,6 +379,136 @@ public class MUCRoomController {
 			for (String outcastJid : mucRoomEntity.getOutcasts()) {
 				room.addOutcast(new JID(outcastJid), null, room.getRole());
 			}
+		}
+	}
+	
+	/**
+	 * Adds the admin.
+	 *
+	 * @param serviceName
+	 *            the service name
+	 * @param roomName
+	 *            the room name
+	 * @param jid
+	 *            the jid
+	 * @throws MUCServiceException
+	 *             the MUC service exception
+	 */
+	public void addAdmin(String serviceName, String roomName, String jid) throws MUCServiceException {
+		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+				.getChatRoom(roomName.toLowerCase());
+		try {
+			room.addAdmin(new JID(jid), room.getRole());
+		} catch (ForbiddenException e) {
+			LOG.error("Could not add admin", e);
+			throw new MUCServiceException("Could not add admin", jid, "ForbiddenException");
+		} catch (ConflictException e) {
+			LOG.error("Could not add admin", e);
+			throw new MUCServiceException("Could not add admin", jid, "ConflictException");
+		}
+	}
+
+	/**
+	 * Adds the owner.
+	 *
+	 * @param serviceName
+	 *            the service name
+	 * @param roomName
+	 *            the room name
+	 * @param jid
+	 *            the jid
+	 * @throws MUCServiceException
+	 *             the MUC service exception
+	 */
+	public void addOwner(String serviceName, String roomName, String jid) throws MUCServiceException {
+		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+				.getChatRoom(roomName.toLowerCase());
+		try {
+			room.addOwner(new JID(jid), room.getRole());
+		} catch (ForbiddenException e) {
+			LOG.error("Could not add owner", e);
+			throw new MUCServiceException("Could not add owner", jid, "ForbiddenException");
+		}
+	}
+
+	/**
+	 * Adds the member.
+	 *
+	 * @param serviceName
+	 *            the service name
+	 * @param roomName
+	 *            the room name
+	 * @param jid
+	 *            the jid
+	 * @throws MUCServiceException
+	 *             the MUC service exception
+	 */
+	public void addMember(String serviceName, String roomName, String jid) throws MUCServiceException {
+		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+				.getChatRoom(roomName.toLowerCase());
+		try {
+			room.addMember(new JID(jid), null, room.getRole());
+		} catch (ForbiddenException e) {
+			LOG.error("Could not add member", e);
+			throw new MUCServiceException("Could not add member", jid, "ForbiddenException");
+		} catch (ConflictException e) {
+			LOG.error("Could not add member", e);
+			throw new MUCServiceException("Could not add member", jid, "ConflictException");
+		}
+	}
+
+	/**
+	 * Adds the outcast.
+	 *
+	 * @param serviceName
+	 *            the service name
+	 * @param roomName
+	 *            the room name
+	 * @param jid
+	 *            the jid
+	 * @throws MUCServiceException
+	 *             the MUC service exception
+	 */
+	public void addOutcast(String serviceName, String roomName, String jid) throws MUCServiceException {
+		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+				.getChatRoom(roomName.toLowerCase());
+		try {
+			room.addOutcast(new JID(jid), null, room.getRole());
+		} catch (NotAllowedException e) {
+			LOG.error("Could not add outcast", e);
+			throw new MUCServiceException("Could not add outcast", jid, "NotAllowedException");
+		} catch (ForbiddenException e) {
+			LOG.error("Could not add outcast", e);
+			throw new MUCServiceException("Could not add outcast", jid, "ForbiddenException");
+		} catch (ConflictException e) {
+			LOG.error("Could not add outcast", e);
+			throw new MUCServiceException("Could not add outcast", jid, "ConflictException");
+		}
+	}
+
+	/**
+	 * Delete affiliation.
+	 *
+	 * @param serviceName
+	 *            the service name
+	 * @param roomName
+	 *            the room name
+	 * @param jid
+	 *            the jid
+	 * @throws MUCServiceException
+	 *             the MUC service exception
+	 */
+	public void deleteAffiliation(String serviceName, String roomName, String jid) throws MUCServiceException {
+		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
+				.getChatRoom(roomName.toLowerCase());
+		try {
+			room.addNone(new JID(jid), room.getRole());
+		} catch (ForbiddenException e) {
+			LOG.error("Could not delete affiliation", e);
+			throw new MUCServiceException("Could not delete affiliation", jid, "ForbiddenException");
+		} catch (ConflictException e) {
+			LOG.error("Could not delete affiliation", e);
+			throw new MUCServiceException("Could not delete affiliation", jid, "ConflictException");
 		}
 	}
 }

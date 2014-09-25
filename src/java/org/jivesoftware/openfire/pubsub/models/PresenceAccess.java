@@ -54,7 +54,7 @@ public class PresenceAccess extends AccessModel {
         XMPPServer server = XMPPServer.getInstance();
         for (JID nodeOwner : node.getOwners()) {
 	        // Give access to the owner of the roster :)
-	        if (nodeOwner.equals(owner.toBareJID())) {
+	        if (nodeOwner.equals(owner)) {
 	            return true;
 	        }
 	        // Check that the node owner is a local user

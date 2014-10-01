@@ -247,6 +247,9 @@ public class MUCRoomController {
 		} else {
 			room.setModificationDate(new Date());
 		}
+		
+		// Unlock the room, because the default configuration lock the room.  		
+		room.unlock(room.getRole());
 
 		// Save the room to the DB if the room should be persistant
 		if (room.isPersistent()) {

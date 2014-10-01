@@ -5,7 +5,7 @@
     <name>MUC Service</name>
     <description>MUC administration over REST Interface</description>
     <author>Roman Soldatow</author>
-	<version>0.2.2</version>
-    <date>09.17.2014</date>
+	<version>0.2.3</version>
+    <date>10.1.2014</date>
     <minServerVersion>3.9.1</minServerVersion>
 </plugin>

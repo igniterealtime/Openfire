@@ -3,14 +3,24 @@
 <web-app>
     <!-- Servlets -->
     <servlet>
-        <servlet-name>UserServiceServlet</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.plugin.userService.UserServiceServlet</servlet-class>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <servlet-class>org.jivesoftware.openfire.plugin.JerseyWrapper</servlet-class>
     </servlet>
 
     <!-- Servlet mappings -->
     <servlet-mapping>
-        <servlet-name>UserServiceServlet</servlet-name>
-        <url-pattern>/userservice</url-pattern>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <url-pattern>/users/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <url-pattern>/properties/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>JerseyWrapper</servlet-name>
+        <url-pattern>/lockouts/*</url-pattern>
     </servlet-mapping>
 
 </web-app>

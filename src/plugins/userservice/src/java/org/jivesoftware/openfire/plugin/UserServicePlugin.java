@@ -438,7 +438,7 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 
 	public void setHttpBasicAuth(boolean httpBasicAuth) {
 		this.httpBasicAuth = httpBasicAuth;
-		JiveGlobals.setProperty("plugin.userservice.httpAuth.enabled", enabled ? "true" : "false");
+		JiveGlobals.setProperty("plugin.userservice.httpAuth.enabled", httpBasicAuth ? "true" : "false");
 	}
 
 	public void propertySet(String property, Map<String, Object> params) {
@@ -448,6 +448,8 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 			this.enabled = Boolean.parseBoolean((String) params.get("value"));
 		} else if (property.equals("plugin.userservice.allowedIPs")) {
 			this.allowedIPs = StringUtils.stringToCollection((String) params.get("value"));
+		} else if (property.equals("plugin.userservice.httpAuth.enabled")) {
+			this.httpBasicAuth = Boolean.parseBoolean((String) params.get("value"));
 		}
 	}
 
@@ -458,6 +460,8 @@ public class UserServicePlugin implements Plugin, PropertyEventListener {
 			this.enabled = false;
 		} else if (property.equals("plugin.userservice.allowedIPs")) {
 			this.allowedIPs = Collections.emptyList();
+		} else if (property.equals("plugin.userservice.httpAuth.enabled")) {
+			this.httpBasicAuth = false;
 		}
 	}
 

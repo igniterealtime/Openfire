@@ -64,6 +64,11 @@ public class AuthFilter implements ContainerRequestFilter {
 			}
 		}
 
+		// To be backwards compatible to userservice 1.*
+		if ("userService/userservice".equals(containerRequest.getPath())) {
+			return containerRequest;
+		}
+
 		// Get the authentification passed in HTTP headers parameters
 		String auth = containerRequest.getHeaderValue("authorization");
 

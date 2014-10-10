@@ -22,6 +22,7 @@
                  org.jivesoftware.openfire.admin.AdminManager,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.ParamUtils"
@@ -160,6 +161,7 @@
         <th nowrap><fmt:message key="session.details.online" /></th>
         <th nowrap><fmt:message key="user.create.username" /></th>
         <th nowrap><fmt:message key="user.create.name" /></th>
+        <th nowrap><fmt:message key="user.roster.groups" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
         <th nowrap><fmt:message key="user.summary.last-logout" /></th>
          <%  // Don't allow editing or deleting if users are read-only.
@@ -235,13 +237,35 @@
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
-        <td width="33%">
+        <td width="23%">
             <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
         </td>
         <td width="15%">
+            <%
+                Collection<Group> groups = webManager.getGroupManager().getGroups(user);
+                if (groups.isEmpty()) {
+            %>
+                <i>None</i>
+            <%
+                }
+                else {
+                    int count = 0;
+                    for (Group group : groups) {
+                        if (count != 0) {
+                            out.print(", ");
+                        }
+                        %>
+                        <a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(group.getName())) %></a>
+                        <%
+                        count++;
+                    }
+                }
+            %>
+        </td>
+        <td width="12%">
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
-        <td width="25%">
+        <td width="23%">
             <% long logoutTime = presenceManager.getLastActivity(user);
                 if (logoutTime > -1) {
                     out.println(StringUtils.getElapsedTime(logoutTime));

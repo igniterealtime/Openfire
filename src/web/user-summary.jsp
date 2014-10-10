@@ -254,9 +254,7 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        %>
-                        <a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(group.getName())) %></a>
-                        <%
+                        %><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(group.getName())) %></a><%
                         count++;
                     }
                 }

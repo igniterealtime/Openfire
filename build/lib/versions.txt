@@ -64,6 +64,7 @@ proxool.jar                         | 0.9.0RC3+ (see note #1)                   
 rome.jar                            | 0.9                                                          | Apache 2.0
 rome-fetcher.jar                    | 0.9                                                          | Apache 2.0
 servlet-api.jar                     | 3.1 - from Jetty 9.1.5.v20140505                             |
+servlet-api-schemas.jar             | 3.1 - from Jetty 9.1.5.v20140505                             |
 shaj.jar                            | 0.5                                                          | Apache 2.0
 sitemesh.jar                        | 2.2.1                                                        | Apache 1.1
 slf4j-api                           | 1.7.7                                                        | http://www.slf4j.org/license.html

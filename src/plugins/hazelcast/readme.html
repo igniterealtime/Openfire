@@ -65,7 +65,7 @@ open source <a href="http://www.hazelcast.org">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 3.1.7.
+The current Hazelcast release is version 3.3.1.
 </p>
 <h2>Installation</h2>
 <p>
@@ -158,9 +158,9 @@ This will activate clustering for all members of the cluster.</li>
 </ol>
 <a name="config" />
 <h2>Configuration</h2>
-<p>
-There are several configuration options built into the Hazelcast plugin
+<p>There are several configuration options built into the Hazelcast plugin
 as Openfire system properties:
+</p>
 <ol>
 <li><i>hazelcast.startup.delay.seconds</i> (5): Number of seconds
 to wait before launching the Hazelcast plugin. This allows Openfire to
@@ -181,15 +181,14 @@ that will be added to the plugin's classpath. This allows a custom Hazelcast
 configuration file to be located outside the Openfire home directory.</li>
 <li><i>hazelcast.config.jmx.enabled</i> (false): Enables JMX support for
 the Hazelcast cluster if JMX has been enabled via the Openfire admin console.
-Refer to the <a href="http://www.hazelcast.com/docs/3.1/manual/multi_html/ch07.html">
+Refer to the <a href="http://docs.hazelcast.org/docs/3.3/manual/html/monitoringwithjmx.html">
 Hazelcast JMX docs</a> for additional information.</li>
 </ol>
-</p>
-<p>
-The Hazelcast plugin uses the <a href="http://www.hazelcast.org/docs/3.1/manual/single_html/#Config">
+<p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.3/manual/html/config.html">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
 By default the cluster members will attempt to discover each other via multicast at the
 following location:
+</p>
 <ul>
 <li>IP Address: 224.2.2.3</li>
 <li>Port: 54327</li>
@@ -211,7 +210,7 @@ following alternative:
 &lt;/join&gt;
 ...
 </pre>
-Please refer to the <a href="http://www.hazelcast.org/docs/3.1/manual/single_html/">
+<p>Please refer to the <a href="http://docs.hazelcast.org/docs/3.3/manual/html-single/">
 Hazelcast reference manual</a> for more information.
 </p>
 </body>

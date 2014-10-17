@@ -205,6 +205,9 @@ public class Version implements Comparable<Version> {
 
 	@Override
 	public int compareTo(Version that) {
+		if (that == null) {
+			return 1;
+		}
 		
 		long thisVersion = (this.getMicro()*10) + (this.getMinor()*1000) + (this.getMajor()*100000);
 		long thatVersion = (that.getMicro()*10) + (that.getMinor()*1000) + (that.getMajor()*100000);

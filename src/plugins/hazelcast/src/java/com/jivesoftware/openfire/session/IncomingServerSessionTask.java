@@ -59,6 +59,9 @@ public class IncomingServerSessionTask extends RemoteSessionTask {
         else if (operation == Operation.getAddress) {
             result = getSession().getAddress();
         }
+        else if (operation == Operation.isUsingServerDialback) {
+            result = ((IncomingServerSession) getSession()).isUsingServerDialback();
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

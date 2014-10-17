@@ -53,11 +53,6 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
         super(nodeID, address);
     }
 
-
-    public String getCipherSuiteName() {
-        return "NONE";
-    }
-
     public PrivacyList getActiveList() {
         Cache<String, ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
         ClientSessionInfo sessionInfo = cache.get(getAddress().toString());

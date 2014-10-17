@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2008-2012, Hazel Bilisim Ltd. All Rights Reserved.
+  ~ Copyright (c) 2008-2013, Hazelcast, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
   ~ limitations under the License.
   -->
 
-<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.1.xsd"
+<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.3.xsd"
            xmlns="http://www.hazelcast.com/schema/config"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <group>
@@ -24,7 +24,10 @@
     </group>
     <management-center enabled="false"/>
     <network>
-        <port auto-increment="true">5701</port>
+        <port auto-increment="true" port-count="100">5701</port>
+        <outbound-ports>
+            <ports>0</ports>
+        </outbound-ports>
         <join>
             <multicast enabled="true">
                 <multicast-group>224.2.2.3</multicast-group>
@@ -33,46 +36,18 @@
             <tcp-ip enabled="false"/>
             <aws enabled="false"/>
         </join>
-        <interfaces enabled="false"/>
-        <ssl enabled="false" />
-        <socket-interceptor enabled="false" />
-        <symmetric-encryption enabled="false">
-            <!--
-               encryption algorithm such as
-               DES/ECB/PKCS5Padding,
-               PBEWithMD5AndDES,
-               AES/CBC/PKCS5Padding,
-               Blowfish,
-               DESede
-            -->
-            <algorithm>PBEWithMD5AndDES</algorithm>
-            <!-- salt value to use when generating the secret key -->
-            <salt>thesalt</salt>
-            <!-- pass phrase to use when generating the secret key -->
-            <password>thepass</password>
-            <!-- iteration count to use when generating the secret key -->
-            <iteration-count>19</iteration-count>
-        </symmetric-encryption>
-        <asymmetric-encryption enabled="false">
-            <!-- encryption algorithm -->
-            <algorithm>RSA/NONE/PKCS1PADDING</algorithm>
-            <!-- private key password -->
-            <keyPassword>thekeypass</keyPassword>
-            <!-- private key alias -->
-            <keyAlias>local</keyAlias>
-            <!-- key store type -->
-            <storeType>JKS</storeType>
-            <!-- key store password -->
-            <storePassword>thestorepass</storePassword>
-            <!-- path to the key store -->
-            <storePath>keystore</storePath>
-        </asymmetric-encryption>
+        <interfaces enabled="false">
+            <interface>10.10.1.*</interface>
+        </interfaces>
+        <ssl enabled="false"/>
+        <socket-interceptor enabled="false"/>
+        <symmetric-encryption enabled="false"/>
+        <asymmetric-encryption enabled="false"/>
     </network>
     <partition-group enabled="false"/>
-    <executor-service>
-        <core-pool-size>16</core-pool-size>
-        <max-pool-size>64</max-pool-size>
-        <keep-alive-seconds>60</keep-alive-seconds>
+    <executor-service name="default">
+        <pool-size>16</pool-size>
+        <queue-capacity>0</queue-capacity>
     </executor-service>
     <queue name="default">
         <!--
@@ -146,22 +121,27 @@
         -->
         <eviction-percentage>25</eviction-percentage>
         <!--
+            Minimum time in milliseconds which should pass before checking
+            if a partition of this map is evictable or not.
+            Default value is 100 millis.
+        -->
+        <min-eviction-check-millis>100</min-eviction-check-millis>
+        <!--
             While recovering from split-brain (network partitioning),
             map entries in the small cluster will merge into the bigger cluster
             based on the policy set here. When an entry merge into the
             cluster, there might an existing entry with the same key already.
             Values of these entries might be different for that same key.
             Which value should be set for the key? Conflict is resolved by
-            the policy set here. Default policy is hz.ADD_NEW_ENTRY
+            the policy set here. Default policy is PutIfAbsentMapMergePolicy
 
             There are built-in merge policies such as
-            hz.NO_MERGE      ; no entry will merge.
-            hz.ADD_NEW_ENTRY ; entry will be added if the merging entry's key
-                               doesn't exist in the cluster.
-            hz.HIGHER_HITS   ; entry with the higher hits wins.
-            hz.LATEST_UPDATE ; entry with the latest update wins.
+            com.hazelcast.map.merge.PassThroughMergePolicy; entry will be added if there is no existing entry for the key.
+            com.hazelcast.map.merge.PutIfAbsentMapMergePolicy ; entry will be added if the merging entry doesn't exist in the cluster.
+            com.hazelcast.map.merge.HigherHitsMapMergePolicy ; entry with the higher hits wins.
+            com.hazelcast.map.merge.LatestUpdateMapMergePolicy ; entry with the latest update wins.
         -->
-        <merge-policy>hz.ADD_NEW_ENTRY</merge-policy>
+        <merge-policy>com.hazelcast.map.merge.PassThroughMergePolicy</merge-policy>
 		<!--
 			Near cache provides a local view of the clustered map, which is
 			ideal for high-read caches. Each cluster member retains a local
@@ -179,6 +159,41 @@
         </near-cache>
     </map>
     
+    <multimap name="default">
+        <backup-count>1</backup-count>
+        <value-collection-type>SET</value-collection-type>
+    </multimap>
+
+    <list name="default">
+        <backup-count>1</backup-count>
+    </list>
+
+    <set name="default">
+        <backup-count>1</backup-count>
+    </set>
+
+    <jobtracker name="default">
+        <max-thread-size>0</max-thread-size>
+        <!-- Queue size 0 means number of partitions * 2 -->
+        <queue-size>0</queue-size>
+        <retry-count>0</retry-count>
+        <chunk-size>1000</chunk-size>
+        <communicate-stats>true</communicate-stats>
+        <topology-changed-strategy>CANCEL_RUNNING_OPERATION</topology-changed-strategy>
+    </jobtracker>
+
+    <semaphore name="default">
+        <initial-permits>0</initial-permits>
+        <backup-count>1</backup-count>
+        <async-backup-count>0</async-backup-count>
+    </semaphore>
+
+    <serialization>
+        <portable-version>0</portable-version>
+    </serialization>
+
+    <services enable-defaults="true"/>
+
     <!--  Partitioned Openfire caches without size/time limits (no eviction). -->
     
     <map name="opt-$cacheStats">

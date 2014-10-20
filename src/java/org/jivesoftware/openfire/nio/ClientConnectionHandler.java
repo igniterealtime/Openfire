@@ -19,20 +19,20 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.common.IdleStatus;
-import org.apache.mina.common.IoSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.JiveGlobals;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.net.ClientStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.JID;
 
 /**
  * ConnectionHandler that knows which subclass of {@link StanzaHandler} should

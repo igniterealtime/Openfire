@@ -19,6 +19,10 @@
 
 package org.jivesoftware.openfire.nio;
 
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -34,11 +38,11 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
-import org.apache.mina.common.ByteBuffer;
-import org.apache.mina.common.IoFilterChain;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.filter.CompressionFilter;
-import org.apache.mina.filter.SSLFilter;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.filterchain.IoFilterChain;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.compression.CompressionFilter;
+import org.apache.mina.filter.ssl.SslFilter;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
@@ -49,6 +53,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -155,7 +160,7 @@ public class NIOConnection implements Connection {
     }
 
     public Certificate[] getLocalCertificates() {
-        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
+        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
         if (sslSession != null) {
             return sslSession.getLocalCertificates();
         }
@@ -164,7 +169,7 @@ public class NIOConnection implements Connection {
 
     public Certificate[] getPeerCertificates() {
         try {
-            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
+            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
             if (sslSession != null) {
                 return sslSession.getPeerCertificates();
             }
@@ -198,7 +203,7 @@ public class NIOConnection implements Connection {
                 if (session != null) {
                     session.setStatus(Session.STATUS_CLOSED);
                 }
-                ioSession.close();
+                ioSession.close(false);
                 closed = true;
                 closedSuccessfully = true;
             }
@@ -240,7 +245,7 @@ public class NIOConnection implements Connection {
     }
 
     public boolean isSecure() {
-        return ioSession.getFilterChain().contains("tls");
+        return ioSession.getFilterChain().contains(TLS_FILTER_NAME);
     }
 
     public void deliver(Packet packet) throws UnauthorizedException {
@@ -248,7 +253,7 @@ public class NIOConnection implements Connection {
             backupDeliverer.deliver(packet);
         }
         else {
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
+            IoBuffer buffer = IoBuffer.allocate(4096);
             buffer.setAutoExpand(true);
 
             boolean errorDelivering = false;
@@ -290,7 +295,7 @@ public class NIOConnection implements Connection {
 
     private void deliverRawText(String text, boolean asynchronous) {
         if (!isClosed()) {
-            ByteBuffer buffer = ByteBuffer.allocate(text.length());
+            IoBuffer buffer = IoBuffer.allocate(text.length());
             buffer.setAutoExpand(true);
 
             boolean errorDelivering = false;
@@ -312,7 +317,7 @@ public class NIOConnection implements Connection {
                 else {
                     // Send stanza and wait for ACK (using a 2 seconds default timeout)
                     boolean ok =
-                            ioSession.write(buffer).join(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
+                            ioSession.write(buffer).awaitUninterruptibly(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
                     if (!ok) {
                         Log.warn("No ACK was received when sending stanza to: " + this.toString());
                     }
@@ -355,12 +360,12 @@ public class NIOConnection implements Connection {
             }
         }
 
-        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+        String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
         SSLContext tlsContext = SSLContext.getInstance(algorithm);
 
         tlsContext.init(km, tm, null);
 
-        SSLFilter filter = new SSLFilter(tlsContext);
+        SslFilter filter = new SslFilter(tlsContext);
         filter.setUseClientMode(clientMode);
         if (authentication == ClientAuth.needed) {
             filter.setNeedClientAuth(true);
@@ -371,12 +376,9 @@ public class NIOConnection implements Connection {
             // good
             filter.setWantClientAuth(true);
         }
-        // TODO Temporary workaround (placing SSLFilter before ExecutorFilter) to avoid deadlock. Waiting for
-        // MINA devs feedback. Note that ExecutorFilter is flanked by ReadThrottleFilterBuilder and we must not
-        // get in between them.
-        ioSession.getFilterChain().addBefore("org.apache.mina.filter.ReadThrottleFilterBuilder.add", "tls", filter);
-        //ioSession.getFilterChain().addAfter("org.apache.mina.filter.ReadThrottleFilterBuilder.release", "tls", filter);
-        ioSession.setAttribute(SSLFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
+        ioSession.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
+        ioSession.setAttribute(SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
+
         if (!clientMode) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -385,11 +387,11 @@ public class NIOConnection implements Connection {
 
     public void addCompression() {
         IoFilterChain chain = ioSession.getFilterChain();
-        String baseFilter = "org.apache.mina.common.ExecutorThreadModel";
-        if (chain.contains("tls")) {
-            baseFilter = "tls";
+        String baseFilter = EXECUTOR_FILTER_NAME;
+        if (chain.contains(TLS_FILTER_NAME)) {
+            baseFilter = TLS_FILTER_NAME;
         }
-        chain.addAfter(baseFilter, "compression", new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
+        chain.addAfter(baseFilter, COMPRESSION_FILTER_NAME, new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
     }
 
     public void startCompression() {

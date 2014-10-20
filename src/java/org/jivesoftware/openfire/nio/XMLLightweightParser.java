@@ -29,8 +29,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.mina.common.ByteBuffer;
-import org.apache.mina.filter.codec.ProtocolDecoder;
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -179,7 +178,7 @@ class XMLLightweightParser {
     /*
     * Main reading method
     */
-    public void read(ByteBuffer byteBuffer) throws Exception {
+    public void read(IoBuffer byteBuffer) throws Exception {
         if (buffer == null) {
             // exception was thrown before, avoid duplicate exception(s)
             // "read" and discard remaining data

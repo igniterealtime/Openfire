@@ -23,8 +23,9 @@ package org.jivesoftware.openfire.net;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.mina.common.IoFilterAdapter;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.filterchain.IoFilterAdapter;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.write.WriteRequest;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,15 +48,15 @@ public class StalledSessionsFilter extends IoFilterAdapter {
 	public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
             throws Exception {
         // Get number of pending requests
-        int pendingBytes = session.getScheduledWriteBytes();
+        long pendingBytes = session.getScheduledWriteBytes();
         if (pendingBytes > bytesCap) {
             // Get last time we were able to send something to the connected client
             long writeTime = session.getLastWriteTime();
-            int pendingRequests = session.getScheduledWriteRequests();
+            int pendingRequests = session.getScheduledWriteMessages();
             Log.debug("About to kill session with pendingBytes: " + pendingBytes + " pendingWrites: " +
                     pendingRequests + " lastWrite: " + new Date(writeTime) + "session: " + session);
             // Close the session and throw an exception
-            session.close();
+            session.close(false);
             throw new IOException("Closing session that seems to be stalled. Preventing OOM");
         }
         // Call next filter (everything is fine)

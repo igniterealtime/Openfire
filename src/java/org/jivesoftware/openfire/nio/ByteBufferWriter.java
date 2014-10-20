@@ -19,7 +19,7 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.common.ByteBuffer;
+import org.apache.mina.core.buffer.IoBuffer;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -32,17 +32,17 @@ import java.nio.charset.CharsetEncoder;
  */
 public class ByteBufferWriter extends Writer {
     private CharsetEncoder encoder;
-    private ByteBuffer byteBuffer;
+    private IoBuffer ioBuffer;
 
 
-    public ByteBufferWriter(ByteBuffer byteBuffer, CharsetEncoder encoder) {
+    public ByteBufferWriter(IoBuffer byteBuffer, CharsetEncoder encoder) {
         this.encoder = encoder;
-        this.byteBuffer = byteBuffer;
+        this.ioBuffer = byteBuffer;
     }
 
     @Override
 	public void write(char cbuf[], int off, int len) throws IOException {
-        byteBuffer.putString(new String(cbuf, off, len), encoder);
+        ioBuffer.putString(new String(cbuf, off, len), encoder);
     }
 
     @Override

@@ -25,7 +25,6 @@ import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -33,8 +32,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -47,16 +44,19 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.mina.common.*;
-import org.apache.mina.filter.ReadThrottleFilterBuilder;
-import org.apache.mina.filter.SSLFilter;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.buffer.SimpleBufferAllocator;
+import org.apache.mina.core.service.IoService;
+import org.apache.mina.core.service.IoServiceListener;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.integration.jmx.IoServiceManager;
-import org.apache.mina.integration.jmx.IoSessionManager;
-import org.apache.mina.transport.socket.nio.SocketAcceptor;
-import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
-import org.apache.mina.transport.socket.nio.SocketSessionConfig;
+import org.apache.mina.filter.ssl.SslFilter;
+import org.apache.mina.integration.jmx.IoServiceMBean;
+import org.apache.mina.integration.jmx.IoSessionMBean;
+import org.apache.mina.transport.socket.SocketSessionConfig;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -90,14 +90,26 @@ import org.slf4j.LoggerFactory;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(ConnectionManagerImpl.class);
-  private static final int MB = 1024 * 1024;
+	private static final int MB = 1024 * 1024;
 
-    private SocketAcceptor socketAcceptor;
-    private SocketAcceptor sslSocketAcceptor;
-    private SocketAcceptor componentAcceptor;
+    public static final String EXECUTOR_FILTER_NAME = "threadPool";
+    public static final String TLS_FILTER_NAME = "tls";
+    public static final String COMPRESSION_FILTER_NAME = "compression";
+    public static final String XMPP_CODEC_FILTER_NAME = "xmpp";
+    public static final String CAPACITY_FILTER_NAME = "outCap";
+
+    private static final String CLIENT_SOCKET_ACCEPTOR_NAME = "client";
+    private static final String CLIENT_SSL_SOCKET_ACCEPTOR_NAME = "client_ssl";
+    private static final String COMPONENT_SOCKET_ACCEPTOR_NAME = "component";
+    private static final String MULTIPLEXER_SOCKET_ACCEPTOR_NAME = "multiplexer";
+
+    private static final Logger Log = LoggerFactory.getLogger(ConnectionManagerImpl.class);
+
+    private NioSocketAcceptor socketAcceptor;
+    private NioSocketAcceptor sslSocketAcceptor;
+    private NioSocketAcceptor componentAcceptor;
     private SocketAcceptThread serverSocketThread;
-    private SocketAcceptor multiplexerSocketAcceptor;
+    private NioSocketAcceptor multiplexerSocketAcceptor;
     private ArrayList<ServerPort> ports;
 
     private SessionManager sessionManager;
@@ -225,17 +237,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start multiplexers socket unless it's been disabled.
         if (isConnectionManagerListenerEnabled()) {
             // Create SocketAcceptor with correct number of processors
-            multiplexerSocketAcceptor = buildSocketAcceptor("multiplexer");
+            multiplexerSocketAcceptor = buildSocketAcceptor(MULTIPLEXER_SOCKET_ACCEPTOR_NAME);
             // Customize Executor that will be used by processors to process incoming stanzas
-            ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("connectionManager");
             int eventThreads = JiveGlobals.getIntProperty("xmpp.multiplex.processing.threads", 16);
-            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor) threadModel.getExecutor();
-            eventExecutor.setCorePoolSize(eventThreads + 1);
-            eventExecutor.setMaximumPoolSize(eventThreads + 1);
-            eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
-            multiplexerSocketAcceptor.getDefaultConfig().setThreadModel(threadModel);
+            multiplexerSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS));
             // Add the XMPP codec filter
-            multiplexerSocketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
+            multiplexerSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
 
         }
     }
@@ -255,7 +262,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     }
                 }
                 // Start accepting connections
-                multiplexerSocketAcceptor.bind(new InetSocketAddress(bindInterface, port), new MultiplexerConnectionHandler(serverName));
+                multiplexerSocketAcceptor.setHandler(new MultiplexerConnectionHandler(serverName));
+                multiplexerSocketAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.connectionManager));
 
@@ -273,7 +281,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void stopConnectionManagerListener() {
         if (multiplexerSocketAcceptor != null) {
-            multiplexerSocketAcceptor.unbindAll();
+            multiplexerSocketAcceptor.unbind();
             for (ServerPort port : ports) {
                 if (port.isConnectionManagerPort()) {
                     ports.remove(port);
@@ -288,25 +296,18 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled() && componentAcceptor == null) {
             // Create SocketAcceptor with correct number of processors
-            componentAcceptor = buildSocketAcceptor("component");
-            // Customize Executor that will be used by processors to process incoming stanzas
-            ExecutorThreadModel threadModel = ExecutorThreadModel.getInstance("component");
+            componentAcceptor = buildSocketAcceptor(COMPONENT_SOCKET_ACCEPTOR_NAME);
             int eventThreads = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
-            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)threadModel.getExecutor();
-            eventExecutor.setCorePoolSize(eventThreads + 1);
-            eventExecutor.setMaximumPoolSize(eventThreads + 1);
-            eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
-
-            componentAcceptor.getDefaultConfig().setThreadModel(threadModel);
+            componentAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS));
             // Add the XMPP codec filter
-            componentAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
+            componentAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
         }
     }
 
     private void startComponentListener() {
         // Start components socket unless it's been disabled.
         if (isComponentListenerEnabled() && componentAcceptor != null &&
-                componentAcceptor.getManagedServiceAddresses().isEmpty()) {
+                componentAcceptor.getManagedSessionCount() == 0) {
             int port = getComponentListenerPort();
             try {
                 // Listen on a specific network interface if it has been set.
@@ -318,8 +319,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     }
                 }
                 // Start accepting connections
-                componentAcceptor
-                        .bind(new InetSocketAddress(bindInterface, port), new ComponentConnectionHandler(serverName));
+                componentAcceptor.setHandler(new ComponentConnectionHandler(serverName));
+                componentAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.component));
 
@@ -337,7 +338,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void stopComponentListener() {
         if (componentAcceptor != null) {
-            componentAcceptor.unbindAll();
+            componentAcceptor.unbind();
             for (ServerPort port : ports) {
                 if (port.isComponentPort()) {
                     ports.remove(port);
@@ -352,9 +353,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients plain socket unless it's been disabled.
         if (isClientListenerEnabled()) {
             // Create SocketAcceptor with correct number of processors
-            socketAcceptor = buildSocketAcceptor("client");
+            socketAcceptor = buildSocketAcceptor(CLIENT_SOCKET_ACCEPTOR_NAME);
             // Customize Executor that will be used by processors to process incoming stanzas
-            int eventThreads = JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16);
+            int eventThreads = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 16);
+
             ExecutorFilter executorFilter = new ExecutorFilter();
             ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
             ThreadFactory threadFactory = eventExecutor.getThreadFactory();
@@ -364,29 +366,17 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             eventExecutor.setMaximumPoolSize(eventThreads + 1);
             eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
 
-            socketAcceptor.getDefaultConfig().setThreadModel(ThreadModel.MANUAL);
             // Add the XMPP codec filter
-            socketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
-            socketAcceptor.getFilterChain().addFirst("threadModel", executorFilter);
+            socketAcceptor.getFilterChain().addFirst(XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
+            socketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
             // Kill sessions whose outgoing queues keep growing and fail to send traffic
-            socketAcceptor.getFilterChain().addAfter("xmpp", "outCap", new StalledSessionsFilter());
+            socketAcceptor.getFilterChain().addAfter(XMPP_CODEC_FILTER_NAME, CAPACITY_FILTER_NAME, new StalledSessionsFilter());
             // Throttle sessions who send data too fast
-            int maxBufferSize = JiveGlobals.getIntProperty("xmpp.client.maxReadBufferSize", 10 * MB);
-            installReadThrottle(socketAcceptor, maxBufferSize);
+            int maxBufferSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_READ_BUFFER, 10 * MB);
+            socketAcceptor.getSessionConfig().setMaxReadBufferSize(maxBufferSize);
+	        Log.debug("Throttling read buffer for connections from socketAcceptor={} to max={} bytes",
+	                  socketAcceptor, maxBufferSize);
         }
-    }
-
-    private static void installReadThrottle(IoAcceptor socketAcceptor, int maxBufferSize) {
-        if (maxBufferSize <= 0) {
-          return;
-        }
-
-        // Install filter that throttles the incoming data
-        Log.debug("Throttling read buffer for connections from socketAcceptor={} to max={} bytes",
-                  socketAcceptor, maxBufferSize);
-        ReadThrottleFilterBuilder readThrottle = new ReadThrottleFilterBuilder();
-        readThrottle.setMaximumConnectionBufferSize(maxBufferSize);
-        readThrottle.attach(socketAcceptor.getFilterChain());
     }
 
     private void startClientListeners(String localIPAddress) {
@@ -403,8 +393,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     }
                 }
                 // Start accepting connections
-                socketAcceptor
-                        .bind(new InetSocketAddress(bindInterface, port), new ClientConnectionHandler(serverName));
+                socketAcceptor.setHandler(new ClientConnectionHandler(serverName));
+                socketAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.client));
 
@@ -422,7 +412,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void stopClientListeners() {
         if (socketAcceptor != null) {
-            socketAcceptor.unbindAll();
+            socketAcceptor.unbind();
             for (ServerPort port : ports) {
                 if (port.isClientPort() && !port.isSecure()) {
                     ports.remove(port);
@@ -437,30 +427,42 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients SSL unless it's been disabled.
         if (isClientSSLListenerEnabled()) {
             int port = getClientSSLListenerPort();
-            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+            String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
             try {
-                // Create SocketAcceptor with correct number of processors
-                sslSocketAcceptor = buildSocketAcceptor("client_ssl");
                 // Customize Executor that will be used by processors to process incoming stanzas
-                int eventThreads = JiveGlobals.getIntProperty("xmpp.client_ssl.processing.threads", 16);
-                ExecutorFilter executorFilter = new ExecutorFilter();
+                int eventThreads = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS_SSL, 16);
+                ExecutorFilter executorFilter = new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS);
                 ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-                ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-                threadFactory = new DelegatingThreadFactory("Old SSL executor thread - ", threadFactory);
-                eventExecutor.setThreadFactory(threadFactory);
-                eventExecutor.setCorePoolSize(eventThreads + 1);
-                eventExecutor.setMaximumPoolSize(eventThreads + 1);
-                eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
 
-                sslSocketAcceptor.getDefaultConfig().setThreadModel(ThreadModel.MANUAL);
+                final ThreadFactory originalThreadFactory = eventExecutor.getThreadFactory();
+                ThreadFactory newThreadFactory = new ThreadFactory()
+                {
+                    private final AtomicInteger threadId = new AtomicInteger( 0 );
+
+                    public Thread newThread( Runnable runnable )
+                    {
+                        Thread t = originalThreadFactory.newThread( runnable );
+                        t.setName("Old SSL executor thread - " + threadId.incrementAndGet() );
+                        t.setDaemon( true );
+                        return t;
+                    }
+                };
+                eventExecutor.setThreadFactory( newThreadFactory );
+                
+                // Create SocketAcceptor with correct number of processors
+                sslSocketAcceptor = buildSocketAcceptor(CLIENT_SSL_SOCKET_ACCEPTOR_NAME);
+                sslSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
+
                 // Add the XMPP codec filter
-                sslSocketAcceptor.getFilterChain().addFirst("xmpp", new ProtocolCodecFilter(new XMPPCodecFactory()));
-                sslSocketAcceptor.getFilterChain().addFirst("threadModel", executorFilter);
+                sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
                 // Kill sessions whose outgoing queues keep growing and fail to send traffic
-                sslSocketAcceptor.getFilterChain().addAfter("xmpp", "outCap", new StalledSessionsFilter());
-                // Throttle sessions who send data too fast
-                int maxBufferSize = JiveGlobals.getIntProperty("xmpp.client_ssl.maxReadBufferSize", 10 * MB);
-                installReadThrottle(sslSocketAcceptor, maxBufferSize);
+                sslSocketAcceptor.getFilterChain().addAfter(XMPP_CODEC_FILTER_NAME, CAPACITY_FILTER_NAME, new StalledSessionsFilter());
+                
+				// Throttle sessions who send data too fast
+				int maxBufferSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_READ_BUFFER_SSL, 10 * MB);
+				sslSocketAcceptor.getSessionConfig().setMaxReadBufferSize(maxBufferSize);
+		        Log.debug("Throttling read buffer for connections from socketAcceptor={} to max={} bytes",
+		                  socketAcceptor, maxBufferSize);
 
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
                 SSLContext sslContext = SSLContext.getInstance(algorithm);
@@ -473,14 +475,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                         trustFactory.getTrustManagers(),
                         new java.security.SecureRandom());
 
-                SSLFilter sslFilter = new SSLFilter(sslContext);
+                SslFilter sslFilter = new SslFilter(sslContext);
                 if (JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("needed")) {
                     sslFilter.setNeedClientAuth(true);
                 }
                 else if(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("wanted")) {
                     sslFilter.setWantClientAuth(true);
                 }
-                sslSocketAcceptor.getFilterChain().addFirst("tls", sslFilter);
+                sslSocketAcceptor.getFilterChain().addFirst(TLS_FILTER_NAME, sslFilter);
 
             }
             catch (Exception e) {
@@ -505,8 +507,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     }
                 }
                 // Start accepting connections
-                sslSocketAcceptor
-                        .bind(new InetSocketAddress(bindInterface, port), new ClientConnectionHandler(serverName));
+                sslSocketAcceptor.setHandler(new ClientConnectionHandler(serverName));
+                sslSocketAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, true, null, ServerPort.Type.client));
 
@@ -524,7 +526,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private void stopClientSSLListeners() {
         if (sslSocketAcceptor != null) {
-            sslSocketAcceptor.unbindAll();
+            sslSocketAcceptor.unbind();
             for (ServerPort port : ports) {
                 if (port.isClientPort() && port.isSecure()) {
                     ports.remove(port);
@@ -582,8 +584,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Check if we need to configure MINA to use Direct or Heap Buffers
         // Note: It has been reported that heap buffers are 50% faster than direct buffers
         if (JiveGlobals.getBooleanProperty("xmpp.socket.heapBuffer", true)) {
-            ByteBuffer.setUseDirectBuffers(false);
-            ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
+            IoBuffer.setUseDirectBuffer(false);
+            IoBuffer.setAllocator(new SimpleBufferAllocator());
         }
     }
 
@@ -718,7 +720,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    public SocketAcceptor getSocketAcceptor() {
+    public NioSocketAcceptor getSocketAcceptor() {
         return socketAcceptor;
     }
 
@@ -726,7 +728,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return JiveGlobals.getIntProperty(ConnectionSettings.Client.PORT, DEFAULT_PORT);
     }
 
-    public SocketAcceptor getSSLSocketAcceptor() {
+    public NioSocketAcceptor getSSLSocketAcceptor() {
         return sslSocketAcceptor;
     }
 
@@ -764,7 +766,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
     }
 
-    public SocketAcceptor getComponentAcceptor() {
+    public NioSocketAcceptor getComponentAcceptor() {
         return componentAcceptor;
     }
 
@@ -791,7 +793,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return JiveGlobals.getIntProperty(ConnectionSettings.Server.PORT, DEFAULT_SERVER_PORT);
     }
 
-    public SocketAcceptor getMultiplexerSocketAcceptor() {
+    public NioSocketAcceptor getMultiplexerSocketAcceptor() {
         return multiplexerSocketAcceptor;
     }
 
@@ -829,24 +831,19 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
         restartClientSSLListeners();
     }
-
-    private SocketAcceptor buildSocketAcceptor(String name) {
-        SocketAcceptor socketAcceptor;
+    
+    private NioSocketAcceptor buildSocketAcceptor(String name) {
+        NioSocketAcceptor socketAcceptor;
         // Create SocketAcceptor with correct number of processors
-        int ioThreads = JiveGlobals.getIntProperty("xmpp.processor.count", Runtime.getRuntime().availableProcessors());
-        // Set the executor that processors will use. Note that processors will use another executor
-        // for processing events (i.e. incoming traffic)
-        Executor ioExecutor = new ThreadPoolExecutor(
-            ioThreads + 1, ioThreads + 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>() );
-        socketAcceptor = new SocketAcceptor(ioThreads, ioExecutor);
+        int processorCount = JiveGlobals.getIntProperty("xmpp.processor.count", Runtime.getRuntime().availableProcessors());
+        socketAcceptor = new NioSocketAcceptor(processorCount);
         // Set that it will be possible to bind a socket if there is a connection in the timeout state
-        SocketAcceptorConfig socketAcceptorConfig = socketAcceptor.getDefaultConfig();
-        socketAcceptorConfig.setReuseAddress(true);
+        socketAcceptor.setReuseAddress(true);
         // Set the listen backlog (queue) length. Default is 50.
-        socketAcceptorConfig.setBacklog(JiveGlobals.getIntProperty("xmpp.socket.backlog", 50));
+        socketAcceptor.setBacklog(JiveGlobals.getIntProperty("xmpp.socket.backlog", 50));
 
         // Set default (low level) settings for new socket connections
-        SocketSessionConfig socketSessionConfig = socketAcceptorConfig.getSessionConfig();
+        SocketSessionConfig socketSessionConfig = socketAcceptor.getSessionConfig();
         //socketSessionConfig.setKeepAlive();
         int receiveBuffer = JiveGlobals.getIntProperty("xmpp.socket.buffer.receive", -1);
         if (receiveBuffer > 0 ) {
@@ -868,15 +865,15 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         return socketAcceptor;
     }
 
-    private void configureJMX(SocketAcceptor acceptor, String suffix) {
-    	final String prefix = IoServiceManager.class.getPackage().getName();
-		// monitor the IoService
-    	try {
-        	IoServiceManager mbean = new IoServiceManager(acceptor);
+    private void configureJMX(NioSocketAcceptor acceptor, String suffix) {
+        final String prefix = IoServiceMBean.class.getPackage().getName();
+        // monitor the IoService
+        try {
+            IoServiceMBean mbean = new IoServiceMBean(acceptor);
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
             ObjectName name = new ObjectName(prefix + ":type=SocketAcceptor,name=" + suffix);
             mbs.registerMBean( mbean, name );
-        	mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
+//        	mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
     	} catch (JMException ex) {
     		Log.warn("Failed to register MINA acceptor mbean (JMX): " + ex);
     	}
@@ -885,7 +882,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 	    	acceptor.addListener(new IoServiceListener() {
 	    	    public void sessionCreated(IoSession session) {
 	    	        try {
-	    	            IoSessionManager mbean = new IoSessionManager(session);
+                        IoSessionMBean mbean = new IoSessionMBean(session);
 	    	            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
 	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
 	    	            					session.getRemoteAddress().toString().replace(':', '/'));
@@ -903,8 +900,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 	    	            Log.warn("Failed to unregister MINA session mbean (JMX): " + ex);
 	    	        }      
 	    	    }
-	    	    public void serviceActivated(IoService is, SocketAddress sa, IoHandler ih, IoServiceConfig isc) { }
-	    	    public void serviceDeactivated(IoService is, SocketAddress sa, IoHandler ih, IoServiceConfig isc) { }
+                public void serviceActivated(IoService service) throws Exception { }
+                public void serviceDeactivated(IoService service) throws Exception { }
+                public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception { }
 	    	});
     	}
     }

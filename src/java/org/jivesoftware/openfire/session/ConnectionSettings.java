@@ -21,6 +21,13 @@ public final class ConnectionSettings {
         public static final String LOGIN_ALLOWED = "xmpp.client.login.allowed";
         public static final String LOGIN_ANONYM_ALLOWED = "xmpp.client.login.allowedAnonym";
 
+        public static final String MAX_THREADS = "xmpp.client.processing.threads";
+        public static final String MAX_READ_BUFFER = "xmpp.client.maxReadBufferSize";
+
+        public static final String MAX_THREADS_SSL = "xmpp.client_ssl.processing.threads";
+        public static final String MAX_READ_BUFFER_SSL = "xmpp.client_ssl.maxReadBufferSize";
+        public static final String TLS_ALGORITHM = "xmpp.socket.ssl.algorithm";
+
         private Client() {
         }
     }

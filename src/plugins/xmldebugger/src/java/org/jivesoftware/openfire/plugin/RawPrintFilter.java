@@ -20,15 +20,16 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import org.apache.mina.common.ByteBuffer;
-import org.apache.mina.common.IoFilterAdapter;
-import org.apache.mina.common.IoSession;
-import org.jivesoftware.util.JiveGlobals;
-
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.apache.mina.core.filterchain.IoFilterAdapter;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.core.write.WriteRequest;
+import org.jivesoftware.util.JiveGlobals;
 
 /**
  * MINA filter that prints to the stdout received XML stanzas before they are actually parsed and
@@ -50,13 +51,13 @@ public class RawPrintFilter extends IoFilterAdapter {
     @Override
 	public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
         // Decode the bytebuffer and print it to the stdout
-        if (enabled && message instanceof ByteBuffer) {
+    	if (enabled && message instanceof ByteBuffer) {
             ByteBuffer byteBuffer = (ByteBuffer) message;
             // Keep current position in the buffer
             int currentPos = byteBuffer.position();
             // Decode buffer
             Charset encoder = Charset.forName("UTF-8");
-            CharBuffer charBuffer = encoder.decode(byteBuffer.buf());
+            CharBuffer charBuffer = encoder.decode(byteBuffer.asReadOnlyBuffer());
             // Print buffer content
             System.out.println(prefix + " - RECV (" + session.hashCode() + "): " + charBuffer);
             // Reset to old position in the buffer
@@ -67,10 +68,10 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void messageSent(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest message) throws Exception {
         if (enabled) {
             System.out.println(prefix + " - SENT (" + session.hashCode() + "): " +
-                    Charset.forName("UTF-8").decode(((ByteBuffer) message).buf()));
+                    Charset.forName("UTF-8").decode(((ByteBuffer) message).asReadOnlyBuffer()));
         }
 
         // Pass the message to the next filter

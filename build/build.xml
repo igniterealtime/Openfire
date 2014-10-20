@@ -134,11 +134,12 @@
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <fileset dir="${lib.merge.dir}" includes="*.jar"/>
-        <fileset dir="${lib.dist.dir}"
-                 includes="servlet-api.jar, mail.jar, jdic.jar, bcpg-jdk15on.jar bcpkix-jdk15on.jar bcprov-jdk15on.jar"/>
+        <fileset dir="${lib.dist.dir}" includes="servlet-api.jar, servlet-api-schemas.jar, mail.jar, jdic.jar"/>
+        <fileset dir="${lib.dist.dir}" includes="bcpg-jdk15on.jar, bcpkix-jdk15on.jar, bcprov-jdk15on.jar"/>
     </path>
 
     <path id="compile.dependencies">
+        <path refid="ant.dependencies"/>
         <path refid="javadoc.dependencies"/>
     </path>
 

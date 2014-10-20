@@ -59,7 +59,9 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.core.LifecycleListener;
+import com.hazelcast.core.MapEvent;
 import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.jivesoftware.util.cluster.HazelcastClusterNodeInfo;
@@ -490,6 +492,24 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 		public void entryEvicted(EntryEvent event) {
 			entryRemoved(event);
 		}
+
+		private void mapClearedOrEvicted(MapEvent event) {
+	        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
+	        // ignore events which were triggered by this node
+	        if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+				nodePresences.get(nodeID).clear();
+	        }
+		}
+		
+		@Override
+		public void mapEvicted(MapEvent event) {
+			mapClearedOrEvicted(event);
+		}
+
+		@Override
+		public void mapCleared(MapEvent event) {
+			mapClearedOrEvicted(event);
+		}
     }
 
     /**
@@ -537,6 +557,25 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 
 		public void entryEvicted(EntryEvent event) {
 			entryRemoved(event);
+		}
+
+		private void mapClearedOrEvicted(MapEvent event) {
+	        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
+	        // ignore events which were triggered by this node
+	        if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+				Set<String> sessionJIDs = lookupJIDList(nodeID, componentsCache.getName());
+				sessionJIDs.clear();
+	        }
+		}
+		
+		@Override
+		public void mapEvicted(MapEvent event) {
+			mapClearedOrEvicted(event);
+		}
+
+		@Override
+		public void mapCleared(MapEvent event) {
+			mapClearedOrEvicted(event);
 		}
     }
 
@@ -661,5 +700,12 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 		} else if (event.getState().equals(LifecycleState.STARTED)) {
 			joinCluster();
 		}
+	}
+
+	@Override
+	public void memberAttributeChanged(MemberAttributeEvent event) {
+		ClusterNodeInfo priorNodeInfo = clusterNodesInfo.get(event.getMember().getUuid());
+        clusterNodesInfo.put(event.getMember().getUuid(), 
+        		new HazelcastClusterNodeInfo(event.getMember(), priorNodeInfo.getJoinedTime()));
 	}
 }

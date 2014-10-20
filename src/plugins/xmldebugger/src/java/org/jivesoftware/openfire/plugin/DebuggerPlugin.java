@@ -20,7 +20,10 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import org.apache.mina.transport.socket.nio.SocketAcceptor;
+import java.io.File;
+import java.util.Map;
+
+import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -29,9 +32,6 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
-
-import java.io.File;
-import java.util.Map;
 
 /**
  * Debugger plugin that prints XML traffic to stdout. By default it will only print

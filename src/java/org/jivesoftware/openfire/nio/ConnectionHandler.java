@@ -57,7 +57,16 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     protected static final String CONNECTION = "CONNECTION";
 
     protected String serverName;
-    private static Map<Integer, XMPPPacketReader> parsers = new ConcurrentHashMap<Integer, XMPPPacketReader>();
+    private static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
+            {
+               @Override
+               protected XMPPPacketReader initialValue()
+               {
+                  final XMPPPacketReader parser = new XMPPPacketReader();
+                  parser.setXPPFactory( factory );
+                  return parser;
+               }
+            };
     /**
      * Reuse the same factory for all the connections.
      */
@@ -166,13 +175,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // to be a parser for each running thread. Each Filter will be executed
         // by the Executor placed as the first Filter. So we can have a parser associated
         // to each Thread
-        int hashCode = Thread.currentThread().hashCode();
-        XMPPPacketReader parser = parsers.get(hashCode);
-        if (parser == null) {
-            parser = new XMPPPacketReader();
-            parser.setXPPFactory(factory);
-            parsers.put(hashCode, parser);
-        }
+        final XMPPPacketReader parser = PARSER_CACHE.get();
         // Update counter of read btyes
         updateReadBytesCounter(session);
         //System.out.println("RCVD: " + message);

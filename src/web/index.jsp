@@ -23,7 +23,7 @@
 %>
 <%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache"%>
 <%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
-<%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor"%>
+<%@ page import="org.apache.mina.transport.socket.nio.NioSocketAcceptor"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
 <%@ page import="org.jivesoftware.openfire.*" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
@@ -75,9 +75,9 @@
     String interfaceName = JiveGlobals.getXMLProperty("network.interface");
 
     ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-    SocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
-    SocketAcceptor sslSocketAcceptor = connectionManager.getSSLSocketAcceptor();
-    SocketAcceptor multiplexerSocketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
+    NioSocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
+    NioSocketAcceptor sslSocketAcceptor = connectionManager.getSSLSocketAcceptor();
+    NioSocketAcceptor multiplexerSocketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
     ServerPort serverPort = null;
     ServerPort componentPort = null;
     AdminConsolePlugin adminConsolePlugin =
@@ -445,7 +445,7 @@
 </thead>
 <tbody>
     <% if (socketAcceptor != null) {
-        for (SocketAddress socketAddress : socketAcceptor.getManagedServiceAddresses()) {
+        for (SocketAddress socketAddress : socketAcceptor.getLocalAddresses()) {
             InetSocketAddress address = (InetSocketAddress) socketAddress;
     %>
     <tr>
@@ -469,7 +469,7 @@
     </tr>
     <% } } %>
     <% if (sslSocketAcceptor != null) {
-        for (SocketAddress socketAddress : sslSocketAcceptor.getManagedServiceAddresses()) {
+        for (SocketAddress socketAddress : sslSocketAcceptor.getLocalAddresses()) {
             InetSocketAddress address = (InetSocketAddress) socketAddress;
     %>
     <tr>
@@ -506,7 +506,7 @@
     </tr>
     <% } %>
     <% if (multiplexerSocketAcceptor != null) {
-        for (SocketAddress socketAddress : multiplexerSocketAcceptor.getManagedServiceAddresses()) {
+        for (SocketAddress socketAddress : multiplexerSocketAcceptor.getLocalAddresses()) {
             InetSocketAddress address = (InetSocketAddress) socketAddress;
     %>
     <tr>

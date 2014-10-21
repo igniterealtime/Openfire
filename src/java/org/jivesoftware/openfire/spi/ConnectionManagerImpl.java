@@ -92,7 +92,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
 	private static final int MB = 1024 * 1024;
 
-    public static final String EXECUTOR_FILTER_NAME = "threadPool";
+    public static final String EXECUTOR_FILTER_NAME = "threadModel";
     public static final String TLS_FILTER_NAME = "tls";
     public static final String COMPRESSION_FILTER_NAME = "compression";
     public static final String XMPP_CODEC_FILTER_NAME = "xmpp";
@@ -362,13 +362,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             ThreadFactory threadFactory = eventExecutor.getThreadFactory();
             threadFactory = new DelegatingThreadFactory("Old executor thread - ", threadFactory);
             eventExecutor.setThreadFactory(threadFactory);
-            eventExecutor.setCorePoolSize(eventThreads + 1);
             eventExecutor.setMaximumPoolSize(eventThreads + 1);
+            eventExecutor.setCorePoolSize(eventThreads + 1);
             eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
 
             // Add the XMPP codec filter
-            socketAcceptor.getFilterChain().addFirst(XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
             socketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
+            socketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
             // Kill sessions whose outgoing queues keep growing and fail to send traffic
             socketAcceptor.getFilterChain().addAfter(XMPP_CODEC_FILTER_NAME, CAPACITY_FILTER_NAME, new StalledSessionsFilter());
             // Throttle sessions who send data too fast

@@ -68,14 +68,14 @@ public class RawPrintFilter extends IoFilterAdapter {
     }
 
     @Override
-	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest message) throws Exception {
-        if (enabled) {
+	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
+        if (enabled && writeRequest.getMessage() instanceof ByteBuffer) {
             System.out.println(prefix + " - SENT (" + session.hashCode() + "): " +
-                    Charset.forName("UTF-8").decode(((ByteBuffer) message).asReadOnlyBuffer()));
+                    Charset.forName("UTF-8").decode(((ByteBuffer) writeRequest.getMessage()).asReadOnlyBuffer()));
         }
 
         // Pass the message to the next filter
-        super.messageSent(nextFilter, session, message);
+        super.messageSent(nextFilter, session, writeRequest);
     }
 
     public boolean isEnabled() {

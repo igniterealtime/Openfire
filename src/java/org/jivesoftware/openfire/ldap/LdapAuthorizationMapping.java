@@ -107,7 +107,8 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
             }
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration answer = ctx.search("", princSearchFilter, new String[] {principal},
+            NamingEnumeration answer = ctx.search("", princSearchFilter, 
+            		new String[] {LdapManager.sanitizeSearchFilter(principal)},
                     constraints);
             Log.debug("LdapAuthorizationMapping: ... search finished");
             if (answer == null || !answer.hasMoreElements()) {

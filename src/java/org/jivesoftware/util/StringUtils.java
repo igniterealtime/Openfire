@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -52,6 +53,8 @@ public class StringUtils {
     private static final char[] AMP_ENCODE = "&amp;".toCharArray();
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
+    
+    private static final String DOMAIN_NAME = "^(?:[A-Za-z0-9][A-Za-z0-9\\-]{0,61}[A-Za-z0-9]|[A-Za-z0-9])$";
 
     private StringUtils() {
         // Not instantiable.
@@ -1116,6 +1119,26 @@ public class StringUtils {
         catch (AddressException e) {
             return false;
         }
+    }
+    
+    /**
+     * Returns true if the string passed in is a valid domain name
+     * 
+     * @param domain Proposed domain name
+     * @return true if the string passed in is a valid domain name
+     */
+    public static boolean isValidDomainName(String domain) {
+    	if (domain == null) {
+    		return false;
+    	}
+    	Pattern re = Pattern.compile(DOMAIN_NAME);
+    	StringTokenizer parser = new StringTokenizer(domain, ".");
+    	while (parser.hasMoreTokens()) {
+    		if (!re.matcher(parser.nextToken()).matches()) {
+    			return false;
+    		}
+    	}
+    	return true;
     }
     
     /**

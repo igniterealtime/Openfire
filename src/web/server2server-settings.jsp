@@ -46,11 +46,8 @@
     boolean serverAllowed = request.getParameter("serverAllowed") != null;
     boolean serverBlocked = request.getParameter("serverBlocked") != null;
     String domain = ParamUtils.getParameter(request,"domain");
-    // OF-671
-    if (domain != null) {
-    	domain = StringUtils.removeXSSCharacters(domain);
-    }
-    String remotePort = ParamUtils.getParameter(request,"remotePort");
+	String remotePort = ParamUtils.getParameter(request,"remotePort");
+	
     boolean updateSucess = false;
     boolean allowSuccess = false;
     boolean blockSuccess = false;
@@ -139,7 +136,7 @@
     if (serverAllowed) {
         int intRemotePort = 0;
         // Validate params
-        if (domain == null || domain.trim().length() == 0) {
+        if (domain == null || domain.trim().length() == 0 || !StringUtils.isValidDomainName(domain)) {
             errors.put("domain","");
         }
         if (remotePort == null || remotePort.trim().length() == 0 ||  "0".equals(remotePort)) {
@@ -167,7 +164,7 @@
 
     if (serverBlocked) {
         // Validate params
-        if (domain == null || domain.trim().length() == 0) {
+        if (domain == null || domain.trim().length() == 0 || !StringUtils.isValidDomainName(domain)) {
             errors.put("domain","");
         }
         // If no errors, continue:

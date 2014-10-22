@@ -9,10 +9,12 @@
  */
 package org.jivesoftware.util;
 
+import static org.junit.Assert.assertTrue;
+
+import javax.naming.ldap.Rdn;
+
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Daniel Henninger
@@ -34,6 +36,47 @@ public class LDAPTest {
         before = "ou=jive,dc=test,dc=jive,dc=com";
         after = "ou=\"jive\",dc=\"test\",dc=\"jive\",dc=\"com\"";
         converted = LdapManager.getEnclosedDN(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+    }
+
+    @Test
+    public void testRdnEscapeValue() {
+        String before = "Jive Software, Inc";
+        String after = "Jive Software\\, Inc";
+        String converted = Rdn.escapeValue(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "Test.User; (+1)";
+        after = "Test.User\\; (\\+1)";
+        converted = Rdn.escapeValue(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "Wildcard *";
+        after = "Wildcard *";
+        converted = Rdn.escapeValue(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "Group/Section";
+        after = "Group/Section";
+        converted = Rdn.escapeValue(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+    }
+
+    @Test
+    public void testSanitizeSearchFilter() {
+        String before = "Test.User; (+1)";
+        String after = "Test.User; \\28+1\\29";
+        String converted = LdapManager.sanitizeSearchFilter(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+
+        before = "Wildcard *";
+        after = "Wildcard \\2a";
+        converted = LdapManager.sanitizeSearchFilter(before);
+        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        
+        before = "~ Group|Section & Teams!";
+        after = "\\7e Group\\7cSection \\26 Teams\\21";
+        converted = LdapManager.sanitizeSearchFilter(before);
         assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
     }
 }

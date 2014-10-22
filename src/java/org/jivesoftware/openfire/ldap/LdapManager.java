@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -971,7 +972,8 @@ public class LdapManager {
             }
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), new String[] {username},
+            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), 
+            		new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
             if (debug) {
@@ -1115,7 +1117,7 @@ public class LdapManager {
             }
             constraints.setReturningAttributes(new String[] { groupNameField });
 
-            String filter = MessageFormat.format(getGroupSearchFilter(), groupname);
+            String filter = MessageFormat.format(getGroupSearchFilter(), sanitizeSearchFilter(JID.unescapeNode(groupname)));
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, constraints);
 
             if (debug) {
@@ -2182,6 +2184,57 @@ public class LdapManager {
         }
         return count;
     }
+    
+    /**
+     * Escapes any special chars (RFC 4515) from a string representing
+     * a search filter assertion value.
+     *
+     * @param input The input string.
+     *
+     * @return A assertion value string ready for insertion into a 
+     *         search filter string.
+     */
+    public static String sanitizeSearchFilter(final String value) {
+
+            StringBuilder result = new StringBuilder();
+
+            for (int i=0; i< value.length(); i++) {
+
+                char c = value.charAt(i);
+
+                switch(c) {
+	            	case '!':		result.append("\\21");	break;
+	            	case '&':		result.append("\\26");	break;
+	            	case '(':		result.append("\\28");	break;
+	            	case ')':		result.append("\\29");	break;
+	            	case '*':		result.append("\\2a");	break;
+	            	case ':':		result.append("\\3a");	break;
+	            	case '\\':		result.append("\\5c");	break;
+	            	case '|':		result.append("\\7c");	break;
+	            	case '~':		result.append("\\7e");	break;
+	            	case '\u0000':	result.append("\\00");	break;
+            	default:
+            		if (c <= 0x7f) {
+                        // regular 1-byte UTF-8 char
+            			result.append(String.valueOf(c));
+                    }
+                    else if (c >= 0x080) { 
+                        // higher-order 2, 3 and 4-byte UTF-8 chars
+                        try {
+                            byte[] utf8bytes = String.valueOf(c).getBytes("UTF8");
+                            for (byte b: utf8bytes)
+                            {
+                            	result.append(String.format("\\%02x", b));
+                            }
+                        } catch (UnsupportedEncodingException e) {
+                            // ignore
+                        }
+            		}
+                }
+            }
+            return result.toString();
+    }
+    
 
     /**
      * Encloses DN values with "

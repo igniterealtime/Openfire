@@ -54,7 +54,7 @@ public class StringUtils {
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
     
-    private static final String DOMAIN_NAME = "^(?:[A-Za-z0-9][A-Za-z0-9\\-]{0,61}[A-Za-z0-9]|[A-Za-z0-9])$";
+    private static final Pattern DOMAIN_NAME = Pattern.compile("^(?:[A-Za-z0-9][A-Za-z0-9\\-]{0,61}[A-Za-z0-9]|[A-Za-z0-9])$");
 
     private StringUtils() {
         // Not instantiable.
@@ -1131,10 +1131,9 @@ public class StringUtils {
     	if (domain == null) {
     		return false;
     	}
-    	Pattern re = Pattern.compile(DOMAIN_NAME);
     	StringTokenizer parser = new StringTokenizer(domain, ".");
     	while (parser.hasMoreTokens()) {
-    		if (!re.matcher(parser.nextToken()).matches()) {
+    		if (!DOMAIN_NAME.matcher(parser.nextToken()).matches()) {
     			return false;
     		}
     	}

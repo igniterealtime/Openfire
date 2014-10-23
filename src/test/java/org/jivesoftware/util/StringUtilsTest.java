@@ -41,7 +41,8 @@ public class StringUtilsTest {
         	StringUtils.validateDomainName(domain);
         	fail("Domain should not be valid: " + domain);
         } catch (IllegalArgumentException iae) {
-        	assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
+        	// this is not part of the official API, so leave off for now
+        	//assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
         }
 	}
 }

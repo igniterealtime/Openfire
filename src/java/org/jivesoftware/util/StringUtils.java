@@ -20,9 +20,11 @@
 package org.jivesoftware.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.IDN;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.BreakIterator;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +35,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -54,8 +55,6 @@ public class StringUtils {
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
     
-    private static final Pattern DOMAIN_NAME = Pattern.compile("^(?:[A-Za-z0-9][A-Za-z0-9\\-]{0,61}[A-Za-z0-9]|[A-Za-z0-9])$");
-
     private StringUtils() {
         // Not instantiable.
     }
@@ -1122,22 +1121,25 @@ public class StringUtils {
     }
     
     /**
-     * Returns true if the string passed in is a valid domain name
+     * Returns a valid domain name, possibly as an ACE-encoded IDN 
+     * (per <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>).
      * 
      * @param domain Proposed domain name
-     * @return true if the string passed in is a valid domain name
+     * @return The validated domain name, possibly ACE-encoded
+     * @throws IllegalArgumentException The given domain name is not valid
      */
-    public static boolean isValidDomainName(String domain) {
-    	if (domain == null) {
-    		return false;
+    public static String validateDomainName(String domain) {
+    	if (domain == null || domain.trim().length() == 0) {
+    		throw new IllegalArgumentException("Domain name cannot be null or empty");
     	}
-    	StringTokenizer parser = new StringTokenizer(domain, ".");
-    	while (parser.hasMoreTokens()) {
-    		if (!DOMAIN_NAME.matcher(parser.nextToken()).matches()) {
-    			return false;
-    		}
-    	}
-    	return true;
+    	String result = IDN.toASCII(domain);
+		if (result.equals(domain)) {
+			// no conversion; validate again via USE_STD3_ASCII_RULES
+			IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
+		} else {
+    		Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
+		}
+    	return result;
     }
     
     /**

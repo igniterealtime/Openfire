@@ -136,8 +136,10 @@
     if (serverAllowed) {
         int intRemotePort = 0;
         // Validate params
-        if (domain == null || domain.trim().length() == 0 || !StringUtils.isValidDomainName(domain)) {
-            errors.put("domain","");
+        try {
+        	StringUtils.validateDomainName(domain);
+        } catch (IllegalArgumentException iae) {
+            errors.put("domain", "");
         }
         if (remotePort == null || remotePort.trim().length() == 0 ||  "0".equals(remotePort)) {
             errors.put("remotePort","");
@@ -164,8 +166,10 @@
 
     if (serverBlocked) {
         // Validate params
-        if (domain == null || domain.trim().length() == 0 || !StringUtils.isValidDomainName(domain)) {
-            errors.put("domain","");
+        try {
+        	StringUtils.validateDomainName(domain);
+        } catch (IllegalArgumentException iae) {
+            errors.put("domain", "");
         }
         // If no errors, continue:
         if (errors.isEmpty()) {

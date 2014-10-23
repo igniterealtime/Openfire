@@ -13,8 +13,8 @@ public class StringUtilsTest {
         assertValidDomainName("www.mycompany.com");
         assertValidDomainName("www.my-company.com");
         assertValidDomainName("abc.de");
-        assertValidDomainName("tronçon.be", "xn--tronon-zua.be");
-        assertValidDomainName("öbb.at", "xn--bb-eka.at");
+        assertValidDomainName("tronÃ§on.be", "xn--tronon-zua.be");
+        assertValidDomainName("Ã¶bb.at", "xn--bb-eka.at");
 
     }
     

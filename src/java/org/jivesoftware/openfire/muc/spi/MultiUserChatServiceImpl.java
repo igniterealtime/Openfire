@@ -309,10 +309,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     return;
                 }
             }
-            // OF-670: Kick S2S users for undeliverable message bounces;
-            // error condition set via LocalOutgoingServerSession or OutgoingSessionPromise
+            // OF-670: Kick MUC users who return permanent error conditions;
+            // also detects S2S-based users from non-responsive domains.
             if (packet.getError() != null &&
-            	packet.getError().getType().equals(PacketError.Condition.remote_server_not_found)) {
+            	packet.getError().getType().equals(PacketError.Type.cancel)) {
             	removeUser(packet.getFrom());
             }
             else {

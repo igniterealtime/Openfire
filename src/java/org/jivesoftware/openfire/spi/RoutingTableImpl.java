@@ -534,16 +534,20 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             return false;
         }
 
-        // Get the highest priority sessions for normal processing.
-        List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
-
         // Check for message carbons enabled sessions and send the message to them.
         for (ClientSession session : nonNegativePrioritySessions) {
             // Deliver to each session, if is message carbons enabled.
             if (shouldCarbonCopyToResource(session, packet, isPrivate)) {
                 session.process(packet);
+            // Deliver to each session if property route.really-all-resources is true
+            // (in case client does not support carbons)
+            } else if (JiveGlobals.getBooleanProperty("route.really-all-resources", false)) {
+                session.process(packet);
             }
         }
+
+        // Get the highest priority sessions for normal processing.
+        List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
 
         if (highestPrioritySessions.size() == 1) {
             // Found only one session so deliver message (if it hasn't already been processed because it has message carbons enabled)

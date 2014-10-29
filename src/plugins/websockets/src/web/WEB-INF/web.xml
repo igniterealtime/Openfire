@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app>
+	<servlet>
+		<servlet-name>websocketsAdmin</servlet-name>
+		<servlet-class>com.ifsoft.websockets.servlet.WebSocketsAdmin</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>websocketsAdmin</servlet-name>
+		<url-pattern>/websockets-properties</url-pattern>
+	</servlet-mapping>
+	
+</web-app>

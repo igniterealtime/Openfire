@@ -28,6 +28,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Openfire makes use of a logging facade (slf4j) to manage its log output. The
@@ -46,17 +47,32 @@ import java.util.List;
 public class Log {
 
 	private static final org.slf4j.Logger Logger = org.slf4j.LoggerFactory.getLogger(Log.class);
-
-// TODO deprecate these properties
-//	JiveGlobals.getXMLProperty("log.debug.format");
-//	JiveGlobals.getXMLProperty("log.info.format");
-//	JiveGlobals.getXMLProperty("log.warn.format");
-//	JiveGlobals.getXMLProperty("log.error.format");
-//	JiveGlobals.getXMLProperty("log.debug.size");
-//	JiveGlobals.getXMLProperty("log.info.size");
-//	JiveGlobals.getXMLProperty("log.warn.size");
-//	JiveGlobals.getXMLProperty("log.error.size"); 
-//	JiveGlobals.getXMLProperty("log.debug.enabled");
+	public static final String LOG_DEBUG_ENABLED = "log.debug.enabled";
+	
+	// listen for changes to the log.debug.enabled property
+	static {
+    	PropertyEventDispatcher.addListener(new PropertyEventListener() {
+    		
+			public void propertySet(String property, Map<String, Object> params) {
+				enableDebugLog(property, Boolean.parseBoolean(params.get("value").toString()));
+			}
+			
+			public void propertyDeleted(String property, Map<String, Object> params) {
+				enableDebugLog(property, false);
+			}
+			
+			// ignore these events
+			public void xmlPropertySet(String property, Map<String, Object> params) { }
+			public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
+			
+			private void enableDebugLog(String property, boolean enabled) {
+				if ((LOG_DEBUG_ENABLED).equals(property)) {
+					Log.setDebugEnabled(enabled);
+				}
+			}
+		});
+	}
+	
 
 	/**
 	 * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.

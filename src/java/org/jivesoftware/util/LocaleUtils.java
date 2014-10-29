@@ -474,7 +474,7 @@ public class LocaleUtils {
         if (locale == null) {
         	locale = JiveGlobals.getLocale();
         }
-        String i18nFile = pluginName + "_i18n";
+        String i18nFile = getI18nFile(pluginName);
 
         // Retrieve classloader from pluginName.
         final XMPPServer xmppServer = XMPPServer.getInstance();
@@ -511,7 +511,7 @@ public class LocaleUtils {
     public static ResourceBundle getPluginResourceBundle(String pluginName) throws Exception {
         final Locale locale = JiveGlobals.getLocale();
 
-        String i18nFile = pluginName + "_i18n";
+        String i18nFile = getI18nFile(pluginName);
 
         // Retrieve classloader from pluginName.
         final XMPPServer xmppServer = XMPPServer.getInstance();
@@ -524,6 +524,10 @@ public class LocaleUtils {
         ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
         return ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
     }
+
+	private static String getI18nFile(String pluginName) {
+		return pluginName.replace('.', '_') + "_i18n";
+	}
 
     /**
      * Returns an internationalized string loaded from a resource bundle using

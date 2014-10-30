@@ -174,7 +174,7 @@
 		    <fmt:message key="config.page.configuration.ofmeet.resolution"/>
 		</td>
 		<td><input type="text" size="10" maxlength="100" name="resolution"
-			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "720") %>">
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360") %>">
 		</td>
 	    </tr>
 	    <tr>

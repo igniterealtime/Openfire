@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>com.ifsoft.websockets.plugin.WebSocketsPlugin</class>
+    <name>WebSockets Plugin</name>
+    <description>WebSockets</description>
+    <version>0.0.1</version>
+    <licenseType>Apache 2.0</licenseType>    
+    <minServerVersion>3.10.0</minServerVersion> 
+    <author>igniterealtime.org</author>
+
+    <adminconsole>              
+        <tab id="tab-server" >		
+            <sidebar id="sidebar-websockets-settings" name="WebSockets" description="WebSockets Setting bar">
+                <item id="WEBSOCKETS-PROPERTIES" name="WebSockets Properties" url="websockets-properties" description="WebSockets Properties"/>                                 
+            </sidebar>		
+        </tab>
+    </adminconsole>    
+</plugin>

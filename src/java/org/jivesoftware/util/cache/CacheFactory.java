@@ -152,6 +152,8 @@ public class CacheFactory {
         cacheProps.put("cache.lockOutCache.maxLifetime", JiveConstants.MINUTE * 15);
         cacheProps.put("cache.groupMeta.size", 512 * 1024l);
         cacheProps.put("cache.groupMeta.maxLifetime", JiveConstants.MINUTE * 15);
+        cacheProps.put("cache.username2roster.size", 1024 * 1024l);
+        cacheProps.put("cache.username2roster.maxLifetime", JiveConstants.MINUTE * 30);
         cacheProps.put("cache.javascript.size", 128 * 1024l);
         cacheProps.put("cache.javascript.maxLifetime", 3600 * 24 * 10l);
         cacheProps.put("cache.ldap.size", 512 * 1024l);

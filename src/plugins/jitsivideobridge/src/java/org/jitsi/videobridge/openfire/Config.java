@@ -45,7 +45,7 @@ public class Config extends HttpServlet
 			ServletOutputStream out = response.getOutputStream();
 
 			String iceServers = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
-			String resolution = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "720");
+			String resolution = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360");
 			String audioBandwidth = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64");
 			String videoBandwidth = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512");
 			String useNicks = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");

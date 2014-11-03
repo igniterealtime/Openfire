@@ -179,7 +179,8 @@ public class LdapUserProvider implements UserProvider {
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 -1,
                 -1,
-                null
+                null,
+                true
         );
     }
     
@@ -193,7 +194,8 @@ public class LdapUserProvider implements UserProvider {
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 startIndex,
                 numResults,
-                manager.getUsernameSuffix()
+                manager.getUsernameSuffix(),
+                true
         );
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
@@ -280,7 +282,8 @@ public class LdapUserProvider implements UserProvider {
                 filter.toString(),
                 startIndex,
                 numResults,
-                manager.getUsernameSuffix()
+                manager.getUsernameSuffix(),
+                true
         );
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }

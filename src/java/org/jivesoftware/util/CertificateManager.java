@@ -72,6 +72,7 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -386,7 +387,7 @@ public class CertificateManager {
                         ASN1Sequence otherNameSeq = (ASN1Sequence) decoder.readObject();
 
                         // Check the object identifier
-                        DERObjectIdentifier objectId = (DERObjectIdentifier) otherNameSeq.getObjectAt(0);
+                        ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
 
                         if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {

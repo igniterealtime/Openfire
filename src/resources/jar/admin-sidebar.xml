@@ -177,6 +177,11 @@
                     <item id="user-roster" name="${sidebar.user-roster}"
                           url="user-roster.jsp"
                           description="${sidebar.user-roster.descr}"/>
+                          
+                    <!-- User Groups -->
+                    <item id="user-groups" name="${sidebar.user-groups}"
+                          url="user-groups.jsp"
+                          description="${sidebar.user-groups.descr}"/>      
 
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"

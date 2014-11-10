@@ -1,5 +1,4 @@
 /**
- * $RCSfile$
  * $Revision: 1623 $
  * $Date: 2005-07-12 18:40:57 -0300 (Tue, 12 Jul 2005) $
  *
@@ -22,20 +21,21 @@ package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.CannotBeInvitedException;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -223,7 +223,8 @@ public class IQOwnerHandler {
         		// XEP-0045: "Affiliations are granted, revoked, and 
         		// maintained based on the user's bare JID, (...)"
                 if (value != null && value.trim().length() != 0) {
-                    admins.add(new JID(value.trim()).asBareJID());
+                	// could be a group jid
+                    admins.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
         	}
         }
@@ -237,12 +238,13 @@ public class IQOwnerHandler {
         		// XEP-0045: "Affiliations are granted, revoked, and 
         		// maintained based on the user's bare JID, (...)"
                 if (value != null && value.trim().length() != 0) {
-        		    owners.add(new JID(value.trim()).asBareJID());
+                	// could be a group jid
+        		    owners.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
         	}
         }
 
-        // Answer a conflic error if all the current owners will be removed
+        // Answer a conflict error if all the current owners will be removed
         if (ownersSent && owners.isEmpty()) {
             throw new ConflictException();
         }
@@ -394,7 +396,10 @@ public class IQOwnerHandler {
             ownersToRemove.removeAll(admins);
             ownersToRemove.removeAll(owners);
             for (JID jid : ownersToRemove) {
-                presences.addAll(room.addMember(jid, null, senderRole));
+            	// ignore group jids
+            	if (!GroupJID.isGroup(jid)) {
+            		presences.addAll(room.addMember(jid, null, senderRole));
+            	}
             }
         }
 
@@ -405,7 +410,10 @@ public class IQOwnerHandler {
             adminsToRemove.removeAll(admins);
             adminsToRemove.removeAll(owners);
             for (JID jid : adminsToRemove) {
-                presences.addAll(room.addMember(jid, null, senderRole));
+            	// ignore group jids
+            	if (!GroupJID.isGroup(jid)) {
+            		presences.addAll(room.addMember(jid, null, senderRole));
+            	}
             }
         }
 
@@ -497,13 +505,37 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_roomadmins");
             field.clearValues();
             for (JID jid : room.getAdmins()) {
-                field.addValue(jid.toString());
+            	if (GroupJID.isGroup(jid)) {
+            		try {
+                		// add each group member to the result (clients don't understand groups)
+                		Group group = GroupManager.getInstance().getGroup(jid);
+                		for (JID groupMember : group.getAll()) {
+                            field.addValue(groupMember);
+                		}
+            		} catch (GroupNotFoundException gnfe) {
+            			Log.warn("Invalid group JID in the member list: " + jid);
+            		}
+            	} else {
+                    field.addValue(jid.toString());
+            	}
             }
 
             field = configurationForm.getField("muc#roomconfig_roomowners");
             field.clearValues();
             for (JID jid : room.getOwners()) {
-                field.addValue(jid.toString());
+            	if (GroupJID.isGroup(jid)) {
+            		try {
+                		// add each group member to the result (clients don't understand groups)
+                		Group group = GroupManager.getInstance().getGroup(jid);
+                		for (JID groupMember : group.getAll()) {
+                            field.addValue(groupMember);
+                		}
+            		} catch (GroupNotFoundException gnfe) {
+            			Log.warn("Invalid group JID in the member list: " + jid);
+            		}
+            	} else {
+                    field.addValue(jid.toString());
+            	}
             }
 
             // Remove the old element

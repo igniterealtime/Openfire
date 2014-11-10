@@ -26,6 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.AbstractCollection;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,11 +35,11 @@ import java.util.Set;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.jivesoftware.util.PersistableMap; 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -61,6 +62,7 @@ public class Group implements Cacheable, Externalizable {
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
     private transient PersistableMap<String, String> properties;
+    private transient GroupJID jid;
 
     private String name;
     private String description;
@@ -133,6 +135,23 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
+     * Returns a JID for the group based on the group name. This
+     * instance will be of class GroupJID to distinguish it from
+     * other types of JIDs in the system.
+     * 
+     * This method is synchronized to ensure each group has only
+     * a single JID instance created via lazy instantiation.
+     *
+     * @return A JID for the group.
+     */
+    public synchronized GroupJID getJID() {
+    	if (jid == null) {
+    		jid = new GroupJID(getName());
+    	}
+        return jid;
+    }
+
+    /**
      * Returns the name of the group. For example, 'XYZ Admins'.
      *
      * @return the name of the group.
@@ -155,13 +174,16 @@ public class Group implements Cacheable, Externalizable {
         }
         try {
             String originalName = this.name;
+            GroupJID originalJID = getJID();
             provider.setName(originalName, name);
             this.name = name;
+            this.jid = null; // rebuilt when needed
 
             // Fire event.
             Map<String, Object> params = new HashMap<String, Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
+            params.put("originalJID", originalJID);
             GroupEventDispatcher.dispatchEvent(this, GroupEventDispatcher.EventType.group_modified,
                     params);
         }
@@ -230,6 +252,17 @@ public class Group implements Cacheable, Externalizable {
         }
         // Return a wrapper that will intercept add and remove commands.
         return properties;
+    }
+
+    /**
+     * Returns a Collection of everyone in the group.
+     *
+     * @return a read-only Collection of the group administrators + members.
+     */
+    public Collection<JID> getAll() {
+    	Set<JID> everybody = new HashSet<JID>(administrators);
+    	everybody.addAll(members);
+        return Collections.unmodifiableSet(everybody);
     }
 
     /**
@@ -471,4 +504,41 @@ public class Group implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().readSerializableCollection(in, members, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
     }
+    
+	/**
+	 * Search for a JID within a group. If the given haystack is not resolvable
+	 * to a group, this method returns false.
+	 * 
+	 * @param needle A JID, possibly a member/admin of the given group
+	 * @param haystack Presumably a Group, a Group name, or a JID that represents a Group
+	 * @return true if the JID (needle) is found in the group (haystack)
+	 */
+	public static boolean search(JID needle, Object haystack) {
+		Group group = resolveFrom(haystack);
+		return (group != null && group.isUser(needle));
+	}
+    
+	/**
+	 * Attempt to resolve the given object into a Group.
+	 * 
+	 * @param proxy Presumably a Group, a Group name, or a JID that represents a Group
+	 * @return The corresponding group, or null if the proxy cannot be resolved as a group
+	 */
+	public static Group resolveFrom(Object proxy) {
+		Group result = null;
+		try {
+			GroupManager groupManger = GroupManager.getInstance();
+			if (proxy instanceof JID) {
+				result = groupManger.getGroup((JID)proxy);
+			} else if (proxy instanceof String) {
+				result = groupManger.getGroup((String)proxy);
+			} else if (proxy instanceof Group) {
+				result = (Group) proxy;
+			}
+		} catch (GroupNotFoundException gnfe) {
+			// ignore
+		}
+		return result;
+	}
+    
 }

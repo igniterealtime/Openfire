@@ -18,12 +18,15 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupJID,
                  java.util.*,
                  org.xmpp.packet.*,
                  org.jivesoftware.openfire.muc.MultiUserChatService"
          errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
@@ -33,6 +36,7 @@
 
 <%  // Get parameters
     String userJID = ParamUtils.getParameter(request,"userJID");
+    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
     boolean add = request.getParameter("add") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
     String mucname = ParamUtils.getParameter(request,"mucname");
@@ -48,26 +52,46 @@
 
     // Handle a save
     Map<String,String> errors = new HashMap<String,String>();
-    JID bareJID = null;
+    List<JID> allowedJIDs = new ArrayList<JID>();
     try {
-        // do validation
-    	bareJID = new JID(userJID).asBareJID();
-    } catch (IllegalArgumentException e) {
+    	if (userJID != null && userJID.trim().length() > 0) {
+    		String allowedJID;
+	        // do validation; could be a group jid
+            if (userJID.indexOf('@') == -1) {
+                String username = JID.escapeNode(userJID);
+                String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
+                allowedJID = username + '@' + domain;
+            }
+            else {
+                String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                allowedJID = username + rest.trim();
+            }
+	    	allowedJIDs.add(GroupJID.fromString(allowedJID.trim()).asBareJID());
+    	}
+    	if (groupNames != null) {
+    		// create a group JID for each group
+    		for (String groupName : groupNames) {
+    			GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+    			allowedJIDs.add(groupJID);
+    		}
+    	}
+    } catch (java.lang.IllegalArgumentException ex) {
         errors.put("userJID","userJID");
     }
     
     if (errors.size() == 0) {
 	    if (add) {
-            mucService.addSysadmin(bareJID);
+            mucService.addSysadmins(allowedJIDs);
             // Log the event
-            webManager.logEvent("added muc sysadmin "+userJID+" for service "+mucname, null);
+            webManager.logEvent("added muc sysadmin permissions for service "+mucname, null);
             response.sendRedirect("muc-sysadmins.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
 
 	    if (delete) {
 	        // Remove the user from the list of system administrators
-	        mucService.removeSysadmin(bareJID);
+	        mucService.removeSysadmin(GroupJID.fromString(userJID));
 	        // Log the event
 	        webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
 	        // done, return
@@ -117,7 +141,11 @@
     </table>
     </div><br>
 
-<%  } else if (errors.size() > 0) { %>
+<%  } else if (errors.size() > 0) {  
+	    if (delete) {
+	    	userJID = null; // mask group jid on error
+	    }
+%>
 
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -140,6 +168,16 @@
 		<fmt:message key="groupchat.admins.legend" />
 	</div>
 	<div class="jive-contentBox">
+	    <p>
+	    <label for="groupJIDs"><fmt:message key="groupchat.admins.add_group" /></label><br/>
+		<select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" id="groupJIDs">
+		<%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
+			<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+			 <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
+			 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
+		<%  } %>
+		</select>
+		</p>
 		<label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
 		<input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? StringUtils.escapeForXML(userJID) : "") %>"
 		 id="userJIDtf">
@@ -165,16 +203,23 @@
 
 				<%  } %>
 
-				<%  for (JID user : mucService.getSysadmins()) {
-	                	String username = JID.unescapeNode(user.getNode());
-	                    String userDisplay = username + '@' + user.getDomain();
+				<%  for (JID jid : mucService.getSysadmins()) {
+            	    boolean isGroup = GroupJID.isGroup(jid);
+            	    String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
 	            %>
 					<tr>
 						<td width="99%">
-							<%= StringUtils.escapeHTMLTags(userDisplay) %>
+		                  <% if (isGroup) { %>
+		                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="groupchat.admins.group" />" alt="<fmt:message key="groupchat.admins.group" />"/>
+		                  <% } else { %>
+		                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="groupchat.admins.user" />" alt="<fmt:message key="groupchat.admins.user" />"/>
+		                  <% } %>
+						  <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
+						  <%= jidDisplay %></a>
+						</td>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+							<a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="groupchat.admins.dialog.title" />"
 							 onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

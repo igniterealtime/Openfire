@@ -32,7 +32,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -42,6 +41,16 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.openfire.group.ConcurrentGroupList;
+import org.jivesoftware.openfire.group.ConcurrentGroupMap;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupAwareList;
+import org.jivesoftware.openfire.group.GroupAwareMap;
+import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.CannotBeInvitedException;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
@@ -97,7 +106,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Gaston Dombiak
  */
-public class LocalMUCRoom implements MUCRoom {
+public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
 	private static final Logger Log = LoggerFactory.getLogger(LocalMUCRoom.class);
 
@@ -172,22 +181,22 @@ public class LocalMUCRoom implements MUCRoom {
     /**
      * List of chatroom's owner. The list contains only bare jid.
      */
-    List<JID> owners = new CopyOnWriteArrayList<JID>();
+    GroupAwareList<JID> owners = new ConcurrentGroupList<JID>();
 
     /**
      * List of chatroom's admin. The list contains only bare jid.
      */
-    List<JID> admins = new CopyOnWriteArrayList<JID>();
+    GroupAwareList<JID> admins = new ConcurrentGroupList<JID>();
 
     /**
      * List of chatroom's members. The list contains only bare jid, mapped to a nickname.
      */
-    private Map<JID, String> members = new ConcurrentHashMap<JID,String>();
+    GroupAwareMap<JID, String> members = new ConcurrentGroupMap<JID,String>();
 
     /**
      * List of chatroom's outcast. The list contains only bare jid of not allowed users.
      */
-    private List<JID> outcasts = new CopyOnWriteArrayList<JID>();
+    private GroupAwareList<JID> outcasts = new ConcurrentGroupList<JID>();
 
     /**
      * The natural language name of the room.
@@ -373,6 +382,7 @@ public class LocalMUCRoom implements MUCRoom {
         rolesToBroadcastPresence.add("moderator");
         rolesToBroadcastPresence.add("participant");
         rolesToBroadcastPresence.add("visitor");
+        GroupEventDispatcher.addListener(this);
     }
 
     public String getName() {
@@ -502,16 +512,16 @@ public class LocalMUCRoom implements MUCRoom {
     public MUCRole.Affiliation getAffiliation(JID jid) {
     	final JID bareJID = jid.asBareJID();
 
-        if (owners.contains(bareJID)) {
+        if (owners.includes(bareJID)) {
             return MUCRole.Affiliation.owner;
         }
-        else if (admins.contains(bareJID)) {
+        else if (admins.includes(bareJID)) {
             return MUCRole.Affiliation.admin;
         }
-        else if (members.containsKey(bareJID)) {
+        else if (members.includesKey(bareJID)) {
             return MUCRole.Affiliation.member;
         }
-        else if (outcasts.contains(bareJID)) {
+        else if (outcasts.includes(bareJID)) {
             return MUCRole.Affiliation.outcast;
         }
         return MUCRole.Affiliation.none;
@@ -536,7 +546,7 @@ public class LocalMUCRoom implements MUCRoom {
                 throw new ServiceUnavailableException();
             }
             final JID bareJID = user.getAddress().asBareJID();
-			boolean isOwner = owners.contains(bareJID);
+			boolean isOwner = owners.includes(bareJID);
             // If the room is locked and this user is not an owner raise a RoomLocked exception
             if (isLocked()) {
                 if (!isOwner) {
@@ -581,23 +591,29 @@ public class LocalMUCRoom implements MUCRoom {
                 role = MUCRole.Role.moderator;
                 affiliation = MUCRole.Affiliation.owner;
             }
-            else if (mucService.getSysadmins().contains(bareJID)) {
+            else if (mucService.isSysadmin(bareJID)) {
                 // The user is a system administrator of the MUC service. Treat him as an owner
                 // although he won't appear in the list of owners
                 role = MUCRole.Role.moderator;
                 affiliation = MUCRole.Affiliation.owner;
             }
-            else if (admins.contains(bareJID)) {
+            else if (admins.includes(bareJID)) {
                 // The user is an admin. Set the role and affiliation accordingly.
                 role = MUCRole.Role.moderator;
                 affiliation = MUCRole.Affiliation.admin;
             }
-            else if (members.containsKey(bareJID)) {
+            // explicit outcast status has higher precedence than member status
+            else if (outcasts.contains(bareJID)) {
+                // The user is an outcast. Raise a "Forbidden" exception.
+                throw new ForbiddenException();
+            }
+            else if (members.includesKey(bareJID)) {
                 // The user is a member. Set the role and affiliation accordingly.
                 role = MUCRole.Role.participant;
                 affiliation = MUCRole.Affiliation.member;
             }
-            else if (outcasts.contains(bareJID)) {
+            // this checks if the user is an outcast implicitly (via a group)
+            else if (outcasts.includes(bareJID)) {
                 // The user is an outcast. Raise a "Forbidden" exception.
                 throw new ForbiddenException();
             }
@@ -681,8 +697,8 @@ public class LocalMUCRoom implements MUCRoom {
      * @return boolean
      */
     private boolean canJoinRoom(LocalMUCUser user){
-    	boolean isOwner = owners.contains(user.getAddress().asBareJID());
-    	boolean isAdmin = admins.contains(user.getAddress().asBareJID());
+    	boolean isOwner = owners.includes(user.getAddress().asBareJID());
+    	boolean isAdmin = admins.includes(user.getAddress().asBareJID());
     	return (!isDestroyed && (!hasOccupancyLimit() || isAdmin || isOwner || (getOccupantsCount() < getMaxUsers())));
     }
 
@@ -1398,6 +1414,7 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public List<Presence> addOwner(JID jid, MUCRole sendRole) throws ForbiddenException {
+    	
         final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
@@ -1405,7 +1422,7 @@ public class LocalMUCRoom implements MUCRoom {
             if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
                 throw new ForbiddenException();
             }
-            // Check if user is already an owner
+            // Check if user is already an owner (explicitly)
 			if (owners.contains(bareJID)) {
                 // Do nothing
                 return Collections.emptyList();
@@ -1434,15 +1451,10 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.owner));
-        // Update the presence with the new affiliation and inform all occupants
-        try {
-            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.owner,
-                    MUCRole.Role.moderator);
-        }
-        catch (NotAllowedException e) {
-            // We should never receive this exception....in theory
-            return null;
-        }
+
+    	// apply the affiliation change, assigning a new affiliation
+    	// based on the group(s) of the affected user(s)
+    	return applyAffiliationChange(getRole(), bareJID, null);
     }
 
     private boolean removeOwner(JID jid) {
@@ -1491,15 +1503,10 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.admin));
-        // Update the presence with the new affiliation and inform all occupants
-        try {
-            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.admin,
-                    MUCRole.Role.moderator);
-        }
-        catch (NotAllowedException e) {
-            // We should never receive this exception....in theory
-            return null;
-        }
+        
+    	// apply the affiliation change, assigning a new affiliation
+    	// based on the group(s) of the affected user(s)
+    	return applyAffiliationChange(getRole(), bareJID, null);
     }
 
     private boolean removeAdmin(JID bareJID) {
@@ -1537,6 +1544,11 @@ public class LocalMUCRoom implements MUCRoom {
             if (owners.contains(bareJID) && owners.size() == 1) {
                 throw new ConflictException();
             }
+            // Check if user is already an member
+            if (members.containsKey(bareJID)) {
+                // Do nothing
+                return Collections.emptyList();
+            }
             // Associate the reserved nickname with the bareJID. If nickname is null then associate an
             // empty string
             members.put(bareJID, (nickname == null ? "" : nickname.toLowerCase()));
@@ -1563,15 +1575,10 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Update other cluster nodes with new member
         CacheFactory.doClusterTask(new AddMember(this, jid.toBareJID(), (nickname == null ? "" : nickname)));
-        // Update the presence with the new affiliation and inform all occupants
-        try {
-            return changeOccupantAffiliation(sendRole, jid, MUCRole.Affiliation.member,
-                    MUCRole.Role.participant);
-        }
-        catch (NotAllowedException e) {
-            // We should never receive this exception....in theory
-            return null;
-        }
+        
+    	// apply the affiliation change, assigning a new affiliation
+    	// based on the group(s) of the affected user(s)
+    	return applyAffiliationChange(getRole(), bareJID, null);
     }
 
     private boolean removeMember(JID jid) {
@@ -1623,45 +1630,23 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.outcast));
-        // Update the presence with the new affiliation and inform all occupants
-        // actorJID will be null if the room itself (ie. via admin console) made the request
-        JID actorJID = senderRole.getUserAddress();
-        List<Presence> updatedPresences = changeOccupantAffiliation(senderRole,
-                jid,
-                MUCRole.Affiliation.outcast,
-                MUCRole.Role.none);
-        Element frag;
-        // Add the status code and reason why the user was banned to the presences that will
-        // be sent to the room occupants (the banned user will not receive this presences)
-        for (Presence presence : updatedPresences) {
-            frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-            // Add the status code 301 that indicates that the user was banned
-            frag.addElement("status").addAttribute("code", "301");
-            // Add the reason why the user was banned
-            if (reason != null && reason.trim().length() > 0) {
-                frag.element("item").addElement("reason").setText(reason);
-            }
-
-            // Remove the banned users from the room. If a user has joined the room from
-            // different client resources, he/she will be kicked from all the client resources
-            // Effectively kick the occupant from the room
-            kickPresence(presence, actorJID);
-        }
-        return updatedPresences;
+        
+    	// apply the affiliation change, assigning a new affiliation
+    	// based on the group(s) of the affected user(s)
+    	return applyAffiliationChange(senderRole, bareJID, reason);
     }
 
     private boolean removeOutcast(JID bareJID) {
         return outcasts.remove( bareJID.asBareJID() );
     }
 
-    public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException,
-            ConflictException {
+    public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException, ConflictException {
+    	
     	final JID bareJID = jid.asBareJID();
-        List<Presence> updatedPresences = Collections.emptyList();
-        boolean wasMember = false;
+        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
+        boolean jidWasAffiliated = false;
         lock.writeLock().lock();
         try {
-            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
             if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
                     && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                 throw new ForbiddenException();
@@ -1670,16 +1655,18 @@ public class LocalMUCRoom implements MUCRoom {
             if (owners.contains(bareJID) && owners.size() == 1) {
                 throw new ConflictException();
             }
-            wasMember = members.containsKey(bareJID) || admins.contains(bareJID) || owners.contains(bareJID);
-            // Remove the user from ALL the affiliation lists
+            // Remove the jid from ALL the affiliation lists
             if (removeOwner(bareJID)) {
                 oldAffiliation = MUCRole.Affiliation.owner;
+                jidWasAffiliated = true;
             }
             else if (removeAdmin(bareJID)) {
                 oldAffiliation = MUCRole.Affiliation.admin;
+                jidWasAffiliated = true;
             }
             else if (removeMember(bareJID)) {
                 oldAffiliation = MUCRole.Affiliation.member;
+                jidWasAffiliated = true;
             }
             else if (removeOutcast(bareJID)) {
                 oldAffiliation = MUCRole.Affiliation.outcast;
@@ -1692,46 +1679,117 @@ public class LocalMUCRoom implements MUCRoom {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.none));
-        // Update the presence with the new affiliation and inform all occupants
-        try {
-            MUCRole.Role newRole;
-            if (isMembersOnly() && wasMember) {
+        
+        if (jidWasAffiliated) {
+        	// apply the affiliation change, assigning a new affiliation
+        	// based on the group(s) of the affected user(s)
+        	return applyAffiliationChange(senderRole, bareJID, null);
+        } else {
+        	// no presence updates needed
+        	return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Evaluate the given JID to determine what the appropriate affiliation should be
+     * after a change has been made. Each affected user will be granted the highest
+     * affiliation they now possess, either explicitly or implicitly via membership
+     * in one or more groups. If the JID is a user, the effective affiliation is
+     * applied to each presence corresponding to that user. If the given JID is a group,
+     * each user in the group is evaluated to determine what their new affiliations will
+     * be. The returned presence updates will be broadcast to the occupants of the room.
+     * 
+     * @param senderRole Typically the room itself, or an owner/admin
+     * @param affiliationJID The JID for the user or group that has been changed
+     * @param reason An optional reason to explain why a user was kicked from the room
+     * @return List of presence updates to be delivered to the room's occupants
+     */
+	private List<Presence> applyAffiliationChange(MUCRole senderRole, final JID affiliationJID, String reason) {
+		
+		// Update the presence(s) for the new affiliation and inform all occupants
+        List<JID> affectedOccupants = new ArrayList<JID>();
+        
+        // first, determine which actual (user) JIDs are affected by the affiliation change
+        if (GroupJID.isGroup(affiliationJID)) {
+            try {
+	        	Group group = GroupManager.getInstance().getGroup(affiliationJID);
+	        	// check each occupant to see if they are in the group that was changed
+	        	// if so, calculate a new affiliation (if any) for the occupant(s)
+	        	for (JID groupMember : group.getAll()) {
+	            	if (occupantsByBareJID.containsKey(groupMember)) {
+	            		affectedOccupants.add(groupMember);
+	            	}
+	        	}
+            } catch (GroupNotFoundException gnfe) {
+            	Log.error("Error updating group presences for " + affiliationJID , gnfe);
+            }
+        } else {
+        	if (occupantsByBareJID.containsKey(affiliationJID)) {
+        		affectedOccupants.add(affiliationJID);
+        	}
+        }
+        
+        // now update each of the affected occupants with a new role/affiliation
+        MUCRole.Role newRole;
+        MUCRole.Affiliation newAffiliation;
+        List<Presence> updatedPresences = new ArrayList<Presence>();
+        // new role/affiliation may be granted via group membership
+        for (JID occupantJID : affectedOccupants) {
+        	Log.info("Applying affiliation change for " + occupantJID);
+            boolean kickMember = false, isOutcast = false;
+            if (owners.includes(occupantJID)) {
+                newRole = MUCRole.Role.moderator;
+                newAffiliation = MUCRole.Affiliation.owner;
+            }
+            else if (admins.includes(occupantJID)) {
+                newRole = MUCRole.Role.moderator;
+                newAffiliation = MUCRole.Affiliation.admin;
+            }
+            // outcast trumps member when an affiliation is changed
+            else if (outcasts.includes(occupantJID)) {
+            	newAffiliation = MUCRole.Affiliation.none;
                 newRole = MUCRole.Role.none;
+                kickMember = true;
+                isOutcast = true;
+            }
+            else if (members.includesKey(occupantJID)) {
+                newRole = MUCRole.Role.participant;
+                newAffiliation = MUCRole.Affiliation.member;
+            }
+            else if (isMembersOnly()) {
+                newRole = MUCRole.Role.none;
+            	newAffiliation = MUCRole.Affiliation.none;
+                kickMember = true;
             }
             else {
                 newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
+            	newAffiliation = MUCRole.Affiliation.member;
             }
-            updatedPresences = changeOccupantAffiliation(senderRole, bareJID, MUCRole.Affiliation.none, newRole);
-            if (isMembersOnly() && wasMember) {
-                // If the room is members-only, remove the user from the room including a status
-                // code of 321 to indicate that the user was removed because of an affiliation
-                // change
-                Element frag;
-                // Add the status code to the presences that will be sent to the room occupants
-                for (Presence presence : updatedPresences) {
-                    // Set the presence as an unavailable presence
-                    presence.setType(Presence.Type.unavailable);
-                    presence.setStatus(null);
-                    frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                    // Add the status code 321 that indicates that the user was removed because of
-                    // an affiliation change
-                    frag.addElement("status").addAttribute("code", "321");
-
-                    // Remove the ex-member from the room. If a user has joined the room from
-                    // different client resources, he/she will be kicked from all the client
-                    // resources.
-                    // Effectively kick the occupant from the room
-                    JID actorJID = senderRole.getUserAddress();
-                    kickPresence(presence, actorJID);
+            Log.info("New affiliation: " + newAffiliation);
+            try {
+            	List<Presence> thisOccupant = changeOccupantAffiliation(senderRole, occupantJID, newAffiliation, newRole);
+                if (isMembersOnly() && kickMember) {
+                    // If the room is members-only, remove the user from the room including a status
+                    // code of 321 to indicate that the user was removed because of an affiliation change
+                	// a status code of 301 indicates the user was removed as an outcast
+                    for (Presence presence : thisOccupant) {
+                        presence.setType(Presence.Type.unavailable);
+                        presence.setStatus(null);
+                        Element x = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                        if (reason != null && reason.trim().length() > 0) {
+                            x.element("item").addElement("reason").setText(reason);
+                        }
+                        x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
+                        kickPresence(presence, senderRole.getUserAddress());
+                    }
                 }
-            }
+    			updatedPresences.addAll(thisOccupant);
+    		} catch (NotAllowedException e) {
+    			Log.error("Error updating presences for " + occupantJID, e);
+    		}
         }
-        catch (NotAllowedException e) {
-            // We should never receive this exception....in theory
-        	Log.error(e.getMessage(), e);
-        }
-        return updatedPresences;
-    }
+		return updatedPresences;
+	}
 
     public boolean isLocked() {
         return lockedTime > 0;
@@ -1826,32 +1884,32 @@ public class LocalMUCRoom implements MUCRoom {
     }
 
     public void affiliationAdded(AddAffiliation affiliation) {
-    	JID bareJID = affiliation.getBareJID();
+    	JID affiliationJID = affiliation.getBareJID();
         switch(affiliation.getAffiliation()) {
 	        case owner:
-	        	removeMember(bareJID);
-	        	removeAdmin(bareJID);
-	        	removeOutcast(bareJID);
-	        	owners.add(bareJID);
+	        	removeMember(affiliationJID);
+	        	removeAdmin(affiliationJID);
+	        	removeOutcast(affiliationJID);
+	        	owners.add(affiliationJID);
 	        	break;
 	        case admin:
-	        	removeMember(bareJID);
-	        	removeOwner(bareJID);
-	        	removeOutcast(bareJID);
-	        	admins.add(bareJID);
+	        	removeMember(affiliationJID);
+	        	removeOwner(affiliationJID);
+	        	removeOutcast(affiliationJID);
+	        	admins.add(affiliationJID);
 	        	break;
 	        case outcast:
-	        	removeMember(bareJID);
-	        	removeAdmin(bareJID);
-	        	removeOwner(bareJID);
-	        	outcasts.add(bareJID);
+	        	removeMember(affiliationJID);
+	        	removeAdmin(affiliationJID);
+	        	removeOwner(affiliationJID);
+	        	outcasts.add(affiliationJID);
 	        	break;
 	        case none:
 	        default:
-	        	removeMember(bareJID);
-	        	removeAdmin(bareJID);
-	        	removeOwner(bareJID);
-	        	removeOutcast(bareJID);
+	        	removeMember(affiliationJID);
+	        	removeAdmin(affiliationJID);
+	        	removeOwner(affiliationJID);
+	        	removeOutcast(affiliationJID);
 	        	break;
         }
     }
@@ -2609,4 +2667,67 @@ public class LocalMUCRoom implements MUCRoom {
 			return false;
 		return true;
 	}
+	
+	// overrides for important Group events
+
+	@Override
+	public void groupDeleting(Group group, Map params) {
+		// remove the group from this room's affiliations
+		GroupJID groupJID = group.getJID();
+		try {
+			addNone(groupJID, getRole());
+		} catch (Exception ex) {
+			Log.error("Failed to remove deleted group from affiliation lists: " + groupJID, ex);
+		}
+	}
+
+	@Override
+	public void groupModified(Group group, Map params) {
+		// check the affiliation lists for the old group jid, replace with a new group jid
+		if ("nameModified".equals(params.get("type"))) {
+			GroupJID originalJID = (GroupJID) params.get("originalJID");
+			GroupJID newJID = group.getJID();
+			try {
+				if (owners.contains(originalJID)) {
+					addOwner(newJID, getRole());
+				} else if (admins.contains(originalJID)) {
+					addAdmin(newJID, getRole());
+				} else if (outcasts.contains(originalJID)) {
+					addOutcast(newJID, null, getRole());
+				} else if (members.containsKey(originalJID)) {
+					addMember(newJID, null, getRole());
+				}
+				addNone(originalJID, getRole());
+			} catch (Exception ex) {
+				Log.error("Failed to update group affiliation for " + newJID, ex);
+			}
+		}
+	}
+
+	@Override
+	public void memberAdded(Group group, Map params) {
+		applyAffiliationChange(getRole(), new JID((String)params.get("member")), null);
+	}
+
+	@Override
+	public void memberRemoved(Group group, Map params) {
+		applyAffiliationChange(getRole(), new JID((String)params.get("member")), null);
+	}
+
+	@Override
+	public void adminAdded(Group group, Map params) {
+		applyAffiliationChange(getRole(), new JID((String)params.get("admin")), null);
+	}
+
+	@Override
+	public void adminRemoved(Group group, Map params) {
+		applyAffiliationChange(getRole(), new JID((String)params.get("admin")), null);
+	}
+
+	@Override
+	public void groupCreated(Group group, Map params) {
+		// ignore
+	}
+	
+	
 }

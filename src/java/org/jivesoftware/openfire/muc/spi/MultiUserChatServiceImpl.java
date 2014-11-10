@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,6 +45,9 @@ import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.group.ConcurrentGroupList;
+import org.jivesoftware.openfire.group.GroupAwareList;
+import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.HistoryStrategy;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCEventDispatcher;
@@ -190,15 +192,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     /**
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can
-     * create a room.
+     * create a room. Might also include group jids.
      */
-    private List<JID> allowedToCreate = new CopyOnWriteArrayList<JID>();
+    private GroupAwareList<JID> allowedToCreate = new ConcurrentGroupList<JID>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
-     * permissions as a room owner.
+     * permissions as a room owner. Might also contain group jids.
      */
-    private List<JID> sysadmins = new CopyOnWriteArrayList<JID>();
+    private GroupAwareList<JID> sysadmins = new ConcurrentGroupList<JID>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
@@ -550,9 +552,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         // The room does not exist so check for creation permissions
                         // Room creation is always allowed for sysadmin
                         final JID bareJID = userjid.asBareJID();
-						if (isRoomCreationRestricted() && !sysadmins.contains(bareJID)) {
+						if (isRoomCreationRestricted() && !sysadmins.includes(bareJID)) {
                             // The room creation is only allowed for certain JIDs
-                            if (!allowedToCreate.contains(bareJID)) {
+                            if (!allowedToCreate.includes(bareJID)) {
                                 // The user is not in the list of allowed JIDs to create a room so raise
                                 // an exception
                                 throw new NotAllowedException();
@@ -822,15 +824,27 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return Collections.unmodifiableCollection(sysadmins);
     }
 
+    public boolean isSysadmin(JID bareJID) {
+        return sysadmins.includes(bareJID);
+    }
+
+    public void addSysadmins(Collection<JID> userJIDs) {
+    	for (JID userJID : userJIDs) {
+    		addSysadmin(userJID);
+    	}
+    }
+
     public void addSysadmin(JID userJID) {
     	final JID bareJID = userJID.asBareJID();
 
-        sysadmins.add(bareJID);
+        if (!sysadmins.contains(userJID)) {
+        	sysadmins.add(bareJID);
+        }
 
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
         ArrayList<JID> tempList = new ArrayList<JID>(sysadmins);
         Collections.sort(tempList);
-        sysadmins = new CopyOnWriteArrayList<JID>(tempList);
+        sysadmins = new ConcurrentGroupList<JID>(tempList);
 
         // Update the config.
         String[] jids = new String[sysadmins.size()];
@@ -917,7 +931,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     	for(JID userJID: userJIDs) {
             // Update the list of allowed JIDs to create MUC rooms. Since we are updating the instance
             // variable there is no need to restart the service
-            listChanged |= allowedToCreate.add(userJID);
+    		if (!allowedToCreate.contains(userJID)) {
+    			allowedToCreate.add(userJID);
+    			listChanged = true;
+    		}
     	}
 
     	// if nothing was added, there's nothing to update
@@ -925,7 +942,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
             List<JID> tempList = new ArrayList<JID>(allowedToCreate);
             Collections.sort(tempList);
-            allowedToCreate = new CopyOnWriteArrayList<JID>(tempList);
+            allowedToCreate = new ConcurrentGroupList<JID>(tempList);
             // Update the config.
             MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromCollection(allowedToCreate));
     	}
@@ -985,7 +1002,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 try {
-                    sysadmins.add(new JID(jid.trim().toLowerCase()).asBareJID());
+                	// could be a group jid
+                    sysadmins.add(GroupJID.fromString(jid.trim().toLowerCase()).asBareJID());
                 } catch (IllegalArgumentException e) {
                     Log.warn("The 'sysadmin.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }
@@ -1007,7 +1025,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
                 try {
-            	    allowedToCreate.add(new JID(jid.trim().toLowerCase()).asBareJID());
+                	// could be a group jid
+            	    allowedToCreate.add(GroupJID.fromString(jid.trim().toLowerCase()).asBareJID());
                 } catch (IllegalArgumentException e) {
                     Log.warn("The 'create.jid' property contains a value that is not a valid JID. It is ignored. Offending value: '" + jid + "'.", e);
                 }

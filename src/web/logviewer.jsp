@@ -129,11 +129,10 @@
     boolean saveLog = ParamUtils.getBooleanParameter(request,"saveLog");
     boolean emailLog = ParamUtils.getBooleanParameter(request,"emailLog");
     boolean debugEnabled = ParamUtils.getBooleanParameter(request,"debugEnabled");
-    boolean wasDebugEnabled = ParamUtils.getBooleanParameter(request,"wasDebugEnabled");
 
     // Enable/disable debugging
-    if (request.getParameter("wasDebugEnabled") != null && wasDebugEnabled != debugEnabled) {
-        Log.setDebugEnabled(debugEnabled);
+    if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
+    	JiveGlobals.setProperty(Log.LOG_DEBUG_ENABLED, String.valueOf(debugEnabled));
         // Log the event
         admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
         response.sendRedirect("logviewer.jsp?log=debug");
@@ -409,19 +408,18 @@ IFRAME {
                                 <fmt:message key="logviewer.debug_log" />: &nbsp;
                             </td>
                             <td width="1%">
-                                <input type="radio" name="debugEnabled" value="true"<%= ((debugEnabled) ? " checked" : "") %> id="de01">
+                                <input id="de01" type="radio" name="debugEnabled" value="true" <%= debugEnabled ? " checked" : "" %>>
                             </td>
                             <td width="1%" nowrap>
                                 <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
                             </td>
                             <td width="1%">
-                                <input type="radio" name="debugEnabled" value="false"<%= ((!debugEnabled) ? " checked" : "") %> id="de02">
+                                <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
                             </td>
                             <td width="1%" nowrap>
                                 <label for="de02">Disabled</label> &nbsp;
                             </td>
                             <td width="1%">
-                                <input type="hidden" name="wasDebugEnabled" value="<%= debugEnabled %>">
                                 <input type="submit" name="" value="<fmt:message key="global.save_changes" />">
                             </td>
                             <td width="94%">&nbsp;</td>

@@ -1,12 +1,18 @@
 package org.apache.mina.management;
 
-import org.apache.mina.common.*;
-import org.apache.mina.filter.executor.ExecutorFilter;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
 
-import java.net.SocketAddress;
+import org.apache.mina.core.service.IoService;
+import org.apache.mina.core.service.IoServiceListener;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.executor.ExecutorFilter;
+import org.apache.mina.filter.executor.OrderedThreadPoolExecutor;
+
+import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -59,15 +65,6 @@ public class MINAStatCollector {
 
     private final IoServiceListener serviceListener = new IoServiceListener()
     {
-        public void serviceActivated( IoService service, SocketAddress serviceAddress, IoHandler handler,
-            IoServiceConfig config )
-        {
-        }
-
-        public void serviceDeactivated( IoService service, SocketAddress serviceAddress, IoHandler handler,
-            IoServiceConfig config )
-        {
-        }
 
         public void sessionCreated( IoSession session )
         {
@@ -77,6 +74,18 @@ public class MINAStatCollector {
         public void sessionDestroyed( IoSession session )
         {
             removeSession( session );
+        }
+
+        @Override
+        public void serviceActivated(IoService service) throws Exception {
+        }
+
+        @Override
+        public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception {
+        }
+
+        @Override
+        public void serviceDeactivated(IoService service) throws Exception {
         }
     };
 
@@ -115,12 +124,10 @@ public class MINAStatCollector {
 
             polledSessions = new ConcurrentLinkedQueue<IoSession>();
 
-            Set<SocketAddress> addresses = service.getManagedServiceAddresses();
-            if (addresses != null) {
-                for (SocketAddress element : addresses) {
-                    for (IoSession ioSession : service.getManagedSessions(element)) {
-                        addSession(ioSession);
-                    }
+            Map<Long, IoSession> sessions = service.getManagedSessions();
+            if (sessions != null) {
+                for (IoSession ioSession : sessions.values()) {
+                    addSession(ioSession);
                 }
             }
 
@@ -307,12 +314,15 @@ public class MINAStatCollector {
                     tmpMsgRead += (readMessages - sessStat.lastMessageRead);
                     tmpBytesWritten += (writtenBytes - sessStat.lastByteWrite);
                     tmpBytesRead += (readBytes - sessStat.lastByteRead);
-                    tmpScheduledWrites += session.getScheduledWriteRequests();
+                    tmpScheduledWrites += session.getScheduledWriteMessages();
 
                     ExecutorFilter executorFilter =
-                            (ExecutorFilter) session.getFilterChain().get(ExecutorThreadModel.class.getName());
+                            (ExecutorFilter) session.getFilterChain().get(EXECUTOR_FILTER_NAME);
                     if (executorFilter != null) {
-                        tmpQueuevedEvents += executorFilter.getEventQueueSize(session);
+                        Executor executor =  executorFilter.getExecutor();
+                        if (executor instanceof OrderedThreadPoolExecutor) {
+                            tmpQueuevedEvents += ((OrderedThreadPoolExecutor) executor).getActiveCount();
+                        }
                     }
 
                     sessStat.lastByteRead = readBytes;
@@ -329,6 +339,87 @@ public class MINAStatCollector {
                 totalScheduledWrites.set(tmpScheduledWrites);
                 totalQueuedEvents.set(tmpQueuevedEvents);
             }
+        }
+    }
+    
+    public class IoSessionStat {
+        long lastByteRead = -1;
+
+        long lastByteWrite = -1;
+
+        long lastMessageRead = -1;
+
+        long lastMessageWrite = -1;
+
+        float byteWrittenThroughput = 0;
+
+        float byteReadThroughput = 0;
+
+        float messageWrittenThroughput = 0;
+
+        float messageReadThroughput = 0;
+
+        //  last time the session was polled
+        long lastPollingTime = System.currentTimeMillis();
+
+        /**
+         * Bytes read per second  
+         * @return bytes per second
+         */
+        public float getByteReadThroughput() {
+            return byteReadThroughput;
+        }
+
+        /**
+         * Bytes written per second  
+         * @return bytes per second
+         */
+        public float getByteWrittenThroughput() {
+            return byteWrittenThroughput;
+        }
+
+        /**
+         * Messages read per second  
+         * @return messages per second
+         */
+        public float getMessageReadThroughput() {
+            return messageReadThroughput;
+        }
+
+        /**
+         * Messages written per second  
+         * @return messages per second
+         */
+        public float getMessageWrittenThroughput() {
+            return messageWrittenThroughput;
+        }
+
+        /**
+         * used for the StatCollector, last polling value 
+         */
+        long getLastByteRead() {
+            return lastByteRead;
+        }
+
+        /**
+         * used for the StatCollector, last polling value 
+         */
+        long getLastByteWrite() {
+            return lastByteWrite;
+        }
+
+        /**
+         * used for the StatCollector, last polling value 
+         */
+        long getLastMessageRead() {
+            return lastMessageRead;
+        }
+
+        /**
+         * used for the StatCollector, last polling value 
+         */
+        long getLastMessageWrite() {
+            return lastMessageWrite;
         }
     }
 }

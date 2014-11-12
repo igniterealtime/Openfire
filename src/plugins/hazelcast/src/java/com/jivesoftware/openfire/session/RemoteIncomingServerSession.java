@@ -42,10 +42,6 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
         this.streamID = new BasicStreamID(streamID);
     }
 
-    public String getCipherSuiteName() {
-        return "NONE";
-    }
-
     public boolean isUsingServerDialback() {
         if (usingServerDialback == -1) {
             ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isUsingServerDialback);

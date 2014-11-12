@@ -32,6 +32,7 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,21 +41,25 @@ import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.bouncycastle.ocsp.BasicOCSPResp;
-import org.bouncycastle.ocsp.CertificateID;
-import org.bouncycastle.ocsp.CertificateStatus;
-import org.bouncycastle.ocsp.OCSPReq;
-import org.bouncycastle.ocsp.OCSPReqGenerator;
-import org.bouncycastle.ocsp.OCSPResp;
-import org.bouncycastle.ocsp.SingleResp;
+import org.bouncycastle.cert.ocsp.BasicOCSPResp;
+import org.bouncycastle.cert.ocsp.CertificateID;
+import org.bouncycastle.cert.ocsp.CertificateStatus;
+import org.bouncycastle.cert.ocsp.OCSPReq;
+import org.bouncycastle.cert.ocsp.OCSPReqBuilder;
+import org.bouncycastle.cert.ocsp.OCSPResp;
+import org.bouncycastle.cert.ocsp.SingleResp;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
+
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A <code>PKIXCertPathChecker</code> that uses 
- * Online Certificate Status Protocol (OCSP) 
- * 
+ * A <code>PKIXCertPathChecker</code> that uses
+ * Online Certificate Status Protocol (OCSP)
+ *
  * See <a href="http://www.ietf.org/rfc/rfc2560.txt">RFC 2560</a>.
  *
  * @author Jay Kline
@@ -185,7 +190,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
                         }
                     }
                 }
-                
+
                 if (issuerCert == null) {
                     //No trust anchor was found matching the issuer
                     throw new CertPathValidatorException("No trusted certificate for " + currCert.getIssuerDN());
@@ -194,11 +199,11 @@ public class OCSPChecker extends PKIXCertPathChecker {
                 // Check cert stores if responder cert has not yet been found
                 if (!haveResponderCert) {
                     Log.debug("OCSPChecker: Searching cert stores for responder's certificate");
-                    
+
                     if (responderSubjectName != null) {
                         X509CertSelector filter = new X509CertSelector();
                         filter.setSubject(responderSubjectName.getName());
-                    
+
                         List<CertStore> certStores = pkixParams.getCertStores();
                         for (CertStore certStore : certStores) {
                             Iterator i = certStore.getCertificates(filter).iterator();
@@ -218,11 +223,11 @@ public class OCSPChecker extends PKIXCertPathChecker {
             }
 
             // Construct an OCSP Request
-            OCSPReqGenerator gen = new OCSPReqGenerator();
+            OCSPReqBuilder gen = new OCSPReqBuilder();
 
-            CertificateID certID = new CertificateID(CertificateID.HASH_SHA1, issuerCert, currCert.getSerialNumber());
+            CertificateID certID = new CertificateID(new JcaDigestCalculatorProviderBuilder().setProvider("BC").build().get(CertificateID.HASH_SHA1), new X509CertificateHolder(issuerCert.getEncoded()), currCert.getSerialNumber());
             gen.addRequest(certID);
-            OCSPReq ocspRequest = gen.generate();
+            OCSPReq ocspRequest = gen.build();
 
 
             URL url;
@@ -261,10 +266,10 @@ public class OCSPChecker extends PKIXCertPathChecker {
             BigInteger serialNumber = currCert.getSerialNumber();
             BasicOCSPResp brep = (BasicOCSPResp) ocspResponse.getResponseObject();
             try {
-                if( ! brep.verify(responderCert.getPublicKey(),"BC")) {
+                if( ! brep.isSignatureValid(new JcaContentVerifierProviderBuilder().setProvider("BC").build(responderCert.getPublicKey()))) {
                     throw new CertPathValidatorException("OCSP response is not verified");
                 }
-            } catch (NoSuchProviderException e) {
+            } catch (Exception e) {
                 throw new CertPathValidatorException("OCSP response could not be verified ("+e.getMessage()+")" ,null, cp, certIndex);
             }
             SingleResp[] singleResp = brep.getResponses();
@@ -278,11 +283,11 @@ public class OCSPChecker extends PKIXCertPathChecker {
                                 serialNumber.toString() + ") is: good");
                         foundResponse = true;
                         break;
-                    } else if (status instanceof org.bouncycastle.ocsp.RevokedStatus) {
+                    } else if (status instanceof org.bouncycastle.cert.ocsp.RevokedStatus) {
                         Log.debug("OCSPChecker: Status of certificate (with serial number " +
                                 serialNumber.toString() + ") is: revoked");
                         throw new CertPathValidatorException("Certificate has been revoked", null, cp, certIndex);
-                    } else if (status instanceof org.bouncycastle.ocsp.UnknownStatus) {
+                    } else if (status instanceof org.bouncycastle.cert.ocsp.UnknownStatus) {
                         Log.debug("OCSPChecker: Status of certificate (with serial number " +
                                 serialNumber.toString() + ") is: unknown");
                         throw new CertPathValidatorException("Certificate's revocation status is unknown", null, cp, certIndex);

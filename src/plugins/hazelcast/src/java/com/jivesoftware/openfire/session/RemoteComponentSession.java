@@ -49,10 +49,6 @@ public class RemoteComponentSession extends RemoteSession implements ComponentSe
         component = new RemoteExternalComponent(address);
     }
 
-    public String getCipherSuiteName() {
-        return "NONE";
-    }
-
     public ExternalComponent getExternalComponent() {
         return component;
     }

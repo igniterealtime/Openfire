@@ -74,6 +74,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
@@ -308,10 +309,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     return;
                 }
             }
-            // The packet is a normal packet that should possibly be sent to the room
-            JID receipient = packet.getTo();
-            String roomName = receipient != null ? receipient.getNode() : null;
-            getChatUser(packet.getFrom(), roomName).process(packet);
+            // OF-670: Kick MUC users who return permanent error conditions;
+            // also detects S2S-based users from non-responsive domains.
+            if (packet.getError() != null &&
+            	packet.getError().getType().equals(PacketError.Type.cancel)) {
+            	removeUser(packet.getFrom());
+            }
+            else {
+                // The packet is a normal packet that should possibly be sent to the room                
+                JID receipient = packet.getTo();
+                String roomName = receipient != null ? receipient.getNode() : null;
+                getChatUser(packet.getFrom(), roomName).process(packet);
+            }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

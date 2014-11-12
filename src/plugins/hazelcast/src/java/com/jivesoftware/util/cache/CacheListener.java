@@ -27,6 +27,7 @@ import org.jivesoftware.util.StringUtils;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.MapEvent;
 
 /**
  * Base listener for cache events in the cluster. This class helps keep track
@@ -48,24 +49,24 @@ class CacheListener implements EntryListener {
     }
 
     public void entryAdded(EntryEvent event) {
-        handleMapEvent(event, false);
+        handleEntryEvent(event, false);
     }
 
     public void entryUpdated(EntryEvent event) {
-        handleMapEvent(event, false);
+        handleEntryEvent(event, false);
     }
 
     public void entryRemoved(EntryEvent event) {
-        handleMapEvent(event, true);
+        handleEntryEvent(event, true);
     }
 
     public void entryEvicted(EntryEvent event) {
-        handleMapEvent(event, true);
+        handleEntryEvent(event, true);
     }
 
-    void handleMapEvent(EntryEvent event, boolean removal) {
+    private void handleEntryEvent(EntryEvent event, boolean removal) {
         NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
-        //ignore items which this node has added
+        // ignore events which were triggered by this node
         if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
             Set<String> sessionJIDS = clusterListener.lookupJIDList(nodeID, cacheName);
             if (removal) {
@@ -76,5 +77,24 @@ class CacheListener implements EntryListener {
             }
         }
     }
+
+	private void handleMapEvent(MapEvent event) {
+        NodeID nodeID = NodeID.getInstance(StringUtils.getBytes(event.getMember().getUuid()));
+        // ignore events which were triggered by this node
+        if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+			Set<String> sessionJIDs = clusterListener.lookupJIDList(nodeID, cacheName);
+			sessionJIDs.clear();
+        }
+	}
+
+	@Override
+	public void mapCleared(MapEvent event) {
+		handleMapEvent(event);
+	}
+
+	@Override
+	public void mapEvicted(MapEvent event) {
+		handleMapEvent(event);
+	}
 
 }

@@ -20,9 +20,11 @@
 package org.jivesoftware.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.IDN;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.BreakIterator;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +54,7 @@ public class StringUtils {
     private static final char[] AMP_ENCODE = "&amp;".toCharArray();
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
-
+    
     private StringUtils() {
         // Not instantiable.
     }
@@ -1116,6 +1118,28 @@ public class StringUtils {
         catch (AddressException e) {
             return false;
         }
+    }
+    
+    /**
+     * Returns a valid domain name, possibly as an ACE-encoded IDN 
+     * (per <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>).
+     * 
+     * @param domain Proposed domain name
+     * @return The validated domain name, possibly ACE-encoded
+     * @throws IllegalArgumentException The given domain name is not valid
+     */
+    public static String validateDomainName(String domain) {
+    	if (domain == null || domain.trim().length() == 0) {
+    		throw new IllegalArgumentException("Domain name cannot be null or empty");
+    	}
+    	String result = IDN.toASCII(domain);
+		if (result.equals(domain)) {
+			// no conversion; validate again via USE_STD3_ASCII_RULES
+			IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
+		} else {
+    		Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
+		}
+    	return result;
     }
     
     /**

@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -971,7 +972,9 @@ public class LdapManager {
             }
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), new String[] {username},
+            // NOTE: this assumes that the username has already been JID-unescaped
+            NamingEnumeration<SearchResult> answer = ctx.search("", getSearchFilter(), 
+            		new String[] {sanitizeSearchFilter(username)},
                     constraints);
 
             if (debug) {
@@ -1115,7 +1118,7 @@ public class LdapManager {
             }
             constraints.setReturningAttributes(new String[] { groupNameField });
 
-            String filter = MessageFormat.format(getGroupSearchFilter(), groupname);
+            String filter = MessageFormat.format(getGroupSearchFilter(), sanitizeSearchFilter(groupname));
             NamingEnumeration<SearchResult> answer = ctx.search("", filter, constraints);
 
             if (debug) {
@@ -1839,6 +1842,28 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim) {
+    	return retrieveList(attribute, searchFilter, startIndex, numResults, suffixToTrim, false);
+    }
+
+    /**
+     * Generic routine for retrieving a list of results from the LDAP server.  It's meant to be very
+     * flexible so that just about any query for a list of results can make use of it without having
+     * to reimplement their own calls to LDAP.  This routine also accounts for sorting settings,
+     * paging settings, any other global settings, and alternate DNs.
+     *
+     * The passed in filter string needs to be pre-prepared!  In other words, nothing will be changed
+     * in the string before it is used as a string.
+     *
+     * @param attribute LDAP attribute to be pulled from each result and placed in the return results.
+     *     Typically pulled from this manager.
+     * @param searchFilter Filter to use to perform the search.  Typically pulled from this manager.
+     * @param startIndex Number/index of first result to include in results.  (-1 for no limit)
+     * @param numResults Number of results to include.  (-1 for no limit)
+     * @param suffixToTrim An arbitrary string to trim from the end of every attribute returned.  null to disable.
+     * @param escapeJIDs Use JID-escaping for returned results (e.g. usernames)
+     * @return A simple list of strings (that should be sorted) of the results.
+     */
+    public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
         List<String> results = new ArrayList<String>();
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
@@ -1921,7 +1946,7 @@ public class LdapManager {
                         result = result.substring(0,result.length()-suffixToTrim.length());
                     }
                     // Add this to the result.
-                    results.add(JID.escapeNode(result));
+                    results.add(escapeJIDs ? JID.escapeNode(result) : result);
                 }
                 // Examine the paged results control response
                 Control[] controls = ctx.getResponseControls();
@@ -1978,7 +2003,7 @@ public class LdapManager {
                             result = result.substring(0,result.length()-suffixToTrim.length());
                         }
                         // Add this to the result.
-                        results.add(JID.escapeNode(result));
+                        results.add(escapeJIDs ? JID.escapeNode(result) : result);
                     }
                     // Examine the paged results control response
                     Control[] controls = ctx2.getResponseControls();
@@ -2182,6 +2207,57 @@ public class LdapManager {
         }
         return count;
     }
+    
+    /**
+     * Escapes any special chars (RFC 4515) from a string representing
+     * a search filter assertion value.
+     *
+     * @param input The input string.
+     *
+     * @return A assertion value string ready for insertion into a 
+     *         search filter string.
+     */
+    public static String sanitizeSearchFilter(final String value) {
+
+            StringBuilder result = new StringBuilder();
+
+            for (int i=0; i< value.length(); i++) {
+
+                char c = value.charAt(i);
+
+                switch(c) {
+	            	case '!':		result.append("\\21");	break;
+	            	case '&':		result.append("\\26");	break;
+	            	case '(':		result.append("\\28");	break;
+	            	case ')':		result.append("\\29");	break;
+	            	case '*':		result.append("\\2a");	break;
+	            	case ':':		result.append("\\3a");	break;
+	            	case '\\':		result.append("\\5c");	break;
+	            	case '|':		result.append("\\7c");	break;
+	            	case '~':		result.append("\\7e");	break;
+	            	case '\u0000':	result.append("\\00");	break;
+            	default:
+            		if (c <= 0x7f) {
+                        // regular 1-byte UTF-8 char
+            			result.append(String.valueOf(c));
+                    }
+                    else if (c >= 0x080) { 
+                        // higher-order 2, 3 and 4-byte UTF-8 chars
+                        try {
+                            byte[] utf8bytes = String.valueOf(c).getBytes("UTF8");
+                            for (byte b: utf8bytes)
+                            {
+                            	result.append(String.format("\\%02x", b));
+                            }
+                        } catch (UnsupportedEncodingException e) {
+                            // ignore
+                        }
+            		}
+                }
+            }
+            return result.toString();
+    }
+    
 
     /**
      * Encloses DN values with "

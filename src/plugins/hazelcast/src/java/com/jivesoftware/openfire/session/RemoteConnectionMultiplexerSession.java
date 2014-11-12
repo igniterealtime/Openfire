@@ -35,10 +35,6 @@ public class RemoteConnectionMultiplexerSession extends RemoteSession implements
         super(nodeID, address);
     }
 
-    public String getCipherSuiteName() {
-        return "NONE";
-    }
-
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
         return new ConnectionMultiplexerSessionTask(address, operation);
     }

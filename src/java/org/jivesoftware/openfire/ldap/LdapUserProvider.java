@@ -179,7 +179,8 @@ public class LdapUserProvider implements UserProvider {
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 -1,
                 -1,
-                null
+                null,
+                true
         );
     }
     
@@ -193,7 +194,8 @@ public class LdapUserProvider implements UserProvider {
                 MessageFormat.format(manager.getSearchFilter(), "*"),
                 startIndex,
                 numResults,
-                manager.getUsernameSuffix()
+                manager.getUsernameSuffix(),
+                true
         );
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
@@ -255,11 +257,6 @@ public class LdapUserProvider implements UserProvider {
         if (!searchFields.keySet().containsAll(fields)) {
             throw new IllegalArgumentException("Search fields " + fields + " are not valid.");
         }
-        // Make the query be a wildcard search by default. So, if the user searches for
-        // "John", make the search be "John*" instead.
-        if (!query.endsWith("*")) {
-            query = query + "*";
-        }
         StringBuilder filter = new StringBuilder();
         //Add the global search filter so only those users the directory administrator wants to include
         //are returned from the directory
@@ -271,7 +268,10 @@ public class LdapUserProvider implements UserProvider {
         }
         for (String field:fields) {
             String attribute = searchFields.get(field);
-            filter.append("(").append(attribute).append("=").append(query).append(")");
+            // Make the query be a wildcard search by default. So, if the user searches for
+            // "John", make the sanitized search be "John*" instead.
+            filter.append("(").append(attribute).append("=")
+            	.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         }
         if (fields.size() > 1) {
             filter.append(")");
@@ -282,7 +282,8 @@ public class LdapUserProvider implements UserProvider {
                 filter.toString(),
                 startIndex,
                 numResults,
-                manager.getUsernameSuffix()
+                manager.getUsernameSuffix(),
+                true
         );
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }

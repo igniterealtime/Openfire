@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -83,7 +85,7 @@ import org.ifsoft.rtp.*;
  * @author Lyubomir Marinov
  * @author Damian Minkov
  */
-public class PluginImpl  implements Plugin, PropertyEventListener
+public class PluginImpl  implements Plugin, PropertyEventListener, ClusterEventListener
 {
 	private static ConcurrentHashMap<String, FocusAgent> sessions;
     /**
@@ -216,9 +218,50 @@ public class PluginImpl  implements Plugin, PropertyEventListener
      */
     private ExecutorService executorService;
 
+    private File pluginDirectory;
+
+
+
+    /**
+     * Initializes this <tt>Plugin</tt>.
+     *
+     * @param manager the <tt>PluginManager</tt> which loads and manages this
+     * <tt>Plugin</tt>
+     * @param pluginDirectory the directory into which this <tt>Plugin</tt> is
+     * located
+     * @see Plugin#initializePlugin(PluginManager, File)
+     */
+    public void initializePlugin(PluginManager manager, File pluginDirectory)
+    {
+		this.pluginDirectory = pluginDirectory;
+
+		boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
+
+		if (nodejs)
+		{
+			Log.info("Jitsi Videobridge - Found NodeJs Plugin. Starting Etherpad");
+
+			JiveGlobals.setProperty("js.jitsivideobridge.etherpad.path", pluginDirectory.getAbsolutePath() + File.separator + "apps" + File.separator + "ofmeet");
+			JiveGlobals.setProperty("js.jitsivideobridge.etherpad", "node_modules/ep_etherpad-lite/node/server.js");
+		}
+
+		startComponent();
+        ClusterManager.addListener(this);
+	}
 
     public void destroyPlugin()
     {
+		Log.info("Jitsi Videobridge - destroyPlugin");
+
+		stopComponent();
+        ClusterManager.removeListener(this);
+;
+	}
+
+    public void stopComponent()
+    {
+		Log.info("Jitsi Videobridge - stopComponent");
+
         PropertyEventDispatcher.removeListener(this);
 
         executorService.shutdown();
@@ -241,17 +284,10 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 		destroyIQHandlers();
     }
 
-    /**
-     * Initializes this <tt>Plugin</tt>.
-     *
-     * @param manager the <tt>PluginManager</tt> which loads and manages this
-     * <tt>Plugin</tt>
-     * @param pluginDirectory the directory into which this <tt>Plugin</tt> is
-     * located
-     * @see Plugin#initializePlugin(PluginManager, File)
-     */
-    public void initializePlugin(final PluginManager manager, final File pluginDirectory)
+    public void startComponent()
     {
+		Log.info("Jitsi Videobridge - startComponent");
+
         PropertyEventDispatcher.addListener(this);
 
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_LOCATION", pluginDirectory.getPath());
@@ -352,22 +388,46 @@ public class PluginImpl  implements Plugin, PropertyEventListener
 				{
 					ce.printStackTrace(System.err);
 				}
-
-				boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
-
-				if (nodejs)
-				{
-					Log.info("Found NodeJs Plugin. Starting Etherpad");
-
-					JiveGlobals.setProperty("js.jitsivideobridge.etherpad.path", pluginDirectory.getAbsolutePath() + File.separator + "apps" + File.separator + "ofmeet");
-					JiveGlobals.setProperty("js.jitsivideobridge.etherpad", "node_modules/ep_etherpad-lite/node/server.js");
-				}
 			}
 		});
     }
 
-    /**
+	@Override
+	public void joinedCluster()
+	{
+		Log.info("Jitsi Videobridge - joinedCluster");
+		stopComponent();
+	}
 
+	@Override
+	public void joinedCluster(byte[] arg0)
+	{
+
+
+	}
+
+	@Override
+	public void leftCluster()
+	{
+		Log.info("Jitsi Videobridge - leftCluster");
+		startComponent();
+	}
+
+	@Override
+	public void leftCluster(byte[] arg0)
+	{
+
+
+	}
+
+	@Override
+	public void markedAsSeniorClusterMember()
+	{
+		Log.info("Jitsi Videobridge - markedAsSeniorClusterMember");
+		startComponent();
+	}
+
+    /**
      */
     private static final SecurityHandler basicAuth(String username, String password, String realm) {
 

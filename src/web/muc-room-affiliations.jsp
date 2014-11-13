@@ -22,6 +22,9 @@
                  org.jivesoftware.openfire.muc.ConflictException,
                  org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.openfire.muc.NotAllowedException,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupJID,
+                 org.jivesoftware.openfire.group.GroupManager,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.IQ"
@@ -29,6 +32,7 @@
 %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.net.URLDecoder" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.HashMap" %>
@@ -45,6 +49,7 @@
     String affiliation = ParamUtils.getParameter(request,"affiliation");
     String userJID = ParamUtils.getParameter(request,"userJID");
     String roomName = roomJID.getNode();
+    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
 
     boolean add = request.getParameter("add") != null;
     boolean addsuccess = request.getParameter("addsuccess") != null;
@@ -64,34 +69,47 @@
     // Handle an add
     if (add) {
         // do validation
-        if (userJID == null) {
+        if (userJID == null && groupNames == null) {
             errors.put("userJID","userJID");
         }
 
         if (errors.size() == 0) {
             try {
-                // Escape username
-                if (userJID.indexOf('@') == -1) {
-                    String username = JID.escapeNode(userJID);
-                    String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
-                    userJID = username + '@' + domain;
-                }
-                else {
-                    String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
-                    String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
-                    userJID = username + rest.trim();
-                }
+            	ArrayList<String> memberJIDs = new ArrayList<String>();
+            	if (userJID != null) {
+                    // Escape username
+                    if (userJID.indexOf('@') == -1) {
+                        String username = JID.escapeNode(userJID);
+                        String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
+                        userJID = username + '@' + domain;
+                    }
+                    else {
+                        String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                        String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                        userJID = username + rest.trim();
+                    }
+                	memberJIDs.add(userJID);
+            	}
+            	if (groupNames != null) {
+            		// create a group JID for each group
+            		for (String groupName : groupNames) {
+            			GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+            			memberJIDs.add(groupJID.toString());
+            		}
+            	}
                 IQ iq = new IQ(IQ.Type.set);
-
                 Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#admin");
-                Element item = frag.addElement("item");
-                item.addAttribute("affiliation", affiliation);
-                item.addAttribute("jid", userJID);
+            	for (String memberJID : memberJIDs){
+                    Element item = frag.addElement("item");
+                    item.addAttribute("affiliation", affiliation);
+                    item.addAttribute("jid", memberJID);
+            	}
                 // Send the IQ packet that will modify the room's configuration
                 room.getIQAdminHandler().handleIQ(iq, room.getRole());
-
                 // Log the event
-                webManager.logEvent("set MUC affilation to "+affiliation+" for "+userJID+" in "+roomName, null);
+                for (String memberJID : memberJIDs) {
+                	webManager.logEvent("set MUC affilation to "+affiliation+" for "+memberJID+" in "+roomName, null);
+                }
                 // done, return
                 response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
                 return;
@@ -103,7 +121,7 @@
                 errors.put("NotAllowedException","NotAllowedException");
             }
             catch (CannotBeInvitedException e) {
-                errors.put("CannotBeInvitedException", "CannotBeInvitedExcpetion");
+                errors.put("CannotBeInvitedException", "CannotBeInvitedException");
             }
         }
     }
@@ -126,8 +144,9 @@
             errors.put("ConflictException","ConflictException");
         }
         catch (CannotBeInvitedException e) {
-                errors.put("CannotBeInvitedException", "CannotBeInvitedExcpetion");
+                errors.put("CannotBeInvitedException", "CannotBeInvitedException");
         }
+        userJID = null; // hide group/user JID
     }
 %>
 
@@ -201,8 +220,18 @@
     <legend><fmt:message key="muc.room.affiliations.permission" /></legend>
     <div>
     <p>
+    <label for="groupJIDs"><fmt:message key="muc.room.affiliations.add_group" /></label><br/>
+	<select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" id="groupJIDs">
+	<%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
+		<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+		 <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
+		 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
+	<%  } %>
+	</select>
+	</p>
+    <p>
     <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
-    <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
+    <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? userJID : "") %>" id="memberJID">
     <select name="affiliation">
         <option value="owner"><fmt:message key="muc.room.affiliations.owner" /></option>
         <option value="admin"><fmt:message key="muc.room.affiliations.admin" /></option>
@@ -237,13 +266,20 @@
                 ArrayList<JID> owners = new ArrayList<JID>(room.getOwners());
                 Collections.sort(owners);
                 for (JID user : owners) {
+                	boolean isGroup = GroupJID.isGroup(user);
                 	String username = JID.unescapeNode(user.getNode());
-                    String userDisplay = username + '@' + user.getDomain();
+                    String userDisplay = isGroup ? ((GroupJID)user).getGroupName() : username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
+                  <% if (isGroup) { %>
+                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.group" />" alt="<fmt:message key="muc.room.affiliations.group" />"/>
+                  <% } else { %>
+                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
+                  <% } %>
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode()) %>">
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=owner"
@@ -269,13 +305,20 @@
                 ArrayList<JID> admins = new ArrayList<JID>(room.getAdmins());
                 Collections.sort(admins);
                 for (JID user : admins) {
+                	boolean isGroup = GroupJID.isGroup(user);
                 	String username = JID.unescapeNode(user.getNode());
-                    String userDisplay = username + '@' + user.getDomain();
+                    String userDisplay = isGroup ? ((GroupJID)user).getGroupName() : username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
+                  <% if (isGroup) { %>
+                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.group" />" alt="<fmt:message key="muc.room.affiliations.group" />"/>
+                  <% } else { %>
+                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
+                  <% } %>
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode()) %>">
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=admin"
@@ -301,15 +344,22 @@
                 ArrayList<JID> members = new ArrayList<JID>(room.getMembers());
                 Collections.sort(members);
                 for (JID user : members) {
+                	boolean isGroup = GroupJID.isGroup(user);
                 	String username = JID.unescapeNode(user.getNode());
-                    String userDisplay = username + '@' + user.getDomain();
+                    String userDisplay = isGroup ? ((GroupJID)user).getGroupName() : username + '@' + user.getDomain();
                     String nickname = room.getReservedNickname(user);
                     nickname = (nickname == null ? "" : " (" + nickname + ")");
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= StringUtils.escapeHTMLTags(userDisplay) %><%=  StringUtils.escapeHTMLTags(nickname) %>
+                  <% if (isGroup) { %>
+                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.group" />" alt="<fmt:message key="muc.room.affiliations.group" />"/>
+                  <% } else { %>
+                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
+                  <% } %>
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode()) %>">
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %></a><%= StringUtils.escapeHTMLTags(nickname) %>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=member"
@@ -335,13 +385,20 @@
                 ArrayList<JID> outcasts = new ArrayList<JID>(room.getOutcasts());
                 Collections.sort(outcasts);
                 for (JID user : outcasts) {
+                	boolean isGroup = GroupJID.isGroup(user);
                 	String username = JID.unescapeNode(user.getNode());
-                    String userDisplay = username + '@' + user.getDomain();
+                    String userDisplay = isGroup ? ((GroupJID)user).getGroupName() : username + '@' + user.getDomain();
         %>
             <tr>
                 <td>&nbsp;</td>
                 <td>
-                    <%= StringUtils.escapeHTMLTags(userDisplay) %>
+                  <% if (isGroup) { %>
+                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.group" />" alt="<fmt:message key="muc.room.affiliations.group" />"/>
+                  <% } else { %>
+                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
+                  <% } %>
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode()) %>">
+                    <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
                     <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=outcast"

@@ -19,12 +19,15 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupJID,
                  java.util.*,
                  org.xmpp.packet.*,
                  org.jivesoftware.openfire.muc.MultiUserChatService"
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.net.URLDecoder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -33,6 +36,7 @@
 
 <%  // Get parameters
     String userJID = ParamUtils.getParameter(request,"userJID");
+    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
     boolean add = request.getParameter("add") != null;
     boolean save = request.getParameter("save") != null;
     boolean success = request.getParameter("success") != null;
@@ -78,11 +82,29 @@
         }
     }
 
-    JID bareJID = null;
+    List<JID> allowedJIDs = new ArrayList<JID>();
     try {
     	if (userJID != null && userJID.trim().length() > 0) {
-	        // do validation
-	    	bareJID = new JID(userJID.trim()).asBareJID();
+    		String allowedJID;
+	        // do validation; could be a group jid
+            if (userJID.indexOf('@') == -1) {
+                String username = JID.escapeNode(userJID);
+                String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
+                allowedJID = username + '@' + domain;
+            }
+            else {
+                String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
+                String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                allowedJID = username + rest.trim();
+            }
+	    	allowedJIDs.add(GroupJID.fromString(allowedJID.trim()).asBareJID());
+    	}
+    	if (groupNames != null) {
+    		// create a group JID for each group
+    		for (String groupName : groupNames) {
+    			GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+    			allowedJIDs.add(groupJID);
+    		}
     	}
     } catch (java.lang.IllegalArgumentException ex) {
         errors.put("userJID","userJID");
@@ -91,16 +113,16 @@
     if (errors.size() == 0) {
 	    // Handle an add
 	    if (add) {
-	            mucService.addUserAllowedToCreate(bareJID);
-	            // Log the event
-	            webManager.logEvent("added MUC room creation permission to "+userJID+" for service "+mucname, null);
-	            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-	            return;
+            mucService.addUsersAllowedToCreate(allowedJIDs);
+            // Log the event
+            webManager.logEvent("updated MUC room creation permissions for service "+mucname, null);
+            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            return;
 	    }
 	
 	    if (delete) {
 	        // Remove the user from the allowed list
-	        mucService.removeUserAllowedToCreate(bareJID);
+	        mucService.removeUserAllowedToCreate(GroupJID.fromString(userJID));
 	        // Log the event
 	        webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
 	        // done, return
@@ -124,7 +146,11 @@
 <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
-<%  if (errors.size() > 0) { %>
+<%  if (errors.size() > 0) { 
+	    if (delete) {
+	    	userJID = null; // mask group jid on error
+	    }
+%>
 
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
@@ -210,6 +236,17 @@
 		<fmt:message key="muc.create.permission.allowed_users" />
 	</div>
 	<div class="jive-contentBox">
+	    <p>
+	    <label for="groupJIDs"><fmt:message key="muc.create.permission.add_group" /></label><br/>
+		<select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 
+		 onclick="this.form.openPerms[1].checked=true;" id="groupJIDs">
+		<%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
+			<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+			 <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
+			 ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
+		<%  } %>
+		</select>
+		</p>
 		<p>
         <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
         <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
@@ -221,7 +258,7 @@
 			<table cellpadding="0" cellspacing="0" border="0" width="100%">
 			<thead>
 				<tr>
-					<th width="99%">User</th>
+					<th width="99%">User/Group</th>
 					<th width="1%">Remove</th>
 				</tr>
 			</thead>
@@ -237,10 +274,18 @@
 				<%  } %>
 
 				<%  for (JID jid : mucService.getUsersAllowedToCreate()) {
+                	    boolean isGroup = GroupJID.isGroup(jid);
+                	    String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
 				%>
 					<tr>
 						<td width="99%">
-							<%= jid.toString() %>
+		                  <% if (isGroup) { %>
+		                	<img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.group" />" alt="<fmt:message key="muc.create.permission.group" />"/>
+		                  <% } else { %>
+		                	<img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
+		                  <% } %>
+						  <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
+						  <%= jidDisplay %></a>
 						</td>
 						<td width="1%" align="center">
 							<a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
@@ -263,3 +308,4 @@
 
 </body>
 </html>
+

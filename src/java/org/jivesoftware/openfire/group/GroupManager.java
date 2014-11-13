@@ -22,7 +22,6 @@ package org.jivesoftware.openfire.group;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -299,6 +298,18 @@ public class GroupManager {
     }
 
     /**
+     * Returns the corresponding group if the given JID represents a group. 
+     *
+     * @param groupJID The JID for the group to retrieve
+     * @return The group corresponding to the JID, or null if the JID does not represent a group
+     * @throws GroupNotFoundException if the JID represents a group that does not exist
+     */
+    public Group getGroup(JID jid) throws GroupNotFoundException {
+    	JID groupJID = GroupJID.fromJID(jid);
+        return (groupJID instanceof GroupJID) ? getGroup(((GroupJID)groupJID).getGroupName()) : null;
+    }
+
+    /**
      * Returns a Group by name.
      *
      * @param name The name of the group to retrieve
@@ -313,22 +324,24 @@ public class GroupManager {
      * Returns a Group by name.
      *
      * @param name The name of the group to retrieve
+     * @param forceLookup Invalidate the group cache for this group
      * @return The group corresponding to that name
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name, boolean forceLookup) throws GroupNotFoundException {
         Group group = null;
-        if (!forceLookup) {
+        if (forceLookup) {
+            groupCache.remove(name);
+        } else {
             group = groupCache.get(name);
         }
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
             synchronized (name.intern()) {
                 group = groupCache.get(name);
-                // If group wan't found in cache, load it up and put it there.
                 if (group == null) {
-                    group = provider.getGroup(name);
-                    groupCache.put(name, group);
+	                group = provider.getGroup(name);
+	                groupCache.put(name, group);
                 }
             }
         }

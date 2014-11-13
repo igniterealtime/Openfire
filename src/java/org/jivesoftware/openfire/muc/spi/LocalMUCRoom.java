@@ -2706,22 +2706,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
 	@Override
 	public void memberAdded(Group group, Map params) {
-		applyAffiliationChange(getRole(), new JID((String)params.get("member")), null);
+		applyAffiliationChangeAndSendPresence(new JID((String)params.get("member")));
 	}
 
 	@Override
 	public void memberRemoved(Group group, Map params) {
-		applyAffiliationChange(getRole(), new JID((String)params.get("member")), null);
+		applyAffiliationChangeAndSendPresence(new JID((String)params.get("member")));
 	}
 
 	@Override
 	public void adminAdded(Group group, Map params) {
-		applyAffiliationChange(getRole(), new JID((String)params.get("admin")), null);
+		applyAffiliationChangeAndSendPresence(new JID((String)params.get("admin")));
 	}
 
 	@Override
 	public void adminRemoved(Group group, Map params) {
-		applyAffiliationChange(getRole(), new JID((String)params.get("admin")), null);
+		applyAffiliationChangeAndSendPresence(new JID((String)params.get("admin")));
+	}
+	
+	private void applyAffiliationChangeAndSendPresence(JID groupMember) {
+		List<Presence> presences = applyAffiliationChange(getRole(), groupMember, null);
+        for (Presence presence : presences) {
+            send(presence);
+        }
 	}
 
 	@Override

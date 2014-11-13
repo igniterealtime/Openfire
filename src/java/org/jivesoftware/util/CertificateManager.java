@@ -386,11 +386,11 @@ public class CertificateManager {
                         ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
                         Object object = decoder.readObject();
                         ASN1Sequence otherNameSeq = null;
-			if (object != null && object instanceof ASN1Sequence) {
+                        if (object != null && object instanceof ASN1Sequence) {
 				otherNameSeq = (ASN1Sequence) object;
-			} else {
+                        } else {
 				continue;
-			}
+                        }
                         // Check the object identifier
                         ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
@@ -411,7 +411,7 @@ public class CertificateManager {
 	                        	// TODO: there's bound to be a better way...
 	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
 	                        } else {
-								DERUTF8String derStr = DERUTF8String.getInstance(o);
+					DERUTF8String derStr = DERUTF8String.getInstance(o);
 		                        identity = derStr.getString();
 	                        }
 	                        if (identity != null && identity.length() > 0) {

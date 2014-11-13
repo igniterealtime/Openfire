@@ -386,11 +386,11 @@ public class CertificateManager {
                         ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
                         Object object = decoder.readObject();
                         ASN1Sequence otherNameSeq = null;
-						if (object != null && object instanceof ASN1Sequence) {
-							otherNameSeq = (ASN1Sequence) object;
-						} else {
-							continue;
-						}
+			if (object != null && object instanceof ASN1Sequence) {
+				otherNameSeq = (ASN1Sequence) object;
+			} else {
+				continue;
+			}
                         // Check the object identifier
                         ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );

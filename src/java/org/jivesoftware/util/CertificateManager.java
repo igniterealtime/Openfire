@@ -377,15 +377,20 @@ public class CertificateManager {
                 return Collections.emptyList();
             }
             // Use the type OtherName to search for the certified server name
-            for (List item : altNames) {
+            for (List<?> item : altNames) {
                 Integer type = (Integer) item.get(0);
                 if (type == 0) {
                     // Type OtherName found so return the associated value
                     try {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
                         ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
-                        ASN1Sequence otherNameSeq = (ASN1Sequence) decoder.readObject();
-
+                        Object object = decoder.readObject();
+                        ASN1Sequence otherNameSeq = null;
+                        if (object != null && object instanceof ASN1Sequence) {
+                        	otherNameSeq = (ASN1Sequence) object;
+                        } else {
+                        	continue;
+                        }
                         // Check the object identifier
                         ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
@@ -406,13 +411,14 @@ public class CertificateManager {
 	                        	// TODO: there's bound to be a better way...
 	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
 	                        } else {
-								DERUTF8String derStr = DERUTF8String.getInstance(o);
+	                        	DERUTF8String derStr = DERUTF8String.getInstance(o);
 		                        identity = derStr.getString();
 	                        }
 	                        if (identity != null && identity.length() > 0) {
 	                            // Add the decoded server name to the list of identities
 	                            identities.add(identity);
 	                        }
+	                        decoder.close();
                         } catch (IllegalArgumentException ex) {
                         	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
                         	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);

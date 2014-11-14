@@ -341,21 +341,47 @@ public class LeafNode extends Node {
     }
 
     @Override
-	public PublishedItem getPublishedItem(String itemID) {
+    public PublishedItem getPublishedItem(String itemID) {
         if (!isItemRequired()) {
             return null;
+        }
+        synchronized (this) {
+            if (lastPublished != null && lastPublished.getID().equals(itemID)) {
+                return lastPublished;
+            }
         }
         return PubSubPersistenceManager.getPublishedItem(this, itemID);
     }
 
     @Override
 	public List<PublishedItem> getPublishedItems() {
-        return PubSubPersistenceManager.getPublishedItems(this, getMaxPublishedItems());
+        return getPublishedItems(getMaxPublishedItems());
     }
 
     @Override
-	public List<PublishedItem> getPublishedItems(int recentItems) {
-        return PubSubPersistenceManager.getPublishedItems(this, recentItems);
+    public synchronized List<PublishedItem> getPublishedItems(int recentItems) {
+        List<PublishedItem> publishedItems = PubSubPersistenceManager.getPublishedItems(this, recentItems);
+        if (lastPublished != null) {
+            // The persistent items may not contain the last item, if it wasn't persisted anymore (e.g. if node configuration changed).
+            // Therefore check, if the last item has been persisted.
+            boolean persistentItemsContainsLastItem = false;
+            for (PublishedItem publishedItem : publishedItems) {
+                if (publishedItem.getID().equals(lastPublished.getID())) {
+                    persistentItemsContainsLastItem = true;
+                    break;
+                }
+            }
+            if (!persistentItemsContainsLastItem) {
+                // And if not, include the last item.
+                publishedItems.add(0, lastPublished);
+                // Recheck the collection size, it might have one more element now (the last item).
+                // Remove it, if it exceeds the max items.
+                if (publishedItems.size() > recentItems) {
+                    publishedItems.remove(publishedItems.size() - 1);
+                }
+            }
+        }
+        return publishedItems;
     }
 
     @Override

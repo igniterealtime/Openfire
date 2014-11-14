@@ -63,7 +63,6 @@
     <property name="jar.starter.name" value="startup.jar"/>
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
-    <property name="pack200.enabled" value="true"/>
 
     <property name="overlay.dir"   value="${basedir}/custom"/>
     <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
@@ -199,12 +198,6 @@
         <classpath refid="ant.dependencies" />
     </taskdef>
     <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
         <classpath refid="ant.dependencies" />
     </taskdef>
     <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
@@ -932,40 +925,6 @@
         <delete file="${release.out.dir}/bin/openfire-dev.bat"/>
         <delete file="${release.out.dir}/bin/openfire-dev.sh"/>
 
-        <!-- Pack200 processing on JAR files in lib dir -->
-
-        <for param="jar">
-            <path>
-                <fileset dir="${release.out.dir}/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar"/>
-            </path>
-            <sequential>
-                <delete file="@{jar}.pack"/>
-                <pack200 src="@{jar}"
-                         destfile="@{jar}.pack"
-                         gzipoutput="false"
-                        />
-                <delete file="@{jar}"/>
-            </sequential>
-        </for>
-
-        <!-- Pack200 processing on JAR files in admin plugin lib dir -->
-
-        <for param="jar">
-            <path>
-                <fileset dir="${release.out.dir}/plugins/admin/webapp/WEB-INF/lib" includes="*.jar"
-                         excludes="startup.jar,jdic.jar,mail.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar"/>
-            </path>
-            <sequential>
-                <delete file="@{jar}.pack"/>
-                <pack200 src="@{jar}"
-                         destfile="@{jar}.pack"
-                         gzipoutput="false"
-                        />
-                <delete file="@{jar}"/>
-            </sequential>
-        </for>
-
         <!-- Copy dist docs, use filtering  -->
         <copy todir="${release.out.dir}">
             <fileset dir="${docs.dir}/dist" includes="*.*" excludes="LICENSE.html"/>
@@ -1036,7 +995,7 @@
             </fileset>
         </copy>
         <!-- Remove GPL libs from distribution -->
-        <delete file="${release.out.dir}/lib/mysql.jar.pack"/>
+        <delete file="${release.out.dir}/lib/mysql.jar"/>
     </target>
 
     <!-- dailybuild ============================================================================ -->
@@ -1578,53 +1537,13 @@
                     </then>
                 </if>
 
-                <!-- Some JAR files don't work well through Pack200. When that's the case, they should
-                     be manually added to this list.
-                -->
-                <property name="pack200.excludes"
-                          value="gnujaxp.jar,mail.jar,bcpg-jdk15on.jar,bcpkix-jdk15on.jar,bcprov-jdk15on.jar,tangosol.jar"/>
-
-                <if>
-                    <equals arg1="${pack200.enabled}" arg2="true" />
-                    <then>
-                        <for param="jar">
-                            <path>
-                                <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" includes="*.jar"
-                                         excludes="${pack200.excludes}"/>
-                            </path>
-                            <sequential>
-                                <delete file="@{jar}.pack"/>
-                                <pack200 src="@{jar}"
-                                         destfile="@{jar}.pack"
-                                         gzipoutput="false"
-                                        />
-                            </sequential>
-                        </for>
-
-                        <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
-                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
-                                <include name="lib/*.pack"/>
-                                <include name="web/WEB-INF/web.xml"/>
-                                <include name="web/WEB-INF/web-custom.xml"/>
-                            </fileset>
-                        </copy>
-
-                        <!-- Excluded pack files need to be copied over as well -->
-                        <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar/lib" overwrite="true">
-                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target/lib"
-                                     includes="${pack200.excludes}"/>
-                        </copy>
-                    </then>
-                    <else>
-                        <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
-                            <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
-                                <include name="lib/*.jar"/>
-                                <include name="web/WEB-INF/web.xml"/>
-                                <include name="web/WEB-INF/web-custom.xml"/>
-                            </fileset>
-                        </copy>
-                    </else>
-                </if>
+                <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">
+                    <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target">
+                        <include name="lib/*.jar"/>
+                        <include name="web/WEB-INF/web.xml"/>
+                        <include name="web/WEB-INF/web-custom.xml"/>
+                    </fileset>
+                </copy>
 
                 <!-- Copy everything else to Openfire's plugin dir -->
                 <copy todir="${plugin.dev.dest.dir}/@{plugin}/jar" overwrite="true">

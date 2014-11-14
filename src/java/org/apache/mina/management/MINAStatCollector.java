@@ -87,6 +87,10 @@ public class MINAStatCollector {
         @Override
         public void serviceDeactivated(IoService service) throws Exception {
         }
+
+		@Override
+		public void sessionClosed(IoSession arg0) throws Exception {
+		}
     };
 
     /**

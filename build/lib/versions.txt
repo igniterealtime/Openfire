@@ -7,7 +7,7 @@ bcpg-jdk15on.jar                    | 1.51                                      
 bcpkix-jdk15on.jar                  | 1.51                                                         | See http://www.bouncycastle.org/licence.html
 bcprov-jdk15on.jar                  | 1.51                                                         | See http://www.bouncycastle.org/licence.html
 cglib.jar                           | 2.1.3 (JMock 2.1.0)                                          |
-commons-lang.jar                    | 2.3                                                          | Apache 2.0
+commons-lang.jar                    | 2.6 (Apache Mina 2.0.9)                                      | Apache 2.0
 commons-logging.jar                 | Jetty 5.1.10                                                 | Apache 2.0
 commons-el.jar                      | Jetty 6.0.1 (1.0)                                            | Apache 2.0
 commons-httpclient.jar              | 3.1                                                          | Apache 2.0
@@ -49,17 +49,17 @@ jsp-api.jar                         | Jetty 6.0.1 (2.0)                         
 jtds.jar                            | 1.2.2                                                        | LGPL
 junit.jar                           | 4.11                                                         | EPL 1.0
 hamcrest-core.jar                   | 1.3 (required by junit)                                      | new BSD licence
-jzlib.jar                           | 1.0.7                                                        | GPL
+jzlib.jar                           | 1.1.3 (Apache Mina 2.0.9)                                    | GPL
 libidn.jar                          | 1.15                                                         | GNU Lesser General Public License version 2.1 or later (http://www.gnu.org/licenses/licenses.html)
 log4j.jar                           | 1.2.15                                                       | Apache 2.0 (http://logging.apache.org/log4j/1.2/license.html)
 mail.jar                            | 1.4.1 (JavaMail)                                             |
-mina-core.jar                       | Apache Mina 2.0.7                                            | Apache 2.0
-mina-filter-compression.jar         | Apache Mina 2.0.7                                            | Apache 2.0
-mina-integration-beans.jar          | Apache Mina 2.0.7                                            | Apache 2.0
-mina-integration-jmx.jar            | Apache Mina 2.0.7                                            | Apache 2.0
-mina-integration-ognl.jar           | Apache Mina 2.0.7                                            | Apache 2.0
-javassist.jar                       | 3.11.0.GA (Apache Mina 2.0.7)                                | Apache 2.0
-ognl.jar                            | 3.0.5 (Apache Mina 2.0.7)                                    | Apache 2.0
+mina-core.jar                       | Apache Mina 2.0.9                                            | Apache 2.0
+mina-filter-compression.jar         | Apache Mina 2.0.9                                            | Apache 2.0
+mina-integration-beans.jar          | Apache Mina 2.0.9                                            | Apache 2.0
+mina-integration-jmx.jar            | Apache Mina 2.0.9                                            | Apache 2.0
+mina-integration-ognl.jar           | Apache Mina 2.0.9                                            | Apache 2.0
+javassist.jar                       | 3.11.0.GA (Apache Mina 2.0.9)                                | Apache 2.0
+ognl.jar                            | 3.0.8 (Apache Mina 2.0.9)                                    | Apache 2.0
 mysql.jar                           | 5.1.30                                                       | GPL
 objenesis                           | 1.0 (JMock 2.1.0)                                            | BSD (http://www.jmock.org/license.html)
 pack200task.jar                     | August 5, 2004                                               | LGPL

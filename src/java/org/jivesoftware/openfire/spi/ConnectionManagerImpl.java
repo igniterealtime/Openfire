@@ -903,6 +903,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 public void serviceActivated(IoService service) throws Exception { }
                 public void serviceDeactivated(IoService service) throws Exception { }
                 public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception { }
+				public void sessionClosed(IoSession ioSession) throws Exception { }
 	    	});
     	}
     }

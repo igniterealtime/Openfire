@@ -741,6 +741,10 @@ public class XMLProperties {
      * used during the writing process for maximum safety.
      */
     private synchronized void saveProperties() {
+    	if (file == null) {
+    		Log.error("Unable to save XML properties; no file specified");
+    		return;
+    	}
         boolean error = false;
         // Write data out to a temporary file first.
         File tempFile = null;

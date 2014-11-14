@@ -162,6 +162,126 @@ hr {
 	
 	<div id="pageBody">
 
+<h2>3.10.0 Beta -- <span style="font-weight: normal;">November 15, 2014</span></h2>
+
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-116'>OF-116</a>] -         Add a text explaining the path used for http-binding
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-460'>OF-460</a>] -         Debug log is not saving its state between restarts
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-670'>OF-670</a>] -          MUC user count not kept in sync across cluster nodes
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-736'>OF-736</a>] -         Openfire should return &lt;incorrect-encoding/&gt; SASL failure, when not using base64 encoding
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-754'>OF-754</a>] -         Lock out user option works incorrectly in some cases
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-778'>OF-778</a>] -         Setup LDAP broken during initial openfire configuration
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-786'>OF-786</a>] -         Muc - grant membership: nickname is not stored
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-794'>OF-794</a>] -         Client sessions for failed cluster nodes are not being cleaned up properly
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-795'>OF-795</a>] -         Unable to disable Message Carbons after they have been enabled by the client
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-796'>OF-796</a>] -         Plugin version check should be numeric rather than textual
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-799'>OF-799</a>] -         Changing server 2 server idle settings has broken UI
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-800'>OF-800</a>] -         Encryption setting wrong when adding a property via System Properties page
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-802'>OF-802</a>] -         MUC Invites result in 404
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-803'>OF-803</a>] -         Message Carbons may throw org.dom4j.IllegalAddException, resulting in disconnection
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-804'>OF-804</a>] -         Joining a locked MUC room should return &lt;item-not-found/&gt; instead of &lt;recipient-unavailable/&gt;
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-805'>OF-805</a>] -         [MUC] OF does not return all affiliated users when requesting multiple affiliations
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-806'>OF-806</a>] -         Flash client connection closing with invalid_namespace error
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-807'>OF-807</a>] -         S2S whitelist form saving domains with &quot;-&quot; without it
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-811'>OF-811</a>] -         Remove deprecated &quot;xml-not-well-formed&quot; error in favor of &quot;not-well-formed&quot;
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-812'>OF-812</a>] -         Monitor plugin fails to handle start date properly
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-813'>OF-813</a>] -         Memory leak
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-818'>OF-818</a>] -         Message routing to bare JID can route to negative priority resources
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-819'>OF-819</a>] -         IQs  (e.g. XMPP Pings) of type error get falsely routed to IQ.createResult() which results in an Exception and connection termination
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-823'>OF-823</a>] -         Numeric overflow in MUCPersistenceManager when loading history older than 24 days.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-830'>OF-830</a>] -         LDAP shared groups disappear after some time
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-832'>OF-832</a>] -         Monitoring plugin fixes
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-839'>OF-839</a>] -         Forwarded extension should not overwrite extension namespaces of the forwarded message.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-840'>OF-840</a>] -         BOSH &lt;stream:features&gt; does not include &lt;register/&gt;
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-845'>OF-845</a>] -         XSS vulnerability in Monitoring Service pages in Admin Console
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-849'>OF-849</a>] -         Error decoding subjectAltName DERTaggedObject cannot be cast to ASN1Sequence
+</li>
+</ul>
+        
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-593'>OF-593</a>] -         LocaleUtils.java_dots_ to_underscores_i18n _bundles
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-797'>OF-797</a>] -         Move ant-tasks in subdirectory (and delete ant.jar)
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-801'>OF-801</a>] -         Extend ant build script to support multi-platform binaries that do not have a file extension
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-828'>OF-828</a>] -         Add the MUC service plugin to Openfire plugins
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-835'>OF-835</a>] -         Prevent fast clients flooding Openfire causing OutOfMemoryError 
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-838'>OF-838</a>] -         Allow for custom lib and conf file placement
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-841'>OF-841</a>] -         Add a note about UAC to the Installation Guide
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-842'>OF-842</a>] -         Additional properties in User Properties view
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-847'>OF-847</a>] -         Upgrade bouncycastle from 1.50 to 1.51
+</li>
+</ul>
+    
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-69'>OF-69</a>] -         Add &quot;Groups user belongs to&quot; column to the User Summary page
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-179'>OF-179</a>] -         Allow MUC permissions to be set using groups
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-250'>OF-250</a>] -         Allow to configure the groups of a user from the user profile
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-324'>OF-324</a>] -         Offline Email Notification
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-843'>OF-843</a>] -         Upgrade clustering components for new Session API method
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-421'>OF-421</a>] -         Update MINA library to latest version
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-466'>OF-466</a>] -         Drop Java 5 support
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-709'>OF-709</a>] -         Update Jetty from 7.4 to 9.1
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-831'>OF-831</a>] -         A typo on Database Settings page during setup
+</li>
+</ul>
+
 <h2>3.9.3 -- <span style="font-weight: normal;">May 6, 2014</span></h2>
 
 <h2>Bug</h2>

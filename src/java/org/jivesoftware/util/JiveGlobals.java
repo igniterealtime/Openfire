@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -316,12 +315,6 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        // home not loaded?
-        if (openfireProperties == null) {
-            return null;
-        }
-
         return openfireProperties.getProperty(name);
     }
 
@@ -347,11 +340,6 @@ public class JiveGlobals {
     public static String getXMLProperty(String name, String defaultValue) {
         if (openfireProperties == null) {
             loadOpenfireProperties();
-        }
-
-        // home not loaded?
-        if (openfireProperties == null) {
-            return defaultValue;
         }
 
         String value = openfireProperties.getProperty(name);
@@ -445,11 +433,7 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        // jiveHome not loaded?
-        if (openfireProperties != null) {
-            openfireProperties.setProperty(name, value);
-        }
+        openfireProperties.setProperty(name, value);
     }
 
     /**
@@ -472,10 +456,7 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        if (openfireProperties != null) {
-            openfireProperties.setProperties(propertyMap);
-        }
+        openfireProperties.setProperties(propertyMap);
     }
 
     /**
@@ -505,11 +486,6 @@ public class JiveGlobals {
             loadOpenfireProperties();
         }
 
-        // jiveHome not loaded?
-        if (openfireProperties == null) {
-            return Collections.EMPTY_LIST;
-        }
-
         String[] propNames = openfireProperties.getChildrenProperties(parent);
         List<String> values = new ArrayList<String>();
         for (String propName : propNames) {
@@ -518,7 +494,6 @@ public class JiveGlobals {
                 values.add(value);
             }
         }
-
         return values;
     }
 
@@ -531,12 +506,6 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        // jiveHome not loaded?
-        if (openfireProperties == null) {
-            return Collections.emptyList();
-        }
-
         return openfireProperties.getAllPropertyNames();
     }
 
@@ -797,6 +766,9 @@ public class JiveGlobals {
         if (isSetupMode()) {
             return;
         }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
         openfireProperties.migrateProperty(name);
     }
     
@@ -969,9 +941,17 @@ public class JiveGlobals {
                     openfireProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage(), ioe);
+                    Log.error(ioe.getMessage());
                     failedLoading = true;
                 }
+            }
+            // create a default/empty XML properties set (helpful for unit testing)
+            if (openfireProperties == null) {
+                try { 
+                	openfireProperties = new XMLProperties();
+                } catch (IOException e) {
+                	Log.error("Failed to setup default openfire properties", e);
+                }            	
             }
         }
     }
@@ -989,12 +969,6 @@ public class JiveGlobals {
                 msg.append("Critical Error! The home directory has not been configured, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
                 System.err.println(msg.toString());
-                try { 
-                	securityProperties = new XMLProperties();
-                } catch (IOException ioe) {
-                	Log.error("Failed to setup default secuirty properties", ioe);
-                }
-                
             }
             // Create a manager with the full path to the security XML file.
             else {
@@ -1014,9 +988,17 @@ public class JiveGlobals {
                     }, 1000);
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage(), ioe);
+                    Log.error(ioe.getMessage());
                     failedLoading = true;
                 }
+            }
+            // create a default/empty XML properties set (helpful for unit testing)
+            if (securityProperties == null) {
+                try { 
+                	securityProperties = new XMLProperties();
+                } catch (IOException e) {
+                	Log.error("Failed to setup default security properties", e);
+                }            	
             }
         }
     }

@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.MissingResourceException;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -618,6 +619,9 @@ public class DbConnectionManager {
 
                 // Check to see if the database schema needs to be upgraded.
                 schemaManager.checkOpenfireSchema(con);
+            }
+            catch (MissingResourceException mre) {
+                Log.error(mre.getMessage());
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

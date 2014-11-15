@@ -25,7 +25,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
-import org.jivesoftware.openfire.sasl.PolicyUtils;
+import com.sun.security.sasl.util.PolicyUtils;
 import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
 
 /**

@@ -553,6 +553,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (name == null && node == null) {
             // Answer the features of the PubSub service
             features.add("http://jabber.org/protocol/pubsub");
+            // Default access model for nodes created on the service
+            String modelName = getDefaultNodeConfiguration(true).getAccessModel().getName();
+            features.add("http://jabber.org/protocol/pubsub#access-" + modelName);
             if (isCollectionNodesSupported()) {
                 // Collection nodes are supported
                 features.add("http://jabber.org/protocol/pubsub#collections");
@@ -609,10 +612,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#subscribe");
             // Configuration of subscription options is supported
             features.add("http://jabber.org/protocol/pubsub#subscription-options");
-            // Default access model for nodes created on the service
-            String modelName = getDefaultNodeConfiguration(true).getAccessModel().getName();
-            features.add("http://jabber.org/protocol/pubsub#default_access_model_" + modelName);
-
         }
         else if (name == null) {
             // Answer the features of a given node

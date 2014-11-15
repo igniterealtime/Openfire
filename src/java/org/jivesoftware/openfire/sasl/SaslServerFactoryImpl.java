@@ -21,11 +21,13 @@
 package org.jivesoftware.openfire.sasl;
 
 import java.util.Map;
+
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.SaslServerFactory;
-import javax.security.sasl.SaslServer;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
-import com.sun.security.sasl.util.PolicyUtils;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
+
 import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
 
 /**
@@ -37,7 +39,6 @@ import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
 public class SaslServerFactoryImpl implements SaslServerFactory {
 
     private static final String myMechs[] = { "PLAIN", "CLEARSPACE" };
-    private static final int mechPolicies[] = { PolicyUtils.NOANONYMOUS, PolicyUtils.NOANONYMOUS };
     private static final int PLAIN = 0;
     private static final int CLEARSPACE = 1;
 
@@ -57,13 +58,13 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
      */
 
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        if (mechanism.equals(myMechs[PLAIN]) && PolicyUtils.checkPolicy(mechPolicies[PLAIN], props)) {
+        if (mechanism.equals(myMechs[PLAIN]) && checkPolicy(props)) {
             if (cbh == null) {
                 throw new SaslException("CallbackHandler with support for Password, Name, and AuthorizeCallback required");
             }
             return new SaslServerPlainImpl(protocol, serverName, props, cbh);
         }
-        else if (mechanism.equals(myMechs[CLEARSPACE]) && PolicyUtils.checkPolicy(mechPolicies[CLEARSPACE], props)) {
+        else if (mechanism.equals(myMechs[CLEARSPACE]) && checkPolicy(props)) {
             if (cbh == null) {
                 throw new SaslException("CallbackHandler with support for AuthorizeCallback required");
             }
@@ -73,12 +74,32 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
     }
 
     /**
+     * Requires supported mechanisms to allow anonymous logins
+     * 
+     * @param props The security properties to check
+     * @return true if the policy allows anonymous logins
+     */
+    private boolean checkPolicy(Map<String, ?> props) {
+		boolean result = true;
+		if (props != null) {
+			String policy = (String) props.get(Sasl.POLICY_NOANONYMOUS);
+			if (Boolean.parseBoolean(policy)) {
+				result = false;
+			}
+		}
+		return result;
+	}
+
+	/**
      * Returns an array of names of mechanisms that match the specified mechanism selection policies.
      * @param props The possibly null set of properties used to specify the security policy of the SASL mechanisms.
      * @return A non-null array containing a IANA-registered SASL mechanism names.
      */
 
     public String[] getMechanismNames(Map<String, ?> props) {
-        return PolicyUtils.filterMechs(myMechs, mechPolicies, props);
+    	if (checkPolicy(props)) {
+    		return myMechs;
+    	}
+    	return new String [] { };
     }
 }

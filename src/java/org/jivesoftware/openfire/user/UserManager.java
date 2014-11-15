@@ -160,6 +160,12 @@ public class UserManager implements IQResultListener {
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException("User provider is read-only.");
         }
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Null or empty username.");
+        }
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Null or empty password.");
+        }
         // Make sure that the username is valid.
         try {
             username = Stringprep.nodeprep(username);

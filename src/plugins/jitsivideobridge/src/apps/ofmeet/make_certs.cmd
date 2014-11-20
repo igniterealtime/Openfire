@@ -1,1 +1,0 @@
-openssl req -new -x509 -nodes -days 365 -subj /C=GB/ST=none/L=none/CN=none -newkey rsa:2048 -keyout etherpad.key.pem -out etherpad.cert.pem

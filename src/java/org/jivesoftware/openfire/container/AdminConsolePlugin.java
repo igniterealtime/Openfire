@@ -165,7 +165,8 @@ public class AdminConsolePlugin implements Plugin {
 					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
 
 				} else {
-					HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+					HttpConfiguration httpsConfig = new HttpConfiguration();
+					httpsConfig.setSendServerVersion( false );
 					httpsConfig.setSecureScheme("https");
 					httpsConfig.setSecurePort(adminSecurePort);
 					httpsConfig.addCustomizer(new SecureRequestCustomizer());

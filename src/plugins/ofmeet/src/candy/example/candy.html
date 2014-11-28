@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Candy - Chats are not dead yet</title>
+	<link rel="shortcut icon" href="../res/img/favicon.png" type="image/gif" />
+	<link rel="stylesheet" type="text/css" href="/candy/res/default.css" />
+
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script type="text/javascript" src="/candy/libs/libs.bundle.js"></script>
+	<script type="text/javascript" src="/candy/libs/strophe.openfire.js"></script>
+	<script type="text/javascript" src="/candy/candy.bundle.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			Candy.init('http://tlvdly02:7070/http-bind/', {
+				core: {
+					// only set this to true if developing / debugging errors
+					debug: false,
+					autojoin: ['fxdesk@conference.tlvdly02']
+				},
+				view: { assets: '/candy/res/' }
+			});
+
+			Candy.Core.connect("tlvdly02");
+		});
+	</script>
+</head>
+<body>
+	<div id="candy"></div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+/**
+ * TypingNotifications CSS
+ *
+ * Author: Melissa Adamaitis <madamei@mojolingo.com>
+ */
+.message-pane-wrapper {
+  padding-bottom: 5px;
+}
+.typing-notification-area {
+  position: fixed;
+  bottom: 34px;
+  color: #ADADAD;
+  font-style: italic;
+  margin-left: 7px;
+  font-size: 0.8em;
+}

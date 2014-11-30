@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Candy - Chats are not dead yet</title>
+	<link rel="shortcut icon" href="candy/res/img/favicon.png" type="image/gif" />
+	<link rel="stylesheet" type="text/css" href="candy/res/default.css" />
+    <script src="/ofmeet/config"></script><!-- BAO -->
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script type="text/javascript" src="candy/libs/libs.bundle.js"></script>
+	<script type="text/javascript" src="candy/libs/strophe.openfire.js"></script>
+	<script type="text/javascript" src="candy/candy.bundle.js"></script>
+
+	<script type="text/javascript" src="candy/candyshop/colors/candy.js"></script>
+	<link rel="stylesheet" type="text/css" href="candy/candyshop/colors/candy.css" />
+	<script type="text/javascript" src="candy/candyshop/notifications/candy.js"></script>
+    <script type="text/javascript" src="candy/candyshop/notifyme/candy.js"></script>
+    <link rel="stylesheet" type="text/css" href="candy/candyshop/notifyme/candy.css" />
+    <script type="text/javascript" src="candy/candyshop/ofmeet/candy.js"></script>
+    <link rel="stylesheet" type="text/css" href="candy/candyshop/ofmeet/candy.css" />
+    <script type="text/javascript" src="candy/candyshop/fastpath/candy.js"></script>
+	<script type="text/javascript" src="candy/candyshop/slash-commands/slash-commands.js"></script>
+	<script type="text/javascript" src="candy/candyshop/timeago/candy.js"></script>
+	<link rel="stylesheet" type="text/css" href="candy/candyshop/timeago/candy.css" />
+	<script type="text/javascript" src="candy/candyshop/typingnotifications/typingnotifications.js"></script>
+	<link rel="stylesheet" type="text/css" href="candy/candyshop/typingnotifications/typingnotifications.css" />
+
+	<script type="text/javascript">
+
+		$(document).ready(function() {
+
+			$("<div>").attr("id","candy").attr("style","width: 100%; height: 100%;").appendTo("body");
+
+			Candy.init(config.bosh, {
+				core: {
+					// only set this to true if developing / debugging errors
+					debug: false,
+					autojoin: true
+				},
+				view: { assets: 'candy/res/' }
+			});
+
+			var jid = config.hosts.domain;
+
+			if (config.userName)
+			{
+				jid = config.userName +  "@" + config.hosts.domain;
+			}
+
+    		CandyShop.OfMeet.init();
+			CandyShop.SlashCommands.defaultConferenceDomain = config.hosts.muc;
+			CandyShop.SlashCommands.init();
+			CandyShop.Timeago.init();
+			CandyShop.TypingNotifications.init();
+			CandyShop.Colors.init();
+			CandyShop.Notifications.init();
+
+			Candy.Core.connect(jid, "null");
+    		CandyShop.NotifyMe.init();
+    		CandyShop.Fastpath.init();
+
+
+		});
+
+		window.addEventListener("unload", function ()
+		{
+
+		});
+	</script>
+</head>
+<body>
+</body>
+</html>

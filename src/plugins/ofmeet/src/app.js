@@ -108,7 +108,9 @@ function connect(jid, password) {
     }
     // BAO
     connection = new Openfire.Connection(document.getElementById('boshURL').value || config.bosh || '/http-bind');
-
+    //connection.rawInput = function (data) { console.log('RECV: ' + data); };
+    //connection.rawOutput = function (data) { console.log('SEND: ' + data); };
+    		
     if (nickname) {
         connection.emuc.addDisplayNameToPresence(nickname);
     }
@@ -1383,25 +1385,8 @@ $(document).ready(function () {
 
 $(window).bind('beforeunload', function () {
     if (connection && connection.connected) {
-        // ensure signout
-        $.ajax({
-            type: 'POST',
-            url: config.bosh,
-            async: false,
-            cache: false,
-            contentType: 'application/xml',
-            data: "<body rid='" + (connection.rid || connection._proto.rid)
-                + "' xmlns='http://jabber.org/protocol/httpbind' sid='"
-                + (connection.sid || connection._proto.sid)
-                + "' type='terminate'><presence xmlns='jabber:client' type='unavailable'/></body>",
-            success: function (data) {
-                console.log('signed out');
-                console.log(data);
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                console.log('signout error', textStatus + ' (' + errorThrown + ')');
-            }
-        });
+	connection.send($pres({type: "unavailable"}))		// BAO
+	connection.disconnect();
     }
     disposeConference(true);
     if(APIConnector.isEnabled())

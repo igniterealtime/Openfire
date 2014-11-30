@@ -31,7 +31,7 @@
  *    A new Openfire object.
  */
  
-Openfire.Connection = function(url, iFrameId) 
+Openfire.Connection = function(url) 
 {
     if (!window.WebSocket) 
     {
@@ -84,32 +84,7 @@ Openfire.Connection = function(url, iFrameId)
             this[k] = new F();
 	    this[k].init(this);	    
         }
-    }	
-       
-    var iframe = document.getElementById(iFrameId);  
-           	
-    if (iframe)
-    {	  
-    	this.iframeWin = iframe.contentWindow;
-    	var that = this;
-    	
-    	window.addEventListener('message', function(event)
-    	{
-    		that._ws.send(event.data);
-    	});
-    	
-    	console.log("Openfire Connection in parent mode");    	
-    
-    } else
-    
-    if (window.parent && window != window.parent)
-    {
-    	console.log("Openfire Connection in child mode");
-	window.addEventListener('message', this._onmessage.bind(this)); 
-    
-    } else {
-    	console.log("Openfire Connection in normal mode");    
-    }
+    }	   
 }
 
 Openfire.Connection.prototype = {
@@ -214,17 +189,13 @@ Openfire.Connection.prototype = {
         
 	this._changeConnectStatus(Strophe.Status.CONNECTING, null);   
 	this.url = this.protocol + "//" + this.host + "/ofmeetws/server?username=" + this.username + "&password=" + this.pass + "&resource=" + this.resource;
+	this._ws = new WebSocket(this.url, "xmpp");  
 	
-	if (window.parent && window == window.parent)
-	{	
-		this._ws = new WebSocket(this.url, "xmpp");  
-
-		this._ws.onopen = this._onopen.bind(this);
-		this._ws.onmessage = this._onmessage.bind(this);
-		this._ws.onclose = this._onclose.bind(this);
-
-		window.openfireWebSocket = this;
-	}
+	this._ws.onopen = this._onopen.bind(this);
+	this._ws.onmessage = this._onmessage.bind(this);
+	this._ws.onclose = this._onclose.bind(this);
+ 	
+	window.openfireWebSocket = this;
 	
         this.jid = this.jid.indexOf("@") < 0 ? this.resource + "@" + this.jid  : this.jid;
 	
@@ -249,18 +220,13 @@ Openfire.Connection.prototype = {
 	try {
 	   
 	   this._changeConnectStatus(Strophe.Status.CONNECTED, null);	
-	   
-	    if (this.iframeWin)
-	    {	
-	    	this.iframeWin.connection._onopen();
-	    }
 
 	} catch (e) {
 
    	    throw Error("User connection callback caused an exception: " + e);
 	} 
 	
-	if (this._ws) this.interval = setInterval (function() {window.openfireWebSocket.sendRaw(" ")}, 10000 );	
+	this.interval = setInterval (function() {window.openfireWebSocket.sendRaw(" ")}, 10000 );	
     },
     
     /** Function: attach
@@ -360,7 +326,7 @@ Openfire.Connection.prototype = {
      
     sendRaw: function(xml) {
 
-        if(!this.connected) {
+        if(!this.connected || this._ws == null) {
             throw Error("Not connected, cannot send packets.");
         }
 
@@ -370,9 +336,7 @@ Openfire.Connection.prototype = {
 		this.rawOutput(xml);
 	}
 	
-    	if (this._ws) this._ws.send(xml);
-    	
-    	if (window.parent && window != window.parent) parent.postMessage(xml, '*');
+    	this._ws.send(xml);
     },
     
 
@@ -391,7 +355,7 @@ Openfire.Connection.prototype = {
      
     send: function(elem) 
     {    
-        if(!this.connected) {
+        if(!this.connected || this._ws == null) {
             throw Error("Not connected, cannot send packets.");
         }
    
@@ -419,10 +383,7 @@ Openfire.Connection.prototype = {
         }
         
 	this.rawOutput(toSend);
-	
-	if (this._ws) this._ws.send(toSend);
-	
-    	if (window.parent && window != window.parent) parent.postMessage(toSend, '*');	
+	this._ws.send(toSend);
     },    
 
     /** Function: flush
@@ -648,14 +609,14 @@ Openfire.Connection.prototype = {
     
     disconnect: function(reason) {
     
-        if(!this.connected) {
+        if(!this.connected || this._ws == null) {
             return;
         }
 
         this._changeConnectStatus(Strophe.Status.DISCONNECTING, reason);  
         Strophe.info("Disconnect was called because: " + reason);
         
-        if (this._ws) this._ws.close();
+        this._ws.close();
         
     },
 
@@ -766,13 +727,10 @@ Openfire.Connection.prototype = {
         this.addTimeds = [];
         this.addHandlers = [];
         
-        if (this._ws)
+        if(this._ws.readyState != this._ws.CLOSED)
         {
-		if(this._ws.readyState != this._ws.CLOSED)
-		{
-		  this._ws.close();
-		}
-	}
+          this._ws.close();
+        }
     },
 
     /** 
@@ -782,12 +740,7 @@ Openfire.Connection.prototype = {
      */    
     
     _onmessage: function(packet) 
-    {    
-	if (this.iframeWin)
-	{	
-		this.iframeWin.postMessage(packet.data, "*");
-	} 
-	
+    {
         var elem;
         
         try {

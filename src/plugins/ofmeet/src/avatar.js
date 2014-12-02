@@ -122,7 +122,16 @@ var Avatar = (function(my) {
     }
 
     function isUserMuted(jid) {
-        if(!mediaStreams[jid] || !mediaStreams[jid][MediaStream.VIDEO_TYPE]) {
+        // XXX(gp) we may want to rename this method to something like
+        // isUserStreaming, for example.
+        if (jid && jid != connection.emuc.myroomjid) {
+            var resource = Strophe.getResourceFromJid(jid);
+            if (!VideoLayout.isInLastN(resource)) {
+                return true;
+            }
+        }
+
+        if (!mediaStreams[jid] || !mediaStreams[jid][MediaStream.VIDEO_TYPE]) {
             return null;
         }
         return mediaStreams[jid][MediaStream.VIDEO_TYPE].muted;
@@ -132,6 +141,9 @@ var Avatar = (function(my) {
         if(id === connection.emuc.myroomjid || !id) {
             id = SettingsMenu.getUID();
         }
+        
+        if (config.userAvatar && config.userAvatar != "null") return config.userAvatar;	// BAO
+        
         return 'https://www.gravatar.com/avatar/' +
             MD5.hexdigest(id.trim().toLowerCase()) +
             "?d=retro&size=" + (size || "30");

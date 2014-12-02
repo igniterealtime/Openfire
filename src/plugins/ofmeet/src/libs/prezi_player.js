@@ -34,7 +34,7 @@
             try {
                 message = JSON.parse(event.data);
             } catch (e) {}
-            if (message && message.id && (player = PreziPlayer.players[message.id])){
+            if (message.id && (player = PreziPlayer.players[message.id])){
                 if (player.options.debug === true) {
                     if (console && console.log) console.log('received', message);
                 }

@@ -9,6 +9,7 @@ package org.jitsi.videobridge.openfire;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.vcard.VCardManager;
 
 import org.slf4j.*;
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ import java.util.*;
 import java.text.*;
 import java.security.Principal;
 
+import org.dom4j.*;
+
 
 public class Config extends HttpServlet
 {
@@ -38,12 +41,27 @@ public class Config extends HttpServlet
 			String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String userName = "null";
+			String userAvatar = "null";
 
 			String securityEnabled = JiveGlobals.getProperty("ofmeet.security.enabled", "true");
 
 			if ("true".equals(securityEnabled))
 			{
 				userName = request.getUserPrincipal().getName();
+				VCardManager vcardManager = VCardManager.getInstance();
+				Element vcard = vcardManager.getVCard(userName);
+
+				if (vcard != null)
+				{
+					Element photo = vcard.element("PHOTO");
+
+					if (photo != null)
+					{
+						String type = photo.element("TYPE").getText();
+						String binval = photo.element("BINVAL").getText();
+						userAvatar = "data:" + type + ";base64," + binval;
+					}
+				}
 			}
 
 			boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
@@ -126,6 +144,7 @@ public class Config extends HttpServlet
 			out.println("    audioBandwidth: '" + audioBandwidth + "',");
 			out.println("    videoBandwidth: '" + videoBandwidth + "',");
 			out.println("    userName: '" + userName + "',");
+			out.println("    userAvatar: '" + userAvatar + "',");
 			out.println("    disablePrezi: true,");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");

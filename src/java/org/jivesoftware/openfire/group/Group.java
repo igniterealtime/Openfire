@@ -441,10 +441,11 @@ public class Group implements Cacheable, Externalizable {
                 }
 
                 // Fire event.
+                Map<String, String> params = new HashMap<String, String>();
                 if (adminCollection) {
-                    Map<String, String> params = new HashMap<String, String>();
                     params.put("admin", user.toString());
                     if (alreadyGroupUser) {
+                    	params.put("member", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.member_removed, params);
                     }
@@ -452,9 +453,9 @@ public class Group implements Cacheable, Externalizable {
                                 GroupEventDispatcher.EventType.admin_added, params);
                 }
                 else {
-                    Map<String, String> params = new HashMap<String, String>();
                     params.put("member", user.toString());
                     if (alreadyGroupUser) {
+                    	params.put("admin", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                     GroupEventDispatcher.EventType.admin_removed, params);
                     }

@@ -368,10 +368,6 @@ public class LocalMUCUser implements MUCUser {
     }
 
     public void process(IQ packet) {
-        // Ignore IQs of type ERROR sent to a room
-        if (IQ.Type.error == packet.getType()) {
-            return;
-        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
@@ -386,7 +382,8 @@ public class LocalMUCUser implements MUCUser {
             if (role == null) {
                 sendErrorPacket(packet, PacketError.Condition.not_authorized);
             }
-            else if (IQ.Type.result == packet.getType()) {
+            else if (IQ.Type.result == packet.getType()
+                    || IQ.Type.error == packet.getType()) {
                 // Only process IQ result packet if it's a private packet sent to another
                 // room occupant
                 if (packet.getTo().getResource() != null) {

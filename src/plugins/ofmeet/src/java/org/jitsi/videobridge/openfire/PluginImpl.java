@@ -186,7 +186,7 @@ public class PluginImpl
 
         ComponentManager componentManager
             = ComponentManagerFactory.getComponentManager();
-        String subdomain = ComponentImpl.SUBDOMAIN;
+        String subdomain = "ofmeet-jitsi-videobridge"; //ComponentImpl.SUBDOMAIN;
         PluginImpl.component = new ComponentImpl();
         boolean added = false;
 

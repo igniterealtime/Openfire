@@ -59,7 +59,7 @@ public class Config extends HttpServlet
 					{
 						String type = photo.element("TYPE").getText();
 						String binval = photo.element("BINVAL").getText();
-						userAvatar = "data:" + type + ";base64," + binval;
+						userAvatar = "data:" + type + ";base64," + binval.replace("\n", "").replace("\r", "");;
 					}
 				}
 			}
@@ -98,8 +98,8 @@ public class Config extends HttpServlet
 			out.println("    hosts: {");
 			out.println("        domain: '" + domain + "',");
 			out.println("        muc: 'conference." + domain + "',");
-			out.println("        bridge: 'jitsi-videobridge." + domain + "',");
-			out.println("        call_control: 'call-control." + domain + "',");
+			out.println("        bridge: 'ofmeet-jitsi-videobridge." + domain + "',");
+			out.println("        call_control: 'ofmeet-call-control." + domain + "',");
 			out.println("    },");
 			out.println("    getroomnode: function (path)");
 			out.println("    {");

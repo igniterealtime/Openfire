@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.TimerTask;
 
@@ -66,7 +67,6 @@ public class JiveGlobals {
     private static final String ENCRYPTED_PROPERTY_NAME_PREFIX = "encrypt.";
     private static final String ENCRYPTED_PROPERTY_NAMES = ENCRYPTED_PROPERTY_NAME_PREFIX + "property.name";
     private static final String ENCRYPTION_ALGORITHM = ENCRYPTED_PROPERTY_NAME_PREFIX + "algorithm";
-    private static final String OLD_ENCRYPTION_ALGORITHM = ENCRYPTED_PROPERTY_NAME_PREFIX + "old_algorithm";
     private static final String ENCRYPTION_KEY_CURRENT = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.current";
     private static final String ENCRYPTION_KEY_NEW = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.new";
     private static final String ENCRYPTION_KEY_OLD = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.old";
@@ -855,10 +855,12 @@ public class JiveGlobals {
      * set the algorithm for encrypting property values 
      */
     public static void setupPropertyEncryptionAlgorithm(String alg) {
-    	// The old way of doing backup backup encryption removals
+    	// Get the old secret key and encryption type
     	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-    	if(StringUtils.isNotEmpty(oldAlg)){
-    		securityProperties.setProperty(OLD_ENCRYPTION_ALGORITHM,oldAlg);
+    	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+    	if(StringUtils.isNotEmpty(oldAlg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
+    		// update encrypted properties
+    		updateEncryptionProperties(oldAlg, oldKey, alg, oldAlg);
     	}
     	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
     		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
@@ -872,40 +874,40 @@ public class JiveGlobals {
      * set a custom key for encrypting property values 
      */
     public static void setupPropertyEncryptionKey(String key) {
-    	currentKey = key;
+    	// Get the old secret key and encryption type
+    	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
     	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
-    	if(StringUtils.isNotEmpty(oldKey) && !oldKey.equals(key)) {
-    		oldKey = new AesEncryptor().decrypt(oldKey);
-    		// Re-encrypted with a new key configuration
-    		reEncryptionPropertiesWithNewKey(oldKey,key);
+    	if(StringUtils.isNotEmpty(oldKey) && !oldKey.equals(key) && StringUtils.isNotEmpty(oldAlg)) {
+    		// update encrypted properties
+    		updateEncryptionProperties(oldAlg, oldKey, oldAlg, key);
     	}
 		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
     }
 
     /**
-     * Re-encrypted with a new key configuration
+     * Re-encrypted with a new key and new algorithm configuration
      * 
-     * @param oldKey old encrypt key
-     * @param newKey old new key
+     * @param oldAlg old algorithm type
+     * @param oldKey old encryptor key
+     * @param newAlg new algorithm type
+     * @param newKey new encryptor key
      */
-    private static void reEncryptionPropertiesWithNewKey(String oldKey,String newKey) {
+    private static void updateEncryptionProperties(String oldAlg,String oldKey,String newAlg,String newKey) {
     	Encryptor oldEncryptor = null;
     	Encryptor newEncryptor = null;
-    	// Get the old settings to decrypt the encrypted configuration properties
-    	String oldAlgorithm = securityProperties.getProperty(OLD_ENCRYPTION_ALGORITHM);
-    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlgorithm)) {
+    	// create the encryptor
+    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlg)) {
     		oldEncryptor = new AesEncryptor(oldKey);
     	} else {
     		oldEncryptor = new Blowfish(oldKey);
     	}
-    	
-    	String newAlgorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
-    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlgorithm)) {
+    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlg)) {
     		newEncryptor = new AesEncryptor(newKey);
     	} else {
     		newEncryptor = new Blowfish(newKey);
     	}
-    	// Set the current encryption 
+    	
+		// Set the current encryption 
     	currentKey = oldKey;
     	propertyEncryptor = oldEncryptor;
     	
@@ -914,22 +916,26 @@ public class JiveGlobals {
     		properties = JiveProperties.getInstance();
     	}
     	
-    	// update current encryption
     	currentKey = newKey;
     	propertyEncryptor = newEncryptor;
     	
-    	// update properties
-    	Iterator<String> iterator = properties.keySet().iterator();
+    	// Update configuration properties
+    	Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
+    	Entry<String, String> entry = null;
+    	String name = null;
     	while(iterator.hasNext()){
-    		String name = iterator.next();
+    		entry = iterator.next();
+    		name = entry.getKey();
     		if(isPropertyEncrypted(name)){
-    			 // update xml prop
-    			 String xmlProperty = getXMLProperty(name);
-    			 if(StringUtils.isNotEmpty(xmlProperty)){
-    				 setXMLProperty(name, getProperty(name));
-    			 }
+    				// update xml prop
+    				String xmlProperty = getXMLProperty(name);
+    				if(StringUtils.isNotEmpty(xmlProperty)){
+    					setXMLProperty(name, entry.getValue());
+    				}
     		}
+    		properties.put(name, entry.getValue());
     	}
+    	
     }
     
    /**

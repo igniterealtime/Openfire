@@ -10,7 +10,7 @@
     <author>Jive Software</author>
     <version>1.4.0</version>
     <date>10/20/2014</date>
-    <minServerVersion>3.10.0</minServerVersion>
+    <minServerVersion>3.9.4</minServerVersion>
 
    <adminconsole>
       <tab id="tab-server">

@@ -7,5 +7,5 @@
     <author>Tom Evans</author>
     <version>1.3.1</version>
     <date>10/15/2014</date>
-    <minServerVersion>3.10.0</minServerVersion>
+    <minServerVersion>3.9.4</minServerVersion>
 </plugin>

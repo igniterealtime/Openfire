@@ -7,7 +7,7 @@
     <author></author>
     <version>0.0.3</version>
     <date>11/30/2014</date>
-    <minServerVersion>3.9.9</minServerVersion>
+    <minServerVersion>3.9.4</minServerVersion>
     
     <adminconsole>
         <tab id="tab-ofmeet" name="${plugin.title}" url="ofmeet-summary.jsp" description="${plugin.description}">

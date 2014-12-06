@@ -79,7 +79,7 @@ Strophe.addConnectionPlugin('ofmuc', {
         var type = pres.getAttribute('type');
         
         if (type != null) {
-            return true;
+           return true;
         }
         
     	if (!this.roomJid || Strophe.getBareJidFromJid(from) != this.roomJid) return true;        
@@ -95,6 +95,11 @@ Strophe.addConnectionPlugin('ofmuc', {
         
         } else if (this.members[from] === undefined) {
             this.members[from] = member;
+    
+            if (config.userAvatar && config.userAvatar != "null")
+            {
+            	this.avatarShare(config.userAvatar);
+            }
             
 	    if (this.sharePDF)
 	    {					
@@ -139,6 +144,12 @@ Strophe.addConnectionPlugin('ofmuc', {
 		that.handlePdfShare(action, url);	
 	});	
 	
+	$(msg).find('avatarshare').each(function() 
+	{
+		that.members[from].avatar = $(this).text();	
+		Avatar.setUserAvatar(from);
+	});
+	
         return true;
     },
     
@@ -180,7 +191,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	{	
 		var callId = Strophe.getNodeFromJid(from); 
 		
-		console.log("onRayo callid", callId, jid);
+		//console.log("onRayo callid", callId, jid);
 		
 		if (jid)
 		{
@@ -201,7 +212,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	{	
 		var callId = Strophe.getNodeFromJid(from); 
 		
-		console.log("onRayo callid", callId, jid);	
+		//console.log("onRayo callid", callId, jid);	
 		
 		if (jid) 
 		{
@@ -266,6 +277,12 @@ Strophe.addConnectionPlugin('ofmuc', {
         this.connection.send(msg);        
     },
     
+    avatarShare: function(avatar) {
+    	//console.log("ofmuc.avatarShare", avatar)
+        var msg = $msg({to: this.roomJid, type: 'groupchat'});
+        msg.c('avatarshare', {xmlns: 'http://igniterealtime.org/protocol/avatarshare'}).t(avatar).up();
+        this.connection.send(msg);        
+    },    
 
     pdfStart: function(url) {
 	//console.log("pdfStart", url);

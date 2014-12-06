@@ -14,7 +14,7 @@ var Avatar = (function(my) {
             }
             users[jid] = id;
         }
-        var url = getGravatarUrl(users[jid] || jid);
+        var url = getGravatarUrl(users[jid] || jid, 100, jid); // BAO
         var resourceJid = Strophe.getResourceFromJid(jid);
         var thumbnail = $('#participant_' + resourceJid);
         var avatar = $('#avatar_' + resourceJid);
@@ -102,7 +102,7 @@ var Avatar = (function(my) {
         }
         var avatar = $("#activeSpeakerAvatar")[0];
         var url = getGravatarUrl(users[jid],
-            interfaceConfig.ACTIVE_SPEAKER_AVATAR_SIZE);
+            interfaceConfig.ACTIVE_SPEAKER_AVATAR_SIZE, jid); // BAO
         if(jid === activeSpeakerJid && avatar.src === url) {
             return;
         }
@@ -122,19 +122,37 @@ var Avatar = (function(my) {
     }
 
     function isUserMuted(jid) {
-        if(!mediaStreams[jid] || !mediaStreams[jid][MediaStream.VIDEO_TYPE]) {
+        // XXX(gp) we may want to rename this method to something like
+        // isUserStreaming, for example.
+        if (jid && jid != connection.emuc.myroomjid) {
+            var resource = Strophe.getResourceFromJid(jid);
+            if (!VideoLayout.isInLastN(resource)) {
+                return true;
+            }
+        }
+
+        if (!mediaStreams[jid] || !mediaStreams[jid][MediaStream.VIDEO_TYPE]) {
             return null;
         }
         return mediaStreams[jid][MediaStream.VIDEO_TYPE].muted;
     }
 
-    function getGravatarUrl(id, size) {
+    function getGravatarUrl(id, size, jid) {
+
+        if (connection.emuc.myroomjid == jid && config.userAvatar && config.userAvatar != "null")
+        {
+        	return config.userAvatar;	// BAO openfire avatars
+        	
+        } else if (connection.ofmuc.members[jid]) {
+        	
+        	return connection.ofmuc.members[jid].avatar;
+        }
+
         if(id === connection.emuc.myroomjid || !id) {
             id = SettingsMenu.getUID();
         }
-        return 'https://www.gravatar.com/avatar/' +
-            MD5.hexdigest(id.trim().toLowerCase()) +
-            "?d=retro&size=" + (size || "30");
+        
+        return '//www.gravatar.com/avatar/' +  MD5.hexdigest(id.trim().toLowerCase()) + "?d=mm&size=" + (size || "30");
     }
 
     return my;

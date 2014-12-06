@@ -8,6 +8,7 @@
 <%@ page import="org.jitsi.videobridge.openfire.*" %>
 <%@ page import="org.jivesoftware.openfire.*" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.io.File" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -119,7 +120,13 @@
         JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.sip.password", clientpassword);          
 
 	String allowdirectsip = request.getParameter("allowdirectsip"); 
-        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.allow.direct.sip", allowdirectsip);         
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.allow.direct.sip", allowdirectsip);   
+        
+	String recordsecret = request.getParameter("recordsecret"); 	
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.recording.secret", recordsecret);          
+
+	String recordpath = request.getParameter("recordpath"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.recording.path", recordpath);          
     }
 
 %>
@@ -315,7 +322,24 @@
 			<input type="radio" value="true" name="enabled" <%= ("true".equals(JiveGlobals.getProperty(PluginImpl.RECORD_PROPERTY_NAME, "false")) ? "checked" : "") %>>
 			<b><fmt:message key="config.page.configuration.record.enabled" /></b> - <fmt:message key="config.page.configuration.record.enabled_description" />
 		    </td>
-	    </tr> 	    
+	    </tr> 
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.record.path"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="recordpath"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.recording.path", container.pluginDirectory.getAbsolutePath() + File.separator + "recordings") %>">
+		</td>
+	    </tr>
+
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.record.secret"/>
+		</td>
+		<td><input type="password" size="60" maxlength="100" name="recordsecret"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.recording.secret", "secret") %>">
+		</td>
+	    </tr>	    
             </tbody>
         </table>
     </p> 
@@ -350,7 +374,7 @@
 		<td align="left" width="150">
 		    <fmt:message key="config.page.configuration.server"/>
 		</td>
-		<td><input type="text" size="20" maxlength="100" name="server"
+		<td><input type="text" size="40" maxlength="100" name="server"
 			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.sipserver", "") %>">
 		</td>
 	    </tr>
@@ -359,7 +383,7 @@
 		<td align="left" width="150">
 		    <fmt:message key="config.page.configuration.outboundproxy"/>
 		</td>
-		<td><input type="text" size="20" maxlength="100" name="outboundproxy"
+		<td><input type="text" size="40" maxlength="100" name="outboundproxy"
 			   value="<%= JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", "") %>">
 		</td>
 	    </tr> 

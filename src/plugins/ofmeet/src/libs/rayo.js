@@ -46,7 +46,7 @@ Strophe.addConnectionPlugin('rayo',
                     console.info('Dial result ', result);
 
                     var resource = $(result).find('ref').attr('uri');
-                    self.call_resource = resource.substr('xmpp:'.length);
+                    self.call_resource = resource.substr('xmpp:'.length);	// BAO
                     console.info(
                         "Received call resource: " + self.call_resource);
                 },

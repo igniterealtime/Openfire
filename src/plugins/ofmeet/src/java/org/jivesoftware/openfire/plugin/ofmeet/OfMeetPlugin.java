@@ -56,7 +56,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	private PluginImpl jitsiPlugin;
 	private JigasiPlugin jigasiPlugin;
 	private PluginManager manager;
-	private File pluginDirectory;
+	public File pluginDirectory;
 
 	public String sipRegisterStatus = "";
 

@@ -283,6 +283,7 @@ function doJoin() {
 
         roomjid += '/' + tmpJid;
     }
+    connection.ofmuc.roomJid = roomName; // BAO
     connection.emuc.doJoin(roomjid);
 }
 

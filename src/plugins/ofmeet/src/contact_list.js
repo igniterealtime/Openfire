@@ -53,7 +53,7 @@ var ContactList = (function (my) {
             }
         };
 
-        newContact.appendChild(createAvatar(id));
+        newContact.appendChild(createAvatar(id, peerJid));	// BAO
         newContact.appendChild(createDisplayNameParagraph("Participant"));
 
         var clElement = contactlist.get(0);
@@ -136,11 +136,22 @@ var ContactList = (function (my) {
      * 
      * @return the newly created avatar element
      */
-    function createAvatar(id) {
+    function createAvatar(id, peerJid) {		// BAO
         var avatar = document.createElement('img');
         avatar.className = "icon-avatar avatar";
-        avatar.src = "https://www.gravatar.com/avatar/" + id + "?d=retro&size=30";
-
+        
+        if (connection.emuc.myroomjid == peerJid && config.userAvatar && config.userAvatar != "null")
+        {
+        	avatar.src = config.userAvatar;	
+        	
+        } else if (connection.ofmuc.members[peerJid] && connection.ofmuc.members[peerJid].avatar) {
+        	
+        	avatar.src = connection.ofmuc.members[peerJid].avatar;
+        
+        } else {
+        
+        	avatar.src = "//www.gravatar.com/avatar/" + id + "?d=mm&size=30";
+        }
         return avatar;
     }
 

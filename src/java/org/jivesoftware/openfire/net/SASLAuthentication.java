@@ -84,7 +84,8 @@ public class SASLAuthentication {
 	private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
 
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
-    private static final Pattern BASE64_ENCODED = Pattern.compile("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$");
+    // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
+    private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.

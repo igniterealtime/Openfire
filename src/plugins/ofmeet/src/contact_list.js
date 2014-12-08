@@ -53,7 +53,7 @@ var ContactList = (function (my) {
             }
         };
 
-        newContact.appendChild(createAvatar(id, peerJid));	// BAO
+        newContact.appendChild(createAvatar(id, peerJid));			// BAO
         newContact.appendChild(createDisplayNameParagraph("Participant"));
 
         var clElement = contactlist.get(0);
@@ -152,6 +152,7 @@ var ContactList = (function (my) {
         
         	avatar.src = "//www.gravatar.com/avatar/" + id + "?d=mm&size=30";
         }
+        
         return avatar;
     }
 

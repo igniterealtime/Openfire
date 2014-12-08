@@ -46,15 +46,21 @@ Strophe.addConnectionPlugin('rayo',
                     console.info('Dial result ', result);
 
                     var resource = $(result).find('ref').attr('uri');
-                    self.call_resource = resource.substr('xmpp:'.length);	// BAO
-                    console.info(
-                        "Received call resource: " + self.call_resource);
+                    self.call_resource = resource.substr('xmpp:'.length);
+                    console.info("Received call resource: " + self.call_resource); // BAO
+                    $.prompt.close();
                 },
                 function (error)
                 {
                     console.info('Dial error ', error);
+                    setTimeout(function()
+                    {
+                    	$.prompt("<h1>Error</h1>Call Failed", {title: "SIP Call " + to, persistent: false});  //BAO
+                    
+                    }, 1000);
                 }
             );
+            
         },
         hang_up: function ()
         {

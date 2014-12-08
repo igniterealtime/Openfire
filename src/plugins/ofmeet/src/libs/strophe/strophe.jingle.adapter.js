@@ -372,6 +372,15 @@ TraceablePeerConnection.prototype.modifySources = function(successCallback) {
     });
     this.removessrc = [];
 
+    // FIXME:
+    // this was a hack for the situation when only one peer exists
+    // in the conference.
+    // check if still required and remove
+    if (sdp.media[0])
+        sdp.media[0] = sdp.media[0].replace('a=recvonly', 'a=sendrecv');
+    if (sdp.media[1])
+        sdp.media[1] = sdp.media[1].replace('a=recvonly', 'a=sendrecv');
+
     sdp.raw = sdp.session + sdp.media.join('');
     this.setRemoteDescription(new RTCSessionDescription({type: 'offer', sdp: sdp.raw}),
         function() {
@@ -520,7 +529,10 @@ function setupRTC() {
                 },
                 pc_constraints: {},
                 getLocalSSRC: function (session, callback) {
-                    session.peerconnection.getStats(function (s) {
+                    // NOTE(gp) latest FF nightlies seem to provide the local
+                    // SSRCs in their SDP so there's no longer necessary to
+                    // take it from the peer connection stats.
+                    /*session.peerconnection.getStats(function (s) {
                             var ssrcs = {};
                             s.forEach(function (item) {
                                 if (item.type == "outboundrtp" && !item.isRemote)
@@ -536,7 +548,8 @@ function setupRTC() {
                         },
                         function () {
                             callback(null);
-                        });
+                        });*/
+                    callback(null);
                 },
                 getStreamID: function (stream) {
                     var tracks = stream.getVideoTracks();
@@ -575,7 +588,9 @@ function setupRTC() {
                 callback(null);
             },
             getStreamID: function (stream) {
-                return stream.id;
+                // streams from FF endpoints have the characters '{' and '}'
+                // that make jQuery choke.
+                return stream.id.replace(/[\{,\}]/g,"");
             },
             getVideoSrc: function (element) {
                 return element.getAttribute("src");

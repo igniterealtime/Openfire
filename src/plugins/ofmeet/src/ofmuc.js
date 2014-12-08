@@ -5,6 +5,8 @@ Strophe.addConnectionPlugin('ofmuc', {
     members: {},
     sharePDF: null,
     pdfPage: "1",
+    recordingToken: null,
+    isRecording: false,
     
     init: function (conn) {
         this.connection = conn;
@@ -40,7 +42,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	    
 		function (result)
 		{
-		    console.info('rayoAccept result ', result);
+		    //console.info('rayoAccept result ', result);
 		},
 		function (error)
 		{
@@ -168,7 +170,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 		var name = $(this).attr('name');
 		var value = $(this).attr('value');
 		
-		console.log("onRayo header", name, value);
+		//console.log("onRayo header", name, value);
 		
 		if (name == "caller_id")
 		{	
@@ -329,7 +331,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	//console.log("openPDFDialog");    	
     	    var that = this;
     	    
-    	    this.roomJid = connection.emuc.roomjid;
+    	    //this.roomJid = connection.emuc.roomjid;
     	
 	    if (that.sharePDF) 
 	    {
@@ -436,7 +438,62 @@ Strophe.addConnectionPlugin('ofmuc', {
     
     isPresentationVisible: function () {
         return ($('#presentation>iframe') != null && $('#presentation>iframe').css('opacity') == 1);
-    }  
+    },
+    
+    toggleRecording: function () 
+    {
+    	var that = this;
+    	
+	if (!this.recordingToken)
+	{		
+		$.prompt('<h2>Enter recording token</h2><input id="recordingToken" type="text" placeholder="token" autofocus>',
+		{
+			title: "Meeting Recording",
+			buttons: { "Record": true, "Cancel": false},
+			defaultButton: 1,
+			loaded: function(event) {
+				document.getElementById('recordingToken').focus();
+			},			
+			submit: function(e,v,m,f)
+			{
+				if(v)
+				{
+				    var token = document.getElementById('recordingToken');
+
+				    if (token.value) {
+					that.recordingToken = Util.escapeHtml(token.value);
+					that.toggleRecording();
+				    }	
+				}
+			}
+		});		
+
+		return;
+	}
+
+	var req = $iq({type: 'set', to: config.hosts.call_control});
+	
+	req.c('record',	{xmlns: 'urn:xmpp:rayo:record:1'});
+	req.c('hint', 	{name: 'JvbToken', value: this.recordingToken}).up();
+	req.c('hint', 	{name: 'JvbState', value: this.isRecording ? "false" : "true"}).up();
+	req.c('hint', 	{name: 'JvbRoomName', value: this.roomJid}).up();
+	    
+	this.connection.sendIQ(req,
+
+		function (result)
+		{
+		    console.info('toggleRecording result ', result);
+		    that.isRecording = !that.isRecording;
+		    Toolbar.setRecordingButtonState(that.isRecording);		    
+		},
+		function (error)
+		{
+		    console.info('toggleRecording error ', error);
+		    Toolbar.setRecordingButtonState(false);
+		    that.isRecording = false;		    
+		}
+	);	    
+    }    
     
 });
 

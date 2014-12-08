@@ -139,7 +139,7 @@
 		<%= conference.getEndpointsCount() %>
         </td>         
         <td width="10%" align="center">
-            <% if (conference.getSpeechActivity() != null && conference.getSpeechActivity().getDominantEndpoint() != null) { %>
+            <% if (conference.getSpeechActivity() != null && conference.getSpeechActivity().getDominantEndpoint() != null && conference.getSpeechActivity().getDominantEndpoint().getDisplayName() != null) { %>
                 <%= conference.getSpeechActivity().getDominantEndpoint().getDisplayName() %>
             <% }
                else { %>

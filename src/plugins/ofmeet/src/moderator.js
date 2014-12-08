@@ -1,11 +1,12 @@
-/* global $, $iq, config, connection, Etherpad, hangUp, roomName, Strophe,
- Toolbar, Util, VideoLayout */
+/* global $, $iq, config, connection, Etherpad, hangUp, messageHandler,
+ roomName, Strophe, Toolbar, Util, VideoLayout */
 /**
  * Contains logic responsible for enabling/disabling functionality available
  * only to moderator users.
  */
 var Moderator = (function (my) {
 
+    var focusUserJid;
     var getNextTimeout = Util.createExpBackoffTimer(1000);
     var getNextErrorTimeout = Util.createExpBackoffTimer(1000);
 
@@ -66,8 +67,30 @@ var Moderator = (function (my) {
         );
     };
 
+    my.setFocusUserJid = function (focusJid) {
+        if (!focusUserJid) {
+            focusUserJid = focusJid;
+            console.info("Focus jid set to: " + focusUserJid);
+        }
+    };
+
+    my.getFocusUserJid = function () {
+        return focusUserJid;
+    };
+
+    my.getFocusComponent = function () {
+        // Get focus component address
+        var focusComponent = config.hosts.focus;
+        // If not specified use default: 'focus.domain'
+        if (!focusComponent) {
+            focusComponent = 'focus.' + config.hosts.domain;
+        }
+        return focusComponent;
+    };
+
     my.createConferenceIq = function () {
-        var elem = $iq({to: config.hosts.focus, type: 'set'});
+        // Generate create conference IQ
+        var elem = $iq({to: Moderator.getFocusComponent(), type: 'set'});
         elem.c('conference', {
             xmlns: 'http://jitsi.org/protocol/focus',
             room: roomName
@@ -93,6 +116,20 @@ var Moderator = (function (my) {
                 { name: 'adaptiveSimulcast', value: config.adaptiveSimulcast})
                 .up();
         }
+        if (config.openSctp !== undefined)
+        {
+            elem.c(
+                'property',
+                { name: 'openSctp', value: config.openSctp})
+                .up();
+        }
+        if (config.enableFirefoxSupport !== undefined)
+        {
+            elem.c(
+                'property',
+                { name: 'enableFirefoxHacks', value: config.enableFirefoxSupport})
+                .up();
+        }
         elem.up();
         return elem;
     };
@@ -100,6 +137,9 @@ var Moderator = (function (my) {
     // FIXME: we need to show the fact that we're waiting for the focus
     // to the user(or that focus is not available)
     my.allocateConferenceFocus = function (roomName, callback) {
+        // Try to use focus user JID from the config
+        Moderator.setFocusUserJid(config.focusUserJid);
+        // Send create conference IQ
         var iq = Moderator.createConferenceIq();
         connection.sendIQ(
             iq,
@@ -108,6 +148,8 @@ var Moderator = (function (my) {
                     // Reset both timers
                     getNextTimeout(true);
                     getNextErrorTimeout(true);
+                    Moderator.setFocusUserJid(
+                        $(result).find('conference').attr('focusjid'));
                     callback();
                 } else {
                     var waitMs = getNextTimeout();
@@ -124,6 +166,11 @@ var Moderator = (function (my) {
             function (error) {
                 var waitMs = getNextErrorTimeout();
                 console.error("Focus error, retry after " + waitMs, error);
+                // Show message
+                messageHandler.notify(
+                    'Conference focus', 'disconnected',
+                    Moderator.getFocusComponent() +
+                    ' not available - retry in ' + (waitMs / 1000) + ' sec');
                 // Reset response timeout
                 getNextTimeout(true);
                 window.setTimeout(

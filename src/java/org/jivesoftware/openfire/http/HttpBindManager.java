@@ -27,24 +27,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -78,7 +77,7 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_THREADS = "httpbind.client.processing.threads";
 
-    public static final int HTTP_BIND_THREADS_DEFAULT = 254;
+    public static final int HTTP_BIND_THREADS_DEFAULT = 16;
 
 	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
 
@@ -513,7 +512,8 @@ public final class HttpBindManager {
      * @param securePort the port to start the TLS (secure) HTTP Bind service on.
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
-        final QueuedThreadPool tp = new QueuedThreadPool(JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT));
+    	int maxThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
+        final QueuedThreadPool tp = new QueuedThreadPool(maxThreads, getMinThreads(maxThreads));
         tp.setName("Jetty-QTP-BOSH");
 
         httpBindServer = new Server(tp);
@@ -543,6 +543,10 @@ public final class HttpBindManager {
         httpBindServer.setHandler(collection);
         collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
     }
+
+	private int getMinThreads(int maxThreads) {
+		return (maxThreads/4)+1;
+	}
 
     private void createBoshHandler(ContextHandlerCollection contexts, String boshPath)
     {

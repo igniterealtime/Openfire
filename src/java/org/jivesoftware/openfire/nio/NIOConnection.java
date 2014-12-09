@@ -395,7 +395,7 @@ public class NIOConnection implements Connection {
     }
 
     public void startCompression() {
-        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get("compression");
+        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get(COMPRESSION_FILTER_NAME);
         ioFilter.setCompressOutbound(true);
     }
 
@@ -429,7 +429,7 @@ public class NIOConnection implements Connection {
     }
 
     public boolean isCompressed() {
-        return ioSession.getFilterChain().contains("compression");
+        return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
     }
 
     public CompressionPolicy getCompressionPolicy() {

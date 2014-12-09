@@ -239,8 +239,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Create SocketAcceptor with correct number of processors
             multiplexerSocketAcceptor = buildSocketAcceptor(MULTIPLEXER_SOCKET_ACCEPTOR_NAME);
             // Customize Executor that will be used by processors to process incoming stanzas
-            int eventThreads = JiveGlobals.getIntProperty("xmpp.multiplex.processing.threads", 16);
-            multiplexerSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS));
+            int maxPoolSize = JiveGlobals.getIntProperty("xmpp.multiplex.processing.threads", 16);
+            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
+            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
+            ThreadFactory threadFactory = eventExecutor.getThreadFactory();
+            threadFactory = new DelegatingThreadFactory("Multiplexer-Thread-", threadFactory);
+            eventExecutor.setThreadFactory(threadFactory);
+            multiplexerSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
             // Add the XMPP codec filter
             multiplexerSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
 
@@ -297,8 +302,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if (isComponentListenerEnabled() && componentAcceptor == null) {
             // Create SocketAcceptor with correct number of processors
             componentAcceptor = buildSocketAcceptor(COMPONENT_SOCKET_ACCEPTOR_NAME);
-            int eventThreads = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
-            componentAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS));
+            int maxPoolSize = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
+            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
+            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
+            ThreadFactory threadFactory = eventExecutor.getThreadFactory();
+            threadFactory = new DelegatingThreadFactory("Component-Thread-", threadFactory);
+            eventExecutor.setThreadFactory(threadFactory);
+            componentAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
             // Add the XMPP codec filter
             componentAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
         }
@@ -355,16 +365,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             // Create SocketAcceptor with correct number of processors
             socketAcceptor = buildSocketAcceptor(CLIENT_SOCKET_ACCEPTOR_NAME);
             // Customize Executor that will be used by processors to process incoming stanzas
-            int eventThreads = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 16);
-
-            ExecutorFilter executorFilter = new ExecutorFilter();
+            int maxPoolSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 16);
+            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
             ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
             ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-            threadFactory = new DelegatingThreadFactory("Old executor thread - ", threadFactory);
+            threadFactory = new DelegatingThreadFactory("C2S-Thread-", threadFactory);
             eventExecutor.setThreadFactory(threadFactory);
-            eventExecutor.setMaximumPoolSize(eventThreads + 1);
-            eventExecutor.setCorePoolSize(eventThreads + 1);
-            eventExecutor.setKeepAliveTime(60, TimeUnit.SECONDS);
 
             // Add the XMPP codec filter
             socketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
@@ -430,24 +436,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
             try {
                 // Customize Executor that will be used by processors to process incoming stanzas
-                int eventThreads = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS_SSL, 16);
-                ExecutorFilter executorFilter = new ExecutorFilter(eventThreads + 1, eventThreads + 1, 60, TimeUnit.SECONDS);
+                int maxPoolSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS_SSL, 16);
+                ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
                 ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-
-                final ThreadFactory originalThreadFactory = eventExecutor.getThreadFactory();
-                ThreadFactory newThreadFactory = new ThreadFactory()
-                {
-                    private final AtomicInteger threadId = new AtomicInteger( 0 );
-
-                    public Thread newThread( Runnable runnable )
-                    {
-                        Thread t = originalThreadFactory.newThread( runnable );
-                        t.setName("Old SSL executor thread - " + threadId.incrementAndGet() );
-                        t.setDaemon( true );
-                        return t;
-                    }
-                };
-                eventExecutor.setThreadFactory( newThreadFactory );
+                ThreadFactory threadFactory = eventExecutor.getThreadFactory();
+                threadFactory = new DelegatingThreadFactory("LegacySSL-Thread-", threadFactory);
+                eventExecutor.setThreadFactory(threadFactory);
                 
                 // Create SocketAcceptor with correct number of processors
                 sslSocketAcceptor = buildSocketAcceptor(CLIENT_SSL_SOCKET_ACCEPTOR_NAME);
@@ -461,8 +455,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 				// Throttle sessions who send data too fast
 				int maxBufferSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_READ_BUFFER_SSL, 10 * MB);
 				sslSocketAcceptor.getSessionConfig().setMaxReadBufferSize(maxBufferSize);
-		        Log.debug("Throttling read buffer for connections from socketAcceptor={} to max={} bytes",
-		                  socketAcceptor, maxBufferSize);
+		        Log.debug("Throttling read buffer for connections from sslSocketAcceptor={} to max={} bytes",
+		                  sslSocketAcceptor, maxBufferSize);
 
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
                 SSLContext sslContext = SSLContext.getInstance(algorithm);
@@ -482,7 +476,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 else if(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("wanted")) {
                     sslFilter.setWantClientAuth(true);
                 }
-                sslSocketAcceptor.getFilterChain().addFirst(TLS_FILTER_NAME, sslFilter);
+                sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, sslFilter);
 
             }
             catch (Exception e) {
@@ -908,7 +902,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     	}
     }
     
-    // #####################################################################
+	private int getCorePoolSize(int maxPoolSize) {
+		return (maxPoolSize/4)+1;
+	}
+
+	// #####################################################################
     // Module management
     // #####################################################################
 

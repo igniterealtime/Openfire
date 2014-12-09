@@ -34,10 +34,8 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.eclipse.jetty.util.log.Log;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
@@ -88,12 +86,12 @@ public class HttpSessionManager {
         // BOSH installations expecting heavy loads may want to allocate additional threads 
         // to this worker pool to ensure timely delivery of inbound packets
         
-        int poolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", 
+        int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", 
 				// use deprecated property as default (shared with ConnectionManagerImpl)
 				JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16));
         int keepAlive = JiveGlobals.getIntProperty("xmpp.httpbind.worker.timeout", 60);
 
-        sendPacketPool = new ThreadPoolExecutor(poolSize, poolSize, keepAlive, TimeUnit.SECONDS, 
+        sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS, 
 			new LinkedBlockingQueue<Runnable>(), // unbounded task queue
 	        new ThreadFactory() { // custom thread factory for BOSH workers
 	            final AtomicInteger counter = new AtomicInteger(1);
@@ -105,6 +103,10 @@ public class HttpSessionManager {
 	            }
 	    	});
     }
+
+	private int getCorePoolSize(int maxPoolSize) {
+		return (maxPoolSize/4)+1;
+	}
 
     /**
      * Starts the services used by the HttpSessionManager.

@@ -370,9 +370,13 @@ public class LocaleUtils {
     public static String getLocalizedString(String key) {
         Locale locale = JiveGlobals.getLocale();
 
-        ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
-
-        return getLocalizedString(key, locale, null, bundle);
+        try {
+        	ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+        	return getLocalizedString(key, locale, null, bundle);
+        } catch (MissingResourceException mre) {
+        	Log.error(mre.getMessage());
+        	return key;
+        }
     }
 
     /**

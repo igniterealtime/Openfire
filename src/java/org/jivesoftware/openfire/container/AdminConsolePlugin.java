@@ -97,10 +97,13 @@ public class AdminConsolePlugin implements Plugin {
         certificateListener = new CertificateListener();
         CertificateManager.addListener(certificateListener);
 
+        // the number of threads allocated to each connector/port
+        int serverThreads = JiveGlobals.getXMLProperty("adminConsole.serverThreads", 2);
+
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
 
-        final QueuedThreadPool tp = new QueuedThreadPool(16,2);
+        final QueuedThreadPool tp = new QueuedThreadPool();
         tp.setName("Jetty-QTP-AdminConsole");
 
         adminServer = new Server(tp);
@@ -118,9 +121,10 @@ public class AdminConsolePlugin implements Plugin {
         if (adminPort > 0) {
 			httpConfig = new HttpConfiguration();
 
+            httpConnector = new ServerConnector(adminServer, -1, serverThreads);
         	// Do not send Jetty info in HTTP headers
 			httpConfig.setSendServerVersion( false );
-            httpConnector = new ServerConnector(adminServer, new HttpConnectionFactory(httpConfig));
+            httpConnector.addConnectionFactory(new HttpConnectionFactory(httpConfig));
             // Listen on a specific network interface if it has been set.
             String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
@@ -161,7 +165,9 @@ public class AdminConsolePlugin implements Plugin {
 					HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(httpsConfig);
 					SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString());
 
-                	httpsConnector = new ServerConnector(adminServer, sslConnectionFactory, httpConnectionFactory);
+                	httpsConnector = new ServerConnector(adminServer, -1, serverThreads);
+                	httpsConnector.addConnectionFactory(sslConnectionFactory);
+                	httpsConnector.addConnectionFactory(httpConnectionFactory);
 				}
 
                 String bindInterface = getBindInterface();
@@ -192,7 +198,7 @@ public class AdminConsolePlugin implements Plugin {
             adminServer.start();
         }
         catch (Exception e) {
-            Log.error("Could not start admin conosle server", e);
+            Log.error("Could not start admin console server", e);
         }
 
         // Log the ports that the admin server is listening on.

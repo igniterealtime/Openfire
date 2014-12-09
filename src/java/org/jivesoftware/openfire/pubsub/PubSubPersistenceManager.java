@@ -1627,9 +1627,6 @@ public class PubSubPersistenceManager {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
-        if (results.size() == 0)
-			return Collections.emptyList();
-
         return results;
     }
 

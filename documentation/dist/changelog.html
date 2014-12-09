@@ -162,16 +162,24 @@ hr {
 	
 	<div id="pageBody">
 
-<h2>3.10.0 Beta -- <span style="font-weight: normal;">November 15, 2014</span></h2>
+<h2>3.10.0 Beta -- <span style="font-weight: normal;">January 20, 2015</span></h2>
 
 <h2>        Bug
 </h2>
 <ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
-</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-116'>OF-116</a>] -         Add a text explaining the path used for http-binding
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-444'>OF-444</a>] -         Jingle Nodes plugin should use lowercase in i18n file&#39;s name
+</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-460'>OF-460</a>] -         Debug log is not saving its state between restarts
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-560'>OF-560</a>] -         Restore or drop support for Pack200 compression
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-565'>OF-565</a>] -         ConnectionHandler has parsing problems due to use of hashcode under heavy load.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-629'>OF-629</a>] -         Remove XMPP Sessions
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-670'>OF-670</a>] -          MUC user count not kept in sync across cluster nodes
 </li>
@@ -221,6 +229,8 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-832'>OF-832</a>] -         Monitoring plugin fixes
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-837'>OF-837</a>] -         PubSub should return non-persistent items (last published item)
+</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-839'>OF-839</a>] -         Forwarded extension should not overwrite extension namespaces of the forwarded message.
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-840'>OF-840</a>] -         BOSH &lt;stream:features&gt; does not include &lt;register/&gt;
@@ -229,11 +239,29 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-849'>OF-849</a>] -         Error decoding subjectAltName DERTaggedObject cannot be cast to ASN1Sequence
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-853'>OF-853</a>] -         XEP-0077 Registration must return &lt;not-acceptable/&gt; if username or password are unspecified.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-855'>OF-855</a>] -         Openfire looses messages when multiple senders send messages to the same receiver that looses connection
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-857'>OF-857</a>] -         c2s stop responding, new connections hang 
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-859'>OF-859</a>] -         Remove static service id reference in Node.class
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-860'>OF-860</a>] -         No MUC status code 110 (self-presence) after joining a room with more than one user
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-861'>OF-861</a>] -         Disable SSLv3 by default as per POODLE vulnerability
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-863'>OF-863</a>] -         Multiple NPEs encountered when running under high load/latency in cluster mode (via hazelcast plugin)
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-864'>OF-864</a>] -         Cleanup routes from defunct cluster member servers
+</li>
 </ul>
         
 <h2>        Improvement
 </h2>
 <ul>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-189'>OF-189</a>] -         do not use com.sun.* classes
+</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-593'>OF-593</a>] -         LocaleUtils.java_dots_ to_underscores_i18n _bundles
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-797'>OF-797</a>] -         Move ant-tasks in subdirectory (and delete ant.jar)
@@ -251,6 +279,8 @@ hr {
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-842'>OF-842</a>] -         Additional properties in User Properties view
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-847'>OF-847</a>] -         Upgrade bouncycastle from 1.50 to 1.51
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-850'>OF-850</a>] -         Improve initialization state for JiveGlobals
 </li>
 </ul>
     

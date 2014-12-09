@@ -88,7 +88,7 @@ public class HttpSessionManager {
         
         int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", 
 				// use deprecated property as default (shared with ConnectionManagerImpl)
-				JiveGlobals.getIntProperty("xmpp.client.processing.threads", 16));
+				JiveGlobals.getIntProperty("xmpp.client.processing.threads", 8));
         int keepAlive = JiveGlobals.getIntProperty("xmpp.httpbind.worker.timeout", 60);
 
         sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS, 

@@ -121,10 +121,11 @@ public class AdminConsolePlugin implements Plugin {
         if (adminPort > 0) {
 			httpConfig = new HttpConfiguration();
 
-            httpConnector = new ServerConnector(adminServer, -1, serverThreads);
         	// Do not send Jetty info in HTTP headers
 			httpConfig.setSendServerVersion( false );
-            httpConnector.addConnectionFactory(new HttpConnectionFactory(httpConfig));
+            httpConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
+            		new HttpConnectionFactory(httpConfig));
+
             // Listen on a specific network interface if it has been set.
             String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
@@ -165,9 +166,8 @@ public class AdminConsolePlugin implements Plugin {
 					HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(httpsConfig);
 					SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString());
 
-                	httpsConnector = new ServerConnector(adminServer, -1, serverThreads);
-                	httpsConnector.addConnectionFactory(sslConnectionFactory);
-                	httpsConnector.addConnectionFactory(httpConnectionFactory);
+                	httpsConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
+                			sslConnectionFactory, httpConnectionFactory);
 				}
 
                 String bindInterface = getBindInterface();

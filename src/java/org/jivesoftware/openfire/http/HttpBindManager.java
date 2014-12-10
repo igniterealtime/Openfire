@@ -200,8 +200,8 @@ public final class HttpBindManager {
         if (port > 0) {
 			HttpConfiguration httpConfig = new HttpConfiguration();
 			configureProxiedConnector(httpConfig);
-            ServerConnector connector = new ServerConnector(httpBindServer, -1, bindThreads);
-            connector.addConnectionFactory(new HttpConnectionFactory(httpConfig));
+            ServerConnector connector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads, 
+            		new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
@@ -253,9 +253,8 @@ public final class HttpBindManager {
 					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
 				} else {
 
-					sslConnector = new ServerConnector(httpBindServer, -1, bindThreads); 
-					sslConnector.addConnectionFactory(new SslConnectionFactory(sslContextFactory, "http/1.1"));
-					sslConnector.addConnectionFactory(new HttpConnectionFactory(httpsConfig));
+					sslConnector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads, 
+							new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig)); 
 				}
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);

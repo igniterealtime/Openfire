@@ -133,8 +133,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             return result;
         }
         catch (Exception e) {
-            if (e.getCause() instanceof IDNAException) {
-                Log.warn(LocaleUtils.getLocalizedString("admin.error"), e);
+            if (e.getCause() instanceof IDNAException || e.getCause() instanceof IllegalArgumentException) {
+                Log.warn(LocaleUtils.getLocalizedString("admin.error") + e.getMessage());
                 IQ result = IQ.createResultIQ(packet);
                 result.setChildElement(packet.getChildElement().createCopy());
                 result.setError(PacketError.Condition.jid_malformed);

@@ -70,8 +70,8 @@ public class SequenceManager {
 
     static {
         new SequenceManager(JiveConstants.ROSTER, 5);
-        new SequenceManager(JiveConstants.OFFLINE, 1);
-        new SequenceManager(JiveConstants.MUC_ROOM, 1);
+        new SequenceManager(JiveConstants.OFFLINE, 5);
+        new SequenceManager(JiveConstants.MUC_ROOM, 5);
     }
 
     /**
@@ -237,7 +237,7 @@ public class SequenceManager {
         }
 
         if (!success) {
-            Log.error("WARNING: failed to obtain next ID block due to " +
+            Log.warn("WARNING: failed to obtain next ID block due to " +
                     "thread contention. Trying again...");
             // Call this method again, but sleep briefly to try to avoid thread contention.
             try {

@@ -43,7 +43,7 @@ public abstract class NodeTask implements ClusterTask
 
 	public PubSubService getService()
 	{
-		if (Node.PUBSUB_SVC_ID.equals(serviceId))
+		if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId))
 			return XMPPServer.getInstance().getPubSubModule();
 		else
 		{

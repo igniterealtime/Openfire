@@ -868,6 +868,19 @@ $(document).bind('left.muc', function (event, jid) {
 
 $(document).bind('presence.muc', function (event, jid, info, pres) {
 
+/* BAO
+    //check if the video bridge is available
+    if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
+        bridgeIsDown = true;
+        messageHandler.showError("Error",
+            "Jitsi Videobridge is currently unavailable. Please try again later!");
+    }
+*/
+    if (info.isFocus)
+    {
+        return;
+    }
+
     // Remove old ssrcs coming from the jid
     Object.keys(ssrc2jid).forEach(function (ssrc) {
         if (ssrc2jid[ssrc] == jid) {
@@ -907,14 +920,11 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
     if (displayName && displayName.length > 0)
         $(document).trigger('displaynamechanged',
                             [jid, displayName]);
-    if (info.isFocus)
-    {
-        return;
-    }
-
     /*if (focus !== null && info.displayName !== null) {
         focus.setEndpointDisplayName(jid, info.displayName);
     }*/
+
+/* BAO
 
     //check if the video bridge is available
     if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
@@ -922,7 +932,7 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
         messageHandler.showError("Error",
             "Jitsi Videobridge is currently unavailable. Please try again later!");
     }
-
+*/
     var id = $(pres).find('>userID').text();
     var email = $(pres).find('>email');
     if(email.length > 0) {
@@ -1127,8 +1137,7 @@ function isAudioMuted()
 
 // Starts or stops the recording for the conference.
 function toggleRecording() {
-    //Recording.toggleRecording();
-    connection.ofmuc.toggleRecording();
+    Recording.toggleRecording();
 }
 
 /**
@@ -1421,6 +1430,7 @@ $(document).ready(function () {
 
 $(window).bind('beforeunload', function () {
     if (connection && connection.connected) {
+/*    
         // ensure signout
         $.ajax({
             type: 'POST',
@@ -1440,6 +1450,8 @@ $(window).bind('beforeunload', function () {
                 console.log('signout error', textStatus + ' (' + errorThrown + ')');
             }
         });
+*/
+	connection.disconnect();
     }
     disposeConference(true);
     if(APIConnector.isEnabled())
@@ -1670,7 +1682,7 @@ function callSipButtonClicked()
 	    messageHandler.openTwoButtonDialog(null,
 		'<h2>Enter SIP number</h2>' +
 		    '<input id="sipNumber" type="text"' +
-		    ' value="' + defaultNumber + '" autofocus placeholder="number or sip:address@doman.com">',	//BAO
+		    ' value="' + defaultNumber + '" autofocus>',
 		false,
 		"Dial",
 		function (e, v, m, f) {
@@ -1678,7 +1690,7 @@ function callSipButtonClicked()
 			var numberInput = document.getElementById('sipNumber');
 			if (numberInput.value) {
 			    connection.rayo.dial(
-				numberInput.value, 'fromnumber', roomName);
+				numberInput.value, roomName, focus.confid);	// BAO
 			}
 		    }
 		},

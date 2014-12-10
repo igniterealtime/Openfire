@@ -95,6 +95,10 @@ public class XmppProtocolProvider
             new OperationSetMultiUserChatImpl(this));
 
         addSupportedOperationSet(
+            OperationSetJitsiMeetTools.class,
+            new OperationSetMeetToolsImpl());
+
+        addSupportedOperationSet(
             OperationSetSimpleCaps.class,
             new OpSetSimpleCapsImpl(this));
 

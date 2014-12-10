@@ -78,6 +78,7 @@ var Avatar = (function(my) {
             if (activeSpeakerJid === jid && VideoLayout.isLargeVideoOnTop()) {
                 setVisibility($("#largeVideo"), !show);
                 setVisibility($('#activeSpeakerAvatar'), show);
+                setVisibility($('#activeSpeakerAudioLevel'), show);
                 setVisibility(avatar, false);
                 setVisibility(video, false);
             } else {
@@ -141,7 +142,7 @@ var Avatar = (function(my) {
         {
         	return config.userAvatar;	// BAO openfire avatars
         	
-        } else if (connection.ofmuc.members[jid]) {
+        } else if (connection.ofmuc.members[jid] && connection.ofmuc.members[jid].avatar) {
         	
         	return connection.ofmuc.members[jid].avatar;
         }

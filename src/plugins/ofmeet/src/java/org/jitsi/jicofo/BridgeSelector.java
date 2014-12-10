@@ -62,6 +62,12 @@ public class BridgeSelector
         = new HashMap<String, BridgeState>();
 
     /**
+     * Pre-configured JVB used as last chance option even if no bridge has been
+     * auto-detected on startup.
+     */
+    private String preConfiguredBridge;
+
+    /**
      * The map of Pub-Sub nodes to videobridge JIDs.
      */
     private Map<String, String> pubSubToBridge = new HashMap<String, String>();
@@ -168,12 +174,30 @@ public class BridgeSelector
 
         Collections.sort(bridgeList);
 
+        boolean isAnyBridgeUp = false;
         ArrayList<String> bridgeJidList = new ArrayList<String>();
         for (BridgeState bridgeState : bridgeList)
         {
             bridgeJidList.add(bridgeState.jid);
+            if (bridgeState.isOperational)
+            {
+                isAnyBridgeUp = true;
+            }
         }
-
+        // Check if we have pre-configured bridge to include in the list
+        if (!StringUtils.isNullOrEmpty(preConfiguredBridge)
+            && !bridgeJidList.contains(preConfiguredBridge))
+        {
+            // If no auto-detected bridge is up then put pre-configured up front
+            if (!isAnyBridgeUp)
+            {
+                bridgeJidList.add(0, preConfiguredBridge);
+            }
+            else
+            {
+                bridgeJidList.add(preConfiguredBridge);
+            }
+        }
         return bridgeJidList;
     }
 
@@ -306,6 +330,24 @@ public class BridgeSelector
                 }
             }
         }
+    }
+
+    /**
+     * Returns the JID of pre-configured Jitsi Videobridge instance.
+     */
+    public String getPreConfiguredBridge()
+    {
+        return preConfiguredBridge;
+    }
+
+    /**
+     * Sets the JID of pre-configured JVB instance which will be used when all
+     * auto-detected bridges are down.
+     * @param preConfiguredBridge XMPP address of pre-configured JVB component.
+     */
+    public void setPreConfiguredBridge(String preConfiguredBridge)
+    {
+        this.preConfiguredBridge = preConfiguredBridge;
     }
 
     /**

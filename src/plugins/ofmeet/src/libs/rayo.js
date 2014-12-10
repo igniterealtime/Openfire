@@ -47,20 +47,14 @@ Strophe.addConnectionPlugin('rayo',
 
                     var resource = $(result).find('ref').attr('uri');
                     self.call_resource = resource.substr('xmpp:'.length);
-                    console.info("Received call resource: " + self.call_resource); // BAO
-                    $.prompt.close();
+                    console.info(
+                        "Received call resource: " + self.call_resource); // BAO
                 },
                 function (error)
                 {
                     console.info('Dial error ', error);
-                    setTimeout(function()
-                    {
-                    	$.prompt("<h1>Error</h1>Call Failed", {title: "SIP Call " + to, persistent: false});  //BAO
-                    
-                    }, 1000);
                 }
             );
-            
         },
         hang_up: function ()
         {

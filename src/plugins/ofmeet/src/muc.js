@@ -159,7 +159,7 @@ Strophe.addConnectionPlugin('emuc', {
             }
         }
         // Always trigger presence to update bindings
-        ///console.log('presence change from', from, pres);		// BAO
+        console.log('presence change from', from, pres);
         $(document).trigger('presence.muc', [from, member, pres]);
 
         // Trigger status message update

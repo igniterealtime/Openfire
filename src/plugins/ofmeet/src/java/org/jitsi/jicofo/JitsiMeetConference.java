@@ -19,6 +19,7 @@ import org.jitsi.jicofo.recording.*;
 import org.jitsi.jicofo.util.*;
 import org.jitsi.protocol.*;
 import org.jitsi.protocol.xmpp.*;
+import org.jitsi.protocol.xmpp.extensions.*;
 import org.jitsi.protocol.xmpp.util.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
@@ -59,9 +60,17 @@ public class JitsiMeetConference
         = Logger.getLogger(JitsiMeetConference.class);
 
     /**
+     * FIXME: remove and replace with focusUserName which is already available
      * The constant describes focus MUC nickname
      */
     private final static String FOCUS_NICK = "focus";
+
+    /**
+     * Error code used in {@link OperationFailedException} when there are no
+     * working videobridge bridges.
+     * FIXME: consider moving to OperationFailedException ?
+     */
+    private final static int BRIDGE_FAILURE_ERR_CODE = 20;
 
     /**
      * Name of MUC room that is hosting Jitsi Meet conference.
@@ -119,6 +128,12 @@ public class JitsiMeetConference
      * Colibri operation set used to manage videobridge channels allocations.
      */
     private OperationSetColibriConference colibri;
+
+    /**
+     * Jitsi Meet tool used for specific operations like adding presence
+     * extensions.
+     */
+    private OperationSetJitsiMeetTools meetTools;
 
     /**
      * The list of active conference participants.
@@ -252,12 +267,20 @@ public class JitsiMeetConference
             = protocolProviderHandler.getOperationSet(
                     OperationSetSimpleCaps.class);
 
+        meetTools
+            = protocolProviderHandler.getOperationSet(
+                    OperationSetJitsiMeetTools.class);
+
         meetExtensionsHandler = new MeetExtensionsHandler(this);
 
         services
             = ServiceUtils.getService(
                     FocusBundleActivator.bundleContext,
                     JitsiMeetServices.class);
+
+        // Set pre-configured videobridge
+        services.getBridgeSelector()
+            .setPreConfiguredBridge(config.getPreConfiguredVideobridge());
 
         if (!protocolProviderHandler.isRegistered())
         {
@@ -474,6 +497,13 @@ public class JitsiMeetConference
                 "Failed to invite " + chatRoomMember.getContactAddress(), e);
 
             participants.remove(newParticipant);
+
+            // Notify users about bridge is down event
+            if (BRIDGE_FAILURE_ERR_CODE == e.getErrorCode())
+            {
+                meetTools.sendPresenceExtension(
+                    chatRoom, new BridgeIsDownPacketExt());
+            }
         }
     }
 
@@ -573,7 +603,7 @@ public class JitsiMeetConference
                     // No more bridges to try
                     throw new OperationFailedException(
                         "Failed to allocate channels - all bridges are faulty",
-                        OperationFailedException.GENERAL_ERROR);
+                        BRIDGE_FAILURE_ERR_CODE);
                 }
                 else
                 {

@@ -20,4 +20,11 @@ public interface XmppChatMember
      * Returns ths original user's connection Jabber ID and not the MUC address.
      */
     String getJabberID();
+
+    /**
+     * Returns the user's browser user agent.
+     *
+     * @return the user's browser user agent.
+     */
+    String getUserAgent();
 }

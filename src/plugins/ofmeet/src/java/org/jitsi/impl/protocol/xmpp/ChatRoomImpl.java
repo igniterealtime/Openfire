@@ -13,6 +13,7 @@ import net.java.sip.communicator.service.protocol.event.*;
 import net.java.sip.communicator.util.Logger;
 
 import org.jitsi.protocol.xmpp.*;
+import org.jitsi.impl.protocol.xmpp.extensions.*;
 import org.jitsi.util.*;
 
 import org.jivesoftware.smack.*;
@@ -969,6 +970,27 @@ public class ChatRoomImpl
             {
                 logger.warn(
                     "New jid received in presence: " + presence.toXML());
+            }
+
+            UserAgentPacketExtension userAgentPacketExtension
+                = (UserAgentPacketExtension) presence.getExtension(
+                    UserAgentPacketExtension.ELEMENT_NAME,
+                    UserAgentPacketExtension.NAMESPACE);
+
+            String userAgent = userAgentPacketExtension.getUserAgent();
+
+            if (StringUtils.isNullOrEmpty(member.getUserAgent()))
+            {
+               logger.info(
+                   "userAgent: " + userAgent + " received for: "
+                        + member.getContactAddress());
+
+                member.setUserAgent(userAgent);
+            }
+            else if (!userAgent.equals(member.getUserAgent()))
+            {
+                logger.warn(
+                    "New userAgent received in presence: " + presence.toXML());
             }
         }
     }

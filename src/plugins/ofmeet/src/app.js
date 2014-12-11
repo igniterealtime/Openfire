@@ -783,7 +783,8 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
     {
         focusJid = jid;
         console.info("Ignore focus: " + jid +", real JID: " + info.jid);
-        messageHandler.notify('Focus', 'connected', 'connected');
+        // We don't want this notification for the focus.
+        // messageHandler.notify('Focus', 'connected', 'connected');
         return;
     }
 
@@ -869,6 +870,7 @@ $(document).bind('left.muc', function (event, jid) {
 $(document).bind('presence.muc', function (event, jid, info, pres) {
 
 /* BAO
+
     //check if the video bridge is available
     if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
         bridgeIsDown = true;
@@ -1051,26 +1053,60 @@ function getConferenceHandler() {
     return activecall;
 }
 
+/**
+ * Mutes/unmutes the local video.
+ *
+ * @param mute <tt>true</tt> to mute the local video; otherwise, <tt>false</tt>
+ * @param options an object which specifies optional arguments such as the
+ * <tt>boolean</tt> key <tt>byUser</tt> with default value <tt>true</tt> which
+ * specifies whether the method was initiated in response to a user command (in
+ * contrast to an automatic decision taken by the application logic)
+ */
+function setVideoMute(mute, options) {
+    if (connection && connection.jingle.localVideo) {
+        var session = getConferenceHandler();
+
+        if (session) {
+            session.setVideoMute(
+                mute,
+                function (mute) {
+                    var video = $('#video');
+                    var communicativeClass = "icon-camera";
+                    var muteClass = "icon-camera icon-camera-disabled";
+
+                    if (mute) {
+                        video.removeClass(communicativeClass);
+                        video.addClass(muteClass);
+                    } else {
+                        video.removeClass(muteClass);
+                        video.addClass(communicativeClass);
+                    }
+                    connection.emuc.addVideoInfoToPresence(mute);
+                    connection.emuc.sendPresence();
+                },
+                options);
+        }
+    }
+}
+
+$(document).on('inlastnchanged', function (event, oldValue, newValue) {
+    if (config.muteLocalVideoIfNotInLastN) {
+        setVideoMute(!newValue, { 'byUser': false });
+    }
+});
+
+/**
+ * Mutes/unmutes the local video.
+ */
 function toggleVideo() {
     buttonClick("#video", "icon-camera icon-camera-disabled");
-    if (!(connection && connection.jingle.localVideo))
-        return;
 
-    var sess = getConferenceHandler();
-    if (sess) {
-        sess.toggleVideoMute(
-            function (isMuted) {
-                if (isMuted) {
-                    $('#video').removeClass("icon-camera");
-                    $('#video').addClass("icon-camera icon-camera-disabled");
-                } else {
-                    $('#video').removeClass("icon-camera icon-camera-disabled");
-                    $('#video').addClass("icon-camera");
-                }
-                connection.emuc.addVideoInfoToPresence(isMuted);
-                connection.emuc.sendPresence();
-            }
-        );
+    if (connection && connection.jingle.localVideo) {
+        var session = getConferenceHandler();
+
+        if (session) {
+            setVideoMute(!session.isVideoMute());
+        }
     }
 }
 
@@ -1430,7 +1466,6 @@ $(document).ready(function () {
 
 $(window).bind('beforeunload', function () {
     if (connection && connection.connected) {
-/*    
         // ensure signout
         $.ajax({
             type: 'POST',
@@ -1450,8 +1485,6 @@ $(window).bind('beforeunload', function () {
                 console.log('signout error', textStatus + ' (' + errorThrown + ')');
             }
         });
-*/
-	connection.disconnect();
     }
     disposeConference(true);
     if(APIConnector.isEnabled())
@@ -1616,7 +1649,7 @@ $(document).bind('fatalError.jingle',
         sessionTerminated = true;
         connection.emuc.doLeave();
         messageHandler.showError(  "Sorry",
-            "Your browser version is too old. Please update and try again...");
+            "Internal application error[setRemoteDescription]");
     }
 );
 
@@ -1690,7 +1723,7 @@ function callSipButtonClicked()
 			var numberInput = document.getElementById('sipNumber');
 			if (numberInput.value) {
 			    connection.rayo.dial(
-				numberInput.value, roomName, focus.confid);	// BAO
+				numberInput.value, roomName, roomName);	// BAO
 			}
 		    }
 		},

@@ -143,7 +143,7 @@ var Avatar = (function(my) {
         {
         	return config.userAvatar;	// BAO openfire avatars
         	
-        } else if (connection.ofmuc.members[jid]) {
+        } else if (connection.ofmuc.members[jid] && connection.ofmuc.members[jid].avatar) {
         	
         	return connection.ofmuc.members[jid].avatar;
         }

@@ -2,10 +2,10 @@
 
 <plugin>
     <class>org.jivesoftware.openfire.plugin.ofmeet.OfMeetPlugin</class>
-    <name>ofmeet</name>
-    <description>Openfire Meetings</description>
-    <author></author>
-    <version>0.0.3</version>
+    <name>Openfire Meetings</name>
+    <description>Provides high quality, scalable video conferences</description>
+    <author>Ignite Realtime</author>
+    <version>0.0.4</version>
     <date>11/30/2014</date>
     <minServerVersion>3.9.9</minServerVersion>
     

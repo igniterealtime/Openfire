@@ -1,4 +1,20 @@
 
+$(document).ready(function () 
+{
+	var conferenceList = '<datalist id="conference-list">'
+		
+	for (var i=0; i<config.conferences.length; i++)
+	{	
+		conferenceList = conferenceList + '<option value="' + Strophe.getNodeFromJid(config.conferences[i].jid) + '"/>'	
+	}
+	
+	conferenceList = conferenceList + '</datalist>'
+	
+	$("body").append(conferenceList);
+	$("#enter_room_field").attr("list", "conference-list");	
+});
+
+
 Strophe.addConnectionPlugin('ofmuc', {
     connection: null,
     roomJid: null,
@@ -7,6 +23,8 @@ Strophe.addConnectionPlugin('ofmuc', {
     pdfPage: "1",
     recordingToken: null,
     isRecording: false,
+    urls: [],
+    bookmarks: [],
     
     init: function (conn) {
         this.connection = conn;
@@ -19,9 +37,34 @@ Strophe.addConnectionPlugin('ofmuc', {
         
 	$(window).resize(function () {
 	   that.resize();
-	});        
+	}); 
+	
+    },
+        
+    statusChanged: function(status, condition)
+    {
+        var that = this;
+            
+	if(status == Strophe.Status.CONNECTED)
+	{
+		this.connection.sendIQ($iq({type: "get"}).c("query", {xmlns: "jabber:iq:private"}).c("storage", {xmlns: "storage:bookmarks"}).tree(), function(resp)
+		{
+			console.log("get bookmarks", resp)
+						
+			$(resp).find('conference').each(function() 
+			{
+				that.bookmarks.push({name: $(this).attr("name"), jid: $(this).attr("jid")});	
+			})
+			
+			$(resp).find('url').each(function() 
+			{
+				that.urls.push({name: $(this).attr("name"), url: $(this).attr("url")});
+			});
+		});
+	}
     },
     
+            
     rayoAccept: function (confId, roomName)
     {
 	    var self = this;
@@ -379,7 +422,16 @@ Strophe.addConnectionPlugin('ofmuc', {
 		}
 	    }
 	    else {
-		$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" value="http://mi.eng.cam.ac.uk/~cipolla/archive/Presentations/MakingPresentations.pdf" placeholder="e.g. http://www.ge.com/battery/resources/pdf/CraigIrwin.pdf" autofocus >',
+	    
+	    	urlsList = '<datalist id="urls-list">'
+	    	
+	    	for (var i=0; i<that.urls.length; i++)
+	    	{
+	    		urlsList = urlsList + '<option value="' + that.urls[i].url + '"/>'
+	    	}
+	    	urlsList = urlsList + '</datalist>'
+	    	
+		$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" list="urls-list" autofocus >' + urlsList,
 		{
 			title: "Share a PDF Presentation",
 			persistent: false,

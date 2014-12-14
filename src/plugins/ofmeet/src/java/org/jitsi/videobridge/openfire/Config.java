@@ -10,6 +10,10 @@ package org.jitsi.videobridge.openfire;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.plugin.spark.*;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 
 import org.slf4j.*;
 import org.slf4j.Logger;
@@ -64,6 +68,25 @@ public class Config extends HttpServlet
 				}
 			}
 
+			String conferences = "[";
+			final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
+
+			for (Bookmark bookmark : bookmarks)
+			{
+				boolean addBookmarkForUser = bookmark.isGlobalBookmark() || isBookmarkForJID(userName, bookmark);
+
+				if (addBookmarkForUser)
+				{
+					if (bookmark.getType() == Bookmark.Type.group_chat)
+					{
+						conferences = conferences + (conferences.equals("[") ? "" : ",");
+						conferences = conferences + "{name: '" + bookmark.getName() + "', jid: '" + bookmark.getValue() + "'}";
+					}
+				}
+			}
+
+			conferences = conferences + "]";
+
 			boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
 
 			writeHeader(response);
@@ -95,8 +118,7 @@ public class Config extends HttpServlet
 			String minChromeExtVer		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.min.chrome.ext.ver", "0.1");
 			String enableFirefoxSupport = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.firefox.support", "false");
 			String logStats 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.stats.logging", "false");
-			String focusUserJid 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "admin@"+domain);
-			String focusUserPassword 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.password", "admin");
+			String focusUserJid 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
 
 			out.println("var config = {");
 			out.println("    hosts: {");
@@ -154,6 +176,7 @@ public class Config extends HttpServlet
 			out.println("    enableFirefoxSupport: " + enableFirefoxSupport + ",");
 			out.println("    logStats: " + logStats + ",");
 			out.println("    disablePrezi: true,");
+			out.println("    conferences: " + conferences + ",");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");
 
@@ -180,4 +203,33 @@ public class Config extends HttpServlet
 			Log.info("Config writeHeader Error", e);
         }
 	}
+
+    private boolean isBookmarkForJID(String username, Bookmark bookmark) {
+
+		if (username == null || username.equals("null")) return false;
+
+        if (bookmark.getUsers().contains(username)) {
+            return true;
+        }
+
+        Collection<String> groups = bookmark.getGroups();
+
+        if (groups != null && !groups.isEmpty()) {
+            GroupManager groupManager = GroupManager.getInstance();
+
+            for (String groupName : groups) {
+                try {
+                    Group group = groupManager.getGroup(groupName);
+
+                    if (group.isUser(username)) {
+                        return true;
+                    }
+                }
+                catch (GroupNotFoundException e) {
+                    Log.debug(e.getMessage(), e);
+                }
+            }
+        }
+        return false;
+    }
 }

@@ -51,8 +51,6 @@ public class ChatMemberImpl
      */
     private String jabberId;
 
-    private String userAgent;
-
     private ChatRoomMemberRole role;
 
     public ChatMemberImpl(String participant, ChatRoomImpl chatRoom)
@@ -130,16 +128,4 @@ public class ChatMemberImpl
     {
         this.jabberId = jabberId;
     }
-
-    @Override
-    public String getUserAgent()
-    {
-        return this.userAgent;
-    }
-
-    void setUserAgent(String userAgent)
-    {
-        this.userAgent = userAgent;
-    }
-
 }

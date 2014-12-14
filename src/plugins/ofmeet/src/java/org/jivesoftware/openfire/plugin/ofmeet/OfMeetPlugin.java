@@ -22,6 +22,9 @@ package org.jivesoftware.openfire.plugin.ofmeet;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+
+import org.xmpp.packet.*;
 
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.container.Plugin;
@@ -32,6 +35,11 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.muc.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +102,30 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			jigasiPlugin.initializePlugin(manager, pluginDirectory);
 
 			Log.info("OfMeet Plugin - Initialize jitsi conference focus");
+
+			UserManager userManager = XMPPServer.getInstance().getUserManager();
+			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+			String userName = "focus";
+			String focusUserJid = userName + "@" + domain;
+			String focusUserPassword = "focus-password-" + System.currentTimeMillis();
+
+			try {
+				userManager.getUser(userName);
+			}
+			catch (UserNotFoundException e) {
+
+				Log.info("OfMeet Plugin - Setup focus user " + focusUserJid);
+
+				userManager.createUser(userName, focusUserPassword, "Openfire Meetings Focus User", focusUserJid);
+
+				JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", focusUserJid);
+				JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focusUserPassword);
+
+   				MultiUserChatService mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference");
+				List<JID> allowedJIDs = new ArrayList<JID>();
+				allowedJIDs.add(new JID(focusUserJid));
+   				mucService.addSysadmins(allowedJIDs);
+			}
 
 			jicofoPlugin = new JicofoPlugin();
 			jicofoPlugin.initializePlugin(manager, pluginDirectory);

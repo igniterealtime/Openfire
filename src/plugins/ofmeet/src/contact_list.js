@@ -152,7 +152,6 @@ var ContactList = (function (my) {
         
         	avatar.src = "//www.gravatar.com/avatar/" + id + "?d=mm&size=30";
         }
-        
         return avatar;
     }
 

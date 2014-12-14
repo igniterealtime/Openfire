@@ -10,7 +10,6 @@ import net.java.sip.communicator.service.shutdown.*;
 import net.java.sip.communicator.util.*;
 import net.java.sip.communicator.util.Logger;
 
-import org.jitsi.impl.protocol.xmpp.extensions.*;
 import org.jitsi.jicofo.log.*;
 import org.jitsi.protocol.*;
 import org.jitsi.service.configuration.*;
@@ -148,12 +147,6 @@ public class FocusManager
                 .addExtensionProvider(LogPacketExtension.LOG_ELEM_NAME,
                                       LogPacketExtension.NAMESPACE,
                                       new LogExtensionProvider());
-
-        ProviderManager
-            .getInstance()
-                .addExtensionProvider(UserAgentPacketExtension.ELEMENT_NAME,
-                                      UserAgentPacketExtension.NAMESPACE,
-                                      new UserAgentPacketExtension.Provider());
         FocusBundleActivator
             .bundleContext.registerService(
                     JitsiMeetServices.class, jitsiMeetServices, null);

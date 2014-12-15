@@ -1,4 +1,5 @@
-/* global $, config, Prezi, Util, connection, setLargeVideoVisible, dockToolbar */
+/* global $, config, connection, dockToolbar, Moderator, Prezi,
+   setLargeVideoVisible, ToolbarToggler, Util, VideoLayout */
 var Etherpad = (function (my) {
     var etherpadName = null;
     var etherpadIFrame = null;
@@ -41,18 +42,19 @@ var Etherpad = (function (my) {
             largeVideo = $('#largeVideo');
 
         if ($('#etherpad>iframe').css('visibility') === 'hidden') {
+            $('#activeSpeaker').css('visibility', 'hidden');
             largeVideo.fadeOut(300, function () {
                 if (Prezi.isPresentationVisible()) {
                     largeVideo.css({opacity: '0'});
                 } else {
                     VideoLayout.setLargeVideoVisible(false);
                 }
+            });
 
-                $('#etherpad>iframe').fadeIn(300, function () {
-                    document.body.style.background = '#eeeeee';
-                    $('#etherpad>iframe').css({visibility: 'visible'});
-                    $('#etherpad').css({zIndex: 2});
-                });
+            $('#etherpad>iframe').fadeIn(300, function () {
+                document.body.style.background = '#eeeeee';
+                $('#etherpad>iframe').css({visibility: 'visible'});
+                $('#etherpad').css({zIndex: 2});
             });
         }
         else if ($('#etherpad>iframe')) {
@@ -60,14 +62,20 @@ var Etherpad = (function (my) {
                 $('#etherpad>iframe').css({visibility: 'hidden'});
                 $('#etherpad').css({zIndex: 0});
                 document.body.style.background = 'black';
-                if (!isPresentation) {
-                    $('#largeVideo').fadeIn(300, function () {
-                        VideoLayout.setLargeVideoVisible(true);
-                    });
-                }
             });
+
+            if (!isPresentation) {
+                $('#largeVideo').fadeIn(300, function () {
+                    VideoLayout.setLargeVideoVisible(true);
+                });
+            }
         }
         resize();
+    };
+
+    my.isVisible = function() {
+        var etherpadIframe = $('#etherpad>iframe');
+        return etherpadIframe && etherpadIframe.is(':visible');
     };
 
     /**
@@ -161,7 +169,7 @@ var Etherpad = (function (my) {
      */
     $(document).bind('etherpadadded.muc', function (event, jid, etherpadName) {
         console.log("Etherpad added", etherpadName);
-        if (config.etherpad_base && !focus) {
+        if (config.etherpad_base && !Moderator.isModerator()) {
             Etherpad.init(etherpadName);
         }
     });
@@ -169,6 +177,7 @@ var Etherpad = (function (my) {
     /**
      * On focus changed event.
      */
+    // FIXME: there is no such event as 'focusechanged.muc'
     $(document).bind('focusechanged.muc', function (event, focus) {
         console.log("Focus changed");
         if (config.etherpad_base)

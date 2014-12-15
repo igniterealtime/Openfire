@@ -14,7 +14,8 @@ var Avatar = (function(my) {
             }
             users[jid] = id;
         }
-        var url = getGravatarUrl(users[jid] || jid, 100, jid); // BAO
+        var thumbUrl = getGravatarUrl(users[jid] || jid, 100, jid); // BAO
+        var contactListUrl = getGravatarUrl(users[jid] || jid, null, jid);
         var resourceJid = Strophe.getResourceFromJid(jid);
         var thumbnail = $('#participant_' + resourceJid);
         var avatar = $('#avatar_' + resourceJid);
@@ -22,25 +23,25 @@ var Avatar = (function(my) {
         // set the avatar in the settings menu if it is local user and get the
         // local video container
         if(jid === connection.emuc.myroomjid) {
-            $('#avatar').get(0).src = url;
+            $('#avatar').get(0).src = thumbUrl;
             thumbnail = $('#localVideoContainer');
         }
 
         // set the avatar in the contact list
         var contact = $('#' + resourceJid + '>img');
         if(contact && contact.length > 0) {
-            contact.get(0).src = url;
+            contact.get(0).src = contactListUrl;
         }
 
         // set the avatar in the thumbnail
         if(avatar && avatar.length > 0) {
-            avatar[0].src = url;
+            avatar[0].src = thumbUrl;
         } else {
             if (thumbnail && thumbnail.length > 0) {
                 avatar = document.createElement('img');
                 avatar.id = 'avatar_' + resourceJid;
                 avatar.className = 'userAvatar';
-                avatar.src = url;
+                avatar.src = thumbUrl;
                 thumbnail.append(avatar);
             }
         }
@@ -72,10 +73,11 @@ var Avatar = (function(my) {
             }
 
             //if the user is the currently focused, the dominant speaker or if
-            //there is no focused and no dominant speaker
-            if (activeSpeakerJid === jid) {
+            //there is no focused and no dominant speaker and the large video is
+            //currently shown
+            if (activeSpeakerJid === jid && VideoLayout.isLargeVideoOnTop()) {
                 setVisibility($("#largeVideo"), !show);
-                setVisibility($('#activeSpeakerAvatar'), show);
+                setVisibility($('#activeSpeaker'), show);
                 setVisibility(avatar, false);
                 setVisibility(video, false);
             } else {
@@ -93,12 +95,8 @@ var Avatar = (function(my) {
      */
     my.updateActiveSpeakerAvatarSrc = function(jid) {
         if(!jid) {
-            if (focusedVideoSrc) {
-                jid = getJidFromVideoSrc(focusedVideoSrc);
-            } else {
-                jid = connection.emuc.findJidFromResource(
-                    VideoLayout.getDominantSpeakerResourceJid());
-            }
+            jid = connection.emuc.findJidFromResource(
+                    VideoLayout.getLargeVideoState().userResourceJid);
         }
         var avatar = $("#activeSpeakerAvatar")[0];
         var url = getGravatarUrl(users[jid],
@@ -137,8 +135,8 @@ var Avatar = (function(my) {
         return mediaStreams[jid][MediaStream.VIDEO_TYPE].muted;
     }
 
-    function getGravatarUrl(id, size, jid) {
-
+    function getGravatarUrl(id, size, jid) {		// BAO
+    
         if (connection.emuc.myroomjid == jid && config.userAvatar && config.userAvatar != "null")
         {
         	return config.userAvatar;	// BAO openfire avatars
@@ -147,12 +145,14 @@ var Avatar = (function(my) {
         	
         	return connection.ofmuc.members[jid].avatar;
         }
-
+        
         if(id === connection.emuc.myroomjid || !id) {
             id = SettingsMenu.getUID();
         }
-        
-        return '//www.gravatar.com/avatar/' +  MD5.hexdigest(id.trim().toLowerCase()) + "?d=mm&size=" + (size || "30");
+                
+        return 'https://www.gravatar.com/avatar/' +
+            MD5.hexdigest(id.trim().toLowerCase()) +
+            "?d=mm&size=" + (size || "30");
     }
 
     return my;

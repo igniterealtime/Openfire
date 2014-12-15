@@ -126,7 +126,16 @@
         JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.recording.secret", recordsecret);          
 
 	String recordpath = request.getParameter("recordpath"); 
-        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.recording.path", recordpath);          
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.recording.path", recordpath);  
+        
+	String adaptivelastn = request.getParameter("adaptivelastn"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.adaptive.lastn", adaptivelastn); 
+
+	String adaptivesimulcast = request.getParameter("adaptivesimulcast"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", adaptivesimulcast);         
+
+	String enablesimulcast = request.getParameter("enablesimulcast"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", enablesimulcast);                 
     }
 
 %>
@@ -179,10 +188,12 @@
 		    </td>
 	    </tr>
 	    <tr>
-		<td align="left" width="150">
+		<td colspan="2" align="left" width="150">
 		    <fmt:message key="config.page.configuration.ofmeet.iceservers"/>
 		</td>
-		<td><input type="text" size="100" maxlength="256" name="iceservers"
+	    </tr>	
+	    <tr>		
+		<td colspan="2"><input type="text" size="100" maxlength="256" name="iceservers"
 			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "") %>" placeholder="{ 'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }] }">
 		</td>
 	    </tr>	
@@ -428,6 +439,53 @@
 	    </tr> 	     	    
         </table>
    </p>   
+    <p>
+        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
+            <thead> 
+            <tr>
+                <th><fmt:message key="config.page.configuration.advanced.features.title"/></th>
+            </tr>
+            </thead>
+            <tbody> 
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="adaptivelastn" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.lastn", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.adaptivelastn.disabled" /></b> - <fmt:message key="config.page.configuration.adaptivelastn.disabled_description" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="adaptivelastn" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.lastn", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.adaptivelastn.enabled" /></b> - <fmt:message key="config.page.configuration.adaptivelastn.enabled_description" />
+		    </td>
+	    </tr> 
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="adaptivesimulcast" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.adaptivesimulcast.disabled" /></b> - <fmt:message key="config.page.configuration.adaptivesimulcast.disabled_description" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="adaptivesimulcast" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.adaptivesimulcast.enabled" /></b> - <fmt:message key="config.page.configuration.adaptivesimulcast.enabled_description" />
+		    </td>
+	    </tr>
+
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="enablesimulcast" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enablesimulcast.disabled" /></b> - <fmt:message key="config.page.configuration.enablesimulcast.disabled_description" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="enablesimulcast" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enablesimulcast.enabled" /></b> - <fmt:message key="config.page.configuration.enablesimulcast.enabled_description" />
+		    </td>
+	    </tr>	    
+        </table>
+   </p>    
    <p>
         <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
             <thead> 

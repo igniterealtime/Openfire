@@ -801,6 +801,7 @@ Openfire.Connection.prototype = {
         }        
     },
     
+    
     /** 
      *
      * Private Function: _textToXML convert text to DOM Document object

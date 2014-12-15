@@ -136,11 +136,11 @@
 		<%= elapsed %>
         </td>  
         <td width="10%" align="center">
-		<%= conference.getEndpointsCount() %>
+		<%= conference.getEndpoints().size() %>
         </td>         
         <td width="10%" align="center">
-            <% if (conference.getSpeechActivity() != null && conference.getSpeechActivity().getDominantEndpoint() != null) { %>
-                <%= conference.getSpeechActivity().getDominantEndpoint().getDisplayName() %>
+            <% if (conference.getSpeechActivity() != null && conference.getSpeechActivity().getDominantEndpoint() != null && conference.getSpeechActivity().getDominantEndpoint().getID() != null) { %>
+                <%= conference.getSpeechActivity().getDominantEndpoint().getID() %>
             <% }
                else { %>
                 &nbsp;

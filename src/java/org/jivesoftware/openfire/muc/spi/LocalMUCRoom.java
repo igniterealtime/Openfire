@@ -1109,6 +1109,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     public void broadcast(BroadcastPresenceRequest presenceRequest) {
         String jid = null;
         Presence presence = presenceRequest.getPresence();
+        JID to = presence.getTo();
         Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
         // Don't include the occupant's JID if the room is semi-anon and the new occupant
         // is not a moderator
@@ -1130,7 +1131,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 }
             }
             // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
-            if (occupant.getPresence().getFrom().equals(presence.getTo())) {
+            if (occupant.getPresence().getFrom().equals(to)) {
                 Presence selfPresence = presence.createCopy();
                 Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 fragSelfPresence.addElement("status").addAttribute("code", "110");

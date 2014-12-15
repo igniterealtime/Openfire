@@ -53,6 +53,7 @@ Strophe.addConnectionPlugin('rayo',
                 function (error)
                 {
                     console.info('Dial error ', error);
+                    setTimeout(function() {messageHandler.openMessageDialog("Dial Error", error);}, 1000);
                 }
             );
         },

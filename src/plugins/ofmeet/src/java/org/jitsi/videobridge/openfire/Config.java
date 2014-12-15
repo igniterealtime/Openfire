@@ -107,7 +107,7 @@ public class Config extends HttpServlet
 			String adaptiveSimulcast	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", "false");
 			String useRtcpMux 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.rtcp.mux", "true");
 			String useBundle 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.bundle", "false");
-			String enableWelcomePage	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.welcomePage", "false");
+			String enableWelcomePage	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.welcomePage", "true");
 			String enableSimulcast 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", "false");
 			String enableRtpStats 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.rtp.stats", "true");
 			String openSctp 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.open.sctp", "true");

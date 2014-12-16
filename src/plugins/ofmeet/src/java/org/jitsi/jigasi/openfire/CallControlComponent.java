@@ -131,13 +131,32 @@ public class CallControlComponent extends AbstractComponent
 		sipService.stop();
 	}
 
-	private void makeCall(Conference conference, JID focusJid, String confJid, String to, String callId)
+	public void recordCall(Conference conference, String token, String state)
 	{
-		Log.info("CallControlComponent - makeCall "  + focusJid + " " + confJid + " " + to + " " + callId);
+		String focusJid = conference.getFocus();
+		String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+
+		Log.info("CallControlComponent - recordCall " + token + " " + state + " " + focusJid);
+
+		IQ iq = new IQ(IQ.Type.set);
+		iq.setTo("ofmeet-jitsi-videobridge."+domain);
+		iq.setFrom(focusJid);
+
+		Element colibri = iq.setChildElement("conference", "http://jitsi.org/protocol/colibri");
+		colibri.addAttribute("id", conference.getID());
+		colibri.addElement("recording").addAttribute("state", state).addAttribute("token", token);
+
+		sendPacket(iq);
+	}
+
+	private void makeCall(Conference conference, String confJid, String to, String callId)
+	{
+		Log.info("CallControlComponent - makeCall " + confJid + " " + to + " " + callId);
 
 		try {
 			String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
 			String callerId = (new JID(confJid)).getNode();
+			String focusJid = conference.getFocus();
 
 			MediaService mediaService = LibJitsi.getMediaService();
 			MediaStream mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, mediaService.createSrtpControl(SrtpControlType.MIKEY));
@@ -156,7 +175,7 @@ public class CallControlComponent extends AbstractComponent
 
 			content.createRtpChannel(null);
 
-			CallSession cs = new CallSession(mediaStream, hostname, this, callId, focusJid.toString(), confJid);
+			CallSession cs = new CallSession(mediaStream, hostname, this, callId, focusJid, confJid);
 			callSessions.put(callId, cs);
 
 			boolean toSip = to.indexOf("sip:") == 0 ;
@@ -189,7 +208,7 @@ public class CallControlComponent extends AbstractComponent
 					String outboundProxy = JiveGlobals.getProperty("voicebridge.default.proxy.outboundproxy", null);
 					String sipUsername = JiveGlobals.getProperty("voicebridge.default.proxy.sipauthuser", null);
 
-					if (outboundProxy != null && sipUsername != null)
+					if (outboundProxy != null && sipUsername != null && !"".equals(outboundProxy.trim()) && !"".equals(sipUsername.trim()))
 					{
 						to = "sip:" + to + "@" + outboundProxy;
 						from = "sip:" + sipUsername + "@" + outboundProxy;
@@ -265,11 +284,17 @@ public class CallControlComponent extends AbstractComponent
 
 		if (confJID != null && conferences.containsKey(confJID))
 		{
-			Log.info("CallControlComponent - findCreateSession conference id " + confJID);
+			String confId = conferences.get(confJID);
+
+			Log.info("CallControlComponent - findCreateSession conference id " + confJID + " " + confId);
 
 			for (Conference conf : getVideobridge().getConferences())
 			{
-				if (conf.getID().equals(conferences.get(confJID))) conference = conf;
+				if (conf.getID().equals(confId))
+				{
+					conference = conf;
+					break;
+				}
 			}
 		}
 
@@ -371,16 +396,18 @@ public class CallControlComponent extends AbstractComponent
 	@Override public IQ handleIQSet(IQ iq)	throws Exception
 	{
 		IQ reply = IQ.createResultIQ(iq);
+		String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
 		try
 		{
 			Log.info("CallControlComponent - handleIQSet\n" + iq);
 
-			JID focusJid = iq.getFrom();
-			String username = focusJid.getNode();
 			Element element = iq.getChildElement();
 			String namespace = element.getNamespaceURI();
 			String request = element.getName();
+
+			String confJid = null;
+			String confId = null;
 
 			if ("dial".equals(request) && "urn:xmpp:rayo:1".equals(namespace))
 			{
@@ -388,7 +415,6 @@ public class CallControlComponent extends AbstractComponent
 
 				String from = element.attributeValue("from");
 				String to = element.attributeValue("to");
-				String confId = null;
 
 				for ( Iterator i = element.elementIterator( "header" ); i.hasNext(); )
 				{
@@ -396,35 +422,52 @@ public class CallControlComponent extends AbstractComponent
 					String name = header.attributeValue("name");
 					String value = header.attributeValue("value");
 
-					if ("JvbRoomName".equals(name)) confId = value;
+					if ("JvbRoomName".equals(name)) confJid = value;
 				}
 
-				if (confId == null)
+				if (confJid == null)
 				{
 					reply.setError(PacketError.Condition.item_not_found);
 					Log.error("No JvbRoomName header found");
 
 				} else {
 
-					String callId = Long.toHexString(System.currentTimeMillis());
-
-					Log.info("Got dial request " + from + " -> " + to + " focusJid: " + focusJid + " confId " + confId + " callId " + callId);
-
-					String callResource = "xmpp:" + callId + "@" + getJID();
-
-					final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
-					childElement.addAttribute("uri", (String) "xmpp:" + callId + "@" + getJID());
-					childElement.addAttribute("id", (String)  callId);
-
-					String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
-					Conference conference = getVideobridge().getConference(confId, focusJid.toString());
-
-					if (conference != null)
+					if (conferences.containsKey(confJid))
 					{
-						makeCall(conference, focusJid, from, to, callId);
+						confId = conferences.get(confJid);
+
+						String callId = Long.toHexString(System.currentTimeMillis());
+
+						Log.info("Got dial request " + from + " -> " + to + " confId " + confId + " callId " + callId);
+
+						String callResource = "xmpp:" + callId + "@" + getJID();
+
+						final Element childElement = reply.setChildElement("ref", "urn:xmpp:rayo:1");
+						childElement.addAttribute("uri", (String) "xmpp:" + callId + "@" + getJID());
+						childElement.addAttribute("id", (String)  callId);
+
+						Conference conference = null;
+
+						for (Conference conf : getVideobridge().getConferences())
+						{
+							if (conf.getID().equals(confId))
+							{
+								conference = conf;
+								break;
+							}
+						}
+
+						if (conference != null)
+						{
+							makeCall(conference, confJid, to, callId);
+
+						} else {
+							Log.error("CallControlComponent - can't find conference " + confId);
+							reply.setError(PacketError.Condition.item_not_found);
+						}
 
 					} else {
-						Log.error("CallControlComponent - invalid conf id " + confId + " " + focusJid);
+						Log.error("CallControlComponent - focus not ready " + confJid);
 						reply.setError(PacketError.Condition.item_not_found);
 					}
 				}
@@ -434,7 +477,6 @@ public class CallControlComponent extends AbstractComponent
 			{
 				Log.info("CallControlComponent - Accept");
 
-				String confId = null;
 				String confName = null;
 
 				for ( Iterator i = element.elementIterator( "header" ); i.hasNext(); )
@@ -451,6 +493,10 @@ public class CallControlComponent extends AbstractComponent
 				{
 					Log.info("CallControlComponent - Accept register " + confId + " " + confName);
 					conferences.put(confName, confId);
+
+				} else {
+					reply.setError(PacketError.Condition.item_not_found);
+					Log.error("No JvbRoomName or JvbRoomId header found");
 				}
 			}
 
@@ -460,6 +506,61 @@ public class CallControlComponent extends AbstractComponent
 				String callId = iq.getTo().getNode();
 				hangupCall(callId);
 			}
+
+			else if ("record".equals(request) && "urn:xmpp:rayo:record:1".equals(namespace))
+			{
+				Log.info("CallControlComponent - Record");
+
+				String token = null;
+				String state = null;
+				String confName = null;
+
+				for ( Iterator i = element.elementIterator( "hint" ); i.hasNext(); )
+				{
+					Element hint = (Element) i.next();
+					String name = hint.attributeValue("name");
+					String value = hint.attributeValue("value");
+
+					if ("JvbToken".equals(name)) token = value;
+					if ("JvbState".equals(name)) state = value;
+					if ("JvbRoomName".equals(name)) confName = value;
+				}
+
+				if (token != null && state != null && confName != null)
+				{
+					if (conferences.containsKey(confName))
+					{
+						confId = conferences.get(confName);
+
+						Conference conference = null;
+
+						for (Conference conf : getVideobridge().getConferences())
+						{
+							if (conf.getID().equals(confId))
+							{
+								conference = conf;
+								break;
+							}
+						}
+
+						if (conference != null)
+						{
+							recordCall(conference, token, state);
+
+						} else {
+							Log.error("CallControlComponent - can't find conference " + confId);
+							reply.setError(PacketError.Condition.item_not_found);
+						}
+					} else {
+						Log.error("CallControlComponent - focus not ready " + confName);
+						reply.setError(PacketError.Condition.item_not_found);
+					}
+				} else {
+					reply.setError(PacketError.Condition.item_not_found);
+					Log.error("No JvbRoomName, JvbToken or JvbState headers found");
+				}
+			}
+
 			else
 			{
 				Log.warn("CallControlComponent - Unknown");

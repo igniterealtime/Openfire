@@ -23,13 +23,17 @@ var VideoLayout = (function (my) {
     my.changeLocalStream = function (stream) {
         connection.jingle.localAudio = stream;
         VideoLayout.changeLocalVideo(stream, true);
-    }
+    };
 
     my.changeLocalAudio = function(stream) {
         connection.jingle.localAudio = stream;
         RTC.attachMediaStream($('#localAudio'), stream);
         document.getElementById('localAudio').autoplay = true;
         document.getElementById('localAudio').volume = 0;
+        if (preMuted) {
+            setAudioMuted(true);
+            preMuted = false;
+        }
     };
 
     my.changeLocalVideo = function(stream, flipX) {
@@ -57,11 +61,19 @@ var VideoLayout = (function (my) {
         var localVideoSelector = $('#' + localVideo.id);
         // Add click handler to both video and video wrapper elements in case
         // there's no video.
-        localVideoSelector.click(function () {
-            VideoLayout.handleVideoThumbClicked(RTC.getVideoSrc(localVideo), false, connection.emuc.myroomjid);
+        localVideoSelector.click(function (event) {
+            event.stopPropagation();
+            VideoLayout.handleVideoThumbClicked(
+                RTC.getVideoSrc(localVideo),
+                false,
+                Strophe.getResourceFromJid(connection.emuc.myroomjid));
         });
-        $('#localVideoContainer').click(function () {
-            VideoLayout.handleVideoThumbClicked(RTC.getVideoSrc(localVideo), false, connection.emuc.myroomjid);
+        $('#localVideoContainer').click(function (event) {
+            event.stopPropagation();
+            VideoLayout.handleVideoThumbClicked(
+                RTC.getVideoSrc(localVideo),
+                false,
+                Strophe.getResourceFromJid(connection.emuc.myroomjid));
         });
 
         // Add hover handler
@@ -151,17 +163,17 @@ var VideoLayout = (function (my) {
 
     my.getLargeVideoState = function () {
         return largeVideoState;
-    }
+    };
 
     /**
      * Updates the large video with the given new video source.
      */
-    my.updateLargeVideo = function(newSrc, vol, jid) {
+    my.updateLargeVideo = function(newSrc, vol, resourceJid) {
         console.log('hover in', newSrc);
 
-        if (RTC.getVideoSrc($('#largeVideo')[0]) != newSrc) {
+        if (RTC.getVideoSrc($('#largeVideo')[0]) !== newSrc) {
 
-            $('#activeSpeakerAvatar').css('visibility', 'hidden');
+            $('#activeSpeaker').css('visibility', 'hidden');
             // Due to the simulcast the localVideoSrc may have changed when the
             // fadeOut event triggers. In that case the getJidFromVideoSrc and
             // isVideoSrcDesktop methods will not function correctly.
@@ -172,28 +184,26 @@ var VideoLayout = (function (my) {
 
             largeVideoState.newSrc = newSrc;
             largeVideoState.isVisible = $('#largeVideo').is(':visible');
-            largeVideoState.isDesktop = isVideoSrcDesktop(jid);
-            if(jid2Ssrc[largeVideoState.userJid] ||
+            largeVideoState.isDesktop = isVideoSrcDesktop(resourceJid);
+            if(jid2Ssrc[largeVideoState.userResourceJid] ||
                 (connection && connection.emuc.myroomjid &&
-                    largeVideoState.userJid == Strophe.getResourceFromJid(connection.emuc.myroomjid)))
-            {
-                largeVideoState.oldJid = largeVideoState.userJid;
+                    largeVideoState.userResourceJid ===
+                    Strophe.getResourceFromJid(connection.emuc.myroomjid))) {
+                largeVideoState.oldResourceJid = largeVideoState.userResourceJid;
+            } else {
+                largeVideoState.oldResourceJid = null;
             }
-            else
-            {
-                largeVideoState.oldJid = null;
-            }
-            largeVideoState.userJid = jid;
+            largeVideoState.userResourceJid = resourceJid;
 
             // Screen stream is already rotated
             largeVideoState.flipX = (newSrc === localVideoSrc) && flipXLocalVideo;
 
             var userChanged = false;
-            if (largeVideoState.oldJid != largeVideoState.userJid) {
+            if (largeVideoState.oldResourceJid !== largeVideoState.userResourceJid) {
                 userChanged = true;
                 // we want the notification to trigger even if userJid is undefined,
                 // or null.
-                $(document).trigger("selectedendpointchanged", [largeVideoState.userJid]);
+                $(document).trigger("selectedendpointchanged", [largeVideoState.userResourceJid]);
             }
 
             if (!largeVideoState.updateInProgress) {
@@ -201,11 +211,13 @@ var VideoLayout = (function (my) {
 
                 var doUpdate = function () {
 
-                    Avatar.updateActiveSpeakerAvatarSrc(largeVideoState.userJid);
+                    Avatar.updateActiveSpeakerAvatarSrc(
+                        connection.emuc.findJidFromResource(
+                            largeVideoState.userResourceJid));
 
-                    if (!userChanged && largeVideoState.preload
-                        && largeVideoState.preload != null
-                        && RTC.getVideoSrc($(largeVideoState.preload)[0]) == newSrc)
+                    if (!userChanged && largeVideoState.preload &&
+                        largeVideoState.preload !== null &&
+                        RTC.getVideoSrc($(largeVideoState.preload)[0]) === newSrc)
                     {
 
                         console.info('Switching to preloaded video');
@@ -214,7 +226,7 @@ var VideoLayout = (function (my) {
                         // loop through largeVideo attributes and apply them on
                         // preload.
                         $.each(attributes, function () {
-                            if (this.name != 'id' && this.name != 'src') {
+                            if (this.name !== 'id' && this.name !== 'src') {
                                 largeVideoState.preload.attr(this.name, this.value);
                             }
                         });
@@ -259,13 +271,17 @@ var VideoLayout = (function (my) {
 
                     // Only if the large video is currently visible.
                     // Disable previous dominant speaker video.
-                    if (largeVideoState.oldJid) {
-                        VideoLayout.enableDominantSpeaker(largeVideoState.oldJid, false);
+                    if (largeVideoState.oldResourceJid) {
+                        VideoLayout.enableDominantSpeaker(
+                            largeVideoState.oldResourceJid,
+                            false);
                     }
 
                     // Enable new dominant speaker in the remote videos section.
-                    if (largeVideoState.userJid) {
-                        VideoLayout.enableDominantSpeaker(largeVideoState.userJid, true);
+                    if (largeVideoState.userResourceJid) {
+                        VideoLayout.enableDominantSpeaker(
+                            largeVideoState.userResourceJid,
+                            true);
                     }
 
                     if (userChanged && largeVideoState.isVisible) {
@@ -275,7 +291,9 @@ var VideoLayout = (function (my) {
                     }
 
                     if(userChanged) {
-                        Avatar.showUserAvatar(largeVideoState.oldJid);
+                        Avatar.showUserAvatar(
+                            connection.emuc.findJidFromResource(
+                                largeVideoState.oldResourceJid));
                     }
 
                     largeVideoState.updateInProgress = false;
@@ -287,15 +305,22 @@ var VideoLayout = (function (my) {
                     doUpdate();
                 }
             }
+        } else {
+            Avatar.showUserAvatar(
+                connection.emuc.findJidFromResource(
+                    largeVideoState.userResourceJid));
         }
+
     };
 
-    my.handleVideoThumbClicked = function(videoSrc, noPinnedEndpointChangedEvent, jid) {
+    my.handleVideoThumbClicked = function(videoSrc,
+                                          noPinnedEndpointChangedEvent, 
+                                          resourceJid) {
         // Restore style for previously focused video
         var oldContainer = null;
-        if(focusedVideoSrc) {
-            var focusJid = focusedVideoSrc.jid;
-            oldContainer = getParticipantContainer(focusJid);
+        if(focusedVideoInfo) {
+            var focusResourceJid = focusedVideoInfo.resourceJid;
+            oldContainer = getParticipantContainer(focusResourceJid);
         }
 
         if (oldContainer) {
@@ -303,9 +328,9 @@ var VideoLayout = (function (my) {
         }
 
         // Unlock current focused.
-        if (focusedVideoSrc && focusedVideoSrc.src === videoSrc)
+        if (focusedVideoInfo && focusedVideoInfo.src === videoSrc)
         {
-            focusedVideoSrc = null;
+            focusedVideoInfo = null;
             var dominantSpeakerVideo = null;
             // Enable the currently set dominant speaker.
             if (currentDominantSpeaker) {
@@ -314,7 +339,10 @@ var VideoLayout = (function (my) {
                         .get(0);
 
                 if (dominantSpeakerVideo) {
-                    VideoLayout.updateLargeVideo(RTC.getVideoSrc(dominantSpeakerVideo), 1, currentDominantSpeaker);
+                    VideoLayout.updateLargeVideo(
+                        RTC.getVideoSrc(dominantSpeakerVideo),
+                        1,
+                        currentDominantSpeaker);
                 }
             }
 
@@ -325,23 +353,24 @@ var VideoLayout = (function (my) {
         }
 
         // Lock new video
-        focusedVideoSrc = {
+        focusedVideoInfo = {
             src: videoSrc,
-            jid: jid
+            resourceJid: resourceJid
         };
 
         // Update focused/pinned interface.
-        if (jid)
+        if (resourceJid)
         {
-            var container = getParticipantContainer(jid);
+            var container = getParticipantContainer(resourceJid);
             container.addClass("videoContainerFocused");
 
             if (!noPinnedEndpointChangedEvent) {
-                $(document).trigger("pinnedendpointchanged", [jid]);
+                $(document).trigger("pinnedendpointchanged", [resourceJid]);
             }
         }
 
-        if ($('#largeVideo').attr('src') == videoSrc) {
+        if ($('#largeVideo').attr('src') === videoSrc &&
+            VideoLayout.isLargeVideoOnTop()) {
             return;
         }
 
@@ -349,7 +378,7 @@ var VideoLayout = (function (my) {
         // this isn't a prezi.
         $(document).trigger("video.selected", [false]);
 
-        VideoLayout.updateLargeVideo(videoSrc, 1, Strophe.getResourceFromJid(jid));
+        VideoLayout.updateLargeVideo(videoSrc, 1, resourceJid);
 
         $('audio').each(function (idx, el) {
             if (el.id.indexOf('mixedmslabel') !== -1) {
@@ -395,7 +424,7 @@ var VideoLayout = (function (my) {
      * Shows/hides the large video.
      */
     my.setLargeVideoVisible = function(isVisible) {
-        var resourceJid = largeVideoState.userJid;
+        var resourceJid = largeVideoState.userResourceJid;
 
         if (isVisible) {
             $('#largeVideo').css({visibility: 'visible'});
@@ -404,8 +433,22 @@ var VideoLayout = (function (my) {
         }
         else {
             $('#largeVideo').css({visibility: 'hidden'});
+            $('#activeSpeaker').css('visibility', 'hidden');
             $('.watermark').css({visibility: 'hidden'});
             VideoLayout.enableDominantSpeaker(resourceJid, false);
+            if(focusedVideoInfo) {
+                var focusResourceJid = focusedVideoInfo.resourceJid;
+                var oldContainer = getParticipantContainer(focusResourceJid);
+
+                if (oldContainer && oldContainer.length > 0) {
+                    oldContainer.removeClass("videoContainerFocused");
+                }
+                focusedVideoInfo = null;
+                if(focusResourceJid) {
+                    Avatar.showUserAvatar(
+                        connection.emuc.findJidFromResource(focusResourceJid));
+                }
+            }
         }
     };
 
@@ -416,6 +459,10 @@ var VideoLayout = (function (my) {
      */
     my.isLargeVideoVisible = function() {
         return $('#largeVideo').is(':visible');
+    };
+
+    my.isLargeVideoOnTop = function () {
+        return !Prezi.isPresentationVisible() && !Etherpad.isVisible();
     };
 
     /**
@@ -438,7 +485,7 @@ var VideoLayout = (function (my) {
         if ($('#' + videoSpanId).length > 0) {
             // If there's been a focus change, make sure we add focus related
             // interface!!
-            if (focus && $('#remote_popupmenu_' + resourceJid).length <= 0) {
+            if (Moderator.isModerator() && $('#remote_popupmenu_' + resourceJid).length <= 0) {
                 addRemoteVideoMenu(peerJid,
                     document.getElementById(videoSpanId));
             }
@@ -476,7 +523,7 @@ var VideoLayout = (function (my) {
 
         // If the peerJid is null then this video span couldn't be directly
         // associated with a participant (this could happen in the case of prezi).
-        if (focus && peerJid != null)
+        if (Moderator.isModerator() && peerJid !== null)
             addRemoteVideoMenu(peerJid, container);
 
         remotes.appendChild(container);
@@ -535,8 +582,21 @@ var VideoLayout = (function (my) {
                 VideoLayout.removeRemoteStreamElement(
                     stream, isVideo, container);
 
-                if (peerJid)
-                    ContactList.removeContact(peerJid);
+                // NOTE(gp) it seems that under certain circumstances, the
+                // onended event is not fired and thus the contact list is not
+                // updated.
+                //
+                // The onended event of a stream should be fired when the SSRCs
+                // corresponding to that stream are removed from the SDP; but
+                // this doesn't seem to always be the case, resulting in ghost
+                // contacts.
+                //
+                // In an attempt to fix the ghost contacts problem, I'm moving
+                // the removeContact() method call in app.js, inside the
+                // 'muc.left' event handler.
+
+                //if (peerJid)
+                //    ContactList.removeContact(peerJid);
             };
 
             // Add click handler.
@@ -546,10 +606,14 @@ var VideoLayout = (function (my) {
                  * no actual video).
                  */
                 var videoThumb = $('#' + container.id + '>video').get(0);
+                if (videoThumb) {
+                    VideoLayout.handleVideoThumbClicked(
+                        RTC.getVideoSrc(videoThumb),
+                        false,
+                        Strophe.getResourceFromJid(peerJid));
+                }
 
-                if (videoThumb)
-                    VideoLayout.handleVideoThumbClicked(RTC.getVideoSrc(videoThumb), false, peerJid);
-
+                event.stopPropagation();
                 event.preventDefault();
                 return false;
             };
@@ -831,42 +895,47 @@ var VideoLayout = (function (my) {
     };
 
     /**
-     * Shows a visual indicator for the focus of the conference.
-     * Currently if we're not the owner of the conference we obtain the focus
-     * from the connection.jingle.sessions.
+     * Shows a visual indicator for the moderator of the conference.
      */
-    my.showFocusIndicator = function() {
-        if (focus !== null) {
+    my.showModeratorIndicator = function () {
+        if (Moderator.isModerator()) {
             var indicatorSpan = $('#localVideoContainer .focusindicator');
 
             if (indicatorSpan.children().length === 0)
             {
-                createFocusIndicatorElement(indicatorSpan[0]);
+                createModeratorIndicatorElement(indicatorSpan[0]);
             }
-        }
-        else if (Object.keys(connection.jingle.sessions).length > 0) {
-            // If we're only a participant the focus will be the only session we have.
-            var session
-                = connection.jingle.sessions
-                    [Object.keys(connection.jingle.sessions)[0]];
-            var focusId
-                = 'participant_' + Strophe.getResourceFromJid(session.peerjid);
+        } else {
+            Object.keys(connection.emuc.members).forEach(function (jid) {
+                var member = connection.emuc.members[jid];
+                if (member.role === 'moderator') {
+                    var moderatorId
+                        = 'participant_' + Strophe.getResourceFromJid(jid);
 
-            var focusContainer = document.getElementById(focusId);
-            if (!focusContainer) {
-                console.error("No focus container!");
-                return;
-            }
-            var indicatorSpan = $('#' + focusId + ' .focusindicator');
+                    var moderatorContainer
+                        = document.getElementById(moderatorId);
 
-            if (!indicatorSpan || indicatorSpan.length === 0) {
-                indicatorSpan = document.createElement('span');
-                indicatorSpan.className = 'focusindicator';
+                    if (Strophe.getResourceFromJid(jid) === 'focus') {
+                        // Skip server side focus
+                        return;
+                    }
+                    if (!moderatorContainer) {
+                        console.error("No moderator container for " + jid);
+                        return;
+                    }
+                    var indicatorSpan
+                        = $('#' + moderatorId + ' .focusindicator');
 
-                focusContainer.appendChild(indicatorSpan);
+                    if (!indicatorSpan || indicatorSpan.length === 0) {
+                        indicatorSpan = document.createElement('span');
+                        indicatorSpan.className = 'focusindicator';
 
-                createFocusIndicatorElement(indicatorSpan);
-            }
+                        moderatorContainer.appendChild(indicatorSpan);
+
+                        createModeratorIndicatorElement(indicatorSpan);
+                    }
+                }
+            });
         }
     };
 
@@ -970,9 +1039,9 @@ var VideoLayout = (function (my) {
         $('#largeVideoContainer').width(availableWidth);
         $('#largeVideoContainer').height(availableHeight);
 
-
-        $('#activeSpeakerAvatar').css('top',
-            (availableHeight - interfaceConfig.ACTIVE_SPEAKER_AVATAR_SIZE) / 2);
+        var avatarSize = interfaceConfig.ACTIVE_SPEAKER_AVATAR_SIZE;
+        var top = availableHeight / 2 - avatarSize / 4 * 3;
+        $('#activeSpeaker').css('top', top);
 
         VideoLayout.resizeThumbnails();
     };
@@ -1040,38 +1109,38 @@ var VideoLayout = (function (my) {
 
         if (video && video.length > 0) {
             if (isEnable) {
-                VideoLayout.showDisplayName(videoContainerId, true);
+                var isLargeVideoVisible = VideoLayout.isLargeVideoOnTop();
+                VideoLayout.showDisplayName(videoContainerId, isLargeVideoVisible);
 
                 if (!videoSpan.classList.contains("dominantspeaker"))
                     videoSpan.classList.add("dominantspeaker");
-
-                video.css({visibility: 'hidden'});
             }
             else {
                 VideoLayout.showDisplayName(videoContainerId, false);
 
                 if (videoSpan.classList.contains("dominantspeaker"))
                     videoSpan.classList.remove("dominantspeaker");
-
-                video.css({visibility: 'visible'});
             }
+
+            Avatar.showUserAvatar(
+                connection.emuc.findJidFromResource(resourceJid));
         }
     };
 
     /**
      * Gets the selector of video thumbnail container for the user identified by
      * given <tt>userJid</tt>
-     * @param userJid user's Jid for whom we want to get the video container.
+     * @param resourceJid user's Jid for whom we want to get the video container.
      */
-    function getParticipantContainer(userJid)
+    function getParticipantContainer(resourceJid)
     {
-        if (!userJid)
+        if (!resourceJid)
             return null;
 
-        if (userJid === connection.emuc.myroomjid)
+        if (resourceJid === Strophe.getResourceFromJid(connection.emuc.myroomjid))
             return $("#localVideoContainer");
         else
-            return $("#participant_" + Strophe.getResourceFromJid(userJid));
+            return $("#participant_" + resourceJid);
     }
 
     /**
@@ -1184,15 +1253,15 @@ var VideoLayout = (function (my) {
     }
 
     /**
-     * Creates the element indicating the focus of the conference.
+     * Creates the element indicating the moderator(owner) of the conference.
      *
-     * @param parentElement the parent element where the focus indicator will
+     * @param parentElement the parent element where the owner indicator will
      * be added
      */
-    function createFocusIndicatorElement(parentElement) {
-        var focusIndicator = document.createElement('i');
-        focusIndicator.className = 'fa fa-star';
-        parentElement.appendChild(focusIndicator);
+    function createModeratorIndicatorElement(parentElement) {
+        var moderatorIndicator = document.createElement('i');
+        moderatorIndicator.className = 'fa fa-star';
+        parentElement.appendChild(moderatorIndicator);
 
         Util.setTooltip(parentElement,
                 "The owner of<br/>this conference",
@@ -1295,8 +1364,8 @@ var VideoLayout = (function (my) {
             if ($(this).attr('disabled') != undefined) {
                 event.preventDefault();
             }
-            var isMute = !mutedAudios[jid];
-            connection.moderate.setMute(jid, isMute);
+            var isMute = mutedAudios[jid] == true;
+            connection.moderate.setMute(jid, !isMute);
             popupmenuElement.setAttribute('style', 'display:none;');
 
             if (isMute) {
@@ -1350,7 +1419,10 @@ var VideoLayout = (function (my) {
                     // We have a video src, great! Let's update the large video
                     // now.
 
-                    VideoLayout.handleVideoThumbClicked(videoThumb.src, false, jid);
+                    VideoLayout.handleVideoThumbClicked(
+                        videoThumb.src,
+                        false,
+                        Strophe.getResourceFromJid(jid));
                 } else {
 
                     // If we don't have a video src for jid, there's absolutely
@@ -1376,19 +1448,27 @@ var VideoLayout = (function (my) {
      * On audio muted event.
      */
     $(document).bind('audiomuted.muc', function (event, jid, isMuted) {
+        /*
+         // FIXME: but focus can not mute in this case ? - check
         if (jid === connection.emuc.myroomjid) {
+
             // The local mute indicator is controlled locally
             return;
+        }*/
+        var videoSpanId = null;
+        if (jid === connection.emuc.myroomjid) {
+            videoSpanId = 'localVideoContainer';
+        } else {
+            VideoLayout.ensurePeerContainerExists(jid);
+            videoSpanId = 'participant_' + Strophe.getResourceFromJid(jid);
         }
 
-        VideoLayout.ensurePeerContainerExists(jid);
+        mutedAudios[jid] = isMuted;
 
-        if (focus) {
-            mutedAudios[jid] = isMuted;
+        if (Moderator.isModerator()) {
             VideoLayout.updateRemoteVideoMenu(jid, isMuted);
         }
 
-        var videoSpanId = 'participant_' + Strophe.getResourceFromJid(jid);
         if (videoSpanId)
             VideoLayout.showAudioIndicator(videoSpanId, isMuted);
     });
@@ -1471,7 +1551,7 @@ var VideoLayout = (function (my) {
 
         // Local video will not have container found, but that's ok
         // since we don't want to switch to local video.
-        if (container && !focusedVideoSrc)
+        if (container && !focusedVideoInfo)
         {
             var video = container.getElementsByTagName("video");
 
@@ -1557,7 +1637,7 @@ var VideoLayout = (function (my) {
                 // it is no longer being received. If resourceJid was being
                 // displayed in the large video we have to switch to another
                 // user.
-                var largeVideoResource = largeVideoState.userJid;
+                var largeVideoResource = largeVideoState.userResourceJid;
                 if (!updateLargeVideo && resourceJid === largeVideoResource) {
                     updateLargeVideo = true;
                 }
@@ -1588,7 +1668,10 @@ var VideoLayout = (function (my) {
 
                         // Don't fire the events again, they've already
                         // been fired in the contact list click handler.
-                        VideoLayout.handleVideoThumbClicked($(sel).attr('src'), false, mediaStream.peerjid);
+                        VideoLayout.handleVideoThumbClicked(
+                            $(sel).attr('src'),
+                            false,
+                            Strophe.getResourceFromJid(mediaStream.peerjid));
 
                         updateLargeVideo = false;
                     }
@@ -1643,16 +1726,20 @@ var VideoLayout = (function (my) {
                     = VideoLayout.getPeerContainerResourceJid(videoParent[0]);
 
             // Update the large video to the last added video only if there's no
-            // current dominant or focused speaker or update it to the current
-            // dominant speaker.
-            if ((!focusedVideoSrc && !VideoLayout.getDominantSpeakerResourceJid())
-                || (parentResourceJid
-                && VideoLayout.getDominantSpeakerResourceJid()
-                    === parentResourceJid)) {
-                VideoLayout.updateLargeVideo(RTC.getVideoSrc(videoelem[0]), 1, parentResourceJid);
+            // current dominant, focused speaker or prezi playing or update it to
+            // the current dominant speaker.
+            if ((!focusedVideoInfo &&
+                !VideoLayout.getDominantSpeakerResourceJid() &&
+                !Prezi.isPresentationVisible()) ||
+                (parentResourceJid &&
+                VideoLayout.getDominantSpeakerResourceJid() === parentResourceJid)) {
+                VideoLayout.updateLargeVideo(
+                    RTC.getVideoSrc(videoelem[0]),
+                    1,
+                    parentResourceJid);
             }
 
-            VideoLayout.showFocusIndicator();
+            VideoLayout.showModeratorIndicator();
         }
     });
 
@@ -1686,7 +1773,7 @@ var VideoLayout = (function (my) {
 
                 var msidParts = msid.split(' ');
 
-                var preload = (Strophe.getResourceFromJid(ssrc2jid[primarySSRC]) == largeVideoState.userJid);
+                var preload = (Strophe.getResourceFromJid(ssrc2jid[primarySSRC]) == largeVideoState.userResourceJid);
 
                 if (preload) {
                     if (largeVideoState.preload)
@@ -1747,9 +1834,9 @@ var VideoLayout = (function (my) {
                 var selRemoteVideo = $(['#', 'remoteVideo_', session.sid, '_', msidParts[0]].join(''));
 
                 var updateLargeVideo = (Strophe.getResourceFromJid(ssrc2jid[primarySSRC])
-                    == largeVideoState.userJid);
-                var updateFocusedVideoSrc = (focusedVideoSrc && focusedVideoSrc.src && focusedVideoSrc.src != '' &&
-                    (RTC.getVideoSrc(selRemoteVideo[0]) == focusedVideoSrc.src));
+                    == largeVideoState.userResourceJid);
+                var updateFocusedVideoSrc = (focusedVideoInfo && focusedVideoInfo.src && focusedVideoInfo.src != '' &&
+                    (RTC.getVideoSrc(selRemoteVideo[0]) == focusedVideoInfo.src));
 
                 var electedStreamUrl;
                 if (largeVideoState.preload_ssrc == primarySSRC)
@@ -1777,7 +1864,7 @@ var VideoLayout = (function (my) {
                 }
 
                 if (updateFocusedVideoSrc) {
-                    focusedVideoSrc.src = RTC.getVideoSrc(selRemoteVideo[0]);
+                    focusedVideoInfo.src = RTC.getVideoSrc(selRemoteVideo[0]);
                 }
 
                 var videoId;

@@ -36,8 +36,6 @@
 #remoteVideos .videocontainer {
     display: inline-block;
     background-color: black;
-    background-repeat: no-repeat;
-    background-position: 45;
     background-size: contain;
     border-radius:8px;
     border: 2px solid #212425;
@@ -376,6 +374,24 @@
     position: absolute;
     z-index: 0;
     border-radius:10px;
+    pointer-events: none;
+}
+
+#activeSpeaker {
+    visibility: hidden;
+    width: 150px;
+    height: 150px;
+    margin: auto;
+    overflow: hidden;
+    position: relative;
+}
+
+#activeSpeakerAudioLevel {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    visibility: inherit;
 }
 
 #mixedstream {
@@ -383,12 +399,14 @@
 }
 
 #activeSpeakerAvatar {
-    visibility: hidden;
     width: 100px;
     height: 100px;
+    top: 25px;
     margin: auto;
     position: relative;
     border-radius: 50px;
+    z-index: 2;
+    visibility: inherit;
 }
 
 .userAvatar {

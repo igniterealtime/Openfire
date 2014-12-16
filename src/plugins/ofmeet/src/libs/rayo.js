@@ -46,13 +46,14 @@ Strophe.addConnectionPlugin('rayo',
                     console.info('Dial result ', result);
 
                     var resource = $(result).find('ref').attr('uri');
-                    self.call_resource = resource.substr('xmpp:'.length);	// BAO
+                    self.call_resource = resource.substr('xmpp:'.length);
                     console.info(
-                        "Received call resource: " + self.call_resource);
+                        "Received call resource: " + self.call_resource); // BAO
                 },
                 function (error)
                 {
                     console.info('Dial error ', error);
+                    setTimeout(function() {messageHandler.openMessageDialog("Dial Error", error);}, 1000);
                 }
             );
         },

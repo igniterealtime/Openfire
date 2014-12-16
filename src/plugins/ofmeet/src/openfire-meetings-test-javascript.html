@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <link rel="import" href="openfire-meetings.html"></link>
+    <script src="/ofmeet/config"></script><!-- BAO -->
+    <script src="libs/strophe/strophe.js?v=1"></script><!-- BAO -->
+    <script src="libs/strophe/strophe.util.js?v=1"></script><!-- BAO -->
+    <script src="libs/strophe/strophe.openfire.js?v=1"></script><!-- BAO -->
+    <script>
+    	var connection = null;
+
+		window.addEventListener("load", function()
+		{
+			connection = new Openfire.Connection(config.bosh);
+    		connection.rawInput = function (data) { console.log('TOP RECV: ' + data); };
+    		connection.rawOutput = function (data) { console.log('TOP SEND: ' + data); };
+
+    		var jid = config.hosts.domain;
+
+			if (config.userName)
+			{
+				jid = config.userName +  "@" + config.hosts.domain;
+			}
+			connection.connect(jid, null, function (status, msg)
+			{
+				console.log('Strophe status changed to', Strophe.getStatusString(status));
+
+				if (status === Strophe.Status.CONNECTED) {
+
+					connection.send($pres());
+					document.getElementById("videoconf").startOpenfireMeeting("dele123", connection);
+
+				} else if (status === Strophe.Status.CONNFAIL) {
+
+				} else if (status === Strophe.Status.DISCONNECTED) {
+
+				} else if (status === Strophe.Status.AUTHFAIL) {
+
+				}
+
+				return true;
+			});
+		});
+
+		window.addEventListener("unload", function ()
+		{
+			$("openfire-meetings")[0].stopOpenfireMeeting()
+			connection.disconnect();
+		});
+    </script>
+  </head>
+  <body>
+     <openfire-meetings id="videoconf"></openfire-meetings>
+  </body>
+</html>

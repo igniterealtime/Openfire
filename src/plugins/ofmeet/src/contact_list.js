@@ -53,7 +53,7 @@ var ContactList = (function (my) {
             }
         };
 
-        newContact.appendChild(createAvatar(id, peerJid));	// BAO
+        newContact.appendChild(createAvatar(id, peerJid));			// BAO
         newContact.appendChild(createDisplayNameParagraph("Participant"));
 
         var clElement = contactlist.get(0);

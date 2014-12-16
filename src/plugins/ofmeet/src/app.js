@@ -2,12 +2,11 @@
 /* application specific logic */
 var connection = null;
 var authenticatedUser = false;
-var focus = null;
 var activecall = null;
 var RTC = null;
 var nickname = null;
 var sharedKey = '';
-var recordingToken ='';
+var focusJid = null;
 var roomUrl = null;
 var roomName = null;
 var ssrc2jid = {};
@@ -39,8 +38,18 @@ var ssrc2videoType = {};
  * Currently focused video "src"(displayed in large video).
  * @type {String}
  */
-var focusedVideoSrc = null;
+var focusedVideoInfo = null;
 var mutedAudios = {};
+/**
+ * Remembers if we were muted by the focus.
+ * @type {boolean}
+ */
+var forceMuted = false;
+/**
+ * Indicates if we have muted our audio before the conference has started.
+ * @type {boolean}
+ */
+var preMuted = false;
 
 var localVideoSrc = null;
 var flipXLocalVideo = true;
@@ -232,11 +241,9 @@ function maybeDoJoin() {
     }
 }
 
-
-function doJoin() {
+function generateRoomName() {
     var roomnode = null;
     var path = window.location.pathname;
-    var roomjid;
 
     // determinde the room node from the url
     // TODO: just the roomnode or the whole bare jid?
@@ -264,7 +271,20 @@ function doJoin() {
     }
 
     roomName = roomnode + '@' + config.hosts.muc;
+}
 
+function doJoin() {
+    if (!roomName) {
+        generateRoomName();
+    }
+
+    Moderator.allocateConferenceFocus(
+        roomName, doJoinAfterFocus);
+}
+
+function doJoinAfterFocus() {
+
+    var roomjid;
     roomjid = roomName;
 
     if (config.useNicks) {
@@ -283,7 +303,7 @@ function doJoin() {
 
         roomjid += '/' + tmpJid;
     }
-    connection.ofmuc.roomJid = roomName; // BAO
+    connection.ofmuc.roomJid = roomName; // BAO    
     connection.emuc.doJoin(roomjid);
 }
 
@@ -424,7 +444,10 @@ function waitForPresence(data, sid) {
         container  = document.getElementById(
                 'participant_' + Strophe.getResourceFromJid(data.peerjid));
     } else {
-        if (data.stream.id !== 'mixedmslabel') {
+        if (data.stream.id !== 'mixedmslabel'
+            // FIXME: default stream is added always with new focus
+            // (to be investigated)
+            && data.stream.id !== 'default') {
             console.error('can not associate stream',
                 data.stream.id,
                 'with a participant');
@@ -652,16 +675,6 @@ $(document).bind('conferenceCreated.jingle', function (event, focus)
     }
 });
 
-$(document).bind('callterminated.jingle', function (event, sid, jid, reason) {
-    // Leave the room if my call has been remotely terminated.
-    if (connection.emuc.joined && focus == null && reason === 'kick') {
-        sessionTerminated = true;
-        connection.emuc.doLeave();
-        messageHandler.openMessageDialog("Session Terminated",
-                            "Ouch! You have been kicked out of the meet!");
-    }
-});
-
 $(document).bind('setLocalDescription.jingle', function (event, sid) {
     // put our ssrcs into presence so other clients can identify our stream
     var sess = connection.jingle.sessions[sid];
@@ -750,27 +763,6 @@ $(document).bind('joined.muc', function (event, jid, info) {
         document.createTextNode(Strophe.getResourceFromJid(jid) + ' (me)')
     );
 
-    if (Object.keys(connection.emuc.members).length < 1) {
-        focus = new ColibriFocus(connection, config.hosts.bridge);
-        if (nickname !== null) {
-            focus.setEndpointDisplayName(connection.emuc.myroomjid,
-                                         nickname);
-        }
-        Toolbar.showSipCallButton(true);
-        Toolbar.showRecordingButton(false);
-    }
-
-    if (!focus)
-    {
-        Toolbar.showSipCallButton(false);
-    }
-
-    if (focus && config.etherpad_base) {
-        Etherpad.init();
-    }
-
-    VideoLayout.showFocusIndicator();
-
     // Add myself to the contact list.
     ContactList.addContact(jid, SettingsMenu.getEmail() || SettingsMenu.getUID());
 
@@ -787,11 +779,18 @@ $(document).bind('joined.muc', function (event, jid, info) {
 
 $(document).bind('entered.muc', function (event, jid, info, pres) {
     console.log('entered', jid, info);
+    if (info.isFocus)
+    {
+        focusJid = jid;
+        console.info("Ignore focus: " + jid +", real JID: " + info.jid);
+        // We don't want this notification for the focus.
+        // messageHandler.notify('Focus', 'connected', 'connected');
+        return;
+    }
+
     messageHandler.notify(info.displayName || 'Somebody',
         'connected',
         'connected');
-
-    console.log('is focus? ' + (focus ? 'true' : 'false'));
 
     // Add Peer's container
     var id = $(pres).find('>userID').text();
@@ -806,7 +805,7 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
         APIConnector.triggerEvent("participantJoined",{jid: jid});
     }
 
-    if (focus !== null) {
+    /*if (focus !== null) {
         // FIXME: this should prepare the video
         if (focus.confid === null) {
             console.log('make new conference with', jid);
@@ -821,7 +820,7 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
             console.log('invite', jid, 'into conference');
             focus.addNewParticipant(jid);
         }
-    }
+    }*/
 });
 
 $(document).bind('left.muc', function (event, jid) {
@@ -838,6 +837,7 @@ $(document).bind('left.muc', function (event, jid) {
         var container = document.getElementById(
                 'participant_' + Strophe.getResourceFromJid(jid));
         if (container) {
+            ContactList.removeContact(jid);
             VideoLayout.removeConnectionIndicator(jid);
             // hide here, wait for video to close before removing
             $(container).hide();
@@ -853,49 +853,14 @@ $(document).bind('left.muc', function (event, jid) {
     delete jid2Ssrc[jid];
 
     // Unlock large video
-    if (focusedVideoSrc && focusedVideoSrc.jid === jid)
+    if (focusedVideoInfo && focusedVideoInfo.jid === jid)
     {
         console.info("Focused video owner has left the conference");
-        focusedVideoSrc = null;
+        focusedVideoInfo = null;
     }
 
     connection.jingle.terminateByJid(jid);
 
-    if (focus == null
-            // I shouldn't be the one that left to enter here.
-            && jid !== connection.emuc.myroomjid
-            && connection.emuc.myroomjid === connection.emuc.list_members[0]
-            // If our session has been terminated for some reason
-            // (kicked, hangup), don't try to become the focus
-            && !sessionTerminated) {
-        console.log('welcome to our new focus... myself');
-        focus = new ColibriFocus(connection, config.hosts.bridge);
-        if (nickname !== null) {
-            focus.setEndpointDisplayName(connection.emuc.myroomjid,
-                                         nickname);
-        }
-
-        Toolbar.showSipCallButton(true);
-
-        if (Object.keys(connection.emuc.members).length > 0) {
-            focus.makeConference(Object.keys(connection.emuc.members));
-            Toolbar.showRecordingButton(true);
-        }
-        $(document).trigger('focusechanged.muc', [focus]);
-    }
-    else if (focus && Object.keys(connection.emuc.members).length === 0) {
-        console.log('everyone left');
-        // FIXME: closing the connection is a hack to avoid some
-        // problems with reinit
-        disposeConference();
-        focus = new ColibriFocus(connection, config.hosts.bridge);
-        if (nickname !== null) {
-            focus.setEndpointDisplayName(connection.emuc.myroomjid,
-                                         nickname);
-        }
-        Toolbar.showSipCallButton(true);
-        Toolbar.showRecordingButton(false);
-    }
     if (connection.emuc.getPrezi(jid)) {
         $(document).trigger('presentationremoved.muc',
                             [jid, connection.emuc.getPrezi(jid)]);
@@ -903,6 +868,20 @@ $(document).bind('left.muc', function (event, jid) {
 });
 
 $(document).bind('presence.muc', function (event, jid, info, pres) {
+
+/* BAO
+
+    //check if the video bridge is available
+    if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
+        bridgeIsDown = true;
+        messageHandler.showError("Error",
+            "Jitsi Videobridge is currently unavailable. Please try again later!");
+    }
+*/
+    if (info.isFocus)
+    {
+        return;
+    }
 
     // Remove old ssrcs coming from the jid
     Object.keys(ssrc2jid).forEach(function (ssrc) {
@@ -943,10 +922,11 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
     if (displayName && displayName.length > 0)
         $(document).trigger('displaynamechanged',
                             [jid, displayName]);
-
-    if (focus !== null && info.displayName !== null) {
+    /*if (focus !== null && info.displayName !== null) {
         focus.setEndpointDisplayName(jid, info.displayName);
-    }
+    }*/
+
+/* BAO
 
     //check if the video bridge is available
     if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
@@ -954,7 +934,7 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
         messageHandler.showError("Error",
             "Jitsi Videobridge is currently unavailable. Please try again later!");
     }
-
+*/
     var id = $(pres).find('>userID').text();
     var email = $(pres).find('>email');
     if(email.length > 0) {
@@ -969,6 +949,17 @@ $(document).bind('presence.status.muc', function (event, jid, info, pres) {
     VideoLayout.setPresenceStatus(
         'participant_' + Strophe.getResourceFromJid(jid), info.status);
 
+});
+
+$(document).bind('kicked.muc', function (event, jid) {
+    console.info(jid + " has been kicked from MUC!");
+    if (connection.emuc.myroomjid === jid) {
+        sessionTerminated = true;
+        disposeConference(false);
+        connection.emuc.doLeave();
+        messageHandler.openMessageDialog("Session Terminated",
+            "Ouch! You have been kicked out of the meet!");
+    }
 });
 
 $(document).bind('passwordrequired.muc', function (event, jid) {
@@ -1059,29 +1050,63 @@ function isVideoSrcDesktop(jid) {
 }
 
 function getConferenceHandler() {
-    return focus ? focus : activecall;
+    return activecall;
 }
 
+/**
+ * Mutes/unmutes the local video.
+ *
+ * @param mute <tt>true</tt> to mute the local video; otherwise, <tt>false</tt>
+ * @param options an object which specifies optional arguments such as the
+ * <tt>boolean</tt> key <tt>byUser</tt> with default value <tt>true</tt> which
+ * specifies whether the method was initiated in response to a user command (in
+ * contrast to an automatic decision taken by the application logic)
+ */
+function setVideoMute(mute, options) {
+    if (connection && connection.jingle.localVideo) {
+        var session = getConferenceHandler();
+
+        if (session) {
+            session.setVideoMute(
+                mute,
+                function (mute) {
+                    var video = $('#video');
+                    var communicativeClass = "icon-camera";
+                    var muteClass = "icon-camera icon-camera-disabled";
+
+                    if (mute) {
+                        video.removeClass(communicativeClass);
+                        video.addClass(muteClass);
+                    } else {
+                        video.removeClass(muteClass);
+                        video.addClass(communicativeClass);
+                    }
+                    connection.emuc.addVideoInfoToPresence(mute);
+                    connection.emuc.sendPresence();
+                },
+                options);
+        }
+    }
+}
+
+$(document).on('inlastnchanged', function (event, oldValue, newValue) {
+    if (config.muteLocalVideoIfNotInLastN) {
+        setVideoMute(!newValue, { 'byUser': false });
+    }
+});
+
+/**
+ * Mutes/unmutes the local video.
+ */
 function toggleVideo() {
     buttonClick("#video", "icon-camera icon-camera-disabled");
-    if (!(connection && connection.jingle.localVideo))
-        return;
 
-    var sess = getConferenceHandler();
-    if (sess) {
-        sess.toggleVideoMute(
-            function (isMuted) {
-                if (isMuted) {
-                    $('#video').removeClass("icon-camera");
-                    $('#video').addClass("icon-camera icon-camera-disabled");
-                } else {
-                    $('#video').removeClass("icon-camera icon-camera-disabled");
-                    $('#video').addClass("icon-camera");
-                }
-                connection.emuc.addVideoInfoToPresence(isMuted);
-                connection.emuc.sendPresence();
-            }
-        );
+    if (connection && connection.jingle.localVideo) {
+        var session = getConferenceHandler();
+
+        if (session) {
+            setVideoMute(!session.isVideoMute());
+        }
     }
 }
 
@@ -1089,9 +1114,29 @@ function toggleVideo() {
  * Mutes / unmutes audio for the local participant.
  */
 function toggleAudio() {
+    setAudioMuted(!isAudioMuted());
+}
+
+/**
+ * Sets muted audio state for the local participant.
+ */
+function setAudioMuted(mute) {
     if (!(connection && connection.jingle.localAudio)) {
+        preMuted = mute;
         // We still click the button.
         buttonClick("#mute", "icon-microphone icon-mic-disabled");
+        return;
+    }
+
+    if (forceMuted && !mute) {
+        console.info("Asking focus for unmute");
+        connection.moderate.setMute(connection.emuc.myroomjid, mute);
+        // FIXME: wait for result before resetting muted status
+        forceMuted = false;
+    }
+
+    if (mute == isAudioMuted()) {
+        // Nothing to do
         return;
     }
 
@@ -1100,17 +1145,14 @@ function toggleAudio() {
     // that we send presence just once.
     var localAudioTracks = connection.jingle.localAudio.getAudioTracks();
     if (localAudioTracks.length > 0) {
-        var audioEnabled = localAudioTracks[0].enabled;
-
         for (var idx = 0; idx < localAudioTracks.length; idx++) {
-            localAudioTracks[idx].enabled = !audioEnabled;
+            localAudioTracks[idx].enabled = !mute;
         }
-
-        // isMuted is the opposite of audioEnabled
-        connection.emuc.addAudioInfoToPresence(audioEnabled);
-        connection.emuc.sendPresence();
-        VideoLayout.showLocalAudioIndicator(audioEnabled);
     }
+    // isMuted is the opposite of audioEnabled
+    connection.emuc.addAudioInfoToPresence(mute);
+    connection.emuc.sendPresence();
+    VideoLayout.showLocalAudioIndicator(mute);
 
     buttonClick("#mute", "icon-microphone icon-mic-disabled");
 }
@@ -1131,51 +1173,7 @@ function isAudioMuted()
 
 // Starts or stops the recording for the conference.
 function toggleRecording() {
-    if (focus === null || focus.confid === null) {
-        console.log('non-focus, or conference not yet organized: not enabling recording');
-        return;
-    }
-
-    if (!recordingToken)
-    {
-        messageHandler.openTwoButtonDialog(null,
-            '<h2>Enter recording token</h2>' +
-                '<input id="recordingToken" type="text" placeholder="token" autofocus>',
-            false,
-            "Save",
-            function (e, v, m, f) {
-                if (v) {
-                    var token = document.getElementById('recordingToken');
-
-                    if (token.value) {
-                        setRecordingToken(Util.escapeHtml(token.value));
-                        toggleRecording();
-                    }
-                }
-            },
-            function (event) {
-                document.getElementById('recordingToken').focus();
-            }
-        );
-
-        return;
-    }
-
-    var oldState = focus.recordingEnabled;
-    Toolbar.toggleRecordingButtonState();
-    focus.setRecording(!oldState,
-                        recordingToken,
-                        function (state) {
-                            console.log("New recording state: ", state);
-                            if (state == oldState) //failed to change, reset the token because it might have been wrong
-                            {
-                                Toolbar.toggleRecordingButtonState();
-                                setRecordingToken(null);
-                            }
-                        }
-    );
-
-
+    Recording.toggleRecording();
 }
 
 /**
@@ -1393,6 +1391,8 @@ $(document).ready(function () {
         }
     });
 
+    Moderator.init();
+
     // Set the defaults for prompt dialogs.
     jQuery.prompt.setDefaults({persistent: false});
 
@@ -1508,7 +1508,6 @@ function disposeConference(onUnload) {
     if(onUnload) {
         stopLocalRtpStatsCollector();
     }
-    focus = null;
     activecall = null;
 }
 
@@ -1575,10 +1574,6 @@ function setSharedKey(sKey) {
     sharedKey = sKey;
 }
 
-function setRecordingToken(token) {
-    recordingToken = token;
-}
-
 /**
  * Updates the room invite url.
  */
@@ -1598,11 +1593,13 @@ function updateRoomUrl(newRoomUrl) {
  * Warning to the user that the conference window is about to be closed.
  */
 function closePageWarning() {
+    /*
+    FIXME: do we need a warning when the focus is a server-side one now ?
     if (focus !== null)
         return "You are the owner of this conference call and"
                 + " you are about to end it.";
-    else
-        return "You are about to leave this conversation.";
+    else*/
+    return "You are about to leave this conversation.";
 }
 
 /**
@@ -1639,13 +1636,20 @@ function setView(viewName) {
 //    }
 }
 
+$(document).bind('error.jingle',
+    function (event, session, error)
+    {
+        console.error("Jingle error", error);
+    }
+);
+
 $(document).bind('fatalError.jingle',
     function (event, session, error)
     {
         sessionTerminated = true;
         connection.emuc.doLeave();
         messageHandler.showError(  "Sorry",
-            "Your browser version is too old. Please update and try again...");
+            "Internal application error[setRemoteDescription]");
     }
 );
 
@@ -1719,7 +1723,7 @@ function callSipButtonClicked()
 			var numberInput = document.getElementById('sipNumber');
 			if (numberInput.value) {
 			    connection.rayo.dial(
-				numberInput.value, roomName, focus.confid);	// BAO
+				numberInput.value, roomName, roomName);	// BAO
 			}
 		    }
 		},

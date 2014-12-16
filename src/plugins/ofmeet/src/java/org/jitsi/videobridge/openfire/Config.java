@@ -10,6 +10,10 @@ package org.jitsi.videobridge.openfire;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.plugin.spark.*;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 
 import org.slf4j.*;
 import org.slf4j.Logger;
@@ -64,35 +68,57 @@ public class Config extends HttpServlet
 				}
 			}
 
+			String conferences = "[";
+			final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
+
+			for (Bookmark bookmark : bookmarks)
+			{
+				boolean addBookmarkForUser = bookmark.isGlobalBookmark() || isBookmarkForJID(userName, bookmark);
+
+				if (addBookmarkForUser)
+				{
+					if (bookmark.getType() == Bookmark.Type.group_chat)
+					{
+						conferences = conferences + (conferences.equals("[") ? "" : ",");
+						conferences = conferences + "{name: '" + bookmark.getName() + "', jid: '" + bookmark.getValue() + "'}";
+					}
+				}
+			}
+
+			conferences = conferences + "]";
+
 			boolean nodejs = XMPPServer.getInstance().getPluginManager().getPlugin("nodejs") != null;
 
 			writeHeader(response);
 
 			ServletOutputStream out = response.getOutputStream();
 
-			String iceServers 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
-			String resolution 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360");
-			String audioMixer		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false");
-			String audioBandwidth 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64");
-			String videoBandwidth 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512");
-			String useNicks 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
-			String useIPv6 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
-			String useStunTurn 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.stunturn", "false");
-			String recordVideo 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.media.record", "false");
-			String defaultSipNumber = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.sip.number", "");
-			String adaptiveLastN 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.lastn", "false");
-			String adaptiveSimulcast= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", "false");
-			String useRtcpMux 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.rtcp.mux", "true");
-			String useBundle 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.bundle", "false");
-			String enableWelcomePage= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.welcomePage", "false");
-			String enableSimulcast 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", "false");
-			String enableRtpStats 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.rtp.stats", "true");
-			String openSctp 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.open.sctp", "true");
-			String desktopSharing 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.desktop.sharing", "ext");
-			String chromeExtensionId= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.chrome.extension.id", "fohfnhgabmicpkjcpjpjongpijcffaba");
-			String channelLastN 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.channel.lastn", "-1");
-			String desktopShareSrcs	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.desktop.sharing.sources", "[\"screen\", \"window\"]");
-			String minChromeExtVer	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.min.chrome.ext.ver", "0.1");
+			String iceServers 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
+			String resolution 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360");
+			String audioMixer			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false");
+			String audioBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64");
+			String videoBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512");
+			String useNicks 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
+			String useIPv6 				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
+			String useStunTurn 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.stunturn", "false");
+			String recordVideo 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.media.record", "false");
+			String defaultSipNumber 	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.sip.number", "");
+			String adaptiveLastN 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.lastn", "false");
+			String adaptiveSimulcast	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", "false");
+			String useRtcpMux 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.rtcp.mux", "true");
+			String useBundle 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.bundle", "false");
+			String enableWelcomePage	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.welcomePage", "true");
+			String enableSimulcast 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", "false");
+			String enableRtpStats 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.rtp.stats", "true");
+			String openSctp 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.open.sctp", "true");
+			String desktopSharing 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.desktop.sharing", "ext");
+			String chromeExtensionId	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.chrome.extension.id", "fohfnhgabmicpkjcpjpjongpijcffaba");
+			String channelLastN 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.channel.lastn", "-1");
+			String desktopShareSrcs		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.desktop.sharing.sources", "[\"screen\", \"window\"]");
+			String minChromeExtVer		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.min.chrome.ext.ver", "0.1");
+			String enableFirefoxSupport = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.firefox.support", "false");
+			String logStats 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.stats.logging", "false");
+			String focusUserJid 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
 
 			out.println("var config = {");
 			out.println("    hosts: {");
@@ -100,6 +126,7 @@ public class Config extends HttpServlet
 			out.println("        muc: 'conference." + domain + "',");
 			out.println("        bridge: 'ofmeet-jitsi-videobridge." + domain + "',");
 			out.println("        call_control: 'ofmeet-call-control." + domain + "',");
+			out.println("        focus: 'ofmeet-focus." + domain + "',");
 			out.println("    },");
 			out.println("    getroomnode: function (path)");
 			out.println("    {");
@@ -132,6 +159,7 @@ public class Config extends HttpServlet
 			out.println("    openSctp: " + openSctp + ",");
 			out.println("    enableRecording: " + recordVideo + ",");
 			out.println("    clientNode: 'http://igniterealtime.org/ofmeet',");
+			out.println("    focusUserJid: '" + focusUserJid + "',");
 			out.println("    defaultSipNumber: '" + defaultSipNumber + "',");
 			out.println("    desktopSharing: '" + desktopSharing + "',");
 			out.println("    chromeExtensionId: '" + chromeExtensionId + "',");
@@ -145,7 +173,10 @@ public class Config extends HttpServlet
 			out.println("    videoBandwidth: '" + videoBandwidth + "',");
 			out.println("    userName: '" + userName + "',");
 			out.println("    userAvatar: '" + userAvatar + "',");
+			out.println("    enableFirefoxSupport: " + enableFirefoxSupport + ",");
+			out.println("    logStats: " + logStats + ",");
 			out.println("    disablePrezi: true,");
+			out.println("    conferences: " + conferences + ",");
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");
 
@@ -172,4 +203,33 @@ public class Config extends HttpServlet
 			Log.info("Config writeHeader Error", e);
         }
 	}
+
+    private boolean isBookmarkForJID(String username, Bookmark bookmark) {
+
+		if (username == null || username.equals("null")) return false;
+
+        if (bookmark.getUsers().contains(username)) {
+            return true;
+        }
+
+        Collection<String> groups = bookmark.getGroups();
+
+        if (groups != null && !groups.isEmpty()) {
+            GroupManager groupManager = GroupManager.getInstance();
+
+            for (String groupName : groups) {
+                try {
+                    Group group = groupManager.getGroup(groupName);
+
+                    if (group.isUser(username)) {
+                        return true;
+                    }
+                }
+                catch (GroupNotFoundException e) {
+                    Log.debug(e.getMessage(), e);
+                }
+            }
+        }
+        return false;
+    }
 }

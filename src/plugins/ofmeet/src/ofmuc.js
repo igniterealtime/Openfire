@@ -1,10 +1,30 @@
 
+$(document).ready(function () 
+{
+	var conferenceList = '<datalist id="conference-list">'
+		
+	for (var i=0; i<config.conferences.length; i++)
+	{	
+		conferenceList = conferenceList + '<option value="' + Strophe.getNodeFromJid(config.conferences[i].jid) + '"/>'	
+	}
+	
+	conferenceList = conferenceList + '</datalist>'
+	
+	$("body").append(conferenceList);
+	$("#enter_room_field").attr("list", "conference-list");	
+});
+
+
 Strophe.addConnectionPlugin('ofmuc', {
     connection: null,
     roomJid: null,
     members: {},
     sharePDF: null,
     pdfPage: "1",
+    recordingToken: null,
+    isRecording: false,
+    urls: [],
+    bookmarks: [],
     
     init: function (conn) {
         this.connection = conn;
@@ -17,9 +37,34 @@ Strophe.addConnectionPlugin('ofmuc', {
         
 	$(window).resize(function () {
 	   that.resize();
-	});        
+	}); 
+	
+    },
+        
+    statusChanged: function(status, condition)
+    {
+        var that = this;
+            
+	if(status == Strophe.Status.CONNECTED)
+	{
+		this.connection.sendIQ($iq({type: "get"}).c("query", {xmlns: "jabber:iq:private"}).c("storage", {xmlns: "storage:bookmarks"}).tree(), function(resp)
+		{
+			console.log("get bookmarks", resp)
+						
+			$(resp).find('conference').each(function() 
+			{
+				that.bookmarks.push({name: $(this).attr("name"), jid: $(this).attr("jid")});	
+			})
+			
+			$(resp).find('url').each(function() 
+			{
+				that.urls.push({name: $(this).attr("name"), url: $(this).attr("url")});
+			});
+		});
+	}
     },
     
+            
     rayoAccept: function (confId, roomName)
     {
 	    var self = this;
@@ -40,7 +85,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	    
 		function (result)
 		{
-		    console.info('rayoAccept result ', result);
+		    //console.info('rayoAccept result ', result);
 		},
 		function (error)
 		{
@@ -168,7 +213,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 		var name = $(this).attr('name');
 		var value = $(this).attr('value');
 		
-		console.log("onRayo header", name, value);
+		//console.log("onRayo header", name, value);
 		
 		if (name == "caller_id")
 		{	
@@ -329,7 +374,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	//console.log("openPDFDialog");    	
     	    var that = this;
     	    
-    	    this.roomJid = connection.emuc.roomjid;
+    	    //this.roomJid = connection.emuc.roomjid;
     	
 	    if (that.sharePDF) 
 	    {
@@ -377,7 +422,16 @@ Strophe.addConnectionPlugin('ofmuc', {
 		}
 	    }
 	    else {
-		$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" value="http://mi.eng.cam.ac.uk/~cipolla/archive/Presentations/MakingPresentations.pdf" placeholder="e.g. http://www.ge.com/battery/resources/pdf/CraigIrwin.pdf" autofocus >',
+	    
+	    	urlsList = '<datalist id="urls-list">'
+	    	
+	    	for (var i=0; i<that.urls.length; i++)
+	    	{
+	    		urlsList = urlsList + '<option value="' + that.urls[i].url + '"/>'
+	    	}
+	    	urlsList = urlsList + '</datalist>'
+	    	
+		$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" list="urls-list" autofocus >' + urlsList,
 		{
 			title: "Share a PDF Presentation",
 			persistent: false,
@@ -436,7 +490,62 @@ Strophe.addConnectionPlugin('ofmuc', {
     
     isPresentationVisible: function () {
         return ($('#presentation>iframe') != null && $('#presentation>iframe').css('opacity') == 1);
-    }  
+    },
+    
+    toggleRecording: function () 
+    {
+    	var that = this;
+    	
+	if (!this.recordingToken)
+	{		
+		$.prompt('<h2>Enter recording token</h2><input id="recordingToken" type="text" placeholder="token" autofocus>',
+		{
+			title: "Meeting Recording",
+			buttons: { "Record": true, "Cancel": false},
+			defaultButton: 1,
+			loaded: function(event) {
+				document.getElementById('recordingToken').focus();
+			},			
+			submit: function(e,v,m,f)
+			{
+				if(v)
+				{
+				    var token = document.getElementById('recordingToken');
+
+				    if (token.value) {
+					that.recordingToken = Util.escapeHtml(token.value);
+					that.toggleRecording();
+				    }	
+				}
+			}
+		});		
+
+		return;
+	}
+
+	var req = $iq({type: 'set', to: config.hosts.call_control});
+	
+	req.c('record',	{xmlns: 'urn:xmpp:rayo:record:1'});
+	req.c('hint', 	{name: 'JvbToken', value: this.recordingToken}).up();
+	req.c('hint', 	{name: 'JvbState', value: this.isRecording ? "false" : "true"}).up();
+	req.c('hint', 	{name: 'JvbRoomName', value: this.roomJid}).up();
+	    
+	this.connection.sendIQ(req,
+
+		function (result)
+		{
+		    console.info('toggleRecording result ', result);
+		    that.isRecording = !that.isRecording;
+		    Toolbar.setRecordingButtonState(that.isRecording);		    
+		},
+		function (error)
+		{
+		    console.info('toggleRecording error ', error);
+		    Toolbar.setRecordingButtonState(false);
+		    that.isRecording = false;		    
+		}
+	);	    
+    }    
     
 });
 

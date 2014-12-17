@@ -22,6 +22,9 @@
         <name>openfire</name>
         <password>openfire</password>
     </group>
+    <properties>
+      <property name="hazelcast.logging.type">slf4j</property>
+    </properties>
     <management-center enabled="false"/>
     <network>
         <port auto-increment="true" port-count="100">5701</port>
@@ -45,10 +48,6 @@
         <asymmetric-encryption enabled="false"/>
     </network>
     <partition-group enabled="false"/>
-    <executor-service name="default">
-        <pool-size>16</pool-size>
-        <queue-capacity>0</queue-capacity>
-    </executor-service>
     <queue name="default">
         <!--
             Maximum size of the queue. When a JVM's local queue size reaches the maximum,

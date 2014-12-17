@@ -6,6 +6,6 @@
     <description>${plugin.description}</description>
     <author>Tom Evans</author>
     <version>1.3.3</version>
-    <date>10/15/2014</date>
+    <date>12/16/2014</date>
     <minServerVersion>3.9.4</minServerVersion>
 </plugin>

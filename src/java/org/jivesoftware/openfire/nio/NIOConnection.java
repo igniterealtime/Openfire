@@ -367,6 +367,8 @@ public class NIOConnection implements Connection {
 
         SslFilter filter = new SslFilter(tlsContext);
         filter.setUseClientMode(clientMode);
+        // Disable SSLv3 due to POODLE vulnerability.
+        filter.setEnabledProtocols(new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"});
         if (authentication == ClientAuth.needed) {
             filter.setNeedClientAuth(true);
         }

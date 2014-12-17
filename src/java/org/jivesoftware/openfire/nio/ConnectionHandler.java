@@ -38,6 +38,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
+import javax.net.ssl.SSLHandshakeException;
+
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
  * received XML stanzas to the proper StanzaHandler.
@@ -146,6 +148,9 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
             Log.info("ConnectionHandler reports IOException for session: " + session, cause);
+            if (cause instanceof SSLHandshakeException) {
+                session.close(true);
+            }
         }
         else if (cause instanceof ProtocolDecoderException) {
             Log.warn("Closing session due to exception: " + session, cause);
@@ -157,7 +162,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             } else {
             	error = new StreamError(StreamError.Condition.internal_server_error);
             }
-            
+
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
             connection.deliverRawText(error.toXML());
             session.close(true);

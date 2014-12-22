@@ -144,6 +144,7 @@ public class AdminConsolePlugin implements Plugin {
                 }
 
                 final SslContextFactory sslContextFactory = new SslContextFactory();
+                sslContextFactory.addExcludeProtocols("SSLv3");
                 sslContextFactory.setTrustStorePassword(SSLConfig.gets2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
                 sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());

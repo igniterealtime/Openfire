@@ -804,7 +804,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             // If the session has been authenticated then offer resource binding
             // and session establishment
             sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
-            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/>");
+            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"><optional/></session>");
         }
         return sb.toString();
     }

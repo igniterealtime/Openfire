@@ -69,19 +69,30 @@ public class Config extends HttpServlet
 			}
 
 			String conferences = "[";
-			final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
 
-			for (Bookmark bookmark : bookmarks)
+			boolean clientControl = XMPPServer.getInstance().getPluginManager().getPlugin("clientControl") != null || XMPPServer.getInstance().getPluginManager().getPlugin("clientcontrol") != null;
+
+			if (clientControl)
 			{
-				boolean addBookmarkForUser = bookmark.isGlobalBookmark() || isBookmarkForJID(userName, bookmark);
+				try {
+					final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
 
-				if (addBookmarkForUser)
-				{
-					if (bookmark.getType() == Bookmark.Type.group_chat)
+					for (Bookmark bookmark : bookmarks)
 					{
-						conferences = conferences + (conferences.equals("[") ? "" : ",");
-						conferences = conferences + "{name: '" + bookmark.getName() + "', jid: '" + bookmark.getValue() + "'}";
+						boolean addBookmarkForUser = bookmark.isGlobalBookmark() || isBookmarkForJID(userName, bookmark);
+
+						if (addBookmarkForUser)
+						{
+							if (bookmark.getType() == Bookmark.Type.group_chat)
+							{
+								conferences = conferences + (conferences.equals("[") ? "" : ",");
+								conferences = conferences + "{name: '" + bookmark.getName() + "', jid: '" + bookmark.getValue() + "'}";
+							}
+						}
 					}
+
+				} catch (Exception e) {
+
 				}
 			}
 

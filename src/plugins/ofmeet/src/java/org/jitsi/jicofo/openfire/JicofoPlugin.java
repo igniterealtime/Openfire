@@ -48,7 +48,7 @@ public class JicofoPlugin
 
 			this.pluginDirectory = pluginDirectory;
 
-			String hostName = XMPPServer.getInstance().getServerInfo().getHostname();
+			String hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getHostname());
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String focusUserJid = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
 			String focusUserPassword = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.password", "focus");

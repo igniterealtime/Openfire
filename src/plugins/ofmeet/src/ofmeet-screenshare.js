@@ -151,21 +151,8 @@ function obtainScreenFromExtension(streamCallback, failCallback) {
             if (isInstalled) {
                 doGetStreamFromExtension(streamCallback, failCallback);
             } else {
-                chrome.webstore.install(
-                    getWebStoreInstallUrl(),
-                    function (arg) {
-                        console.log("Extension installed successfully", arg);
-                        // We need to reload the page in order to get the access to chrome.runtime
-                        window.location.reload(false);
-                    },
-                    function (arg) {
-                        console.log("Failed to auto install the extension", arg);
-                        failCallback(arg);
-                        window.open(getWebStoreInstallUrl(), "_blank");
-                        messageHandler.showError('Error',
-                            'Install manually and reload webpage');
-                    }
-                );
+                window.open(getWebStoreInstallUrl(), "_blank");
+                messageHandler.showError('Error', 'Install manually and reload webpage');
             }
         }
     );

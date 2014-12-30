@@ -136,7 +136,7 @@ JingleSession.prototype.accept = function () {
         // FIXME: change any inactive to sendrecv or whatever they were originally
         sdp = sdp.replace('a=inactive', 'a=sendrecv');
     }
-    this.peerconnection.setLocalDescription(new RTCSessionDescription({type: 'answer', sdp: sdp}),
+    this.peerconnection.setLocalDescription(new RTCSessionDescription({type: 'answer', sdp: this.setBandwidth(sdp)}), // BAO
         function () {
             //console.log('setLocalDescription success');
             $(document).trigger('setLocalDescription.jingle', [self.sid]);
@@ -385,7 +385,8 @@ JingleSession.prototype.createdOffer = function (sdp) {
             },
             10000);
     }
-    sdp.sdp = this.localSDP.raw;
+    sdp.sdp = this.setBandwidth(this.localSDP.raw); // BAO
+    
     this.peerconnection.setLocalDescription(sdp,
         function () {
             if(this.usetrickle)
@@ -625,7 +626,7 @@ JingleSession.prototype.createdAnswer = function (sdp, provisional) {
                     },
                     10000);
     }
-    sdp.sdp = this.localSDP.raw;
+    sdp.sdp = this.setBandwidth(this.localSDP.raw); //BAO
     this.peerconnection.setLocalDescription(sdp,
         function () {
 
@@ -763,3 +764,19 @@ JingleSession.prototype.getStats = function (interval) {
     }, interval || 3000);
     return this.statsinterval;
 };
+
+// BAO
+
+JingleSession.prototype.setBandwidth = function (sdp) 
+{
+    // remove existing bandwidth lines
+    sdp = sdp.replace( /b=AS([^\r\n]+\r\n)/g , '');
+
+    // audio bandwidth 
+    sdp = sdp.replace( /a=mid:audio\r\n/g , 'a=mid:audio\r\nb=AS:' + config.audioBandwidth + '\r\n');
+    
+    // video bandwidth
+    sdp = sdp.replace( /a=mid:video\r\n/g , 'a=mid:video\r\nb=AS:' + config.videoBandwidth + '\r\n');
+    
+    return sdp;
+}

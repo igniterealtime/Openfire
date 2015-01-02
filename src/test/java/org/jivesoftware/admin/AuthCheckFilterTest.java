@@ -25,8 +25,6 @@ public class AuthCheckFilterTest {
 
         assertTrue(AuthCheckFilter.testURLPassesExclude("setup/setup-new.jsp","setup/setup-*"));
 
-        // Let's get crafty by using an "@" symbol
-        assertFalse(AuthCheckFilter.testURLPassesExclude("login.jsp?@another.jsp", "login.jsp"));
         assertFalse(AuthCheckFilter.testURLPassesExclude("another.jsp?login.jsp", "login.jsp"));
     }
 }

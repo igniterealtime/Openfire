@@ -1,0 +1,121 @@
+
+.togetherjs * {
+  -webkit-box-sizing: content-box !important;
+  -moz-box-sizing: content-box !important;
+  box-sizing: content-box !important;
+}
+
+.togetherjs-cursor svg {
+  -webkit-filter: drop-shadow(1px 3px 2px rgba(0, 0, 0, 0.3));
+  -webkit-transform: rotate(-10deg);
+}
+.togetherjs-cursor-img {
+  position: relative;
+  top: 0;
+}
+.togetherjs-cursor img {
+  width: 20px;
+  -webkit-filter: drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.2));
+  /*FIX ME, moz filter not working...*/
+
+  -moz-filter: drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0px 2px 1px rgba(0, 0, 0, 0.2));
+}
+.togetherjs-cursor {
+  position: absolute;
+  z-index: 9999;
+  font-size: 28px;
+  font-weight: bolder;
+  /* This magic CSS rule makes this element basically invisible to clicks/etc:
+  (good on all but IE: http://caniuse.com/pointer-events */
+
+  pointer-events: none;
+  /*FIXME: maybe these should use position: fixed so the cursor
+  stays stuck to the top of the screen until the appropriate time
+  (when .togetherjs-scrolled-above/below is removed)?*/
+
+}
+.togetherjs-cursor:hover {
+  cursor: pointer;
+}
+.togetherjs-cursor.togetherjs-scrolled-above {
+  position: fixed;
+}
+.togetherjs-cursor.togetherjs-scrolled-above svg {
+  -webkit-transition-duration: 0.8s;
+  -webkit-transition-property: -webkit-transform;
+  -webkit-transform: rotate(20deg);
+  transition-duration: 0.8s;
+  transition-property: transform;
+  transform: rotate(20deg);
+}
+.togetherjs-cursor.togetherjs-scrolled-above .togetherjs-cursor-down {
+  display: none;
+}
+.togetherjs-cursor.togetherjs-scrolled-below {
+  position: fixed;
+}
+.togetherjs-cursor.togetherjs-scrolled-below svg {
+  -webkit-transition-duration: 0.8s;
+  -webkit-transition-property: -webkit-transform;
+  -webkit-transform: rotate(-150deg);
+  transition-duration: 0.8s;
+  transition-property: transform;
+  transform: rotate(-150deg);
+}
+.togetherjs-cursor.togetherjs-scrolled-below .togetherjs-cursor-up {
+  display: none;
+}
+.togetherjs-cursor.togetherjs-scrolled-normal svg {
+  -webkit-transition-duration: 0.8s;
+  -webkit-transition-property: -webkit-transform;
+  -webkit-transform: rotate(-10deg);
+  transition-duration: 0.8s;
+  transition-property: transform;
+  transform: rotate(-10deg);
+}
+.togetherjs-cursor.togetherjs-scrolled-normal .togetherjs-cursor-up,
+.togetherjs-cursor.togetherjs-scrolled-normal .togetherjs-cursor-down {
+  display: none;
+}
+.togetherjs-cursor .togetherjs-cursor-container {
+  opacity: 0.9;
+  white-space: nowrap;
+  font-family: openSansLight, Helvetica, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 40%;
+  position: relative;
+  top: 5px;
+  left: 15px;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.5);
+  -webkit-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+.togetherjs-click {
+  position: absolute;
+  z-index: 9998;
+  pointer-events: none;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 5px;
+  border: 3px solid #ff3a29;
+  /*    Note, you must call this like:
+  .transition(~"value, value, value")*/
+
+  transition: width 2s, height 2s, margin 2s, border 2s;
+  -moz-transition: width 2s, height 2s, margin 2s, border 2s;
+  -webkit-transition: width 2s, height 2s, margin 2s, border 2s;
+  -o-transition: width 2s, height 2s, margin 2s, border 2s;
+}
+.togetherjs-click.togetherjs-clicking {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 20px;
+  border: 3px solid rgba(0, 0, 0, 0);
+}

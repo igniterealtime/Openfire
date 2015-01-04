@@ -5,7 +5,7 @@ $(document).ready(function ()
 		
 	for (var i=0; i<config.conferences.length; i++)
 	{	
-		conferenceList = conferenceList + '<option value="' + Strophe.getNodeFromJid(config.conferences[i].jid) + '"/>'	
+		conferenceList = conferenceList + '<option value="' + Strophe.getNodeFromJid(config.conferences[i].jid) + '">' + config.conferences[i].name + '</option>'	
 	}
 	
 	conferenceList = conferenceList + '</datalist>'
@@ -183,10 +183,15 @@ Strophe.addConnectionPlugin('ofmuc', {
 	$(msg).find('pdfshare').each(function() 
 	{
 		var action = $(this).attr('action');
-		var url = $(this).attr('url');
+		var url = $(this).attr('url');		
+		that.roomJid = Strophe.getBareJidFromJid(from);
 		
-		that.roomJid = Strophe.getBareJidFromJid(from)
-		that.handlePdfShare(action, url);	
+		if (Strophe.getResourceFromJid(from) != Strophe.getResourceFromJid(that.connection.jid))
+		{
+			var farparty = SettingsMenu.getDisplayName();				
+			if (!farparty) farparty = Strophe.getResourceFromJid(from);				
+			that.handlePdfShare(action, url, farparty);	
+		}
 	});	
 	
 	$(msg).find('avatarshare').each(function() 
@@ -282,9 +287,9 @@ Strophe.addConnectionPlugin('ofmuc', {
 	//console.log("handleAppShare", url, action);
     },
     
-    handlePdfShare: function (action, url)
+    handlePdfShare: function (action, url, from)
     {
-	//console.log("handlePdfShare", url, action);
+	//console.log("local handlePdfShare", url, action, from);
 	
 	if (this.sharePDF == null)
 	{
@@ -293,11 +298,17 @@ Strophe.addConnectionPlugin('ofmuc', {
 			if (action == "create") this.pdfStart(url);		
 		
 		} else {
-
+			
 			if (action == "destroy") this.pdfStop(url);	
 			if (action == "goto") this.appFrame.contentWindow.location.href = "/ofmeet/pdf/index.html?pdf=" + url;
 		}
-	}	
+	}
+	
+	if (this.appFrame && this.appFrame.contentWindow.handlePdfShare && action == "message")
+	{
+		this.appFrame.contentWindow.handlePdfShare(url, from);
+	}
+	
     },
 
     pdfReady: function() {
@@ -370,6 +381,16 @@ Strophe.addConnectionPlugin('ofmuc', {
 	}
     },
     
+    pfdMessage: function(msg) {
+
+	//console.log("pfdMessage", msg);
+	
+	if (this.appFrame)
+	{
+		this.pdfShare("message", JSON.stringify(msg));
+	}        
+    },
+    
     openPDFDialog: function() {
 	//console.log("openPDFDialog");    	
     	    var that = this;
@@ -427,7 +448,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	    	
 	    	for (var i=0; i<that.urls.length; i++)
 	    	{
-	    		urlsList = urlsList + '<option value="' + that.urls[i].url + '"/>'
+	    		urlsList = urlsList + '<option value="' + that.urls[i].url + '">' + that.urls[i].name + '</option>'
 	    	}
 	    	urlsList = urlsList + '</datalist>'
 	    	

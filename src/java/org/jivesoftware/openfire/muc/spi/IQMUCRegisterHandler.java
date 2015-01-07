@@ -141,18 +141,20 @@ class IQMUCRegisterHandler {
             if (nickname != null) {
                 // The user is already registered with the room so answer a completed form
                 ElementUtil.setProperty(currentRegistration, "query.registered", null);
+                currentRegistration.addElement("username").addText(nickname);
+
                 Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                
-                @SuppressWarnings("unchecked")
-				Iterator<Element> fields = form.elementIterator("field");
-                
-                Element field;
-                while (fields.hasNext()) {
-                    field = fields.next();
-                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
-                        field.addElement("value").addText(nickname);
-                    }
-                }
+                currentRegistration.remove(form);
+//                @SuppressWarnings("unchecked")
+//				Iterator<Element> fields = form.elementIterator("field");
+//
+//                Element field;
+//                while (fields.hasNext()) {
+//                    field = fields.next();
+//                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
+//                        field.addElement("value").addText(nickname);
+//                    }
+//                }
                 reply.setChildElement(currentRegistration);
             }
             else {

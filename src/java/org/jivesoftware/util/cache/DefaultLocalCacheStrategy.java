@@ -94,7 +94,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     public void doClusterTask(final ClusterTask task) {
     }
 
-    public boolean doClusterTask(ClusterTask task, byte[] nodeID) {
+    public void doClusterTask(ClusterTask task, byte[] nodeID) {
         throw new IllegalStateException("Cluster service is not available");
     }
 

@@ -24,6 +24,9 @@
     </group>
     <properties>
       <property name="hazelcast.logging.type">slf4j</property>
+      <property name="hazelcast.operation.call.timeout.millis">30000</property>
+      <property name="hazelcast.memcache.enabled">false</property>
+      <property name="hazelcast.rest.enabled">false</property>
     </properties>
     <management-center enabled="false"/>
     <network>

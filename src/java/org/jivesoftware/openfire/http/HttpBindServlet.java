@@ -243,8 +243,10 @@ public class HttpBindServlet extends HttpServlet {
 
         HttpSession session = sessionManager.getSession(sid);
         if (session == null) {
-            Log.warn("Client provided invalid session: " + sid + ". [" +
-                    request.getRemoteAddr() + "]");
+        	if (Log.isDebugEnabled()) {
+                Log.debug("Client provided invalid session: " + sid + ". [" +
+                        request.getRemoteAddr() + "]");
+        	}
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Invalid SID.");
             return;
         }

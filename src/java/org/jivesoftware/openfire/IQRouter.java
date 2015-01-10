@@ -97,6 +97,7 @@ public class IQRouter extends BasicModule {
         }
         JID sender = packet.getFrom();
         ClientSession session = sessionManager.getSession(sender);
+        Element childElement = packet.getChildElement(); // may be null
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
@@ -106,23 +107,25 @@ public class IQRouter extends BasicModule {
                 // User is requesting this server to authenticate for another server. Return
                 // a bad-request error
                 IQ reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
+                if (childElement != null) {
+                    reply.setChildElement(childElement.createCopy());
+                }
                 reply.setError(PacketError.Condition.bad_request);
                 session.process(reply);
                 Log.warn("User tried to authenticate with this server using an unknown receipient: " +
                         packet.toXML());
             }
             else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
-                    isLocalServer(to) && (
-                            "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
-                                    "jabber:iq:register"
-                                            .equals(packet.getChildElement().getNamespaceURI()) ||
-                                    "urn:ietf:params:xml:ns:xmpp-bind"
-                                            .equals(packet.getChildElement().getNamespaceURI())))) {
+                    childElement != null && isLocalServer(to) && (
+                        "jabber:iq:auth".equals(childElement.getNamespaceURI()) ||
+                        "jabber:iq:register".equals(childElement.getNamespaceURI()) ||
+                        "urn:ietf:params:xml:ns:xmpp-bind".equals(childElement.getNamespaceURI())))) {
                 handle(packet);
             } else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
                 IQ reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
+                if (childElement != null) {
+                    reply.setChildElement(childElement.createCopy());
+                }
                 reply.setError(PacketError.Condition.not_authorized);
                 session.process(reply);
             }
@@ -133,7 +136,9 @@ public class IQRouter extends BasicModule {
             if (session != null) {
                 // An interceptor rejected this packet so answer a not_allowed error
                 IQ reply = new IQ();
-                reply.setChildElement(packet.getChildElement().createCopy());
+                if (childElement != null) {
+                    reply.setChildElement(childElement.createCopy());
+                }
                 reply.setID(packet.getID());
                 reply.setTo(session.getAddress());
                 reply.setFrom(packet.getTo());

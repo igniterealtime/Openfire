@@ -98,7 +98,8 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
             }
             else {
                 ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isInitialized);
-                initialized = (Boolean) doSynchronousClusterTask(task) ? 1 : 0;
+                Object result = doSynchronousClusterTask(task);
+                initialized = result != null && (Boolean) result ? 1 : 0;
             }
         }
         return initialized == 1;
@@ -133,8 +134,9 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
         ClientSessionInfo sessionInfo = cache.get(getAddress().toString());
         if (sessionInfo != null) {
             return sessionInfo.getPresence();
-            }
-        return null;
+        }
+        // this can happen if a cluster node becomes unreachable
+        return new Presence(Presence.Type.unavailable);
     }
 
     public void setPresence(Presence presence) {

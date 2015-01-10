@@ -520,7 +520,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
         for (JID address : getRoutes(recipientJID, packet.getFrom())) {
             ClientSession session = getClientRoute(address);
-            if (session != null) {
+            if (session != null && session.isInitialized()) {
                 sessions.add(session);
             }
         }

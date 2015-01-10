@@ -20,6 +20,7 @@
 package com.jivesoftware.util.cache;
 
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -291,8 +292,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
      * Note that this method does not provide the result set for the given
      * task, as the task is run asynchronously across the cluster.
      */
-    public boolean doClusterTask(final ClusterTask task, byte[] nodeID) {
-    	if (cluster == null) { return false; }
+    public void doClusterTask(final ClusterTask task, byte[] nodeID) {
+    	if (cluster == null) { return; }
     	Member member = getMember(nodeID);
         // Check that the requested member was found
         if (member != null) {
@@ -300,10 +301,10 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     		logger.debug("Executing asynchronous DistributedTask: " + task.getClass().getName());
 	        hazelcast.getExecutorService(HAZELCAST_EXECUTOR_SERVICE_NAME).submitToMember(
 	        		new CallableTask<Object>(task), member);
-            return true;
         } else {
-	        logger.warn("Requested node " + StringUtils.getString(nodeID) + " not found in cluster");
-        	return false;
+        	String msg = MessageFormat.format("Requested node {0} not found in cluster", StringUtils.getString(nodeID));
+	        logger.warn(msg);
+        	throw new IllegalArgumentException(msg);
 		}
     }
 
@@ -369,7 +370,9 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		logger.error("Failed to execute cluster task", e);
         	}
         } else {
-        	logger.warn("Requested node " + StringUtils.getString(nodeID) + " not found in cluster");
+        	String msg = MessageFormat.format("Requested node {0} not found in cluster", StringUtils.getString(nodeID));
+	        logger.warn(msg);
+        	throw new IllegalArgumentException(msg);
         }
         return result;
     }

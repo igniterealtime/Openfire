@@ -25,6 +25,7 @@ import java.util.Date;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ClusterTask;
@@ -177,8 +178,10 @@ public abstract class RemoteSession implements Session {
     	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
     	Object result = null;
     	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-        	SessionManager.getInstance().removeSession(null, 
-        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+    		Session remoteSession = ((RemoteSessionTask)task).getSession();
+    		if (remoteSession instanceof ClientSession) {
+            	SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
+    		}
     	} else {
         	result = (info == null) ? null : CacheFactory.doSynchronousClusterTask(task, nodeID);
         }
@@ -193,8 +196,10 @@ public abstract class RemoteSession implements Session {
     protected void doClusterTask(ClusterTask task) {
     	ClusterNodeInfo info = CacheFactory.getClusterNodeInfo(nodeID);
     	if (info == null && task instanceof RemoteSessionTask) { // clean up invalid session
-        	SessionManager.getInstance().removeSession(null, 
-        			((RemoteSessionTask)task).getSession().getAddress(), false, false);
+    		Session remoteSession = ((RemoteSessionTask)task).getSession();
+    		if (remoteSession instanceof ClientSession) {
+            	SessionManager.getInstance().removeSession(null, remoteSession.getAddress(), false, false);
+    		}
 		} else {
 			CacheFactory.doClusterTask(task, nodeID);
 	    }

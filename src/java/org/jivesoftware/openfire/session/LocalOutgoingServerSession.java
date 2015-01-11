@@ -611,7 +611,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
 	void deliver(Packet packet) throws UnauthorizedException {
-        if (conn != null && !conn.isClosed()) {
+        if (!conn.isClosed()) {
             conn.deliver(packet);
         }
     }

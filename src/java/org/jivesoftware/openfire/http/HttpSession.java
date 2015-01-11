@@ -134,8 +134,7 @@ public class HttpSession extends LocalClientSession {
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
                        StreamID streamID, long rid, HttpConnection connection) {
-        super(serverName, null, streamID);
-        conn = new HttpVirtualConnection(address);
+        super(serverName, new HttpVirtualConnection(address), streamID);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;

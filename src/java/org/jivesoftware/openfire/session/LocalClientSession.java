@@ -854,14 +854,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
 	public void deliver(Packet packet) throws UnauthorizedException {
-        if (conn != null) {
-            conn.deliver(packet);
-        } else {
-        	// invalid session; clean up and retry delivery (offline)
-        	Log.error("Failed to deliver packet to invalid session (no connection); will retry");
-        	sessionManager.removeSession(this);
-        	XMPPServer.getInstance().getPacketDeliverer().deliver(packet);
-        }
+        conn.deliver(packet);
     }
 
     @Override

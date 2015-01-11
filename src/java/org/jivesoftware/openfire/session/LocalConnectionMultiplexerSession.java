@@ -302,7 +302,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
     @Override
 	void deliver(Packet packet) throws UnauthorizedException {
-        if (conn != null && !conn.isClosed()) {
+        if (!conn.isClosed()) {
             conn.deliver(packet);
         }
     }

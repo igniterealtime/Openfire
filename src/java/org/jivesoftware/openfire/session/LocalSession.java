@@ -75,7 +75,7 @@ public abstract class LocalSession implements Session {
     /**
      * The connection that this session represents.
      */
-    protected Connection conn;
+    protected final Connection conn;
 
     protected SessionManager sessionManager;
 
@@ -101,6 +101,9 @@ public abstract class LocalSession implements Session {
      * @param streamID unique identifier for this session.
      */
     public LocalSession(String serverName, Connection connection, StreamID streamID) {
+        if (connection == null) {
+            throw new IllegalArgumentException("connection must not be null");
+        }
         conn = connection;
         this.streamID = streamID;
         this.serverName = serverName;
@@ -328,9 +331,7 @@ public abstract class LocalSession implements Session {
     abstract void deliver(Packet packet) throws UnauthorizedException;
 
     public void deliverRawText(String text) {
-        if (conn != null) {
-            conn.deliverRawText(text);
-        }
+        conn.deliverRawText(text);
     }
 
     /**
@@ -342,9 +343,7 @@ public abstract class LocalSession implements Session {
     public abstract String getAvailableStreamFeatures();
 
     public void close() {
-        if (conn != null) {
-            conn.close();
-        }
+        conn.close();
     }
 
     public boolean validate() {

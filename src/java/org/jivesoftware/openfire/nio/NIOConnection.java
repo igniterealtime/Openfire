@@ -31,7 +31,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -116,16 +116,20 @@ public class NIOConnection implements Connection {
     private boolean closed;
     
     /**
-     * Lock used to ensure the integrity of the underlying IoSession 
-     * (refer to https://issues.apache.org/jira/browse/DIRMINA-653 for details)
+     * Lock used to ensure the integrity of the underlying IoSession (refer to
+     * https://issues.apache.org/jira/browse/DIRMINA-653 for details)
+     * <p>
+     * This lock can be removed once Openfire guarantees a stable delivery
+     * order, in which case {@link #deliver(Packet)} won't be called
+     * concurrently any more, which made this lock necessary in the first place.
+     * </p>
      */
-    private Semaphore ioSessionLock;
+    private final ReentrantLock ioSessionLock = new ReentrantLock(true);
 
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
         closed = false;
-        ioSessionLock = new Semaphore(1, true);
     }
 
     public boolean validate() {
@@ -261,12 +265,9 @@ public class NIOConnection implements Connection {
         }
         else {
             boolean errorDelivering = false;
+            IoBuffer buffer = IoBuffer.allocate(4096);
+            buffer.setAutoExpand(true);
             try {
-            	ioSessionLock.acquire();
-
-            	IoBuffer buffer = IoBuffer.allocate(4096);
-                buffer.setAutoExpand(true);
-
             	// OF-464: if the connection has been dropped, fail over to backupDeliverer (offline)
             	if (!ioSession.isConnected()) {
             		throw new IOException("Connection reset/closed by peer");
@@ -279,14 +280,17 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                ioSession.write(buffer);
+                
+                ioSessionLock.lock();
+                try {
+                    ioSession.write(buffer);
+                } finally {
+                    ioSessionLock.unlock();
+                }
             }
             catch (Exception e) {
                 Log.debug("Error delivering packet:\n" + packet, e);
                 errorDelivering = true;
-            }
-            finally {
-            	ioSessionLock.release();
             }
             if (errorDelivering) {
                 close();
@@ -307,14 +311,10 @@ public class NIOConnection implements Connection {
 
     private void deliverRawText(String text, boolean asynchronous) {
         if (!isClosed()) {
-
             boolean errorDelivering = false;
+            IoBuffer buffer = IoBuffer.allocate(text.length());
+            buffer.setAutoExpand(true);
             try {
-            	ioSessionLock.acquire();
-
-            	IoBuffer buffer = IoBuffer.allocate(text.length());
-                buffer.setAutoExpand(true);
-
                 //Charset charset = Charset.forName(CHARSET);
                 //buffer.putString(text, charset.newEncoder());
                 buffer.put(text.getBytes(CHARSET));
@@ -322,29 +322,33 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                if (asynchronous) {
-                	// OF-464: handle dropped connections (no backupDeliverer in this case?)
-                	if (!ioSession.isConnected()) {
-                		throw new IOException("Connection reset/closed by peer");
-                	}
-                    ioSession.write(buffer);
-                }
-                else {
-                    // Send stanza and wait for ACK (using a 2 seconds default timeout)
-                    boolean ok =
-                            ioSession.write(buffer).awaitUninterruptibly(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
-                    if (!ok) {
-                        Log.warn("No ACK was received when sending stanza to: " + this.toString());
+                ioSessionLock.lock();
+                try {
+                    if (asynchronous) {
+                        // OF-464: handle dropped connections (no backupDeliverer in this case?)
+                        if (!ioSession.isConnected()) {
+                            throw new IOException("Connection reset/closed by peer");
+                        }
+                        ioSession.write(buffer);
                     }
+                    else {
+                        // Send stanza and wait for ACK (using a 2 seconds default timeout)
+                        boolean ok =
+                                ioSession.write(buffer).awaitUninterruptibly(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
+                        if (!ok) {
+                            Log.warn("No ACK was received when sending stanza to: " + this.toString());
+                        }
+                    }
+                } 
+                finally {
+                    ioSessionLock.unlock();
                 }
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text:\n" + text, e);
                 errorDelivering = true;
             }
-            finally {
-            	ioSessionLock.release();
-            }
+
             // Close the connection if delivering text fails and we are already not closing the connection
             if (errorDelivering && asynchronous) {
                 close();

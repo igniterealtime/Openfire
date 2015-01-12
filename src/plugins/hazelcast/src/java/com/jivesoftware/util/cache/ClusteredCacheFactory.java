@@ -124,13 +124,20 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         int retry = 0;
         do {
             try {
+	            // Use ClusterClassLoader to load hazelcast config file
 	            Config config = new ClasspathXmlConfig(HAZELCAST_CONFIG_FILE);
 	            config.setInstanceName("openfire");
-                config.setClassLoader(loader);
 	            if (JMXManager.isEnabled() && HAZELCAST_JMX_ENABLED) {
 	            	config.setProperty("hazelcast.jmx", "true");
 	            	config.setProperty("hazelcast.jmx.detailed", "true");
 	            }
+	            
+	            // Change ClassLoader to old ClassLoader to load Haselcast
+	            // classes
+	            if (oldLoader != null) {
+	            	Thread.currentThread().setContextClassLoader(oldLoader);
+	            }
+	            
 	        	hazelcast = Hazelcast.newHazelcastInstance(config);
 	            cluster = hazelcast.getCluster();
 	
@@ -145,6 +152,9 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 	            cluster.addMembershipListener(clusterListener);
 	            break;
 	        } catch (Exception e) {
+	            // On hazelcast start error set ClusterClassLoader to reload
+	            // hazelcast config file
+	            Thread.currentThread().setContextClassLoader(loader);
 	            if (retry < CLUSTER_STARTUP_RETRY_COUNT) {
 	            	logger.warn("Failed to start clustering (" +  e.getMessage() + "); " +
 	            			"will retry in " + CLUSTER_STARTUP_RETRY_TIME + " seconds");

@@ -50,7 +50,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
     @Override
 	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer());
+        return new NIOConnection(session, new OfflinePacketDeliverer());
     }
 
     @Override

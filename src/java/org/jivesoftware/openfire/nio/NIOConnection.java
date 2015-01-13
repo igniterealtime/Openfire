@@ -255,7 +255,15 @@ public class NIOConnection implements Connection {
 
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+        	// OF-857: Do not allow the backup deliverer to recurse
+        	if (backupDeliverer == null) {
+        		Log.error("Failed to deliver packet: " + packet.toXML());
+        		throw new IllegalStateException("Connection closed");
+        	}
+        	// attempt to deliver via backup only once
+        	PacketDeliverer backup = backupDeliverer;
+            backupDeliverer = null;
+            backup.deliver(packet);
         }
         else {
             boolean errorDelivering = false;

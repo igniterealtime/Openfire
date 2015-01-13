@@ -40,6 +40,9 @@ import org.xmpp.jnodes.nio.LocalIPResolver;
 import org.xmpp.jnodes.nio.PublicIPResolver;
 
 public class JingleNodesPlugin implements Plugin {
+	
+	private static final String[] 	stun_host = 	{"stun.l.google.com",	"stun.schlund.de",	"stun.iptel.org ",	"stun4.l.google.com"};
+	private static final int[] 		stun_port =		{19302,					3478,				3478,				19302};
 
     private static final Logger Log = LoggerFactory.getLogger(JingleNodesPlugin.class);
 
@@ -92,10 +95,15 @@ public class JingleNodesPlugin implements Plugin {
     }
 
     public void verifyNetwork() {
-        final String localAddress = JiveGlobals.getProperty(JN_PUB_IP_PROPERTY, LocalIPResolver.getLocalIP());
-        LocalIPResolver.setOverrideIp(localAddress);
-        final InetSocketAddress publicAddress = PublicIPResolver.getPublicAddress("stun.xten.com", 3478);
-        hasPublicIP = publicAddress != null && publicAddress.getAddress().getHostAddress().equals(localAddress);
+		for(int i =0;i<stun_host.length;++i) {
+			final String localAddress = JiveGlobals.getProperty(JN_PUB_IP_PROPERTY, LocalIPResolver.getLocalIP());
+			LocalIPResolver.setOverrideIp(localAddress);
+			final InetSocketAddress publicAddress = PublicIPResolver.getPublicAddress(stun_host[i], stun_port[i]);
+			hasPublicIP = publicAddress != null && publicAddress.getAddress().getHostAddress().equals(localAddress);
+			if(hasPublicIP) {
+				return;
+			}
+		}
     }
 
     private void closeAllChannels() {

@@ -215,8 +215,8 @@ public class NIOConnection implements Connection {
             if (session != null) {
                 session.setStatus(Session.STATUS_CLOSED);
             }
-            notifyCloseListeners(); // clean up session, etc.
             closed = true;
+            notifyCloseListeners(); // clean up session, etc.
     	}
         ioSession.close(false); // async via MINA
     }

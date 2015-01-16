@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketExtension;
 
 /**
  * Controls what is done with offline messages.
@@ -80,9 +81,11 @@ public class OfflineMessageStrategy extends BasicModule {
     public void storeOffline(Message message) {
         if (message != null) {
             // Do nothing if the message was sent to the server itself, an anonymous user or a non-existent user
+        	// Also ignore message carbons
             JID recipientJID = message.getTo();
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
                     recipientJID.getNode() == null ||
+                    message.getExtension("received", "urn:xmpp:carbons:2") != null ||
                     !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 return;
             }

@@ -203,25 +203,22 @@ public class NIOConnection implements Connection {
     }
 
     public void close() {
-        boolean closedSuccessfully = false;
-        synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
-                } catch (Exception e) {
-                    // Ignore
-                }
-                if (session != null) {
-                    session.setStatus(Session.STATUS_CLOSED);
-                }
-                ioSession.close(false);
-                closed = true;
-                closedSuccessfully = true;
+    	synchronized(this) {
+    		if (isClosed()) {
+    			return;
+    		}
+            try {
+                deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
+            } catch (Exception e) {
+                // Ignore
             }
-        }
-        if (closedSuccessfully) {
-            notifyCloseListeners();
-        }
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
+            }
+            closed = true;
+            notifyCloseListeners(); // clean up session, etc.
+    	}
+        ioSession.close(false); // async via MINA
     }
 
     public void systemShutdown() {
@@ -248,11 +245,8 @@ public class NIOConnection implements Connection {
         session = owner;
     }
 
-    public boolean isClosed() {
-        if (session == null) {
-            return closed;
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+    public synchronized boolean isClosed() {
+        return closed;
     }
 
     public boolean isSecure() {
@@ -261,7 +255,15 @@ public class NIOConnection implements Connection {
 
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+        	// OF-857: Do not allow the backup deliverer to recurse
+        	if (backupDeliverer == null) {
+        		Log.error("Failed to deliver packet: " + packet.toXML());
+        		throw new IllegalStateException("Connection closed");
+        	}
+        	// attempt to deliver via backup only once
+        	PacketDeliverer backup = backupDeliverer;
+            backupDeliverer = null;
+            backup.deliver(packet);
         }
         else {
             boolean errorDelivering = false;

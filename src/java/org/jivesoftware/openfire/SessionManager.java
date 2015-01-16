@@ -641,10 +641,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
         List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
-            // Send the presence of the session whose presence has changed to
-            // this other user's session
-            presence.setTo(address);
-            routingTable.routePacket(address, presence, false);
+        	if (!originatingResource.equals(address)) {
+	            // Send the presence of the session whose presence has changed to
+	            // this user's other session(s)
+	            presence.setTo(address);
+	            routingTable.routePacket(address, presence, false);
+        	}
         }
     }
 

@@ -233,22 +233,32 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
         boolean routed = false;
-        if (serverName.equals(jid.getDomain())) {
-        	// Packet sent to our domain.
-            routed = routeToLocalDomain(jid, packet, fromServer);
-        }
-        else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
-            // Packet sent to component hosted in this server
-            routed = routeToComponent(jid, packet, routed);
-        }
-        else {
-            // Packet sent to remote server
-            routed = routeToRemoteDomain(jid, packet, routed);
+        try {
+	        if (serverName.equals(jid.getDomain())) {
+	        	// Packet sent to our domain.
+	            routed = routeToLocalDomain(jid, packet, fromServer);
+	        }
+	        else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
+	            // Packet sent to component hosted in this server
+	            routed = routeToComponent(jid, packet, routed);
+	        }
+	        else {
+	            // Packet sent to remote server
+	            routed = routeToRemoteDomain(jid, packet, routed);
+	        }
+        } catch (Exception ex) {
+        	// Catch here to ensure that all packets get handled, despite various processing
+        	// exceptions, rather than letting any fall through the cracks. For example,
+        	// an IAE could be thrown when running in a cluster if a remote member becomes 
+        	// unavailable before the routing caches are updated to remove the defunct node.
+        	// We have also occasionally seen various flavors of NPE and other oddities, 
+        	// typically due to unexpected environment or logic breakdowns. 
+        	Log.error("Primary packet routing failed", ex); 
         }
 
         if (!routed) {
             if (Log.isDebugEnabled()) {
-                Log.debug("RoutingTableImpl: Failed to route packet to JID: {} packet: {}", jid, packet.toXML());
+                Log.debug("Failed to route packet to JID: {} packet: {}", jid, packet.toXML());
             }
             if (packet instanceof IQ) {
                 iqRouter.routingFailed(jid, packet);

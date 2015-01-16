@@ -770,7 +770,7 @@ JingleSession.prototype.getStats = function (interval) {
 JingleSession.prototype.setBandwidth = function (sdp) 
 {
     // remove existing bandwidth lines
-    sdp = sdp.replace( /b=AS([^\r\n]+\r\n)/g , '');
+    //sdp = sdp.replace( /b=AS([^\r\n]+\r\n)/g , '');
 
     // audio bandwidth 
     sdp = sdp.replace( /a=mid:audio\r\n/g , 'a=mid:audio\r\nb=AS:' + config.audioBandwidth + '\r\n');

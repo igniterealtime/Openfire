@@ -51,24 +51,30 @@ public class JicofoPlugin
 			String hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getHostname());
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String focusUserJid = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
-			String focusUserPassword = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.password", "focus");
+			String focusUserPassword = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.password", null);
 
-			Log.info("JicofoPlugin - using focus " + focusUserJid + ":" + hostName + "/" + focusUserPassword);
+			if (focusUserPassword != null)
+			{
+				Log.info("JicofoPlugin - using focus " + focusUserJid + ":" + hostName + "/" + focusUserPassword);
 
-			System.setProperty("org.jitsi.videobridge.ofmeet.audio.mixer", JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
+				System.setProperty("org.jitsi.videobridge.ofmeet.audio.mixer", JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
 
-			System.setProperty("net.java.sip.communicator.service.gui.ALWAYS_TRUST_MODE_ENABLED",  "true");
-			System.setProperty(FocusManager.HOSTNAME_PNAME, hostName);
-			System.setProperty(FocusManager.XMPP_DOMAIN_PNAME, domain);
-			System.setProperty(FocusManager.FOCUS_USER_DOMAIN_PNAME, domain);
-			System.setProperty(FocusManager.FOCUS_USER_NAME_PNAME, (new JID(focusUserJid)).getNode());
-			System.setProperty(FocusManager.FOCUS_USER_PASSWORD_PNAME, focusUserPassword);
+				System.setProperty("net.java.sip.communicator.service.gui.ALWAYS_TRUST_MODE_ENABLED",  "true");
+				System.setProperty(FocusManager.HOSTNAME_PNAME, hostName);
+				System.setProperty(FocusManager.XMPP_DOMAIN_PNAME, domain);
+				System.setProperty(FocusManager.FOCUS_USER_DOMAIN_PNAME, domain);
+				System.setProperty(FocusManager.FOCUS_USER_NAME_PNAME, (new JID(focusUserJid)).getNode());
+				System.setProperty(FocusManager.FOCUS_USER_PASSWORD_PNAME, focusUserPassword);
 
-			ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
-			String subdomain = "ofmeet-focus";
-			FocusComponent component = new FocusComponent(false);
-            componentManager.addComponent(subdomain, component);
-           	added = true;
+				ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
+				String subdomain = "ofmeet-focus";
+				FocusComponent component = new FocusComponent(false);
+				componentManager.addComponent(subdomain, component);
+				added = true;
+
+			} else {
+				Log.error("Focus user not setup. password missing " + focusUserJid);
+			}
         }
         catch (Exception ce)
         {

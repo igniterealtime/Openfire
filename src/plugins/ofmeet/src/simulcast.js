@@ -319,7 +319,7 @@ SimulcastReceiver.prototype._updateRemoteMaps = function (lines) {
     this._remoteMaps.msid2ssrc = {};
 
     var self = this;
-    if (remoteVideoSources.groups && remoteVideoSources.groups.length !== 0) {
+    if (remoteVideoSources && remoteVideoSources.groups && remoteVideoSources.groups.length !== 0) {
         remoteVideoSources.groups.forEach(function (group) {
             if (group.semantics === 'SIM' && group.ssrcs && group.ssrcs.length !== 0) {
                 quality = 0;

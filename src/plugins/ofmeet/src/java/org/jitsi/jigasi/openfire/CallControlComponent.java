@@ -95,7 +95,15 @@ public class CallControlComponent extends AbstractComponent
 		properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
 		properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
 
-		sipService = new SipService(properties);
+		if (JiveGlobals.getBooleanProperty("org.jitsi.videobridge.ofmeet.sip.enabled", true))
+		{
+			Log.info("CallControlComponent - enabling SIP gateway ");
+
+			sipService = new SipService(properties);
+
+		} else {
+			Log.info("CallControlComponent -enabling SIP gateway");
+		}
 	}
 
 	@Override protected String[] discoInfoFeatureNamespaces()
@@ -128,7 +136,7 @@ public class CallControlComponent extends AbstractComponent
 
 		callSessions.clear();
 
-		sipService.stop();
+		if (sipService != null) sipService.stop();
 	}
 
 	public void recordCall(Conference conference, String token, String state)
@@ -173,7 +181,7 @@ public class CallControlComponent extends AbstractComponent
 				mediaStream.setRTPTranslator(content.getRTPTranslator());
 			}
 
-			content.createRtpChannel(null);
+			content.createRtpChannel(null, null, null);
 
 			CallSession cs = new CallSession(mediaStream, hostname, this, callId, focusJid, confJid);
 			callSessions.put(callId, cs);
@@ -319,7 +327,7 @@ public class CallControlComponent extends AbstractComponent
 					mediaStream.setRTPTranslator(content.getRTPTranslator());
 				}
 
-				content.createRtpChannel(null);
+				content.createRtpChannel(null, null, null);
 
 				String callId = Long.toHexString(System.currentTimeMillis());
 				session = new CallSession(mediaStream, hostname, this, callId, conference.getFocus(), confJID);

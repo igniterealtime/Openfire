@@ -3015,13 +3015,13 @@ Candy.View.Observer = function(self, $) {
 	 *   (Object) args - {message, roomJid}
 	 */
     self.Message = function(event, args) {
-        if (args.message.type === "subject") {
+        if (args && args.message && args.message.type === "subject") {
             if (!Candy.View.Pane.Chat.rooms[args.roomJid]) {
                 Candy.View.Pane.Room.init(args.roomJid, args.message.name);
                 Candy.View.Pane.Room.show(args.roomJid);
             }
             Candy.View.Pane.Room.setSubject(args.roomJid, args.message.body);
-        } else if (args.message.type === "info") {
+        } else if (args && args.message && args.message.type === "info") {
             Candy.View.Pane.Chat.infoMessage(args.roomJid, args.message.body);
         } else {
             // Initialize room if it's a message for a new private user chat

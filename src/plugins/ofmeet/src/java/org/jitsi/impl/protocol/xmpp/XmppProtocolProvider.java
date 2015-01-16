@@ -458,7 +458,7 @@ public class XmppProtocolProvider
             connection.sendPacket(packet);
 
             //FIXME: retry allocation on timeout
-            Packet response = packetCollector.nextResult(20000);
+            Packet response = packetCollector.nextResult(60000);	// BAO
 
             packetCollector.cancel();
 

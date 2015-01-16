@@ -70,11 +70,12 @@ public class Config extends HttpServlet
 
 			String conferences = "[";
 
-			boolean clientControl = XMPPServer.getInstance().getPluginManager().getPlugin("clientControl") != null || XMPPServer.getInstance().getPluginManager().getPlugin("clientcontrol") != null;
+			try {
 
-			if (clientControl)
-			{
-				try {
+				boolean clientControl = XMPPServer.getInstance().getPluginManager().getPlugin("clientControl") != null || XMPPServer.getInstance().getPluginManager().getPlugin("clientcontrol") != null;
+
+				if (clientControl)
+				{
 					final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
 
 					for (Bookmark bookmark : bookmarks)
@@ -90,10 +91,10 @@ public class Config extends HttpServlet
 							}
 						}
 					}
-
-				} catch (Exception e) {
-
 				}
+
+			} catch (Exception e) {
+
 			}
 
 			conferences = conferences + "]";
@@ -107,8 +108,8 @@ public class Config extends HttpServlet
 			String iceServers 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.iceservers", "");
 			String resolution 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360");
 			String audioMixer			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false");
-			String audioBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "64");
-			String videoBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "512");
+			String audioBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "128");
+			String videoBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "2048");
 			String useNicks 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
 			String useIPv6 				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
 			String useStunTurn 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.stunturn", "false");
@@ -131,12 +132,19 @@ public class Config extends HttpServlet
 			String logStats 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.stats.logging", "false");
 			String focusUserJid 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
 
+			String callControl = "'ofmeet-call-control." + domain + "'";
+
+			if (JiveGlobals.getBooleanProperty("org.jitsi.videobridge.ofmeet.sip.enabled", true) == false)
+			{
+				callControl = "null";
+			}
+
 			out.println("var config = {");
 			out.println("    hosts: {");
 			out.println("        domain: '" + domain + "',");
 			out.println("        muc: 'conference." + domain + "',");
 			out.println("        bridge: 'ofmeet-jitsi-videobridge." + domain + "',");
-			out.println("        call_control: 'ofmeet-call-control." + domain + "',");
+			out.println("        call_control: " + callControl + ",");
 			out.println("        focus: 'ofmeet-focus." + domain + "',");
 			out.println("    },");
 			out.println("    getroomnode: function (path)");
@@ -193,7 +201,7 @@ public class Config extends HttpServlet
 
 		}
 		catch(Exception e) {
-			Log.info("Config doGet Error", e);
+			Log.error("Config doGet Error", e);
 		}
 	}
 
@@ -211,7 +219,7 @@ public class Config extends HttpServlet
         }
         catch(Exception e)
         {
-			Log.info("Config writeHeader Error", e);
+			Log.error("Config writeHeader Error", e);
         }
 	}
 

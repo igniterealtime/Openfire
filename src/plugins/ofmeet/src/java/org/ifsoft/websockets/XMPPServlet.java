@@ -324,10 +324,11 @@ public final class XMPPServlet extends WebSocketServlet
             if (wsSession != null && wsSession.isOpen() && !"".equals( packet.trim() ) )
             {
                 try {
-                	Log.debug( digest + " : Delivered : " + packet );
-                	wsSession.getRemote().sendString(packet);
+                	Log.debug( digest + " : Delivered : \n" + packet );
+                	wsSession.getRemote().sendStringByFuture(packet);
                 } catch (Exception e) {
                     Log.error("XMPPWebSocket deliver " + e);
+					Log.warn( digest + " : Could not deliver : \n" + packet );
                 }
             }
         }

@@ -83,7 +83,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 		return jitsiPlugin;
 	}
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
 
 		ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
 
@@ -96,7 +96,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			jitsiPlugin = new PluginImpl();
 			jitsiPlugin.initializePlugin(manager, pluginDirectory);
 
-			Log.info("OfMeet Plugin - Initialize jitsi sip gateway ");
+			Log.info("OfMeet Plugin - Initialize SIP gateway ");
 
 			jigasiPlugin = new JigasiPlugin();
 			jigasiPlugin.initializePlugin(manager, pluginDirectory);
@@ -107,7 +107,6 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String userName = "focus";
 			String focusUserJid = userName + "@" + domain;
-			String focusUserPassword = "focus-password-" + System.currentTimeMillis();
 
 			try {
 				userManager.getUser(userName);
@@ -116,19 +115,34 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 
 				Log.info("OfMeet Plugin - Setup focus user " + focusUserJid);
 
-				userManager.createUser(userName, focusUserPassword, "Openfire Meetings Focus User", focusUserJid);
+				String focusUserPassword = "focus-password-" + System.currentTimeMillis();
 
-				JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", focusUserJid);
-				JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focusUserPassword);
+				try {
+					userManager.createUser(userName, focusUserPassword, "Openfire Meetings Focus User", focusUserJid);
 
-   				MultiUserChatService mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference");
-				List<JID> allowedJIDs = new ArrayList<JID>();
-				allowedJIDs.add(new JID(focusUserJid));
-   				mucService.addSysadmins(allowedJIDs);
+					JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", focusUserJid);
+					JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focusUserPassword);
+
+					MultiUserChatService mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference");
+					List<JID> allowedJIDs = new ArrayList<JID>();
+					allowedJIDs.add(new JID(focusUserJid));
+					mucService.addSysadmins(allowedJIDs);
+				}
+				catch (Exception e1) {
+
+					Log.error("Could NOT create focus user", e1);
+				}
 			}
 
-			jicofoPlugin = new JicofoPlugin();
-			jicofoPlugin.initializePlugin(manager, pluginDirectory);
+			new Timer().schedule(new TimerTask()
+			{
+				@Override public void run()
+				{
+     				jicofoPlugin = new JicofoPlugin();
+					jicofoPlugin.initializePlugin(manager, pluginDirectory);
+				}
+			}, 5000);
+
 
 			ClusterManager.addListener(this);
 

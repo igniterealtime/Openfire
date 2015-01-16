@@ -972,7 +972,69 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public void leftCluster(byte[] nodeID) {
-        // Do nothing
+    	
+    	// When a peer server leaves the cluster, any remote routes that were
+    	// associated with the defunct node must be dropped from the routing 
+    	// caches that are shared by the remaining cluster member(s).
+    	
+    	// drop routes for all client sessions connected via the defunct cluster node
+        Lock clientLock = CacheFactory.getLock(nodeID, usersCache);
+        try {
+        	clientLock.lock();
+	    	List<String> remoteClientRoutes = new ArrayList<String>();
+	    	for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
+	    		if (entry.getValue().getNodeID().equals(nodeID)) {
+	    			remoteClientRoutes.add(entry.getKey());
+	    		}
+	    	}
+	    	for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
+	    		if (entry.getValue().getNodeID().equals(nodeID)) {
+	    			remoteClientRoutes.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String route : remoteClientRoutes) {
+	    		removeClientRoute(new JID(route));
+	    	}
+        }
+        finally {
+        	clientLock.unlock();
+        }
+    	
+    	// remove routes for server domains that were accessed through the defunct node
+        Lock serverLock = CacheFactory.getLock(nodeID, serversCache);
+        try {
+        	serverLock.lock();
+	    	List<String> remoteServerDomains = new ArrayList<String>();
+	    	for (Map.Entry<String, byte[]> entry : serversCache.entrySet()) {
+	    		if (entry.getValue().equals(nodeID)) {
+	    			remoteServerDomains.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String domain : remoteServerDomains) {
+	    		removeServerRoute(new JID(domain));
+	    	}
+        }
+        finally {
+        	serverLock.unlock();
+        }
+    	
+    	// remove component routes for the defunct node
+        Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
+        try {
+        	componentLock.lock();
+	    	List<String> remoteComponents = new ArrayList<String>();
+	    	for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
+	    		if (entry.getValue().remove(nodeID) && entry.getValue().size() == 0) {
+	    			remoteComponents.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String jid : remoteComponents) {
+	    		removeComponentRoute(new JID(jid));
+	    	}
+        }
+        finally {
+        	componentLock.unlock();
+        }
     }
 
     public void markedAsSeniorClusterMember() {

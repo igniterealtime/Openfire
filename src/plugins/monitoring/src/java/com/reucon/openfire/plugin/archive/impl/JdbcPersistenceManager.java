@@ -50,8 +50,8 @@ public class JdbcPersistenceManager implements PersistenceManager {
             + "ofConversation.messageCount, " + "ofConversation.startDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource,"
             + "ofConParticipant.nickname, " + "ofConParticipant.bareJID AS fromJID, " + "ofMessageArchive.toJID, "
             + "min(ofConParticipant.joinedDate) AS startDate, " + "max(ofConParticipant.leftDate) as leftDate "
-            + "FROM ofConversation "
-            + "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
+			+ "FROM ofConversation "
+			+ "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
             + "INNER JOIN (SELECT conversationID, toJID FROM ofMessageArchive union all SELECT conversationID, fromJID as toJID FROM ofMessageArchive) ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID ";
 
     	public static final String SELECT_CONVERSATIONS_GROUP_BY = " GROUP BY ofConversation.conversationID, ofConversation.room, ofConversation.isExternal, ofConversation.lastActivity, ofConversation.messageCount, ofConversation.startDate, ofConParticipant.bareJID, ofConParticipant.jidResource, ofConParticipant.nickname, ofConParticipant.bareJID, ofMessageArchive.toJID";
@@ -95,7 +95,6 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 	public static final String CONVERSATION_WITH_JID = "ofMessageArchive.toJID";
 	// public static final String CONVERSATION_WITH_JID = "c.withJid";
-
 	public static final String MESSAGE_ID = "ofMessageArchive.messageID";
 
 	public static final String MESSAGE_SENT_DATE = "ofMessageArchive.sentDate";
@@ -126,7 +125,6 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 	// public static final String SELECT_PARTICIPANTS_BY_CONVERSATION =
 	// "SELECT participantId,startTime,endTime,jid FROM archiveParticipants WHERE conversationId =? ORDER BY startTime";
-
 	 public static final String SELECT_MESSAGES = "SELECT DISTINCT " + "ofMessageArchive.fromJID, "
 			+ "ofMessageArchive.toJID, " + "ofMessageArchive.sentDate, " + "ofMessageArchive.stanza, "
 			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
@@ -168,7 +166,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	public Date getAuditedStartDate(Date startDate) {
 		long maxRetrievable = JiveGlobals.getIntProperty("conversation.maxRetrievable", ConversationManager.DEFAULT_MAX_RETRIEVABLE)
 				* JiveConstants.DAY;
-		Date result;
+		Date result = startDate;
 		if (maxRetrievable > 0) {
 			Date now = new Date();
 			Date maxRetrievableDate = new Date(now.getTime() - maxRetrievable);
@@ -176,12 +174,8 @@ public class JdbcPersistenceManager implements PersistenceManager {
 				result = maxRetrievableDate;
 			} else if (startDate.before(maxRetrievableDate)) {
 				result = maxRetrievableDate;
-			} else {
-				result = startDate;
 			}
-		}else{
-                        result = startDate;
-                }
+		}
 		return result;
 	}
 
@@ -887,5 +881,4 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 		return false;
 	}
-
 }

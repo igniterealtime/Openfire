@@ -23,10 +23,17 @@ package org.jivesoftware.openfire.http;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.Handler;
@@ -39,15 +46,19 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.GzipFilter;
 import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -108,6 +119,13 @@ public final class HttpBindManager {
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
 
     private static HttpBindManager instance = new HttpBindManager();
+    
+    // Compression "disabled" by default; use "optional" to enable compression (restart required)
+    // When enabled, http response will be compressed if the http request includes an 
+    // "Accept" header with a value of "gzip" and/or "deflate"
+    private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
+    		ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString())
+            .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
 
     private Server httpBindServer;
 
@@ -552,9 +570,27 @@ public final class HttpBindManager {
     {
         ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
         context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
+        if (isHttpCompressionEnabled()) {
+	        Filter gzipFilter = new GzipFilter() {
+	        	@Override
+	        	public void init(FilterConfig config) throws ServletException {
+	        		super.init(config);
+	        		_methods.add(HttpMethod.POST.asString());
+	        		Log.info("Installed response compression filter");
+	        	}
+	        };
+	        FilterHolder filterHolder = new FilterHolder();
+	        filterHolder.setFilter(gzipFilter);
+        	context.addFilter(filterHolder, "/*", EnumSet.of(DispatcherType.REQUEST));
+        }
     }
 
-    private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
+    // NOTE: disabled by default
+    private boolean isHttpCompressionEnabled() {
+		return isCompressionEnabled;
+	}
+
+	private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
         context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");

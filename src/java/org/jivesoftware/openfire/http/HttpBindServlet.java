@@ -168,9 +168,16 @@ public class HttpBindServlet extends HttpServlet {
 
         String sid = node.attributeValue("sid");
 
-        // We have a new session
         if (sid == null) {
-            createNewSession(request, response, node);
+        	if (node.elements().size() > 0) {
+        		// invalid session request; missing sid
+                Log.warn("Invalid client request; SID is required. [" + request.getRemoteAddr() + "]");
+                sendLegacyError(response, BoshBindingError.badRequest);
+                return;
+        	} else {
+                // We have a new session
+        		createNewSession(request, response, node);
+        	}
         }
         else {
             handleSessionRequest(sid, request, response, node);

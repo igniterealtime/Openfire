@@ -157,16 +157,6 @@ public class HttpSession extends LocalClientSession {
 	        }
         }
 
-        // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            Element compression = DocumentHelper.createElement(new QName("compression",
-                    new Namespace("", "http://jabber.org/features/compress")));
-            Element method = compression.addElement("method");
-            method.setText("zlib");
-
-            elements.add(compression);
-        }
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
             elements.add(DocumentHelper.createElement(new QName("register",
                     new Namespace("", "http://jabber.org/features/iq-register"))));
@@ -853,7 +843,7 @@ public class HttpSession extends LocalClientSession {
 
         Delivered delivered = new Delivered(deliverable);
         delivered.setRequestID(connection.getRequestId());
-        while (sentElements.size() > hold) {
+        while (sentElements.size() > maxRequests) {
             sentElements.remove(0);
         }
 

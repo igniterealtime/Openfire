@@ -22,6 +22,7 @@ jetty-io.jar                        | Jetty 9.1.5.v20140505                     
 jetty-security.jar                  | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jetty-server.jar                    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jetty-servlet.jar                   | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
+jetty-servlets.jar                  | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jetty-util.jar                      | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jetty-webapp.jar                    | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0
 jetty-websocket.jar                 | Jetty 9.1.5.v20140505                                        | Apache 2.0, Eclipse 1.0

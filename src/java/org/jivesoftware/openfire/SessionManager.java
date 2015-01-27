@@ -548,10 +548,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @param session the session that was authenticated.
      */
     public void addSession(LocalClientSession session) {
-        // Remove the pre-Authenticated session but remember to use the temporary ID as the key
-        localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
         // Add session to the routing table (routing table will know session is not available yet)
         routingTable.addClientRoute(session.getAddress(), session);
+        // Remove the pre-Authenticated session but remember to use the temporary ID as the key
+        localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
                 SessionEventDispatcher.EventType.session_created;

@@ -84,5 +84,4 @@ xpp3.jar                            | XPP_3 1.1.4c                              
 Notes
 -----
 1) proxool - patched ProxyConnection to send log message in #registerClosedStatement to debug instead of warn
-2) mina-* - upgraded to MINA 2.0.7; added javassist/ognl dependencies
-3) npn-boot-1.1.7.v20140316.jar added to dist folder
+2) npn-boot-1.1.7.v20140316.jar added to dist folder

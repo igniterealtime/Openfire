@@ -24,6 +24,12 @@ public class OperationSetMeetToolsImpl
     }
 
     @Override
+    public void removeSupportedFeature(String s)
+    {
+
+    }
+
+    @Override
     public void sendPresenceExtension(ChatRoom chatRoom,
                                       PacketExtension extension)
     {

@@ -13,7 +13,6 @@ import net.java.sip.communicator.service.protocol.event.*;
 import net.java.sip.communicator.util.Logger;
 
 import org.jitsi.protocol.xmpp.*;
-import org.jitsi.util.*;
 
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
@@ -69,6 +68,25 @@ public class ChatRoomImpl
     private CopyOnWriteArrayList<ChatRoomLocalUserRoleListener>
         localUserRoleListeners
             = new CopyOnWriteArrayList<ChatRoomLocalUserRoleListener>();
+
+    /**
+     * HACK:
+     * We need to have participant presence received, before firing
+     * participant "joined" event to know MUC participant real JID from the
+     * start. However Smack seems to be unpredictable(or XMPP server - not
+     * sure) on the order of "member joined" and "presence packet" events.
+     * So if "member joined" is fired before presence then we cache
+     * participant in {@link #earlyParticipant}. If opposite order takes
+     * place that is presence is received before "member joined" event
+     * we cache Presence in <tt>onJoinPresence</tt>. {@link
+     * ChatRoomMemberPresenceChangeEvent#MEMBER_JOINED} is fired when we have
+     * first Presence packet and Smack "member joined" event has been fired.
+     */
+    private final Map<String, Presence> onJoinPresence
+        = new HashMap<String,Presence>();
+
+    private final List<String> earlyParticipant
+        = new ArrayList<String>();
 
     /**
      * Nickname to member impl class map.
@@ -171,9 +189,35 @@ public class ChatRoomImpl
                 logger.info("FORM: " + field.toXML());
             }*/
             Form answer = config.createAnswerForm();
+            // Room non-anonymous
             FormField whois = new FormField("muc#roomconfig_whois");
             whois.addValue("anyone");
             answer.addField(whois);
+            // Room moderated
+            //FormField roomModerated
+            //    = new FormField("muc#roomconfig_moderatedroom");
+            //roomModerated.addValue("true");
+            //answer.addField(roomModerated);
+            // Only participants can send private messages
+            //FormField onlyParticipantsPm
+            //        = new FormField("muc#roomconfig_allowpm");
+            //onlyParticipantsPm.addValue("participants");
+            //answer.addField(onlyParticipantsPm);
+            // Presence broadcast
+            //FormField presenceBroadcast
+            //        = new FormField("muc#roomconfig_presencebroadcast");
+            //presenceBroadcast.addValue("participant");
+            //answer.addField(presenceBroadcast);
+            // Get member list
+            //FormField getMemberList
+            //        = new FormField("muc#roomconfig_getmemberlist");
+            //getMemberList.addValue("participant");
+            //answer.addField(getMemberList);
+            // Public logging
+            //FormField publicLogging
+            //        = new FormField("muc#roomconfig_enablelogging");
+            //publicLogging.addValue("false");
+            //answer.addField(publicLogging);
 
             muc.sendConfigurationForm(answer);
         }
@@ -241,11 +285,47 @@ public class ChatRoomImpl
         return this.role;
     }
 
+    /**
+     * Resets cached role instance so that it will be refreshed when {@link
+     * #getUserRole()} is called.
+     */
+    private void resetCachedUserRole()
+    {
+        role = null;
+    }
+
+    /**
+     * Resets cached role instance for given participant.
+     * @param participant full mucJID of the participant for whom we want to
+     *                    reset cached role instance.
+     */
+    private void resetRoleForParticipant(String participant)
+    {
+        if (participant.endsWith("/" + myNickName))
+        {
+            resetCachedUserRole();
+        }
+        else
+        {
+            ChatMemberImpl member = members.get(participant);
+            if (member != null)
+            {
+                member.resetCachedRole();
+            }
+            else
+            {
+                logger.error(
+                    "Role reset for: " + participant + " who does not exist");
+            }
+        }
+    }
+
     @Override
     public void setLocalUserRole(ChatRoomMemberRole role)
         throws OperationFailedException
     {
-
+        // Method not used but log error just in case to spare debugging
+        logger.error("setLocalUserRole not implemented");
     }
 
     /**
@@ -273,7 +353,7 @@ public class ChatRoomImpl
     }
 
     /**
-     * Sets the new rolefor the local user in the context of this chatroom.
+     * Sets the new role for the local user in the context of this chat room.
      *
      * @param role the new role to be set for the local user
      * @param isInitial if <tt>true</tt> this is initial role set.
@@ -502,13 +582,32 @@ public class ChatRoomImpl
     @Override
     public void grantOwnership(String address)
     {
-        try
+        logger.info("Grant owner to " + address);
+
+        // Have to construct the IQ manually as Smack version used here seems
+        // to be using wrong namespace(muc#owner instead of muc#admin)
+        // which does not work with the Prosody.
+        MUCAdmin admin = new MUCAdmin();
+        admin.setType(IQ.Type.SET);
+        admin.setTo(roomName);
+
+        MUCAdmin.Item item = new MUCAdmin.Item("owner", null);
+        item.setJid(address);
+        admin.addItem(item);
+
+        XmppProtocolProvider provider
+                = (XmppProtocolProvider) getParentProvider();
+        XmppConnection connection
+                = provider.getConnectionAdapter();
+
+        IQ reply = (IQ) connection.sendPacketAndGetReply(admin);
+        if (reply.getType() != IQ.Type.RESULT)
         {
-            muc.grantOwnership(address);
-        }
-        catch (XMPPException e)
-        {
-            throw new RuntimeException(e);
+            // FIXME: we should have checked exceptions for all operations in
+            // ChatRoom interface which are expected to fail.
+            // OperationFailedException maybe ?
+            throw new RuntimeException(
+                    "Failed to grant owner: " + reply.getError());
         }
     }
 
@@ -691,24 +790,11 @@ public class ChatRoomImpl
         connection.sendPacket(lastPresenceSent);
     }
 
-    class MemberListener
-        implements ParticipantStatusListener
+    private ChatMemberImpl addMember(String participant)
     {
-        @Override
-        public void joined(String participant)
-        {
-            ChatMemberImpl member;
+        ChatMemberImpl newMember;
 
-            synchronized (members)
-            {
-                member = addMember(participant);
-            }
-
-            if (member != null)
-                notifyParticipantJoined(member);
-        }
-
-        private ChatMemberImpl addMember(String participant)
+        synchronized (members)
         {
             if (members.containsKey(participant))
             {
@@ -716,12 +802,37 @@ public class ChatRoomImpl
                 return null;
             }
 
-            ChatMemberImpl newMember
-                = new ChatMemberImpl(participant, ChatRoomImpl.this);
+            newMember = new ChatMemberImpl(participant, ChatRoomImpl.this);
 
             members.put(participant, newMember);
+        }
 
-            return newMember;
+        return newMember;
+    }
+
+    class MemberListener
+        implements ParticipantStatusListener
+    {
+        @Override
+        public void joined(String participant)
+        {
+            //logger.info(Thread.currentThread()+"JOINED ROOM: "+participant);
+
+            Presence peerPresence = onJoinPresence.get(participant);
+            if (peerPresence == null)
+            {
+                earlyParticipant.add(participant);
+                return;
+            }
+
+            onJoinPresence.remove(participant);
+
+            ChatMemberImpl member = addMember(participant);
+            if (member != null)
+            {
+                member.processPresence(peerPresence);
+                notifyParticipantJoined(member);
+            }
         }
 
         private ChatMemberImpl removeMember(String participant)
@@ -756,7 +867,13 @@ public class ChatRoomImpl
             if (logger.isTraceEnabled())
                 logger.trace("Kicked: " + participant + ", " + s2 +", " + s3);
 
-            ChatMemberImpl member = members.get(participant);
+            ChatMemberImpl member;
+
+            synchronized (members)
+            {
+                member = removeMember(participant);
+            }
+
             if (member == null)
             {
                 logger.error(
@@ -772,6 +889,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Voice granted: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -779,6 +899,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Voice revoked: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -786,6 +909,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Banned: " + s + ", " + s2 + ", " + s3);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -793,6 +919,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Membership granted: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -800,6 +929,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Membership revoked: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -807,6 +939,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Moderator granted: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -814,6 +949,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Moderator revoked: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -821,6 +959,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Ownership granted: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -828,6 +969,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Ownership revoked: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -835,6 +979,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Admin granted: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -842,6 +989,9 @@ public class ChatRoomImpl
         {
             if (logger.isTraceEnabled())
                 logger.trace("Admin revoked: " + s);
+
+            // We do not fire events - not required for now
+            resetRoleForParticipant(s);
         }
 
         @Override
@@ -942,9 +1092,7 @@ public class ChatRoomImpl
          */
         private void processOtherPresence(Presence presence)
         {
-            MUCUser mucUser
-                = (MUCUser) presence.getExtension(
-                    "x", "http://jabber.org/protocol/muc#user");
+            String participant = presence.getFrom();
 
             ChatMemberImpl member = members.get(presence.getFrom());
             if (member == null)
@@ -952,24 +1100,25 @@ public class ChatRoomImpl
                 logger.warn(
                     "Received presence for non-existing member: "
                         + presence.toXML());
+                if (earlyParticipant.contains(participant))
+                {
+                    earlyParticipant.remove(participant);
+
+                    member = addMember(participant);
+                    if (member != null)
+                    {
+                        member.processPresence(presence);
+                        notifyParticipantJoined(member);
+                    }
+                }
+                else
+                {
+                    onJoinPresence.put(presence.getFrom(), presence);
+                }
                 return;
             }
 
-            String jid = mucUser.getItem().getJid();
-
-            if (StringUtils.isNullOrEmpty(member.getJabberID()))
-            {
-                logger.info(
-                    "JID: " + jid + " received for: "
-                        + member.getContactAddress());
-
-                member.setJabberID(mucUser.getItem().getJid());
-            }
-            else if(!jid.equals(member.getJabberID()))
-            {
-                logger.warn(
-                    "New jid received in presence: " + presence.toXML());
-            }
+            member.processPresence(presence);
         }
     }
 }

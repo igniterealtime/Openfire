@@ -109,7 +109,7 @@ public class Config extends HttpServlet
 			String resolution 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.resolution", "360");
 			String audioMixer			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false");
 			String audioBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.bandwidth", "128");
-			String videoBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "2048");
+			String videoBandwidth 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.video.bandwidth", "4096");
 			String useNicks 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.usenicks", "false");
 			String useIPv6 				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.useipv6", "false");
 			String useStunTurn 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.use.stunturn", "false");

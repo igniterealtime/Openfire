@@ -726,10 +726,13 @@ function getUserMediaWithConstraints(um, success_callback, failure_callback, res
             }
             break;
     }
-    if (constraints.video.mandatory.minWidth)
-        constraints.video.mandatory.maxWidth = constraints.video.mandatory.minWidth;
-    if (constraints.video.mandatory.minHeight)
-        constraints.video.mandatory.maxHeight = constraints.video.mandatory.minHeight;
+    if (constraints.video)
+    {
+	    if (constraints.video.mandatory.minWidth)
+		constraints.video.mandatory.maxWidth = constraints.video.mandatory.minWidth;
+	    if (constraints.video.mandatory.minHeight)
+		constraints.video.mandatory.maxHeight = constraints.video.mandatory.minHeight;
+    }
 
     if (bandwidth) { // doesn't work currently, see webrtc issue 1846
         if (!constraints.video) constraints.video = {mandatory: {}, optional: []};//same behaviour as true

@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>JmxWeb Plugin Readme</title>
+    <style type="text/css">
+        BODY {
+            font-size: 100%;
+        }
+
+        BODY, TD, TH {
+            font-family: tahoma, verdana, arial, helvetica, sans-serif;
+            font-size: 0.8em;
+        }
+
+        H2 {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        A:hover {
+            text-decoration: none;
+        }
+
+        H1 {
+            font-family: tahoma, arial, helvetica, sans-serif;
+            font-size: 1.4em;
+            font-weight: bold;
+            border-bottom: 1px #ccc solid;
+            padding-bottom: 2px;
+        }
+
+        TT {
+            font-family: courier new;
+            font-weight: bold;
+            color: #060;
+        }
+
+        PRE {
+            font-family: courier new;
+            font-size: 100%;
+        }
+
+        .events TH {
+            font-size: 8pt;
+            font-family: verdana;
+            font-weight: bold;
+            text-align: left;
+            background-color: #eee;
+            border-bottom: 1px #ccc solid;
+        }
+
+        .events .event {
+            font-weight: bold;
+        }
+
+        .events .description {
+            font-size: 8pt;
+            font-family: verdana;
+        }
+
+        .events TD {
+            border-bottom: 1px #ccc dotted;
+            vertical-align: top;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>
+    JmxWeb Plugin Readme
+</h1>
+
+<p>
+JmxWeb plugin is web based platform for managing and monitoring openfire via JMX. It includes hawtio, a lightweight and modular HTML5 web console with lots of plugins and jolokia a JMX-HTTP bridge providing a web based alternative to JSR-160 connectors.
+It also includes the mbeans from the java-monitor probe for openfire.
+</p>
+
+<h2>Prerequesites</h2>
+
+<p>
+
+</p>
+
+<h2>Installation</h2>
+
+<ol>
+    <li>Stop Openfire.</li>
+    <li>Copy the jmxweb.jar file to the OPENFIRE_HOME/plugins directory.</li>
+    <li>Restart Openfire.</li>
+</ol>
+
+<h2>Configuration</h2>
+
+<p>If you want to monitor openfire JMX mbeans, enable JMX by adding the following to System Properties via the Web Admin Console or add into the table ofproperty.</p>
+
+<ul>
+<li>xmpp.jmx.enabled (true or false)</li>
+<li>xmpp.jmx.secure (true or false)</li>
+</ul>
+<p><img src="http://community.igniterealtime.org/servlet/JiveServlet/downloadImage/38-1735-33840/Image2.jpg" style="width: 620px; height: 349px;" __jive_id="33840" /></p>
+<h2>How to use</h2>
+<p><span>To access hawtio, point your browser at </span><a href="http://your-server:7070/hawtio" rel="nofollow" target="_blank">http://your-server:7070/hawtio</a></p>
+<p><span>To access jolokia rest api from your javascript applications use URL </span><a href="http://your-server:7070/jolokia" rel="nofollow" target="_blank">http://your-server:7070/jolokia</a><span>. Make sure you provide headers for basic authentication.</span></p>
+<p></p>
+<p><img src="http://community.igniterealtime.org/servlet/JiveServlet/downloadImage/38-1735-33841/Image3.jpg" style="width: 620px; height: 391px;" __jive_id="33841" /></p>
+</body>
+</html>

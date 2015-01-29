@@ -1,2 +1,2 @@
 language: java
-script: ant -f build/build.xml openfire test plugins
+script: ant -Dhalt.on.plugin.error=true -f build/build.xml openfire test plugins

@@ -16,7 +16,7 @@ import org.jivesoftware.openfire.plugin.rest.entity.SystemProperties;
 import org.jivesoftware.openfire.plugin.rest.entity.SystemProperty;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 
-@Path("restapi/system/properties")
+@Path("restapi/v1/system/properties")
 public class RestAPIService {
 
 	private RESTServicePlugin plugin;
@@ -27,14 +27,14 @@ public class RestAPIService {
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public SystemProperties getSystemProperties() {
 		return plugin.getSystemProperties();
 	}
 	
 	@GET
 	@Path("/{propertyKey}")
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public SystemProperty getSystemProperty(@PathParam("propertyKey") String propertyKey) throws ServiceException {
 		return plugin.getSystemProperty(propertyKey);
 	}

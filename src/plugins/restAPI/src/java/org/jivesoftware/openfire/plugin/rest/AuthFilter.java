@@ -45,6 +45,11 @@ public class AuthFilter implements ContainerRequestFilter {
 		if (!plugin.isEnabled()) {
 			throw new WebApplicationException(Status.FORBIDDEN);
 		}
+		
+		// To be backwards compatible to userservice 1.*
+		if ("restapi/v1/userservice".equals(containerRequest.getPath())) {
+			return containerRequest;
+		}
 
 		if (!plugin.getAllowedIPs().isEmpty()) {
 			// Get client's IP address
@@ -63,7 +68,7 @@ public class AuthFilter implements ContainerRequestFilter {
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
 		}
-
+		
 		// Get the authentification passed in HTTP headers parameters
 		String auth = containerRequest.getHeaderValue("authorization");
 

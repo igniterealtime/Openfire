@@ -167,7 +167,6 @@ public final class HttpBindManager {
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
-        contexts = new ContextHandlerCollection();
 
         // setup the cache for the allowed origins
         this.setupAllowedOriginsMap();
@@ -186,6 +185,7 @@ public final class HttpBindManager {
 
         try {
             httpBindServer.start();
+            Log.info("HTTP bind service started");
         }
         catch (Exception e) {
             Log.error("Error starting HTTP bind service", e);
@@ -198,10 +198,12 @@ public final class HttpBindManager {
         if (httpBindServer != null) {
             try {
                 httpBindServer.stop();
+                Log.info("HTTP bind service stopped");
             }
             catch (Exception e) {
-                Log.error("Error stoping HTTP bind service", e);
+                Log.error("Error stopping HTTP bind service", e);
             }
+            httpBindServer = null;
         }
     }
 
@@ -486,9 +488,6 @@ public final class HttpBindManager {
      * @throws Exception when there is an error configuring the HTTP binding ports.
      */
     public void setHttpBindPorts(int unsecurePort, int securePort) throws Exception {
-        changeHttpBindPorts(unsecurePort, securePort);
-        bindPort = unsecurePort;
-        bindSecurePort = securePort;
         if (unsecurePort != HTTP_BIND_PORT_DEFAULT) {
             JiveGlobals.setProperty(HTTP_BIND_PORT, String.valueOf(unsecurePort));
         }
@@ -501,28 +500,6 @@ public final class HttpBindManager {
         else {
             JiveGlobals.deleteProperty(HTTP_BIND_SECURE_PORT);
         }
-    }
-
-    private synchronized void changeHttpBindPorts(int unsecurePort, int securePort)
-            throws Exception {
-        if (unsecurePort < 0 && securePort < 0) {
-            throw new IllegalArgumentException("At least one port must be greater than zero.");
-        }
-        if (unsecurePort == securePort) {
-            throw new IllegalArgumentException("Ports must be distinct.");
-        }
-
-        if (httpBindServer != null) {
-            try {
-                httpBindServer.stop();
-            }
-            catch (Exception e) {
-                Log.error("Error stopping http bind server", e);
-            }
-        }
-
-        configureHttpBindServer(unsecurePort, securePort);
-        httpBindServer.start();
     }
 
     /**
@@ -557,6 +534,7 @@ public final class HttpBindManager {
             httpBindServer.addConnector(httpsConnector);
         }
 
+        contexts = new ContextHandlerCollection();
         createBoshHandler(contexts, "/http-bind");
         createCrossDomainHandler(contexts, "/crossdomain.xml");
         loadStaticDirectory(contexts);
@@ -616,23 +594,10 @@ public final class HttpBindManager {
 
     private void doEnableHttpBind(boolean shouldEnable) {
         if (shouldEnable && httpBindServer == null) {
-            try {
-                changeHttpBindPorts(JiveGlobals.getIntProperty(HTTP_BIND_PORT,
-                        HTTP_BIND_PORT_DEFAULT), JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
-                        HTTP_BIND_SECURE_PORT_DEFAULT));
-            }
-            catch (Exception e) {
-                Log.error("Error configuring HTTP binding ports", e);
-            }
+            start();
         }
         else if (!shouldEnable && httpBindServer != null) {
-            try {
-                httpBindServer.stop();
-            }
-            catch (Exception e) {
-                Log.error("Error stopping HTTP bind service", e);
-            }
-            httpBindServer = null;
+            stop();
         }
     }
 
@@ -689,41 +654,19 @@ public final class HttpBindManager {
         if (value == bindPort) {
             return;
         }
-        try {
-            changeHttpBindPorts(value, JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT,
-                    HTTP_BIND_SECURE_PORT_DEFAULT));
-            bindPort = value;
-        }
-        catch (Exception ex) {
-            Log.error("Error setting HTTP bind ports", ex);
-        }
+        restartServer();
     }
 
     private void setSecureHttpBindPort(int value) {
         if (value == bindSecurePort) {
             return;
         }
-        try {
-            changeHttpBindPorts(JiveGlobals.getIntProperty(HTTP_BIND_PORT,
-                    HTTP_BIND_PORT_DEFAULT), value);
-            bindSecurePort = value;
-        }
-        catch (Exception ex) {
-            Log.error("Error setting HTTP bind ports", ex);
-        }
+        restartServer();
     }
 
     private synchronized void restartServer() {
-        if (httpBindServer != null) {
-            try {
-                httpBindServer.stop();
-            }
-            catch (Exception e) {
-                Log.error("Error stopping http bind server", e);
-            }
-
-            configureHttpBindServer(getHttpBindUnsecurePort(), getHttpBindSecurePort());
-        }
+        stop();
+        start();
     }
 
     /** Listens for changes to Jive properties that affect the HTTP server manager. */

@@ -110,19 +110,18 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     @Override
 	public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         try {
-            IQ returnPacket = null;
+            IQ returnPacket;
             org.xmpp.packet.Roster roster = (org.xmpp.packet.Roster)packet;
 
             JID recipientJID = packet.getTo();
 
             // The packet is bound for the server and must be roster management
-            if (recipientJID == null || recipientJID.getNode() == null ||
-                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
+            if (recipientJID == null || recipientJID.equals(packet.getFrom().asBareJID())) {
                 returnPacket = manageRoster(roster);
-            }
-            // The packet must be a roster removal from a foreign domain user.
-            else {
-                removeRosterItem(roster);
+            } else {
+                returnPacket = IQ.createResultIQ(packet);
+                returnPacket.setChildElement(packet.getChildElement().createCopy());
+                returnPacket.setError(PacketError.Condition.service_unavailable);
             }
             return returnPacket;
         }
@@ -147,37 +146,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 result.setError(PacketError.Condition.internal_server_error);
                 return result;
             }
-        }
-    }
-
-    /**
-     * Remove a roster item. At this stage, this is recipient who has received
-     * a roster update. We must check that it is a removal, and if so, remove
-     * the roster item based on the sender's id rather than what is in the item
-     * listing itself.
-     *
-     * @param packet The packet suspected of containing a roster removal
-     */
-    private void removeRosterItem(org.xmpp.packet.Roster packet) throws UnauthorizedException,
-            SharedGroupException {
-        JID recipientJID = packet.getTo();
-        JID senderJID = packet.getFrom();
-        try {
-            for (org.xmpp.packet.Roster.Item packetItem : packet.getItems()) {
-                if (packetItem.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
-                    Roster roster = userManager.getUser(recipientJID.getNode()).getRoster();
-                    RosterItem item = roster.getRosterItem(senderJID);
-                    roster.deleteRosterItem(senderJID, true);
-                    item.setSubStatus(RosterItem.SUB_REMOVE);
-                    item.setSubStatus(RosterItem.SUB_NONE);
-
-                    Packet itemPacket = packet.createCopy();
-                    sessionManager.userBroadcast(recipientJID.getNode(), itemPacket);
-                }
-            }
-        }
-        catch (UserNotFoundException e) {
-            throw new UnauthorizedException(e);
         }
     }
 
@@ -333,6 +301,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:roster");

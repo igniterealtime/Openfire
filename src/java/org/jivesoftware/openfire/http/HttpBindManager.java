@@ -124,7 +124,7 @@ public final class HttpBindManager {
     // When enabled, http response will be compressed if the http request includes an 
     // "Accept" header with a value of "gzip" and/or "deflate"
     private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
-    		ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString())
+    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString())
             .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
 
     private Server httpBindServer;

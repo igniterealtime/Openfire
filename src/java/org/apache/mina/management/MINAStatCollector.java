@@ -206,13 +206,14 @@ public class MINAStatCollector {
 
         // add the bytes processed between last polling and session closing
         // prevent non seen byte with non-connected protocols like HTTP and datagrams
-        IoSessionStat sessStat = ( IoSessionStat ) session.getAttribute( KEY );
-        session.removeAttribute( KEY );
+        IoSessionStat sessStat = ( IoSessionStat ) session.removeAttribute( KEY );
 
-        totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
-        totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
-        totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
-        totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
+        if (sessStat != null) {
+	        totalMsgWritten.addAndGet(session.getWrittenMessages() - sessStat.lastMessageWrite);
+	        totalMsgRead.addAndGet(session.getReadMessages() - sessStat.lastMessageRead);
+	        totalBytesWritten.addAndGet(session.getWrittenBytes() - sessStat.lastByteWrite);
+	        totalBytesRead.addAndGet(session.getReadBytes() - sessStat.lastByteRead);
+        }
     }
 
 

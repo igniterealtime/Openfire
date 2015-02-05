@@ -70,6 +70,7 @@
     <script src="message_handler.js?v=2"></script>
     <script src="api_connector.js?v=2"></script>
     <script src="settings_menu.js?v=1"></script>
+    <script src="lz-string.js?v=1"></script>
     <script src="avatar.js?v=4"></script><!-- avatars -->
     <link rel="stylesheet" href="css/font.css?v=6"/>
     <link rel="stylesheet" href="css/toastr.css?v=1">
@@ -216,10 +217,16 @@
                             <i class="icon-prezi"></i>
                         </a>
                     </span>
-                    <span id="prezi_button"><!-- BAO -->
+                    <span id="pdf_button"><!-- BAO -->
                         <div class="header_button_separator"></div>
                         <a class="button" data-container="body" data-toggle="popover" data-placement="bottom" content="Share PDF" onclick='connection.ofmuc.openPDFDialog();'>
                             <i class="icon-prezi"></i>
+                        </a>
+                    </span>
+                    <span id="appsButton"><!-- BAO -->
+                        <div class="header_button_separator"></div>
+                        <a class="button" data-container="body" data-toggle="popover" data-placement="bottom" content="Shared Application" onclick='connection.ofmuc.openAppsDialog();'>
+                            <i class="icon-share-doc"></i>
                         </a>
                     </span>
                     <span id="etherpadButton">

@@ -69,6 +69,7 @@ public final class XMPPServlet extends WebSocketServlet
 
 	@Override public void configure(WebSocketServletFactory factory)
 	{
+		factory.getPolicy().setMaxTextMessageSize(64000000);
 		factory.setCreator(new WSocketCreator());
 	}
 

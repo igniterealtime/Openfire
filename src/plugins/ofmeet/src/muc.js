@@ -41,7 +41,7 @@ Strophe.addConnectionPlugin('emuc', {
         this.sendPresence();
     },
     doLeave: function() {
-        console.log("do leave", this.myroomjid);
+        //console.log("do leave", this.myroomjid);
         var pres = $pres({to: this.myroomjid, type: 'unavailable' });
         this.presMap.length = 0;
         this.connection.send(pres);
@@ -66,7 +66,7 @@ Strophe.addConnectionPlugin('emuc', {
             var url = presentation.attr('url');
             var current = presentation.find('>current').text();
 
-            console.log('presentation info received from', from, url);
+            //console.log('presentation info received from', from, url);
 
             if (this.preziMap[from] == null) {
                 this.preziMap[from] = url;
@@ -159,7 +159,7 @@ Strophe.addConnectionPlugin('emuc', {
             }
         }
         // Always trigger presence to update bindings
-        console.log('presence change from', from, pres);
+        //console.log('presence change from', from, pres);
         $(document).trigger('presence.muc', [from, member, pres]);
 
         // Trigger status message update
@@ -233,7 +233,7 @@ Strophe.addConnectionPlugin('emuc', {
         var msg = $msg({to: this.roomjid, type: 'groupchat'});
         msg.c('subject', subject);
         this.connection.send(msg);
-        console.log("topic changed to " + subject);
+        //console.log("topic changed to " + subject);
     },
     onMessage: function (msg) {
         // FIXME: this is a hack. but jingle on muc makes nickchanges hard
@@ -254,13 +254,13 @@ Strophe.addConnectionPlugin('emuc', {
             var subjectText = subject.text();
             if(subjectText || subjectText == "") {
                 Chat.chatSetSubject(subjectText);
-                console.log("Subject is changed to " + subjectText);
+                //console.log("Subject is changed to " + subjectText);
             }
         }
 
 
         if (txt) {
-            console.log('chat', nick, txt);
+            //console.log('chat', nick, txt);
             Chat.updateChatConversation(from, nick, txt);
             if(APIConnector.isEnabled() && APIConnector.isEventEnabled("incomingMessage"))
             {
@@ -289,12 +289,12 @@ Strophe.addConnectionPlugin('emuc', {
                             // password is required
                             if (sharedKey)
                             {
-                                console.log('set room password');
+                                //console.log('set room password');
                                 Toolbar.lockLockButton();
                             }
                             else
                             {
-                                console.log('removed room password');
+                                //console.log('removed room password');
                                 Toolbar.unlockLockButton();
                             }
                         },
@@ -332,10 +332,10 @@ Strophe.addConnectionPlugin('emuc', {
         this.connection.sendIQ(
                 kickIQ,
                 function (result) {
-                    console.log('Kick participant with jid: ', jid, result);
+                    //console.log('Kick participant with jid: ', jid, result);
                 },
                 function (error) {
-                    console.log('Kick participant error: ', error);
+                    //console.log('Kick participant error: ', error);
                 });
     },
     sendPresence: function () {

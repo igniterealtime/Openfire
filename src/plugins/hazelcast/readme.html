@@ -65,7 +65,32 @@ open source <a href="http://www.hazelcast.org">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 3.3.3.
+The current Hazelcast release is version 3.4.
+</p>
+<h3>Clustering vs. Federation</h3>
+<p>XMPP is designed to scale in ways that are similar to email. Each Openfire
+installation supports a single XMPP domain, and a server-to-server (S2S)
+protocol as described in the specification is provided to link multiple XMPP 
+domains together. This is known as federation. It represents a powerful way to
+"scale out" XMPP, as it allows an XMPP user to communicate securely with any 
+user in any other such federated domain. These federations may be public or
+private as appropriate. Federated domains may exchange XMPP stanzas 
+across the Internet (WAN) and may even discover one another using DNS-based 
+service lookup and address resolution.
+</p>
+<p>By contrast, clustering is a technique used to "scale up" a single XMPP domain.
+The server members within a cluster all share an identical configuration. Each 
+member will allow any user within the domain to connect, authenticate, and exchange
+stanzas. Clustered servers all share a single database, and are also required to
+be resident within the same LAN-based (low latency) network infrastructure. This
+type of deployment is suitable to provide runtime redundancy and will support a 
+larger number of users and connections (within a single domain) than a single 
+server would be able to provide.
+</p>
+<p>For very large Openfire deployments, a combination of federation and clustering will
+provide the best results. Whereas a single clustered XMPP domain will be able to 
+support tens or even hundreds of thousands of users, a federated deployment will be 
+needed to reach true Internet scale of millions of concurrent XMPP connections.
 </p>
 <h2>Installation</h2>
 <p>
@@ -181,10 +206,10 @@ that will be added to the plugin's classpath. This allows a custom Hazelcast
 configuration file to be located outside the Openfire home directory.</li>
 <li><i>hazelcast.config.jmx.enabled</i> (false): Enables JMX support for
 the Hazelcast cluster if JMX has been enabled via the Openfire admin console.
-Refer to the <a href="http://docs.hazelcast.org/docs/3.3/manual/html/monitoringwithjmx.html">
+Refer to the <a href="http://docs.hazelcast.org/docs/3.4/manual/html/monitoringwithjmx.html">
 Hazelcast JMX docs</a> for additional information.</li>
 </ol>
-<p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.3/manual/html/config.html">
+<p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.4/manual/html/configurationoverview.html">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
 By default the cluster members will attempt to discover each other via multicast at the
 following location:
@@ -210,8 +235,33 @@ following alternative:
 &lt;/join&gt;
 ...
 </pre>
-<p>Please refer to the <a href="http://docs.hazelcast.org/docs/3.3/manual/html-single/">
+<p>Please refer to the <a href="http://docs.hazelcast.org/docs/3.4/manual/html-single/">
 Hazelcast reference manual</a> for more information.
+</p>
+<h3>A Word About Garbage Collection</h3>
+<p>Hazelcast is quite sensitive to delays that may be caused by long-running GC cycles which are typical 
+of servers using a default runtime JVM configuration. In most cases it will be preferable to activate the 
+concurrent garbage collector (CMS) or the new G1 garbage collector to minimize blocking within the JVM.
+When using CMS, you may be able to counter the effects of heap fragmentation by using JMX to invoke 
+System.gc() when the cluster is relatively idle (e.g. overnight). This has the effect of temporarily 
+interrupting the concurrent GC algortithm in favor of the default GC to collect and compact the heap.
+</p>
+<p>In addition, the runtime characteristics of your Openfire cluster will vary greatly depending on the
+number and type of clients that are connected, and which XMPP services you are using in your deployment.
+However, note that because many of the objects allocated on the heap are of the short-lived variety, 
+increasing the proportion of young generation (eden) space may also have a positive impact on performance.
+As an example, the following OPENFIRE_OPTS have been shown to be suitable in a three-node cluster of
+servers (four CPUs each), supporting approximately 50k active users:
+</p>
+<pre>
+OPENFIRE_OPTS="-Xmx4G -Xms4G -XX:NewRatio=1 -XX:SurvivorRatio=4 
+               -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC
+               -XX:+CMSParallelRemarkEnabled -XX:CMSFullGCsBeforeCompaction=1 
+               -XX:CMSInitiatingOccupancyFraction=80 -XX:+UseCMSInitiatingOccupancyOnly 
+               -XX:+PrintGCDetails -XX:+PrintPromotionFailure"
+</pre>
+<p>This GC configuration will also emit helpful GC diagnostic information to the console to aid further
+tuning and troubleshooting as appropriate for your deployment.
 </p>
 </body>
 </html>

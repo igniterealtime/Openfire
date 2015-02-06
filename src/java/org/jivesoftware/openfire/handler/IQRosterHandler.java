@@ -23,7 +23,9 @@ package org.jivesoftware.openfire.handler;
 import gnu.inet.encoding.IDNAException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
@@ -120,8 +122,9 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 returnPacket = manageRoster(roster);
             } else {
                 returnPacket = IQ.createResultIQ(packet);
-                returnPacket.setChildElement(packet.getChildElement().createCopy());
-                returnPacket.setError(PacketError.Condition.service_unavailable);
+                // The server MUST return a <forbidden/> stanza error to the client if the sender of the roster set is not authorized to update the roster
+                // (where typically only an authenticated resource of the account itself is authorized).
+                returnPacket.setError(PacketError.Condition.forbidden);
             }
             return returnPacket;
         }
@@ -193,25 +196,38 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 returnPacket = null;
             }
             else if (IQ.Type.set == type) {
+                returnPacket = IQ.createResultIQ(packet);
 
-                for (org.xmpp.packet.Roster.Item item : packet.getItems()) {
-                    if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
-                        removeItem(cachedRoster, packet.getFrom(), item);
-                    }
-                    else {
-                        if (cachedRoster.isRosterItem(item.getJID())) {
-                            // existing item
-                            RosterItem cachedItem = cachedRoster.getRosterItem(item.getJID());
-                            cachedItem.setAsCopyOf(item);
-                            cachedRoster.updateRosterItem(cachedItem);
-                        }
-                        else {
-                            // new item
-                            cachedRoster.createRosterItem(item);
+                // RFC 6121 2.3.3.  Error Cases:
+                // The server MUST return a <bad-request/> stanza error to the client if the roster set contains any of the following violations:
+                // The <query/> element contains more than one <item/> child element.
+                if (packet.getItems().size() > 1) {
+                    returnPacket.setError(new PacketError(PacketError.Condition.bad_request, PacketError.Type.modify, "Query contains more than one item"));
+                } else {
+                    for (org.xmpp.packet.Roster.Item item : packet.getItems()) {
+                        if (item.getSubscription() == org.xmpp.packet.Roster.Subscription.remove) {
+                            if (removeItem(cachedRoster, packet.getFrom(), item) == null) {
+                                // RFC 6121 2.5.3.  Error Cases: If the value of the 'jid' attribute specifies an item that is not in the roster, then the server MUST return an <item-not-found/> stanza error.
+                                returnPacket.setError(PacketError.Condition.item_not_found);
+                            }
+                        } else {
+                            PacketError error = checkGroups(item.getGroups());
+                            if (error != null) {
+                                returnPacket.setError(error);
+                            } else {
+                                if (cachedRoster.isRosterItem(item.getJID())) {
+                                    // existing item
+                                    RosterItem cachedItem = cachedRoster.getRosterItem(item.getJID());
+                                    cachedItem.setAsCopyOf(item);
+                                    cachedRoster.updateRosterItem(cachedItem);
+                                } else {
+                                    // new item
+                                    cachedRoster.createRosterItem(item);
+                                }
+                            }
                         }
                     }
                 }
-                returnPacket = IQ.createResultIQ(packet);
             }
         }
         catch (UserNotFoundException e) {
@@ -223,18 +239,43 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
     }
 
     /**
+     * Checks the roster groups for error conditions described in RFC 6121 § 2.3.3.
+     *
+     * @param groups The groups.
+     * @return An error if the specification is violated or null if everything is fine.
+     */
+    private static PacketError checkGroups(Iterable<String> groups) {
+        Set<String> set = new HashSet<String>();
+        for (String group : groups) {
+            if (!set.add(group)) {
+                // Duplicate group found.
+                // RFC 6121 2.3.3.  Error Cases: 2. The <item/> element contains more than one <group/> element, but there are duplicate groups
+                return new PacketError(PacketError.Condition.bad_request, PacketError.Type.modify, "Item contains duplicate groups");
+            }
+            if (group.isEmpty()) {
+                // The server MUST return a <not-acceptable/> stanza error to the client if the roster set contains any of the following violations:
+                // 2. The XML character data of the <group/> element is of zero length.
+                return new PacketError(PacketError.Condition.not_acceptable, PacketError.Type.modify, "Group is of zero length");
+            }
+        }
+        return null;
+    }
+
+    /**
      * Remove the roster item from the sender's roster (and possibly the recipient's).
      * Actual roster removal is done in the removeItem(Roster,RosterItem) method.
      *
      * @param roster The sender's roster.
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
+     * @return The removed item or null, if not item has been removed.
      */
-    private void removeItem(org.jivesoftware.openfire.roster.Roster roster, JID sender,
+    private RosterItem removeItem(org.jivesoftware.openfire.roster.Roster roster, JID sender,
             org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         JID recipient = item.getJID();
         // Remove recipient from the sender's roster
-        roster.deleteRosterItem(item.getJID(), true);
+        RosterItem removedItem = roster.deleteRosterItem(item.getJID(), true);
+
         // Forward set packet to the subscriber
         if (localServer.isLocal(recipient)) { // Recipient is local so let's handle it here
             try {
@@ -270,6 +311,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 router.route(removePacket);
             }
         }
+        return removedItem;
     }
 
     /**

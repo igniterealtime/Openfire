@@ -1,4 +1,4 @@
-<%@ page import="com.jivesoftware.util.cluster.NodeRuntimeStats,
+<%@ page import="org.jivesoftware.plugin.util.cluster.NodeRuntimeStats,
                  org.jivesoftware.util.cache.CacheFactory,
                  com.hazelcast.core.Hazelcast,
                  com.hazelcast.core.Cluster,

@@ -540,7 +540,6 @@ public class XMPPServer {
         loadModule(PrivateStorage.class.getName());
         // Load core modules
         loadModule(PresenceManagerImpl.class.getName());
-        loadModule(SessionManager.class.getName());
         loadModule(PacketRouterImpl.class.getName());
         loadModule(IQRouter.class.getName());
         loadModule(MessageRouter.class.getName());
@@ -580,6 +579,8 @@ public class XMPPServer {
         loadModule(PubSubModule.class.getName());
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
+        // SessionManager registers to IQDiscoItemsHandler, therefore load it after it.
+        loadModule(SessionManager.class.getName());
         loadModule(UpdateManager.class.getName());
         loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());

@@ -2,33 +2,27 @@
 <html>
 
 <head>
-  	<link rel="stylesheet" type="text/css" href="cursor.css" />
-	<script type="text/javascript" src="jquery-1.10.2.min.js"></script>
-	<script type="text/javascript" src="util.js"></script>
-	<script type="text/javascript" src="ofmeet.js"></script>
-	<script type="text/javascript" src="tinycolor.js"></script>
 	<script>
-		document.addEventListener('message', function (event)
+		OpenfireMeetings =
 		{
-			window.parent.console.log("remote message", event);
-		});
+			setContent: function(content)
+			{
+				console.log("remote setContent", content);
+			},
 
-		document.addEventListener('set-content', function (event)
-		{
-			window.parent.console.log("remote set-content", event.detail);
-		});
+			getContent: function()
+			{
+				console.log("remote getContent");
+				return null;
+			},
 
-		OpenfireMeetings.getContent = function()
-		{
-			window.parent.console.log("remote getContent");
-			return null;
-		}
+			getPrintContent: function()
+			{
+				console.log("remote getPrintContent");
+				return '<img src="http://londontopia.net/wp-content/uploads/2015/01/enhanced-buzz-wide-22194-1393580280-8.jpg"/>';
+			}
+		};
 
-		OpenfireMeetings.getPrintContent = function()
-		{
-			window.parent.console.log("remote getPrintContent");
-			return '<img src="http://londontopia.net/wp-content/uploads/2015/01/enhanced-buzz-wide-22194-1393580280-8.jpg"/>';
-		}
 	</script>
 </head>
 

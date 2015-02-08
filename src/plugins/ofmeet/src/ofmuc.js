@@ -26,6 +26,8 @@ Strophe.addConnectionPlugin('ofmuc', {
     isRecording: false,
     urls: [],
     bookmarks: [],
+    appRunning: false,
+    enableCursor: true,
     
     init: function (conn) {
         this.connection = conn;
@@ -40,6 +42,15 @@ Strophe.addConnectionPlugin('ofmuc', {
 	   that.resize();
 	}); 
 	
+	window.addEventListener('message', function (event) 
+	{ 
+		//console.log("addListener message ofmuc", event);
+		
+		if (!event.data) return;  
+		if (event.data.type == 'ofmeetLoaded')  that.appReady();
+		if (event.data.type == 'ofmeetSendMessage')  that.appMessage(event.data.msg);                           
+	});	
+	
     },
         
     statusChanged: function(status, condition)
@@ -50,7 +61,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	{
 		this.connection.sendIQ($iq({type: "get"}).c("query", {xmlns: "jabber:iq:private"}).c("storage", {xmlns: "storage:bookmarks"}).tree(), function(resp)
 		{
-			console.log("get bookmarks", resp)
+			//console.log("get bookmarks", resp)
 						
 			$(resp).find('conference').each(function() 
 			{
@@ -298,8 +309,15 @@ Strophe.addConnectionPlugin('ofmuc', {
     },
     
     appSave: function(callback) {
+    	//console.log("ofmuc.appSave");
     	
-	if (this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.getContent)
+    	var canSave = false;
+    	
+    	try {
+    		canSave = this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.getContent;
+    	} catch (e) { if (callback) callback()}
+    	
+	if (canSave)
 	{        	
 		var content = LZString.compressToUTF16(this.appFrame.contentWindow.OpenfireMeetings.getContent());
     		
@@ -307,8 +325,9 @@ Strophe.addConnectionPlugin('ofmuc', {
     		{
 			//console.log("ofmuc.appSave", this.shareApp, content);
 
+			var ns = this.shareApp + "/" + this.roomJid;
 			var iq = $iq({to: config.hosts.domain, type: 'set'});
-			iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: this.shareApp}).t(content);
+			iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: ns}).t(content);
 
 			this.connection.sendIQ(iq,
 
@@ -322,13 +341,20 @@ Strophe.addConnectionPlugin('ofmuc', {
 			);
 			
 		} else if (callback) callback();
-	}       
+	
+	} else if (callback) callback()      
     },   
     
     appPrint: function() {
-    	console.log("ofmuc.appPrint");
+    	//console.log("ofmuc.appPrint");
 
-	if (this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.getPrintContent)
+    	var canPrint = false;
+    	
+    	try {
+    		canPrint = this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.getPrintContent;
+    	} catch (e) {}
+    	
+	if (canPrint)
 	{        	
 		var content = this.appFrame.contentWindow.OpenfireMeetings.getPrintContent();   
 		var printWin = window.open();
@@ -336,10 +362,19 @@ Strophe.addConnectionPlugin('ofmuc', {
 		printWin.print();
    		printWin.close();
 	}
-    },     
+    },  
+    
+    appEnableCursor: function(flag) {
+    	console.log("ofmuc.appEnableCursor", flag)       
+    	this.enableCursor = flag;
+    },
+    
 
     appReady: function() {
-    	console.log("ofmuc.appReady")   
+    	//console.log("ofmuc.appReady")   
+    	
+    	if (this.appRunning) return;
+    	
         $.prompt.close();    	
         
 	this.setPresentationVisible(true); 
@@ -353,8 +388,9 @@ Strophe.addConnectionPlugin('ofmuc', {
 	if (this.shareApp)     // owner, get from server
 	{
 		var that = this;
+		var ns = this.shareApp + "/" + this.roomJid;
         	var iq = $iq({to: config.hosts.domain, type: 'get'});
-        	iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: this.shareApp});
+        	iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: ns});
         	
 		this.connection.sendIQ(iq,
 
@@ -363,12 +399,14 @@ Strophe.addConnectionPlugin('ofmuc', {
 
 				$(resp).find('ofmeet-application').each(function() 
 				{
-					if (that.appFrame && that.appFrame.contentWindow.OpenfireMeetings && that.appFrame.contentWindow.OpenfireMeetings.setContent)
-					{ 	
-						var content = LZString.decompressFromUTF16($(this).text());
-						//console.log("ofmuc.appReady", that.shareApp, content);						
-						that.appFrame.contentWindow.OpenfireMeetings.setContent(content);
-					}
+					try {
+						if (that.appFrame && that.appFrame.contentWindow.OpenfireMeetings && that.appFrame.contentWindow.OpenfireMeetings.setContent)
+						{ 	
+							var content = LZString.decompressFromUTF16($(this).text());
+							//console.log("ofmuc.appReady", that.shareApp, content);						
+							that.appFrame.contentWindow.OpenfireMeetings.setContent(content);
+						}
+					} catch (e) {}
 				});
 			},
 
@@ -382,6 +420,8 @@ Strophe.addConnectionPlugin('ofmuc', {
 		msg.c('appshare', {xmlns: 'http://igniterealtime.org/protocol/appshare', action: 'message', url: '{"type": "joined"}'}).up();
 		this.connection.send(msg);
 	}
+	
+	this.appRunning = true;
     },
     
     appShare: function(action, url) {
@@ -394,21 +434,20 @@ Strophe.addConnectionPlugin('ofmuc', {
     appStart: function(url, owner) {
 	console.log("ofmuc.appStart", url, owner);
 	
-	$('#presentation').html('<iframe id="appViewer"></iframe>');
-	
+	$('#presentation').html('<iframe id="appViewer" src="' + url + "?room=" + Strophe.getNodeFromJid(this.roomJid) + "&user=" + SettingsMenu.getDisplayName() + '"></iframe>');
 	this.appFrame = document.getElementById("appViewer");
-	this.appFrame.contentWindow.location.href = url + "?room=" + Strophe.getNodeFromJid(this.roomJid) + "&user=" + SettingsMenu.getDisplayName();
+	this.enableCursor = true;
 	
-        $.prompt("Please wait....",
-            {
-                title: "Application Loader",
-                persistent: false
-            }
-        );	
+	$.prompt("Please wait....",
+	    {
+		title: "Application Loader",
+		persistent: false
+	    }
+	);
     },
 
    appStop: function(url) {    
-	console.log("ofmuc.appStop", url);	
+	//console.log("ofmuc.appStop", url);	
 
 	this.setPresentationVisible(false);
 	
@@ -416,6 +455,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	{
 		this.appFrame.contentWindow.location.href = "about:blank";
 		this.appFrame = null;
+		this.appRunning = false;
 		
 		$('#presentation').html('');		
 	}
@@ -448,15 +488,44 @@ Strophe.addConnectionPlugin('ofmuc', {
 		}
 	}
 	
-	if (this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.handleAppMessage && action == "message")
+	if (this.appFrame && this.appFrame.contentWindow)
 	{
-		this.appFrame.contentWindow.OpenfireMeetings.handleAppMessage(url, from);
-	}	
+		if (this.enableCursor) this.appFrame.contentWindow.postMessage({ type: 'ofmeetSetMessage', json: url, from: from}, '*');
+		
+		try {
+			if (this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.handleAppMessage && action == "message")
+			{
+				this.appFrame.contentWindow.OpenfireMeetings.handleAppMessage(url, from);
+			}
+		} catch (e) { }		
+	}
     },
 
     openAppsDialog: function() {
 	console.log("ofmuc.openAppsDialog"); 
 	var that = this;
+	var canPrint = false;
+	var canSave = false;
+	
+	try {
+		canPrint = this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.getPrintContent;
+		canSave = this.appFrame && this.appFrame.contentWindow.OpenfireMeetings && this.appFrame.contentWindow.OpenfireMeetings.setContent;
+	} catch (e) {}
+	
+	var removeButtons = { "Remove": 1};
+	var printButtons = { "Ok": 1};
+	
+	if (canPrint)
+	{
+		removeButtons["Print"] = 2;
+		printButtons["Print"] = 2;		
+	}
+	
+	if (canSave)
+	{
+		removeButtons["Save"] = 3;	
+	}	
+	
 	
 	if (this.shareApp) 
 	{
@@ -469,7 +538,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 			$.prompt("Are you sure you would like to remove your shared applicationt",
 				{
 				title: "Remove application sharing",
-				buttons: { "Remove": 1, "Print": 2, "Save": 3, "Cancel": 0},
+				buttons: removeButtons,
 				defaultButton: 1,
 				submit: function(e,v,m,f)
 				{
@@ -479,8 +548,8 @@ Strophe.addConnectionPlugin('ofmuc', {
 						{
 							that.appShare("destroy", that.shareApp);
 							that.appStop(that.shareApp);
-							that.shareApp = null;						
-						});					
+							that.shareApp = null;
+						});						
 						
 					} 
 					else if(v==3)
@@ -505,7 +574,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 			$.prompt("Another participant is already sharing an application, presentation or document. This conference allows only one application, presentation or document at a time.",
 				 {
 				 f: "Share an application",
-				 buttons: { "Ok": 1, "Print": 2},
+				 buttons: printButtons,
 				 defaultButton: 0,
 				 submit: function(e,v,m,f)
 				 {

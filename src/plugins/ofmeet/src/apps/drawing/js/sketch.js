@@ -292,7 +292,7 @@ $(document).ready(function ()
 	  // Color-button functions:
 	  $('.color-picker').click(function () {
 	    var $this = $(this);
-	    console.log($this);
+	    //console.log($this);
 	    setColor($this.css("background-color"));
 	    changeMouse();
 	  });
@@ -303,7 +303,7 @@ $(document).ready(function ()
 	  });
 
 	  $('.user-color-pick').click(function() {
-	    setColor(OpenfireMeetings.getMyCursor().color);
+	    setColor('red');
 	    changeMouse();
 	  });
 
@@ -322,44 +322,52 @@ $(document).ready(function ()
 
 	// Listens for draw messages, sends info about the drawn lines:
 
-	document.addEventListener('message', function (event) 
-	{
-		//window.parent.console.log("remote sketch handleAppMessage", event);
-	
-		if (!onReady) return
 
-		try {
-			var msg = JSON.parse(event.detail.json);
-			if (msg.type == "draw") draw(msg.start, msg.end, msg.color, msg.size, msg.compositeOperation, true);
-			if (msg.type == "joined") OpenfireMeetings.send({type: 'init', lines: lines}); 
-			if (msg.type == "init") init(msg);			
-			if (msg.type == "clear") clear(false);    
-
-		} catch (e) { window.parent.console.error("remote sketch handleAppMessage", e)}	
-	});
-
-	document.addEventListener('set-content', function (event) 
+	OpenfireMeetings =
 	{
-		window.parent.console.log("remote set-content", event.detail);	
-		var content = event.detail.content && event.detail.content != "" ? event.detail.content : "{}"
-		var newLines = JSON.parse(content);
-		init({lines: newLines});
-		OpenfireMeetings.send({type: 'init', lines: lines}); 
-	});
-	
-	OpenfireMeetings.getContent = function()
-	{
-		window.parent.console.log("remote getContent");
-		return JSON.stringify(lines);
+		setContent: function (content) 
+		{
+			//console.log("remote set-content", content);	
+			var newLines = JSON.parse(content);
+			init({lines: newLines});
+			OpenfireMeetings.send({type: 'init', lines: lines}); 
+		},
+
+		getContent: function()
+		{
+			//console.log("remote getContent");
+			return JSON.stringify(lines);
+		},
+
+		getPrintContent: function()
+		{
+			//console.log("remote getPrintContent");
+			var img = canvas.toDataURL("image/png");
+			return '<img src="'+img+'"/>';
+		},
+		
+		handleAppMessage: function (json) 
+		{
+			//console.log("remote sketch handleAppMessage", json);
+
+			if (!onReady) return
+
+			try {
+				var msg = JSON.parse(json);
+				if (msg.type == "draw") draw(msg.start, msg.end, msg.color, msg.size, msg.compositeOperation, true);
+				if (msg.type == "joined") OpenfireMeetings.send({type: 'init', lines: lines}); 
+				if (msg.type == "init") init(msg);			
+				if (msg.type == "clear") clear(false);    
+
+			} catch (e) { console.error("remote sketch handleAppMessage", e)}	
+		},
+
+		send: function(json)
+		{
+			window.parent.connection.ofmuc.appMessage(json);
+		}
 	}
-	
-	OpenfireMeetings.getPrintContent = function()
-	{
-		window.parent.console.log("remote getPrintContent");
-
-		var img = canvas.toDataURL("image/png");
-		return '<img src="'+img+'"/>';
-	}	
   
+        window.parent.connection.ofmuc.appReady();
   	onReady = true;	
 });

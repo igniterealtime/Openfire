@@ -8,9 +8,7 @@ channel.onMessage.addListener(function (message) {
 window.addEventListener('message', function (event) {
     if (event.source != window)
         return;
-    if (!event.data && (
-			event.data.type == 'ofmeetGetScreen' ||
-			event.data.type == 'ofmeetCancelGetScreen'))
+    if (!event.data || (event.data.type != 'ofmeetGetScreen' &&	event.data.type != 'ofmeetCancelGetScreen'))
         return;
     channel.postMessage(event.data);
 });

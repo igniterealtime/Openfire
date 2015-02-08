@@ -1200,8 +1200,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener,
     @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         try {
-            // If the requesting entity is the user itself or the sender or the requesting entity can probe the presence of the user.
-            if (server.getUserManager().isRegisteredUser(senderJID) && name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name)) {
+            // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
+            if (name != null && senderJID != null &&
+            	server.getUserManager().isRegisteredUser(senderJID) && 
+            	(name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
                 Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
                 for (ClientSession clientSession : getSessions(name)) {
                     discoItems.add(new DiscoItem(clientSession.getAddress(), null, null, null));

@@ -28,12 +28,12 @@
 	{
 		handleAppMessage: function  (json, from)
 		{
-			try {
+			//try {
 				var obj = JSON.parse(json);
 				//window.parent.console.log("remote handleAppMessage", obj, json, from);
 				quill.site.receive(obj);
 
-			} catch (e) { window.parent.console.error("remote handleAppMessage", e)}
+			//} catch (e) { window.parent.console.error("remote handleAppMessage", e)}
 		},
 
 		getContent: function()
@@ -79,7 +79,11 @@
 			$('#editor').css({height: window.innerHeight - 60, width: window.innerWidth - 40});
 		});
 
+		window.parent.connection.ofmuc.appEnableCursor(false);
       	window.parent.connection.ofmuc.appReady();
+
+		window.parent.console.log('remote document ready XX', user, room);
+
     });
   </script>
 </head>

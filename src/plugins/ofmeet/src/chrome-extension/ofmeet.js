@@ -1,66 +1,73 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
- 
+
+var ofmeet = (function (my) 
+{ 
   var FOREGROUND_COLORS = ["#111", "#eee"];
   var CURSOR_HEIGHT = 50;
   var CURSOR_ANGLE = (35 / 180) * Math.PI;
   var CURSOR_WIDTH = Math.ceil(Math.sin(CURSOR_ANGLE) * CURSOR_HEIGHT);
   var CLICK_TRANSITION_TIME = 3000;
-
-  var peers = {};
   
   var session = {
   
   	send: function(msg)
-  	{
-  		window.parent.console.log('remote session.send', msg);
-  		window.parent.connection.ofmuc.appMessage(msg);
+  	{  	
+  		//console.log("session send", msg);
+  		window.parent.postMessage({ type: 'ofmeetSendMessage', msg: msg}, '*');
   	}
   };
+  
+  var eventMaker = {};
+  
+  eventMaker.performClick = function (target) {
+    // FIXME: should accept other parameters, like Ctrl/Alt/etc
+    var event = document.createEvent("MouseEvents");
+    event.initMouseEvent(
+      "click", // type
+      true, // canBubble
+      true, // cancelable
+      window, // view
+      0, // detail
+      0, // screenX
+      0, // screenY
+      0, // clientX
+      0, // clientY
+      false, // ctrlKey
+      false, // altKey
+      false, // shiftKey
+      false, // metaKey
+      0, // button
+      null // relatedTarget
+    );
+    // FIXME: I'm not sure this custom attribute always propagates?
+    // seems okay in Firefox/Chrome, but I've had problems with
+    // setting attributes on keyboard events in the past.
+    event.togetherjsInternal = true;
+    target = $(target)[0];
+    var cancelled = target.dispatchEvent(event);
+    if (cancelled) {
+      return;
+    }
+    if (target.tagName == "A") {
+      var href = target.href;
+      if (href) {
+        location.href = href;
+        return;
+      }
+    }
+    // FIXME: should do button clicks (like a form submit)
+    // FIXME: should run .onclick() as well
+  };
 
-  var handleAppMessage = function(json, from)
-  {
-  	try {
-  		var obj = JSON.parse(json);
-  		//window.parent.console.log("remote handleAppMessage", obj, json, from);
-  		
-		var p = peers[from];
-		
-		if (! p) {        
-    			p = Cursor.getClient(from);
-    			p.updatePeer({id: from, name: from, status: "live"}); 
-    			peers[from] = p;
-		} 
-    
-    		if (obj.type == "cursor-update") p.updatePosition(obj);	
-    		if (obj.type == "cursor-click") handleCursorClick(obj, p);
-  	
-  	} catch (e) { window.parent.console.error(e)}
+  eventMaker.fireChange = function (target) {
+    target = $(target)[0];
+    var event = document.createEvent("HTMLEvents");
+    event.initEvent("change", true, true);
+    target.dispatchEvent(event);
   };
   
-  
-  var handleCursorClick =  function (pos, peer) 
-  {
-    // When the click is calculated isn't always the same as how the
-    // last cursor update was calculated, so we force the cursor to
-    // the last location during a click:
-
-	peer.updatePosition(pos);
-	
-	var topPos = pos.top + pos.offsetY;
-	var leftPos = pos.left + pos.offsetX;	
-
-	if (pos.element) {
-		var target = $(elementFinder.findElement(pos.element));
-		var offset = target.offset();
-		topPos = offset.top + pos.offsetY;
-		leftPos = offset.left + pos.offsetX;
-	}
-
-	displayClick({top: topPos, left: leftPos}, 'red');
-  };
 
   var elementFinder = {};
     
@@ -529,7 +536,7 @@
   var lastPosY = -1;
   var lastMessage = null;
   
-  function mousemove(event) 
+  function mouseMove(event) 
   {
     var now = Date.now();
     if (now - lastTime < MIN_TIME) {
@@ -686,7 +693,7 @@
 
 
   function displayClick(pos, color) {
-  console.log("displayClick", pos, color);
+    //console.log("displayClick", pos, color);
     // FIXME: should we hide the local click if no one else is going to see it?
     // That means tracking who might be able to see our screen.
     var element = $('<div class="togetherjs-click togetherjs"></div>');
@@ -724,24 +731,102 @@
     });
   }
   
-window.addEventListener("unload", function () 
-{
+  
+  var handleCursorClick =  function (pos, peer) 
+  {
+    // When the click is calculated isn't always the same as how the
+    // last cursor update was calculated, so we force the cursor to
+    // the last location during a click:
+
+	peer.updatePosition(pos);
+	
+	var topPos = pos.top + pos.offsetY;
+	var leftPos = pos.left + pos.offsetX;	
+
+	if (pos.element) {
+		var target = $(elementFinder.findElement(pos.element));
+		var offset = target.offset();
+		topPos = offset.top + pos.offsetY;
+		leftPos = offset.left + pos.offsetX;
+		
+        	eventMaker.performClick(target);		
+	}
+	displayClick({top: topPos, left: leftPos}, 'red');
+  };    
+    
+  my.handleAppMessage = function(json, from)
+  {
+  	//try {
+  		var obj = JSON.parse(json);
+  		console.log("remote handleAppMessage", obj, json, from);
+  		       
+    		p = Cursor.getClient(from);
+    		
+    		if (p)
+    		{
+			p.updatePeer({id: from, name: from, status: "live"}); 
+
+			if (obj.type == "cursor-update") p.updatePosition(obj);	
+			if (obj.type == "cursor-click") handleCursorClick(obj, p);
+		}
+		
+		var myEvent = new CustomEvent("message", {detail: {json: json, from: from}});
+		document.dispatchEvent(myEvent);		
+  	
+  	//} catch (e) {console.error(e)}
+  }
+   
+
+  window.addEventListener("unload", function () 
+  {
+    if (window == window.parent) return;
+
+    console.log("remote unload", my.room, my.user);
+    
     Cursor.forEach(function (c, clientId) {
       Cursor.destroy(clientId);
     });
-    
-    $(document).unbind("mousemove", mousemove);
+
+    document.removeEventListener("mousemove", mouseMove, true);    
     document.removeEventListener("click", documentClick, true);
     document.removeEventListener("keydown", documentKeydown, true);
-    $(window).unbind("scroll", scroll);	   
-});
-	
-window.addEventListener("load", function()
-{
-    $(document).mousemove(mousemove);
-    document.addEventListener("click", documentClick, true);
-    document.addEventListener("keydown", documentKeydown, true);
-    $(window).scroll(scroll);
-    scroll();
-    window.parent.connection.ofmuc.appReady();	    
-});
+    
+    $(window).unbind("scroll", scroll);	
+    window.parent.postMessage({ type: 'ofmeetUnloaded'}, '*');    
+  });
+  
+  window.addEventListener('message', function (event) {
+
+  	//console.log("addEventListener message extension", event, window == window.parent);
+    
+	if (!event.data) return;
+
+	// handle ofmuc requests
+	if (event.data.type == 'ofmeetSetMessage')  	my.handleAppMessage(event.data.json, event.data.from);	// from ofmuc
+
+	// handle API requests
+	if (event.data.type == 'ofmeetGetCursor')  	window.parent.postMessage({ type: 'ofmeetGotCursor', content: Cursor.getClient(event.data.user)}, '*');
+	if (event.data.type == 'ofmeetGetMyCursor')  	window.parent.postMessage({ type: 'ofmeetGotCursor', content: Cursor.getClient(my.user)}, '*');	
+
+  });
+  
+  $(document).ready(function () 
+  {
+	if (window == window.parent) return;
+
+	my.room = util.urlParam("room");
+	my.user = util.urlParam("user");  
+
+	document.addEventListener("mousemove", mouseMove, true);    
+	document.addEventListener("click", documentClick, true);
+	document.addEventListener("keydown", documentKeydown, true);
+
+	$(window).scroll(scroll);
+	scroll();
+
+	console.log("remote loaded", my.room, my.user);    
+	window.parent.postMessage({ type: 'ofmeetLoaded'}, '*');
+  });
+  return my;
+  
+}(ofmeet || {}));

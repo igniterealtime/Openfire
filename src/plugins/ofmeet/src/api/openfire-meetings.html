@@ -1,0 +1,58 @@
+<html>
+  <template id="ofmeetTemplate">
+    <link rel="stylesheet" href="ofmeet.css?v=1"/>
+	<div id="videospace">
+		<div id="largeVideoContainer" class="videocontainer">
+			<div id="activeSpeaker">
+				<img id="activeSpeakerAvatar" src=""/>
+				<canvas id="activeSpeakerAudioLevel"></canvas>
+			</div>
+			<video id="largeVideo" autoplay oncontextmenu="return false;"></video>
+		</div>
+		<div id="remoteVideos">
+			<span id="localVideoContainer" class="videocontainer">
+				<span id="localNick" class="nick"></span>
+				<span id="localVideoWrapper" />
+				<audio id="localAudio" autoplay oncontextmenu="return false;" muted></audio>
+				<span class="focusindicator"></span>
+			</span>
+		</div>
+	</div>
+  </template>
+    <script src="/ofmeet/config"></script>
+    <script src="ofmeet.js?v=1"></script>
+	<script>
+		var importDoc = document.currentScript.ownerDocument;
+		var proto = Object.create(HTMLElement.prototype);
+
+		proto.createdCallback = function()
+		{
+			var shadow = document.body;	// shadow dom does not currently work with jquery. Big TODO: remove jquery from ofmeet
+
+			var template = importDoc.querySelector('#ofmeetTemplate');
+			shadow.appendChild(template.content.cloneNode(true));
+
+			var room = this.getAttribute("room");
+
+			$(document).bind('ofmeet.connected', function (event, connection)
+			{
+				//console.log("ofmeet connected", connection);
+				if (room) ofmeet.joinRoom(room, true);
+			});
+
+			$(document).bind('ofmeet.ready', function ()
+			{
+				//console.log("ofmeet ready");
+				ofmeet.init();
+			});
+
+			$(document).ready(function ()
+			{
+				//console.log("document.ready");
+				ofmeet.ready();
+			});
+		};
+
+		document.registerElement("openfire-meetings",  {prototype: proto});
+	</script>
+</html>

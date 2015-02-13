@@ -154,8 +154,7 @@ JingleSession.prototype.accept = function () {
                     }:{};
                     error.source = 'answer';
                     $(document).trigger('error.jingle', [self.sid, error]);
-                },
-                10000);
+                });
         },
         function (e) {
             console.error('setLocalDescription failed', e);
@@ -259,8 +258,7 @@ JingleSession.prototype.sendIceCandidate = function (candidate) {
                         }:{};
                         error.source = 'offer';
                         $(document).trigger('error.jingle', [self.sid, error]);
-                    },
-                    10000);
+                    });
             }
 
             RTC.getLocalSSRC(this, function (ssrcs) {
@@ -336,8 +334,7 @@ JingleSession.prototype.sendIceCandidates = function (candidates) {
             }:{};
             error.source = 'transportinfo';
             $(document).trigger('error.jingle', [this.sid, error]);
-        },
-        10000);
+        });
 };
 
 
@@ -382,8 +379,7 @@ JingleSession.prototype.createdOffer = function (sdp) {
                 }:{};
                 error.source = 'offer';
                 $(document).trigger('error.jingle', [self.sid, error]);
-            },
-            10000);
+            });
     }
     sdp.sdp = this.setBandwidth(this.localSDP.raw); // BAO
     
@@ -623,8 +619,7 @@ JingleSession.prototype.createdAnswer = function (sdp, provisional) {
                         }:{};
                         error.source = 'answer';
                         $(document).trigger('error.jingle', [self.sid, error]);
-                    },
-                    10000);
+                    });
     }
     sdp.sdp = this.setBandwidth(this.localSDP.raw); //BAO
     this.peerconnection.setLocalDescription(sdp,
@@ -685,8 +680,7 @@ JingleSession.prototype.sendTerminate = function (reason, text) {
                 reason: $(stanza).find('error :first')[0].tagName,
             }:{};
             $(document).trigger('ack.jingle', [self.sid, error]);
-        },
-        10000);
+        });
     if (this.statsinterval !== null) {
         window.clearInterval(this.statsinterval);
         this.statsinterval = null;

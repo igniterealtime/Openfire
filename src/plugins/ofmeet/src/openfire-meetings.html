@@ -89,17 +89,15 @@
 
     	}, true);
 
-    	var autoconnect = this.getAttribute("autoconnect");
     	var room = this.getAttribute("room");
 
-    	if (autoconnect && room) this.startOpenfireMeeting(room);
+    	if (room) this.startOpenfireMeeting(room);
     };
 
-	proto.startOpenfireMeeting = function(room, connection)
+	proto.startOpenfireMeeting = function(room)
 	{
-		console.log("startOpenfireMeeting", room, connection);
+		console.log("startOpenfireMeeting", room);
 
-		this.connection = connection;
 		var that = this;
 
 		this.videoModalCancel.addEventListener('click', function (e)
@@ -110,7 +108,6 @@
 		if (room)
 		{
 			var roomName = room.split("@")[0];
-			if (this.connection) this.connection.becomeParent(this.tag);
 			this.videoModalBody.innerHTML = '<iframe id="' + this.tag + '" src="index.html?r=' + roomName + '#external"></iframe>';
 			this.videoModalOverlay.style.visibility = "visible";
 		}
@@ -124,8 +121,6 @@
 		this.videoModalBody.innerHTML = "";
 		this.videoModalOverlay.style.visibility = "hidden";
 		this.videoModal.style.display = "none";
-
-		if (this.connection) this.connection.becomeNormal();
 	};
 
 	proto.resizeWindow = function()

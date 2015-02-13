@@ -319,15 +319,17 @@ Strophe.addConnectionPlugin('ofmuc', {
     	
 	if (canSave)
 	{        	
-		var content = LZString.compressToUTF16(this.appFrame.contentWindow.OpenfireMeetings.getContent());
+		var content = this.appFrame.contentWindow.OpenfireMeetings.getContent();
     		
     		if (content != null)
     		{
-			//console.log("ofmuc.appSave", this.shareApp, content);
+			var compressed = LZString.compressToBase64(content);   
+			
+			//console.log("ofmuc.appSave", this.shareApp, content, compressed);
 
 			var ns = this.shareApp + "/" + this.roomJid;
 			var iq = $iq({to: config.hosts.domain, type: 'set'});
-			iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: ns}).t(content);
+			iq.c('query', {xmlns: "jabber:iq:private"}).c('ofmeet-application', {xmlns: ns}).t(compressed);
 
 			this.connection.sendIQ(iq,
 
@@ -365,7 +367,7 @@ Strophe.addConnectionPlugin('ofmuc', {
     },  
     
     appEnableCursor: function(flag) {
-    	console.log("ofmuc.appEnableCursor", flag)       
+    	//console.log("ofmuc.appEnableCursor", flag)   
     	this.enableCursor = flag;
     },
     
@@ -402,7 +404,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 					try {
 						if (that.appFrame && that.appFrame.contentWindow.OpenfireMeetings && that.appFrame.contentWindow.OpenfireMeetings.setContent)
 						{ 	
-							var content = LZString.decompressFromUTF16($(this).text());
+							var content = LZString.decompressFromBase64($(this).text());
 							//console.log("ofmuc.appReady", that.shareApp, content);						
 							that.appFrame.contentWindow.OpenfireMeetings.setContent(content);
 						}
@@ -411,9 +413,11 @@ Strophe.addConnectionPlugin('ofmuc', {
 			},
 
 			function (err) {			
-				$.prompt("Application save...", {title: err, persistent: false});			
+				$.prompt("Application data retrieve...", {title: err, persistent: false});			
 			}
 		); 
+		
+		this.appShare("create", this.shareApp);			
 		
 	} else { 		// request from peers	
 		var msg = $msg({to: this.roomJid, type: 'groupchat'});
@@ -422,6 +426,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	}
 	
 	this.appRunning = true;
+    	this.appFrame.contentWindow.postMessage({ type: 'ofmeetEnableCursor', flag: this.enableCursor}, '*');	
     },
     
     appShare: function(action, url) {
@@ -432,18 +437,19 @@ Strophe.addConnectionPlugin('ofmuc', {
     },  
 
     appStart: function(url, owner) {
-	console.log("ofmuc.appStart", url, owner);
+	//console.log("ofmuc.appStart", url, owner);
 	
+	this.enableCursor = true;
+		
 	$('#presentation').html('<iframe id="appViewer" src="' + url + "?room=" + Strophe.getNodeFromJid(this.roomJid) + "&user=" + SettingsMenu.getDisplayName() + '"></iframe>');
 	this.appFrame = document.getElementById("appViewer");
-	this.enableCursor = true;
-	
+		
 	$.prompt("Please wait....",
 	    {
 		title: "Application Loader",
 		persistent: false
 	    }
-	);
+	);	
     },
 
    appStop: function(url) {    
@@ -484,7 +490,6 @@ Strophe.addConnectionPlugin('ofmuc', {
 		} else {
 			
 			if (action == "destroy") this.appStop(url);	
-			if (action == "goto") this.appFrame.contentWindow.location.href = url + "?room=" + Strophe.getNodeFromJid(this.roomJid) + "&user=" + SettingsMenu.getDisplayName();
 		}
 	}
 	
@@ -502,7 +507,7 @@ Strophe.addConnectionPlugin('ofmuc', {
     },
 
     openAppsDialog: function() {
-	console.log("ofmuc.openAppsDialog"); 
+	//console.log("ofmuc.openAppsDialog"); 
 	var that = this;
 	var canPrint = false;
 	var canSave = false;
@@ -591,7 +596,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 		}
 	}
 	else {
-	    	var appsList = '<select id="appName"><option value="/ofmeet/apps/woot">Collaborative Editing</option><option value="/ofmeet/apps/drawing">Collaborative Drawing</option>'
+	    	var appsList = '<select id="appName"><option value="/ofmeet/apps/woot">Collaborative Editing</option><option value="/ofmeet/apps/drawing">Collaborative Drawing</option><option value="/ofmeet/apps/scrumblr">Post-It Scrum Board</option>'
 	    	
 	    	for (var i=0; i<that.urls.length; i++)
 	    	{
@@ -615,12 +620,11 @@ Strophe.addConnectionPlugin('ofmuc', {
 					that.shareApp = document.getElementById('appName').value;
 
 					if (that.shareApp)
-					{
+					{											
 						setTimeout(function()
 						{					
-							that.appStart(that.shareApp, true);
-							that.appShare("create", that.shareApp);
-						}, 500);							
+							that.appStart(that.shareApp, true);						
+						}, 500);													
 					}
 				}					 
 			}

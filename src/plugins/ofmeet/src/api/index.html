@@ -1,6 +1,17 @@
 <html>
   <head>
     <link rel="stylesheet" href="ofmeet.css?v=1"/>
+    <style>
+		html, body{
+			margin:0px;
+			height:100%;
+			color: #424242;
+			font-family:'Helvetica Neue', Helvetica, sans-serif;
+			font-weight: 400;
+			background: #000000;
+			overflow-x: hidden;
+		}
+    </style>
     <script src="/ofmeet/config"></script>
     <script src="ofmeet.js?v=1"></script>
     <script>
@@ -24,9 +35,9 @@
 				//ofmeet.toggleAudio();
 				//ofmeet.toggleScreenSharing();
 				//ofmeet.toggleFilmStrip();
-				//ofmeet.visible(visible);
-				//visible = !visible;
-
+				ofmeet.visible(visible);
+				visible = !visible;
+/*
 				if (joined)
 				{
 					ofmeet.leaveRoom();
@@ -36,14 +47,14 @@
 					ofmeet.joinRoom("alizecornet", true);
 					joined = true;
 				}
-
+*/
 			}, 60000);
 		});
 
 		$(document).bind('ofmeet.ready', function ()
 		{
 			console.log("ofmeet.ready");
-			ofmeet.init();
+			ofmeet.connect();
 		});
 
 		$(document).ready(function ()
@@ -205,22 +216,6 @@
     </script>
   </head>
   <body>
-	<div id="videospace">
-		<div id="largeVideoContainer" class="videocontainer">
-			<div id="activeSpeaker">
-				<img id="activeSpeakerAvatar" src=""/>
-				<canvas id="activeSpeakerAudioLevel"></canvas>
-			</div>
-			<video id="largeVideo" autoplay oncontextmenu="return false;"></video>
-		</div>
-		<div id="remoteVideos">
-			<span id="localVideoContainer" class="videocontainer">
-				<span id="localNick" class="nick"></span>
-				<span id="localVideoWrapper" />
-				<audio id="localAudio" autoplay oncontextmenu="return false;" muted></audio>
-				<span class="focusindicator"></span>
-			</span>
-		</div>
-	</div>
+	<h1>Openfire Meetings</h1>
   </body>
 </html>

@@ -1,23 +1,6 @@
 <html>
   <template id="ofmeetTemplate">
     <link rel="stylesheet" href="ofmeet.css?v=1"/>
-	<div id="videospace">
-		<div id="largeVideoContainer" class="videocontainer">
-			<div id="activeSpeaker">
-				<img id="activeSpeakerAvatar" src=""/>
-				<canvas id="activeSpeakerAudioLevel"></canvas>
-			</div>
-			<video id="largeVideo" autoplay oncontextmenu="return false;"></video>
-		</div>
-		<div id="remoteVideos">
-			<span id="localVideoContainer" class="videocontainer">
-				<span id="localNick" class="nick"></span>
-				<span id="localVideoWrapper" />
-				<audio id="localAudio" autoplay oncontextmenu="return false;" muted></audio>
-				<span class="focusindicator"></span>
-			</span>
-		</div>
-	</div>
   </template>
     <script src="/ofmeet/config"></script>
     <script src="ofmeet.js?v=1"></script>
@@ -43,7 +26,7 @@
 			$(document).bind('ofmeet.ready', function ()
 			{
 				//console.log("ofmeet ready");
-				ofmeet.init();
+				ofmeet.connect();
 			});
 
 			$(document).ready(function ()

@@ -248,16 +248,6 @@
     user-select: none;
 }
 
-html, body{
-    margin:0px;
-    height:100%;
-    color: #424242;
-    font-family:'Helvetica Neue', Helvetica, sans-serif;
-    font-weight: 400;
-    background: #000000;
-    overflow-x: hidden;
-}
-
 .right-panel {
     display:none;
     position:absolute;
@@ -401,63 +391,6 @@ a.bottomToolbarButton:hover {
     width: 20px;
     height: 1px;
     background: #373737;
-}
-
-input[type='text'], input[type='password'], textarea {
-    display: inline-block;
-    font-size: 14px;
-    padding: 5px;
-    background: #f3f3f3;
-    border-radius: 3px;
-    font-weight: 100;
-    line-height: 20px;
-    height: 40px;
-    color: #333;
-    text-align: left;
-    border:1px solid #ACD8F0;
-    outline: none; /* removes the default outline */
-    resize: none; /* prevents the user-resizing, adjust to taste */
-}
-
-input[type='text'], input[type='password'], textarea:focus {
-    box-shadow: inset 0 0 3px 2px #ACD8F0; /* provides a more style-able
-                                         replacement to the outline */
-}
-
-textarea {
-    overflow: hidden;
-    word-wrap: break-word;
-    resize: horizontal;
-}
-
-button.no-icon {
-    padding: 0 1em;
-}
-
-button {
-    border: none;
-    height: 35px;
-    padding: 0 1em 0 2em;
-    position: relative;
-    border-radius: 3px;
-    font-weight: bold;
-    color: #fff;
-    line-height: 35px;
-    background: #2c8ad2;
-}
-
-button, input, select, textarea {
-    margin: 0;
-    vertical-align: baseline;
-}
-
-button, input[type="button"], input[type="reset"], input[type="submit"] {
-    cursor: pointer;
-    -webkit-appearance: button;
-}
-
-form {
-    display: block;
 }
 
 #downloadlog {
@@ -711,7 +644,7 @@ form {
 
 
 #videospace {
-    display: block;
+    display: none;
     position: absolute;
     top: 0px;
     left: 0px;

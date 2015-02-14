@@ -9,6 +9,7 @@ var ofmeet = (function (my)
   var CURSOR_ANGLE = (35 / 180) * Math.PI;
   var CURSOR_WIDTH = Math.ceil(Math.sin(CURSOR_ANGLE) * CURSOR_HEIGHT);
   var CLICK_TRANSITION_TIME = 3000;
+  var enableCursor = true;
   
   var session = {
   
@@ -653,6 +654,9 @@ var ofmeet = (function (my)
       // This is an artificial internal event
       return;
     }
+    
+    if (!enableCursor) return;
+    
     // FIXME: this might just be my imagination, but somehow I just
     // really don't want to do anything at this stage of the event
     // handling (since I'm catching every click), and I'll just do
@@ -752,13 +756,13 @@ var ofmeet = (function (my)
         	eventMaker.performClick(target);		
 	}
 	displayClick({top: topPos, left: leftPos}, 'red');
-  };    
-    
+  };
+      
   my.handleAppMessage = function(json, from)
   {
   	//try {
   		var obj = JSON.parse(json);
-  		console.log("remote handleAppMessage", obj, json, from);
+  		//console.log("remote handleAppMessage", obj, json, from);
   		       
     		p = Cursor.getClient(from);
     		
@@ -768,10 +772,7 @@ var ofmeet = (function (my)
 
 			if (obj.type == "cursor-update") p.updatePosition(obj);	
 			if (obj.type == "cursor-click") handleCursorClick(obj, p);
-		}
-		
-		var myEvent = new CustomEvent("message", {detail: {json: json, from: from}});
-		document.dispatchEvent(myEvent);		
+		}		
   	
   	//} catch (e) {console.error(e)}
   }
@@ -781,7 +782,7 @@ var ofmeet = (function (my)
   {
     if (window == window.parent) return;
 
-    console.log("remote unload", my.room, my.user);
+    //console.log("remote unload", my.room, my.user);
     
     Cursor.forEach(function (c, clientId) {
       Cursor.destroy(clientId);
@@ -803,7 +804,8 @@ var ofmeet = (function (my)
 
 	// handle ofmuc requests
 	if (event.data.type == 'ofmeetSetMessage')  	my.handleAppMessage(event.data.json, event.data.from);	// from ofmuc
-
+	if (event.data.type == 'ofmeetEnableCursor') 	enableCursor = event.data.flag;
+	
 	// handle API requests
 	if (event.data.type == 'ofmeetGetCursor')  	window.parent.postMessage({ type: 'ofmeetGotCursor', content: Cursor.getClient(event.data.user)}, '*');
 	if (event.data.type == 'ofmeetGetMyCursor')  	window.parent.postMessage({ type: 'ofmeetGotCursor', content: Cursor.getClient(my.user)}, '*');	
@@ -824,7 +826,7 @@ var ofmeet = (function (my)
 	$(window).scroll(scroll);
 	scroll();
 
-	console.log("remote loaded", my.room, my.user);    
+	//console.log("remote loaded", my.room, my.user);    
 	window.parent.postMessage({ type: 'ofmeetLoaded'}, '*');
   });
   return my;

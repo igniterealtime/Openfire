@@ -88,7 +88,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Derek DeMoro
  */
-public class SessionManager extends BasicModule implements ClusterEventListener, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
+public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
 
 	private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
 
@@ -1171,7 +1171,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener,
         conflictLimit = limit;
         JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
     }
-
+    /*
     @Override
     public Iterator<DiscoServerItem> getItems() {
         return Arrays.asList(new DiscoServerItem(serverAddress, null, null, null, this, this)).iterator();
@@ -1215,7 +1215,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener,
             return Collections.emptyIterator();
         }
     }
-
+    */
     private class ClientSessionListener implements ConnectionCloseListener {
         /**
          * Handle a session that just closed.
@@ -1374,7 +1374,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener,
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
         // Listen to cluster events
         ClusterManager.addListener(this);
-        server.getIQDiscoItemsHandler().addServerItemsProvider(this);
+        //server.getIQDiscoItemsHandler().addServerItemsProvider(this);
     }
 
 

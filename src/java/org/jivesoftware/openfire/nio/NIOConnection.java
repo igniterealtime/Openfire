@@ -216,8 +216,11 @@ public class NIOConnection implements Connection {
                 session.setStatus(Session.STATUS_CLOSED);
             }
             closed = true;
-            notifyCloseListeners(); // clean up session, etc.
     	}
+    	
+    	// OF-881: Notify any close listeners after the synchronized block has completed. 
+    	notifyCloseListeners(); // clean up session, etc.
+    	
         ioSession.close(false); // async via MINA
     }
 

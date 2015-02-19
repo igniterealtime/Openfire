@@ -116,6 +116,10 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
 
+    public static final String HTTP_BIND_REQUEST_HEADER_SIZE = "httpbind.request.header.size";
+
+    public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = 32768;
+
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
 
     private static HttpBindManager instance = new HttpBindManager();
@@ -164,6 +168,7 @@ public final class HttpBindManager {
         JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST_NAME);
         JiveGlobals.migrateProperty(HTTP_BIND_CORS_ENABLED);
         JiveGlobals.migrateProperty(HTTP_BIND_CORS_ALLOW_ORIGIN);
+        JiveGlobals.migrateProperty(HTTP_BIND_REQUEST_HEADER_SIZE);
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
@@ -289,7 +294,7 @@ public final class HttpBindManager {
 
     private void configureProxiedConnector(HttpConfiguration httpConfig) {
         // Check to see if we are deployed behind a proxy
-        // Refer to http://docs.codehaus.org/display/JETTY/Configuring+Connectors
+        // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (isXFFEnabled()) {
         	ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
         	// default: "X-Forwarded-For"
@@ -315,6 +320,7 @@ public final class HttpBindManager {
 
         	httpConfig.addCustomizer(customizer);
         }
+        httpConfig.setRequestHeaderSize(JiveGlobals.getIntProperty(HTTP_BIND_REQUEST_HEADER_SIZE, HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT));
    }
 
     private String getBindInterface() {

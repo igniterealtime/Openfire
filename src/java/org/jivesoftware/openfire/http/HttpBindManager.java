@@ -123,9 +123,9 @@ public final class HttpBindManager {
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
 
     private static HttpBindManager instance = new HttpBindManager();
-    
+
     // Compression "disabled" by default; use "optional" to enable compression (restart required)
-    // When enabled, http response will be compressed if the http request includes an 
+    // When enabled, http response will be compressed if the http request includes an
     // "Accept" header with a value of "gzip" and/or "deflate"
     private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
     		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString())
@@ -172,6 +172,9 @@ public final class HttpBindManager {
 
         PropertyEventDispatcher.addListener(new HttpServerPropertyListener());
         this.httpSessionManager = new HttpSessionManager();
+
+        // we need to initialise contexts at constructor time in order for plugins to add their contexts before start()
+        contexts = new ContextHandlerCollection();
 
         // setup the cache for the allowed origins
         this.setupAllowedOriginsMap();
@@ -225,7 +228,7 @@ public final class HttpBindManager {
         if (port > 0) {
 			HttpConfiguration httpConfig = new HttpConfiguration();
 			configureProxiedConnector(httpConfig);
-            ServerConnector connector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads, 
+            ServerConnector connector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
             		new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
@@ -279,8 +282,8 @@ public final class HttpBindManager {
 					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
 				} else {
 
-					sslConnector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads, 
-							new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig)); 
+					sslConnector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
+							new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
 				}
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
@@ -517,7 +520,7 @@ public final class HttpBindManager {
     private synchronized void configureHttpBindServer(int port, int securePort) {
     	// this is the number of threads allocated to each connector/port
     	int bindThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
-    	
+
         final QueuedThreadPool tp = new QueuedThreadPool();
         tp.setName("Jetty-QTP-BOSH");
 
@@ -540,7 +543,9 @@ public final class HttpBindManager {
             httpBindServer.addConnector(httpsConnector);
         }
 
-        contexts = new ContextHandlerCollection();
+        //contexts = new ContextHandlerCollection();
+        // TODO implement a way to get plugins to add their their web services to contexts
+
         createBoshHandler(contexts, "/http-bind");
         createCrossDomainHandler(contexts, "/crossdomain.xml");
         loadStaticDirectory(contexts);

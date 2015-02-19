@@ -94,7 +94,7 @@ public class CacheFactory {
         localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
                 "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
         clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
-                "com.jivesoftware.util.cache.ClusteredCacheFactory");
+                "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
 
         cacheNames.put("Favicon Hits", "faviconHits");
         cacheNames.put("Favicon Misses", "faviconMisses");

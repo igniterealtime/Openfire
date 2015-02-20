@@ -31,6 +31,8 @@ public final class ExceptionType {
 	/** The Constant NOT_ALLOWED. */
 	public static final String NOT_ALLOWED = "NotAllowedException";
 
+	/** The Constant ALREADY_EXISTS. */
+	public static final String ALREADY_EXISTS = "AlreadyExistsException";
 	/**
 	 * Instantiates a new exception type.
 	 */

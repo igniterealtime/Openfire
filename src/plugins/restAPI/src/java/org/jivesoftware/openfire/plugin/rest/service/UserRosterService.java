@@ -50,7 +50,7 @@ public class UserRosterService {
 					Response.Status.NOT_FOUND, e);
 		} catch (UserAlreadyExistsException e) {
 			throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.USER_ALREADY_EXISTS_EXCEPTION,
-					Response.Status.BAD_REQUEST, e);
+					Response.Status.CONFLICT, e);
 		} catch (SharedGroupException e) {
 			throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.SHARED_GROUP_EXCEPTION,
 					Response.Status.BAD_REQUEST, e);
@@ -85,7 +85,7 @@ public class UserRosterService {
 					Response.Status.BAD_REQUEST, e);
 		} catch (UserAlreadyExistsException e) {
 			throw new ServiceException(COULD_NOT_UPDATE_THE_ROSTER, rosterJid,
-					ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.BAD_REQUEST, e);
+					ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT, e);
 		}
 		return Response.status(Response.Status.OK).build();
 	}

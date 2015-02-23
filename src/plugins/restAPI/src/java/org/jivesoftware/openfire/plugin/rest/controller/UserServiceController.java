@@ -8,6 +8,12 @@ import javax.ws.rs.core.Response;
 
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.plugin.rest.dao.PropertyDAO;
 import org.jivesoftware.openfire.plugin.rest.entity.RosterEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.RosterItemEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.UserEntities;
@@ -16,12 +22,7 @@ import org.jivesoftware.openfire.plugin.rest.entity.UserGroupsEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.UserProperty;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
-import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
-import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.plugin.rest.dao.PropertyDAO;
+import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
@@ -29,7 +30,6 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.xmpp.packet.JID;
 
 /**
@@ -85,9 +85,9 @@ public class UserServiceController {
 						userEntity.getEmail());
 			} catch (UserAlreadyExistsException e) {
 				throw new ServiceException("Could not create new user", userEntity.getUsername(),
-						ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.BAD_REQUEST);
+						ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);
 			}
-			addProperties(userEntity);
+			addProperties(userEntity.getUsername(), userEntity.getProperties());
 		}
 	}
 
@@ -103,6 +103,16 @@ public class UserServiceController {
 	 */
 	public void updateUser(String username, UserEntity userEntity) throws ServiceException {
 		if (userEntity != null && !username.isEmpty()) {
+			// Payload contains another username than provided over path
+			// parameter
+			if (userEntity.getUsername() != null) {
+				if (!userEntity.getUsername().equals(username)) {
+					JustMarriedController.changeName(username, userEntity.getUsername(), true, userEntity.getEmail(),
+							userEntity.getName());
+					addProperties(userEntity.getUsername(), userEntity.getProperties());
+					return;
+				}
+			}
 			User user = getAndCheckUser(username);
 			if (userEntity.getPassword() != null) {
 				user.setPassword(userEntity.getPassword());
@@ -114,7 +124,7 @@ public class UserServiceController {
 				user.setEmail(userEntity.getEmail());
 			}
 
-			addProperties(userEntity);
+			addProperties(username, userEntity.getProperties());
 		}
 	}
 
@@ -138,13 +148,14 @@ public class UserServiceController {
 	 *
 	 * @param userSearch
 	 *            the user search
-	 * @param propertyValue 
-	 * @param propertyKey 
+	 * @param propertyValue
+	 * @param propertyKey
 	 * @return the user entities
-	 * @throws ServiceException 
+	 * @throws ServiceException
 	 */
-	public UserEntities getUserEntities(String userSearch, String propertyKey, String propertyValue) throws ServiceException {
-		if(propertyKey != null) {
+	public UserEntities getUserEntities(String userSearch, String propertyKey, String propertyValue)
+			throws ServiceException {
+		if (propertyKey != null) {
 			return getUserEntitiesByProperty(propertyKey, propertyValue);
 		}
 		UserEntities userEntities = new UserEntities();
@@ -339,9 +350,12 @@ public class UserServiceController {
 	/**
 	 * Adds the user to group.
 	 *
-	 * @param username            the username
-	 * @param userGroupsEntity            the user groups entity
-	 * @throws ServiceException the service exception
+	 * @param username
+	 *            the username
+	 * @param userGroupsEntity
+	 *            the user groups entity
+	 * @throws ServiceException
+	 *             the service exception
 	 */
 	public void addUserToGroups(String username, UserGroupsEntity userGroupsEntity) throws ServiceException {
 		if (userGroupsEntity != null) {
@@ -420,11 +434,11 @@ public class UserServiceController {
 	 * @throws ServiceException
 	 *             the service exception
 	 */
-	private void addProperties(UserEntity userEntity) throws ServiceException {
-		User user = getAndCheckUser(userEntity.getUsername());
+	private void addProperties(String username, List<UserProperty> properties) throws ServiceException {
+		User user = getAndCheckUser(username);
 		user.getProperties().clear();
-		if (userEntity.getProperties() != null) {
-			for (UserProperty property : userEntity.getProperties()) {
+		if (properties != null) {
+			for (UserProperty property : properties) {
 				user.getProperties().put(property.getKey(), property.getValue());
 			}
 		}
@@ -433,9 +447,11 @@ public class UserServiceController {
 	/**
 	 * Creates the group.
 	 *
-	 * @param groupName            the group name
+	 * @param groupName
+	 *            the group name
 	 * @return the group
-	 * @throws ServiceException the service exception
+	 * @throws ServiceException
+	 *             the service exception
 	 */
 	private Group createGroup(String groupName) throws ServiceException {
 		Group group = null;

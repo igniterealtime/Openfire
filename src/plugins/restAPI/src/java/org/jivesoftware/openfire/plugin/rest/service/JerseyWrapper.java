@@ -2,6 +2,8 @@ package org.jivesoftware.openfire.plugin.rest.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -43,8 +45,12 @@ public class JerseyWrapper extends ServletContainer {
 
 	/** The prc. */
 	private static PackagesResourceConfig prc;
+	
+	/** The Constant JERSEY_LOGGER. */
+	private final static Logger JERSEY_LOGGER = Logger.getLogger("com.sun.jersey");
 
 	static {
+		JERSEY_LOGGER.setLevel(Level.SEVERE); 
 		config = new HashMap<String, Object>();
 		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);

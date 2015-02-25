@@ -310,7 +310,7 @@ public class AuditorImpl implements Auditor {
    		// Set limit date after which we need to rollover the audit file (based on the date)
    		Calendar calendar = Calendar.getInstance();
    		calendar.setTime(auditDate);
-   		calendar.set(Calendar.HOUR, 23);
+   		calendar.set(Calendar.HOUR_OF_DAY, 23);
    		calendar.set(Calendar.MINUTE, 59);
    		calendar.set(Calendar.SECOND, 59);
    		calendar.set(Calendar.MILLISECOND, 999);

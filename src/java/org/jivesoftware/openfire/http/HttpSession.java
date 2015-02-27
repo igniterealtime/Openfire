@@ -1164,10 +1164,9 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Deliverable implements Comparable<Deliverable> {
+    private class Deliverable {
         private final String text;
         private final Collection<String> packets;
-        private long requestID;
 
         public Deliverable(String text) {
             this.text = text;
@@ -1180,22 +1179,13 @@ public class HttpSession extends LocalClientSession {
             for (Packet packet : elements) {
                 // Rewrite packet namespace according XEP-0206
                 if (packet instanceof Presence) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<presence xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(9));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<presence xmlns=\"jabber:client\"" + packet.toXML().substring(9));
                 }
                 else if (packet instanceof IQ) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<iq xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(3));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<iq xmlns=\"jabber:client\"" + packet.toXML().substring(3));
                 }
                 else if (packet instanceof Message) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<message xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(8));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<message xmlns=\"jabber:client\"" + packet.toXML().substring(8));
                 }
                 else {
                     this.packets.add(packet.toXML());
@@ -1214,14 +1204,6 @@ public class HttpSession extends LocalClientSession {
             else {
                 return text;
             }
-        }
-
-        public void setRequestID(long requestID) {
-            this.requestID = requestID;
-        }
-
-        public long getRequestID() {
-            return requestID;
         }
 
         public Collection<Packet> getPackets() {
@@ -1254,10 +1236,6 @@ public class HttpSession extends LocalClientSession {
                 }
             }
             return answer;
-        }
-
-        public int compareTo(Deliverable o) {
-            return (int) (o.getRequestID() - requestID);
         }
     }
 

@@ -294,11 +294,9 @@ public class HttpBindServlet extends HttpServlet {
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
             System.out.println(new Date()+": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
-        byte[] byteContent = content.getBytes("UTF-8");
-        response.setContentLength(byteContent.length);
-        response.getOutputStream().write(byteContent);
-        response.getOutputStream().close();
-        context.complete();
+
+        final byte[] byteContent = content.getBytes("UTF-8");
+        response.getOutputStream().setWriteListener( new WriteListenerImpl(context, byteContent) );
     }
 
     private void sendError(HttpSession session, AsyncContext context, BoshBindingError bindingError)
@@ -433,6 +431,32 @@ public class HttpBindServlet extends HttpServlet {
             } catch (IOException ex) {
                 Log.debug("Error while sending an error to ["+remoteAddress +"] in response to an earlier data-read failure.", ex);
             }
+        }
+    }
+
+    static class WriteListenerImpl implements WriteListener {
+
+        private final AsyncContext context;
+        private final byte[] data;
+        private final String remoteAddress;
+
+        public WriteListenerImpl(AsyncContext context, byte[] data) {
+            this.context = context;
+            this.data = data;
+            this.remoteAddress = getRemoteAddress(context);
+        }
+
+        @Override
+        public void onWritePossible() throws IOException {
+            Log.trace("Data can be written to [" + remoteAddress + "]");
+            context.getResponse().getOutputStream().write(data);
+            context.complete();
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            Log.warn("Error writing response data to [" + remoteAddress + "]", throwable);
+            context.complete();
         }
     }
 }

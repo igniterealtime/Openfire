@@ -303,7 +303,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            Log.info(new Date() + ": HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
+            System.out.println(new Date() + ": HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
             if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) || session.getMajorVersion() > 1)

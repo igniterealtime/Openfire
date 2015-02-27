@@ -611,8 +611,8 @@ public class HttpSession extends LocalClientSession {
         int pauseDuration = HttpBindServlet.getIntAttribute(rootNode.attributeValue("pause"), -1);
 
         if ("terminate".equals(type)) {
-            close();
             connection.deliverBody(createEmptyBody(true));
+            close();
             lastRequestID = connection.getRequestId();
         }
         else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {

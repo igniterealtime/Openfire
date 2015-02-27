@@ -6,6 +6,7 @@ work/
 *.ipr
 .idea
 atlassian-ide-plugin.xml
+out/
 
 # Ignore Eclipse project files
 .settings

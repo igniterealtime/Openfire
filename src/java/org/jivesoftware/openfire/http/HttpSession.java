@@ -987,7 +987,7 @@ public class HttpSession extends LocalClientSession {
 	                /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
 	                Log.warn("Iterating over a connection that was closed. Openfire will recover from this problem, but it should not occur in the first place.");
                 } catch (IOException e) {
-                    // TODO handle this
+                    Log.warn("An unexpected exception occurred while iterating over connections. Openfire will attempt to recover by ignoring this connection.", e);
                 }
             }
         }
@@ -1047,7 +1047,8 @@ public class HttpSession extends LocalClientSession {
 		            } catch (HttpConnectionClosedException e) {
 		            	/* ignore ... already closed */
                     } catch (IOException e) {
-                        // TODO e.printStackTrace();
+                        // Likely caused by closing a stale session / connection.
+                        Log.debug("An unexpected exception occurred while closing a session.", e);
 		            }
 		        }
 	        }

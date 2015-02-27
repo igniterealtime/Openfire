@@ -202,7 +202,7 @@ public class HttpSessionManager {
 
         connection.setSession(session);
         try {
-            connection.deliverBody(createSessionCreationResponse(session));
+            connection.deliverBody(createSessionCreationResponse(session), true);
         }
         catch (HttpConnectionClosedException e) {
             Log.error("Error creating session.", e);

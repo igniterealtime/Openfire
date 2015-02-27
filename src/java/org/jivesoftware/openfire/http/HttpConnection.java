@@ -72,7 +72,7 @@ public class HttpConnection {
         }
 
         try {
-            deliverBody(null);
+            deliverBody(null, true);
         }
         catch (HttpConnectionClosedException e) {
             Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
@@ -106,11 +106,12 @@ public class HttpConnection {
      * sent an empty body.
      *
      * @param body the XMPP content to be forwarded to the client inside of a body tag.
+     * @param async when false, this method blocks until the data has been delivered to the client.
      *
      * @throws HttpConnectionClosedException when this connection to the client has already received
      * a deliverable to forward to the client
      */
-    public void deliverBody(String body) throws HttpConnectionClosedException, IOException {
+    public void deliverBody(String body, boolean async) throws HttpConnectionClosedException, IOException {
         // We only want to use this function once so we will close it when the body is delivered.
     	synchronized (this) {
 	        if (isClosed) {
@@ -123,7 +124,7 @@ public class HttpConnection {
         if (body == null) {
             body = HttpBindServlet.createEmptyBody(false);
         }
-        HttpBindServlet.respond(this.getSession(), this.context, body);
+        HttpBindServlet.respond(this.getSession(), this.context, body, async);
     }
 
     /**

@@ -611,17 +611,17 @@ public class HttpSession extends LocalClientSession {
         int pauseDuration = HttpBindServlet.getIntAttribute(rootNode.attributeValue("pause"), -1);
 
         if ("terminate".equals(type)) {
-            connection.deliverBody(createEmptyBody(true));
+            connection.deliverBody(createEmptyBody(true), true);
             close();
             lastRequestID = connection.getRequestId();
         }
         else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {
-            connection.deliverBody(createSessionRestartResponse());
+            connection.deliverBody(createSessionRestartResponse(), true);
             lastRequestID = connection.getRequestId();
         }
         else if (pauseDuration > 0 && pauseDuration <= getMaxPause()) {
             pause(pauseDuration);
-            connection.deliverBody(createEmptyBody(false));
+            connection.deliverBody(createEmptyBody(false), true);
             lastRequestID = connection.getRequestId();
             setLastResponseEmpty(true);
         }
@@ -700,14 +700,18 @@ public class HttpSession extends LocalClientSession {
         context.addListener(new AsyncListener() {
             @Override
             public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("complete event " + asyncEvent);
                 connectionQueue.remove(connection);
                 fireConnectionClosed(connection);
             }
 
             @Override
             public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("timeout event " + asyncEvent);
                 try {
-                    connection.deliverBody(createEmptyBody());
+                    // If onTimeout does not result in a complete(), the container falls back to default behavior.
+                    // This is why this body is to be delivered in a non-async fashion.
+                    connection.deliverBody(createEmptyBody(), false);
                     setLastResponseEmpty(true);
 
                     // This connection timed out we need to increment the request count
@@ -725,6 +729,7 @@ public class HttpSession extends LocalClientSession {
 
             @Override
             public void onError(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("error event " + asyncEvent);
                 Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
             }
 
@@ -739,7 +744,7 @@ public class HttpSession extends LocalClientSession {
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
             }
-            connection.deliverBody(createDeliverable(deliverable.deliverables));
+            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
             addConnection(connection, isPoll);
             return connection;
         }
@@ -805,7 +810,7 @@ public class HttpSession extends LocalClientSession {
 			                throw new HttpBindException("Unexpected RID error.",
 			                        BoshBindingError.itemNotFound);
 			            }
-			            connection.deliverBody(createDeliverable(deliverable.deliverables));
+			            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
 					} else {
 						if(Log.isDebugEnabled()) {
 							Log.debug("It's still open - calling close()");
@@ -889,7 +894,7 @@ public class HttpSession extends LocalClientSession {
 
     private void deliver(HttpConnection connection, Collection<Deliverable> deliverable)
             throws HttpConnectionClosedException, IOException {
-        connection.deliverBody(createDeliverable(deliverable));
+        connection.deliverBody(createDeliverable(deliverable), true);
 
         Delivered delivered = new Delivered(deliverable);
         delivered.setRequestID(connection.getRequestId());
@@ -1041,7 +1046,7 @@ public class HttpSession extends LocalClientSession {
 					                pendingElements.clear();
 		            			}
 	            			} else {
-	            				toClose.deliverBody(null);
+	            				toClose.deliverBody(null, true);
 	            			}
 		            	}
 		            } catch (HttpConnectionClosedException e) {

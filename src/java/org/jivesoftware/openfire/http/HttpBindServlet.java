@@ -272,7 +272,7 @@ public class HttpBindServlet extends HttpServlet {
         return reader;
     }
 
-    public static void respond(HttpSession session, AsyncContext context, String content) throws IOException
+    public static void respond(HttpSession session, AsyncContext context, String content, boolean async) throws IOException
     {
         final HttpServletResponse response = ((HttpServletResponse) context.getResponse());
         final HttpServletRequest request = ((HttpServletRequest) context.getRequest());
@@ -292,11 +292,17 @@ public class HttpBindServlet extends HttpServlet {
         }
         
         if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            System.out.println(new Date()+": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
+            System.out.println(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
         final byte[] byteContent = content.getBytes("UTF-8");
-        response.getOutputStream().setWriteListener( new WriteListenerImpl(context, byteContent) );
+        if (async) {
+            response.getOutputStream().setWriteListener(new WriteListenerImpl(context, byteContent));
+        } else {
+            context.getResponse().getOutputStream().write(byteContent);
+            context.getResponse().getOutputStream().flush();
+            context.complete();
+        }
     }
 
     private void sendError(HttpSession session, AsyncContext context, BoshBindingError bindingError)
@@ -309,7 +315,7 @@ public class HttpBindServlet extends HttpServlet {
             if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) || session.getMajorVersion() > 1)
             {
                 final String errorBody = createErrorBody(bindingError.getErrorType().getType(), bindingError.getCondition());
-                respond(session, context, errorBody);
+                respond(session, context, errorBody, true);
             } else {
                 sendLegacyError(context, bindingError);
             }

@@ -20,17 +20,16 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.jivesoftware.util.JiveConstants;
-import org.eclipse.jetty.continuation.Continuation;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.AsyncContext;
+import java.io.IOException;
 import java.security.cert.X509Certificate;
 
 /**
  * Represents one HTTP connection with a client using the HTTP Binding service. The client will wait
- * on {@link #getResponse()} until the server forwards a message to it or the wait time on the
+ * on a response until the server forwards a message to it or the wait time on the
  * session timeout.
  *
  * @author Alexander Wenckus
@@ -38,17 +37,15 @@ import java.security.cert.X509Certificate;
 public class HttpConnection {
 
     private static final Logger Log = LoggerFactory.getLogger(HttpConnection.class);
-    private static final String RESPONSE_BODY = "response-body";
-    private static final String CONNECTION_CLOSED = "connection closed";
 
     private final long requestId;
     private final X509Certificate[] sslCertificates;
     private final boolean isSecure;
     
-    private String body;
     private HttpSession session;
-    private Continuation continuation;
     private boolean isClosed;
+
+    private final AsyncContext context;
 
     /**
      * Constructs an HTTP Connection.
@@ -57,24 +54,29 @@ public class HttpConnection {
      * @param isSecure true if this connection is using HTTPS
      * @param sslCertificates list of certificates presented by the client.
      */
-    public HttpConnection(long requestId, boolean isSecure, X509Certificate[] sslCertificates) {
+    public HttpConnection(long requestId, boolean isSecure, X509Certificate[] sslCertificates, AsyncContext context) {
         this.requestId = requestId;
         this.isSecure = isSecure;
         this.sslCertificates = sslCertificates;
+        this.context = context;
     }
 
     /**
      * The connection should be closed without delivering a stanza to the requestor.
      */
     public void close() {
-        if (isClosed) {
-            return;
+        synchronized (this) {
+            if (isClosed) {
+                return;
+            }
         }
 
         try {
-            deliverBody(CONNECTION_CLOSED);
+            deliverBody(null);
         }
         catch (HttpConnectionClosedException e) {
+            Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
+        } catch (IOException e) {
             Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
         }
     }
@@ -85,7 +87,7 @@ public class HttpConnection {
      *
      * @return true if this connection has been closed.
      */
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return isClosed;
     }
 
@@ -108,55 +110,20 @@ public class HttpConnection {
      * @throws HttpConnectionClosedException when this connection to the client has already received
      * a deliverable to forward to the client
      */
-    public void deliverBody(String body) throws HttpConnectionClosedException {
+    public void deliverBody(String body) throws HttpConnectionClosedException, IOException {
         // We only want to use this function once so we will close it when the body is delivered.
     	synchronized (this) {
 	        if (isClosed) {
 	            throw new HttpConnectionClosedException("The http connection is no longer " +
 	                    "available to deliver content");
 	        }
-	        else {
-	            isClosed = true;
-	        }
-    	}
-        if (body == null) {
-            body = CONNECTION_CLOSED;
+            isClosed = true;
         }
-        if (isSuspended()) {
-            continuation.setAttribute(RESPONSE_BODY, body);
-            continuation.resume();
-            session.incrementServerPacketCount();
-        }
-        else {
-            this.body = body;
-        }
-    }
 
-    /**
-     * A call that will suspend the request if there is no deliverable currently available.
-     * Once the response becomes available, it is returned.
-     *
-     * @return the deliverable to send to the client
-     * @throws HttpBindTimeoutException to indicate that the maximum wait time requested by the
-     * client has been surpassed and an empty response should be returned.
-     */
-    public String getResponse() throws HttpBindTimeoutException {
-        if (body == null && continuation != null) {
-            try {
-                body = waitForResponse();
-            }
-            catch (HttpBindTimeoutException e) {
-                this.isClosed = true;
-                throw e;
-            }
+        if (body == null) {
+            body = HttpBindServlet.createEmptyBody(false);
         }
-        else if (body == null) {
-            throw new IllegalStateException("Continuation not set, cannot wait for deliverable.");
-        }
-        else if(CONNECTION_CLOSED.equals(body)) {
-        	return null;
-        }
-        return body;
+        HttpBindServlet.respond(this.getSession(), this.context, body);
     }
 
     /**
@@ -193,41 +160,6 @@ public class HttpConnection {
      */
     public X509Certificate[] getPeerCertificates() {
         return sslCertificates;
-    }
-
-    void setContinuation(Continuation continuation) {
-        this.continuation = continuation;
-    }
-    
-    public boolean isSuspended() {
-    	return continuation != null && continuation.isSuspended();
-    }
-    
-    public boolean isExpired() {
-    	return continuation != null && continuation.isExpired();
-    }
-
-    private String waitForResponse() throws HttpBindTimeoutException {
-        // we enter this method when we have no messages pending delivery
-		// when we resume a suspended continuation, or when we time out
-		if (continuation.isInitial()) {
-		    continuation.setTimeout(session.getWait() * JiveConstants.SECOND);
-            continuation.suspend();
-            continuation.undispatch();
-        } else if (continuation.isResumed()) {
-            // This will occur when the hold attribute of a session has been exceeded.
-            String deliverable = (String) continuation.getAttribute(RESPONSE_BODY);
-            if (deliverable == null) {
-                throw new HttpBindTimeoutException();
-            }
-            else if(CONNECTION_CLOSED.equals(deliverable)) {
-                return null;
-            }
-            return deliverable;
-        }
-
-        throw new HttpBindTimeoutException("Request " + requestId + " exceeded response time from " +
-                "server of " + session.getWait() + " seconds.");
     }
 
 	@Override

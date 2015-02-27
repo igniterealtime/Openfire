@@ -199,7 +199,8 @@ public class HttpSessionManager {
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
         session.setMinorVersion(Integer.parseInt(versionString[1]));
-        
+
+        connection.setSession(session);
         try {
             connection.deliverBody(createSessionCreationResponse(session));
         }

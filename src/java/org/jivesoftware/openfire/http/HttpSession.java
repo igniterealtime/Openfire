@@ -695,6 +695,7 @@ public class HttpSession extends LocalClientSession {
             throws HttpConnectionClosedException, HttpBindException, IOException
     {
         final HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates, context);
+        connection.setSession(this);
         context.setTimeout(getWait() * JiveConstants.SECOND);
         context.addListener(new AsyncListener() {
             @Override
@@ -825,7 +826,6 @@ public class HttpSession extends LocalClientSession {
 
         sslCertificates = connection.getPeerCertificates();
 
-        connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {

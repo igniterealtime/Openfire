@@ -23880,8 +23880,8 @@ var ofmeet = (function(of)
 
 	var VideoLayout = (function (my) {
 	    var currentDominantSpeaker = null;
-	    var lastNCount = config.channelLastN;
-	    var localLastNCount = config.channelLastN;
+	    var lastNCount = -1;
+	    var localLastNCount = -1;
 	    var localLastNSet = [];
 	    var lastNEndpointsCache = [];
 	    var lastNPickupJid = null;
@@ -23892,6 +23892,12 @@ var ofmeet = (function(of)
 
 	    var defaultLocalDisplayName = "Me";
 
+	    my.init = function()
+	    {
+	    	lastNCount = config.channelLastN;
+	    	localLastNCount = config.chan	    
+	    }
+	    
 	    my.connectionIndicators = {};
 
 	    my.isInLastN = function(resource) {
@@ -27497,7 +27503,7 @@ var ofmeet = (function(of)
 	    console.error(text);
 	};
 
-	var simulcast = new SimulcastManager();
+	var simulcast = null;
 
 	$(document).bind('simulcastlayerschanged', function (event, endpointSimulcastLayers) {
 	    endpointSimulcastLayers.forEach(function (esl) {
@@ -31984,14 +31990,38 @@ var ofmeet = (function(of)
 			$('#videospace').css("display", "none");			
 		}
 	}
-	
-	of.ready = function () 
+
+	of.ready = function (username, password) 
 	{
-	    //console.log("of.ready");
+		$.ajax({type: "GET", url: "/ofmeet/config", dataType: "script", headers: {"Authorization": "Basic " + btoa(username + ":" + password)}}).done(function()
+		{
+			var cssId = 'ofmeet-css';
+
+			if (!document.getElementById(cssId))
+			{
+			    var head  = document.getElementsByTagName('head')[0];
+			    var link  = document.createElement('link');
+			    link.id   = cssId;
+			    link.rel  = 'stylesheet';
+			    link.type = 'text/css';
+			    link.href = '/ofmeet/api/ofmeet.css';
+			    link.media = 'all';
+			    head.appendChild(link);
+			}		
+			of.initialise();
+		})
+	}
+	
+	of.initialise = function () 
+	{
+	    console.log("of.initialise");
 	    
 	    $('#videospace').css("display", "block");
 	    
+	    VideoLayout.init();
 	    Moderator.init();
+	    
+	    simulcast = new SimulcastManager();
 
 	    // Set default desktop sharing method
 	    setDesktopSharing(config.desktopSharing);
@@ -32157,7 +32187,7 @@ var ofmeet = (function(of)
 	}
 	
     	of.VideoLayout = VideoLayout;
-    	of.connection = connection;
+    	of.connection = connection;    	
     	
     	return of;
 }(ofmeet || {}));

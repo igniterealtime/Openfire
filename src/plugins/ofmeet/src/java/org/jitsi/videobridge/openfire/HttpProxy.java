@@ -38,7 +38,7 @@ public class HttpProxy  extends HttpServlet
 			String url = request.getParameter("url");
 
 			if (url != null) {
-				writeHeader(response);
+				writeHeader(url, response);
 				writeGet(url, response.getOutputStream());
 			}
 
@@ -49,7 +49,7 @@ public class HttpProxy  extends HttpServlet
 	}
 
 
-    private void writeHeader(HttpServletResponse response)
+    private void writeHeader(String urlString, HttpServletResponse response)
     {
 
 		try {
@@ -57,7 +57,12 @@ public class HttpProxy  extends HttpServlet
 			response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 			response.addHeader("Cache-Control", "post-check=0, pre-check=0");
 			response.setHeader("Pragma", "no-cache");
-			response.setHeader("Content-Type", "application/pdf");
+
+			if (urlString.endsWith(".pdf"))
+				response.setHeader("Content-Type", "application/pdf");
+			else
+				response.setHeader("Content-Type", "text/html");
+
 			response.setHeader("Connection", "close");
         }
         catch(Exception e)

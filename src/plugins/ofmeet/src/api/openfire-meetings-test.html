@@ -17,13 +17,14 @@
 			setInterval(function()
 			{
 				console.log("ofmeet test cycle", joined);
+/*
+				ofmeet.toggleVideo();
+				ofmeet.toggleAudio();
+				ofmeet.toggleScreenSharing();
+				ofmeet.toggleFilmStrip();
 
-				//ofmeet.toggleVideo();
-				//ofmeet.toggleAudio();
-				//ofmeet.toggleScreenSharing();
-				//ofmeet.toggleFilmStrip();
-				//ofmeet.visible(visible);
-				//visible = !visible;
+				ofmeet.visible(visible);
+				visible = !visible;
 
 				if (joined)
 				{
@@ -35,8 +36,21 @@
 					joined = true;
 				}
 
-
+*/
 			}, 60000);
+		});
+
+
+		$(document).bind('ofmeet.ready', function ()
+		{
+			console.log("ofmeet ready");
+			ofmeet.connect();
+		});
+
+		$(document).ready(function ()
+		{
+			console.log("document.ready");
+			ofmeet.ready("jamesbond", "007");
 		});
 
 		$(document).bind('remotevideo.resized', function (event, width, height)

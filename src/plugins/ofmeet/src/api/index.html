@@ -1,6 +1,5 @@
 <html>
   <head>
-    <link rel="stylesheet" href="ofmeet.css?v=1"/>
     <style>
 		html, body{
 			margin:0px;
@@ -12,7 +11,6 @@
 			overflow-x: hidden;
 		}
     </style>
-    <script src="/ofmeet/config"></script>
     <script src="ofmeet.js?v=1"></script>
     <script>
 		var conn = null;
@@ -31,13 +29,14 @@
 
 			setInterval(function()
 			{
-				//ofmeet.toggleVideo();
-				//ofmeet.toggleAudio();
-				//ofmeet.toggleScreenSharing();
-				//ofmeet.toggleFilmStrip();
+/*
+				ofmeet.toggleVideo();
+				ofmeet.toggleAudio();
+				ofmeet.toggleScreenSharing();
+				ofmeet.toggleFilmStrip();
 				ofmeet.visible(visible);
 				visible = !visible;
-/*
+
 				if (joined)
 				{
 					ofmeet.leaveRoom();
@@ -48,7 +47,9 @@
 					joined = true;
 				}
 */
+
 			}, 60000);
+
 		});
 
 		$(document).bind('ofmeet.ready', function ()
@@ -60,7 +61,7 @@
 		$(document).ready(function ()
 		{
 			console.log("document.ready");
-			ofmeet.ready();
+			ofmeet.ready("deleolajide", "969131");
 		});
 
 		$(document).bind('remotevideo.resized', function (event, width, height)

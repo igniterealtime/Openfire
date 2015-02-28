@@ -19,5 +19,5 @@
    "name": "Openfire Meetings Chrome Extension",
    "permissions": [ "desktopCapture" ],
    "short_name": "ofmeet chrome extension",
-   "version": "0.0.3"
+   "version": "0.0.5"
 }

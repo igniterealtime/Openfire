@@ -311,6 +311,10 @@ class XMLLightweightParser {
                         status = XMLLightweightParser.OUTSIDE;
                         cdataOffset = 0;
                     }
+                } else if (cdataOffset == XMLLightweightParser.CDATA_END.length-1 && ch == XMLLightweightParser.CDATA_END[cdataOffset - 1]) {
+                	// if we are looking for the last CDATA_END char, and we instead found an extra ']' 
+                	// char, leave cdataOffset as is and proceed to the next char. This could be a case 
+                	// where the XML character data ends with multiple square braces. For Example ]]]>
                 } else {
                     cdataOffset = 0;
                 }

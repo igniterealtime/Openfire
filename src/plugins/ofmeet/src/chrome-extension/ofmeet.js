@@ -10,6 +10,7 @@ var ofmeet = (function (my)
   var CURSOR_WIDTH = Math.ceil(Math.sin(CURSOR_ANGLE) * CURSOR_HEIGHT);
   var CLICK_TRANSITION_TIME = 3000;
   var enableCursor = true;
+  var displayMouseClick = false;  
   
   var session = {
   
@@ -691,7 +692,7 @@ var ofmeet = (function (my)
         left: offset.left
       });
       
-      displayClick({top: event.pageY, left: event.pageX}, 'red');
+      if (displayMouseClick) displayClick({top: event.pageY, left: event.pageX}, 'red');
     });
   }
 
@@ -760,6 +761,8 @@ var ofmeet = (function (my)
       
   my.handleAppMessage = function(json, from)
   {
+  	displayMouseClick = true;
+  	
   	//try {
   		var obj = JSON.parse(json);
   		//console.log("remote handleAppMessage", obj, json, from);

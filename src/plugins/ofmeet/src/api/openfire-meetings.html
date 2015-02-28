@@ -1,38 +1,16 @@
 <html>
-  <template id="ofmeetTemplate">
-    <link rel="stylesheet" href="ofmeet.css?v=1"/>
-  </template>
-    <script src="/ofmeet/config"></script>
     <script src="ofmeet.js?v=1"></script>
 	<script>
-		var importDoc = document.currentScript.ownerDocument;
 		var proto = Object.create(HTMLElement.prototype);
 
 		proto.createdCallback = function()
 		{
-			var shadow = document.body;	// shadow dom does not currently work with jquery. Big TODO: remove jquery from ofmeet
-
-			var template = importDoc.querySelector('#ofmeetTemplate');
-			shadow.appendChild(template.content.cloneNode(true));
-
 			var room = this.getAttribute("room");
 
 			$(document).bind('ofmeet.connected', function (event, connection)
 			{
 				//console.log("ofmeet connected", connection);
 				if (room) ofmeet.joinRoom(room, true);
-			});
-
-			$(document).bind('ofmeet.ready', function ()
-			{
-				//console.log("ofmeet ready");
-				ofmeet.connect();
-			});
-
-			$(document).ready(function ()
-			{
-				//console.log("document.ready");
-				ofmeet.ready();
 			});
 		};
 

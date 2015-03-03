@@ -71,6 +71,8 @@ public class JerseyWrapper extends ServletContainer {
 		prc.getClasses().add(UserGroupService.class);
 		prc.getClasses().add(UserLockoutService.class);
 
+		prc.getClasses().add(GroupService.class);
+
 		prc.getClasses().add(RESTExceptionMapper.class);
 	}
 

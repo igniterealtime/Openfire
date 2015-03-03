@@ -6,14 +6,15 @@ import java.util.List;
 
 import javax.ws.rs.core.Response;
 
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
-import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.plugin.rest.dao.PropertyDAO;
+import org.jivesoftware.openfire.plugin.rest.entity.GroupEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.RosterEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.RosterItemEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.UserEntities;
@@ -26,11 +27,13 @@ import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 
 /**
  * The Class UserServiceController.
@@ -47,6 +50,9 @@ public class UserServiceController {
 
 	/** The server. */
 	private XMPPServer server;
+	
+	/** The lock out manager. */
+	private LockOutManager lockOutManager;
 
 	/**
 	 * Gets the single instance of UserServiceController.
@@ -64,6 +70,7 @@ public class UserServiceController {
 		server = XMPPServer.getInstance();
 		userManager = server.getUserManager();
 		rosterManager = server.getRosterManager();
+		lockOutManager = server.getLockOutManager();
 	}
 
 	/**
@@ -88,6 +95,9 @@ public class UserServiceController {
 						ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);
 			}
 			addProperties(userEntity.getUsername(), userEntity.getProperties());
+		} else {
+			throw new ServiceException("Could not create new user",
+					"users", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
 		}
 	}
 
@@ -186,7 +196,7 @@ public class UserServiceController {
 	 */
 	public void enableUser(String username) throws ServiceException {
 		getAndCheckUser(username);
-		LockOutManager.getInstance().enableAccount(username);
+		lockOutManager.enableAccount(username);
 	}
 
 	/**
@@ -199,7 +209,15 @@ public class UserServiceController {
 	 */
 	public void disableUser(String username) throws ServiceException {
 		getAndCheckUser(username);
-		LockOutManager.getInstance().disableAccount(username, null, null);
+		lockOutManager.disableAccount(username, null, null);
+		
+        if (lockOutManager.isAccountDisabled(username)) {
+            final StreamError error = new StreamError(StreamError.Condition.not_authorized);
+            for (ClientSession sess : SessionManager.getInstance().getSessions(username)) {
+                sess.deliverRawText(error.toXML());
+                sess.close();
+            }
+        }
 	}
 
 	/**
@@ -367,7 +385,7 @@ public class UserServiceController {
 					group = GroupManager.getInstance().getGroup(groupName);
 				} catch (GroupNotFoundException e) {
 					// Create this group
-					group = createGroup(groupName);
+					group = GroupController.getInstance().createGroup(new GroupEntity(groupName, ""));
 				}
 				groups.add(group);
 			}
@@ -442,29 +460,6 @@ public class UserServiceController {
 				user.getProperties().put(property.getKey(), property.getValue());
 			}
 		}
-	}
-
-	/**
-	 * Creates the group.
-	 *
-	 * @param groupName
-	 *            the group name
-	 * @return the group
-	 * @throws ServiceException
-	 *             the service exception
-	 */
-	private Group createGroup(String groupName) throws ServiceException {
-		Group group = null;
-		try {
-			group = GroupManager.getInstance().createGroup(groupName);
-			group.getProperties().put("sharedRoster.showInRoster", "onlyGroup");
-			group.getProperties().put("sharedRoster.displayName", groupName);
-			group.getProperties().put("sharedRoster.groupList", "");
-		} catch (GroupAlreadyExistsException e) {
-			throw new ServiceException("Could not create group", groupName, ExceptionType.GROUP_ALREADY_EXISTS,
-					Response.Status.BAD_REQUEST, e);
-		}
-		return group;
 	}
 
 	/**

@@ -1278,6 +1278,7 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#possible-parameters-3">Possible parameters</a></li>
 <li><a href="#examples-4">Examples</a><ul>
 <li><a href="#xml-example">XML Example</a></li>
+<li><a href="#rename-example">Rename Example</a></li>
 <li><a href="#json-example">JSON Example</a></li>
 </ul>
 </li>
@@ -1400,6 +1401,32 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 </li>
 </ul>
 </li>
+<li><a href="#group-related-rest-endpoints">Group related REST Endpoints</a><ul>
+<li><a href="#retrieve-all-groups">Retrieve all groups</a><ul>
+<li><a href="#examples-26">Examples</a></li>
+</ul>
+</li>
+<li><a href="#retrieve-a-group">Retrieve a group</a><ul>
+<li><a href="#possible-parameters-24">Possible parameters</a></li>
+<li><a href="#examples-27">Examples</a></li>
+</ul>
+</li>
+<li><a href="#create-a-group">Create a group</a><ul>
+<li><a href="#examples-28">Examples</a></li>
+</ul>
+</li>
+<li><a href="#delete-a-group">Delete a group</a><ul>
+<li><a href="#possible-parameters-25">Possible parameters</a></li>
+<li><a href="#examples-29">Examples</a></li>
+</ul>
+</li>
+<li><a href="#update-a-group">Update a group</a><ul>
+<li><a href="#possible-parameters-26">Possible parameters</a></li>
+<li><a href="#examples-30">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</a><ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation-1">Installation</a></li>
@@ -1419,6 +1446,7 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 
 <ul>
 <li>Get overview over all or specific user and to create, update or delete a user</li>
+<li>Get overview over all or specific group and to create, update or delete a group</li>
 <li>Get overview over all user roster entries and to add, update or delete a roster entry</li>
 <li>Add user to a group and remove a user from a group</li>
 <li>Lockout or unlock the user (enable / disable)</li>
@@ -1715,6 +1743,8 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 </tbody></table>
 
 
+
+
 <h3 id="system-property">System Property</h3>
 
 <table>
@@ -2001,6 +2031,8 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <p><strong>Payload:</strong> User <br>
 <strong>Return value:</strong> HTTP status 200 (OK)</p>
 
+
+
 <h3 id="possible-parameters-3">Possible parameters</h3>
 
 <table>
@@ -2063,6 +2095,8 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 <p><strong>Payload:</strong></p>
 
+
+
 <pre class="prettyprint"><code class=" hljs xml"><span class="hljs-pi">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-title">user</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-title">username</span>&gt;</span>newUsername<span class="hljs-tag">&lt;/<span class="hljs-title">username</span>&gt;</span>
@@ -2072,6 +2106,8 @@ If you want to create a resource with JSON data format, please add “<strong>Co
         <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">key</span>=<span class="hljs-value">"keyname"</span> <span class="hljs-attribute">value</span>=<span class="hljs-value">"value"</span>/&gt;</span>
     <span class="hljs-tag">&lt;/<span class="hljs-title">properties</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">user</span>&gt;</span></code></pre>
+
+
 
 <h4 id="json-example">JSON Example</h4>
 
@@ -2259,7 +2295,7 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 <h2 id="lockout-a-user">Lockout a user</h2>
 
-<p>Endpoint to lockout / ban the user from the chat server</p>
+<p>Endpoint to lockout / ban the user from the chat server. The user will be kicked if the user is online.</p>
 
 <blockquote>
   <p><strong>POST</strong> /lockouts/{username}</p>
@@ -2843,6 +2879,8 @@ Payload Example 1 (required parameters):</p>
     <span class="hljs-tag">&lt;/<span class="hljs-title">outcasts</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">chatRoom</span>&gt;</span></code></pre>
 
+
+
 <h3 id="json-examples-1">JSON Examples</h3>
 
 <blockquote>
@@ -2915,6 +2953,8 @@ Payload Example 1 (required parameters):</p>
         ]
     }
 }</code></pre>
+
+
 
 <h2 id="delete-a-chat-room">Delete a chat room</h2>
 
@@ -3057,6 +3097,8 @@ Payload Example 1 (required parameters):</p>
         <span class="hljs-tag">&lt;<span class="hljs-title">outcast</span>&gt;</span>outcast1@localhost<span class="hljs-tag">&lt;/<span class="hljs-title">outcast</span>&gt;</span>
     <span class="hljs-tag">&lt;/<span class="hljs-title">outcasts</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">chatRoom</span>&gt;</span></code></pre>
+
+
 
 <h2 id="add-user-with-role-to-chat-room">Add user with role to chat room</h2>
 
@@ -3392,6 +3434,211 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 
 
+<h1 id="group-related-rest-endpoints">Group related REST Endpoints</h1>
+
+
+
+<h2 id="retrieve-all-groups">Retrieve all groups</h2>
+
+<p>Endpoint to get all groups</p>
+
+<blockquote>
+  <p><strong>GET</strong> /groups</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Groups</p>
+
+
+
+<h3 id="examples-26">Examples</h3>
+
+<blockquote>
+  <p><strong>Header</strong>: Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/groups">http://example.org:9090/plugins/restapi/v1/groups</a></p>
+</blockquote>
+
+
+
+<h2 id="retrieve-a-group">Retrieve a group</h2>
+
+<p>Endpoint to get information over specific group</p>
+
+<blockquote>
+  <p><strong>GET</strong> /groups/{groupName}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Group</p>
+
+
+
+<h3 id="possible-parameters-24">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>groupName</td>
+  <td>@Path</td>
+  <td>The name of the group</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-27">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/groups/moderators">http://example.org:9090/plugins/restapi/v1/groups/moderators</a></p>
+
+
+
+<h2 id="create-a-group">Create a group</h2>
+
+<p>Endpoint to create a new group</p>
+
+<blockquote>
+  <p><strong>POST</strong> /groups</p>
+</blockquote>
+
+<p><strong>Payload:</strong> Group <br>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
+
+
+
+<h3 id="examples-28">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
+  <strong>Header:</strong> Content-Type: application/xml</p>
+  
+  <p><strong>POST</strong> <a href="http://example.org:9090/plugins/restapi/v1/groups">http://example.org:9090/plugins/restapi/v1/groups</a></p>
+</blockquote>
+
+<p><strong>Payload Example:</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs xml"><span class="hljs-pi">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">group</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">name</span>&gt;</span>GroupName<span class="hljs-tag">&lt;/<span class="hljs-title">name</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">description</span>&gt;</span>Some description<span class="hljs-tag">&lt;/<span class="hljs-title">description</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">group</span>&gt;</span></code></pre>
+
+
+
+<h2 id="delete-a-group">Delete a group</h2>
+
+<p>Endpoint to delete a group</p>
+
+<blockquote>
+  <p><strong>DELETE</strong> /groups/{groupName}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
+
+<h3 id="possible-parameters-25">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>groupName</td>
+  <td>@Path</td>
+  <td>The name of the group</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-29">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/groups/groupToDelete">http://example.org:9090/plugins/restapi/v1/groups/groupToDelete</a></p>
+</blockquote>
+
+
+
+<h2 id="update-a-group">Update a group</h2>
+
+<p>Endpoint to update / overwrite a group</p>
+
+<blockquote>
+  <p><strong>PUT</strong> /groups/{groupName}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> Group <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
+
+<h3 id="possible-parameters-26">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>groupName</td>
+  <td>@Path</td>
+  <td>The name of the group</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-30">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
+  <strong>Header:</strong> Content-Type application/xml</p>
+  
+  <p><strong>PUT</strong> <a href="http://example.org:9090/plugins/restapi/v1/groups/groupNameToUpdate">http://example.org:9090/plugins/restapi/v1/groups/groupNameToUpdate</a></p>
+</blockquote>
+
+<p><strong>Payload:</strong></p>
+
+
+
+<pre class="prettyprint"><code class=" hljs xml"><span class="hljs-pi">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">group</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">name</span>&gt;</span>groupNameToUpdate<span class="hljs-tag">&lt;/<span class="hljs-title">name</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">description</span>&gt;</span>New description<span class="hljs-tag">&lt;/<span class="hljs-title">description</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">group</span>&gt;</span></code></pre>
+
+
+
 <h1 id="deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</h1>
 
 
@@ -3587,6 +3834,71 @@ If the strings are encoded incorrectly, double byte characters will look garbele
   <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
 </tr>
 </tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

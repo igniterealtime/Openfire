@@ -19,8 +19,8 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,19 +33,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages sessions for all users connecting to Openfire using the HTTP binding protocal,
+ * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
  * <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  */
 public class HttpSessionManager {
@@ -78,7 +76,11 @@ public class HttpSessionManager {
         JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
     	
         this.sessionManager = SessionManager.getInstance();
+        init();
+    }
 
+    public void init() {
+        Log.warn("HttpSessionManager.init() recreate sendPacketPool");
         // Configure a pooled executor to handle async routing for incoming packets
         // with a default size of 16 threads ("xmpp.httpbind.worker.threads"); also
         // uses an unbounded task queue and configurable keep-alive (default: 60 secs)
@@ -144,7 +146,7 @@ public class HttpSessionManager {
     /**
      * Creates an HTTP binding session which will allow a user to exchange packets with Openfire.
      *
-     * @param address the internet address that was used to bind to Wildfie.
+     * @param address the internet address that was used to bind to Openfire.
      * @param rootNode the body element that was sent containing the request for a new session.
      * @param connection the HTTP connection object which abstracts the individual connections to
      * Openfire over the HTTP binding protocol. The initial session creation response is returned to
@@ -197,17 +199,21 @@ public class HttpSessionManager {
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
         session.setMinorVersion(Integer.parseInt(versionString[1]));
-        
+
+        connection.setSession(session);
         try {
-            connection.deliverBody(createSessionCreationResponse(session));
+            connection.deliverBody(createSessionCreationResponse(session), true);
         }
         catch (HttpConnectionClosedException e) {
-            /* This won't happen here. */
+            Log.error("Error creating session.", e);
+            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
         }
         catch (DocumentException e) {
-            Log.error("Error creating document", e);
-            throw new HttpBindException("Internal server error",
-                    BoshBindingError.internalServerError);
+            Log.error("Error creating session.", e);
+            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
+        } catch (IOException e) {
+            Log.error("Error creating session.", e);
+            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
         }
         return session;
     }
@@ -293,44 +299,6 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
-    /**
-     * Forwards a client request, which is related to a session, to the server. A connection is
-     * created and queued up in the provided session. When a connection reaches the top of a queue
-     * any pending packets bound for the client will be forwarded to the client through the
-     * connection.
-     *
-     * @param rid the unique, sequential, requestID sent from the client.
-     * @param session the HTTP session of the client that made the request.
-     * @param isSecure true if the request was made over a secure channel, HTTPS, and false if it
-     * was not.
-     * @param rootNode the XML body of the request.
-     * @return the created HTTP connection.
-     *
-     * @throws HttpBindException for several reasons: if the encoding inside of an auth packet is
-     * not recognized by the server, or if the packet type is not recognized.
-     * @throws HttpConnectionClosedException if the session is no longer available.
-     */
-    public HttpConnection forwardRequest(long rid, HttpSession session, boolean isSecure,
-                                         Element rootNode) throws HttpBindException,
-            HttpConnectionClosedException
-    {
-        //noinspection unchecked
-        List<Element> elements = rootNode.elements();
-    	boolean isPoll = (elements.size() == 0);
-    	if ("terminate".equals(rootNode.attributeValue("type")))
-    		isPoll = false;
-    	else if ("true".equals(rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")))))
-    		isPoll = false;
-    	else if (rootNode.attributeValue("pause") != null)
-    		isPoll = false;
-        HttpConnection connection = session.createConnection(rid, elements, isSecure, isPoll);
-        if (elements.size() > 0) {
-            // creates the runnable to forward the packets
-            new HttpPacketSender(session).init();
-        }
-        return connection;
-    }
-
     private HttpSession createSession(long rid, InetAddress address, HttpConnection connection) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
@@ -354,19 +322,7 @@ public class HttpSessionManager {
         }
     }
 
-    private double getDoubleAttribute(String doubleValue, double defaultValue) {
-        if (doubleValue == null || "".equals(doubleValue.trim())) {
-            return defaultValue;
-        }
-        try {
-            return Double.parseDouble(doubleValue);
-        }
-        catch (Exception ex) {
-            return defaultValue;
-        }
-    }
-
-    private String createSessionCreationResponse(HttpSession session) throws DocumentException {
+    private static String createSessionCreationResponse(HttpSession session) throws DocumentException {
         Element response = DocumentHelper.createElement("body");
         response.addNamespace("", "http://jabber.org/protocol/httpbind");
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
@@ -417,23 +373,7 @@ public class HttpSessionManager {
         }
     }
 
-    /**
-     * A runner that guarantees that the packets per a session will be sent and
-     * processed in the order in which they were received.
-     */
-    private class HttpPacketSender implements Runnable {
-        private HttpSession session;
-
-        HttpPacketSender(HttpSession session) {
-            this.session = session;
-        }
-
-        public void run() {
-            session.sendPendingPackets();
-        }
-
-        private void init() {
-            sendPacketPool.execute(this);
-        }
+    protected void execute(Runnable runnable) {
+        this.sendPacketPool.execute(runnable);
     }
 }

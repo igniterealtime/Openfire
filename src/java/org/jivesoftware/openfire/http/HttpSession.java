@@ -19,6 +19,7 @@
 
 package org.jivesoftware.openfire.http;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
@@ -36,16 +37,9 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.Namespace;
-import org.dom4j.QName;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.SessionPacketRouter;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -63,6 +57,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
@@ -458,7 +456,7 @@ public class HttpSession extends LocalClientSession {
         	synchronized (connectionQueue) {
 	            for (HttpConnection connection : connectionQueue) {
 	                // The session is currently active, set the last activity to the current time.
-	                if (!(connection.isClosed() || connection.isExpired())) {
+	                if (!(connection.isClosed())) {
 	                    lastActivity = System.currentTimeMillis();
 	                    break;
 	                }
@@ -567,53 +565,69 @@ public class HttpSession extends LocalClientSession {
 	}
 
     /**
-     * Returns the response for a specific connection instance. It is possible for there to be multiple
-     * connections in the queue for the same rid so we need to be careful that we are accessing the correct
-     * connection.
-     * <p><b>Note that this method also removes the connection from the internal connection queue.</b>
-     * 
-     * @param connection the connection for which to get the response.
-     * @return the response from the connection
-     * @throws HttpBindException
-     */
-    protected String consumeResponse(HttpConnection connection) throws HttpBindException {
-    	Log.debug("consumeResponse: " + connection);
-    	if(connectionQueue.contains(connection)) {
-            String response = getResponse(connection);
-            connectionQueue.remove(connection);
-            fireConnectionClosed(connection);
-            return response;
-    	}
-	    throw new InternalError("Could not locate connection: " + connection);
-    }
-
-    private String getResponse(HttpConnection connection) throws HttpBindException {
-        String response = null;
-        try {
-            response = connection.getResponse();
-        }
-        catch (HttpBindTimeoutException e) {
-            // This connection timed out we need to increment the request count
-            if (connection.getRequestId() != lastRequestID + 1) {
-                throw new HttpBindException("Unexpected RID error.",
-                        BoshBindingError.itemNotFound);
-            }
-            lastRequestID = connection.getRequestId();
-        }
-        if (response == null) {
-            response = createEmptyBody();
-            setLastResponseEmpty(true);
-        }
-        return response;
-    }
-
-    /**
      * Sets whether the initial request on the session was secure.
      *
      * @param isSecure true if the initial request was secure and false if it wasn't.
      */
     protected void setSecure(boolean isSecure) {
         this.isSecure = isSecure;
+    }
+
+    /**
+     * Forwards a client request, which is related to a session, to the server. A connection is
+     * created and queued up in the provided session. When a connection reaches the top of a queue
+     * any pending packets bound for the client will be forwarded to the client through the
+     * connection.
+     *
+     * @param rid the unique, sequential, requestID sent from the client.
+     * @param isSecure true if the request was made over a secure channel, HTTPS, and false if it
+     * was not.
+     * @param rootNode the XML body of the request.
+     * @param context the context of the asynchronous servlet call leading up to this method call.
+     *
+     * @throws org.jivesoftware.openfire.http.HttpBindException for several reasons: if the encoding inside of an auth packet is
+     * not recognized by the server, or if the packet type is not recognized.
+     * @throws org.jivesoftware.openfire.http.HttpConnectionClosedException if the session is no longer available.
+     */
+    public void forwardRequest(long rid, boolean isSecure, Element rootNode, AsyncContext context)
+            throws HttpBindException, HttpConnectionClosedException, IOException
+    {
+        List<Element> elements = rootNode.elements();
+        boolean isPoll = (elements.size() == 0);
+        if ("terminate".equals(rootNode.attributeValue("type")))
+            isPoll = false;
+        else if ("true".equals(rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")))))
+            isPoll = false;
+        else if (rootNode.attributeValue("pause") != null)
+            isPoll = false;
+        HttpConnection connection = this.createConnection(rid, elements, isSecure, isPoll, context);
+        if (elements.size() > 0) {
+            // creates the runnable to forward the packets
+            new HttpPacketSender(this).init();
+        }
+
+        final String type = rootNode.attributeValue("type");
+        String restartStream = rootNode.attributeValue(new QName("restart", rootNode.getNamespaceForPrefix("xmpp")));
+        int pauseDuration = HttpBindServlet.getIntAttribute(rootNode.attributeValue("pause"), -1);
+
+        if ("terminate".equals(type)) {
+            connection.deliverBody(createEmptyBody(true), true);
+            close();
+            lastRequestID = connection.getRequestId();
+        }
+        else if ("true".equals(restartStream) && rootNode.elements().size() == 0) {
+            connection.deliverBody(createSessionRestartResponse(), true);
+            lastRequestID = connection.getRequestId();
+        }
+        else if (pauseDuration > 0 && pauseDuration <= getMaxPause()) {
+            pause(pauseDuration);
+            connection.deliverBody(createEmptyBody(false), true);
+            lastRequestID = connection.getRequestId();
+            setLastResponseEmpty(true);
+        }
+        else {
+            resetInactivityTimeout();
+        }
     }
 
     /**
@@ -677,10 +691,52 @@ public class HttpSession extends LocalClientSession {
      * protocol.
      */
     synchronized HttpConnection createConnection(long rid, Collection<Element> packetsToBeSent,
-                                                 boolean isSecure, boolean isPoll)
-            throws HttpConnectionClosedException, HttpBindException
+                                                 boolean isSecure, boolean isPoll, AsyncContext context)
+            throws HttpConnectionClosedException, HttpBindException, IOException
     {
-        HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates);
+        final HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates, context);
+        connection.setSession(this);
+        context.setTimeout(getWait() * JiveConstants.SECOND);
+        context.addListener(new AsyncListener() {
+            @Override
+            public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("complete event " + asyncEvent);
+                connectionQueue.remove(connection);
+                fireConnectionClosed(connection);
+            }
+
+            @Override
+            public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("timeout event " + asyncEvent);
+                try {
+                    // If onTimeout does not result in a complete(), the container falls back to default behavior.
+                    // This is why this body is to be delivered in a non-async fashion.
+                    connection.deliverBody(createEmptyBody(), false);
+                    setLastResponseEmpty(true);
+
+                    // This connection timed out we need to increment the request count
+                    if (connection.getRequestId() != lastRequestID + 1) {
+                        throw new IOException("Unexpected RID error.");
+                    }
+                    lastRequestID = connection.getRequestId();
+                } catch (HttpConnectionClosedException e) {
+                    Log.warn("Unexpected exception while processing connection timeout.", e);
+                } finally {
+                    connectionQueue.remove(connection);
+                    fireConnectionClosed(connection);
+                }
+            }
+
+            @Override
+            public void onError(AsyncEvent asyncEvent) throws IOException {
+                Log.debug("error event " + asyncEvent);
+                Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
+            }
+
+            @Override
+            public void onStartAsync(AsyncEvent asyncEvent) throws IOException {}
+        });
+
         if (rid <= lastRequestID) {
             Delivered deliverable = retrieveDeliverable(rid);
             if (deliverable == null) {
@@ -688,7 +744,7 @@ public class HttpSession extends LocalClientSession {
                 throw new HttpBindException("Unexpected RID error.",
                         BoshBindingError.itemNotFound);
             }
-            connection.deliverBody(createDeliverable(deliverable.deliverables));
+            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
             addConnection(connection, isPoll);
             return connection;
         }
@@ -719,7 +775,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void addConnection(HttpConnection connection, boolean isPoll) throws HttpBindException,
-            HttpConnectionClosedException {
+            HttpConnectionClosedException, IOException {
         if (connection == null) {
             throw new IllegalArgumentException("Connection cannot be null.");
         }
@@ -754,7 +810,7 @@ public class HttpSession extends LocalClientSession {
 			                throw new HttpBindException("Unexpected RID error.",
 			                        BoshBindingError.itemNotFound);
 			            }
-			            connection.deliverBody(createDeliverable(deliverable.deliverables));
+			            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
 					} else {
 						if(Log.isDebugEnabled()) {
 							Log.debug("It's still open - calling close()");
@@ -775,7 +831,6 @@ public class HttpSession extends LocalClientSession {
 
         sslCertificates = connection.getPeerCertificates();
 
-        connection.setSession(this);
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
@@ -838,8 +893,8 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void deliver(HttpConnection connection, Collection<Deliverable> deliverable)
-            throws HttpConnectionClosedException {
-        connection.deliverBody(createDeliverable(deliverable));
+            throws HttpConnectionClosedException, IOException {
+        connection.deliverBody(createDeliverable(deliverable), true);
 
         Delivered delivered = new Delivered(deliverable);
         delivered.setRequestID(connection.getRequestId());
@@ -934,9 +989,12 @@ public class HttpSession extends LocalClientSession {
 	                }
 	            }
 	            catch (HttpConnectionClosedException e) {
-	                /* Connection was closed, try the next one */
-	            }
-	        }
+	                /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
+	                Log.warn("Iterating over a connection that was closed. Openfire will recover from this problem, but it should not occur in the first place.");
+                } catch (IOException e) {
+                    Log.warn("An unexpected exception occurred while iterating over connections. Openfire will attempt to recover by ignoring this connection.", e);
+                }
+            }
         }
 
         if (!delivered) {
@@ -988,11 +1046,14 @@ public class HttpSession extends LocalClientSession {
 					                pendingElements.clear();
 		            			}
 	            			} else {
-	            				toClose.deliverBody(null);
+	            				toClose.deliverBody(null, true);
 	            			}
 		            	}
 		            } catch (HttpConnectionClosedException e) {
 		            	/* ignore ... already closed */
+                    } catch (IOException e) {
+                        // Likely caused by closing a stale session / connection.
+                        Log.debug("An unexpected exception occurred while closing a session.", e);
 		            }
 		        }
 	        }
@@ -1038,6 +1099,28 @@ public class HttpSession extends LocalClientSession {
         if(ack > lastRequestID)
         	body.addAttribute("ack", String.valueOf(ack));
         return body.asXML();
+    }
+
+    protected static String createEmptyBody(boolean terminate)
+    {
+        final Element body = DocumentHelper.createElement("body");
+        if (terminate) { body.addAttribute("type", "terminate"); }
+        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        return body.asXML();
+    }
+
+    private String createSessionRestartResponse()
+    {
+        final Element response = DocumentHelper.createElement("body");
+        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        response.addNamespace("stream", "http://etherx.jabber.org/streams");
+
+        final Element features = response.addElement("stream:features");
+        for (Element feature : getAvailableStreamFeaturesElements()) {
+            features.add(feature);
+        }
+
+        return response.asXML();
     }
 
     /**
@@ -1087,10 +1170,9 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Deliverable implements Comparable<Deliverable> {
+    private class Deliverable {
         private final String text;
         private final Collection<String> packets;
-        private long requestID;
 
         public Deliverable(String text) {
             this.text = text;
@@ -1103,22 +1185,13 @@ public class HttpSession extends LocalClientSession {
             for (Packet packet : elements) {
                 // Rewrite packet namespace according XEP-0206
                 if (packet instanceof Presence) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<presence xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(9));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<presence xmlns=\"jabber:client\"" + packet.toXML().substring(9));
                 }
                 else if (packet instanceof IQ) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<iq xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(3));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<iq xmlns=\"jabber:client\"" + packet.toXML().substring(3));
                 }
                 else if (packet instanceof Message) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("<message xmlns=\"jabber:client\"");
-                    sb.append(packet.toXML().substring(8));
-                    this.packets.add(sb.toString());
+                    this.packets.add("<message xmlns=\"jabber:client\"" + packet.toXML().substring(8));
                 }
                 else {
                     this.packets.add(packet.toXML());
@@ -1137,14 +1210,6 @@ public class HttpSession extends LocalClientSession {
             else {
                 return text;
             }
-        }
-
-        public void setRequestID(long requestID) {
-            this.requestID = requestID;
-        }
-
-        public long getRequestID() {
-            return requestID;
         }
 
         public Collection<Packet> getPackets() {
@@ -1178,10 +1243,6 @@ public class HttpSession extends LocalClientSession {
             }
             return answer;
         }
-
-        public int compareTo(Deliverable o) {
-            return (int) (o.getRequestID() - requestID);
-        }
     }
 
     private class Delivered {
@@ -1210,6 +1271,26 @@ public class HttpSession extends LocalClientSession {
 	            }
             }
             return packets;
+        }
+    }
+
+    /**
+     * A runner that guarantees that the packets per a session will be sent and
+     * processed in the order in which they were received.
+     */
+    private class HttpPacketSender implements Runnable {
+        private HttpSession session;
+
+        HttpPacketSender(HttpSession session) {
+            this.session = session;
+        }
+
+        public void run() {
+            session.sendPendingPackets();
+        }
+
+        private void init() {
+            HttpBindManager.getInstance().getSessionManager().execute(this);
         }
     }
 }

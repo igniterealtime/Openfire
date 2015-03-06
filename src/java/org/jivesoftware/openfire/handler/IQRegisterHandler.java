@@ -158,8 +158,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         JiveGlobals.migrateProperty("register.inband");
         JiveGlobals.migrateProperty("register.password");
         
-        // See if in-band registration should be enabled (default is true).
-        registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
+        // See if in-band registration should be enabled (default is false).
+        registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", false);
         // See if users can change their passwords (default is true).
         canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
     }

@@ -380,7 +380,10 @@ public class LocalMUCUser implements MUCUser {
         else {
             MUCRole role = roles.get(group);
             if (role == null) {
-                sendErrorPacket(packet, PacketError.Condition.not_authorized);
+                // If a non-occupant sends a disco to an address of the form <room@service/nick>,
+                // a MUC service MUST return a <bad-request/> error.
+                // http://xmpp.org/extensions/xep-0045.html#disco-occupant
+                sendErrorPacket(packet, PacketError.Condition.bad_request);
             }
             else if (IQ.Type.result == packet.getType()
                     || IQ.Type.error == packet.getType()) {

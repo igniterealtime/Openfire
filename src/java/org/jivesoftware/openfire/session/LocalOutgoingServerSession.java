@@ -62,6 +62,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketExtension;
 import org.xmpp.packet.Presence;
 
 import com.jcraft.jzlib.JZlib;

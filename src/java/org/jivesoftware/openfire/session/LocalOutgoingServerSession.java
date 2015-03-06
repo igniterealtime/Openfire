@@ -637,6 +637,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     private void returnErrorToSender(Packet packet) {
         RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         try {
+        	// OF-888 (outgoing S2S failure) Prevent recursion for failed delivery of error response packet
+        	String el = "ext";
+        	String ns = getClass().getName();
+        	if (packet.deleteExtension(el, ns)) {
+                Log.warn("Failed to route error to sender; remote server not found. Original packet: " + packet);
+                return;
+        	}
+        	packet.addExtension(new PacketExtension(el, ns));
             if (packet instanceof IQ) {
             	if (((IQ) packet).isResponse()) {
             		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());

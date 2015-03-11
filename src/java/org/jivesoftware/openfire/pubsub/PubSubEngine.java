@@ -39,6 +39,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
@@ -52,6 +53,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.packet.Presence;
 
 /**
@@ -315,8 +317,14 @@ public class PubSubEngine {
     private void publishItemsToNode(PubSubService service, IQ iq, Element publishElement) {
         String nodeID = publishElement.attributeValue("node");
         Node node;
+
+        JID from = iq.getFrom();
+        // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
+        JID owner = from.asBareJID();
+
         if (nodeID == null) {
-            // No node was specified. Return bad_request error
+            // XEP-0060 Section 7.2.3.3 - No node was specified. Return bad_request error
+            // This suggests that Instant nodes should not be auto-created
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
@@ -326,15 +334,29 @@ public class PubSubEngine {
             // Look for the specified node
             node = service.getNode(nodeID);
             if (node == null) {
-                // Node does not exist. Return item-not-found error
-                sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
-                return;
+                if (service instanceof PEPService && service.isServiceAdmin(owner)){
+                    // If it is a PEP service & publisher is service owner -
+                    // auto create nodes.
+                    Element childElement = iq.getChildElement();
+                    Element createElement = publishElement.element("publish");
+                    CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement);
+
+                    if (response.newNode == null) {
+                        // New node creation failed. Since pep#auto-create is advertised 
+                        // in disco#info, node creation error should be sent to the client.
+                        sendErrorPacket(iq, response.creationStatus, response.pubsubError);
+                    } else {
+                        // Node creation succeeded, set node to newNode.
+                        node = response.newNode;
+                    }
+                } else {
+                    // Node does not exist. Return item-not-found error
+                    sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
+                    return;
+                }
             }
         }
 
-        JID from = iq.getFrom();
-        // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
-        JID owner = from.asBareJID();
         if (!node.getPublisherModel().canPublish(node, owner) && !service.isServiceAdmin(owner)) {
             // Entity does not have sufficient privileges to publish to node
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
@@ -1084,13 +1106,61 @@ public class PubSubEngine {
     }
 
     private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement) {
+        // Call createNodeHelper and get the node creation status.
+        CreateNodeResponse response = createNodeHelper(service, iq, childElement, createElement);
+        if (response.newNode == null) {
+            // New node creation failed
+            sendErrorPacket(iq, response.creationStatus, response.pubsubError);
+        } else {
+            IQ reply = IQ.createResultIQ(iq);
+            Node newNode = response.newNode;
+            String nodeID = createElement.attributeValue("node");
+            // Include new nodeID if it has changed from the original nodeID
+            if (!newNode.getNodeID().equals(nodeID)) {
+                Element elem = reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+                elem.addElement("create").addAttribute("node", newNode.getNodeID());
+            }
+            router.route(reply);
+        }
+    }
+
+    /**
+     * Response Object returned by createNodeHelper method
+     */
+    private class CreateNodeResponse {
+        public final PacketError.Condition creationStatus;
+        public final Node newNode;
+        public final Element pubsubError;
+
+        public CreateNodeResponse(PacketError.Condition creationStatus, Element pubsubError, Node newNode) {
+            this.creationStatus = creationStatus;
+            this.newNode = newNode;
+            this.pubsubError = pubsubError;
+        }
+    }
+
+    /**
+     * Checks if the following conditions are satisfied and creates a node
+     * - Requester can create nodes
+     * - Instant node creation is enabled
+     * - Node does not already exist
+     * - New node configuration is valid
+     *
+     * NOTE: This method should not reply to the client
+     *
+     * @param service
+     * @param iq
+     * @param childElement
+     * @param createElement
+     * @return
+     */
+    private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement) {
         // Get sender of the IQ packet
         JID from = iq.getFrom();
         // Verify that sender has permissions to create nodes
         if (!service.canCreateNode(from) || (!UserManager.getInstance().isRegisteredUser(from) && !isComponent(from)) ) {
             // The user is not allowed to create nodes so return an error
-            sendErrorPacket(iq, PacketError.Condition.forbidden, null);
-            return;
+            return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }
         DataForm completedForm = null;
         CollectionNode parentNode = null;
@@ -1102,8 +1172,7 @@ public class PubSubEngine {
                 // Instant nodes creation is not allowed so return an error
                 Element pubsubError = DocumentHelper.createElement(
                         QName.get("nodeid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
-                return;
+                return new CreateNodeResponse(PacketError.Condition.not_acceptable, pubsubError, null);
             }
             do {
                 // Create a new nodeID and make sure that the random generated string does not
@@ -1129,13 +1198,11 @@ public class PubSubEngine {
                         Node tempNode = service.getNode(parentNodeID);
                         if (tempNode == null) {
                             // Requested parent node was not found so return an error
-                            sendErrorPacket(iq, PacketError.Condition.item_not_found, null);
-                            return;
+                            return new CreateNodeResponse(PacketError.Condition.item_not_found, null, null);
                         }
                         else if (!tempNode.isCollectionNode()) {
                             // Requested parent node is not a collection node so return an error
-                            sendErrorPacket(iq, PacketError.Condition.not_acceptable, null);
-                            return;
+                            return new CreateNodeResponse(PacketError.Condition.not_acceptable, null, null);
                         }
                         parentNode = (CollectionNode) tempNode;
                     }
@@ -1158,8 +1225,7 @@ public class PubSubEngine {
         Node existingNode = service.getNode(newNodeID);
         if (existingNode != null) {
             // There is a conflict since a node with the same ID already exists
-            sendErrorPacket(iq, PacketError.Condition.conflict, null);
-            return;
+            return new CreateNodeResponse(PacketError.Condition.conflict, null, null);
         }
 
         if (collectionType && !service.isCollectionNodesSupported()) {
@@ -1167,24 +1233,21 @@ public class PubSubEngine {
             Element pubsubError = DocumentHelper.createElement(
                     QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
             pubsubError.addAttribute("feature", "collections");
-            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
-            return;
+            return new CreateNodeResponse(PacketError.Condition.feature_not_implemented, pubsubError, null);
         }
 
         if (parentNode != null && !collectionType) {
             // Check if requester is allowed to add a new leaf child node to the parent node
             if (!parentNode.isAssociationAllowed(from)) {
                 // User is not allowed to add child leaf node to parent node. Return an error.
-                sendErrorPacket(iq, PacketError.Condition.forbidden, null);
-                return;
+                return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
             }
             // Check if number of child leaf nodes has not been exceeded
             if (parentNode.isMaxLeafNodeReached()) {
                 // Max number of child leaf nodes has been reached. Return an error.
                 Element pubsubError = DocumentHelper.createElement(QName.get("max-nodes-exceeded",
                         "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.conflict, pubsubError);
-                return;
+                return new CreateNodeResponse(PacketError.Condition.conflict, pubsubError, null);
             }
         }
 
@@ -1213,7 +1276,7 @@ public class PubSubEngine {
                         newNode.saveToDB();
                     }
 
-					CacheFactory.doClusterTask(new RefreshNodeTask(newNode));
+                    CacheFactory.doClusterTask(new RefreshNodeTask(newNode));
                 }
                 else {
                     conflict = true;
@@ -1221,23 +1284,16 @@ public class PubSubEngine {
             }
             if (conflict) {
                 // There is a conflict since a node with the same ID already exists
-                sendErrorPacket(iq, PacketError.Condition.conflict, null);
+                return new CreateNodeResponse(PacketError.Condition.conflict, null, null);
             }
             else {
                 // Return success to the node owner
-                IQ reply = IQ.createResultIQ(iq);
-                // Include new nodeID if it has changed from the original nodeID
-                if (!newNode.getNodeID().equals(nodeID)) {
-                    Element elem =
-                            reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-                    elem.addElement("create").addAttribute("node", newNode.getNodeID());
-                }
-                router.route(reply);
+                return new CreateNodeResponse(null, null, newNode);
             }
         }
         catch (NotAcceptableException e) {
             // Node should have at least one owner. Return not-acceptable error.
-            sendErrorPacket(iq, PacketError.Condition.not_acceptable, null);
+            return new CreateNodeResponse(PacketError.Condition.not_acceptable, null, null);
         }
     }
 

@@ -97,6 +97,8 @@ public final class XMPPServlet extends WebSocketServlet
 		private boolean doWebSocketConnect(HttpServletRequest request, XMPPWebSocket socket)
 		{
 			try {
+				boolean isExistingSession = false;
+
 				String username = URLDecoder.decode( ParamUtils.getParameter(request, "username"), "UTF-8");
 				String password = URLDecoder.decode( ParamUtils.getParameter(request, "password"), "UTF-8");
 				String resource = URLDecoder.decode( ParamUtils.getParameter(request, "resource"), "UTF-8");
@@ -115,6 +117,8 @@ public final class XMPPServlet extends WebSocketServlet
 
 				if (session != null)
 				{
+					isExistingSession = true;
+
 					int conflictLimit = SessionManager.getInstance().getConflictKickLimit();
 
 					if (conflictLimit == SessionManager.NEVER_KICK) {
@@ -158,39 +162,46 @@ public final class XMPPServlet extends WebSocketServlet
 
 							} else {
 
-								try {
-									String userName = JID.unescapeNode(username);
-									UserManager userManager = XMPPServer.getInstance().getUserManager();
+								if (isExistingSession && (password.equals("dummy") || password.equals("reuse")))
+								{
+									authToken = new AuthToken(username);
 
-									if (register != null && register.equals("true") && XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled())	// if register, create new user
-									{
-										try {
-											userManager.getUser(userName);
-										}
-										catch (UserNotFoundException e) {
-											userManager.createUser(userName, password, null, null);
+								} else {
+
+									try {
+										String userName = JID.unescapeNode(username);
+										UserManager userManager = XMPPServer.getInstance().getUserManager();
+
+										if (register != null && register.equals("true") && XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled())	// if register, create new user
+										{
+											try {
+												userManager.getUser(userName);
+											}
+											catch (UserNotFoundException e) {
+												userManager.createUser(userName, password, null, null);
+											}
+
+										} else {
+
+											try {
+												userManager.getUser(userName);
+											}
+
+											catch (UserNotFoundException e) {
+												Log.error( "user not found " + userName, e );
+												return false;
+											}
 										}
 
-									} else {
+										authToken = AuthFactory.authenticate( userName, password );
 
-										try {
-											userManager.getUser(userName);
-										}
-
-										catch (UserNotFoundException e) {
-											Log.error( "user not found " + userName, e );
-											return false;
-										}
+									} catch ( UnauthorizedException e ) {
+										Log.error( "An error occurred while attempting to create a web socket (USERNAME: " + username + " RESOURCE: " + resource + " ) : ", e );
+										return false;
+									} catch ( Exception e ) {
+										Log.error( "An error occurred while attempting to create a web socket : ", e );
+										return false;
 									}
-
-									authToken = AuthFactory.authenticate( userName, password );
-
-								} catch ( UnauthorizedException e ) {
-									Log.error( "An error occurred while attempting to create a web socket (USERNAME: " + username + " RESOURCE: " + resource + " ) : ", e );
-									return false;
-								} catch ( Exception e ) {
-									Log.error( "An error occurred while attempting to create a web socket : ", e );
-									return false;
 								}
 							}
 						}

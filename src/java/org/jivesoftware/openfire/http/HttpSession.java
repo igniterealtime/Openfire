@@ -600,9 +600,10 @@ public class HttpSession extends LocalClientSession {
             isPoll = false;
         else if (rootNode.attributeValue("pause") != null)
             isPoll = false;
-        HttpConnection connection = this.createConnection(rid, elements, isSecure, isPoll, context);
+        HttpConnection connection = this.createConnection(rid, isSecure, isPoll, context);
         if (elements.size() > 0) {
             // creates the runnable to forward the packets
+            packetsToSend.add(elements);
             new HttpPacketSender(this).init();
         }
 
@@ -680,7 +681,6 @@ public class HttpSession extends LocalClientSession {
      * response.
      *
      * @param rid the request id related to the connection.
-     * @param packetsToBeSent any packets that this connection should send.
      * @param isSecure true if the connection was secured using HTTPS.
      * @return the created {@link org.jivesoftware.openfire.http.HttpConnection} which represents
      *         the connection.
@@ -690,8 +690,7 @@ public class HttpSession extends LocalClientSession {
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      * protocol.
      */
-    synchronized HttpConnection createConnection(long rid, Collection<Element> packetsToBeSent,
-                                                 boolean isSecure, boolean isPoll, AsyncContext context)
+    synchronized HttpConnection createConnection(long rid, boolean isSecure, boolean isPoll, AsyncContext context)
             throws HttpConnectionClosedException, HttpBindException, IOException
     {
         final HttpConnection connection = new HttpConnection(rid, isSecure, sslCertificates, context);
@@ -721,16 +720,17 @@ public class HttpSession extends LocalClientSession {
                     lastRequestID = connection.getRequestId();
                 } catch (HttpConnectionClosedException e) {
                     Log.warn("Unexpected exception while processing connection timeout.", e);
-                } finally {
-                    connectionQueue.remove(connection);
-                    fireConnectionClosed(connection);
                 }
+
+                // Note that 'onComplete' will be invoked.
             }
 
             @Override
             public void onError(AsyncEvent asyncEvent) throws IOException {
                 Log.debug("error event " + asyncEvent);
                 Log.warn("Unhandled AsyncListener error: " + asyncEvent.getThrowable());
+                connectionQueue.remove(connection);
+                fireConnectionClosed(connection);
             }
 
             @Override
@@ -754,9 +754,6 @@ public class HttpSession extends LocalClientSession {
                         BoshBindingError.itemNotFound);
         }
 
-        if (packetsToBeSent.size() > 0) {
-            packetsToSend.add(packetsToBeSent);
-        }
         addConnection(connection, isPoll);
         return connection;
     }
@@ -834,13 +831,12 @@ public class HttpSession extends LocalClientSession {
         // We aren't supposed to hold connections open or we already have some packets waiting
         // to be sent to the client.
         if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
-        	synchronized(pendingElements) {
-	            deliver(connection, pendingElements);
-	            lastRequestID = connection.getRequestId();
-	            pendingElements.clear();
-        	}
-            connectionQueue.add(connection);
-            Collections.sort(connectionQueue, connectionComparator);
+            fireConnectionOpened(connection);
+            synchronized(pendingElements) {
+                deliver(connection, pendingElements);
+                lastRequestID = connection.getRequestId();
+                pendingElements.clear();
+            }
         }
         else {
             // With this connection we need to check if we will have too many connections open,
@@ -878,7 +874,6 @@ public class HttpSession extends LocalClientSession {
 	            }
             }
         }
-        fireConnectionOpened(connection);
     }
 
     private int getOpenConnectionCount() {
@@ -978,8 +973,13 @@ public class HttpSession extends LocalClientSession {
     private void deliver(Deliverable stanza) {
         Collection<Deliverable> deliverable = Arrays.asList(stanza);
         boolean delivered = false;
+        int pendingConnections = 0;
         synchronized (connectionQueue) {
 	        for (HttpConnection connection : connectionQueue) {
+                if (connection.isClosed()) {
+                    continue;
+                }
+                pendingConnections++;
 	            try {
 	                if (connection.getRequestId() == lastRequestID + 1) {
 	                    lastRequestID = connection.getRequestId();
@@ -998,6 +998,9 @@ public class HttpSession extends LocalClientSession {
         }
 
         if (!delivered) {
+            if (pendingConnections > 0) {
+                Log.warn("Unable to deliver a stanza (it is being queued instead), although there are available connections! RID / Connection processing is out of sync!");
+            }
             pendingElements.add(stanza);
         }
     }

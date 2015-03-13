@@ -135,7 +135,13 @@
         JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.adaptive.simulcast", adaptivesimulcast);         
 
 	String enablesimulcast = request.getParameter("enablesimulcast"); 
-        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", enablesimulcast);                 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.enable.simulcast", enablesimulcast); 
+
+	String focusjid = request.getParameter("focusjid"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", focusjid); 
+        
+	String focuspassword = request.getParameter("focuspassword"); 
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focuspassword);         
     }
 
 %>
@@ -298,7 +304,24 @@
                 <th colspan="2"><fmt:message key="config.page.configuration.security.title"/></th>
             </tr>
             </thead>
-            <tbody>            
+            <tbody>  
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.focus.jid"/>
+		</td>
+		<td><input type="text" size="20" maxlength="100" name="focusjid"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain()) %>">
+		</td>
+	    </tr>
+
+	    <tr>
+		<td align="left" width="150">
+		    <fmt:message key="config.page.configuration.focus.password"/>
+		</td>
+		<td><input type="password" size="20" maxlength="100" name="focuspassword"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.password", "focus-password-" + System.currentTimeMillis()) %>">
+		</td>
+	    </tr>            
 	    <tr>
 		    <td  nowrap colspan="2">
 			<input type="radio" value="false" name="securityenabled" <%= ("false".equals(JiveGlobals.getProperty("ofmeet.security.enabled", "true")) ? "checked" : "") %>>

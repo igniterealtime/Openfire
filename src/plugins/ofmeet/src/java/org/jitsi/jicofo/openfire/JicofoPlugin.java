@@ -55,7 +55,7 @@ public class JicofoPlugin
 
 			if (focusUserPassword != null)
 			{
-				Log.info("JicofoPlugin - using focus " + focusUserJid + ":" + hostName + "/" + focusUserPassword);
+				Log.info("JicofoPlugin - using focus " + focusUserJid + ":" + hostName);
 
 				System.setProperty("org.jitsi.videobridge.ofmeet.audio.mixer", JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
 

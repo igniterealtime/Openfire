@@ -47,17 +47,19 @@ public class StalledSessionsFilter extends IoFilterAdapter {
     @Override
 	public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest)
             throws Exception {
-        // Get number of pending requests
-        long pendingBytes = session.getScheduledWriteBytes();
-        if (pendingBytes > bytesCap) {
-            // Get last time we were able to send something to the connected client
-            long writeTime = session.getLastWriteTime();
-            int pendingRequests = session.getScheduledWriteMessages();
-            Log.debug("About to kill session with pendingBytes: " + pendingBytes + " pendingWrites: " +
-                    pendingRequests + " lastWrite: " + new Date(writeTime) + "session: " + session);
-            // Close the session and throw an exception
-            session.close(false);
-            throw new IOException("Closing session that seems to be stalled. Preventing OOM");
+        if (!session.isClosing()) {
+            // Get number of pending requests
+            long pendingBytes = session.getScheduledWriteBytes();
+            if (pendingBytes > bytesCap) {
+                // Get last time we were able to send something to the connected client
+                long writeTime = session.getLastWriteTime();
+                int pendingRequests = session.getScheduledWriteMessages();
+                Log.debug("About to kill session with pendingBytes: " + pendingBytes + " pendingWrites: " +
+                        pendingRequests + " lastWrite: " + new Date(writeTime) + "session: " + session);
+                // Close the session and throw an exception
+                session.close(false);
+                throw new IOException("Closing session that seems to be stalled. Preventing OOM");
+            }
         }
         // Call next filter (everything is fine)
         super.filterWrite(nextFilter, session, writeRequest);

@@ -49,7 +49,7 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
+import org.eclipse.jetty.servlets.AsyncGzipFilter;
 import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -561,7 +561,7 @@ public final class HttpBindManager {
         ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
         context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
         if (isHttpCompressionEnabled()) {
-	        Filter gzipFilter = new GzipFilter() {
+	        Filter gzipFilter = new AsyncGzipFilter() {
 	        	@Override
 	        	public void init(FilterConfig config) throws ServletException {
 	        		super.init(config);

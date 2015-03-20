@@ -124,11 +124,11 @@ public final class HttpBindManager {
 
     private static HttpBindManager instance = new HttpBindManager();
 
-    // Compression "disabled" by default; use "optional" to enable compression (restart required)
+    // Compression "optional" by default; use "disabled" to disable compression (restart required)
     // When enabled, http response will be compressed if the http request includes an
     // "Accept" header with a value of "gzip" and/or "deflate"
     private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
-    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString())
+    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString())
             .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
 
     private Server httpBindServer;

@@ -457,8 +457,10 @@ public class HttpBindServlet extends HttpServlet {
             Log.trace("Data can be written to [" + remoteAddress + "]");
 
             // BOSH communication should not have Chunked encoding. Ensure that the
-            // buffer can hold the entire response to prevent chunking.
+            // buffer can hold the entire response to prevent chunking. Also explicitly
+            // set the content length for the same purpose.
             context.getResponse().setBufferSize(data.length);
+            context.getResponse().setContentLength(data.length);
 
             context.getResponse().getOutputStream().write(data);
             context.complete();

@@ -250,6 +250,7 @@ public final class HttpBindManager {
 
                 final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.addExcludeProtocols("SSLv3");
+                sslContextFactory.setTrustStorePath(SSLConfig.getc2sTruststoreLocation());
                 sslContextFactory.setTrustStorePassword(SSLConfig.getc2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
                 sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());

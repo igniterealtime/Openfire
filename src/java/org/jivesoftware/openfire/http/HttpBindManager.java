@@ -575,7 +575,7 @@ public final class HttpBindManager {
         }
     }
 
-    // NOTE: disabled by default
+    // NOTE: enabled by default
     private boolean isHttpCompressionEnabled() {
 		return isCompressionEnabled;
 	}

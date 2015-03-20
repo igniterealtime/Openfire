@@ -455,6 +455,7 @@ public class HttpBindServlet extends HttpServlet {
         @Override
         public void onWritePossible() throws IOException {
             Log.trace("Data can be written to [" + remoteAddress + "]");
+            context.getResponse().setContentLength(data.length);
             context.getResponse().getOutputStream().write(data);
             context.complete();
         }

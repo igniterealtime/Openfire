@@ -455,6 +455,11 @@ public class HttpBindServlet extends HttpServlet {
         @Override
         public void onWritePossible() throws IOException {
             Log.trace("Data can be written to [" + remoteAddress + "]");
+
+            // BOSH communication should not have Chunked encoding. Ensure that the
+            // buffer can hold the entire response to prevent chunking.
+            context.getResponse().setBufferSize(data.length);
+
             context.getResponse().getOutputStream().write(data);
             context.complete();
         }

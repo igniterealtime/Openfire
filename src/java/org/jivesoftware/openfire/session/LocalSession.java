@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -352,6 +353,10 @@ public abstract class LocalSession implements Session {
 
     public boolean isSecure() {
         return conn.isSecure();
+    }
+
+    public Certificate[] getPeerCertificates() {
+        return conn.getPeerCertificates();
     }
 
     public boolean isClosed() {

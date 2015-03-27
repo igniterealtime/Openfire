@@ -68,15 +68,17 @@
 
         <%  } %>
     </td>
-    <%  if (sess.isSecure()) { %>
-        <td width="1%">
-            <img src="images/lock.gif" width="16" height="16" border="0"
-            title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
-        </td>
-     <% } else { %>
-        <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
-     <% } %>
-
+    <td width="1%">
+        <%  if (sess.isSecure()) {
+                if (sess.getPeerCertificates() != null && sess.getPeerCertificates().length > 0) { %>
+                    <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+        <%      } else { %>
+                    <img src="images/lock.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+        <%      }
+            } else { %>
+                    <img src="images/blank.gif" width="1" height="1" alt="">
+     <%     } %>
+    </td>
     <%  Presence.Show _show = sess.getPresence().getShow();
         String _stat = sess.getPresence().getStatus();
         if (!sess.getPresence().isAvailable()) {

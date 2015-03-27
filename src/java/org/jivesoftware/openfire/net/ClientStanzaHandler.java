@@ -23,6 +23,7 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.xmlpull.v1.XmlPullParser;
@@ -111,7 +112,7 @@ public class ClientStanzaHandler extends StanzaHandler {
 	void startTLS() throws Exception {
         Connection.ClientAuth policy;
         try {
-            policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled"));
+            policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY, "disabled"));
         } catch (IllegalArgumentException e) {
             policy = Connection.ClientAuth.disabled;
         }

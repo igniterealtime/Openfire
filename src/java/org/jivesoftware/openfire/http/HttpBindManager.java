@@ -88,6 +88,8 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_THREADS = "httpbind.client.processing.threads";
 
+    public static final String HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY = "httpbind.client.cert.policy";
+
     public static final int HTTP_BIND_THREADS_DEFAULT = 8;
 
 	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
@@ -258,7 +260,7 @@ public final class HttpBindManager {
                 sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
 
                 // Set policy for checking client certificates
-                String certPol = JiveGlobals.getProperty("xmpp.client.cert.policy", "disabled");
+                String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");
                 if(certPol.equals("needed")) {
                 	sslContextFactory.setNeedClientAuth(true);
                 	sslContextFactory.setWantClientAuth(true);

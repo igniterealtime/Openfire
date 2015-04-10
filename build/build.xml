@@ -26,7 +26,7 @@
     <property name="version.major" value="3"/>
     <property name="version.minor" value="10"/>
     <property name="version.revision" value="0"/>
-    <property name="version.extra" value="beta"/>    <!-- For 'beta' or 'alpha' -->
+    <property name="version.extra" value="rc"/>    <!-- For 'alpha', 'beta', or 'rc' -->
 
 	<property name="javac.source" value="1.7"/>
 	<property name="javac.target" value="1.7"/>

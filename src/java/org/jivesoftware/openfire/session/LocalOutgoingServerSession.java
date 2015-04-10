@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -637,15 +638,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private void returnErrorToSender(Packet packet) {
         RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        if (packet.getError() != null) {
+            Log.debug("Possible double bounce: " + packet.toXML());
+        }
         try {
-        	// OF-888 (outgoing S2S failure) Prevent recursion for failed delivery of error response packet
-        	String el = "ext";
-        	String ns = getClass().getName();
-        	if (packet.deleteExtension(el, ns)) {
-                Log.warn("Failed to route error to sender; remote server not found. Original packet: " + packet);
-                return;
-        	}
-        	packet.addExtension(new PacketExtension(el, ns));
             if (packet instanceof IQ) {
             	if (((IQ) packet).isResponse()) {
             		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
@@ -656,23 +652,33 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
                 reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+                reply.setType(IQ.Type.error);
                 reply.setError(PacketError.Condition.remote_server_not_found);
                 routingTable.routePacket(reply.getTo(), reply, true);
             }
             else if (packet instanceof Presence) {
+                if (((Presence)packet).getType() == Presence.Type.error) {
+                    Log.debug("Double-bounce of presence: " + packet.toXML());
+                    return;
+                }
                 Presence reply = new Presence();
                 reply.setID(packet.getID());
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
+                reply.setType(Presence.Type.error);
                 reply.setError(PacketError.Condition.remote_server_not_found);
                 routingTable.routePacket(reply.getTo(), reply, true);
             }
             else if (packet instanceof Message) {
+                if (((Message)packet).getType() == Message.Type.error){
+                    Log.debug("Double-bounce of message: " + packet.toXML());
+                    return;
+                }
                 Message reply = new Message();
                 reply.setID(packet.getID());
                 reply.setTo(packet.getFrom());
                 reply.setFrom(packet.getTo());
-                reply.setType(((Message)packet).getType());
+                reply.setType(Message.Type.error);
                 reply.setThread(((Message)packet).getThread());
                 reply.setError(PacketError.Condition.remote_server_not_found);
                 routingTable.routePacket(reply.getTo(), reply, true);

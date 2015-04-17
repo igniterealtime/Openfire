@@ -122,6 +122,9 @@ public class XMPPDateTimeFormat {
                     return dateTimeFormatWoMillies.parse(rfc822Date);
                 }
             } else {
+                // OF-898: Replace any number of millisecond-characters with at most three of them.
+                rfc822Date = rfc822Date.replaceAll("(\\.[0-9]{3})[0-9]*", "$1");
+
                 synchronized (dateTimeFormat) {
                     return dateTimeFormat.parse(rfc822Date);
                 }

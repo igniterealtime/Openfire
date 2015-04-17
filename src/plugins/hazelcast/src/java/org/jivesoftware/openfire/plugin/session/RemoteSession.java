@@ -20,6 +20,7 @@
 package org.jivesoftware.openfire.plugin.session;
 
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 import java.util.Date;
 
 import org.jivesoftware.openfire.SessionManager;
@@ -118,6 +119,11 @@ public abstract class RemoteSession implements Session {
     public String getCipherSuiteName() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getCipherSuiteName);
         return (String) doSynchronousClusterTask(task);
+    }
+
+    public Certificate[] getPeerCertificates() {
+        ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getPeerCertificates);
+        return (Certificate[]) doSynchronousClusterTask(task);
     }
 
     public void process(Packet packet) {

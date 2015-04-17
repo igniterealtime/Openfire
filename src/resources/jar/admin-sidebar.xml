@@ -127,11 +127,6 @@
                   url="ssl-settings.jsp"
                   description="${sidebar.server-ssl.descr}"/>
 
-            <!-- SSL Certificates -->
-            <item id="ssl-certificates" name="${sidebar.ssl-certificates}"
-                  url="ssl-certificates.jsp"
-                  description="${sidebar.ssl-certificates.descr}"/>
-
             <!-- Compression Settings -->
             <item id="server-compression" name="${sidebar.server-compression}"
                   url="compression-settings.jsp"
@@ -141,6 +136,26 @@
             <item id="server-transfer-proxy" name="${sidebar.transfer-proxy}"
                   url="file-transfer-proxy.jsp"
                   description="${sidebar.transfer-proxy.descr}"/>
+
+        </sidebar>
+
+        <!-- TLS / SSL-->
+        <sidebar id="sidebar-certificates" name="${sidebar.sidebar-certificates}">
+
+            <!-- Server Certificates -->
+            <item id="security-keystore" name="${sidebar.security-keystore}"
+                  url="security-keystore.jsp"
+                  description="${sidebar.security-keystore.descr}"/>
+
+            <!-- C2S Certificate Truststore -->
+            <item id="security-truststore-c2s" name="${sidebar.security-truststore-c2s}"
+                  url="security-truststore.jsp?type=c2s"
+                  description="${sidebar.security-truststore-c2s.descr}"/>
+
+            <!-- S2S Certificate Truststore -->
+            <item id="security-truststore-s2s" name="${sidebar.security-truststore-s2s}"
+                  url="security-truststore.jsp?type=s2s"
+                  description="${sidebar.security-truststore-s2s.descr}"/>
 
         </sidebar>
 

@@ -123,4 +123,36 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
 	</tag>
+    <tag>
+        <name>infobox</name>
+        <tagclass>org.jivesoftware.admin.InfoboxTag</tagclass>
+        <bodycontent>JSP</bodycontent>
+        <info />
+        <attribute>
+            <name>type</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
+        <name>ASN1DER</name>
+        <tagclass>org.jivesoftware.admin.ASN1DERTag</tagclass>
+        <bodycontent>JSP</bodycontent>
+        <info />
+        <attribute>
+            <name>value</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <function>
+        <name>replaceAll</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String replaceAll(java.lang.String, java.lang.String, java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>split</name>
+        <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
+        <function-signature>java.lang.String[] split(java.lang.String, java.lang.String)</function-signature>
+    </function>
 </taglib>

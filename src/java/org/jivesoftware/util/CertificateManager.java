@@ -688,6 +688,57 @@ public class CertificateManager {
     }
 
     /**
+     * Imports one certificate into a truststore.
+     *
+     * This method will fail when more than one certificate is being provided.
+     *
+     * @param trustStore store where certificates are stored.
+     * @param alias the name (key) under which the certificate is to be stored in the store.
+     * @param inputStream a stream containing the certificate.
+     */
+    public static void installCertsInTrustStore(KeyStore trustStore, String alias, InputStream inputStream) throws Exception
+    {
+        // Input validation
+        if (trustStore == null) {
+            throw new IllegalArgumentException("Argument 'trustStore' cannot be null.");
+        }
+        if (alias == null || alias.trim().isEmpty()) {
+            throw new IllegalArgumentException("Argument 'alias' cannot be null or an empty String.");
+        }
+        if (inputStream == null) {
+            throw new IllegalArgumentException("Argument 'inputStream' cannot be null.");
+        }
+        alias = alias.trim();
+
+        // Check that there is a certificate for the specified alias
+        if (trustStore.containsAlias(alias)) {
+            throw new IllegalArgumentException("Certificate already exists for alias: " + alias);
+        }
+
+        // Load certificate found in the PEM input stream
+        final Collection<? extends Certificate> certificates = CertificateFactory.getInstance("X509").generateCertificates(inputStream);
+        if (certificates.isEmpty()) {
+            throw new Exception("No certificate was found in the input.");
+        }
+        if (certificates.size() != 1) {
+            throw new Exception("More than one certificate was found in the input.");
+        }
+
+        final X509Certificate certificate = (X509Certificate) certificates.iterator().next();
+
+        trustStore.setCertificateEntry(alias, certificate);
+
+        // Notify listeners that a new certificate has been added.
+        for (CertificateEventListener listener : listeners) {
+            try {
+                listener.certificateCreated(trustStore, alias, certificate);
+            } catch (Throwable e) {
+                Log.warn("An exception occurred during the invocation of a CertificateEventListener.", e);
+            }
+        }
+    }
+
+    /**
      * Imports a new signed certificate and its private key into the keystore. The certificate input
      * stream may contain the signed certificate as well as its CA chain.
      *

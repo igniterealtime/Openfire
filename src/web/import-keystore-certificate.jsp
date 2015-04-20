@@ -31,20 +31,20 @@
         }
         if (errors.isEmpty()) {
             try {
-                // Create an alias for the signed certificate
-                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                int index = 1;
-                String alias = domain + "_" + index;
-                while (SSLConfig.getKeyStore().containsAlias(alias)) {
-                    index = index + 1;
-                    alias = domain + "_" + index;
-                }
                 KeyStore keystore;
                 try {
                     keystore = SSLConfig.getKeyStore();
                 }
                 catch (Exception e) {
                     keystore = SSLConfig.initializeKeyStore();
+                }
+                // Create an alias for the signed certificate
+                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+                int index = 1;
+                String alias = domain + "_" + index;
+                while (keystore.containsAlias(alias)) {
+                    index = index + 1;
+                    alias = domain + "_" + index;
                 }
                 // Import certificate
                 CertificateManager.installCert(keystore, SSLConfig.gets2sTrustStore(),

@@ -281,7 +281,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
         MultiUserChatService chatService =
                 XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID);
         MUCRoom room = chatService.getChatRoom(roomJID.getNode());
-        return room != null && room.getOwners().contains(user.toBareJID());
+        return room != null && room.getOwners().contains(user);
     }
 
     private boolean isClearspaceRoom(JID roomJID) {

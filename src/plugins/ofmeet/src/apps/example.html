@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<head>
+	<script>
+		OpenfireMeetings =
+		{
+			setContent: function(content)
+			{
+				console.log("remote setContent", content);
+			},
+
+			getContent: function()
+			{
+				console.log("remote getContent");
+				return null;
+			},
+
+			getPrintContent: function()
+			{
+				console.log("remote getPrintContent");
+				return '<img src="http://londontopia.net/wp-content/uploads/2015/01/enhanced-buzz-wide-22194-1393580280-8.jpg"/>';
+			}
+		};
+
+	</script>
+</head>
+
+<body>
+	<img src="http://londontopia.net/wp-content/uploads/2015/01/enhanced-buzz-wide-22194-1393580280-8.jpg"/>
+</body>
+
+</html>

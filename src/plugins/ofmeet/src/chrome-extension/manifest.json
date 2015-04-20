@@ -1,0 +1,23 @@
+{
+   "background": {
+      "scripts": [ "background.js" ]
+   },
+   "content_scripts": [ {
+      "js": [ "content.js", "jquery.min.js", "util.js", "ofmeet.js",  "tinycolor.js" ],
+      "css": [ "cursor.css" ],
+      "matches": [ "https://*/*", "http://*/*" ],      
+      "all_frames": true
+   } ],
+   "description": "Openfire Meetings Chrome Extension required for screen sharing and co-browsing",
+   "icons": {
+      "128": "icon128.png",
+      "16": "icon16.png",
+      "48": "icon48.png"
+   },
+   "manifest_version": 2,
+   "minimum_chrome_version": "34",
+   "name": "Openfire Meetings Chrome Extension",
+   "permissions": [ "desktopCapture" ],
+   "short_name": "ofmeet chrome extension",
+   "version": "0.0.5"
+}

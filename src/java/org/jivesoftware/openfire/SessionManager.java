@@ -22,6 +22,7 @@ package org.jivesoftware.openfire;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -39,6 +41,11 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
@@ -60,12 +67,15 @@ import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -78,7 +88,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Derek DeMoro
  */
-public class SessionManager extends BasicModule implements ClusterEventListener {
+public class SessionManager extends BasicModule implements ClusterEventListener/*, ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider */{
 
 	private static final Logger Log = LoggerFactory.getLogger(SessionManager.class);
 
@@ -391,12 +401,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @return the newly created {@link IncomingServerSession}.
      * @throws UnauthorizedException if the local server has not been initialized yet.
      */
-    public LocalIncomingServerSession createIncomingServerSession(Connection conn, StreamID id)
+    public LocalIncomingServerSession createIncomingServerSession(Connection conn, StreamID id, String fromDomain)
             throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        LocalIncomingServerSession session = new LocalIncomingServerSession(serverName, conn, id);
+        LocalIncomingServerSession session = new LocalIncomingServerSession(serverName, conn, id, fromDomain);
         conn.init(session);
         // Register to receive close notification on this session so we can
         // remove its route from the sessions set
@@ -548,10 +558,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
      * @param session the session that was authenticated.
      */
     public void addSession(LocalClientSession session) {
-        // Remove the pre-Authenticated session but remember to use the temporary ID as the key
-        localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
         // Add session to the routing table (routing table will know session is not available yet)
         routingTable.addClientRoute(session.getAddress(), session);
+        // Remove the pre-Authenticated session but remember to use the temporary ID as the key
+        localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
                 SessionEventDispatcher.EventType.session_created;
@@ -584,7 +594,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
             routingTable.addClientRoute(session.getAddress(), session);
             // Broadcast presence between the user's resources
             broadcastPresenceOfOtherResource(session);
-            broadcastPresenceToOtherResources(session.getAddress(), presence);
+
+            // RFC 6121 § 4.4.2.
+            // The user's server MUST also send the presence stanza to all of the user's available resources (including the resource that generated the presence notification in the first place).
+            Presence selfPresence = presence.createCopy();
+            selfPresence.setTo(session.getAddress());
+            routingTable.routePacket(session.getAddress(), selfPresence, false);
         }
     }
 
@@ -641,10 +656,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
         List<JID> addresses = routingTable.getRoutes(searchJID, null);
         for (JID address : addresses) {
-            // Send the presence of the session whose presence has changed to
-            // this other user's session
-            presence.setTo(address);
-            routingTable.routePacket(address, presence, false);
+        	if (!originatingResource.equals(address)) {
+	            // Send the presence of the session whose presence has changed to
+	            // this user's other session(s)
+	            presence.setTo(address);
+	            routingTable.routePacket(address, presence, false);
+        	}
         }
     }
 
@@ -872,7 +889,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
 
     public Collection<ClientSession> getSessions(String username) {
         List<ClientSession> sessionList = new ArrayList<ClientSession>();
-        if (username != null) {
+        if (username != null && serverName != null) {
             List<JID> addresses = routingTable.getRoutes(new JID(username, serverName, null, true), null);
             for (JID address : addresses) {
                 sessionList.add(routingTable.getClientRoute(address));
@@ -1159,7 +1176,51 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         conflictLimit = limit;
         JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
     }
+    /*
+    @Override
+    public Iterator<DiscoServerItem> getItems() {
+        return Arrays.asList(new DiscoServerItem(serverAddress, null, null, null, this, this)).iterator();
+    }
 
+    @Override
+    public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public Iterator<String> getFeatures(String name, String node, JID senderJID) {
+        return Collections.emptyIterator();
+    }
+
+    @Override
+    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
+        return null;
+    }
+
+    @Override
+    public boolean hasInfo(String name, String node, JID senderJID) {
+        return false;
+    }
+
+    @Override
+    public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
+        try {
+            // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
+            if (name != null && senderJID != null &&
+            	server.getUserManager().isRegisteredUser(senderJID) && 
+            	(name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
+                Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
+                for (ClientSession clientSession : getSessions(name)) {
+                    discoItems.add(new DiscoItem(clientSession.getAddress(), null, null, null));
+                }
+                return discoItems.iterator();
+            }
+            return Collections.emptyIterator();
+        } catch (UserNotFoundException e) {
+            return Collections.emptyIterator();
+        }
+    }
+    */
     private class ClientSessionListener implements ConnectionCloseListener {
         /**
          * Handle a session that just closed.
@@ -1318,6 +1379,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener 
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
         // Listen to cluster events
         ClusterManager.addListener(this);
+        //server.getIQDiscoItemsHandler().addServerItemsProvider(this);
     }
 
 

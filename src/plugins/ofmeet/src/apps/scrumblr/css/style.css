@@ -1,0 +1,619 @@
+
+
+
+body {
+	font-family: 'Helvetica Neue Light', arial, serif;
+	font-size: 13px;
+	color: #333;
+	background-color: #ddd;
+	xbackground-image: -webkit-gradient(radial, 265 118, 456, 147 0, 29, from(#DDDDDD), to(#f3f3f3));
+
+	padding-left: 10px;
+
+	xheight: 1400px;
+	xwidth: 2000px;
+
+
+
+	user-select: none;
+	-o-user-select:none;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+
+	background-image: url('/ofmeet/apps/scrumblr/css/bg/concrete_wall_2_2.png');
+
+}
+
+#board {
+	position: relative;
+	background-color: #dcd5d1;
+
+	height: 100%;
+	xwidth: 980px;
+	xborder: solid silver 8px;
+
+	background-image: -webkit-gradient(
+	    linear,
+	    left top,
+	    right bottom,
+	    color-stop(0.49, rgb(214,210,206)),
+	    color-stop(0.84, rgb(196,191,182))
+	);
+
+	xbackground: -moz-linear-gradient(top,  rgb(214,210,206),  #000);
+
+	-moz-box-shadow:inset 1px 1px 3px #999;
+	box-shadow:inset 1px 1px 3px #999;
+}
+
+.board-outline {
+	border: solid #ccc 8px;
+	display: block;
+	width: 996px;
+	height: 466px;
+
+	xmargin-left: auto;
+	xmargin-right: auto;
+
+	box-shadow: 1px 3px 2px #aaa;
+
+	x-webkit-transform:rotate(0.3deg); /*"is that a little off-level? i feel like it is off-level"*/
+}
+
+#board-doodles {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	display: inline;
+	opacity: 0.035;
+	background-image: url('scribbles2.png');
+}
+
+
+
+.hover .content {
+	xborder: solid rgba(92, 157, 181,0.5) 3px;
+}
+
+
+.card-icon {
+display:none;
+position: absolute;
+top: 3%; left: 82%;
+opacity: .3;
+width: 16px; height: 16px;
+}
+
+.card-icon-hover {
+	opacity: .9;
+}
+
+.card-edit-form, .card-edit-form input, .card-edit-form textarea {
+	border: none;
+	font-size:inherit;
+	font-weight:inherit;
+	background-color:inherit;
+	xvertical-align: inherit;
+	font-family: inherit;
+	text-align: center;
+	xcolor: #444;
+	padding: 0;
+	margin: 0;
+	outline-width:0;
+	overflow: hidden;
+	resize: none;
+	width: 100%;
+	color: #330066;
+	color: #666;
+
+}
+
+
+
+.board-table {
+	xz-index: 1;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	xborder: solid black 1px;
+	height: 100%;
+	width: 100%;
+}
+
+.board-table .col{
+	xborder-left: dashed #19ba98 5px;
+	text-align: center;
+	vertical-align: top;
+	height: 100%;
+	xopacity: 1;
+	background-image: url('/ofmeet/apps/scrumblr/images/green-board-line.png');
+	background-repeat: repeat-y;
+	background-position: left top;
+}
+
+.board-table .first{
+	border-left: none;
+	text-align: center;
+	vertical-align: top;
+	height: 100%;
+	background-image: none;
+
+}
+
+h1, h1 a {
+	color: #b6b6b6;
+	padding: 0px;
+	margin: 0px;
+	margin-left: 1px;
+	font-weight: normal;
+	xtext-shadow: 1px 1px 1px #b6b6b6;
+	font-size: 15px;
+	padding-top: 14px;
+	letter-spacing: +1px;
+	font-family:  "Helvetica Neue Light", "HelveticaNeue-Light", 'Helvetica Neue', arial, serif;
+	text-decoration: none;
+}
+
+h2 {
+	font-family: 'Rock Salt', "Arial Rounded MT Bold", arial, serif;
+	color: #5c9db4;
+	font-size: 18px;
+	}
+
+.bottom-icon {
+	padding: 5px;
+	opacity: .4;
+}
+
+.bottom-icon:hover {
+	padding: 5px;
+	opacity: .6;
+}
+
+.faded-icon {
+	opacity: .4;
+}
+
+.faded-icon:hover {
+	opacity: .6;
+}
+
+#add-col {
+	position: absolute; right: 3px; top: 200px; display: none; opacity: .15;
+}
+#add-col:hover {
+	opacity: .5;
+}
+
+#delete-col {
+	position: absolute; right: 3px; top: 224px; display: none; opacity: .15;
+}
+#delete-col:hover {
+	opacity: .5;
+}
+
+#config-dropdown {
+	border: solid #666 5px;
+	width: 200px;
+	height: 34px;
+	border-radius: 15px;
+	background-color: #888;
+	box-shadow: 0px 0px 10px #444;
+	padding: 2px;
+	display: none;
+}
+
+.config-dropdown-icon {
+	padding: 5px;
+	opacity: .5;
+}
+
+.buttons {
+	float: left;
+}
+
+.names {
+	padding-left: 10px;
+	width: 980px;
+	text-align: right;
+	color: #bbb;
+	letter-spacing: 4px;
+	font-family:  "Helvetica Neue Light", "HelveticaNeue-Light", 'Helvetica Neue', arial, serif;
+	font-size: 13px;
+
+}
+
+.names p {
+	padding: 0; margin 0;
+}
+
+.names ul {
+	list-style: none;
+	margin-top: 4px;
+	margin-bottom: 4px;
+}
+
+#yourname-li {
+	color: #888;
+}
+
+.names input {
+   padding: 0; //2px 8px 2px 2px;
+    border: none;
+    outline: 0;
+    width: 100px;
+    background: -webkit-gradient(linear, left top, left 25, from(#FFFFFF), color-stop(4%, #EEEEEE), to(#FFFFFF));
+    background: -moz-linear-gradient(top, #FFFFFF, #EEEEEE 1px, #FFFFFF 25px);
+
+	background: none;
+	border-radius: 10px;
+	color: #666;
+	text-align: right;
+	font-family:  "Helvetica Neue Light", "HelveticaNeue-Light", 'Helvetica Neue', arial, serif;
+	font-size: 13px;
+	letter-spacing: 4px;
+	margin:0;
+
+	position: relative;
+}
+
+.names input:hover {
+    xpadding: 2px 2px 2px 2px;
+    xborder: solid 1px #E5E5E5;
+    outline: 0;
+    width: 100px;
+    background: -webkit-gradient(linear, left top, left 25, from(#FFFFFF), color-stop(4%, #EEEEEE), to(#FFFFFF));
+    background: -moz-linear-gradient(top, #FFFFFF, #EEEEEE 1px, #FFFFFF 25px);
+xopacity: .5;
+	background: none;
+    box-shadow: rgba(0,0,0, 0.1) 0px 0px 8px;
+	border-radius: 10px;
+	color: #aaa;
+	text-align: right;
+	font-family:  "Helvetica Neue Light", "HelveticaNeue-Light", 'Helvetica Neue', arial, serif;
+	font-size: 13px;
+	letter-spacing: 4px;
+	margin:0;
+
+}
+
+.names .focused {
+	color: #444;
+}
+
+.you-text {
+	letter-spacing: 2px;
+}
+
+
+#user-icon {
+	vertical-align: text-top;
+	position: relative;
+	left: 0px;
+}
+
+.sticker {
+	padding-top:  0px;
+	padding-left: 2px;
+	xz-index:10;
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	background-repeat: no-repeat;
+}
+
+.stickers {
+	width: 1000px;
+	text-align: right;
+	padding-top: 2px; margin: 0;
+}
+
+
+#sticker-red {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-red.png');
+}
+#sticker-blue {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-blue.png');
+}
+#sticker-yellow {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-yellow.png');
+}
+#sticker-green {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-green.png');
+}
+#sticker-pink {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-pink.png');
+}
+#sticker-lightblue {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-lightblue.png');
+}
+#sticker-orange {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-orange.png');
+}
+#sticker-purple {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-purple.png');
+}
+#sticker-gold {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-gold.png');
+}
+#sticker-silverstar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-silverstar.png');
+}
+#sticker-bluestar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-bluestar.png');
+}
+#sticker-redstar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-redstar.png');
+}
+#addsticker {
+	background-image: url('/ofmeet/apps/scrumblr/images/icons/iconic/raster/black/plus_8x8.png');
+	background-position: 2px 2px;
+	opacity: 0.3;
+
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	background-repeat: no-repeat;
+}
+#addsticker:hover {
+	opacity: 0.7;
+}
+#nosticker {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-deletestar.png');
+}
+
+#sticker-nostar {
+	position: relative;
+	top: 3px;
+	opacity: .5;
+}
+
+#sticker-redstar {
+	top: 1px;
+}
+
+/*.sticker-red {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-red.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-blue {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-blue.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-yellow {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-yellow.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-green {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-green.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-gold {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-gold.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-bluestar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-bluestar.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-silverstar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-silverstar.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-redstar {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-redstar.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-pink {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-pink.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-orange {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-orange.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-lightblue {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-lightblue.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+.sticker-purple {
+	background-image: url('/ofmeet/apps/scrumblr/images/stickers/sticker-purple.png');
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}*/
+
+
+
+
+/* Stuff for landing page */
+h1.home {
+	font-size: 100px;
+	font-family: 'Covered By Your Grace',"Arial Rounded MT Bold", arial, serif;
+	color: #19ba98;
+	opacity: .8;
+	padding: 0;
+	margin: 0;
+	text-align: center;
+	xline-height: .9em;
+}
+
+.home {
+	font-size: 30px;
+	font-family: 'Covered By Your Grace',"Arial Rounded MT Bold", arial, serif;
+	color: #19ba98;
+	color: #222;
+	opacity: 1;
+	padding: 0;
+	margin: 0;
+	text-align: center;
+	xline-height: .9em;
+}
+
+p.home a {
+	color: #5c9db4;
+
+	text-decoration: none;
+}
+
+p.small {
+	font-size: 22px;
+}
+
+#video {
+	height: 450px;
+	width: 1000px;
+	padding-top: 100px;
+}
+
+input.text {
+    width: 230px;
+    background: none;
+    padding: 6px;
+    margin-bottom: 10px;
+    border: none;
+	font-size: 30px;
+	font-family: 'Covered By Your Grace',"Arial Rounded MT Bold", arial, serif;
+	color: #5c9db4;
+	text-align: center;
+	border-bottom: dashed 3px #19ba98;
+}
+
+input:hover {
+    x-webkit-box-shadow: 0px 0px 4px #000;
+    xbackground: none;
+}
+
+#go {
+	 background: none;
+    margin-bottom: 10px;
+    border: none;
+	font-size: 40px;
+	font-family: 'Covered By Your Grace',"Arial Rounded MT Bold", arial, serif;
+	color: #19ba98;
+	color: black;
+
+	xborder: solid 1px;
+
+
+
+}
+
+.notice-bar {
+	xbackground-color: #ccc;
+	opacity: .2;
+	padding: 0;
+	margin: 0;
+	xtext-align: center;
+	margin-left: 300px;
+}
+
+.notice-bar a {
+	color: #333;
+}
+
+#marker {
+	position: absolute; bottom: 0; right: 200px;
+	z-index: 1;
+}
+
+#eraser {
+	position: absolute; bottom: 0; right: 70px;
+	z-index: 1;
+}
+
+
+.card-hover-draggable {
+	xborder: 1px dashed blue;
+	box-shadow:inset 0 0 40px rgba(128, 128, 256,0.2);
+	background-color: rgba(128, 128, 256,0.1)
+}
+
+/*img ~ .card-hover-draggable {
+	-webkit-filter: hue-rotate(180deg);
+}*/
+
+img {
+	user-drag: none; -moz-user-select: none; -webkit-user-drag: none;
+}
+
+.config {
+	position: fixed;
+	right: 18px;
+	top: 4px;
+}
+
+.trash {
+	position: fixed;
+	right: 18px;
+	bottom: 4px;
+}
+
+
+
+
+
+
+.filler {
+	xwidth: 100%;
+	xbackground-color: rgba(255,0,0,0.1);
+	xheight: 100%;
+	right: 0;
+	bottom: 0;
+	position: absolute;
+	text-align: right;
+}
+
+.active-connections {
+	color: #999
+}
+
+
+
+
+/* states and images */
+.ui-icon { width: 16px; height: 16px; background-image: url(images/ui-icons_222222_256x240.png); }
+.ui-widget-content .ui-icon {background-image: url(images/ui-icons_222222_256x240.png); }
+.ui-widget-header .ui-icon {background-image: url(images/ui-icons_222222_256x240.png); }
+.ui-state-default .ui-icon { background-image: url(images/ui-icons_888888_256x240.png); }
+.ui-state-hover .ui-icon, .ui-state-focus .ui-icon {background-image: url(images/ui-icons_454545_256x240.png); }
+.ui-state-active .ui-icon {background-image: url(images/ui-icons_454545_256x240.png); }
+.ui-state-highlight .ui-icon {background-image: url(images/ui-icons_2e83ff_256x240.png); }
+.ui-state-error .ui-icon, .ui-state-error-text .ui-icon {background-image: url(images/ui-icons_cd0a0a_256x240.png); }
+
+
+.ui-resizable { position: relative;}
+.ui-resizable-handle { position: absolute;font-size: 0.1px;z-index: 99999; display: block;}
+.ui-resizable-disabled .ui-resizable-handle, .ui-resizable-autohide .ui-resizable-handle { display: none; }
+.ui-resizable-n { cursor: n-resize; height: 7px; width: 100%; top: -5px; left: 0; }
+.ui-resizable-s { cursor: s-resize; height: 7px; width: 100%; bottom: -5px; left: 0; }
+.ui-resizable-e { cursor: e-resize; width: 7px; right: -5px; top: 0; height: 100%; }
+.ui-resizable-w { cursor: w-resize; width: 7px; left: -5px; top: 0; height: 100%; }
+.ui-resizable-se { cursor: se-resize; width: 12px; height: 12px; right: 1px; bottom: 1px; }
+.ui-resizable-sw { cursor: sw-resize; width: 9px; height: 9px; left: -5px; bottom: -5px; }
+.ui-resizable-nw { cursor: nw-resize; width: 9px; height: 9px; left: -5px; top: -5px; }
+.ui-resizable-ne { cursor: ne-resize; width: 9px; height: 9px; right: -5px; top: -5px;}
+
+.ui-icon-gripsmall-diagonal-se { background-position: -64px -224px; }

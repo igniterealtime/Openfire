@@ -152,17 +152,17 @@
 <% if (showReadme) {
     String pluginName = ParamUtils.getParameter(request, "plugin");
     Plugin plugin = pluginManager.getPlugin(pluginName);
+    StringBuilder readmeString = new StringBuilder();
     if (plugin != null) {
         File readme = new File(pluginManager.getPluginDirectory(plugin), "readme.html");
         if (readme.exists()) {
             BufferedReader in = null;
             try {
-                in = new BufferedReader(new FileReader(readme));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(readme), "UTF8"));
                 String line;
                 while ((line = in.readLine()) != null) {
-%>
-<%= line %>
-<%
+                	readmeString.append(line);
+                	readmeString.append(System.getProperty("line.separator"));
                     }
                 }
                 catch (IOException ioe) {
@@ -179,23 +179,26 @@
                 }
             }
         }
+%>
+<%=readmeString%>
+<%
         return;
     }
 %>
 <% if (showChangelog) {
     String pluginName = ParamUtils.getParameter(request, "plugin");
     Plugin plugin = pluginManager.getPlugin(pluginName);
+    StringBuilder changelogString = new StringBuilder();
     if (plugin != null) {
         File changelog = new File(pluginManager.getPluginDirectory(plugin), "changelog.html");
         if (changelog.exists()) {
             BufferedReader in = null;
             try {
-                in = new BufferedReader(new FileReader(changelog));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(changelog), "UTF8"));
                 String line;
                 while ((line = in.readLine()) != null) {
-%>
-<%= line %>
-<%
+                	changelogString.append(line);
+                	changelogString.append(System.getProperty("line.separator"));
                     }
                 }
                 catch (IOException ioe) {
@@ -212,6 +215,9 @@
                 }
             }
         }
+%>
+<%=changelogString%>
+<%
         return;
     }
 %>

@@ -19,6 +19,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.mina.filter.codec.ProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolEncoder;
@@ -38,11 +39,11 @@ public class XMPPCodecFactory implements ProtocolCodecFactory {
         decoder = new XMPPDecoder();
     }
 
-    public ProtocolEncoder getEncoder() throws Exception {
+    public ProtocolEncoder getEncoder(IoSession session) throws Exception {
         return encoder;
     }
 
-    public ProtocolDecoder getDecoder() throws Exception {
+    public ProtocolDecoder getDecoder(IoSession session) throws Exception {
         return decoder;
     }
 }

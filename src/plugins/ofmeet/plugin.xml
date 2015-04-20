@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.ofmeet.OfMeetPlugin</class>
+    <name>Openfire Meetings</name>
+    <description>Provides high quality, scalable video conferences using Jitsi Meet and Jitsi Videobridge</description>
+    <author>Ignite Realtime</author>
+    <version>0.1.4</version>
+    <date>03/13/2015</date>
+    <minServerVersion>3.9.9</minServerVersion>
+    
+    <adminconsole>
+        <tab id="tab-ofmeet" name="${plugin.title}" url="ofmeet-summary.jsp" description="${plugin.description}">
+            <sidebar id="siderbar-ofmeet" name="${plugin.title}">
+                <item id="ofmeet-summary" name="${config.page.summary.title}" description="${config.page.summary.description}" url="ofmeet-summary.jsp"/>
+                <item id="ofmeet-settings" name="${config.page.settings.title}" description="${config.page.settings.description}" url="ofmeet-settings.jsp"/>
+            </sidebar>
+        </tab>
+    </adminconsole>    
+</plugin>

@@ -25,6 +25,10 @@ import java.util.List;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.CannotBeInvitedException;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
@@ -32,6 +36,8 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -47,6 +53,8 @@ import org.xmpp.packet.Presence;
  */
 public class IQAdminHandler {
 	
+	private static final Logger logger = LoggerFactory.getLogger(IQAdminHandler.class);
+
 	private final LocalMUCRoom room;
 
     private final PacketRouter router;
@@ -152,9 +160,19 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (JID jid : room.getOutcasts()) {
-                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
-                        metaData.addAttribute("affiliation", "outcast");
-                        metaData.addAttribute("jid", jid.toString());
+                    	if (GroupJID.isGroup(jid)) {
+                    		try {
+                        		// add each group member to the result (clients don't understand groups)
+                        		Group group = GroupManager.getInstance().getGroup(jid);
+                        		for (JID groupMember : group.getAll()) {
+                                    metaData = addAffiliationToResult(affiliation, result, groupMember);
+                        		}
+                    		} catch (GroupNotFoundException gnfe) {
+                    			logger.warn("Invalid group JID in the outcast list: " + jid);
+                    		}
+                    	} else {
+                    		metaData = addAffiliationToResult(affiliation, result, jid);
+                    	}
                     }
 
                 } else if ("member".equals(affiliation)) {
@@ -166,18 +184,19 @@ public class IQAdminHandler {
                         throw new ForbiddenException();
                     }
                     for (JID jid : room.getMembers()) {
-                        metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
-                        metaData.addAttribute("affiliation", "member");
-                        metaData.addAttribute("jid", jid.toString());
-                        try {
-                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            MUCRole role = roles.get(0);
-                            metaData.addAttribute("role", role.getRole().toString());
-                            metaData.addAttribute("nick", role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing
-                        }
+                    	if (GroupJID.isGroup(jid)) {
+                    		try {
+                        		// add each group member to the result (clients don't understand groups)
+                        		Group group = GroupManager.getInstance().getGroup(jid);
+                        		for (JID groupMember : group.getAll()) {
+                                    metaData = addAffiliationToResult(affiliation, result, groupMember);
+                        		}
+                    		} catch (GroupNotFoundException gnfe) {
+                    			logger.warn("Invalid group JID in the member list: " + jid);
+                    		}
+                    	} else {
+                            metaData = addAffiliationToResult(affiliation, result, jid);
+                    	}
                     }
                 } else if ("moderator".equals(roleAttribute)) {
                     // The client is requesting the list of moderators
@@ -206,41 +225,37 @@ public class IQAdminHandler {
                     }
                 } else if ("owner".equals(affiliation)) {
                     // The client is requesting the list of owners
-                    Element ownerMetaData;
-                    MUCRole role;
                     for (JID jid : room.getOwners()) {
-                        ownerMetaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
-                        ownerMetaData.addAttribute("affiliation", "owner");
-                        ownerMetaData.addAttribute("jid", jid.toBareJID());
-                        // Add role and nick to the metadata if the user is in the room
-                        try {
-                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            role = roles.get(0);
-                            ownerMetaData.addAttribute("role", role.getRole().toString());
-                            ownerMetaData.addAttribute("nick", role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing
-                        }
+                    	if (GroupJID.isGroup(jid)) {
+                    		try {
+                        		// add each group member to the result (clients don't understand groups)
+                        		Group group = GroupManager.getInstance().getGroup(jid);
+                        		for (JID groupMember : group.getAll()) {
+                                    metaData = addAffiliationToResult(affiliation, result, groupMember);
+                        		}
+                    		} catch (GroupNotFoundException gnfe) {
+                    			logger.warn("Invalid group JID in the owner list: " + jid);
+                    		}
+                    	} else {
+                            metaData = addAffiliationToResult(affiliation, result, jid);
+                    	}
                     }
                 } else if ("admin".equals(affiliation)) {
                     // The client is requesting the list of admins
-                    Element adminMetaData;
-                    MUCRole role;
                     for (JID jid : room.getAdmins()) {
-                        adminMetaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
-                        adminMetaData.addAttribute("affiliation", "admin");
-                        adminMetaData.addAttribute("jid", jid.toBareJID());
-                        // Add role and nick to the metadata if the user is in the room
-                        try {
-                            List<MUCRole> roles = room.getOccupantsByBareJID(jid);
-                            role = roles.get(0);
-                            adminMetaData.addAttribute("role", role.getRole().toString());
-                            adminMetaData.addAttribute("nick", role.getNickname());
-                        }
-                        catch (UserNotFoundException e) {
-                            // Do nothing
-                        }
+                    	if (GroupJID.isGroup(jid)) {
+                    		try {
+                        		// add each group member to the result (clients don't understand groups)
+                        		Group group = GroupManager.getInstance().getGroup(jid);
+                        		for (JID groupMember : group.getAll()) {
+                                    metaData = addAffiliationToResult(affiliation, result, groupMember);
+                        		}
+                    		} catch (GroupNotFoundException gnfe) {
+                    			logger.warn("Invalid group JID in the admin list: " + jid);
+                    		}
+                    	} else {
+                            metaData = addAffiliationToResult(affiliation, result, jid);
+                    	}
                     }
                 } else {
                     reply.setError(PacketError.Condition.bad_request);
@@ -268,7 +283,8 @@ public class IQAdminHandler {
                     // going to change a role or an affiliation
                     nick = item.attributeValue("nick");
                     if (hasJID) {
-                        jids.add(new JID(item.attributeValue("jid")));
+                    	// could be a group JID
+                        jids.add(GroupJID.fromString(item.attributeValue("jid")));
                     } else {
                         // Get the JID based on the requested nick
                         for (MUCRole role : room.getOccupantsByNickname(nick)) {
@@ -300,9 +316,24 @@ public class IQAdminHandler {
                             presences.addAll(room.addMember(jid, nick, senderRole));
                             // If the user had an affiliation don't send an invitation. Otherwise
                             // send an invitation if the room is members-only and skipping invites
-                           // are not disabled system-wide xmpp.muc.skipInvite
+                            // are not disabled system-wide xmpp.muc.skipInvite
                             if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
-                                room.sendInvitation(jid, null, senderRole, null);
+                            	List<JID> invitees = new ArrayList<JID>();
+                            	if (GroupJID.isGroup(jid)) {
+                            		try {
+                                		Group group = GroupManager.getInstance().getGroup(jid);
+                                		for (JID inGroup : group.getAll()) {
+                                			invitees.add(inGroup);
+                                		}
+                            		} catch (GroupNotFoundException gnfe) {
+                            			logger.error("Failed to send invitations for group members", gnfe);
+                            		}
+                            	} else {
+                            		invitees.add(jid);
+                            	}
+                            	for (JID invitee : invitees) {
+                            		room.sendInvitation(invitee, null, senderRole, null);
+                            	}
                             }
                         } else if ("outcast".equals(target)) {
                             // Add the user as an outcast of the room based on the bare JID
@@ -335,4 +366,20 @@ public class IQAdminHandler {
             }
         }
     }
+
+	private Element addAffiliationToResult(String affiliation, Element parent, JID jid) {
+		Element result = parent.addElement("item", "http://jabber.org/protocol/muc#admin");
+		result.addAttribute("affiliation", affiliation);
+		result.addAttribute("jid", jid.toString());
+		try {
+		    List<MUCRole> roles = room.getOccupantsByBareJID(jid);
+		    MUCRole role = roles.get(0);
+		    result.addAttribute("role", role.getRole().toString());
+		    result.addAttribute("nick", role.getNickname());
+		}
+		catch (UserNotFoundException e) {
+		    // the JID is note currently an occupant
+		}
+		return result;
+	}
 }

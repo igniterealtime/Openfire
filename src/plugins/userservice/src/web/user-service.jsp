@@ -1,7 +1,6 @@
 <%@ page import="java.util.*,
                  org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.*,
-                 org.jivesoftware.openfire.plugin.UserServicePlugin"
+                 org.jivesoftware.util.*,org.jivesoftware.openfire.plugin.UserServicePlugin"
     errorPage="error.jsp"
 %>
 
@@ -18,6 +17,7 @@
     boolean success = request.getParameter("success") != null;
     String secret = ParamUtils.getParameter(request, "secret");
     boolean enabled = ParamUtils.getBooleanParameter(request, "enabled");
+    boolean httpBasicAuth = ParamUtils.getBooleanParameter(request, "authtype");
     String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
 
     UserServicePlugin plugin = (UserServicePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userservice");
@@ -28,6 +28,7 @@
         if (errors.size() == 0) {
             plugin.setEnabled(enabled);
         	plugin.setSecret(secret);
+        	plugin.setHttpBasicAuth(httpBasicAuth);
             plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
             response.sendRedirect("user-service.jsp?success=true");
             return;
@@ -36,6 +37,7 @@
 
     secret = plugin.getSecret();
     enabled = plugin.isEnabled();
+    httpBasicAuth = plugin.isHttpBasicAuth();
     allowedIPs = StringUtils.collectionToString(plugin.getAllowedIPs());
 %>
 
@@ -48,7 +50,7 @@
 
 
 <p>
-Use the form below to enable or disable the User Service and configure the secret key.
+Use the form below to enable or disable the User Service and configure the secret key or HTTP basic auth.
 By default the User Service plugin is <strong>disabled</strong>, which means that
 HTTP requests to the service will be ignored.
 </p>
@@ -78,7 +80,8 @@ HTTP requests to the service will be ignored.
     simple integration with other applications.</p>
 
     <p>However, the presence of this service exposes a security risk. Therefore,
-    a secret key is used to validate legitimate requests to this service. Moreover,
+    a secret key is used to validate legitimate requests to this service. 
+    Another validation could be done over the HTTP basic authentication. Moreover,
     for extra security you can specify the list of IP addresses that are allowed to
     use this service. An empty list means that the service can be accessed from any
     location. Addresses are delimited by commas.
@@ -89,11 +92,17 @@ HTTP requests to the service will be ignored.
         <label for="rb01"><b>Enabled</b> - User service requests will be processed.</label>
         <br>
         <input type="radio" name="enabled" value="false" id="rb02"
-         <%= ((!enabled) ? "checked" : "") %>>
+        <%= ((!enabled) ? "checked" : "") %>>
         <label for="rb02"><b>Disabled</b> - User service requests will be ignored.</label>
         <br><br>
 
-        <label for="text_secret">Secret key:</label>
+        <input type="radio" name="authtype" value="true" id="http_basic_auth"  <%= ((httpBasicAuth) ? "checked" : "") %>>
+        <label for="http_basic_auth">HTTP basic auth - User service REST authentication with Openfire admin account.</label>
+        <br>
+        <input type="radio" name="authtype" value="false" id="secretKeyAuth"  <%= ((!httpBasicAuth) ? "checked" : "") %>>
+        <label for="secretKeyAuth">Secret key auth - User service REST authentication over specified secret key.</label>
+        <br>
+        <label style="padding-left: 25px" for="text_secret">Secret key:</label>
         <input type="text" name="secret" value="<%= secret %>" id="text_secret">
         <br><br>
 

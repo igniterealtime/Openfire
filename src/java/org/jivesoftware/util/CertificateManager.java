@@ -72,6 +72,7 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -376,17 +377,22 @@ public class CertificateManager {
                 return Collections.emptyList();
             }
             // Use the type OtherName to search for the certified server name
-            for (List item : altNames) {
+            for (List<?> item : altNames) {
                 Integer type = (Integer) item.get(0);
                 if (type == 0) {
                     // Type OtherName found so return the associated value
                     try {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
                         ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
-                        ASN1Sequence otherNameSeq = (ASN1Sequence) decoder.readObject();
-
+                        Object object = decoder.readObject();
+                        ASN1Sequence otherNameSeq = null;
+                        if (object != null && object instanceof ASN1Sequence) {
+                        	otherNameSeq = (ASN1Sequence) object;
+                        } else {
+                        	continue;
+                        }
                         // Check the object identifier
-                        DERObjectIdentifier objectId = (DERObjectIdentifier) otherNameSeq.getObjectAt(0);
+                        ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
                     	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
 
                         if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
@@ -405,13 +411,14 @@ public class CertificateManager {
 	                        	// TODO: there's bound to be a better way...
 	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
 	                        } else {
-								DERUTF8String derStr = DERUTF8String.getInstance(o);
+	                        	DERUTF8String derStr = DERUTF8String.getInstance(o);
 		                        identity = derStr.getString();
 	                        }
 	                        if (identity != null && identity.length() > 0) {
 	                            // Add the decoded server name to the list of identities
 	                            identities.add(identity);
 	                        }
+	                        decoder.close();
                         } catch (IllegalArgumentException ex) {
                         	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
                         	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
@@ -677,6 +684,57 @@ public class CertificateManager {
             return true;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * Imports one certificate into a truststore.
+     *
+     * This method will fail when more than one certificate is being provided.
+     *
+     * @param trustStore store where certificates are stored.
+     * @param alias the name (key) under which the certificate is to be stored in the store.
+     * @param inputStream a stream containing the certificate.
+     */
+    public static void installCertsInTrustStore(KeyStore trustStore, String alias, InputStream inputStream) throws Exception
+    {
+        // Input validation
+        if (trustStore == null) {
+            throw new IllegalArgumentException("Argument 'trustStore' cannot be null.");
+        }
+        if (alias == null || alias.trim().isEmpty()) {
+            throw new IllegalArgumentException("Argument 'alias' cannot be null or an empty String.");
+        }
+        if (inputStream == null) {
+            throw new IllegalArgumentException("Argument 'inputStream' cannot be null.");
+        }
+        alias = alias.trim();
+
+        // Check that there is a certificate for the specified alias
+        if (trustStore.containsAlias(alias)) {
+            throw new IllegalArgumentException("Certificate already exists for alias: " + alias);
+        }
+
+        // Load certificate found in the PEM input stream
+        final Collection<? extends Certificate> certificates = CertificateFactory.getInstance("X509").generateCertificates(inputStream);
+        if (certificates.isEmpty()) {
+            throw new Exception("No certificate was found in the input.");
+        }
+        if (certificates.size() != 1) {
+            throw new Exception("More than one certificate was found in the input.");
+        }
+
+        final X509Certificate certificate = (X509Certificate) certificates.iterator().next();
+
+        trustStore.setCertificateEntry(alias, certificate);
+
+        // Notify listeners that a new certificate has been added.
+        for (CertificateEventListener listener : listeners) {
+            try {
+                listener.certificateCreated(trustStore, alias, certificate);
+            } catch (Throwable e) {
+                Log.warn("An exception occurred during the invocation of a CertificateEventListener.", e);
+            }
         }
     }
 

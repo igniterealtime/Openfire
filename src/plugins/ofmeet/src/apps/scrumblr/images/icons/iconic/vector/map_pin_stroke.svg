@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 14.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 43363)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="20px"
+	 height="32px" viewBox="0 0 20 32" enable-background="new 0 0 20 32" xml:space="preserve">
+<g id="Layer_1">
+</g>
+<g id="map_x5F_pin_x5F_stroke_x5F_32x32">
+	<g>
+		<path fill="#010101" d="M10,4c1.602,0,3.109,0.625,4.242,1.76C15.375,6.891,16,8.398,16,10s-0.625,3.109-1.734,4.213
+			c-0.164,0.166-2.234,2.224-4.266,5.441c-2.023-3.211-4.086-5.261-4.242-5.415C4.625,13.109,4,11.602,4,10s0.625-3.109,1.758-4.242
+			S8.398,4,10,4 M10,0C7.438,0,4.883,0.977,2.93,2.93c-3.906,3.904-3.906,10.237,0,14.141C2.93,17.07,10,24,10,32
+			c0-8,7.07-14.93,7.07-14.93c3.906-3.904,3.906-10.237,0-14.141C15.117,0.977,12.558,0,10,0L10,0z"/>
+		<path fill="#010101" d="M12,10c0,1.105-0.896,2-2,2c-1.109,0-2-0.895-2-2s0.891-2,2-2C11.104,8,12,8.895,12,10z"/>
+	</g>
+</g>
+</svg>

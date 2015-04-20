@@ -206,7 +206,11 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      * @param subdomain the subdomain of the component's address.
      */
     public void removeComponent(String subdomain) {
-        List<Component> componentsToRemove = new ArrayList<Component>(routables.get(subdomain).getComponents());
+    	RoutableComponents components = null;
+    	if (routables == null || (components = routables.get(subdomain)) == null) {
+    		return;
+    	}
+        List<Component> componentsToRemove = new ArrayList<Component>(components.getComponents());
         for (Component component : componentsToRemove) {
             removeComponent(subdomain, component);
         }

@@ -17,6 +17,8 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="org.jivesoftware.admin.LoginLimitManager" %>
+<%@ page import="java.net.URL" %>
+<%@ page import="java.lang.StringBuilder" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -31,7 +33,29 @@
             return "index.jsp";
         }
         else {
-            return url;
+        	if (url.startsWith("/")) {
+        		return url;
+        	}
+        	try {
+        		URL u = new URL(url);
+	        	StringBuilder s = new StringBuilder();
+	        	if (u.getPath().equals("")) {
+	        		s.append("/");
+	        	} else {
+	        		s.append(u.getPath());
+	        	}
+	        	if (u.getQuery() != null) {
+	        		s.append('?');
+	        		s.append(u.getQuery());
+	        	}
+	        	if (u.getRef() != null) {
+	        		s.append('#');
+	        		s.append(u.getRef());
+	        	}
+	            return s.toString();
+        	} catch(Exception e) {
+        		return "index.jsp";
+        	}
         }
     }
 %>

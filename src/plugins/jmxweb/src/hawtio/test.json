@@ -1,0 +1,10 @@
+{
+  some_plugin: {
+    "Name": "dummy",
+    "Context": "/hawtio",
+    "Domain": "",
+    "Scripts": [
+      "test.js"
+    ]
+  }
+}

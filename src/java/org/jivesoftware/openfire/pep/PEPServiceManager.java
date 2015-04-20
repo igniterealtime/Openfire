@@ -216,7 +216,7 @@ public class PEPServiceManager {
 	}
 	
 	public boolean hasCachedService(JID owner) {
-		return pepServices.get(owner) != null;
+		return pepServices.get(owner.toBareJID()) != null;
 	}
 	
 	// mimics Shutdown, without killing the timer.

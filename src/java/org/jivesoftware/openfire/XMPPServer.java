@@ -63,7 +63,25 @@ import org.jivesoftware.openfire.disco.UserItemsProvider;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.handler.IQAuthHandler;
+import org.jivesoftware.openfire.handler.IQBindHandler;
+import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQLastActivityHandler;
+import org.jivesoftware.openfire.handler.IQMessageCarbonsHandler;
+import org.jivesoftware.openfire.handler.IQOfflineMessagesHandler;
+import org.jivesoftware.openfire.handler.IQPingHandler;
+import org.jivesoftware.openfire.handler.IQPrivacyHandler;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.openfire.handler.IQRegisterHandler;
+import org.jivesoftware.openfire.handler.IQRosterHandler;
+import org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler;
+import org.jivesoftware.openfire.handler.IQSharedGroupHandler;
+import org.jivesoftware.openfire.handler.IQTimeHandler;
+import org.jivesoftware.openfire.handler.IQVersionHandler;
+import org.jivesoftware.openfire.handler.IQvCardHandler;
+import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
@@ -90,6 +108,7 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.Version;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -128,7 +147,7 @@ import org.xmpp.packet.JID;
  */
 public class XMPPServer {
 
-	private static final Logger Log = LoggerFactory.getLogger(XMPPServer.class);
+	private static final Logger logger = LoggerFactory.getLogger(XMPPServer.class);
 
     private static XMPPServer instance;
 
@@ -337,19 +356,19 @@ public class XMPPServer {
             host = InetAddress.getLocalHost().getHostName();
         }
         catch (UnknownHostException ex) {
-            Log.warn("Unable to determine local hostname.", ex);
+            logger.warn("Unable to determine local hostname.", ex);
         }
         if (host == null) {
             host = "127.0.0.1";        	
         }
 
-        version = new Version(3, 10, 0, Version.ReleaseStatus.Alpha, -1);
+        version = new Version(3, 11, 0, Version.ReleaseStatus.Alpha, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
 
         if (isStandAlone()) {
-        	Log.info("Registering shutdown hook (standalone mode)");
+        	logger.info("Registering shutdown hook (standalone mode)");
             Runtime.getRuntime().addShutdownHook(new ShutdownHookThread());
             TaskEngine.getInstance().schedule(new Terminator(), 1000, 1000);
         }
@@ -360,17 +379,17 @@ public class XMPPServer {
             CacheFactory.initialize();
         } catch (InitializationException e) {
             e.printStackTrace();
-            Log.error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         }
 
         JiveGlobals.migrateProperty("xmpp.domain");
         name = JiveGlobals.getProperty("xmpp.domain", host).toLowerCase();
 
-        org.jivesoftware.util.Log.setDebugEnabled(JiveGlobals.getXMLProperty("log.debug.enabled", false));
+        JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
+        Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));
         
         // Update server info
         xmppServerInfo = new XMPPServerInfoImpl(name, host, version, startDate);
-
 
         initialized = true;
     }
@@ -389,6 +408,14 @@ public class XMPPServer {
             // Set the new server domain assigned during the setup process
             name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
             xmppServerInfo.setXMPPDomain(name);
+
+            // Iterate through all the provided XML properties and set the ones that haven't
+            // already been touched by setup prior to this method being called.
+            for (String propName : (List<String>)JiveGlobals.getXMLPropertyNames()) {
+                if (JiveGlobals.getProperty(propName) == null) {
+                    JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
+                }
+            }
 
             // Update certificates (if required)
             try {
@@ -412,7 +439,7 @@ public class XMPPServer {
                 }
 
             } catch (Exception e) {
-                Log.error("Error generating self-signed certificates", e);
+                logger.error("Error generating self-signed certificates", e);
             }
 
             // Initialize list of admins now (before we restart Jetty)
@@ -446,7 +473,7 @@ public class XMPPServer {
                     }
                     catch (Exception e) {
                         e.printStackTrace();
-                        Log.error(e.getMessage(), e);
+                        logger.error(e.getMessage(), e);
                         shutdownServer();
                     }
                 }
@@ -487,7 +514,7 @@ public class XMPPServer {
             // Log that the server has been started
             String startupBanner = LocaleUtils.getLocalizedString("short.title") + " " + version.getVersionString() +
                     " [" + JiveGlobals.formatDateTime(new Date()) + "]";
-            Log.info(startupBanner);
+            logger.info(startupBanner);
             System.out.println(startupBanner);
 
             started = true;
@@ -499,7 +526,7 @@ public class XMPPServer {
         }
         catch (Exception e) {
             e.printStackTrace();
-            Log.error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
             System.out.println(LocaleUtils.getLocalizedString("startup.error"));
             shutdownServer();
         }
@@ -580,7 +607,7 @@ public class XMPPServer {
         }
         catch (Exception e) {
             e.printStackTrace();
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
     }
 
@@ -599,7 +626,7 @@ public class XMPPServer {
                     module.stop();
                     module.destroy();
                 }
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
     }
@@ -620,7 +647,7 @@ public class XMPPServer {
                     module.stop();
                     module.destroy();
                 }
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
     }
@@ -637,7 +664,7 @@ public class XMPPServer {
                 restartMethod.invoke(null, (Object []) null);
             }
             catch (Exception e) {
-                Log.error("Could not restart container", e);
+                logger.error("Could not restart container", e);
             }
         }
     }
@@ -677,7 +704,7 @@ public class XMPPServer {
      * inside of another server.
      */
     public void stop() {
-    	Log.info("Initiating shutdown ...");
+    	logger.info("Initiating shutdown ...");
         // Only do a system exit if we're running standalone
         if (isStandAlone()) {
             // if we're in a wrapper, we have to tell the wrapper to shut us down
@@ -688,7 +715,7 @@ public class XMPPServer {
                     stopMethod.invoke(null, 0);
                 }
                 catch (Exception e) {
-                    Log.error("Could not stop container", e);
+                    logger.error("Could not stop container", e);
                 }
             }
             else {
@@ -755,7 +782,7 @@ public class XMPPServer {
             System.err.println("Database setup or configuration error: " +
                     "Please verify your database settings and check the " +
                     "logs/error.log file for detailed error messages.");
-            Log.error("Database could not be accessed", e);
+            logger.error("Database could not be accessed", e);
             throw new IllegalArgumentException(e);
         }
         finally {
@@ -892,7 +919,7 @@ public class XMPPServer {
             		}
         		}
         	} catch (IOException ioe) {
-        		Log.error("Error reading console input", ioe);
+        		logger.error("Error reading console input", ioe);
         	}
     	}
     }
@@ -912,7 +939,7 @@ public class XMPPServer {
         @Override
 		public void run() {
             shutdownServer();
-            Log.info("Server halted");
+            logger.info("Server halted");
             System.err.println("Server halted");
         }
     }
@@ -954,30 +981,30 @@ public class XMPPServer {
         	try {
         		listener.serverStopping();
         	} catch (Exception ex) {
-        		Log.error("Exception during listener shutdown", ex);
+        		logger.error("Exception during listener shutdown", ex);
         	}
         }
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
         }
-    	Log.info("Shutting down " + modules.size() + " modules ...");
+    	logger.info("Shutting down " + modules.size() + " modules ...");
         // Get all modules and stop and destroy them
         for (Module module : modules.values()) {
         	try {
 	            module.stop();
 	            module.destroy();
         	} catch (Exception ex) {
-        		Log.error("Exception during module shutdown", ex);
+        		logger.error("Exception during module shutdown", ex);
         	}
         }
         // Stop all plugins
-    	Log.info("Shutting down plugins ...");
+    	logger.info("Shutting down plugins ...");
         if (pluginManager != null) {
         	try {
         		pluginManager.shutdown();
         	} catch (Exception ex) {
-        		Log.error("Exception during plugin shutdown", ex);
+        		logger.error("Exception during plugin shutdown", ex);
         	}
         }
         modules.clear();
@@ -985,14 +1012,14 @@ public class XMPPServer {
         try {	
         	DbConnectionManager.destroyConnectionProvider();
         } catch (Exception ex) {
-    		Log.error("Exception during DB shutdown", ex);
+    		logger.error("Exception during DB shutdown", ex);
         }
 
         // Shutdown the task engine.
         TaskEngine.getInstance().shutdown();
 
         // hack to allow safe stopping
-        Log.info("Openfire stopped");
+        logger.info("Openfire stopped");
     }
     
     /**

@@ -136,7 +136,7 @@ public class PublishedItem implements Serializable {
     	if (node == null) {
 			synchronized (this) {
 				if (node == null) {
-					if (Node.PUBSUB_SVC_ID.equals(serviceId))
+					if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId))
 					{
 						node = (LeafNode) XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
 					}

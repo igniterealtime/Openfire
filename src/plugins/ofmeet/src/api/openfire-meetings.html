@@ -1,0 +1,19 @@
+<html>
+    <script src="ofmeet.js?v=1"></script>
+	<script>
+		var proto = Object.create(HTMLElement.prototype);
+
+		proto.createdCallback = function()
+		{
+			var room = this.getAttribute("room");
+
+			$(document).bind('ofmeet.connected', function (event, connection)
+			{
+				//console.log("ofmeet connected", connection);
+				if (room) ofmeet.joinRoom(room, true);
+			});
+		};
+
+		document.registerElement("openfire-meetings",  {prototype: proto});
+	</script>
+</html>

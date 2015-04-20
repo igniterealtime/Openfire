@@ -33,25 +33,44 @@
         directory (where all the source files are on your filesystem).
         </p>
 
-<pre>custom/
-| - overlay.properties       &lt;- Properties file to replace text in i18n files (optional)
-| - source/                  &lt;- Directory to place java source files to be overridden
-| - webapp/                  &lt;- Directory to place any web file (image, CSS or jsp)
-</pre>
+        <pre>custom/
+        | - overlay.properties       &lt;- Properties file to replace text in i18n files (optional)
+        | - conf/                    &lt;- Directory to place configuration files to be overridden
+        | - lib/                     &lt;- Directory to place any private or 3rd prty jar files
+        | - source/                  &lt;- Directory to place java source files to be overridden
+        | - webapp/                  &lt;- Directory to place any web file (image, CSS or jsp)
+        </pre>
+
+        <p>
+            In the <tt>custom/conf</tt> directory, mirror the contents under the <tt>src/conf</tt> directory.
+            Any files you place under <tt>custom/conf</tt> will override the current conf files under conf
+            in the build. For example, to override the <tt>openfire.xml</tt> config file, you would place a
+            openfire.xml file under the directory <tt>custom/conf/</tt>.
+        </p>
+
+        <p>
+            Any files you place under the <tt>custom/lib</tt> directory will be placed along side the other
+            jar files under the <tt>openfire/lib/</tt> directory. For example, if you require a 3rd party 
+            jar file for use with changes you made under <tt>custom/source/</tt>, you would place the
+            jar file in <tt>custom/lib/</tt> and it will be placed in the <tt>lib/</tt> in the build.
+        </p>
 
         <p>
             In the <tt>custom/source</tt> directory, mirror the contents under the <tt>src/java</tt> directory.
             Any files you place under <tt>custom/source</tt> will override the current source files in the build.
-            For example, to override the
-class <tt>org.jivesoftware.openfire.Channel</tt> you would place a Channel.java file under the directory <tt>custom/source/org/jivesoftware/openfire/</tt>
+            For example, to override the class <tt>org.jivesoftware.openfire.Channel</tt> you would place a 
+            Channel.java file under the directory <tt>custom/source/org/jivesoftware/openfire/</tt>.
         </p>
+
         <p>
-In the <tt>custom/webapp</tt> directory, mirror the contents of the <tt>src/web</tt> directory.  Any files you place
-there will override the current source files in the build.  For example, if you want to modify <tt>src/web/login.jsp</tt>
-            then add login.jsp to the directory <tt>custom/webapp</tt>.
-           </p>
+            In the <tt>custom/webapp</tt> directory, mirror the contents of the <tt>src/web</tt> directory.  
+            Any files you place there will override the current source files in the build.  For example, 
+            if you want to modify <tt>src/web/login.jsp</tt> then add login.jsp to the directory 
+            <tt>custom/webapp</tt>.
+        </p>
+
         <p>
-Currently, overridden files will simply be included in the built war or jar files.  We have not added
+            Currently, overridden files will simply be included in the built war or jar files.  We have not added
             functionality to bundle these changes in a separate jar file.
         </p>
 

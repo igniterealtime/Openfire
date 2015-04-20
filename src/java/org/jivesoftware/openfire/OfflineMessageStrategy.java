@@ -20,10 +20,13 @@
 
 package org.jivesoftware.openfire;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.user.UserManager;
@@ -33,13 +36,14 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketExtension;
 
 /**
  * Controls what is done with offline messages.
  *
  * @author Iain Shigeoka
  */
-public class OfflineMessageStrategy extends BasicModule {
+public class OfflineMessageStrategy extends BasicModule implements ServerFeaturesProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(OfflineMessageStrategy.class);
 
@@ -80,9 +84,11 @@ public class OfflineMessageStrategy extends BasicModule {
     public void storeOffline(Message message) {
         if (message != null) {
             // Do nothing if the message was sent to the server itself, an anonymous user or a non-existent user
+        	// Also ignore message carbons
             JID recipientJID = message.getTo();
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
                     recipientJID.getNode() == null ||
+                    message.getExtension("received", "urn:xmpp:carbons:2") != null ||
                     !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 return;
             }
@@ -236,6 +242,18 @@ public class OfflineMessageStrategy extends BasicModule {
         if (type != null && type.length() > 0) {
             OfflineMessageStrategy.type = Type.valueOf(type);
         }
+    }
+
+    @Override
+    public Iterator<String> getFeatures() {
+        switch (type) {
+            case store:
+            case store_and_bounce:
+            case store_and_drop:
+                // http://xmpp.org/extensions/xep-0160.html#disco
+                return Collections.singleton("msgoffline").iterator();
+        }
+        return Collections.<String>emptyList().iterator();
     }
 
     /**

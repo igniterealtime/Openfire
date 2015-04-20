@@ -21,6 +21,7 @@
 package org.jivesoftware.openfire.pep;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -278,7 +279,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * in the server's disco#info result (as per section 4 of XEP-0163).
      */
     public Iterator<String> getFeatures() {
-        return XMPPServer.getInstance().getPubSubModule().getFeatures(null, null, null);
+        Iterator<String> it = XMPPServer.getInstance().getPubSubModule().getFeatures(null, null, null);
+        ArrayList<String> features = new ArrayList<String>();
+        while (it.hasNext()) {
+            features.add(it.next());
+        }
+        // Auto Creation of nodes is supported in PEP
+        features.add("http://jabber.org/protocol/pubsub#auto-create");
+        return features.iterator();
     }
 
 

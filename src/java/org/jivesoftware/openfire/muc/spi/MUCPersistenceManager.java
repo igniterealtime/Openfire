@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
@@ -229,7 +231,7 @@ public class MUCPersistenceManager {
                 pstmt = con.prepareStatement(LOAD_HISTORY);
                 // Reload the history, using "muc.history.reload.limit" (days); defaults to 2
                 int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                long from = System.currentTimeMillis() - (86400000 * reloadLimitDays);
+                long from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
                 pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
@@ -257,22 +259,23 @@ public class MUCPersistenceManager {
             pstmt.setLong(1, room.getID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                JID jid = new JID(rs.getString(1));
+            	// might be a group JID
+                JID affiliationJID = GroupJID.fromString(rs.getString(1));
                 MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
                 try {
                     switch (affiliation) {
                         case owner:
-                            room.addOwner(jid, room.getRole());
+                            room.addOwner(affiliationJID, room.getRole());
                             break;
                         case admin:
-                            room.addAdmin(jid, room.getRole());
+                            room.addAdmin(affiliationJID, room.getRole());
                             break;
                         case outcast:
-                            room.addOutcast(jid, null, room.getRole());
+                            room.addOutcast(affiliationJID, null, room.getRole());
                             break;
                         default:
                             Log.error("Unkown affiliation value " + affiliation + " for user "
-                                    + jid.toBareJID() + " in persistent room " + room.getID());
+                                    + affiliationJID.toBareJID() + " in persistent room " + room.getID());
                     }
                 }
                 catch (Exception e) {
@@ -286,7 +289,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                    room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
+                	room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);
@@ -546,7 +549,7 @@ public class MUCPersistenceManager {
                 // if the property is defined, but not numeric, default to 2 (days)
                 int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
                 Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
-                from = System.currentTimeMillis() - (86400000 * reloadLimitDays);
+                from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
             }
             statement.setLong(1, serviceID);
             statement.setString(2, StringUtils.dateToMillis(new Date(from)));
@@ -612,9 +615,10 @@ public class MUCPersistenceManager {
                     final MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(resultSet.getInt(3));
 
                     final String jidValue = resultSet.getString(2);
-                    final JID jid;
+                    final JID affiliationJID;
                     try {
-                        jid = new JID(jidValue);
+                    	// might be a group JID
+                        affiliationJID = GroupJID.fromString(jidValue);
                     } catch (IllegalArgumentException ex) {
                         Log.warn("An illegal JID ({}) was found in the database, "
                                 + "while trying to load all affiliations for room "
@@ -626,16 +630,16 @@ public class MUCPersistenceManager {
                     try {
                         switch (affiliation) {
                             case owner:
-                                room.addOwner(jid, room.getRole());
+                                room.addOwner(affiliationJID, room.getRole());
                                 break;
                             case admin:
-                                room.addAdmin(jid, room.getRole());
+                                room.addAdmin(affiliationJID, room.getRole());
                                 break;
                             case outcast:
-                                room.addOutcast(jid, null, room.getRole());
+                                room.addOutcast(affiliationJID, null, room.getRole());
                                 break;
                             default:
-                                Log.error("Unknown affiliation value " + affiliation + " for user " + jid + " in persistent room " + room.getID());
+                                Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
                         }
                     } catch (ForbiddenException e) {
                         Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
@@ -658,6 +662,7 @@ public class MUCPersistenceManager {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
+        JID affiliationJID = null;
         try {
             connection = DbConnectionManager.getConnection();
             statement = connection.prepareStatement(LOAD_ALL_MEMBERS);
@@ -672,7 +677,9 @@ public class MUCPersistenceManager {
                         continue;
                     }
                     try {
-                        room.addMember(new JID(resultSet.getString(2)), resultSet.getString(3), room.getRole());
+                    	// might be a group JID
+                    	affiliationJID = GroupJID.fromString(resultSet.getString(2));
+                    	room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
                     } catch (ForbiddenException e) {
                         Log.warn("Unable to add member to room.", e);
                     } catch (ConflictException e) {
@@ -787,7 +794,7 @@ public class MUCPersistenceManager {
     public static void saveAffiliationToDB(MUCRoom room, JID jid, String nickname,
             MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
     {
-    	final String bareJID = jid.toBareJID();
+    	final String affiliationJid = jid.toBareJID();
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -800,7 +807,7 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(ADD_MEMBER);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.setString(3, nickname);
                     pstmt.executeUpdate();
                 }
@@ -819,7 +826,7 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.setInt(3, newAffiliation.getValue());
                     pstmt.executeUpdate();
                 }
@@ -843,7 +850,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(UPDATE_MEMBER);
                     pstmt.setString(1, nickname);
                     pstmt.setLong(2, room.getID());
-                    pstmt.setString(3, bareJID);
+                    pstmt.setString(3, affiliationJid);
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -862,14 +869,14 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getTransactionConnection();
                     pstmt = con.prepareStatement(DELETE_AFFILIATION);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.executeUpdate();
                     DbConnectionManager.fastcloseStmt(pstmt);
 
                     // Add them as a member.
                     pstmt = con.prepareStatement(ADD_MEMBER);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.setString(3, nickname);
                     pstmt.executeUpdate();
                 }
@@ -890,13 +897,13 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getTransactionConnection();
                     pstmt = con.prepareStatement(DELETE_MEMBER);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.executeUpdate();
                     DbConnectionManager.fastcloseStmt(pstmt);
 
                     pstmt = con.prepareStatement(ADD_AFFILIATION);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJid);
                     pstmt.setInt(3, newAffiliation.getValue());
                     pstmt.executeUpdate();
                 }
@@ -918,7 +925,7 @@ public class MUCPersistenceManager {
                     pstmt = con.prepareStatement(UPDATE_AFFILIATION);
                     pstmt.setInt(1, newAffiliation.getValue());
                     pstmt.setLong(2, room.getID());
-                    pstmt.setString(3, bareJID);
+                    pstmt.setString(3, affiliationJid);
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -941,7 +948,7 @@ public class MUCPersistenceManager {
     public static void removeAffiliationFromDB(MUCRoom room, JID jid,
             MUCRole.Affiliation oldAffiliation)
     {
-    	final String bareJID = jid.toBareJID();
+    	final String affiliationJID = jid.toBareJID();
         if (room.isPersistent() && room.wasSavedToDB()) {
             if (MUCRole.Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
@@ -951,7 +958,7 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(DELETE_MEMBER);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJID);
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -969,7 +976,7 @@ public class MUCPersistenceManager {
                     con = DbConnectionManager.getConnection();
                     pstmt = con.prepareStatement(DELETE_AFFILIATION);
                     pstmt.setLong(1, room.getID());
-                    pstmt.setString(2, bareJID);
+                    pstmt.setString(2, affiliationJID);
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
@@ -985,9 +992,9 @@ public class MUCPersistenceManager {
     /**
      * Removes the affiliation of the user from the DB if ANY room that is persistent.
      *
-     * @param bareJID The bareJID of the user to remove his affiliation from ALL persistent rooms.
+     * @param affiliationJID The bareJID of the user to remove his affiliation from ALL persistent rooms.
      */
-    public static void removeAffiliationFromDB(JID bareJID)
+    public static void removeAffiliationFromDB(JID affiliationJID)
     {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -995,13 +1002,13 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             // Remove the user from the members table
             pstmt = con.prepareStatement(DELETE_USER_MEMBER);
-            pstmt.setString(1, bareJID.toBareJID());
+            pstmt.setString(1, affiliationJID.toBareJID());
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove the user from the generic affiliations table
             pstmt = con.prepareStatement(DELETE_USER_MUCAFFILIATION);
-            pstmt.setString(1, bareJID.toBareJID());
+            pstmt.setString(1, affiliationJID.toBareJID());
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

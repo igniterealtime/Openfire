@@ -233,22 +233,32 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
         boolean routed = false;
-        if (serverName.equals(jid.getDomain())) {
-        	// Packet sent to our domain.
-            routed = routeToLocalDomain(jid, packet, fromServer);
-        }
-        else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
-            // Packet sent to component hosted in this server
-            routed = routeToComponent(jid, packet, routed);
-        }
-        else {
-            // Packet sent to remote server
-            routed = routeToRemoteDomain(jid, packet, routed);
+        try {
+	        if (serverName.equals(jid.getDomain())) {
+	        	// Packet sent to our domain.
+	            routed = routeToLocalDomain(jid, packet, fromServer);
+	        }
+	        else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
+	            // Packet sent to component hosted in this server
+	            routed = routeToComponent(jid, packet, routed);
+	        }
+	        else {
+	            // Packet sent to remote server
+	            routed = routeToRemoteDomain(jid, packet, routed);
+	        }
+        } catch (Exception ex) {
+        	// Catch here to ensure that all packets get handled, despite various processing
+        	// exceptions, rather than letting any fall through the cracks. For example,
+        	// an IAE could be thrown when running in a cluster if a remote member becomes 
+        	// unavailable before the routing caches are updated to remove the defunct node.
+        	// We have also occasionally seen various flavors of NPE and other oddities, 
+        	// typically due to unexpected environment or logic breakdowns. 
+        	Log.error("Primary packet routing failed", ex); 
         }
 
         if (!routed) {
             if (Log.isDebugEnabled()) {
-                Log.debug("RoutingTableImpl: Failed to route packet to JID: {} packet: {}", jid, packet.toXML());
+                Log.debug("Failed to route packet to JID: {} packet: {}", jid, packet.toXML());
             }
             if (packet instanceof IQ) {
                 iqRouter.routingFailed(jid, packet);
@@ -520,7 +530,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
         for (JID address : getRoutes(recipientJID, packet.getFrom())) {
             ClientSession session = getClientRoute(address);
-            if (session != null) {
+            if (session != null && session.isInitialized()) {
                 sessions.add(session);
             }
         }
@@ -528,23 +538,28 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get the sessions with non-negative priority for message carbons processing.
         List<ClientSession> nonNegativePrioritySessions = getNonNegativeSessions(sessions, 0);
 
-        // Get the highest priority sessions for normal processing.
-        List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
+        if (nonNegativePrioritySessions.isEmpty()) {
+            // No session is available so store offline
+            Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
+            return false;
+        }
 
         // Check for message carbons enabled sessions and send the message to them.
         for (ClientSession session : nonNegativePrioritySessions) {
             // Deliver to each session, if is message carbons enabled.
             if (shouldCarbonCopyToResource(session, packet, isPrivate)) {
                 session.process(packet);
+            // Deliver to each session if property route.really-all-resources is true
+            // (in case client does not support carbons)
+            } else if (JiveGlobals.getBooleanProperty("route.really-all-resources", false)) {
+                session.process(packet);
             }
         }
 
-        if (highestPrioritySessions.isEmpty()) {
-            // No session is available so store offline
-        	Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
-            return false;
-        }
-        else if (highestPrioritySessions.size() == 1) {
+        // Get the highest priority sessions for normal processing.
+        List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);
+
+        if (highestPrioritySessions.size() == 1) {
             // Found only one session so deliver message (if it hasn't already been processed because it has message carbons enabled)
             if (!shouldCarbonCopyToResource(highestPrioritySessions.get(0), packet, isPrivate)) {
                 highestPrioritySessions.get(0).process(packet);
@@ -967,7 +982,69 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public void leftCluster(byte[] nodeID) {
-        // Do nothing
+    	
+    	// When a peer server leaves the cluster, any remote routes that were
+    	// associated with the defunct node must be dropped from the routing 
+    	// caches that are shared by the remaining cluster member(s).
+    	
+    	// drop routes for all client sessions connected via the defunct cluster node
+        Lock clientLock = CacheFactory.getLock(nodeID, usersCache);
+        try {
+        	clientLock.lock();
+	    	List<String> remoteClientRoutes = new ArrayList<String>();
+	    	for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
+	    		if (entry.getValue().getNodeID().equals(nodeID)) {
+	    			remoteClientRoutes.add(entry.getKey());
+	    		}
+	    	}
+	    	for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
+	    		if (entry.getValue().getNodeID().equals(nodeID)) {
+	    			remoteClientRoutes.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String route : remoteClientRoutes) {
+	    		removeClientRoute(new JID(route));
+	    	}
+        }
+        finally {
+        	clientLock.unlock();
+        }
+    	
+    	// remove routes for server domains that were accessed through the defunct node
+        Lock serverLock = CacheFactory.getLock(nodeID, serversCache);
+        try {
+        	serverLock.lock();
+	    	List<String> remoteServerDomains = new ArrayList<String>();
+	    	for (Map.Entry<String, byte[]> entry : serversCache.entrySet()) {
+	    		if (entry.getValue().equals(nodeID)) {
+	    			remoteServerDomains.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String domain : remoteServerDomains) {
+	    		removeServerRoute(new JID(domain));
+	    	}
+        }
+        finally {
+        	serverLock.unlock();
+        }
+    	
+    	// remove component routes for the defunct node
+        Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
+        try {
+        	componentLock.lock();
+	    	List<String> remoteComponents = new ArrayList<String>();
+	    	for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
+	    		if (entry.getValue().remove(nodeID) && entry.getValue().size() == 0) {
+	    			remoteComponents.add(entry.getKey());
+	    		}
+	    	}
+	    	for (String jid : remoteComponents) {
+	    		removeComponentRoute(new JID(jid));
+	    	}
+        }
+        finally {
+        	componentLock.unlock();
+        }
     }
 
     public void markedAsSeniorClusterMember() {

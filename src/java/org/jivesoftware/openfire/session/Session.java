@@ -26,6 +26,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 import java.util.Date;
 
 /**
@@ -136,6 +137,13 @@ public interface Session extends RoutableChannelHandler {
     public boolean isSecure();
 
     /**
+     * Returns the peer certificates associated with this session, if any.
+     *
+     * @return certificates, possibly empty or null.
+     */
+    public Certificate[] getPeerCertificates();
+
+    /**
      * Returns the IP address string in textual presentation.
      *
      * @return  the raw IP address in a string format.
@@ -195,4 +203,11 @@ public interface Session extends RoutableChannelHandler {
      * @return true if the socket remains valid, false otherwise.
      */
     public boolean validate();
+    
+    /**
+     * Returns the TLS cipher suite name, if any.
+     * Always returns a valid string, though the string may be "NONE"
+     * @return cipher suite name.
+     */
+    public String getCipherSuiteName();
 }

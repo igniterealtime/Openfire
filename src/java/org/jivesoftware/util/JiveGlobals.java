@@ -28,15 +28,17 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.TimerTask;
 
+import org.apache.commons.lang.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -316,12 +318,6 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        // home not loaded?
-        if (openfireProperties == null) {
-            return null;
-        }
-
         return openfireProperties.getProperty(name);
     }
 
@@ -347,11 +343,6 @@ public class JiveGlobals {
     public static String getXMLProperty(String name, String defaultValue) {
         if (openfireProperties == null) {
             loadOpenfireProperties();
-        }
-
-        // home not loaded?
-        if (openfireProperties == null) {
-            return defaultValue;
         }
 
         String value = openfireProperties.getProperty(name);
@@ -445,11 +436,7 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        // jiveHome not loaded?
-        if (openfireProperties != null) {
-            openfireProperties.setProperty(name, value);
-        }
+        openfireProperties.setProperty(name, value);
     }
 
     /**
@@ -472,10 +459,7 @@ public class JiveGlobals {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
-
-        if (openfireProperties != null) {
-            openfireProperties.setProperties(propertyMap);
-        }
+        openfireProperties.setProperties(propertyMap);
     }
 
     /**
@@ -505,11 +489,6 @@ public class JiveGlobals {
             loadOpenfireProperties();
         }
 
-        // jiveHome not loaded?
-        if (openfireProperties == null) {
-            return Collections.EMPTY_LIST;
-        }
-
         String[] propNames = openfireProperties.getChildrenProperties(parent);
         List<String> values = new ArrayList<String>();
         for (String propName : propNames) {
@@ -518,8 +497,19 @@ public class JiveGlobals {
                 values.add(value);
             }
         }
-
         return values;
+    }
+
+    /**
+     * Return all property names as a list of strings, or an empty list if jiveHome has not been loaded.
+     *
+     * @return all child property for the given parent.
+     */
+    public static List<String> getXMLPropertyNames() {
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
+        return openfireProperties.getAllPropertyNames();
     }
 
     /**
@@ -779,6 +769,9 @@ public class JiveGlobals {
         if (isSetupMode()) {
             return;
         }
+        if (openfireProperties == null) {
+            loadOpenfireProperties();
+        }
         openfireProperties.migrateProperty(name);
     }
     
@@ -862,6 +855,13 @@ public class JiveGlobals {
      * set the algorithm for encrypting property values 
      */
     public static void setupPropertyEncryptionAlgorithm(String alg) {
+    	// Get the old secret key and encryption type
+    	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+    	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+    	if(StringUtils.isNotEmpty(oldAlg) && !oldAlg.equals(alg) && StringUtils.isNotEmpty(oldKey)){
+    		// update encrypted properties
+    		updateEncryptionProperties(oldAlg, oldKey, alg, oldAlg);
+    	}
     	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(alg)) {
     		securityProperties.setProperty(ENCRYPTION_ALGORITHM, ENCRYPTION_ALGORITHM_AES);
     	} else {
@@ -874,8 +874,68 @@ public class JiveGlobals {
      * set a custom key for encrypting property values 
      */
     public static void setupPropertyEncryptionKey(String key) {
-    	currentKey = key;
+    	// Get the old secret key and encryption type
+    	String oldAlg = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+    	String oldKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+    	if(StringUtils.isNotEmpty(oldKey) && !oldKey.equals(key) && StringUtils.isNotEmpty(oldAlg)) {
+    		// update encrypted properties
+    		updateEncryptionProperties(oldAlg, oldKey, oldAlg, key);
+    	}
 		securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
+    }
+
+    /**
+     * Re-encrypted with a new key and new algorithm configuration
+     * 
+     * @param oldAlg old algorithm type
+     * @param oldKey old encryptor key
+     * @param newAlg new algorithm type
+     * @param newKey new encryptor key
+     */
+    private static void updateEncryptionProperties(String oldAlg,String oldKey,String newAlg,String newKey) {
+    	Encryptor oldEncryptor = null;
+    	Encryptor newEncryptor = null;
+    	// create the encryptor
+    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(oldAlg)) {
+    		oldEncryptor = new AesEncryptor(oldKey);
+    	} else {
+    		oldEncryptor = new Blowfish(oldKey);
+    	}
+    	if (ENCRYPTION_ALGORITHM_AES.equalsIgnoreCase(newAlg)) {
+    		newEncryptor = new AesEncryptor(newKey);
+    	} else {
+    		newEncryptor = new Blowfish(newKey);
+    	}
+    	
+		// Set the current encryption 
+    	currentKey = oldKey;
+    	propertyEncryptor = oldEncryptor;
+    	
+    	// load properties to decrypt
+    	if(properties == null) {
+    		properties = JiveProperties.getInstance();
+    	}
+    	
+    	currentKey = newKey;
+    	propertyEncryptor = newEncryptor;
+    	
+    	// Update configuration properties
+    	Iterator<Entry<String, String>> iterator = properties.entrySet().iterator();
+    	Entry<String, String> entry = null;
+    	String name = null;
+    	while(iterator.hasNext()){
+    		entry = iterator.next();
+    		name = entry.getKey();
+    		if(isPropertyEncrypted(name)){
+    				// update xml prop
+    				String xmlProperty = getXMLProperty(name);
+    				if(StringUtils.isNotEmpty(xmlProperty)){
+    					setXMLProperty(name, entry.getValue());
+    				}
+    		}
+    		properties.put(name, entry.getValue());
+    	}
+    	
     }
     
    /**
@@ -951,9 +1011,17 @@ public class JiveGlobals {
                     openfireProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage(), ioe);
+                    Log.error(ioe.getMessage());
                     failedLoading = true;
                 }
+            }
+            // create a default/empty XML properties set (helpful for unit testing)
+            if (openfireProperties == null) {
+                try { 
+                	openfireProperties = new XMLProperties();
+                } catch (IOException e) {
+                	Log.error("Failed to setup default openfire properties", e);
+                }            	
             }
         }
     }
@@ -971,12 +1039,6 @@ public class JiveGlobals {
                 msg.append("Critical Error! The home directory has not been configured, \n");
                 msg.append("which will prevent the application from working correctly.\n\n");
                 System.err.println(msg.toString());
-                try { 
-                	securityProperties = new XMLProperties();
-                } catch (IOException ioe) {
-                	Log.error("Failed to setup default secuirty properties", ioe);
-                }
-                
             }
             // Create a manager with the full path to the security XML file.
             else {
@@ -996,9 +1058,17 @@ public class JiveGlobals {
                     }, 1000);
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage(), ioe);
+                    Log.error(ioe.getMessage());
                     failedLoading = true;
                 }
+            }
+            // create a default/empty XML properties set (helpful for unit testing)
+            if (securityProperties == null) {
+                try { 
+                	securityProperties = new XMLProperties();
+                } catch (IOException e) {
+                	Log.error("Failed to setup default security properties", e);
+                }            	
             }
         }
     }

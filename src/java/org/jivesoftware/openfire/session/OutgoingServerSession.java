@@ -36,8 +36,7 @@ import java.util.Collection;
  *
  * @author Gaston Dombiak
  */
-public interface OutgoingServerSession extends Session {
-
+public interface OutgoingServerSession extends ServerSession {
     /**
      * Returns a collection with all the domains, subdomains and virtual hosts that where
      * authenticated. The remote server will accept packets sent from any of these domains,
@@ -84,11 +83,4 @@ public interface OutgoingServerSession extends Session {
      * @return True if the subdomain was authenticated by the remote server.
      */
     boolean authenticateSubdomain(String domain, String hostname);
-
-    /**
-     * Returns true if this outgoing session was established using server dialback.
-     *
-     * @return true if this outgoing session was established using server dialback.
-     */
-    boolean isUsingServerDialback();
 }

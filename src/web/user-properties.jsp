@@ -32,6 +32,7 @@
 <%@ page import="org.xmpp.packet.JID"%><%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -300,6 +301,25 @@
     <% } %>
 </tbody>
 </table>
+</div>
+
+<br>
+<div class="jive-table">
+	<table cellpadding="0" cellspacing="0" border="0" width="100%">
+		<thead>
+			<tr>
+				<th colspan="2"><fmt:message key="user.properties.additional_properties" /></th>
+			</tr>
+		</thead>
+		<tbody>
+			<% for(Map.Entry<String, String> properties : user.getProperties().entrySet()) { %>
+			<tr>
+				<td class="c1"><%= StringUtils.escapeHTMLTags(properties.getKey()) %>:</td>
+				<td><%= StringUtils.escapeHTMLTags(properties.getValue()) %></td>
+			</tr>
+			<% } %>
+		</tbody>
+	</table>
 </div>
 
 <br><br>

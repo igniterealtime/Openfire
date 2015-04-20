@@ -20,11 +20,9 @@
 
 package org.jivesoftware.openfire.starter;
 
-import java.io.*;
-import java.util.jar.Pack200;
-import java.util.jar.JarOutputStream;
+import org.jivesoftware.util.Log;
 
-import  org.jivesoftware.util.Log;
+import java.io.File;
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
@@ -86,9 +84,6 @@ public class ServerStarter {
                 libDir = new File(DEFAULT_LIB_DIR);
             }
 
-            // Unpack any pack files.
-            unpackArchives(libDir, true);
-
             String adminLibDirString = System.getProperty("openfireHome");
             if (adminLibDirString == null) {
                 adminLibDirString = DEFAULT_ADMIN_LIB_DIR;
@@ -97,10 +92,7 @@ public class ServerStarter {
                 adminLibDirString = adminLibDirString+"/plugins/admin/webapp/WEB-INF/lib";
             }
             File adminLibDir = new File(adminLibDirString);
-            if (adminLibDir.exists()) {
-                unpackArchives(adminLibDir, false);
-            }
-            else {
+            if (!adminLibDir.exists()) {
                 Log.warn("Admin Lib Directory " + adminLibDirString +
                     " does not exist. Web admin console may not work.");
             }
@@ -131,65 +123,5 @@ public class ServerStarter {
             }
         }
         return parent;
-    }
-
-    /**
-     * Converts any pack files in a directory into standard JAR files. Each
-     * pack file will be deleted after being converted to a JAR. If no
-     * pack files are found, this method does nothing.
-     *
-     * @param libDir the directory containing pack files.
-     * @param printStatus true if status ellipses should be printed when unpacking.
-     */
-    private void unpackArchives(File libDir, boolean printStatus) {
-        // Get a list of all packed files in the lib directory.
-        File [] packedFiles = libDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".pack");
-            }
-        });
-
-        if (packedFiles == null) {
-            // Do nothing since no .pack files were found
-            return;
-        }
-
-        // Unpack each.
-        boolean unpacked = false;
-        for (File packedFile : packedFiles) {
-            try {
-                String jarName = packedFile.getName().substring(0,
-                        packedFile.getName().length() - ".pack".length());
-                // Delete JAR file with same name if it exists (could be due to upgrade
-                // from old Openfire release).
-                File jarFile = new File(libDir, jarName);
-                if (jarFile.exists()) {
-                    jarFile.delete();
-                }
-                
-                InputStream in = new BufferedInputStream(new FileInputStream(packedFile));
-                JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
-                        new FileOutputStream(new File(libDir, jarName))));
-                Pack200.Unpacker unpacker = Pack200.newUnpacker();
-                // Print something so the user knows something is happening.
-                if (printStatus) {
-                    System.out.print(".");
-                }
-                // Call the unpacker
-                unpacker.unpack(in, out);
-
-                in.close();
-                out.close();
-                packedFile.delete();
-                unpacked = true;
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        // Print newline if unpacking happened.
-        if (unpacked && printStatus) {
-            System.out.println();
-        }
     }
 }

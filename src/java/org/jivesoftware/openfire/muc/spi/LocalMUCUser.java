@@ -368,10 +368,6 @@ public class LocalMUCUser implements MUCUser {
     }
 
     public void process(IQ packet) {
-        // Ignore IQs of type ERROR or RESULT sent to a room
-        if (IQ.Type.error == packet.getType() || IQ.Type.result == packet.getType()) {
-            return;
-        }
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
@@ -384,9 +380,13 @@ public class LocalMUCUser implements MUCUser {
         else {
             MUCRole role = roles.get(group);
             if (role == null) {
-                sendErrorPacket(packet, PacketError.Condition.not_authorized);
+                // If a non-occupant sends a disco to an address of the form <room@service/nick>,
+                // a MUC service MUST return a <bad-request/> error.
+                // http://xmpp.org/extensions/xep-0045.html#disco-occupant
+                sendErrorPacket(packet, PacketError.Condition.bad_request);
             }
-            else if (IQ.Type.result == packet.getType()) {
+            else if (IQ.Type.result == packet.getType()
+                    || IQ.Type.error == packet.getType()) {
                 // Only process IQ result packet if it's a private packet sent to another
                 // room occupant
                 if (packet.getTo().getResource() != null) {

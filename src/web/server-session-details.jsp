@@ -123,9 +123,12 @@
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
         <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
+        <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
+        <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
         <%  if (inSession.isSecure()) { %>
@@ -151,9 +154,12 @@
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
         <td><%= inSession.getStreamID()%></td>
+        <td><% if (inSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
+        <td><%= inSession.getCipherSuiteName() %></td>
         <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
         <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
+        <td align="center"><%= numFormatter.format(inSession.getNumServerPackets()) %></td>
     </tr>
     </table>
     </div>
@@ -169,8 +175,11 @@
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
         <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
+        <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
+        <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
@@ -197,8 +206,11 @@
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
         <td><%= outSession.getStreamID()%></td>
+        <td><% if (outSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
+        <td><%= outSession.getCipherSuiteName() %></td>
         <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
         <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
+        <td align="center"><%= numFormatter.format(outSession.getNumClientPackets()) %></td>
         <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
     </table>

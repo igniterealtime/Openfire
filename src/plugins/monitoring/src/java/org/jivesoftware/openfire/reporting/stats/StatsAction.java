@@ -179,12 +179,19 @@ public class StatsAction {
         format.setMaximumFractionDigits(0);
         if(lows.length > 0) {
             if(type == Statistic.Type.count) {
-                low = String.valueOf((int) lows[0]);
+                double result = 0;
+                for (int i = 0; i < lows.length; i++ ) {
+                        result += lows[i];
+                }
+                low = String.valueOf((int) result);
             }
             else {
-                double l = lows[0];
-                if(Double.isNaN(l)) {
-                    l = 0;
+                double l = 0;
+                for (int i = 0; i < lows.length; i++ ) {
+                        if(Double.isNaN(lows[i])) {
+                                lows[i] = 0;
+                        }
+                        l += lows[i];
                 }
                 low = format.format(l);
             }
@@ -195,12 +202,19 @@ public class StatsAction {
         String high;
         if(highs.length > 0) {
             if(type == Statistic.Type.count) {
-                high = String.valueOf((int) highs[0]);
+                double result = 0;
+                for (int i=0; i < highs.length; i++ ) {
+                        result += highs[i];
+                }
+                high = String.valueOf((int) result);
             }
             else {
-                double h= highs[0];
-                if(Double.isNaN(h)) {
-                    h = 0;
+                double h= 0;
+                for (int i = 0; i < highs.length; i++) {
+                        if(Double.isNaN(highs[i])) {
+                                highs[i] = 0;
+                        }
+                        h += highs[i];
                 }
                 high = format.format(h);
             }

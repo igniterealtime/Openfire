@@ -192,7 +192,7 @@ public class PubSubPersistenceManager {
             "UPDATE ofPubsubDefaultConf SET deliverPayloads=?, maxPayloadSize=?, persistItems=?, " +
             "maxItems=?, notifyConfigChanges=?, notifyDelete=?, notifyRetract=?, " +
             "presenceBased=?, sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?, " +
-            "accessModel=?, language=? replyPolicy=?, associationPolicy=?, maxLeafNodes=? " +
+            "accessModel=?, language=?, replyPolicy=?, associationPolicy=?, maxLeafNodes=? " +
             "WHERE serviceID=? AND leaf=?";
     private static final String ADD_DEFAULT_CONF =
             "INSERT INTO ofPubsubDefaultConf (serviceID, leaf, deliverPayloads, maxPayloadSize, " +
@@ -1626,9 +1626,6 @@ public class PubSubPersistenceManager {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-
-        if (results.size() == 0)
-			return Collections.emptyList();
 
         return results;
     }

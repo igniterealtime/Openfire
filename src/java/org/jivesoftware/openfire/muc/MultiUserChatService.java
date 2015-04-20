@@ -60,22 +60,37 @@ public interface MultiUserChatService extends Component {
      * Returns the collection of JIDs that are system administrators of the MUC service. A sysadmin has
      * the same permissions as a room owner. 
      * 
-     * @return a list of bare JIDs.
+     * @return a list of user/group JIDs.
      */
     Collection<JID> getSysadmins();
+    
+    /**
+     * Validates the given JID as a MUC service administrator. 
+     * 
+     * @return true if the given JID is a MUC service administrator
+     */
+    boolean isSysadmin(JID bareJID);
 
     /**
      * Adds a new system administrator of the MUC service. A sysadmin has the same permissions as 
      * a room owner. 
      * 
-     * @param userJID the bare JID of the new user to add as a system administrator.
+     * @param userJID the bare JID of the new user/group to add as a system administrator.
      */
     void addSysadmin(JID userJID);
 
     /**
+     * Adds multiple system administrators for the MUC service. A sysadmin has the same permissions as 
+     * a room owner. 
+     * 
+     * @param userJIDs the JIDs of the new users/groups to add as a system administrator.
+     */
+    void addSysadmins(Collection<JID> userJIDs);
+
+    /**
      * Removes a system administrator of the MUC service.
      * 
-     * @param userJID the bare JID of the user to remove from the list.
+     * @param userJID the bare JID of the user/group to remove from the list.
      */
     void removeSysadmin(JID userJID);
 
@@ -99,34 +114,34 @@ public interface MultiUserChatService extends Component {
      * Returns the collection of JIDs that are allowed to create MUC rooms. An empty list means that
      * anyone can create a room. 
      * 
-     * @return a list of bare JIDs.
+     * @return a list of user/group JIDs.
      */
     Collection<JID> getUsersAllowedToCreate();
 
     /**
-     * Adds a new user to the list of JIDs that are allowed to create MUC rooms.
+     * Adds a new user/group to the list of JIDs that are allowed to create MUC rooms.
      * 
-     * @param userJID the bare JID of the new user to add to list.
+     * @param userJID the JID of the new user/group to add to list.
      */
     void addUserAllowedToCreate(JID userJID);
     
     /**
-     * Adds new users to the list of JIDs that are allowed to create MUC rooms.
-     * @param userJIDs collection of bare JIDs if users to add to list.
+     * Adds new users/groups to the list of JIDs that are allowed to create MUC rooms.
+     * @param userJIDs collection of JIDs for users/groups to add to list.
      */
     void addUsersAllowedToCreate(Collection<JID> userJIDs);
 
     /**
-     * Removes a user from list of JIDs that are allowed to create MUC rooms.
+     * Removes a user/group from list of JIDs that are allowed to create MUC rooms.
      * 
-     * @param userJID the bare JID of the user to remove from the list.
+     * @param userJID the JID of the user/group to remove from the list.
      */
     void removeUserAllowedToCreate(JID userJID);
 
     /**
-     * Removes users from list of JIDs that are allowed to create MUC rooms.
+     * Removes users/groups from list of JIDs that are allowed to create MUC rooms.
      * 
-     * @param userJIDs collection of bare JIDs of users to remove from the list.
+     * @param userJIDs collection of JIDs of users/groups to remove from the list.
      */
     void removeUsersAllowedToCreate(Collection<JID> userJIDs);
 

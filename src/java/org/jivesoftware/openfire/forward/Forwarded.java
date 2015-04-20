@@ -19,7 +19,10 @@ public class Forwarded extends PacketExtension {
         for (Object element : copy.getElement().elements()) {
             if (element instanceof Element) {
                 Element el = (Element) element;
-                el.setQName(QName.get(el.getName(), "jabber:client"));
+                // Only set the "jabber:client" namespace if the namespace is empty (otherwise the resulting xml would look like <body xmlns=""/>)
+                if ("".equals(el.getNamespace().getStringValue())) {
+                    el.setQName(QName.get(el.getName(), "jabber:client"));
+                }
             }
         }
         element.add(copy.getElement());

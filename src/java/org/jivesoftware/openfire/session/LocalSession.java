@@ -17,9 +17,12 @@
 package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.net.ssl.SSLSession;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -28,6 +31,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.TLSStreamHandler;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -71,7 +76,7 @@ public abstract class LocalSession implements Session {
     /**
      * The connection that this session represents.
      */
-    protected Connection conn;
+    protected final Connection conn;
 
     protected SessionManager sessionManager;
 
@@ -97,6 +102,9 @@ public abstract class LocalSession implements Session {
      * @param streamID unique identifier for this session.
      */
     public LocalSession(String serverName, Connection connection, StreamID streamID) {
+        if (connection == null) {
+            throw new IllegalArgumentException("connection must not be null");
+        }
         conn = connection;
         this.streamID = streamID;
         this.serverName = serverName;
@@ -324,9 +332,7 @@ public abstract class LocalSession implements Session {
     abstract void deliver(Packet packet) throws UnauthorizedException;
 
     public void deliverRawText(String text) {
-        if (conn != null) {
-            conn.deliverRawText(text);
-        }
+        conn.deliverRawText(text);
     }
 
     /**
@@ -338,9 +344,7 @@ public abstract class LocalSession implements Session {
     public abstract String getAvailableStreamFeatures();
 
     public void close() {
-        if (conn != null) {
-            conn.close();
-        }
+        conn.close();
     }
 
     public boolean validate() {
@@ -349,6 +353,10 @@ public abstract class LocalSession implements Session {
 
     public boolean isSecure() {
         return conn.isSecure();
+    }
+
+    public Certificate[] getPeerCertificates() {
+        return conn.getPeerCertificates();
     }
 
     public boolean isClosed() {
@@ -386,5 +394,23 @@ public abstract class LocalSession implements Session {
      */
     public boolean isUsingSelfSignedCertificate() {
         return conn.isUsingSelfSignedCertificate();
+    }
+
+    /**
+     * Returns a String representing the Cipher Suite Name, or "NONE".
+     * @return String
+     */
+    public String getCipherSuiteName() {
+        SocketConnection s = (SocketConnection)getConnection();
+        if (s != null) {
+            TLSStreamHandler t = s.getTLSStreamHandler();
+            if (t != null) {
+                SSLSession ssl = t.getSSLSession();
+                if (ssl != null) {
+                    return ssl.getCipherSuite();
+                }
+            }
+        }
+        return "NONE";
     }
 }

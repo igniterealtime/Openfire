@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin>
+    <class>org.jivesoftware.openfire.plugin.MUCServicePlugin</class>
+    <name>MUC Service</name>
+    <description>MUC administration over REST Interface</description>
+    <author>Roman Soldatow</author>
+	<version>0.2.3</version>
+    <date>10.1.2014</date>
+    <minServerVersion>3.9.1</minServerVersion>
+</plugin>

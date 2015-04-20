@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.mina.common.IdleStatus;
-import org.apache.mina.common.IoHandlerAdapter;
-import org.apache.mina.common.IoSession;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
+
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -57,7 +59,16 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     protected static final String CONNECTION = "CONNECTION";
 
     protected String serverName;
-    private static Map<Integer, XMPPPacketReader> parsers = new ConcurrentHashMap<Integer, XMPPPacketReader>();
+    private static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
+            {
+               @Override
+               protected XMPPPacketReader initialValue()
+               {
+                  final XMPPPacketReader parser = new XMPPPacketReader();
+                  parser.setXPPFactory( factory );
+                  return parser;
+               }
+            };
     /**
      * Reuse the same factory for all the connections.
      */
@@ -92,7 +103,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // removing connections without warning.
         final int idleTime = getMaxIdleTime() / 2;
         if (idleTime > 0) {
-            session.setIdleTime(IdleStatus.READER_IDLE, idleTime);
+            session.getConfig().setIdleTime(IdleStatus.READER_IDLE, idleTime);
         }
     }
 
@@ -137,6 +148,9 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         if (cause instanceof IOException) {
             // TODO Verify if there were packets pending to be sent and decide what to do with them
             Log.info("ConnectionHandler reports IOException for session: " + session, cause);
+            if (cause instanceof SSLHandshakeException) {
+                session.close(true);
+            }
         }
         else if (cause instanceof ProtocolDecoderException) {
             Log.warn("Closing session due to exception: " + session, cause);
@@ -148,10 +162,10 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             } else {
             	error = new StreamError(StreamError.Condition.internal_server_error);
             }
-            
+
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
             connection.deliverRawText(error.toXML());
-            session.close();
+            session.close(true);
         }
         else {
             Log.error("ConnectionHandler reports unexpected exception for session: " + session, cause);
@@ -166,13 +180,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // to be a parser for each running thread. Each Filter will be executed
         // by the Executor placed as the first Filter. So we can have a parser associated
         // to each Thread
-        int hashCode = Thread.currentThread().hashCode();
-        XMPPPacketReader parser = parsers.get(hashCode);
-        if (parser == null) {
-            parser = new XMPPPacketReader();
-            parser.setXPPFactory(factory);
-            parsers.put(hashCode, parser);
-        }
+        final XMPPPacketReader parser = PARSER_CACHE.get();
         // Update counter of read btyes
         updateReadBytesCounter(session);
         //System.out.println("RCVD: " + message);

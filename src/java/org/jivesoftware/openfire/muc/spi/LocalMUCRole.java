@@ -173,8 +173,8 @@ public class LocalMUCRole implements MUCRole {
                 throw new NotAllowedException();
             }
         }
-        // A moderator cannot be kicked from a room
-        if (MUCRole.Role.moderator == role && MUCRole.Role.none == newRole) {
+        // A moderator cannot be kicked from a room unless there has also been an affiliation change
+        if (MUCRole.Role.moderator == role && MUCRole.Role.none == newRole && MUCRole.Affiliation.none != affiliation) {
             throw new NotAllowedException();
         }
         // TODO A moderator MUST NOT be able to revoke voice from a user whose affiliation is at or

@@ -20,9 +20,11 @@
 package org.jivesoftware.util;
 
 import java.io.UnsupportedEncodingException;
+import java.net.IDN;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.BreakIterator;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
+import org.apache.commons.codec.binary.Base32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +55,10 @@ public class StringUtils {
     private static final char[] AMP_ENCODE = "&amp;".toCharArray();
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
-
+    
+    // docs indicate this class is thread safe
+    private static Base32 Base32Hex = new Base32(true);
+    
     private StringUtils() {
         // Not instantiable.
     }
@@ -568,6 +574,58 @@ public class StringUtils {
     }
 
     /**
+     * Encodes a String as a base32 String using the base32hex profile.
+     *
+     * @param data a String to encode.
+     * @return a base32 encoded String.
+     */
+    public static String encodeBase32(String data) {
+        byte[] bytes = null;
+        try {
+            bytes = data == null ? null : data.getBytes("UTF-8");
+        }
+        catch (UnsupportedEncodingException uee) {
+            Log.error(uee.getMessage(), uee);
+        }
+        return encodeBase32(bytes);
+    }
+
+    /**
+     * Encodes a byte array into a base32 String using the base32hex profile.
+     * Implementation is case-insensitive and returns encoded strings in lower case.
+     *
+     * @param data a byte array to encode.
+     * @return a base32 encode String.
+     */
+    public static String encodeBase32(byte[] data) {
+        return data == null ? null : Base32Hex.encodeAsString(data).toLowerCase();
+    }
+
+    /**
+     * Decodes a base32 String using the base32hex profile. Implementation
+     * is case-insensitive and converts the given string to upper case before
+     * decoding.
+     *
+     * @param data a base32 encoded String to decode.
+     * @return the decoded String.
+     */
+    public static byte[] decodeBase32(String data) {
+        return data == null ? null : Base32Hex.decode(data.toUpperCase());
+    }
+    
+    /**
+     * Validates a string to ensure all its bytes are in the Base32 alphabet.
+     * Implementation is case-insensitive and converts the given string to 
+     * upper case before evaluating.
+     * 
+     * @param data the string to test
+     * @return True if the given string can be decoded using Base32
+     */
+    public static boolean isBase32(String data) {
+    	return data == null ? false : Base32Hex.isInAlphabet(data.toUpperCase());
+    }
+
+    /**
      * Converts a line of text into an array of lower case words using a
      * BreakIterator.wordInstance().<p>
      *
@@ -1069,6 +1127,25 @@ public class StringUtils {
     }
 
     /**
+     * Returns true if the given string is in the given array.
+     * 
+     * @param array
+     * @param item
+     * @return true if the array contains the item
+     */
+    public static boolean contains(String[] array, String item) {
+        if (array == null || array.length == 0 || item == null) {
+            return false;
+        }
+        for (String anArray : array) {
+            if (item.equals(anArray)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Abbreviates a string to a specified length and then adds an ellipsis
      * if the input is greater than the maxWidth. Example input:
      * <pre>
@@ -1116,6 +1193,28 @@ public class StringUtils {
         catch (AddressException e) {
             return false;
         }
+    }
+    
+    /**
+     * Returns a valid domain name, possibly as an ACE-encoded IDN 
+     * (per <a href="http://www.ietf.org/rfc/rfc3490.txt">RFC 3490</a>).
+     * 
+     * @param domain Proposed domain name
+     * @return The validated domain name, possibly ACE-encoded
+     * @throws IllegalArgumentException The given domain name is not valid
+     */
+    public static String validateDomainName(String domain) {
+    	if (domain == null || domain.trim().length() == 0) {
+    		throw new IllegalArgumentException("Domain name cannot be null or empty");
+    	}
+    	String result = IDN.toASCII(domain);
+		if (result.equals(domain)) {
+			// no conversion; validate again via USE_STD3_ASCII_RULES
+			IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
+		} else {
+    		Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
+		}
+    	return result;
     }
     
     /**

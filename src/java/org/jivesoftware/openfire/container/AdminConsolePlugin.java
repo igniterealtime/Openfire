@@ -20,41 +20,28 @@
 package org.jivesoftware.openfire.container;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.management.remote.JMXAuthenticator;
-import javax.management.remote.JMXPrincipal;
-import javax.management.remote.JMXServiceURL;
-import javax.security.auth.Subject;
-
-import org.eclipse.jetty.jmx.ConnectorServer;
-import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.spdy.server.http.HTTPSPDYServerConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -110,10 +97,13 @@ public class AdminConsolePlugin implements Plugin {
         certificateListener = new CertificateListener();
         CertificateManager.addListener(certificateListener);
 
+        // the number of threads allocated to each connector/port
+        int serverThreads = JiveGlobals.getXMLProperty("adminConsole.serverThreads", 2);
+
         adminPort = JiveGlobals.getXMLProperty("adminConsole.port", 9090);
         adminSecurePort = JiveGlobals.getXMLProperty("adminConsole.securePort", 9091);
 
-        final QueuedThreadPool tp = new QueuedThreadPool(254);
+        final QueuedThreadPool tp = new QueuedThreadPool();
         tp.setName("Jetty-QTP-AdminConsole");
 
         adminServer = new Server(tp);
@@ -133,7 +123,9 @@ public class AdminConsolePlugin implements Plugin {
 
         	// Do not send Jetty info in HTTP headers
 			httpConfig.setSendServerVersion( false );
-            httpConnector = new ServerConnector(adminServer, new HttpConnectionFactory(httpConfig));
+            httpConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
+            		new HttpConnectionFactory(httpConfig));
+
             // Listen on a specific network interface if it has been set.
             String bindInterface = getBindInterface();
             httpConnector.setHost(bindInterface);
@@ -152,6 +144,7 @@ public class AdminConsolePlugin implements Plugin {
                 }
 
                 final SslContextFactory sslContextFactory = new SslContextFactory();
+                sslContextFactory.addExcludeProtocols("SSLv3");
                 sslContextFactory.setTrustStorePassword(SSLConfig.gets2sTrustPassword());
                 sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
                 sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
@@ -165,7 +158,8 @@ public class AdminConsolePlugin implements Plugin {
 					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
 
 				} else {
-					HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+					HttpConfiguration httpsConfig = new HttpConfiguration();
+					httpsConfig.setSendServerVersion( false );
 					httpsConfig.setSecureScheme("https");
 					httpsConfig.setSecurePort(adminSecurePort);
 					httpsConfig.addCustomizer(new SecureRequestCustomizer());
@@ -173,7 +167,8 @@ public class AdminConsolePlugin implements Plugin {
 					HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(httpsConfig);
 					SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString());
 
-                	httpsConnector = new ServerConnector(adminServer, sslConnectionFactory, httpConnectionFactory);
+                	httpsConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
+                			sslConnectionFactory, httpConnectionFactory);
 				}
 
                 String bindInterface = getBindInterface();
@@ -204,7 +199,7 @@ public class AdminConsolePlugin implements Plugin {
             adminServer.start();
         }
         catch (Exception e) {
-            Log.error("Could not start admin conosle server", e);
+            Log.error("Could not start admin console server", e);
         }
 
         // Log the ports that the admin server is listening on.

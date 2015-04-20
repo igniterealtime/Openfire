@@ -1,6 +1,8 @@
 Openfire
 ========
 
+[![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)  [![Project Stats](https://www.openhub.net/p/Openfire/widgets/project_thin_badge.gif)](https://www.openhub.net/p/Openfire)
+
 About
 -----
 
@@ -18,7 +20,7 @@ users should:
 1. Create a forums account (only e-mail is a requirement, you can skip all the other fields).
 2. Login to a forum account
 3. Press New in your toolbar and choose Discussion
-4. Choose the [Openfire Dev forum](http://community.igniterealtime.org/community/developers/openfire) of Openfire and add the tag 'bug_report' to your new post
+4. Choose the [Openfire Dev forum](http://community.igniterealtime.org/community/developers/openfire_dev) of Openfire and add the tag 'bug_report' to your new post
 
 Please search for your issues in the bug tracker before reporting.
 
@@ -27,8 +29,6 @@ Resources
 
 - Bug Tracker: http://issues.igniterealtime.org/browse/OF
 - Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
-
-[![Build Status](https://travis-ci.org/igniterealtime/Openfire.svg?branch=master)](https://travis-ci.org/igniterealtime/Openfire)
 
 Ignite Realtime
 ===============

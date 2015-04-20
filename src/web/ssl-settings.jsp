@@ -28,6 +28,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -210,32 +211,12 @@
 <body>
 
 <%  if (success) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.settings.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } else if (ParamUtils.getBooleanParameter(request,"deletesuccess")) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.settings.uninstalled" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
+    <admin:infobox type="success"><fmt:message key="ssl.settings.update" /></admin:infobox>
 <%  } %>
+
+<c:if test="${param.deletesuccess}">
+    <admin:infobox type="success"><fmt:message key="ssl.settings.uninstalled" /></admin:infobox>
+</c:if>
 
 <p>
 <fmt:message key="ssl.settings.client.info" />

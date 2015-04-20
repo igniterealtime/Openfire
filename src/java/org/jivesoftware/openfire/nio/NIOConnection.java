@@ -19,6 +19,10 @@
 
 package org.jivesoftware.openfire.nio;
 
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -27,6 +31,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -34,11 +39,11 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
-import org.apache.mina.common.ByteBuffer;
-import org.apache.mina.common.IoFilterChain;
-import org.apache.mina.common.IoSession;
-import org.apache.mina.filter.CompressionFilter;
-import org.apache.mina.filter.SSLFilter;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.filterchain.IoFilterChain;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.compression.CompressionFilter;
+import org.apache.mina.filter.ssl.SslFilter;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
@@ -49,6 +54,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
 import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
@@ -108,7 +114,17 @@ public class NIOConnection implements Connection {
      * closed.
      */
     private boolean closed;
-
+    
+    /**
+     * Lock used to ensure the integrity of the underlying IoSession (refer to
+     * https://issues.apache.org/jira/browse/DIRMINA-653 for details)
+     * <p>
+     * This lock can be removed once Openfire guarantees a stable delivery
+     * order, in which case {@link #deliver(Packet)} won't be called
+     * concurrently any more, which made this lock necessary in the first place.
+     * </p>
+     */
+    private final ReentrantLock ioSessionLock = new ReentrantLock(true);
 
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
@@ -155,7 +171,7 @@ public class NIOConnection implements Connection {
     }
 
     public Certificate[] getLocalCertificates() {
-        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
+        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
         if (sslSession != null) {
             return sslSession.getLocalCertificates();
         }
@@ -164,7 +180,7 @@ public class NIOConnection implements Connection {
 
     public Certificate[] getPeerCertificates() {
         try {
-            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SSLFilter.SSL_SESSION);
+            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
             if (sslSession != null) {
                 return sslSession.getPeerCertificates();
             }
@@ -187,25 +203,25 @@ public class NIOConnection implements Connection {
     }
 
     public void close() {
-        boolean closedSuccessfully = false;
-        synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
-                } catch (Exception e) {
-                    // Ignore
-                }
-                if (session != null) {
-                    session.setStatus(Session.STATUS_CLOSED);
-                }
-                ioSession.close();
-                closed = true;
-                closedSuccessfully = true;
+    	synchronized(this) {
+    		if (isClosed()) {
+    			return;
+    		}
+            try {
+                deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
+            } catch (Exception e) {
+                // Ignore
             }
-        }
-        if (closedSuccessfully) {
-            notifyCloseListeners();
-        }
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
+            }
+            closed = true;
+    	}
+    	
+    	// OF-881: Notify any close listeners after the synchronized block has completed. 
+    	notifyCloseListeners(); // clean up session, etc.
+    	
+        ioSession.close(false); // async via MINA
     }
 
     public void systemShutdown() {
@@ -232,26 +248,30 @@ public class NIOConnection implements Connection {
         session = owner;
     }
 
-    public boolean isClosed() {
-        if (session == null) {
-            return closed;
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+    public synchronized boolean isClosed() {
+        return closed;
     }
 
     public boolean isSecure() {
-        return ioSession.getFilterChain().contains("tls");
+        return ioSession.getFilterChain().contains(TLS_FILTER_NAME);
     }
 
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+        	// OF-857: Do not allow the backup deliverer to recurse
+        	if (backupDeliverer == null) {
+        		Log.error("Failed to deliver packet: " + packet.toXML());
+        		throw new IllegalStateException("Connection closed");
+        	}
+        	// attempt to deliver via backup only once
+        	PacketDeliverer backup = backupDeliverer;
+            backupDeliverer = null;
+            backup.deliver(packet);
         }
         else {
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
-            buffer.setAutoExpand(true);
-
             boolean errorDelivering = false;
+            IoBuffer buffer = IoBuffer.allocate(4096);
+            buffer.setAutoExpand(true);
             try {
             	// OF-464: if the connection has been dropped, fail over to backupDeliverer (offline)
             	if (!ioSession.isConnected()) {
@@ -265,7 +285,13 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                ioSession.write(buffer);
+                
+                ioSessionLock.lock();
+                try {
+                    ioSession.write(buffer);
+                } finally {
+                    ioSessionLock.unlock();
+                }
             }
             catch (Exception e) {
                 Log.debug("Error delivering packet:\n" + packet, e);
@@ -290,10 +316,9 @@ public class NIOConnection implements Connection {
 
     private void deliverRawText(String text, boolean asynchronous) {
         if (!isClosed()) {
-            ByteBuffer buffer = ByteBuffer.allocate(text.length());
-            buffer.setAutoExpand(true);
-
             boolean errorDelivering = false;
+            IoBuffer buffer = IoBuffer.allocate(text.length());
+            buffer.setAutoExpand(true);
             try {
                 //Charset charset = Charset.forName(CHARSET);
                 //buffer.putString(text, charset.newEncoder());
@@ -302,26 +327,33 @@ public class NIOConnection implements Connection {
                     buffer.put((byte) '\0');
                 }
                 buffer.flip();
-                if (asynchronous) {
-                	// OF-464: handle dropped connections (no backupDeliverer in this case?)
-                	if (!ioSession.isConnected()) {
-                		throw new IOException("Connection reset/closed by peer");
-                	}
-                    ioSession.write(buffer);
-                }
-                else {
-                    // Send stanza and wait for ACK (using a 2 seconds default timeout)
-                    boolean ok =
-                            ioSession.write(buffer).join(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
-                    if (!ok) {
-                        Log.warn("No ACK was received when sending stanza to: " + this.toString());
+                ioSessionLock.lock();
+                try {
+                    if (asynchronous) {
+                        // OF-464: handle dropped connections (no backupDeliverer in this case?)
+                        if (!ioSession.isConnected()) {
+                            throw new IOException("Connection reset/closed by peer");
+                        }
+                        ioSession.write(buffer);
                     }
+                    else {
+                        // Send stanza and wait for ACK (using a 2 seconds default timeout)
+                        boolean ok =
+                                ioSession.write(buffer).awaitUninterruptibly(JiveGlobals.getIntProperty("connection.ack.timeout", 2000));
+                        if (!ok) {
+                            Log.warn("No ACK was received when sending stanza to: " + this.toString());
+                        }
+                    }
+                } 
+                finally {
+                    ioSessionLock.unlock();
                 }
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text:\n" + text, e);
                 errorDelivering = true;
             }
+
             // Close the connection if delivering text fails and we are already not closing the connection
             if (errorDelivering && asynchronous) {
                 close();
@@ -355,13 +387,15 @@ public class NIOConnection implements Connection {
             }
         }
 
-        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+        String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
         SSLContext tlsContext = SSLContext.getInstance(algorithm);
 
         tlsContext.init(km, tm, null);
 
-        SSLFilter filter = new SSLFilter(tlsContext);
+        SslFilter filter = new SslFilter(tlsContext);
         filter.setUseClientMode(clientMode);
+        // Disable SSLv3 due to POODLE vulnerability.
+        filter.setEnabledProtocols(new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"});
         if (authentication == ClientAuth.needed) {
             filter.setNeedClientAuth(true);
         }
@@ -371,11 +405,9 @@ public class NIOConnection implements Connection {
             // good
             filter.setWantClientAuth(true);
         }
-        // TODO Temporary workaround (placing SSLFilter before ExecutorFilter) to avoid deadlock. Waiting for
-        // MINA devs feedback
-        ioSession.getFilterChain().addBefore("org.apache.mina.common.ExecutorThreadModel", "tls", filter);
-        //ioSession.getFilterChain().addAfter("org.apache.mina.common.ExecutorThreadModel", "tls", filter);
-        ioSession.setAttribute(SSLFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
+        ioSession.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
+        ioSession.setAttribute(SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
+
         if (!clientMode) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -384,15 +416,15 @@ public class NIOConnection implements Connection {
 
     public void addCompression() {
         IoFilterChain chain = ioSession.getFilterChain();
-        String baseFilter = "org.apache.mina.common.ExecutorThreadModel";
-        if (chain.contains("tls")) {
-            baseFilter = "tls";
+        String baseFilter = EXECUTOR_FILTER_NAME;
+        if (chain.contains(TLS_FILTER_NAME)) {
+            baseFilter = TLS_FILTER_NAME;
         }
-        chain.addAfter(baseFilter, "compression", new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
+        chain.addAfter(baseFilter, COMPRESSION_FILTER_NAME, new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
     }
 
     public void startCompression() {
-        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get("compression");
+        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get(COMPRESSION_FILTER_NAME);
         ioFilter.setCompressOutbound(true);
     }
 
@@ -426,7 +458,7 @@ public class NIOConnection implements Connection {
     }
 
     public boolean isCompressed() {
-        return ioSession.getFilterChain().contains("compression");
+        return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
     }
 
     public CompressionPolicy getCompressionPolicy() {

@@ -9,18 +9,12 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
-
-<%--
-  Created by IntelliJ IDEA.
-  User: gato
-  Date: Nov 6, 2006
-  Time: 3:15:13 PM
-  To change this template use File | Settings | File Templates.
---%>
 
 <% // Get parameters:
     boolean save = ParamUtils.getParameter(request, "save") != null;
@@ -98,7 +92,7 @@
                 SSLConfig.saveStores();
                 // Log the event
                 webManager.logEvent("generated SSL signing request", null);
-                response.sendRedirect("ssl-certificates.jsp?issuerUpdated=true");
+                response.sendRedirect("security-keystore.jsp");
                 return;
             }
             catch (Exception e) {
@@ -114,76 +108,41 @@
     <title>
         <fmt:message key="ssl.signing-request.title"/>
     </title>
-    <meta name="pageID" content="ssl-certificates"/>
+    <meta name="pageID" content="security-keystore"/>
 </head>
 <body>
-<%  if (errors.containsKey("name")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_name" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } else if (errors.containsKey("organizationalUnit")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_ou" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } else if (errors.containsKey("organization")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_o" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } else if (errors.containsKey("city")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_city" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } else if (errors.containsKey("state")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_state" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } else if (errors.containsKey("countryCode")) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="ssl.signing-request.enter_country" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-<%  } %>
+
+<% pageContext.setAttribute("errors", errors); %>
+<c:forEach var="err" items="${errors}">
+    <admin:infobox type="error">
+        <c:choose>
+            <c:when test="${err.key eq 'name'}">
+                <fmt:message key="ssl.signing-request.enter_name" />
+            </c:when>
+            <c:when test="${err.key eq 'organizationalUnit'}">
+                <fmt:message key="ssl.signing-request.enter_ou" />
+            </c:when>
+            <c:when test="${err.key eq 'organization'}">
+                <fmt:message key="ssl.signing-request.enter_o" />
+            </c:when>
+            <c:when test="${err.key eq 'city'}">
+                <fmt:message key="ssl.signing-request.enter_city" />
+            </c:when>
+            <c:when test="${err.key eq 'state'}">
+                <fmt:message key="ssl.signing-request.enter_state" />
+            </c:when>
+            <c:when test="${err.key eq 'countryCode'}">
+                <fmt:message key="ssl.signing-request.enter_country" />
+            </c:when>
+            <c:otherwise>
+                <c:out value="${err.key}"/>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:forEach>
 
 <!-- BEGIN 'Issuer information form' -->
 <form action="ssl-signing-request.jsp" method="post">

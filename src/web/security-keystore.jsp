@@ -29,7 +29,6 @@
     boolean generate = ParamUtils.getBooleanParameter(request, "generate");
     boolean delete = ParamUtils.getBooleanParameter(request, "delete");
     boolean importReply = ParamUtils.getBooleanParameter(request, "importReply");
-    String type = ParamUtils.getParameter(request, "type");
     String alias = ParamUtils.getParameter(request, "alias");
     Map<String, String> errors = new HashMap<String, String>();
     KeyStore keyStore = null;
@@ -71,17 +70,9 @@
         }
     }
     if (delete) {
-        if (type != null && alias != null) {
+        if (alias != null) {
             try {
-                if (type.equals("server")) {
-                    CertificateManager.deleteCertificate(keyStore, alias);
-                } else if (type.equals("s2s")) {
-                    CertificateManager.deleteCertificate(s2sTrustStore, alias);
-                } else if (type.equals("c2s")) {
-                    CertificateManager.deleteCertificate(c2sTrustStore, alias);
-                } else {
-                    throw new Exception("Unknown certificate type: " + type);
-                }
+                CertificateManager.deleteCertificate(keyStore, alias);
                 SSLConfig.saveStores();
                 // Log the event
                 webManager.logEvent("deleted SSL cert with alias " + alias, null);
@@ -97,7 +88,7 @@
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
             try {
-                CertificateManager.installReply(SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore(),
+                CertificateManager.installReply(keyStore, s2sTrustStore,
                         SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(reply.getBytes()), true, true);
                 SSLConfig.saveStores();
                 // Log the event
@@ -151,7 +142,7 @@
 </c:forEach>
 <%
     if (keyStore != null) {
-        if (keyStore.size() > 1 && !CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+        if (keyStore.size() > 1 && !CertificateManager.isRSACertificate(keyStore, XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
 %>
 <admin:infobox type="warning"><fmt:message key="index.certificate-warning"/></admin:infobox>
 <%  } else if (keyStore.size() < 2) { %>
@@ -294,7 +285,7 @@
             <c:out value="${certificate.publicKey.algorithm}"/>
         </td>
         <td width="1" align="center">
-            <a href="security-keystore.jsp?alias=${alias}&type=server&delete=true"
+            <a href="security-keystore.jsp?alias=${alias}&delete=true"
                title="<fmt:message key="global.click_delete"/>"
                onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                     ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -336,8 +327,8 @@
     <% if (offerUpdateIssuer) { %>
     <p>
         <fmt:message key="ssl.signing-request.offer-issuer-information">
-            <fmt:param value="<%= "<a href='ssl-signing-request.jsp'>" %>"/>
-            <fmt:param value="<%= "</a>" %>"/>
+            <fmt:param value="<a href='ssl-signing-request.jsp'>"/>
+            <fmt:param value="</a>"/>
         </fmt:message>
     </p>
     <% } %>

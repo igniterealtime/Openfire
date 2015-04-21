@@ -162,58 +162,7 @@ hr {
 	
 	<div id="pageBody">
 
-<h2>3.10.0 Release Candidate -- <span style="font-weight: normal;">April 10, 2015</span></h2>
-
-
-<h2>        Bug
-</h2>
-<ul>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-405'>OF-405</a>] -         Openfire fails to verify chained certificates
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-474'>OF-474</a>] -         OpenFire still provides entry forms for already-registered room users
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-822'>OF-822</a>] -         If a non-occupant sends a request to an occupant, a MUC service MUST return a &lt;bad-request/&gt; error.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-866'>OF-866</a>] -         Unexpected &quot;session not found&quot; errors under load
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-869'>OF-869</a>] -         Update Jetty to 9.2.x version
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-870'>OF-870</a>] -         stanza with multiple &quot;to&quot; attributes generated after restart
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-874'>OF-874</a>] -         disco#items request SHOULD return connected or available resources
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-875'>OF-875</a>] -         Roster requests to bare JID of the user are not responded
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-876'>OF-876</a>] -         IQRosterHandler does not respect error cases in RFC 6121 § 2.3.3.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-877'>OF-877</a>] -         BOSH connector does not properly restart after a configuration change
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-878'>OF-878</a>] -         NPE in MINAStatCollector
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-884'>OF-884</a>] -         Auditor uses wrong hour for file rotation
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-885'>OF-885</a>] -         Use non-blocking, async API for BOSH servlet
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-886'>OF-886</a>] -         Openfire fails to parse CDATA when it ends with sequence ]]]&gt;
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-888'>OF-888</a>] -         s2s locks up with gmail
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-893'>OF-893</a>] -         Mutual Authentication Broken for BOSH
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-894'>OF-894</a>] -         Openfire tries to close a closing session over and over.
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-895'>OF-895</a>] -         Update postgresql driver to support PostgreSQL 9.4
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-896'>OF-896</a>] -         Default client compression inconsistency
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-897'>OF-897</a>] -         GZipFilter fails on Async BOSH servlet
-</li>
-<li>[<a href='https://igniterealtime.org/issues/browse/OF-901'>OF-901</a>] -         Update bundled JREto 1.7.0_76
-</li>
-
-</ul>
-
-<h2>3.10.0 Beta -- <span style="font-weight: normal;">January 20, 2015</span></h2>
+<h2>3.10.0 -- <span style="font-weight: normal;">April 20, 2015</span></h2>
 
 <h2>        Bug
 </h2>
@@ -222,9 +171,13 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-397'>OF-397</a>] -         Do not deliver offline messages to clients with negative priority
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-405'>OF-405</a>] -         Openfire fails to verify chained certificates
+</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-444'>OF-444</a>] -         Jingle Nodes plugin should use lowercase in i18n file&#39;s name
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-460'>OF-460</a>] -         Debug log is not saving its state between restarts
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-474'>OF-474</a>] -         OpenFire still provides entry forms for already-registered room users
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-560'>OF-560</a>] -         Restore or drop support for Pack200 compression
 </li>
@@ -274,6 +227,8 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-819'>OF-819</a>] -         IQs  (e.g. XMPP Pings) of type error get falsely routed to IQ.createResult() which results in an Exception and connection termination
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-822'>OF-822</a>] -         If a non-occupant sends a request to an occupant, a MUC service MUST return a &lt;bad-request/&gt; error.
+</li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-823'>OF-823</a>] -         Numeric overflow in MUCPersistenceManager when loading history older than 24 days.
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-830'>OF-830</a>] -         LDAP shared groups disappear after some time
@@ -306,6 +261,40 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-864'>OF-864</a>] -         Cleanup routes from defunct cluster member servers
 </li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-866'>OF-866</a>] -         Unexpected &quot;session not found&quot; errors under load
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-870'>OF-870</a>] -         stanza with multiple &quot;to&quot; attributes generated after restart
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-874'>OF-874</a>] -         disco#items request SHOULD return connected or available resources
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-875'>OF-875</a>] -         Roster requests to bare JID of the user are not responded
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-876'>OF-876</a>] -         IQRosterHandler does not respect error cases in RFC 6121 § 2.3.3.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-877'>OF-877</a>] -         BOSH connector does not properly restart after a configuration change
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-878'>OF-878</a>] -         NPE in MINAStatCollector
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-881'>OF-881</a>] -         NIOConnection Thread Deadlock when two clients in each others roster simultaneously disconnect
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-884'>OF-884</a>] -         Auditor uses wrong hour for file rotation
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-885'>OF-885</a>] -         Use non-blocking, async API for BOSH servlet
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-886'>OF-886</a>] -         Openfire fails to parse CDATA when it ends with sequence ]]]&gt;
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-888'>OF-888</a>] -         s2s locks up with gmail
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-890'>OF-890</a>] -         BOSH client connections sometimes failing
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-894'>OF-894</a>] -         Openfire tries to close a closing session over and over.
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-895'>OF-895</a>] -         Update postgresql driver to support PostgreSQL 9.4
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-896'>OF-896</a>] -         Default client compression inconsistency
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-897'>OF-897</a>] -         GZipFilter fails on Async BOSH servlet
+</li>
 </ul>
         
 <h2>        Improvement
@@ -332,6 +321,10 @@ hr {
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-847'>OF-847</a>] -         Upgrade bouncycastle from 1.50 to 1.51
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-850'>OF-850</a>] -         Improve initialization state for JiveGlobals
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-869'>OF-869</a>] -         Update Jetty to 9.2.x version
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-893'>OF-893</a>] -         Mutual Authentication Broken for BOSH
 </li>
 </ul>
     
@@ -360,6 +353,8 @@ hr {
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-709'>OF-709</a>] -         Update Jetty from 7.4 to 9.1
 </li>
 <li>[<a href='https://igniterealtime.org/issues/browse/OF-831'>OF-831</a>] -         A typo on Database Settings page during setup
+</li>
+<li>[<a href='https://igniterealtime.org/issues/browse/OF-901'>OF-901</a>] -         Update bundled JRE to 1.7.0_76
 </li>
 </ul>
 

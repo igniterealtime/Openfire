@@ -38,13 +38,19 @@
     JingleNodesPlugin plugin = (JingleNodesPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("jinglenodes");
 
     if (update) {
-        String overrideIP = request.getParameter("overrideip");
+        JiveGlobals.setProperty(JingleNodesPlugin.JN_PUBLIC_IP_PROPERTY, request.getParameter("publicip"));
+        JiveGlobals.setProperty(JingleNodesPlugin.JN_MIN_PORT_PROPERTY, request.getParameter("minport"));
+        JiveGlobals.setProperty(JingleNodesPlugin.JN_MAX_PORT_PROPERTY, request.getParameter("maxport"));
+        JiveGlobals.setProperty(JingleNodesPlugin.JN_TEST_STUN_SERVER_PROPERTY, request.getParameter("teststunserver"));
+        JiveGlobals.setProperty(JingleNodesPlugin.JN_TEST_STUN_PORT_PROPERTY, request.getParameter("teststunport"));
+
+        String overrideIP = request.getParameter("localip");
         if (overrideIP != null) {
             overrideIP = overrideIP.trim();
             try {
                 InetAddress.getByName(overrideIP);
                 LocalIPResolver.setOverrideIp(overrideIP);
-                JiveGlobals.setProperty(JingleNodesPlugin.JN_PUB_IP_PROPERTY, overrideIP);
+                JiveGlobals.setProperty(JingleNodesPlugin.JN_LOCAL_IP_PROPERTY, overrideIP);
                 plugin.verifyNetwork();
             } catch (Exception e) {
                 errorMessage = LocaleUtils.getLocalizedString("jn.settings.invalid.publicip", "jinglenodes");
@@ -99,11 +105,42 @@
                 </td>
             </tr>
             <tr>
-                <td><label class="jive-label"><fmt:message key="jn.settings.overrideip"/>:</label><br>
+                <td><label class="jive-label"><fmt:message key="jn.settings.localip"/>:</label><br>
                 </td>
                 <td align="left">
-                    <input name="overrideip" type="text" maxlength="15" size="15"
+                    <input name="localip" type="text" maxlength="15" size="15"
                            value="<%=LocalIPResolver.getLocalIP()%>"/>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.settings.publicip"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="publicip" type="text" maxlength="15" size="15"
+                           value="<%=JiveGlobals.getProperty(plugin.JN_PUBLIC_IP_PROPERTY, "")%>"/>
+                    <i><fmt:message key="jn.settings.publicip.help"/></i>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.settings.portrange"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="minport" type="text" maxlength="5" size="6"
+                           value="<%=plugin.getMinPort()%>"/> - 
+                    <input name="maxport" type="text" maxlength="5" size="6"
+                           value="<%=plugin.getMaxPort()%>"/>
+                    <i><fmt:message key="jn.settings.portrange.help"/></i>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="jive-label"><fmt:message key="jn.settings.teststunserver"/>:</label><br>
+                </td>
+                <td align="left">
+                    <input name="teststunserver" type="text" maxlength="30" size="15"
+                           value="<%=plugin.getTestSTUNServer()%>"/>:
+                    <input name="teststunport" type="text" maxlength="5" size="5"
+                           value="<%=plugin.getTestSTUNPort()%>"/>
+                    <i><fmt:message key="jn.settings.teststunserver.help"/></i>
                 </td>
             </tr>
             <tr>

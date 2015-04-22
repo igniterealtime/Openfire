@@ -43,7 +43,13 @@ public class JingleNodesPlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(JingleNodesPlugin.class);
 
-    public static final String JN_PUB_IP_PROPERTY = "jinglenodes.publicip";
+    public static final String JN_LOCAL_IP_PROPERTY = "jinglenodes.localIP";
+    public static final String JN_PUBLIC_IP_PROPERTY = "jinglenodes.publicIP";
+    public static final String JN_MIN_PORT_PROPERTY = "jinglenodes.minPort";
+    public static final String JN_MAX_PORT_PROPERTY = "jinglenodes.maxPort";
+    public static final String JN_TEST_STUN_SERVER_PROPERTY = "jinglenodes.testSTUNServer";
+    public static final String JN_TEST_STUN_PORT_PROPERTY = "jinglenodes.testSTUNPort";
+
     private ComponentManager componentManager;
 
     private final ConcurrentHashMap<String, RelayChannel> channels = new ConcurrentHashMap<String, RelayChannel>();
@@ -92,10 +98,20 @@ public class JingleNodesPlugin implements Plugin {
     }
 
     public void verifyNetwork() {
-        final String localAddress = JiveGlobals.getProperty(JN_PUB_IP_PROPERTY, LocalIPResolver.getLocalIP());
+        final String localAddress = JiveGlobals.getProperty(JN_LOCAL_IP_PROPERTY, LocalIPResolver.getLocalIP());
         LocalIPResolver.setOverrideIp(localAddress);
-        final InetSocketAddress publicAddress = PublicIPResolver.getPublicAddress("stun.xten.com", 3478);
-        hasPublicIP = publicAddress != null && publicAddress.getAddress().getHostAddress().equals(localAddress);
+        final InetSocketAddress publicAddress = PublicIPResolver.getPublicAddress(getTestSTUNServer(), getTestSTUNPort());
+        hasPublicIP = publicAddress != null && publicAddress.getAddress().getHostAddress().equals(getPublicIP());
+
+        // Provide a more detailed log message to help users reasonably debug this situation
+        if (!hasPublicIP) {
+            if (publicAddress != null) {
+                Log.error("verifyNetwork Failed - public IP address from test STUN server [" + publicAddress.getAddress().getHostAddress() + "] does not match server configuration [" + getPublicIP() + "]");
+            }
+            else {
+                Log.error("verifyNetwork Failed - failed to retrieve public address from test STUN server " + getTestSTUNServer() + ":" + Integer.toString(getTestSTUNPort()));
+            }
+        }
     }
 
     private void closeAllChannels() {
@@ -108,7 +124,7 @@ public class JingleNodesPlugin implements Plugin {
         RelayChannel rc = null;
         try {
 
-            rc = RelayChannel.createLocalRelayChannel(bindAllInterfaces ? "0.0.0.0" : LocalIPResolver.getLocalIP(), 30000, 50000);
+            rc = RelayChannel.createLocalRelayChannel(bindAllInterfaces ? "0.0.0.0" : LocalIPResolver.getLocalIP(), getMinPort(), getMaxPort());
             final int id = ids.incrementAndGet();
             final String sId = String.valueOf(id);
             rc.setAttachment(sId);
@@ -146,5 +162,26 @@ public class JingleNodesPlugin implements Plugin {
 
     public int getActiveChannelCount() {
         return channels.size();
+    }
+
+    // Changed all previous hardcoded values to be properties that can be overridden
+    public String getPublicIP() {
+        return JiveGlobals.getProperty(JN_PUBLIC_IP_PROPERTY, LocalIPResolver.getLocalIP());
+    }
+
+    public int getMinPort() {
+        return Integer.parseInt(JiveGlobals.getProperty(JN_MIN_PORT_PROPERTY, "30000"));
+    }
+
+    public int getMaxPort() {
+        return Integer.parseInt(JiveGlobals.getProperty(JN_MAX_PORT_PROPERTY, "50000"));
+    }
+
+    public String getTestSTUNServer() {
+        return JiveGlobals.getProperty(JN_TEST_STUN_SERVER_PROPERTY, "stun.l.google.com");
+    }
+
+    public int getTestSTUNPort() {
+        return Integer.parseInt(JiveGlobals.getProperty(JN_TEST_STUN_PORT_PROPERTY, "19302"));
     }
 }

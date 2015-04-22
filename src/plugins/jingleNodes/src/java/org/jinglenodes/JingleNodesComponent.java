@@ -84,14 +84,14 @@ class JingleNodesComponent extends AbstractComponent {
 
             if (channel != null) {
 
-                childElement.addAttribute(HOST, LocalIPResolver.getLocalIP());
+                childElement.addAttribute(HOST, plugin.getPublicIP());
                 childElement.addAttribute(LOCAL_PORT, Integer.toString(channel.getPortA()));
                 childElement.addAttribute(REMOTE_PORT, Integer.toString(channel.getPortB()));
 
                 reply.setChildElement(childElement);
 
                 Log.debug("Created relay channel {}:{}, {}:{}, {}:{}", new Object[]{HOST,
-                        LocalIPResolver.getLocalIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT,
+                        plugin.getPublicIP(), LOCAL_PORT, Integer.toString(channel.getPortA()), REMOTE_PORT,
                         Integer.toString(channel.getPortB())});
 
             } else {

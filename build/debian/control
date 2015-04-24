@@ -9,7 +9,7 @@ Homepage: http://www.igniterealtime.org
 Package: openfire
 Section: net
 Priority: optional
-Pre-Depends: openjdk-7-jre | oracle-java7-jre
+Pre-Depends: openjdk-7-jre-headless | openjdk-7-jre | oracle-java7-jre
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

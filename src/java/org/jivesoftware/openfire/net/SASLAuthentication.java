@@ -795,7 +795,7 @@ public class SASLAuthentication {
         // Clean up not-available mechanisms
         for (Iterator<String> it=answer.iterator(); it.hasNext();) {
             String mech = it.next();
-            if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
+            if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5") || mech.equals("SCRAM-SHA-1")) {
                 // Check if the user provider in use supports passwords retrieval. Accessing
                 // to the users passwords will be required by the CallbackHandler
                 if (!AuthFactory.supportsPasswordRetrieval()) {
@@ -832,6 +832,7 @@ public class SASLAuthentication {
             mechanisms.add("PLAIN");
             mechanisms.add("DIGEST-MD5");
             mechanisms.add("CRAM-MD5");
+            mechanisms.add("SCRAM-SHA-1");
             mechanisms.add("JIVE-SHAREDSECRET");
         }
         else {
@@ -843,6 +844,7 @@ public class SASLAuthentication {
                         mech.equals("PLAIN") ||
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
+                        mech.equals("SCRAM-SHA-1") ||
                         mech.equals("GSSAPI") ||
                         mech.equals("EXTERNAL") ||
                         mech.equals("JIVE-SHAREDSECRET")) 

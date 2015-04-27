@@ -84,6 +84,8 @@ public class User implements Cacheable, Externalizable, Result {
     private static final String EMAIL_VISIBLE_PROPERTY = "email.visible";
 
     private String username;
+    private String salt;
+    private String hi;
     private String name;
     private String email;
     private Date creationDate;
@@ -198,6 +200,22 @@ public class User implements Cacheable, Externalizable, Result {
 		} catch (InternalUnauthenticatedException e) {
             Log.error(e.getMessage(), e);
 		}
+    }
+    
+    public String getHi() {
+    	return hi;
+    }
+    
+    public void setHi(String hi) {
+    	this.hi = hi;
+    }
+    
+    public String getSalt() {
+    	return salt;
+    }
+    
+    public void setSalt(String salt) {
+    	this.salt = salt;
     }
 
     public String getName() {

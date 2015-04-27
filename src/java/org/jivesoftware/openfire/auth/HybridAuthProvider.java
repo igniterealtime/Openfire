@@ -257,4 +257,10 @@ public class HybridAuthProvider implements AuthProvider {
     public boolean supportsPasswordRetrieval() {
         return false;
     }
+
+    @Override
+    public boolean isScramSupported() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

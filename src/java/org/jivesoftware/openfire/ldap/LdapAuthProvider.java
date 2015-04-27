@@ -160,4 +160,9 @@ public class LdapAuthProvider implements AuthProvider {
     public boolean supportsPasswordRetrieval() {
         return false;
     }
+
+    @Override
+    public boolean isScramSupported() {
+        return false;
+    }
 }

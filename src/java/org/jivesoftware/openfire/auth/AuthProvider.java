@@ -129,4 +129,6 @@ public interface AuthProvider {
      *         backend user store.
      */
     public boolean supportsPasswordRetrieval();
+
+    boolean isScramSupported();
 }

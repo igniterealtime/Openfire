@@ -802,6 +802,11 @@ public class SASLAuthentication {
                     it.remove();
                 }
             }
+            else if (mech.equals("SCRAM-SHA-1")) {
+                if (!AuthFactory.supportsPasswordRetrieval() && !AuthFactory.supportsScram()) {
+                    it.remove();
+                }
+            }
             else if (mech.equals("ANONYMOUS")) {
                 // Check anonymous is supported
                 if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
@@ -832,6 +837,7 @@ public class SASLAuthentication {
             mechanisms.add("PLAIN");
             mechanisms.add("DIGEST-MD5");
             mechanisms.add("CRAM-MD5");
+            mechanisms.add("SCRAM-SHA-1");
             mechanisms.add("JIVE-SHAREDSECRET");
         }
         else {
@@ -843,6 +849,7 @@ public class SASLAuthentication {
                         mech.equals("PLAIN") ||
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
+                        mech.equals("SCRAM-SHA-1") ||
                         mech.equals("GSSAPI") ||
                         mech.equals("EXTERNAL") ||
                         mech.equals("JIVE-SHAREDSECRET")) 

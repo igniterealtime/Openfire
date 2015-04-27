@@ -3,6 +3,10 @@
 
 CREATE TABLE ofUser (
   username              NVARCHAR(64)    NOT NULL,
+  storedKey             VARCHAR(32),
+  serverKey             VARCHAR(32),
+  salt                  VARCHAR(32),
+  iterations            INTEGER,
   plainPassword         NVARCHAR(32)    NULL,
   encryptedPassword     NVARCHAR(255)   NULL,
   name                  NVARCHAR(100)   NULL,

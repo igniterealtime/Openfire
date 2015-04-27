@@ -109,4 +109,10 @@ public class CrowdAuthProvider implements AuthProvider {
 		return false;
 	}
 
+    @Override
+    public boolean isScramSupported() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
 }

@@ -3,6 +3,8 @@
 
 CREATE TABLE ofUser (
   username              VARCHAR(64)     NOT NULL,
+  hi                    VARCHAR(64),
+  salt                  VARCHAR(32),
   plainPassword         VARCHAR(32),
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),

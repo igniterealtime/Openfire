@@ -20,11 +20,15 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+
+import javax.security.sasl.SaslException;
+import javax.xml.bind.DatatypeConverter;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -49,7 +53,9 @@ public class DefaultAuthProvider implements AuthProvider {
     private static final String LOAD_PASSWORD =
             "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
+            "UPDATE ofUser SET plainPassword=?, encryptedPassword=?, hi=?, salt=? WHERE username=?";
+    
+    private static final SecureRandom random = new SecureRandom();
 
     /**
      * Constructs a new DefaultAuthProvider.
@@ -184,6 +190,20 @@ public class DefaultAuthProvider implements AuthProvider {
                 throw new UserNotFoundException();
             }
         }
+        
+        // Store the salt and salted password so SCRAM-SHA-1 SASL auth can be used later.
+        byte[] saltShaker = new byte[32];
+        random.nextBytes(saltShaker);
+        String salt = DatatypeConverter.printBase64Binary(saltShaker);
+        
+        // http://en.wikipedia.org/wiki/Salted_Challenge_Response_Authentication_Mechanism#Stored_password
+        String hi = null;
+        try {
+			hi = DatatypeConverter.printBase64Binary(ScramUtils.createSaltedPassword(saltShaker, password));
+		} catch (SaslException e) {
+			Log.warn("Unable to generate salted password.");
+		}
+        
         if (!usePlainPassword) {
             try {
                 encryptedPassword = AuthFactory.encryptPassword(password);
@@ -213,7 +233,14 @@ public class DefaultAuthProvider implements AuthProvider {
             else {
                 pstmt.setString(2, encryptedPassword);
             }
-            pstmt.setString(3, username);
+            if (hi == null) {
+            	pstmt.setNull(3, Types.VARCHAR);
+            }
+            else {
+            	pstmt.setString(3, hi);
+            }
+            pstmt.setString(4, salt);
+            pstmt.setString(5, username);
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {

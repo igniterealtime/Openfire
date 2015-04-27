@@ -62,7 +62,7 @@ public class DefaultUserProvider implements UserProvider {
 	private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
-            "SELECT name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
+            "SELECT salt, hi, name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
     private static final String USER_COUNT =
             "SELECT count(*) FROM ofUser";
     private static final String ALL_USERS =
@@ -85,7 +85,7 @@ public class DefaultUserProvider implements UserProvider {
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE ofUser SET modificationDate=? WHERE username=?";
     private static final boolean IS_READ_ONLY = false;
-
+    
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -104,12 +104,17 @@ public class DefaultUserProvider implements UserProvider {
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
-            String name = rs.getString(1);
-            String email = rs.getString(2);
-            Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-            Date modificationDate = new Date(Long.parseLong(rs.getString(4).trim()));
+            String salt = rs.getString(1);
+            String hi = rs.getString(2);
+            String name = rs.getString(3);
+            String email = rs.getString(4);
+            Date creationDate = new Date(Long.parseLong(rs.getString(5).trim()));
+            Date modificationDate = new Date(Long.parseLong(rs.getString(6).trim()));
 
-            return new User(username, name, email, creationDate, modificationDate);
+            User user = new User(username, name, email, creationDate, modificationDate);
+            user.setSalt(salt);
+            user.setHi(hi);
+            return user;
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);
@@ -186,6 +191,7 @@ public class DefaultUserProvider implements UserProvider {
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
+            
             return new User(username, name, email, now, now);
         }
     }

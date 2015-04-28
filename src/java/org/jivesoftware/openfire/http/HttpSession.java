@@ -710,7 +710,7 @@ public class HttpSession extends LocalClientSession {
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
-                    connection.deliverBody(createEmptyBody(), false);
+                    connection.deliverBody(createEmptyBody(false), false);
                     setLastResponseEmpty(true);
 
                     // This connection timed out we need to increment the request count
@@ -1014,13 +1014,8 @@ public class HttpSession extends LocalClientSession {
 
     private String createDeliverable(Collection<Deliverable> elements) {
         StringBuilder builder = new StringBuilder();
-        builder.append("<body xmlns='" + "http://jabber.org/protocol/httpbind" + "'");
-
-        long ack = getLastAcknowledged();
-        if(ack > lastRequestID)
-            builder.append(" ack='").append(ack).append("'");
-
-        builder.append(">");
+        builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
+        		.append(getLastAcknowledged()).append("'>");
 
         setLastResponseEmpty(elements.size() == 0);
         synchronized (elements) {
@@ -1095,20 +1090,12 @@ public class HttpSession extends LocalClientSession {
    		});
     }
 
-    private String createEmptyBody() {
-        Element body = DocumentHelper.createElement("body");
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
-        long ack = getLastAcknowledged();
-        if(ack > lastRequestID)
-        	body.addAttribute("ack", String.valueOf(ack));
-        return body.asXML();
-    }
-
-    protected static String createEmptyBody(boolean terminate)
+    protected String createEmptyBody(boolean terminate)
     {
         final Element body = DocumentHelper.createElement("body");
         if (terminate) { body.addAttribute("type", "terminate"); }
         body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
         return body.asXML();
     }
 

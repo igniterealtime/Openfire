@@ -348,14 +348,6 @@ public class HttpBindServlet extends HttpServlet {
         sendLegacyError(context, error, null);
     }
 
-    protected static String createEmptyBody(boolean terminate)
-    {
-        final Element body = DocumentHelper.createElement("body");
-        if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
-        return body.asXML();
-    }
-
     protected static String createErrorBody(String type, String condition) {
         final Element body = DocumentHelper.createElement("body");
         body.addNamespace("", "http://jabber.org/protocol/httpbind");

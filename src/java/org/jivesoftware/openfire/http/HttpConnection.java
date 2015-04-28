@@ -122,9 +122,9 @@ public class HttpConnection {
         }
 
         if (body == null) {
-            body = HttpBindServlet.createEmptyBody(false);
+            body = getSession().createEmptyBody(false);
         }
-        HttpBindServlet.respond(this.getSession(), this.context, body, async);
+        HttpBindServlet.respond(getSession(), this.context, body, async);
     }
 
     /**

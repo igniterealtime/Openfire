@@ -50,10 +50,11 @@ import com.reucon.openfire.plugin.archive.PersistenceManager;
 import com.reucon.openfire.plugin.archive.impl.ArchiveManagerImpl;
 import com.reucon.openfire.plugin.archive.impl.JdbcPersistenceManager;
 import com.reucon.openfire.plugin.archive.xep0136.Xep0136Support;
+import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support;
 
 /**
  * Openfire Monitoring plugin.
- * 
+ *
  * @author Matt Tucker
  */
 public class MonitoringPlugin implements Plugin {
@@ -71,6 +72,7 @@ public class MonitoringPlugin implements Plugin {
 	private ArchiveManager archiveManager;
 	private IndexManager indexManager;
 	private Xep0136Support xep0136Support;
+	private Xep0313Support xep0313Support;
 
 	public MonitoringPlugin() {
 		instance = this;
@@ -131,7 +133,7 @@ public class MonitoringPlugin implements Plugin {
 
 	/**
 	 * Returns the instance of a module registered with the Monitoring plugin.
-	 * 
+	 *
 	 * @param clazz
 	 *            the module class.
 	 * @return the instance of the module.
@@ -156,6 +158,9 @@ public class MonitoringPlugin implements Plugin {
 
 		xep0136Support = new Xep0136Support(XMPPServer.getInstance());
 		xep0136Support.start();
+
+		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
+		xep0313Support.start();
 
 		System.out.println("Starting Monitoring Plugin");
 
@@ -189,6 +194,9 @@ public class MonitoringPlugin implements Plugin {
 
 		xep0136Support = new Xep0136Support(XMPPServer.getInstance());
 		xep0136Support.start();
+
+		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
+		xep0313Support.start();
 	}
 
 	public void destroyPlugin() {

@@ -35,6 +35,7 @@ public class ArchivedMessage {
     private JID toJID;
     private Date sentDate;
     private String body;
+    private String stanza;
     private boolean roomEvent;
 
     /**
@@ -55,6 +56,11 @@ public class ArchivedMessage {
         this.sentDate = sentDate;
         this.body = body;
         this.roomEvent = roomEvent;
+    }
+
+    public ArchivedMessage(long conversationID, JID fromJID, JID toJID, Date sentDate, String body, String stanza, boolean roomEvent) {
+    	this(conversationID, fromJID, toJID, sentDate, body, roomEvent);
+    	this.stanza = stanza;
     }
 
     /**
@@ -100,6 +106,15 @@ public class ArchivedMessage {
      */
     public String getBody() {
         return body;
+    }
+
+    /**
+     * String encoded message stanza.
+     *
+     * @return string encoded message stanza.
+     */
+    public String getStanza() {
+    	return stanza;
     }
 
     /**

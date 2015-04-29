@@ -17,6 +17,7 @@ public class XmppResultSet
     private Integer firstIndex;
     private Long last;
     private Integer count;
+    private boolean complete;
 
     public XmppResultSet(Element setElement)
     {
@@ -119,6 +120,24 @@ public class XmppResultSet
     }
 
     /**
+     * Returns the total size of the result set.
+     *
+     * @return the total size of the result set.
+     */
+    public Integer getCount() {
+    	return count;
+    }
+
+    /**
+     * Returns whether the result set is complete (last page of results).
+     *
+     * @return whether the result set is complete.
+     */
+    public boolean isComplete() {
+		return complete;
+	}
+
+    /**
      * Sets the id of the first element returned.
      *
      * @param first the id of the first element returned.
@@ -158,7 +177,16 @@ public class XmppResultSet
         this.count = count;
     }
 
-    public Element createResultElement()
+    /**
+     * Sets whether the result set is complete (used by last page of results)
+     *
+     * @param complete
+     */
+	public void setComplete(boolean complete) {
+		this.complete = complete;
+	}
+
+	public Element createResultElement()
     {
         final Element set;
 

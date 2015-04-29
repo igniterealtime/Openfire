@@ -4,10 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.TreeMap;
 import java.util.HashSet;
@@ -87,6 +85,14 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	public static final String CONVERSATION_WITH_JID = "ofMessageArchive.toJID";
 	// public static final String CONVERSATION_WITH_JID = "c.withJid";
 
+	public static final String MESSAGE_ID = "ofMessageArchive.messageID";
+
+	public static final String MESSAGE_SENT_DATE = "ofMessageArchive.sentDate";
+
+	public static final String MESSAGE_TO_JID = "ofMessageArchive.toJID";
+
+	public static final String MESSAGE_FROM_JID = "ofMessageArchive.fromJID";
+
 	public static final String SELECT_ACTIVE_CONVERSATIONS = "SELECT DISTINCT " + "ofConversation.conversationID, " + "ofConversation.room, "
 			+ "ofConversation.isExternal, " + "ofConversation.startDate, " + "ofConversation.lastActivity, " + "ofConversation.messageCount, "
 			+ "ofConParticipant.joinedDate, " + "ofConParticipant.leftDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource, "
@@ -109,6 +115,16 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 	// public static final String SELECT_PARTICIPANTS_BY_CONVERSATION =
 	// "SELECT participantId,startTime,endTime,jid FROM archiveParticipants WHERE conversationId =? ORDER BY startTime";
+
+	 public static final String SELECT_MESSAGES = "SELECT DISTINCT " + "ofMessageArchive.fromJID, "
+			+ "ofMessageArchive.toJID, " + "ofMessageArchive.sentDate, " + "ofMessageArchive.stanza, "
+			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
+			+ "FROM ofMessageArchive "
+			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID ";
+
+	 public static final String COUNT_MESSAGES = "SELECT COUNT(DISTINCT ofMessageArchive.messageID) "
+			+ "FROM ofMessageArchive "
+			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID ";
 
 	public boolean createMessage(ArchivedMessage message) {
 		/* read only */
@@ -337,6 +353,215 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			pstmt.setString(parameterIndex++, ownerJid);
 		}
 		if (withJid != null) {
+			pstmt.setString(parameterIndex++, withJid);
+		}
+		return parameterIndex;
+	}
+
+	@Override
+	public Collection<ArchivedMessage> findMessages(Date startDate,
+			Date endDate, String ownerJid, String withJid, XmppResultSet xmppResultSet) {
+
+		final StringBuilder querySB;
+		final StringBuilder whereSB;
+		final StringBuilder limitSB;
+
+		final TreeMap<Long, ArchivedMessage> archivedMessages = new TreeMap<Long, ArchivedMessage>();
+
+		querySB = new StringBuilder(SELECT_MESSAGES);
+		whereSB = new StringBuilder();
+		limitSB = new StringBuilder();
+
+		// Ignore legacy messages
+		appendWhere(whereSB, MESSAGE_ID, " IS NOT NULL ");
+
+		startDate = getAuditedStartDate(startDate);
+		if (startDate != null) {
+			appendWhere(whereSB, MESSAGE_SENT_DATE, " >= ?");
+		}
+		if (endDate != null) {
+			appendWhere(whereSB, MESSAGE_SENT_DATE, " <= ?");
+		}
+		if (ownerJid != null) {
+			appendWhere(whereSB, CONVERSATION_OWNER_JID, " = ?");
+		}
+		if(withJid != null) {
+			appendWhere(whereSB, "( ", MESSAGE_TO_JID, " = ? OR ", MESSAGE_FROM_JID, " = ? )");
+		}
+		if (whereSB.length() != 0) {
+			querySB.append(" WHERE ").append(whereSB);
+		}
+
+		if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
+			querySB.insert(0,"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY "+MESSAGE_SENT_DATE+") AS RowNum FROM ( ");
+			querySB.append(") ofMessageArchive ) t2 WHERE RowNum");
+		}
+		else {
+			querySB.append(" ORDER BY ").append(MESSAGE_SENT_DATE);
+		}
+
+		if (xmppResultSet != null) {
+			Integer firstIndex = null;
+			int max = xmppResultSet.getMax() != null ? xmppResultSet.getMax() : DEFAULT_MAX;
+			int count = countMessages(startDate, endDate, ownerJid, withJid, whereSB.toString());
+			boolean reverse = false;
+
+			xmppResultSet.setCount(count);
+			if (xmppResultSet.getIndex() != null) {
+				firstIndex = xmppResultSet.getIndex();
+			} else if (xmppResultSet.getAfter() != null) {
+				firstIndex = countMessagesBefore(startDate, endDate, ownerJid, withJid, xmppResultSet.getAfter(), whereSB.toString());
+				firstIndex += 1;
+			} else if (xmppResultSet.getBefore() != null) {
+
+				int messagesBeforeCount = countMessagesBefore(startDate, endDate, ownerJid, withJid, xmppResultSet.getBefore(), whereSB.toString());
+				firstIndex = messagesBeforeCount;
+				firstIndex -= max;
+
+				// Reduce result limit to number of results before (if less than a page remaining)
+				if(messagesBeforeCount < max) {
+					max = messagesBeforeCount;
+				}
+
+				reverse = true;
+				if (firstIndex < 0) {
+					firstIndex = 0;
+				}
+			}
+			firstIndex = firstIndex != null ? firstIndex : 0;
+
+			if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
+				limitSB.append(" BETWEEN ").append(firstIndex+1);
+				limitSB.append(" AND ").append(firstIndex+max);
+			}
+			else {
+				limitSB.append(" LIMIT ").append(max);
+				limitSB.append(" OFFSET ").append(firstIndex);
+			}
+			xmppResultSet.setFirstIndex(firstIndex);
+
+			if(isLastPage(firstIndex, count, max, reverse)) {
+				xmppResultSet.setComplete(true);
+			}
+		}
+
+		querySB.append(limitSB);
+
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(querySB.toString());
+			bindMessageParameters(startDate, endDate, ownerJid, withJid, pstmt);
+
+			rs = pstmt.executeQuery();
+			Log.debug("findMessages: SELECT_MESSAGES: " + pstmt.toString());
+			while(rs.next()) {
+				Date time = millisToDate(rs.getLong("sentDate"));
+				ArchivedMessage archivedMessage = new ArchivedMessage(time, null, null, null);
+				archivedMessage.setId(rs.getLong("messageID"));
+				archivedMessage.setStanza(rs.getString("stanza"));
+
+				archivedMessages.put(archivedMessage.getId(), archivedMessage);
+			}
+		} catch(SQLException sqle) {
+			Log.error("Error selecting conversations", sqle);
+		} finally {
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+
+		if (xmppResultSet != null && archivedMessages.size() > 0) {
+			xmppResultSet.setFirst(archivedMessages.firstKey());
+			xmppResultSet.setLast(archivedMessages.lastKey());
+		}
+
+		return archivedMessages.values();
+	}
+
+	private Integer countMessages(Date startDate, Date endDate,
+			String ownerJid, String withJid, String whereClause) {
+
+		StringBuilder querySB;
+
+		querySB = new StringBuilder(COUNT_MESSAGES);
+		if (whereClause != null && whereClause.length() != 0) {
+			querySB.append(" WHERE ").append(whereClause);
+		}
+
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(querySB.toString());
+			bindMessageParameters(startDate, endDate, ownerJid, withJid, pstmt);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1);
+			} else {
+				return 0;
+			}
+		} catch (SQLException sqle) {
+			Log.error("Error counting conversations", sqle);
+			return 0;
+		} finally {
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+	}
+
+	private Integer countMessagesBefore(Date startDate, Date endDate,
+			String ownerJid, String withJid, Long before, String whereClause) {
+
+		StringBuilder querySB;
+
+		querySB = new StringBuilder(COUNT_MESSAGES);
+		querySB.append(" WHERE ");
+		if (whereClause != null && whereClause.length() != 0) {
+			querySB.append(whereClause);
+			querySB.append(" AND ");
+		}
+		querySB.append(MESSAGE_ID).append(" < ?");
+
+		Connection con = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			int parameterIndex;
+			con = DbConnectionManager.getConnection();
+			pstmt = con.prepareStatement(querySB.toString());
+			parameterIndex = bindMessageParameters(startDate, endDate, ownerJid, withJid, pstmt);
+			pstmt.setLong(parameterIndex, before);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1);
+			} else {
+				return 0;
+			}
+		} catch (SQLException sqle) {
+			Log.error("Error counting conversations", sqle);
+			return 0;
+		} finally {
+			DbConnectionManager.closeConnection(rs, pstmt, con);
+		}
+	}
+
+	private int bindMessageParameters(Date startDate, Date endDate,
+			String ownerJid, String withJid, PreparedStatement pstmt) throws SQLException {
+		int parameterIndex = 1;
+
+		if (startDate != null) {
+			pstmt.setLong(parameterIndex++, dateToMillis(startDate));
+		}
+		if (endDate != null) {
+			pstmt.setLong(parameterIndex++, dateToMillis(endDate));
+		}
+		if (ownerJid != null) {
+			pstmt.setString(parameterIndex++, ownerJid);
+		}
+		if (withJid != null) {
+			// Add twice due to OR operator
+			pstmt.setString(parameterIndex++, withJid);
 			pstmt.setString(parameterIndex++, withJid);
 		}
 		return parameterIndex;
@@ -621,4 +846,30 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	private Date millisToDate(Long millis) {
 		return millis == null ? null : new Date(millis);
 	}
+
+	/**
+	 * Determines whether a result page is the last of a set.
+	 *
+	 * @param firstItemIndex index (in whole set) of first item in page.
+	 * @param resultCount total number of results in set.
+	 * @param pageSize number of results in a page.
+	 * @param reverse whether paging is being performed in reverse (back to front)
+	 * @return whether results are from last page.
+	 */
+	private boolean isLastPage(int firstItemIndex, int resultCount, int pageSize, boolean reverse) {
+
+		if(reverse) {
+			// Index of first item in last page always 0 when reverse
+			if(firstItemIndex == 0) {
+				return true;
+			}
+		} else {
+			if((firstItemIndex + pageSize) >= resultCount) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 }

@@ -1,7 +1,7 @@
 -- $Revision$
 -- $Date$
 
-INSERT INTO ofVersion (name, version) VALUES ('monitoring', 2);
+INSERT INTO ofVersion (name, version) VALUES ('monitoring', 3);
 
 CREATE TABLE ofConversation (
   conversationID        INTEGER        NOT NULL,
@@ -28,12 +28,14 @@ CREATE INDEX ofConParticipant_conv_idx ON ofConParticipant (conversationID, bare
 CREATE INDEX ofConParticipant_jid_idx ON ofConParticipant (bareJID);
 
 CREATE TABLE ofMessageArchive (
+   messageID		 INTEGER		  NULL,
    conversationID    INTEGER          NOT NULL,
    fromJID           VARCHAR2(1024)   NOT NULL,
    fromJIDResource   VARCHAR2(255)    NULL,
    toJID             VARCHAR2(1024)   NOT NULL,
    toJIDResource   VARCHAR2(255)      NULL,
    sentDate          INTEGER          NOT NULL,
+   stanza			 LONG			  NULL,
    body              LONG
 );
 CREATE INDEX ofMessageArchive_con_idx ON ofMessageArchive (conversationID);

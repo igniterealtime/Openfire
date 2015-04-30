@@ -25,7 +25,7 @@ public class UserGroupService {
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public UserGroupsEntity getUserGroups(@PathParam("username") String username) throws ServiceException {
 		return new UserGroupsEntity(plugin.getUserGroups(username));
 	}

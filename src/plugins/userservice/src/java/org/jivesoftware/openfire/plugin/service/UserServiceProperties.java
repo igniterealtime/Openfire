@@ -22,14 +22,14 @@ public class UserServiceProperties {
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	@Path("/{key}")
 	public UserEntities getUsersByPropertyKey(@PathParam("key") String key) throws ServiceException {
 		return plugin.getUserEntitiesByProperty(key, null);
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	@Path("/{key}/{value}")
 	public UserEntities getUsersByPropertyKeyValue(@PathParam("key") String key, @PathParam("value") String value)
 			throws ServiceException {

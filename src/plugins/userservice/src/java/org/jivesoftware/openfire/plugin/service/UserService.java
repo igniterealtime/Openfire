@@ -28,7 +28,7 @@ public class UserService {
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public UserEntities getUsers(@QueryParam("search") String userSearch) {
 		return plugin.getUserEntities(userSearch);
 	}
@@ -41,7 +41,7 @@ public class UserService {
 
 	@GET
 	@Path("/{username}")
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public UserEntity getUser(@PathParam("username") String username) throws ServiceException {
 		return plugin.getUserEntity(username);
 	}

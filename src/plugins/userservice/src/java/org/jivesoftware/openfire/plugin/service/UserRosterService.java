@@ -35,7 +35,7 @@ public class UserRosterService {
 	}
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public RosterEntities getUserRoster(@PathParam("username") String username) throws ServiceException {
 		return plugin.getRosterEntities(username);
 	}

@@ -310,19 +310,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (process((IQ)packet)) {
                     return;
                 }
+            } else if (packet instanceof Message) {
+                Message msg = (Message) packet;
+                if (msg.getType() == Message.Type.error) {
+                    // Bounced message, drop user.
+                    removeUser(packet.getFrom());
+                    return;
+                }
+            } else if (packet instanceof Presence) {
+                Presence pres = (Presence) packet;
+                if (pres.getType() == Presence.Type.error) {
+                    // Bounced presence, drop user.
+                    removeUser(packet.getFrom());
+                    return;
+                }
             }
-            // OF-670: Kick MUC users who return permanent error conditions;
-            // also detects S2S-based users from non-responsive domains.
-            if (packet.getError() != null &&
-            	packet.getError().getType().equals(PacketError.Type.cancel)) {
-            	removeUser(packet.getFrom());
-            }
-            else {
-                // The packet is a normal packet that should possibly be sent to the room                
-                JID receipient = packet.getTo();
-                String roomName = receipient != null ? receipient.getNode() : null;
-                getChatUser(packet.getFrom(), roomName).process(packet);
-            }
+            // The packet is a normal packet that should possibly be sent to the room                
+            JID recipient = packet.getTo();
+            String roomName = recipient != null ? recipient.getNode() : null;
+            getChatUser(packet.getFrom(), roomName).process(packet);
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

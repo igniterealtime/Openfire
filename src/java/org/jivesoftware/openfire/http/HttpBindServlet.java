@@ -299,9 +299,9 @@ public class HttpBindServlet extends HttpServlet {
         if (async) {
             response.getOutputStream().setWriteListener(new WriteListenerImpl(context, byteContent));
         } else {
-            // BOSH communication should not have Chunked encoding. Ensure that the
-            // buffer can hold the entire response to prevent chunking.
-            context.getResponse().setBufferSize(byteContent.length);
+            // BOSH communication should not use Chunked encoding.
+            // This is prevented by explicitly setting the Content-Length header.
+            context.getResponse().setContentLength(byteContent.length);
             context.getResponse().getOutputStream().write(byteContent);
             context.getResponse().getOutputStream().flush();
             context.complete();
@@ -346,14 +346,6 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         sendLegacyError(context, error, null);
-    }
-
-    protected static String createEmptyBody(boolean terminate)
-    {
-        final Element body = DocumentHelper.createElement("body");
-        if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
-        return body.asXML();
     }
 
     protected static String createErrorBody(String type, String condition) {

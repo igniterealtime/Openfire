@@ -1,0 +1,467 @@
+/*
+// Copyright (c) 2007 - 2010 blueprintcss.org
+// Modified and extended by Frank Kohlhepp in 2011
+// https://github.com/frankkohlhepp/default-css
+// License: MIT-license
+*/
+
+/*
+// Reset the default browser CSS
+*/
+html {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+body, div, span, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, code,
+del, dfn, em, img, q, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, dialog, figure, footer, header,
+hgroup, nav, section {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: inherit;
+    font-size: 100%;
+    font-weight: inherit;
+    font-style: inherit;
+    vertical-align: baseline;
+}
+
+article, aside, dialog, figure, footer, header,
+hgroup, nav, section {
+    display: block;
+}
+
+body {
+    background-color: white;
+    line-height: 1.5;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+caption, th, td {
+    text-align: left;
+    font-weight: normal;
+}
+
+table, th, td {
+    vertical-align: middle;
+}
+
+blockquote:before, blockquote:after, q:before, q:after {
+    content: "";
+}
+
+blockquote, q {
+    quotes: "" "";
+}
+
+a img {
+    border: none;
+}
+
+/*
+// Default typography
+*/
+html {
+    font-size: 100.01%;
+}
+
+body {
+    background-color: white;
+    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font-size: 75%;
+    color: #222222;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: normal;
+    color: #111111;
+}
+
+h1 {
+    margin-bottom: 0.5em;
+    font-size: 3em;
+    line-height: 1;
+}
+
+h2 {
+    margin-bottom: 0.75em;
+    font-size: 2em;
+}
+
+h3 {
+    margin-bottom: 1em;
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+h4 {
+    margin-bottom: 1.25em;
+    font-size: 1.2em;
+    line-height: 1.25;
+}
+
+h5 {
+    margin-bottom: 1.5em;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+h6 {
+    font-size: 1em;
+    font-weight: bold;
+}
+
+h1 img, h2 img, h3 img,
+h4 img, h5 img, h6 img {
+    margin: 0;
+}
+
+/* Text elements */
+p {
+    margin: 0 0 1.5em;
+}
+
+.left {
+    float: left !important;
+}
+
+p .left {
+    margin: 1.5em 1.5em 1.5em 0;
+    padding: 0;
+}
+
+.right {
+    float: right !important;
+}
+
+p .right {
+    margin: 1.5em 0 1.5em 1.5em;
+    padding: 0;
+}
+
+a:focus, a:hover {
+    color: #0099FF;
+}
+
+a {
+    color: #0066CC;
+    text-decoration: underline;
+}
+
+blockquote {
+    margin: 1.5em;
+    font-style: italic;
+    color: #666666;
+}
+
+strong, dfn {
+    font-weight: bold;
+}
+
+em, dfn {
+    font-style: italic;
+}
+
+sup, sub {
+    line-height: 0;
+}
+
+abbr, acronym {
+    border-bottom: 1px dotted #666666;
+}
+
+address {
+    margin: 0 0 1.5em;
+    font-style: italic;
+}
+
+del {
+    color: #666666;
+}
+
+pre {
+    margin: 1.5em 0;
+    white-space: pre;
+}
+
+pre, code, tt {
+    font: 1em "andale mono", "lucida console", monospace;
+    line-height: 1.5;
+}
+
+/* Lists */
+li ul, li ol {
+    margin: 0;
+}
+
+ul, ol {
+    margin: 0 1.5em 1.5em 0;
+    padding-left: 1.5em;
+}
+
+ul {
+    list-style-type: disc;
+}
+
+ol {
+    list-style-type: decimal;
+}
+
+dl {
+    margin: 0 0 1.5em 0;
+}
+
+dl dt {
+    font-weight: bold;
+}
+
+dd {
+    margin-left: 1.5em;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    margin-bottom: 1.4em;
+}
+
+th {
+    font-weight: bold;
+}
+
+table.zebra thead th, table.zebra tfoot th {
+    background-color: #BFBFBF;
+}
+
+th, td, caption {
+    padding: 4px 10px 4px 5px;
+}
+
+table.zebra tbody tr:nth-child(even) td, table.zebra tbody tr.even td {
+    background-color: #E6E6E6;
+}
+
+caption {
+    background-color: #EEEEEE;
+}
+
+/* Misc classes */
+.fancy {
+    text-shadow: white 0 1px 0;
+}
+
+.bfancy {
+    text-shadow: black 0 1px 0;
+}
+
+.fancyt {
+    text-shadow: white 0 -1px 0;
+}
+
+.bfancyt {
+    text-shadow: black 0 -1px 0;
+}
+
+.no-fancy {
+    text-shadow: none;
+}
+
+.select {
+    cursor: auto;
+    user-select: auto;
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -o-user-select: auto;
+}
+
+img.select, .select img {
+    user-drag: auto;
+    -webkit-user-drag: auto;
+    -moz-user-drag: auto;
+    -o-user-drag: auto;
+}
+
+.no-select {
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+}
+
+img.no-select, .no-select img {
+    user-drag: none;
+    -webkit-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+}
+
+.focus:focus, .focus :focus {
+    outline: auto;
+}
+
+.no-focus:focus, .no-focus :focus {
+    outline: 0;
+}
+
+.small {
+    margin-bottom: 1.875em;
+    font-size: .8em;
+    line-height: 1.875em;
+}
+
+.large {
+    margin-bottom: 1.25em;
+    font-size: 1.2em;
+    line-height: 2.5em;
+}
+
+.show {
+    display: block !important;
+}
+
+.show-inline {
+    display: inline-block !important;
+}
+
+.hide {
+    display: none;
+}
+
+.quiet {
+    color: #666666;
+}
+
+.loud {
+    color: black;
+}
+
+.highlight {
+    background-color: yellow;
+}
+
+.added {
+    background-color: #006600;
+    color: white;
+}
+
+.removed {
+    background-color: #990000;
+    color: white;
+}
+
+.first {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.last {
+    margin-right: 0;
+    padding-right: 0;
+}
+
+.top {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.bottom {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/*
+// Default styling for forms
+*/
+fieldset {
+    margin: 0 0 1.5em 0;
+    padding: 0 1.4em 1.4em 1.4em;
+    border: 1px solid #CCCCCC;
+}
+
+legend {
+    margin-top: -0.2em;
+    margin-bottom: 1em;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* Form fields */
+input[type=text], input[type=password], textarea {
+    background-color: white;
+    border: 1px solid #BBBBBB;
+}
+
+input[type=text], input[type=password],
+textarea, select {
+    margin: 0.5em 0;
+}
+
+input[type=text], input[type=password] {
+    width: 300px;
+    padding: 4px;
+}
+
+textarea {
+    width: 450px;
+    height: 170px;
+    padding: 5px;
+}
+
+/* success, info, notice and error boxes */
+.success, .info, .notice, .error {
+    margin-bottom: 1em;
+    padding: 0.8em;
+    border: 2px solid #DDDDDD;
+}
+
+.success {
+    background-color: #E6EFC2;
+    border-color: #C6D880;
+    color: #264409;
+}
+
+.info {
+    background-color: #D5EDF8;
+    border-color: #92CAE4;
+    color: #205791;
+}
+
+.notice {
+    background-color: #FFF6BF;
+    border-color: #FFD324;
+    color: #514721;
+}
+
+.error {
+    background-color: #FBE3E4;
+    border-color: #FBC2C4;
+    color: #8A1F11;
+}
+
+.success a {
+    color: #264409;
+}
+
+.info a {
+    color: #205791;
+}
+
+.notice a {
+    color: #514721;
+}
+
+.error a {
+    color: #8A1F11;
+}

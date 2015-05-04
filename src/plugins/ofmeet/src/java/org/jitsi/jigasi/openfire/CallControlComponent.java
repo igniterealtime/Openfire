@@ -21,8 +21,10 @@ import javax.media.format.*;
 import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.session.*;
 
 import org.slf4j.*;
 import org.slf4j.Logger;
@@ -56,7 +58,7 @@ import org.ifsoft.*;
 import org.ifsoft.sip.*;
 import net.sf.fmj.media.rtp.*;
 import org.ifsoft.rtp.*;
-
+import uk.nominet.DDDS.*;
 
 public class CallControlComponent extends AbstractComponent
 {
@@ -81,7 +83,7 @@ public class CallControlComponent extends AbstractComponent
 		self = this;
 
 		Properties properties = new Properties();
-		String hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getHostname());
+		String hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 		String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
 		String port = JiveGlobals.getProperty("org.jitsi.videobridge.sip.port.number", "5060");
 
@@ -162,7 +164,7 @@ public class CallControlComponent extends AbstractComponent
 		Log.info("CallControlComponent - makeCall " + confJid + " " + to + " " + callId);
 
 		try {
-			String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
+			String hostname = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String callerId = (new JID(confJid)).getNode();
 			String focusJid = conference.getFocus();
 
@@ -192,13 +194,46 @@ public class CallControlComponent extends AbstractComponent
 
 			if (!toSip && !toPhone)
 			{
-				to = "tel:" + to;
-				toPhone = true;
+				String sipUri = null;
+
+				if (to.length() == 8)
+				{
+					toSip = true;
+					to = "sip:8835100" + to + "@81.201.82.25";
+
+				} else {
+
+					if (to.indexOf("+") != 0) to = "+" + to;
+
+					Log.info("CallControlComponent - makeCall looking up "  + to);
+
+					ENUM mEnum = new ENUM("e164.arpa");
+					Rule[] rules = mEnum.lookup(to);
+
+					for (Rule rule: rules)
+					{
+						String temp = rule.evaluate();
+						Log.info("CallControlComponent - makeCall found "  + temp);
+						if (temp.indexOf("sip:") == 0) sipUri = temp;
+					}
+
+					if (sipUri != null)
+					{
+						toSip = true;
+						to = sipUri;
+
+					} else {
+						to = "tel:" + to;
+						toPhone = true;
+					}
+				}
 			}
 
 			if (toSip)
 			{
 				from = "sip:" + callerId + "@" + hostname;
+
+				Log.info("CallControlComponent - makeCall with direct sip "  + to + " " + from);
 
 			} else {
 
@@ -261,14 +296,14 @@ public class CallControlComponent extends AbstractComponent
 		Log.info("CallControlComponent - findCreateSession " + from + " " + to + " " + destination);
 
 		CallSession session = null;
-		String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
+		String hostname = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		String callerId = to;
 		String confJID = null;
 		Conference conference =  null;
 
 		boolean allowDirectSIP = "true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.allow.direct.sip", "false"));
 
-		if (!allowDirectSIP && !registrations.containsKey(from))
+		if (!allowDirectSIP || !registrations.containsKey(from))
 		{
 			Log.warn("CallControlComponent - call rejected from " + from + " " + to);
 			return null;	// only accept calls from registered SIP user endpoint
@@ -361,39 +396,73 @@ public class CallControlComponent extends AbstractComponent
 
 				MultiUserChatService service = mucManager.getMultiUserChatService(confJID);
 
-				if (service.hasChatRoom(conferenceId))
+				if (service != null)
 				{
-					MUCRoom room = service.getChatRoom(conferenceId);
-
-					if (room != null)
+					if (service.hasChatRoom(conferenceId))
 					{
-						for (MUCRole role : room.getOccupants())
+						MUCRoom room = service.getChatRoom(conferenceId);
+
+						if (room != null)
 						{
-							Presence presence = new Presence();
-							presence.setFrom(callId + "@" + getJID());
-							presence.setTo(role.getUserAddress());
-
-							if (accepted)
+							for (MUCRole role : room.getOccupants())
 							{
-								Element answered = presence.addChildElement("answered", "urn:xmpp:rayo:1");
-								answered.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
-								answered.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
+								Presence presence = new Presence();
+								presence.setFrom(callId + "@" + getJID());
+								presence.setTo(role.getUserAddress());
 
-							} else {
-								Element hangup = presence.addChildElement("hangup", "urn:xmpp:rayo:1");
-								hangup.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
-								hangup.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
+								if (accepted)
+								{
+									Element answered = presence.addChildElement("answered", "urn:xmpp:rayo:1");
+									answered.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
+									answered.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
 
-								callSessions.remove(callId);
+								} else {
+									Element hangup = presence.addChildElement("hangup", "urn:xmpp:rayo:1");
+									hangup.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
+									hangup.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
+
+									callSessions.remove(callId);
+								}
+
+								sendPacket(presence);
 							}
 
-							sendPacket(presence);
+							return;
 						}
 					}
 				}
 
+				// no valid muc service or room. send events to requestor
+
+				String username = (new JID(session.focusJID)).getNode();
+
+				Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(username);
+
+				for (ClientSession clientSession : sessions)
+				{
+					Presence presence = new Presence();
+					presence.setFrom(callId + "@" + getJID());
+					presence.setTo(clientSession.getAddress());
+
+					if (accepted)
+					{
+						Element answered = presence.addChildElement("answered", "urn:xmpp:rayo:1");
+						answered.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
+						answered.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
+
+					} else {
+						Element hangup = presence.addChildElement("hangup", "urn:xmpp:rayo:1");
+						hangup.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
+						hangup.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
+
+						callSessions.remove(callId);
+					}
+
+					sendPacket(presence);
+				}
+
 			} catch (Exception e) {
-				Log.error("CallControlComponent inviteEvent. error finding room " + session.roomJID, e);
+				Log.error("CallControlComponent inviteEvent. error" + session.roomJID, e);
 			}
 
 		} else {
@@ -430,20 +499,32 @@ public class CallControlComponent extends AbstractComponent
 					String name = header.attributeValue("name");
 					String value = header.attributeValue("value");
 
+					if ("JvbRoomId".equals(name)) confId = value;
 					if ("JvbRoomName".equals(name)) confJid = value;
 				}
 
-				if (confJid == null)
+				if (confJid == null && confId == null)
 				{
 					reply.setError(PacketError.Condition.item_not_found);
-					Log.error("No JvbRoomName header found");
+					Log.error("No JvbRoomName or JvbRoomId header found");
 
 				} else {
 
-					if (conferences.containsKey(confJid))
+					if (confId == null)
 					{
-						confId = conferences.get(confJid);
+						if (conferences.containsKey(confJid))
+						{
+							confId = conferences.get(confJid);
+						}
+					}
 
+					if (confJid == null)
+					{
+						confJid = confId + "@conference." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+					}
+
+					if (confId != null)
+					{
 						String callId = Long.toHexString(System.currentTimeMillis());
 
 						Log.info("Got dial request " + from + " -> " + to + " confId " + confId + " callId " + callId);

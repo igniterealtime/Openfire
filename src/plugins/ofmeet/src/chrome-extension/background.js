@@ -1,5 +1,18 @@
-/* Background page, responsible for actually choosing media */
-chrome.runtime.onConnect.addListener(function (channel) {
+
+window.addEventListener("load", function() 
+{
+
+});
+
+window.addEventListener("beforeunload", function () 
+{
+
+});
+			
+
+
+chrome.runtime.onConnect.addListener(function (channel) 
+{
     channel.onMessage.addListener(function (message) {
         switch(message.type) {
         case 'ofmeetGetScreen':

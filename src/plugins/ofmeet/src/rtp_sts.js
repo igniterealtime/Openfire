@@ -462,7 +462,7 @@ StatsCollector.prototype.processStatsReport = function () {
             continue;
         var jid = ssrc2jid[ssrc];
         if (!jid) {
-            console.warn("No jid for ssrc: " + ssrc);
+            //console.warn("No jid for ssrc: " + ssrc);
             continue;
         }
 
@@ -656,7 +656,7 @@ StatsCollector.prototype.processAudioLevelReport = function ()
         var before = this.baselineAudioLevelsReport[idx];
         if (!before)
         {
-            console.warn(getStatValue(now, 'ssrc') + ' not enough data');
+            //console.warn(getStatValue(now, 'ssrc') + ' not enough data');
             continue;
         }
 
@@ -664,7 +664,7 @@ StatsCollector.prototype.processAudioLevelReport = function ()
         var jid = ssrc2jid[ssrc];
         if (!jid)
         {
-            console.warn("No jid for ssrc: " + ssrc);
+            //console.warn("No jid for ssrc: " + ssrc);
             continue;
         }
 

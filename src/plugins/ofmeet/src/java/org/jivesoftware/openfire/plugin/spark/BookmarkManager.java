@@ -52,7 +52,7 @@ public class BookmarkManager {
      * @return the bookmark.
      * @throws NotFoundException if the bookmark could not be found or loaded.
      */
-    public Bookmark getBookmark(long bookmarkID) throws NotFoundException {
+    public static Bookmark getBookmark(long bookmarkID) throws NotFoundException {
         // TODO add caching
         return new Bookmark(bookmarkID);
     }

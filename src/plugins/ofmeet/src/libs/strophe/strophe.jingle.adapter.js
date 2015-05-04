@@ -182,7 +182,16 @@ TraceablePeerConnection.prototype.setLocalDescription = function (description, s
         },
         function (err) {
             self.trace('setLocalDescriptionOnFailure', err);
-            failureCallback(err);
+	    
+	    if (err.indexOf("Called in wrong state") > -1)
+	    {
+	    	setTimeout(function()
+	    	{
+	    		self.setLocalDescription(description, successCallback, failureCallback);
+	    	
+	    	}, 1000);
+	    
+	    } else failureCallback(err);
         }
     );
     /*
@@ -339,17 +348,6 @@ TraceablePeerConnection.prototype.modifySources = function(successCallback) {
     // FIXME: this is a big hack
     // https://code.google.com/p/webrtc/issues/detail?id=2688
     // ^ has been fixed.
-    if (!(this.signalingState == 'stable' && this.iceConnectionState == 'connected')) {
-        console.warn('modifySources not yet', this.signalingState, this.iceConnectionState);
-        this.wait = true;
-        window.setTimeout(function() { self.modifySources(successCallback); }, 250);
-        return;
-    }
-    if (this.wait) {
-        window.setTimeout(function() { self.modifySources(successCallback); }, 2500);
-        this.wait = false;
-        return;
-    }
 
     // Reset switch streams flag
     this.switchstreams = false;

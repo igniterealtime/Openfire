@@ -1,0 +1,129 @@
+@font-face {
+  font-family: 'open_sansregular';
+  src: url("/plugins/ofmeet/fonts/OpenSans-Regular-webfont.eot");
+  src: url("/plugins/ofmeet/fonts/OpenSans-Regular-webfont.eot?#iefix") format("embedded-opentype"), url("/plugins/ofmeet/fonts/OpenSans-Regular-webfont.woff") format("woff"), url("/plugins/ofmeet/fonts/OpenSans-Regular-webfont.ttf") format("truetype"), url("/plugins/ofmeet/fonts/OpenSans-Regular-webfont.svg#open_sansregular") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+
+@font-face {
+  font-family: 'open_sansitalic';
+  src: url("/plugins/ofmeet/fonts/OpenSans-Italic-webfont.eot");
+  src: url("/plugins/ofmeet/fonts/OpenSans-Italic-webfont.eot?#iefix") format("embedded-opentype"), url("/plugins/ofmeet/fonts/OpenSans-Italic-webfont.woff") format("woff"), url("/plugins/ofmeet/fonts/OpenSans-Italic-webfont.ttf") format("truetype"), url("/plugins/ofmeet/fonts/OpenSans-Italic-webfont.svg#open_sansitalic") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+
+@font-face {
+  font-family: 'open_sansbold';
+  src: url("/plugins/ofmeet/fonts/OpenSans-Bold-webfont.eot");
+  src: url("/plugins/ofmeet/fonts/OpenSans-Bold-webfont.eot?#iefix") format("embedded-opentype"), url("/plugins/ofmeet/fonts/OpenSans-Bold-webfont.woff") format("woff"), url("/plugins/ofmeet/fonts/OpenSans-Bold-webfont.ttf") format("truetype"), url("/plugins/ofmeet/fonts/OpenSans-Bold-webfont.svg#open_sansbold") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+
+body, .button {
+  font-family: 'open_sansregular'; }
+
+body {
+  background: lightgray; }
+
+#workshop_manager {
+  background: white; }
+  #workshop_manager a {
+    font-family: 'open_sansbold'; }
+  #workshop_manager h1, #workshop_manager h2, #workshop_manager h3, #workshop_manager h4, #workshop_manager h5, #workshop_manager h6 {
+    font-family: 'open_sansbold'; }
+  #workshop_manager .app_row {
+    margin: 0 5px; }
+  #workshop_manager .new_button {
+    margin-top: 10px; }
+  #workshop_manager .button .fa {
+    padding-right: 5px; }
+  #workshop_manager .workshop_manager_dialog {
+    border: solid 1px white;
+    padding: 20px 30px 0 30px;
+    border-radius: 0;
+    background: white; }
+    #workshop_manager .workshop_manager_dialog .ui-dialog-content {
+      padding: 0; }
+    #workshop_manager .workshop_manager_dialog .ui-dialog-titlebar {
+      display: none; }
+  #workshop_manager .ui-widget-overlay {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.5); }
+  #workshop_manager #event_input {
+    overflow: visible; }
+    #workshop_manager #event_input .button {
+      margin-left: 20px; }
+    #workshop_manager #event_input input[type='checkbox'] {
+      display: block;
+      margin: 10px; }
+    #workshop_manager #event_input input[type='date']::-webkit-clear-button {
+      display: none; }
+    #workshop_manager #event_input textarea {
+      height: 100px;
+      resize: none; }
+  #workshop_manager #event_calendar table {
+    border: none; }
+  #workshop_manager #event_calendar .fc-header {
+    margin-bottom: -5px;
+    border: none; }
+    #workshop_manager #event_calendar .fc-header .fc-header-title > h2 {
+      font-size: 1rem !important; }
+  #workshop_manager #event_calendar .fc-widget-content, #workshop_manager #event_calendar .fc-widget-header {
+    border-color: rgba(0, 2, 93, 0.3);
+    background: white; }
+  #workshop_manager #event_calendar .fc-event {
+    border-radius: 0 !important;
+    border: 2px solid rgba(0, 0, 0, 0);
+    padding: 5px 1px;
+    background: #ff7f00; }
+    #workshop_manager #event_calendar .fc-event.selected {
+      border-color: #00005d; }
+    #workshop_manager #event_calendar .fc-event.workshop {
+      background: rgba(228, 26, 28, 0.8); }
+      #workshop_manager #event_calendar .fc-event.workshop.selected {
+        background: #e41a1c; }
+    #workshop_manager #event_calendar .fc-event.open_shop {
+      background: rgba(55, 126, 184, 0.8); }
+      #workshop_manager #event_calendar .fc-event.open_shop.selected {
+        background: #377eb8; }
+    #workshop_manager #event_calendar .fc-event.tour {
+      background: rgba(77, 175, 74, 0.8); }
+      #workshop_manager #event_calendar .fc-event.tour.selected {
+        background: #4daf4a; }
+    #workshop_manager #event_calendar .fc-event.misc {
+      background: rgba(152, 78, 163, 0.8); }
+      #workshop_manager #event_calendar .fc-event.misc.selected {
+        background: #984ea3; }
+  #workshop_manager #event_calendar .fc-event-inner {
+    display: inline; }
+  #workshop_manager #event_calendar .fc-event-time {
+    display: none; }
+  #workshop_manager #event_calendar .fc-button {
+    border-radius: 0;
+    background: none;
+    box-shadow: none; }
+  #workshop_manager .event_details .details_groups, details_users, #workshop_manager .event_details .details_cost {
+    font-family: 'open_sansitalic';
+    padding-top: 10px; }
+  #workshop_manager .event_details .details_description {
+    padding-top: 10px; }
+  #workshop_manager .event_details .details_register {
+    margin-top: 10px; }
+  #workshop_manager .event_details .details_edit {
+    margin-left: 20px; }
+    #workshop_manager .event_details .details_edit .fa {
+      padding-right: 5px; }
+  #workshop_manager .event_toolbar .button {
+    margin-right: 0.35rem; }
+  #workshop_manager .event_toolbar .event_subtoolbar .button {
+    padding-left: 1rem;
+    padding-right: 1rem; }
+    #workshop_manager .event_toolbar .event_subtoolbar .button .fa {
+      padding: 0; }
+
+.right-off-canvas-menu {
+  background: white;
+  padding-left: 10px; }
+
+.move-left .exit-off-canvas {
+  box-shadow: none; }

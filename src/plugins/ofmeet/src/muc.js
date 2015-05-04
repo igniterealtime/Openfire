@@ -338,7 +338,13 @@ Strophe.addConnectionPlugin('emuc', {
                     //console.log('Kick participant error: ', error);
                 });
     },
-    sendPresence: function () {
+    sendPresence: function () 
+    {
+	if (!this.presMap['to']) {
+		// Too early to send presence - not initialized
+		return;
+	}
+
         var pres = $pres({to: this.presMap['to'] });
         pres.c('x', {xmlns: this.presMap['xns']});
 

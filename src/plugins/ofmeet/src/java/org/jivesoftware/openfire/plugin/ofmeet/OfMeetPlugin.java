@@ -23,10 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
-
+import java.text.*;
+import java.util.regex.*;
 import org.xmpp.packet.*;
 
 import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.plugin.spark.*;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.http.HttpBindManager;
@@ -40,6 +42,7 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.group.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +61,9 @@ import org.jitsi.videobridge.openfire.PluginImpl;
 import org.jitsi.jigasi.openfire.JigasiPlugin;
 import org.jitsi.jicofo.openfire.JicofoPlugin;
 
+import net.sf.json.*;
+
+
 public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 
     private static final Logger Log = LoggerFactory.getLogger(OfMeetPlugin.class);
@@ -67,6 +73,10 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	private JicofoPlugin jicofoPlugin;
 	private PluginManager manager;
 	public File pluginDirectory;
+    private TaskEngine taskEngine = TaskEngine.getInstance();
+    private UserManager userManager = XMPPServer.getInstance().getUserManager();
+
+    public static OfMeetPlugin self;
 
 	public String sipRegisterStatus = "";
 
@@ -89,6 +99,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 
 		this.manager = manager;
 		this.pluginDirectory = pluginDirectory;
+		self = this;
 
 		try {
 			Log.info("OfMeet Plugin - Initialize jitsi videobridge ");
@@ -103,7 +114,6 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 
 			Log.info("OfMeet Plugin - Initialize jitsi conference focus");
 
-			UserManager userManager = XMPPServer.getInstance().getUserManager();
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String userName = "focus";
 			String focusUserJid = userName + "@" + domain;
@@ -143,6 +153,26 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 				}
 			}, 5000);
 
+			try {
+
+				boolean clientControl = XMPPServer.getInstance().getPluginManager().getPlugin("clientControl") != null || XMPPServer.getInstance().getPluginManager().getPlugin("clientcontrol") != null;
+
+				if (clientControl)
+				{
+					new Timer().scheduleAtFixedRate(new TimerTask()
+					{
+						@Override public void run()
+						{
+							processMeetingPlanner();
+						}
+
+					}, 0,  900000);
+				}
+
+			} catch (Exception e) {
+
+				Log.error("Meeting Planner Executor error", e);
+			}
 
 			ClusterManager.addListener(this);
 
@@ -257,8 +287,150 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	public void markedAsSeniorClusterMember()
 	{
 		Log.info("OfMeet Plugin - markedAsSeniorClusterMember");
+
 		jitsiPlugin.initializePlugin(manager, pluginDirectory);
 		jigasiPlugin.initializePlugin(manager, pluginDirectory);
 		jicofoPlugin.initializePlugin(manager, pluginDirectory);
+	}
+
+	public void processMeetingPlanner()
+	{
+		Log.info("OfMeet Plugin - processMeetingPlanner");
+
+		final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
+
+		for (Bookmark bookmark : bookmarks)
+		{
+			String json = bookmark.getProperty("calendar");
+
+			if (json != null)
+			{
+				bookmark.setProperty("lock", "true");
+
+				JSONArray calendar = new JSONArray(json);
+				boolean done = false;
+
+				for(int i = 0; i < calendar.length(); i++)
+				{
+					JSONObject meeting = calendar.getJSONObject(i);
+
+					boolean processed = meeting.getBoolean("processed");
+					long startLong = meeting.getLong("startTime");
+
+					Date rightNow = new Date(System.currentTimeMillis());
+					Date actionDate = new Date(startLong + 300000);
+					Date warnDate = new Date(startLong - 960000);
+
+					Log.debug("OfMeet Plugin - scanning meeting now " + rightNow + " action " + actionDate + " warn " + warnDate + "\n" + meeting );
+
+					if(rightNow.after(warnDate) && rightNow.before(actionDate))
+					{
+						for (String user : bookmark.getUsers())
+						{
+							processMeeting(meeting, user);
+						}
+
+						for (String groupName : bookmark.getGroups())
+						{
+							try {
+								Group group = GroupManager.getInstance().getGroup(groupName);
+
+								for (JID memberJID : group.getMembers())
+								{
+									processMeeting(meeting, memberJID.getNode());
+								}
+
+							} catch (GroupNotFoundException e) { }
+						}
+
+						meeting.put("processed", true);
+						done = true;
+					}
+				}
+
+				if (done)
+				{
+					json = calendar.toString();
+					bookmark.setProperty("calendar", json);
+
+					Log.debug("OfMeet Plugin - processed meeting\n" + json);
+				}
+
+				bookmark.setProperty("lock", "false");
+			}
+		}
+	}
+
+	private void processMeeting(JSONObject meeting, String username)
+	{
+		Log.info("OfMeet Plugin - processMeeting " + username + " " + meeting);
+
+	   	try {
+			User user = userManager.getUser(username);
+			Date start = new Date(meeting.getLong("startTime"));
+			Date end = new Date(meeting.getLong("startTime"));
+			String name = user.getName();
+			String email = user.getEmail();
+			String description = meeting.getString("description");
+			String title = meeting.getString("title");
+			String room = meeting.getString("room");
+			String url = "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443") + "/ofmeet/?r=" + room;
+			String template = JiveGlobals.getProperty("ofmeet.email.template", "Dear [name],\n\nYou have an online meeting from [start] to [end]\n\n[description]\n\nTo join, please click\n[url]\n\nAdministrator - [domain]");
+
+			HashMap variables = new HashMap<String, String>();
+
+			if (email != null)
+			{
+				variables.put("name", name);
+				variables.put("email", email);
+				variables.put("start", start.toString());
+				variables.put("end", end.toString());
+				variables.put("description", description);
+				variables.put("title", title);
+				variables.put("room", room);
+				variables.put("url", url);
+				variables.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+
+				sendEmail(name, email, title, replaceTokens(template, variables), null);
+			}
+	   }
+	   catch (Exception e) {
+		   Log.error("processMeeting error", e);
+	   }
+	}
+
+	private void sendEmail(String toName, String toAddress, String subject, String body, String htmlBody)
+	{
+	   try {
+		   String fromAddress = "no_reply@" + JiveGlobals.getProperty("ofmeet.email.domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+		   String fromName = JiveGlobals.getProperty("ofmeet.email.fromname", "Openfire Meetings");
+
+		   Log.debug( "sendEmail " + toAddress + " " + subject + "\n " + body + "\n " + htmlBody);
+		   EmailService.getInstance().sendMessage(toName, toAddress, fromName, fromAddress, subject, body, htmlBody);
+	   }
+	   catch (Exception e) {
+		   Log.error(e.toString());
+	   }
+
+	}
+
+	private String replaceTokens(String text, Map<String, String> replacements)
+	{
+		Pattern pattern = Pattern.compile("\\[(.+?)\\]");
+		Matcher matcher = pattern.matcher(text);
+		StringBuffer buffer = new StringBuffer();
+
+		while (matcher.find())
+		{
+			String replacement = replacements.get(matcher.group(1));
+
+			if (replacement != null)
+			{
+				matcher.appendReplacement(buffer, "");
+				buffer.append(replacement);
+			}
+		}
+		matcher.appendTail(buffer);
+		return buffer.toString();
 	}
 }

@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -39,7 +40,8 @@ public class IQQueryHandler extends AbstractIQHandler implements
 	private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
 	private static final String NAMESPACE = "urn:xmpp:mam:0";
 	private static final String MODULE_NAME = "Message Archive Management Query Handler";
-	private static final DateFormat XEP0082_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+	XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
 
 	protected IQQueryHandler() {
 		super(MODULE_NAME, "query", NAMESPACE);
@@ -139,10 +141,10 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		Date endDate = null;
 		try {
 			if(startField != null) {
-				startDate = XEP0082_DATE_FORMAT.parse(startField);
+				startDate = xmppDateTimeFormat.parseString(startField);
 			}
 			if(endField != null) {
-				endDate = XEP0082_DATE_FORMAT.parse(endField);
+				endDate = xmppDateTimeFormat.parseString(endField);
 			}
 		} catch (ParseException e) {
 			Log.error("Error parsing query date filters.", e);
@@ -219,8 +221,7 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		Element forwarded = result.addElement("forwarded", "urn:xmpp:forward:0");
 		Element delay = forwarded.addElement("delay", "urn:xmpp:delay");
 
-		XEP0082_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-		delay.addAttribute("stamp", XEP0082_DATE_FORMAT.format(archivedMessage.getTime()));
+		delay.addAttribute("stamp", XMPPDateTimeFormat.format(archivedMessage.getTime()));
 
 		Document stanza;
 		try {

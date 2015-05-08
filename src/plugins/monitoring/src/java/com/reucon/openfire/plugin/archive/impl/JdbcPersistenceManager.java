@@ -141,7 +141,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	public Date getAuditedStartDate(Date startDate) {
 		long maxRetrievable = JiveGlobals.getIntProperty("conversation.maxRetrievable", ConversationManager.DEFAULT_MAX_RETRIEVABLE)
 				* JiveConstants.DAY;
-		Date result = null;
+		Date result = startDate;
 		if (maxRetrievable > 0) {
 			Date now = new Date();
 			Date maxRetrievableDate = new Date(now.getTime() - maxRetrievable);
@@ -150,9 +150,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			} else if (startDate.before(maxRetrievableDate)) {
 				result = maxRetrievableDate;
 			}
-		}else{
-                        result = startDate;
-                }
+		}
 		return result;
 	}
 

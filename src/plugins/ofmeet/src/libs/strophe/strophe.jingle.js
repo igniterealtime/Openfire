@@ -3,7 +3,7 @@ Strophe.addConnectionPlugin('jingle', {
     connection: null,
     sessions: {},
     jid2session: {},
-    ice_config: {iceServers: []},
+    ice_config: config.iceServers ? config.iceServers : {'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }]},
     pc_constraints: {},
     media_constraints: {
         mandatory: {

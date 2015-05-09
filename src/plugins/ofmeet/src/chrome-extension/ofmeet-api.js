@@ -18551,6 +18551,10 @@ var ofmeet = (function(of)
 	    this.hadturncandidate = false;
 	    this.lasticecandidate = false;
 
+	    this.relayHost = null;
+	    this.relayLocalPort = null;
+	    this.relayRemotePort = null; 
+    
 	    this.statsinterval = null;
 
 	    this.reason = null;
@@ -18574,7 +18578,10 @@ var ofmeet = (function(of)
 	    this.hadstuncandidate = false;
 	    this.hadturncandidate = false;
 	    this.lasticecandidate = false;
-
+	    this.relayHost = null;
+	    this.relayLocalPort = null;
+	    this.relayRemotePort = null; 
+	    
 	    this.peerconnection
 		= new TraceablePeerConnection(
 		    this.connection.jingle.ice_config,
@@ -18806,6 +18813,8 @@ var ofmeet = (function(of)
 
 	JingleSession.prototype.sendIceCandidates = function (candidates) {
 	    //console.log('sendIceCandidates', candidates);
+	    var self = this;
+	    var relayDone = false;
 	    var cand = $iq({to: this.peerjid, type: 'set'})
 		.c('jingle', {xmlns: 'urn:xmpp:jingle:1',
 		    action: 'transport-info',
@@ -18823,6 +18832,36 @@ var ofmeet = (function(of)
 		    for (var i = 0; i < cands.length; i++) {
 			cand.c('candidate', SDPUtil.candidateToJingle(cands[i].candidate)).up();
 		    }
+		    
+		    if (!self.relayDone )
+		    {
+			    console.log('sendIceCandidates: send jingle nodes request');            
+			    var iqRelay = $iq({type: "get", to: "relay." + self.connection.domain}).c('channel', {xmlns: "http://jabber.org/protocol/jinglenodes#channel", protocol: 'udp'});
+
+			    self.connection.sendIQ(iqRelay, function(response)
+			    {
+				if ($(response).attr('type') == "result")
+				{
+					console.log('sendIceCandidates: jingle nodes response', response);  
+					self.hadturncandidate = true;
+
+					$(response).find('channel').each(function() 
+					{
+						self.relayHost = $(this).attr('host');
+						self.relayLocalPort = $(this).attr('localport');
+						self.relayRemotePort = $(this).attr('remoteport');
+
+						var relayCandidate = "a=candidate:3707591233 1 udp 2113937151 " + self.relayHost + " " + self.relayRemotePort + " typ relay generation 0 ";
+
+						console.log("add JingleNodes candidate: " + self.relayHost + " " + self.relayLocalPort + " " + self.relayRemotePort); 
+						cand.c('candidate', SDPUtil.candidateToJingle(relayCandidate)).up();
+					});
+
+				}		
+			    }, function(err) {console.error("jingle nodes request error", err)});
+			    
+			    relayDone = true;
+		    }	    	    
 		    // add fingerprint
 		    if (SDPUtil.find_line(this.localSDP.media[mid], 'a=fingerprint:', this.localSDP.session)) {
 			var tmp = SDPUtil.parse_fingerprint(SDPUtil.find_line(this.localSDP.media[mid], 'a=fingerprint:', this.localSDP.session));
@@ -18838,6 +18877,8 @@ var ofmeet = (function(of)
 		    cand.up(); // transport
 		    cand.up(); // content
 		}
+		
+		self.relayDone = relayDone;
 	    }
 	    // might merge last-candidate notification into this, but it is called alot later. See webrtc issue #2340
 	    //console.log('was this the last candidate', this.lasticecandidate);
@@ -18963,6 +19004,14 @@ var ofmeet = (function(of)
 		    this.remoteSDP.raw = this.remoteSDP.session + this.remoteSDP.media.join('');
 		}
 	    }
+	    
+	    if (this.relayHost != null && this.relayLocalPort != null)
+	    {
+		var candidate = new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + this.relayHost + " " + this.relayLocalPort + " typ relay generation 0 "});
+		this.peerconnection.addIceCandidate(candidate);  
+		this.hadturncandidate = true;
+	    }
+	    
 	    var remotedesc = new RTCSessionDescription({type: desctype, sdp: this.remoteSDP.raw});
 
 	    this.peerconnection.setRemoteDescription(remotedesc,
@@ -20406,7 +20455,7 @@ var ofmeet = (function(of)
 	    connection: null,
 	    sessions: {},
 	    jid2session: {},
-	    ice_config: {iceServers: []},
+	    ice_config: {'iceServers': [{ 'url': 'stun:stun.l.google.com:19302' }]},
 	    pc_constraints: {},
 	    media_constraints: {
 		mandatory: {
@@ -20503,7 +20552,7 @@ var ofmeet = (function(of)
 			}
 			sess.media_constraints = this.media_constraints;
 			sess.pc_constraints = this.pc_constraints;
-			sess.ice_config = this.ice_config;
+			sess.ice_config = config.iceServers ? config.iceServers : this.ice_config;
 
 			sess.initiate(fromJid, false);
 			// FIXME: setRemoteDescription should only be done when this call is to be accepted
@@ -20590,7 +20639,7 @@ var ofmeet = (function(of)
 		}
 		sess.media_constraints = this.media_constraints;
 		sess.pc_constraints = this.pc_constraints;
-		sess.ice_config = this.ice_config;
+		sess.ice_config = config.iceServers ? config.iceServers : this.ice_config;
 
 		sess.initiate(peerjid, true);
 		this.sessions[sess.sid] = sess;
@@ -29484,14 +29533,56 @@ var ofmeet = (function(of)
 	       connection: null,
 	       audioChannels: {},
 	       localStream: null,
+	       dtmfSender: null,
 
 		init: function (conn) 
 		{
 			this.connection = conn; 
-
+        		this.connection.addHandler(this.onRayo.bind(this), 'urn:xmpp:rayo:1');  
+        	
 			console.log("strophe plugin inum enabled");                              
 		},
+		
+		onRayo: function (packet) 
+		{
+			//console.log("inum - onRayo", packet);
+			var from = $(packet).attr('from');
+			var callId = Strophe.getNodeFromJid(from); 
+			var callerId = null;
+			var calledId = null;			
 
+			$(packet).find('header').each(function() 
+			{		
+				var name = $(this).attr('name');
+				var value = $(this).attr('value');
+
+				//console.log("inum - onRayo header", name, value);
+
+				if (name == "caller_id") callerId = value;
+				if (name == "called_id") calledId = value;				
+			});	
+
+			$(packet).find('answered').each(function() 
+			{	
+				$(document).trigger('inum.answered', [callId, callerId, calledId]);
+			});
+
+			$(packet).find('hangup').each(function() 
+			{	
+				$(document).trigger('inum.hangup', [callId, callerId, calledId]);			
+			});	
+
+			return true;
+		},
+
+		sendTones: function (tones)
+		{
+			if (this.dtmfSender) 
+			{
+				this.dtmfSender.insertDTMF(tones);
+			}		
+		},
+		
 		hangup: function (callId)
 		{
 		    var self = this;
@@ -29595,7 +29686,9 @@ var ofmeet = (function(of)
 
 		handleOffer: function(offer) 
 		{
-			var offerSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');                   
+			//var offerSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 111 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');                   
+			
+			var offerSDP = new SDP('v=0\r\no=- 5151055458874951233 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 1 RTP/SAVPF 0 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:audio\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=sendrecv\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:126 telephone-event/8000\r\na=maxptime:60\r\nm=video 1 RTP/SAVPF 100 116 117\r\nc=IN IP4 0.0.0.0\r\na=rtcp:1 IN IP4 0.0.0.0\r\na=mid:video\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=sendrecv\r\na=rtpmap:100 VP8/90000\r\na=rtcp-fb:100 ccm fir\r\na=rtcp-fb:100 nack\r\na=rtcp-fb:100 goog-remb\r\na=rtpmap:116 red/90000\r\na=rtpmap:117 ulpfec/90000\r\n');                   			
 			offerSDP.media[1] = null;
 
 			console.log("handleOffer", offer, this.localStream, offerSDP);
@@ -29695,8 +29788,17 @@ var ofmeet = (function(of)
 				{
 					that.audioChannels[confId].peerconnection.setLocalDescription(desc);
 					$(document).trigger('inum.connected', [confId, audioId]);					
-				});                                                           
-			};                                             
+				}); 
+				
+				that.dtmfSender = that.audioChannels[confId].peerconnection.createDTMFSender(that.localStream.getTracks()[0]);
+				
+				that.dtmfSender.ontonechange = function(tone)
+				{
+					console.log("sent dtmf tone", tone);
+					$(document).trigger('inum.tone', [confId, audioId, tone]);
+				};
+				
+			}                                         
 
 			that.audioChannels[confId].peerconnection.addStream(that.localStream);
 			that.audioChannels[confId].peerconnection.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp : offerSDP.raw}));
@@ -29791,7 +29893,7 @@ var ofmeet = (function(of)
 
 				function (res) {
 				    console.log('sendAnswer ok', res);  
-				    $(document).trigger('inum.answered', [confId, audioId]);				    
+				    $(document).trigger('inum.delivered', [confId, audioId]);				    
 				},
 
 				function (err) {
@@ -29836,8 +29938,10 @@ var ofmeet = (function(of)
 			
 			this.audioChannels[confId].peerconnection = null;
 			this.localStream = null;
+			this.dtmfSender = null
 		}                              
 	});  
+ 
 
 	/**
 	 * messageHandler
@@ -32426,7 +32530,14 @@ var ofmeet = (function(of)
 
 	of.ready = function (username, password) 
 	{
-		$.ajax({type: "GET", url: "/ofmeet/config", dataType: "script", headers: {"Authorization": "Basic " + btoa(username + ":" + password)}}).done(function()
+		var headers = null;
+		
+		if (username && password)
+		{
+			headers = {"Authorization": "Basic " + btoa(username + ":" + password)}
+		}
+		
+		$.ajax({type: "GET", url: "/ofmeet/config", dataType: "script", headers: headers}).done(function()
 		{
 			var cssId = 'ofmeet-css';
 
@@ -32560,7 +32671,7 @@ var ofmeet = (function(of)
 	}
 	
     	of.VideoLayout = VideoLayout;
-    	of.connection = connection;    	
+    	of.connection = connection;  
     	
     	return of;
 }(ofmeet || {}));

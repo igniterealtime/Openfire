@@ -3,10 +3,10 @@
 <plugin>
     <class>org.jinglenodes.JingleNodesPlugin</class>
     <name>Jingle Nodes Plugin</name>
-    <description>Provides support for Jingle Nodes. This version is a custom modified version of 1.1.1 with a more advanced admin page exposing more properties and the ability to work behind a firewall.</description>
+    <description>Provides support for Jingle Nodes</description>
     <author>Jingle Nodes (Rodrigo Martins)</author>
-    <version>0.1.2</version>
-    <date>04/22/2015</date>
+    <version>0.1.3</version>
+    <date>05/09/2015</date>
     <minServerVersion>3.9.0</minServerVersion>
 
     <adminconsole>

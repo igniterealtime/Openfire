@@ -34,6 +34,10 @@ function JingleSession(me, sid, connection) {
     this.statsinterval = null;
 
     this.reason = null;
+    
+    this.relayHost = null;
+    this.relayLocalPort = null;
+    this.relayRemotePort = null;  
 
     this.wait = true;
     this.localStreamsSSRC = null;
@@ -54,6 +58,9 @@ JingleSession.prototype.initiate = function (peerjid, isInitiator) {
     this.hadstuncandidate = false;
     this.hadturncandidate = false;
     this.lasticecandidate = false;
+    this.relayHost = null;
+    this.relayLocalPort = null;
+    this.relayRemotePort = null;     
 
     this.peerconnection
         = new TraceablePeerConnection(
@@ -215,6 +222,7 @@ JingleSession.prototype.sendIceCandidate = function (candidate) {
                     // start 20ms callout
                     window.setTimeout(function () {
                         if (self.drip_container.length === 0) return;
+    			//console.log('sendIceCandidates timeout', self.usetrickle, self.usedrip, self.drip_container);                        
                         self.sendIceCandidates(self.drip_container);
                         self.drip_container = [];
                     }, 20);
@@ -223,7 +231,8 @@ JingleSession.prototype.sendIceCandidate = function (candidate) {
                 this.drip_container.push(candidate);
                 return;
             } else {
-                self.sendIceCandidate([candidate]);
+    		//console.log('sendIceCandidates single', self.usetrickle, self.usedrip, candidate);                 
+                self.sendIceCandidates([candidate]);
             }
         }
     } else {
@@ -286,6 +295,8 @@ JingleSession.prototype.sendIceCandidate = function (candidate) {
 
 JingleSession.prototype.sendIceCandidates = function (candidates) {
     console.log('sendIceCandidates', candidates);
+    var self = this; 
+    var relayDone = false;
     var cand = $iq({to: this.peerjid, type: 'set'})
         .c('jingle', {xmlns: 'urn:xmpp:jingle:1',
             action: 'transport-info',
@@ -301,8 +312,39 @@ JingleSession.prototype.sendIceCandidates = function (candidates) {
                 name: (cands[0].sdpMid? cands[0].sdpMid : mline.media)
             }).c('transport', ice);
             for (var i = 0; i < cands.length; i++) {
-                cand.c('candidate', SDPUtil.candidateToJingle(cands[i].candidate)).up();
+               cand.c('candidate', SDPUtil.candidateToJingle(cands[i].candidate)).up();
             }
+            
+            if (!self.relayDone)
+            {
+    		    console.log('sendIceCandidates: send jingle nodes request');            
+		    var iqRelay = $iq({type: "get", to: "relay." + self.connection.domain}).c('channel', {xmlns: "http://jabber.org/protocol/jinglenodes#channel", protocol: 'udp'});
+
+		    self.connection.sendIQ(iqRelay, function(response)
+		    {
+			if ($(response).attr('type') == "result")
+			{
+    		    		console.log('sendIceCandidates: jingle nodes response', response);  
+    		    		self.hadturncandidate = true;
+    		    		
+				$(response).find('channel').each(function() 
+				{
+					self.relayHost = $(this).attr('host');
+					self.relayLocalPort = $(this).attr('localport');
+					self.relayRemotePort = $(this).attr('remoteport');
+
+					var relayCandidate = "a=candidate:3707591233 1 udp 2113937151 " + self.relayHost + " " + self.relayRemotePort + " typ relay generation 0 ";
+
+					console.log("add JingleNodes candidate: " + self.relayHost + " " + self.relayLocalPort + " " + self.relayRemotePort); 
+					cand.c('candidate', SDPUtil.candidateToJingle(relayCandidate)).up();
+				});
+
+			}		
+		    }, function(err) {console.error("jingle nodes request error", err)});
+		    
+		    relayDone = true;		    
+	    }
+            
             // add fingerprint
             if (SDPUtil.find_line(this.localSDP.media[mid], 'a=fingerprint:', this.localSDP.session)) {
                 var tmp = SDPUtil.parse_fingerprint(SDPUtil.find_line(this.localSDP.media[mid], 'a=fingerprint:', this.localSDP.session));
@@ -318,6 +360,7 @@ JingleSession.prototype.sendIceCandidates = function (candidates) {
             cand.up(); // transport
             cand.up(); // content
         }
+	self.relayDone = relayDone;        
     }
     // might merge last-candidate notification into this, but it is called alot later. See webrtc issue #2340
     //console.log('was this the last candidate', this.lasticecandidate);
@@ -442,6 +485,13 @@ JingleSession.prototype.setRemoteDescription = function (elem, desctype) {
             }
             this.remoteSDP.raw = this.remoteSDP.session + this.remoteSDP.media.join('');
         }
+    }
+    
+    if (this.relayHost != null && this.relayLocalPort != null)
+    {
+	var candidate = new RTCIceCandidate({sdpMLineIndex: "0", candidate: "a=candidate:3707591233 1 udp 2113937151 " + this.relayHost + " " + this.relayLocalPort + " typ relay generation 0 "});
+	this.peerconnection.addIceCandidate(candidate);  
+	this.hadturncandidate = true;
     }
     var remotedesc = new RTCSessionDescription({type: desctype, sdp: this.remoteSDP.raw});
 

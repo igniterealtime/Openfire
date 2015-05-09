@@ -578,7 +578,7 @@ function setupRTC() {
             browser: 'chrome',
             getUserMedia: navigator.webkitGetUserMedia.bind(navigator),
             attachMediaStream: function (element, stream) {
-                element.attr('src', webkitURL.createObjectURL(stream));
+                element.attr('src', URL.createObjectURL(stream));
             },
             // DTLS should now be enabled by default but..
             pc_constraints: {'optional': [{'DtlsSrtpKeyAgreement': 'true'}]},

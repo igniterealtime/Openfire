@@ -43,12 +43,12 @@ public class JingleNodesPlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(JingleNodesPlugin.class);
 
-    public static final String JN_LOCAL_IP_PROPERTY = "jinglenodes.localIP";
-    public static final String JN_PUBLIC_IP_PROPERTY = "jinglenodes.publicIP";
-    public static final String JN_MIN_PORT_PROPERTY = "jinglenodes.minPort";
-    public static final String JN_MAX_PORT_PROPERTY = "jinglenodes.maxPort";
-    public static final String JN_TEST_STUN_SERVER_PROPERTY = "jinglenodes.testSTUNServer";
-    public static final String JN_TEST_STUN_PORT_PROPERTY = "jinglenodes.testSTUNPort";
+    public static final String JN_LOCAL_IP_PROPERTY = "jinglenodes.localip";
+    public static final String JN_PUBLIC_IP_PROPERTY = "jinglenodes.publicip";
+    public static final String JN_MIN_PORT_PROPERTY = "jinglenodes.minport";
+    public static final String JN_MAX_PORT_PROPERTY = "jinglenodes.maxport";
+    public static final String JN_TEST_STUN_SERVER_PROPERTY = "jinglenodes.teststunserver";
+    public static final String JN_TEST_STUN_PORT_PROPERTY = "jinglenodes.teststunport";
 
     private ComponentManager componentManager;
 

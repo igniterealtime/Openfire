@@ -3,6 +3,7 @@ package com.reucon.openfire.plugin.archive.xep0136;
 import com.reucon.openfire.plugin.archive.model.ArchivedMessage;
 import com.reucon.openfire.plugin.archive.model.Conversation;
 import com.reucon.openfire.plugin.archive.util.XmppDateUtil;
+import com.reucon.openfire.plugin.archive.xep.AbstractIQHandler;
 import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -16,8 +17,11 @@ import java.util.List;
  * Message Archiving Retrieve Handler.
  */
 public class IQRetrieveHandler extends AbstractIQHandler {
+
+	private static final String NAMESPACE = "urn:xmpp:archive";
+
 	public IQRetrieveHandler() {
-		super("Message Archiving Retrieve Handler", "retrieve");
+		super("Message Archiving Retrieve Handler", "retrieve", NAMESPACE);
 	}
 
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {

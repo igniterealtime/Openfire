@@ -72,11 +72,11 @@ import org.xmpp.packet.Message;
  * conversation data is enabled by default, but can be disabled by setting "conversation.metadataArchiving" to <tt>false</tt>. Archiving of messages
  * in a conversation is disabled by default, but can be enabled by setting "conversation.messageArchiving" to <tt>true</tt>.
  * <p>
- * 
+ *
  * When running in a cluster only the senior cluster member will keep track of the active conversations. Other cluster nodes will forward conversation
  * events that occurred in the local node to the senior cluster member. If the senior cluster member goes down then current conversations will be
  * terminated and if users keep sending messages between them then new conversations will be created.
- * 
+ *
  * @author Matt Tucker
  */
 public class ConversationManager implements Startable, ComponentEventListener {
@@ -85,8 +85,8 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	private static final String UPDATE_CONVERSATION = "UPDATE ofConversation SET lastActivity=?, messageCount=? WHERE conversationID=?";
 	private static final String UPDATE_PARTICIPANT = "UPDATE ofConParticipant SET leftDate=? WHERE conversationID=? AND bareJID=? AND jidResource=? AND joinedDate=?";
-	private static final String INSERT_MESSAGE = "INSERT INTO ofMessageArchive(conversationID, fromJID, fromJIDResource, toJID, toJIDResource, sentDate, body) "
-			+ "VALUES (?,?,?,?,?,?,?)";
+	private static final String INSERT_MESSAGE = "INSERT INTO ofMessageArchive(messageID, conversationID, fromJID, fromJIDResource, toJID, toJIDResource, sentDate, body, stanza) "
+			+ "VALUES ((SELECT COUNT(*) FROM ofMessageArchive),?,?,?,?,?,?,?,?)";
 	private static final String CONVERSATION_COUNT = "SELECT COUNT(*) FROM ofConversation";
 	private static final String MESSAGE_COUNT = "SELECT COUNT(*) FROM ofMessageArchive";
 	private static final String DELETE_CONVERSATION_1 = "DELETE FROM ofMessageArchive WHERE conversationID=?";
@@ -319,7 +319,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Returns true if metadata archiving is enabled. Conversation meta-data includes the participants, start date, last activity, and the count of
 	 * messages sent. When archiving is enabled, all meta-data is written to the database.
-	 * 
+	 *
 	 * @return true if metadata archiving is enabled.
 	 */
 	public boolean isMetadataArchivingEnabled() {
@@ -329,7 +329,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Sets whether metadata archiving is enabled. Conversation meta-data includes the participants, start date, last activity, and the count of
 	 * messages sent. When archiving is enabled, all meta-data is written to the database.
-	 * 
+	 *
 	 * @param enabled
 	 *            true if archiving should be enabled.
 	 */
@@ -340,7 +340,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns true if one-to-one chats or group chats messages are being archived.
-	 * 
+	 *
 	 * @return true if one-to-one chats or group chats messages are being archived.
 	 */
 	public boolean isArchivingEnabled() {
@@ -351,7 +351,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	 * Returns true if message archiving is enabled for one-to-one chats. When enabled, all messages in one-to-one conversations are stored in the
 	 * database. Note: it's not possible for meta-data archiving to be disabled when message archiving is enabled; enabling message archiving
 	 * automatically enables meta-data archiving.
-	 * 
+	 *
 	 * @return true if message archiving is enabled.
 	 */
 	public boolean isMessageArchivingEnabled() {
@@ -361,7 +361,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Sets whether message archiving is enabled. When enabled, all messages in conversations are stored in the database. Note: it's not possible for
 	 * meta-data archiving to be disabled when message archiving is enabled; enabling message archiving automatically enables meta-data archiving.
-	 * 
+	 *
 	 * @param enabled
 	 *            true if message should be enabled.
 	 */
@@ -378,7 +378,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	 * Returns true if message archiving is enabled for group chats. When enabled, all messages in group conversations are stored in the database
 	 * unless a list of rooms was specified in {@link #getRoomsArchived()} . Note: it's not possible for meta-data archiving to be disabled when room
 	 * archiving is enabled; enabling room archiving automatically enables meta-data archiving.
-	 * 
+	 *
 	 * @return true if room archiving is enabled.
 	 */
 	public boolean isRoomArchivingEnabled() {
@@ -389,7 +389,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	 * Sets whether message archiving is enabled for group chats. When enabled, all messages in group conversations are stored in the database unless
 	 * a list of rooms was specified in {@link #getRoomsArchived()} . Note: it's not possible for meta-data archiving to be disabled when room
 	 * archiving is enabled; enabling room archiving automatically enables meta-data archiving.
-	 * 
+	 *
 	 * @param enabled
 	 *            if room archiving is enabled.
 	 */
@@ -405,7 +405,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Returns list of room names whose messages will be archived. When room archiving is enabled and this list is empty then messages of all local
 	 * rooms will be archived. However, when name of rooms are defined in this list then only messages of those rooms will be archived.
-	 * 
+	 *
 	 * @return list of local room names whose messages will be archived.
 	 */
 	public Collection<String> getRoomsArchived() {
@@ -415,7 +415,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Sets list of room names whose messages will be archived. When room archiving is enabled and this list is empty then messages of all local rooms
 	 * will be archived. However, when name of rooms are defined in this list then only messages of those rooms will be archived.
-	 * 
+	 *
 	 * @param roomsArchived
 	 *            list of local room names whose messages will be archived.
 	 */
@@ -426,7 +426,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns the number of minutes a conversation can be idle before it's ended.
-	 * 
+	 *
 	 * @return the conversation idle time.
 	 */
 	public int getIdleTime() {
@@ -435,7 +435,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Sets the number of minutes a conversation can be idle before it's ended.
-	 * 
+	 *
 	 * @param idleTime
 	 *            the max number of minutes a conversation can be idle before it's ended.
 	 * @throws IllegalArgumentException
@@ -452,7 +452,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Returns the maximum number of minutes a conversation can last before it's ended. Any additional messages between the participants in the chat
 	 * will be associated with a new conversation.
-	 * 
+	 *
 	 * @return the maximum number of minutes a conversation can last.
 	 */
 	public int getMaxTime() {
@@ -462,7 +462,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Sets the maximum number of minutes a conversation can last before it's ended. Any additional messages between the participants in the chat will
 	 * be associated with a new conversation.
-	 * 
+	 *
 	 * @param maxTime
 	 *            the maximum number of minutes a conversation can last.
 	 * @throws IllegalArgumentException
@@ -506,7 +506,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns the count of active conversations.
-	 * 
+	 *
 	 * @return the count of active conversations.
 	 */
 	public int getConversationCount() {
@@ -518,7 +518,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns a conversation by ID.
-	 * 
+	 *
 	 * @param conversationID
 	 *            the ID of the conversation.
 	 * @return the conversation.
@@ -548,7 +548,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns the set of active conversations.
-	 * 
+	 *
 	 * @return the active conversations.
 	 */
 	public Collection<Conversation> getConversations() {
@@ -571,7 +571,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Returns the total number of conversations that have been archived to the database. The archived conversation may only be the meta-data, or it
 	 * might include messages as well if message archiving is turned on.
-	 * 
+	 *
 	 * @return the total number of archived conversations.
 	 */
 	public int getArchivedConversationCount() {
@@ -596,7 +596,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns the total number of messages that have been archived to the database.
-	 * 
+	 *
 	 * @return the total number of archived messages.
 	 */
 	public int getArchivedMessageCount() {
@@ -621,7 +621,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Adds a conversation listener, which will be notified of newly created conversations, conversations ending, and updates to conversations.
-	 * 
+	 *
 	 * @param listener
 	 *            the conversation listener.
 	 */
@@ -631,7 +631,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Removes a conversation listener.
-	 * 
+	 *
 	 * @param listener
 	 *            the conversation listener.
 	 */
@@ -642,17 +642,19 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Processes an incoming message of a one-to-one chat. The message will mapped to a conversation and then queued for storage if archiving is
 	 * turned on.
-	 * 
+	 *
 	 * @param sender
 	 *            sender of the message.
 	 * @param receiver
 	 *            receiver of the message.
 	 * @param body
 	 *            body of the message.
+	 * @param stanza
+	 * 			  String encoded message stanza
 	 * @param date
 	 *            date when the message was sent.
 	 */
-	void processMessage(JID sender, JID receiver, String body, Date date) {
+	void processMessage(JID sender, JID receiver, String body, String stanza, Date date) {
 		String conversationKey = getConversationKey(sender, receiver);
 		synchronized (conversationKey.intern()) {
 			Conversation conversation = conversations.get(conversationKey);
@@ -706,7 +708,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 			if (messageArchivingEnabled) {
 				if (body != null) {
 					/* OF-677 - Workaround to prevent null messages being archived */
-					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, receiver, date, body, false));
+					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, receiver, date, body, stanza, false));
 				}
 			}
 			// Notify listeners of the conversation update.
@@ -718,7 +720,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Processes an incoming message sent to a room. The message will mapped to a conversation and then queued for storage if archiving is turned on.
-	 * 
+	 *
 	 * @param roomJID
 	 *            the JID of the room where the group conversation is taking place.
 	 * @param sender
@@ -768,7 +770,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 				JID jid = new JID(roomJID + "/" + nickname);
 				if (body != null) {
 					/* OF-677 - Workaround to prevent null messages being archived */
-					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, false));
+					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, "", false));
 				}
 			}
 			// Notify listeners of the conversation update.
@@ -785,7 +787,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	 * <p/>
 	 * Eventually, when a new conversation will start in the room and if this user is still in the room then the new conversation will detect this
 	 * user and mark like if the user joined the converstion from the beginning.
-	 * 
+	 *
 	 * @param room
 	 *            the room where the user joined.
 	 * @param user
@@ -805,7 +807,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Notification message indicating that a user left a groupchat conversation. If no groupchat conversation was taking place in the specified room
 	 * then ignore this event.
-	 * 
+	 *
 	 * @param room
 	 *            the room where the user left.
 	 * @param user
@@ -839,7 +841,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns the group conversation taking place in the specified room or <tt>null</tt> if none.
-	 * 
+	 *
 	 * @param room
 	 *            JID of the room.
 	 * @return the group conversation taking place in the specified room or null if none.
@@ -856,7 +858,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 	/**
 	 * Returns true if the specified message should be processed by the conversation manager. Only messages between two users, group chats, or
 	 * gateways are processed.
-	 * 
+	 *
 	 * @param message
 	 *            the message to analyze.
 	 * @return true if the specified message should be processed by the conversation manager.
@@ -871,7 +873,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns true if the specified JID should be recorded in a conversation.
-	 * 
+	 *
 	 * @param jid
 	 *            the JID.
 	 * @return true if the JID should be recorded in a conversation.
@@ -903,7 +905,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	/**
 	 * Returns a unique key for a coversation between two JID's. The order of two JID parameters is irrelevant; the same key will be returned.
-	 * 
+	 *
 	 * @param jid1
 	 *            the first JID.
 	 * @param jid2
@@ -987,6 +989,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 						pstmt.setString(5, message.getToJID().getResource());
 						pstmt.setLong(6, message.getSentDate().getTime());
 						DbConnectionManager.setLargeTextField(pstmt, 7, message.getBody());
+						DbConnectionManager.setLargeTextField(pstmt, 8, message.getStanza());
 						if (DbConnectionManager.isBatchUpdatesSupported()) {
 							pstmt.addBatch();
 						} else {

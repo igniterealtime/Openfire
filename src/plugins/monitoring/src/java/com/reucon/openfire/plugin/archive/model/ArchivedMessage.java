@@ -30,6 +30,7 @@ public class ArchivedMessage {
 	private String body;
 	private Conversation conversation;
 	private JID withJid;
+	private String stanza;
 
 	public ArchivedMessage(Date time, Direction direction, String type, JID withJid) {
 		this.time = time;
@@ -74,6 +75,14 @@ public class ArchivedMessage {
 		this.body = body;
 	}
 
+	public String getStanza() {
+		return stanza;
+	}
+
+	public void setStanza(String stanza) {
+		this.stanza = stanza;
+	}
+
 	public Conversation getConversation() {
 		return conversation;
 	}
@@ -84,7 +93,7 @@ public class ArchivedMessage {
 
 	/**
 	 * Checks if this message contains payload that should be archived.
-	 * 
+	 *
 	 * @return <code>true</code> if this message is empty, <code>false</code>
 	 *         otherwise.
 	 */

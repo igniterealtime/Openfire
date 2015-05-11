@@ -12,6 +12,7 @@ import org.xmpp.packet.JID;
 
 import com.reucon.openfire.plugin.archive.model.Conversation;
 import com.reucon.openfire.plugin.archive.util.XmppDateUtil;
+import com.reucon.openfire.plugin.archive.xep.AbstractIQHandler;
 import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
 
 /**
@@ -19,10 +20,12 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
  */
 public class IQListHandler extends AbstractIQHandler implements
 		ServerFeaturesProvider {
+
+	private static final String NAMESPACE = "urn:xmpp:archive";
 	private static final String NAMESPACE_MANAGE = "urn:xmpp:archive:manage";
 
 	public IQListHandler() {
-		super("Message Archiving List Handler", "list");
+		super("Message Archiving List Handler", "list", NAMESPACE);
 	}
 
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {

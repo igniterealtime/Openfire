@@ -9,8 +9,8 @@
     <date>10/28/2014</date>
     <minServerVersion>3.9.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
-    <databaseVersion>2</databaseVersion>
-	
+    <databaseVersion>3</databaseVersion>
+
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="stats-dashboard" name="${admin.sidebar.statistics.name}" description="${admin.item.stats-dashboard.description}">

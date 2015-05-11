@@ -65,9 +65,21 @@ public interface PersistenceManager
      * @param owner     bare jid of the owner of the conversation to find or <code>null</code> for any.
      * @param with      bare jid of the communication partner or <code>null</code> for any. This is either
      *                  the jid of another XMPP user or the jid of a group chat.
-     * @return the conversations that matched search critera without messages and participants.
+     * @return the conversations that matched search criteria without messages and participants.
      */
     Collection<Conversation> findConversations(Date startDate, Date endDate, String owner, String with, XmppResultSet xmppResultSet);
+
+    /**
+     * Searches for messages.
+     *
+     * @param startDate earliest start date of the message to find or <code>null</code> for any.
+     * @param endDate   latest end date of the message to find or <code>null</code> for any.
+     * @param owner     bare jid of the owner of the message to find or <code>null</code> for any.
+     * @param with      bare jid of the communication partner or <code>null</code> for any. This is either
+     *                  the jid of another XMPP user or the jid of a group chat.
+     * @return the messages that matched search criteria.
+     */
+    Collection<ArchivedMessage> findMessages(Date startDate, Date endDate, String owner, String with, XmppResultSet xmppResultSet);
 
     Collection<Conversation> getActiveConversations(int conversationTimeout);
 

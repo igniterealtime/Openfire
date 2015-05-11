@@ -1,4 +1,4 @@
-package com.reucon.openfire.plugin.archive.xep0136;
+package com.reucon.openfire.plugin.archive.xep;
 
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -11,15 +11,15 @@ import com.reucon.openfire.plugin.archive.IndexManager;
 import com.reucon.openfire.plugin.archive.PersistenceManager;
 
 /**
- * Abstract base class for XEP-0136 IQ Handlers.
+ * Abstract base class for XEP-specific IQ Handlers.
  */
 public abstract class AbstractIQHandler extends IQHandler {
-	protected static final String NAMESPACE = "urn:xmpp:archive";
+
 	private final IQHandlerInfo info;
 
-	protected AbstractIQHandler(String moduleName, String elementName) {
+	protected AbstractIQHandler(String moduleName, String elementName, String namespace) {
 		super(moduleName);
-		this.info = new IQHandlerInfo(elementName, NAMESPACE);
+		this.info = new IQHandlerInfo(elementName, namespace);
 	}
 
 	public final IQHandlerInfo getInfo() {

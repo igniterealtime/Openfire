@@ -995,26 +995,14 @@ public class WorkgroupManager implements Component {
     }
 
     /**
-     * Sorts all <code>Workgroups</code> by ID.
+     * Sorts all <code>Workgroups</code> by Display Name.
      */
     static Comparator<Workgroup> workgroupComparator = new Comparator<Workgroup>() {
         public int compare(Workgroup item1, Workgroup item2) {
-            float int1 = item1.getID();
-            float int2 = item2.getID();
+            String str1 = item1.getDisplayName();
+            String str2 = item2.getDisplayName();
 
-            if (int1 == int2) {
-                return 0;
-            }
-
-            if (int1 > int2) {
-                return 1;
-            }
-
-            if (int1 < int2) {
-                return -1;
-            }
-
-            return 0;
+            return str1.compareToIgnoreCase(str2);
         }
     };
 }

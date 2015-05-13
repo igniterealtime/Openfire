@@ -108,8 +108,12 @@ var VideoLayout = (function (my) {
         {
            myResourceJid = Strophe.getResourceFromJid(connection.emuc.myroomjid);
         }
-        VideoLayout.updateLargeVideo(localVideoSrc, 0,
-            myResourceJid);
+        VideoLayout.updateLargeVideo(localVideoSrc, 0,  myResourceJid);
+            
+	if (stream.getVideoTracks().length == 0)
+	{
+		localVideoSelector.css("display", "none");
+	}
 
     };
 

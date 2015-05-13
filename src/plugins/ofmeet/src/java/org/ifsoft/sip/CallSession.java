@@ -143,6 +143,8 @@ public class CallSession
 	public String callId;
 	public String focusJID;
 	public String roomJID;
+	public String username;
+	public long startTimestamp = 0;
 
 	private CallControlComponent callControl;
 

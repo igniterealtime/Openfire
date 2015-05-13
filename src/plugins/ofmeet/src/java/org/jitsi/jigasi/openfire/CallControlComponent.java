@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.database.DbConnectionManager;
+import java.sql.*;
 
 import org.slf4j.*;
 import org.slf4j.Logger;
@@ -159,7 +161,7 @@ public class CallControlComponent extends AbstractComponent
 		sendPacket(iq);
 	}
 
-	private void makeCall(Conference conference, String confJid, String to, String callId)
+	private void makeCall(Conference conference, String confJid, String to, String callId, String username, long startTimestamp)
 	{
 		Log.info("CallControlComponent - makeCall " + confJid + " " + to + " " + callId);
 
@@ -267,6 +269,8 @@ public class CallControlComponent extends AbstractComponent
 
 			cs.jabberRemote = to;
 			cs.jabberLocal = from;
+			cs.username = username;
+			cs.startTimestamp = startTimestamp;
 
 			SipService.sendInvite(cs);
 
@@ -280,11 +284,12 @@ public class CallControlComponent extends AbstractComponent
 	{
 		Log.info("hangupCall " + callId);
 
-		CallSession cs = callSessions.get(callId);
+		CallSession cs = callSessions.remove(callId);
 
 		if (cs != null)
 		{
 			SipService.sendBye(cs);
+			updateCallRecord(cs.startTimestamp, (int)(System.currentTimeMillis() - cs.startTimestamp));
 
 		} else {
 			Log.error("CallControlComponent hangup. cannot fine callid " + callId);
@@ -379,6 +384,12 @@ public class CallControlComponent extends AbstractComponent
 			}
 		}
 
+		if (session != null)
+		{
+			long startTimestamp = System.currentTimeMillis();
+			session.startTimestamp = startTimestamp;
+			createCallRecord("admin", from, confJID, startTimestamp, 0, "received");
+		}
 		return session;
 	}
 
@@ -455,7 +466,12 @@ public class CallControlComponent extends AbstractComponent
 						hangup.addElement("header").addAttribute("name", "caller_id").addAttribute("value", session.jabberRemote);
 						hangup.addElement("header").addAttribute("name", "called_id").addAttribute("value", session.jabberLocal);
 
-						callSessions.remove(callId);
+						CallSession cs = callSessions.remove(callId);
+
+						if (cs != null)
+						{
+							updateCallRecord(cs.startTimestamp, (int)(System.currentTimeMillis() - cs.startTimestamp));
+						}
 					}
 
 					sendPacket(presence);
@@ -548,7 +564,11 @@ public class CallControlComponent extends AbstractComponent
 
 						if (conference != null)
 						{
-							makeCall(conference, confJid, to, callId);
+							String username = iq.getFrom().getNode();
+							long startTimestamp = System.currentTimeMillis();
+
+							makeCall(conference, confJid, to, callId, username, startTimestamp);
+							createCallRecord(username, confJid, to, startTimestamp, 0, "dialed");
 
 						} else {
 							Log.error("CallControlComponent - can't find conference " + confId);
@@ -709,6 +729,72 @@ public class CallControlComponent extends AbstractComponent
 		} catch (Exception e) {
 
 			Log.error("CallControlComponent sendPacket ", e);
+		}
+	}
+
+   private void createCallRecord(String username, String addressFrom, String addressTo, long datetime, int duration, String calltype)
+   {
+		boolean sipPlugin = XMPPServer.getInstance().getPluginManager().getPlugin("sip") != null;
+
+		if (sipPlugin)
+		{
+			Log.info("createCallRecord " + username + " " + addressFrom + " " + addressTo + " " + datetime);
+
+			String sql = "INSERT INTO ofSipPhoneLog (username, addressFrom, addressTo, datetime, duration, calltype) values  (?, ?, ?, ?, ?, ?)";
+
+			Connection con = null;
+			PreparedStatement psmt = null;
+			ResultSet rs = null;
+
+			try {
+				con = DbConnectionManager.getConnection();
+				psmt = con.prepareStatement(sql);
+				psmt.setString(1, username);
+				psmt.setString(2, addressFrom);
+				psmt.setString(3, addressTo);
+				psmt.setLong(4, datetime);
+				psmt.setInt(5, duration);
+				psmt.setString(6, calltype);
+
+				psmt.executeUpdate();
+
+			} catch (SQLException e) {
+				Log.error(e.getMessage(), e);
+			} finally {
+				DbConnectionManager.closeConnection(rs, psmt, con);
+			}
+		}
+    }
+
+	private void updateCallRecord(long datetime, int duration)
+	{
+		boolean sipPlugin = XMPPServer.getInstance().getPluginManager().getPlugin("sip") != null;
+
+		if (sipPlugin)
+		{
+			Log.info("updateCallRecord " + datetime + " " + duration);
+
+			String sql = "UPDATE ofSipPhoneLog SET duration = ? WHERE datetime = ?";
+
+			Connection con = null;
+			PreparedStatement psmt = null;
+
+			try {
+
+				con = DbConnectionManager.getConnection();
+				psmt = con.prepareStatement(sql);
+
+				psmt.setInt(1, duration);
+				psmt.setLong(2, (datetime / 1000));
+				psmt.executeUpdate();
+
+
+			} catch (SQLException e) {
+				Log.error(e.getMessage(), e);
+
+			} finally {
+				DbConnectionManager.closeConnection(psmt, con);
+			}
 		}
 	}
 }

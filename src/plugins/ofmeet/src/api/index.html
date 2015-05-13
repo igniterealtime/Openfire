@@ -17,6 +17,13 @@
 		var visible = false;
 		var joined = false;
 
+		function urlParam(name)
+		{
+			var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+			if (!results) { return undefined; }
+			return unescape(results[1] || undefined);
+		};
+
 		$(document).bind('ofmeet.connected', function (event, connection)
 		{
 			console.log("ofmeet connected", connection);
@@ -55,7 +62,7 @@
 		$(document).bind('ofmeet.ready', function ()
 		{
 			console.log("ofmeet.ready");
-			ofmeet.connect();
+			ofmeet.connect(urlParam("novideo"));
 		});
 
 		$(document).ready(function ()

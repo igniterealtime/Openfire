@@ -88,7 +88,11 @@ window.addEventListener("load", function()
 	
 	$(document).bind('inum.cleared', function(event, callId)
 	{
-		console.log("inum.cleared", callId);	
+		console.log("inum.cleared", callId);
+		dialer.setLabel("Call");
+		dialer.setState("inactive");				
+		dialer.call = null
+		stopTone();		
 	});	
 
 	$(document).bind('inum.dialled', function (event, confId, to, callId)

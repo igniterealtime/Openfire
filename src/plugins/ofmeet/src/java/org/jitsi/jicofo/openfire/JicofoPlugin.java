@@ -57,7 +57,7 @@ public class JicofoPlugin
 			{
 				Log.info("JicofoPlugin - using focus " + focusUserJid + ":" + hostName);
 
-				System.setProperty("org.jitsi.videobridge.ofmeet.audio.mixer", JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
+				//System.setProperty("org.jitsi.videobridge.ofmeet.audio.mixer", JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
 
 				System.setProperty("net.java.sip.communicator.service.gui.ALWAYS_TRUST_MODE_ENABLED",  "true");
 				System.setProperty(FocusManager.HOSTNAME_PNAME, hostName);

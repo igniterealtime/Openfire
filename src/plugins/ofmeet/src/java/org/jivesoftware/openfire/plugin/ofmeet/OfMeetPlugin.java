@@ -43,6 +43,7 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.group.*;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -295,7 +296,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 
 	public void processMeetingPlanner()
 	{
-		Log.info("OfMeet Plugin - processMeetingPlanner");
+		Log.debug("OfMeet Plugin - processMeetingPlanner");
 
 		final Collection<Bookmark> bookmarks = BookmarkManager.getBookmarks();
 
@@ -392,6 +393,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 				variables.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 
 				sendEmail(name, email, title, replaceTokens(template, variables), null);
+				SecurityAuditManager.getInstance().logEvent(user.getUsername(), "sent email - " + title, description);
 			}
 	   }
 	   catch (Exception e) {

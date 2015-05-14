@@ -211,8 +211,20 @@ function obtainAudioAndVideoPermissions(callback) {
             video: stream.getVideoTracks().length
         });
     }
+    
+    var media = ['audio', 'video'];
+    var resolution = config.resolution || '360';
+    
+    if (urlParam("novideo"))
+    {
+    	media = ['audio'];
+    	resolution = null;
+    }
+    
+    console.log("using media", media);
+    
     getUserMediaWithConstraints(
-        ['audio', 'video'],
+        media,
         cb,
         function (error) {
             console.error('failed to obtain audio/video stream - trying audio only', error);
@@ -231,7 +243,7 @@ function obtainAudioAndVideoPermissions(callback) {
                 }
             );
         },
-        config.resolution || '360');
+        resolution);
 }
 
 function maybeDoJoin() {
@@ -284,6 +296,13 @@ function doJoin() {
     Moderator.allocateConferenceFocus(
         roomName, doJoinAfterFocus);
 }
+
+function urlParam(name)
+{
+	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+	if (!results) { return undefined; }
+	return unescape(results[1] || undefined);
+};
 
 function doJoinAfterFocus() {
 

@@ -675,55 +675,58 @@ function getUserMediaWithConstraints(um, success_callback, failure_callback, res
         }
     }
 
-    // Check if we are running on Android device
-    var isAndroid = navigator.userAgent.indexOf('Android') != -1;
+    if (constraints.video) {
+	    // Check if we are running on Android device
+	    var isAndroid = navigator.userAgent.indexOf('Android') != -1;
 
-    if (resolution && !constraints.video || isAndroid) {
-        constraints.video = { mandatory: {}, optional: [] };// same behaviour as true
+	    if (resolution && !constraints.video || isAndroid) {
+		constraints.video = { mandatory: {}, optional: [] };// same behaviour as true
+	    }
+	    // see https://code.google.com/p/chromium/issues/detail?id=143631#c9 for list of supported resolutions
+	    switch (resolution) {
+		// 16:9 first
+		case '1080':
+		case 'fullhd':
+		    constraints.video.mandatory.minWidth = 1920;
+		    constraints.video.mandatory.minHeight = 1080;
+		    break;
+		case '720':
+		case 'hd':
+		    constraints.video.mandatory.minWidth = 1280;
+		    constraints.video.mandatory.minHeight = 720;
+		    break;
+		case '360':
+		    constraints.video.mandatory.minWidth = 640;
+		    constraints.video.mandatory.minHeight = 360;
+		    break;
+		case '180':
+		    constraints.video.mandatory.minWidth = 320;
+		    constraints.video.mandatory.minHeight = 180;
+		    break;
+		// 4:3
+		case '960':
+		    constraints.video.mandatory.minWidth = 960;
+		    constraints.video.mandatory.minHeight = 720;
+		    break;
+		case '640':
+		case 'vga':
+		    constraints.video.mandatory.minWidth = 640;
+		    constraints.video.mandatory.minHeight = 480;
+		    break;
+		case '320':
+		    constraints.video.mandatory.minWidth = 320;
+		    constraints.video.mandatory.minHeight = 240;
+		    break;
+		default:
+		    if (isAndroid) {
+			constraints.video.mandatory.minWidth = 320;
+			constraints.video.mandatory.minHeight = 240;
+			constraints.video.mandatory.maxFrameRate = 15;
+		    }
+		    break;
+	    }
     }
-    // see https://code.google.com/p/chromium/issues/detail?id=143631#c9 for list of supported resolutions
-    switch (resolution) {
-        // 16:9 first
-        case '1080':
-        case 'fullhd':
-            constraints.video.mandatory.minWidth = 1920;
-            constraints.video.mandatory.minHeight = 1080;
-            break;
-        case '720':
-        case 'hd':
-            constraints.video.mandatory.minWidth = 1280;
-            constraints.video.mandatory.minHeight = 720;
-            break;
-        case '360':
-            constraints.video.mandatory.minWidth = 640;
-            constraints.video.mandatory.minHeight = 360;
-            break;
-        case '180':
-            constraints.video.mandatory.minWidth = 320;
-            constraints.video.mandatory.minHeight = 180;
-            break;
-        // 4:3
-        case '960':
-            constraints.video.mandatory.minWidth = 960;
-            constraints.video.mandatory.minHeight = 720;
-            break;
-        case '640':
-        case 'vga':
-            constraints.video.mandatory.minWidth = 640;
-            constraints.video.mandatory.minHeight = 480;
-            break;
-        case '320':
-            constraints.video.mandatory.minWidth = 320;
-            constraints.video.mandatory.minHeight = 240;
-            break;
-        default:
-            if (isAndroid) {
-                constraints.video.mandatory.minWidth = 320;
-                constraints.video.mandatory.minHeight = 240;
-                constraints.video.mandatory.maxFrameRate = 15;
-            }
-            break;
-    }
+    
     if (constraints.video)
     {
 	    if (constraints.video.mandatory.minWidth)

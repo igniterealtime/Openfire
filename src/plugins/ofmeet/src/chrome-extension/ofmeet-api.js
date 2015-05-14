@@ -24046,6 +24046,11 @@ var ofmeet = (function(of)
 		}
 		VideoLayout.updateLargeVideo(localVideoSrc, 0,
 		    myResourceJid);
+		    
+		if (stream.getVideoTracks().length == 0)
+		{
+			localVideoSelector.css("display", "none");
+		}		    
 
 	    };
 
@@ -31184,7 +31189,7 @@ var ofmeet = (function(of)
 
 	var sessionTerminated = false;
 
-	function connectOpenfire(jid, password) 
+	function connectOpenfire(jid, password, novideo) 
 	{
 	    //console.log("connect", jid, password);
 	    
@@ -31269,7 +31274,7 @@ var ofmeet = (function(of)
 			}
 		    	
 		    	$(document).trigger('ofmeet.connected', [connection]);
-		    });
+		    }, novideo);
 		    
 		    
 		} else if (status === Strophe.Status.CONNFAIL) {
@@ -31293,18 +31298,30 @@ var ofmeet = (function(of)
 	 * We ask for audio and video combined stream in order to get permissions and
 	 * not to ask twice.
 	 */
-	function obtainAudioAndVideoPermissions(callback) {
+	function obtainAudioAndVideoPermissions(callback, novideo) {
 	    // Get AV
 	    var cb = function (stream) {
-		//console.log('got', stream, stream.getAudioTracks().length, stream.getVideoTracks().length);
+		console.log('got', stream, stream.getAudioTracks().length, stream.getVideoTracks().length);
 		callback(stream);
 		trackUsage('localMedia', {
 		    audio: stream.getAudioTracks().length,
 		    video: stream.getVideoTracks().length
 		});
 	    }
+
+	    var media = ['audio', 'video'];
+	    var resolution = config.resolution || '360';
+
+	    if (novideo)
+	    {
+		media = ['audio'];
+		resolution = null;
+	    }
+
+	    console.log("using media", media);
+
 	    getUserMediaWithConstraints(
-		['audio', 'video'],
+		media,
 		cb,
 		function (error) {
 		    console.error('failed to obtain audio/video stream - trying audio only', error);
@@ -31323,7 +31340,7 @@ var ofmeet = (function(of)
 			}
 		    );
 		},
-		config.resolution || '360');
+		resolution);
 	}
 
 	function generateRoomName() {
@@ -32534,7 +32551,9 @@ var ofmeet = (function(of)
 		
 		if (username && password)
 		{
-			headers = {"Authorization": "Basic " + btoa(username + ":" + password)}
+			headers = {"Authorization": "Basic " + btoa(username + ":" + password)};
+			of.username = username;
+			of.password = password;
 		}
 		
 		$.ajax({type: "GET", url: "/ofmeet/config", dataType: "script", headers: headers}).done(function()
@@ -32631,7 +32650,7 @@ var ofmeet = (function(of)
 	    setAudioMuted(!isAudioMuted());
 	}	
 
-	of.connect = function connect(username, password) 
+	of.connect = function connect(novideo) 
 	{	    
 	    RTC = setupRTC();
 	    
@@ -32642,7 +32661,7 @@ var ofmeet = (function(of)
 	    }
 
 	    var jid = config.hosts.domain;
-	    if (username) jid = username +  "@" + config.hosts.domain;
+	    if (of.username) jid = of.username +  "@" + config.hosts.domain;
 
 	    if (config.userName)
 	    {
@@ -32650,7 +32669,7 @@ var ofmeet = (function(of)
 		authenticatedUser = true;
 	    } 
 	    
-	    connectOpenfire(jid, password);	    
+	    connectOpenfire(jid, of.password, novideo);	    
 	}
 
 	of.leaveRoom = function leaveRoom() 

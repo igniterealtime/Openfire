@@ -18,6 +18,11 @@ import java.util.concurrent.*;
 import org.slf4j.*;
 import org.slf4j.Logger;
 
+import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.util.*;
+import org.xmpp.packet.*;
+
+
 /**
  * Allows logging of {@link org.jitsi.videobridge.log.Event}s using an
  * <tt>Openfire</tt> instance.
@@ -55,7 +60,7 @@ public class OpenfireEventService implements LoggingService
      */
     @SuppressWarnings("unchecked")
     @Override
-    public void logEvent(Event e)
+    public void logEvent(final Event e)
     {
         // The following is a sample JSON message in the format used by InfluxDB
         //  [
@@ -101,7 +106,7 @@ public class OpenfireEventService implements LoggingService
             @Override
             public void run()
             {
-                sendPost(jsonString);
+                sendPost(e.getName(), jsonString);
             }
         });
     }
@@ -111,11 +116,19 @@ public class OpenfireEventService implements LoggingService
      * {@link #url}.
      * @param s the content of the POST request.
      */
-    private void sendPost(final String s)
+    private void sendPost(final String summary, final String detail)
     {
         try
         {
-			Log.info("OpenfireEventService sendPost " + s);
+			String focusUsername = "focus";
+			String focusUserJid = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid");
+
+			if (focusUserJid != null)
+			{
+				focusUsername = (new JID(focusUserJid)).getNode();
+			}
+			Log.info("OpenfireEventService sendPost " + focusUsername + " " + detail);
+			SecurityAuditManager.getInstance().logEvent(focusUsername, summary, detail);
         }
         catch (Exception e)
         {

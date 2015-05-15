@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+     This file stores the modules that make up the implementation of Openfire.  Modules are loaded
+     in the order they are specified in this file (top to bottom).
+     
+     Don't modify this file unless you really know what you are doing 
+ -->
+ 
+<jive>
+  <!--  Boot Modules -->
+  <module interface="org.jivesoftware.openfire.RoutingTable" implementation="org.jivesoftware.openfire.spi.RoutingTableImpl" />
+  <module interface="org.jivesoftware.openfire.audit.AuditManager" implementation="org.jivesoftware.openfire.audit.spi.AuditManagerImpl" />
+  <module interface="org.jivesoftware.openfire.roster.RosterManager" implementation="org.jivesoftware.openfire.roster.RosterManager" />
+  <module interface="org.jivesoftware.openfire.PrivateStorage" implementation="org.jivesoftware.openfire.PrivateStorage" />
+  
+  <!--  Core Modules -->  
+  <module interface="org.jivesoftware.openfire.PresenceManager" implementation="org.jivesoftware.openfire.spi.PresenceManagerImpl" />
+  <module interface="org.jivesoftware.openfire.SessionManager" implementation="org.jivesoftware.openfire.SessionManager" />
+  <module interface="org.jivesoftware.openfire.PacketRouter" implementation="org.jivesoftware.openfire.spi.PacketRouterImpl" />
+  <module interface="org.jivesoftware.openfire.IQRouter" implementation="org.jivesoftware.openfire.IQRouter" />
+  <module interface="org.jivesoftware.openfire.MessageRouter" implementation="org.jivesoftware.openfire.MessageRouter" />
+  <module interface="org.jivesoftware.openfire.PresenceRouter" implementation="org.jivesoftware.openfire.PresenceRouter" />
+  <module interface="org.jivesoftware.openfire.MulticastRouter" implementation="org.jivesoftware.openfire.MulticastRouter" />
+  <module interface="org.jivesoftware.openfire.spi.PacketTransporterImpl" implementation="org.jivesoftware.openfire.spi.PacketTransporterImpl" />
+  <module interface="org.jivesoftware.openfire.PacketDeliverer" implementation="org.jivesoftware.openfire.spi.PacketDelivererImpl" />
+  <module interface="org.jivesoftware.openfire.transport.TransportHandler" implementation="org.jivesoftware.openfire.transport.TransportHandler" />
+  <module interface="org.jivesoftware.openfire.OfflineMessageStrategy" implementation="org.jivesoftware.openfire.OfflineMessageStrategy" />
+  <module interface="org.jivesoftware.openfire.OfflineMessageStore" implementation="org.jivesoftware.openfire.OfflineMessageStore" />
+  <module interface="org.jivesoftware.openfire.vcard.VCardManager" implementation="org.jivesoftware.openfire.vcard.VCardManager" />
+  
+  <!--  Standard Modules -->  
+  <module interface="org.jivesoftware.openfire.handler.IQBindHandler" implementation="org.jivesoftware.openfire.handler.IQBindHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler" implementation="org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQAuthHandler" implementation="org.jivesoftware.openfire.handler.IQAuthHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQPingHandler" implementation="org.jivesoftware.openfire.handler.IQPingHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQPrivateHandler" implementation="org.jivesoftware.openfire.handler.IQPrivateHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQRegisterHandler" implementation="org.jivesoftware.openfire.handler.IQRegisterHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQRosterHandler" implementation="org.jivesoftware.openfire.handler.IQRosterHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQTimeHandler" implementation="org.jivesoftware.openfire.handler.IQTimeHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQEntityTimeHandler" implementation="org.jivesoftware.openfire.handler.IQEntityTimeHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQvCardHandler" implementation="org.jivesoftware.openfire.handler.IQvCardHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQVersionHandler" implementation="org.jivesoftware.openfire.handler.IQVersionHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQLastActivityHandler" implementation="org.jivesoftware.openfire.handler.IQLastActivityHandler" />
+  <module interface="org.jivesoftware.openfire.handler.PresenceSubscribeHandler" implementation="org.jivesoftware.openfire.handler.PresenceSubscribeHandler" />
+  <module interface="org.jivesoftware.openfire.handler.PresenceUpdateHandler" implementation="org.jivesoftware.openfire.handler.PresenceUpdateHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQOfflineMessagesHandler" implementation="org.jivesoftware.openfire.handler.IQOfflineMessagesHandler" />
+  <module interface="org.jivesoftware.openfire.pep.IQPEPHandler" implementation="org.jivesoftware.openfire.pep.IQPEPHandler" />
+  <module interface="org.jivesoftware.openfire.pep.IQPEPOwnerHandler" implementation="org.jivesoftware.openfire.pep.IQPEPOwnerHandler" />
+  <module interface="org.jivesoftware.openfire.net.MulticastDNSService" implementation="org.jivesoftware.openfire.net.MulticastDNSService" />
+  <module interface="org.jivesoftware.openfire.handler.IQSharedGroupHandler" implementation="org.jivesoftware.openfire.handler.IQSharedGroupHandler" />
+  <module interface="org.jivesoftware.openfire.commands.AdHocCommandHandler" implementation="org.jivesoftware.openfire.commands.AdHocCommandHandler" />
+  <module interface="org.jivesoftware.openfire.handler.IQPrivacyHandler" implementation="org.jivesoftware.openfire.handler.IQPrivacyHandler" />
+  <module interface="org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager" implementation="org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager" />
+  <module interface="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" implementation="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" />
+  <module interface="org.jivesoftware.openfire.mediaproxy.MediaProxyService" implementation="org.jivesoftware.openfire.mediaproxy.MediaProxyService" />
+  <module interface="org.jivesoftware.openfire.pubsub.PubSubModule" implementation="org.jivesoftware.openfire.pubsub.PubSubModule" />
+  <module interface="org.jivesoftware.openfire.disco.IQDiscoInfoHandler" implementation="org.jivesoftware.openfire.disco.IQDiscoInfoHandler" />
+  <module interface="org.jivesoftware.openfire.disco.IQDiscoItemsHandler" implementation="org.jivesoftware.openfire.disco.IQDiscoItemsHandler" />
+  <module interface="org.jivesoftware.openfire.update.UpdateManager" implementation="org.jivesoftware.openfire.update.UpdateManager" />
+  <module interface="org.jivesoftware.openfire.FlashCrossDomainHandler" implementation="org.jivesoftware.openfire.FlashCrossDomainHandler" />
+  <module interface="org.jivesoftware.openfire.component.InternalComponentManager" implementation="org.jivesoftware.openfire.component.InternalComponentManager" />
+  <module interface="org.jivesoftware.openfire.muc.MultiUserChatManager" implementation="org.jivesoftware.openfire.muc.MultiUserChatManager" />
+  <module interface="org.jivesoftware.openfire.clearspace.ClearspaceManager" implementation="org.jivesoftware.openfire.clearspace.ClearspaceManager" />
+  <module interface="org.jivesoftware.openfire.handler.IQMessageCarbonsHandler" implementation="org.jivesoftware.openfire.handler.IQMessageCarbonsHandler" />
+  <!--  
+        Load this module always last since we don't want to start listening for clients
+        before the rest of the modules have been started
+  -->
+  <module interface="org.jivesoftware.openfire.ConnectionManager" implementation="org.jivesoftware.openfire.spi.ConnectionManagerImpl" />
+</jive>

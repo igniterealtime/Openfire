@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -110,7 +111,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * Counter of user connections. A connection is counted just after it was created and not
      * after the user became available. This counter only considers sessions local to this JVM.
      * That means that when running inside of a cluster you will need to add up this counter
-     * for each cluster node. 
+     * for each cluster node.
      */
     private final AtomicInteger connectionsCounter = new AtomicInteger(0);
 
@@ -159,7 +160,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * This same information is stored in {@link LocalIncomingServerSession} but the
      * reason for this duplication is that when running in a cluster other nodes
      * will have access to this clustered cache even in the case of this node going
-     * down. 
+     * down.
      */
     private Cache<String, Set<String>> validatedDomainsCache;
 
@@ -171,7 +172,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
     /**
      * Local session manager responsible for keeping sessions connected to this JVM that are not
-     * present in the routing table. 
+     * present in the routing table.
      */
     private LocalSessionManager localSessionManager;
     /**
@@ -285,7 +286,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * Creates a new <tt>ConnectionMultiplexerSession</tt>.
      *
      * @param conn the connection to create the session from.
-     * @param address the JID (may include a resource) of the connection manager's session. 
+     * @param address the JID (may include a resource) of the connection manager's session.
      * @return a newly created session.
      */
     public LocalConnectionMultiplexerSession createMultiplexerSession(Connection conn, JID address) {
@@ -1207,7 +1208,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         try {
             // If the requesting entity is the user itself or the requesting entity can probe the presence of the user.
             if (name != null && senderJID != null &&
-            	server.getUserManager().isRegisteredUser(senderJID) && 
+            	server.getUserManager().isRegisteredUser(senderJID) &&
             	(name.equals(senderJID.getNode()) || server.getPresenceManager().canProbePresence(senderJID, name))) {
                 Collection<DiscoItem> discoItems = new ArrayList<DiscoItem>();
                 for (ClientSession clientSession : getSessions(name)) {
@@ -1240,6 +1241,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                         presence.setType(Presence.Type.unavailable);
                         presence.setFrom(session.getAddress());
                         router.route(presence);
+                    }
+
+                    // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
+                    if(session.getStreamManager().isEnabled()) {
+	                    Map<Long,Packet> unacknowledgedStanzas = session.getStreamManager().getUnacknowledgedServerStanzas();
+	                    if(!unacknowledgedStanzas.isEmpty()) {
+	                    	for(Entry<Long,Packet> unacknowledgedStanza : unacknowledgedStanzas.entrySet()) {
+	                    		router.route(unacknowledgedStanza.getValue());
+	                    	}
+	                    }
                     }
                 }
                 finally {

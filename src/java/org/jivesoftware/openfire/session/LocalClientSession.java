@@ -38,6 +38,7 @@ import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -801,10 +802,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
         }
         else {
-            // If the session has been authenticated then offer resource binding
+            // If the session has been authenticated then offer resource binding,
             // and session establishment
             sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
             sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"><optional/></session>");
+
+            // Offer XEP-0198 stream management capabilities if enabled.
+            if(JiveGlobals.getBooleanProperty("stream.management.active", true)) {
+            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
+            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+            }
         }
         return sb.toString();
     }
@@ -854,7 +861,17 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
 	public void deliver(Packet packet) throws UnauthorizedException {
+
         conn.deliver(packet);
+
+        if(streamManager.isEnabled()) {
+        	streamManager.incrementServerSentStanzas();
+        	// Temporarily store packet until delivery confirmed
+        	streamManager.getUnacknowledgedServerStanzas().put(streamManager.getServerSentStanzas(), packet.createCopy());
+	        if(getNumServerPackets() % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
+	        	streamManager.sendServerRequest();
+	        }
+        }
     }
 
     @Override

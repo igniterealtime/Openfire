@@ -375,8 +375,9 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			String description = meeting.getString("description");
 			String title = meeting.getString("title");
 			String room = meeting.getString("room");
-			String url = "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443") + "/ofmeet/?r=" + room;
-			String template = JiveGlobals.getProperty("ofmeet.email.template", "Dear [name],\n\nYou have an online meeting from [start] to [end]\n\n[description]\n\nTo join, please click\n[url]\n\nAdministrator - [domain]");
+			String videourl = "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443") + "/ofmeet/?r=" + room;
+			String audiourl = videourl + "&novideo=true";
+			String template = JiveGlobals.getProperty("ofmeet.email.template", "Dear [name],\n\nYou have an online meeting from [start] to [end]\n\n[description]\n\nTo join, please click\n[videourl]\nFor audio only with no webcan, please click\n[audiourl]\n\nAdministrator - [domain]");
 
 			HashMap variables = new HashMap<String, String>();
 
@@ -389,7 +390,8 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 				variables.put("description", description);
 				variables.put("title", title);
 				variables.put("room", room);
-				variables.put("url", url);
+				variables.put("videourl", videourl);
+				variables.put("audiourl", audiourl);
 				variables.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 
 				sendEmail(name, email, title, replaceTokens(template, variables), null);

@@ -132,6 +132,7 @@ public class Config extends HttpServlet
 			String logStats 			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.enable.stats.logging", "false");
 			String focusUserJid 		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", "focus@"+domain);
 
+
 			String callControl = "'ofmeet-call-control." + domain + "'";
 
 			if (JiveGlobals.getBooleanProperty("org.jitsi.videobridge.ofmeet.sip.enabled", true) == false)
@@ -199,6 +200,41 @@ public class Config extends HttpServlet
 			out.println("    bosh: window.location.protocol + '//' + window.location.host + '/http-bind/'");
 			out.println("};	");
 
+			String canvasExtra				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.canvas.extra", "104");
+			String canvasRadius				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.canvas.radius", "7");
+			String shadowColor				= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.shadow.color", "#ffffff");
+			String initialToolbarTimeout	= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.initial.toolbar.timeout", "20000");
+			String toolbarTimeout			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.toolbar.timeout", "4000");
+			String defRemoteDisplName		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.remote.displayname", "Change Me");
+			String defDomSpkrDisplName		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.speaker.displayname", "Speaker");
+			String defLocalDisplName		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.local.displayname", "Me");
+			String watermarkLink			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.watermark.link", "");
+			String showWatermark			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.watermark", "false");
+			String brandWatermarkLink		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.brand.watermark.link", "");
+			String brandShowWatermark		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.brand.show.watermark", "false");
+			String showPoweredBy			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.poweredby", "false");
+			String randomRoomNames			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.random.roomnames", "true");
+			String applicationName			= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.application.name", "Openfire Meetings");
+			String activeSpkrAvatarSize		= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.active.speaker.avatarsize", "100");
+
+			out.println("var interfaceConfig = {");
+			out.println("    CANVAS_EXTRA: " + canvasExtra + ",");
+    		out.println("	 CANVAS_RADIUS: " + canvasRadius + ",");
+			out.println("    SHADOW_COLOR: '" + shadowColor + "',");
+			out.println("    INITIAL_TOOLBAR_TIMEOUT: " + initialToolbarTimeout + ",");
+			out.println("    TOOLBAR_TIMEOUT: " + toolbarTimeout + ",");
+			out.println("    DEFAULT_REMOTE_DISPLAY_NAME: '" + defRemoteDisplName + "',");
+			out.println("    DEFAULT_DOMINANT_SPEAKER_DISPLAY_NAME: '" + defDomSpkrDisplName + "',");
+    		out.println("	 DEFAULT_LOCAL_DISPLAY_NAME: '" + defLocalDisplName + "',");
+			out.println("    SHOW_JITSI_WATERMARK: " + showWatermark + ",");
+			out.println("    JITSI_WATERMARK_LINK: '" + watermarkLink + "',");
+			out.println("    SHOW_BRAND_WATERMARK: " + brandShowWatermark + ",");
+			out.println("    BRAND_WATERMARK_LINK: '" + brandWatermarkLink + "',");
+			out.println("    SHOW_POWERED_BY: " + showPoweredBy + ",");
+			out.println("    GENERATE_ROOMNAMES_ON_WELCOME_PAGE: " + randomRoomNames + ",");
+			out.println("    APP_NAME: '" + applicationName + "',");
+			out.println("    ACTIVE_SPEAKER_AVATAR_SIZE: " + activeSpkrAvatarSize);
+			out.println("}; ");
 		}
 		catch(Exception e) {
 			Log.error("Config doGet Error", e);

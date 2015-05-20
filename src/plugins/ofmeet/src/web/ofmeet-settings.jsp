@@ -141,7 +141,59 @@
         JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.jid", focusjid); 
         
 	String focuspassword = request.getParameter("focuspassword"); 
-        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focuspassword);         
+        JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.focus.user.password", focuspassword); 
+        
+	String canvasExtra = request.getParameter("canvasExtra"); 
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.canvas.extra", canvasExtra);
+	
+	String canvasRadius = request.getParameter("canvasRadius");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.canvas.radius", canvasRadius);
+	
+	String shadowColor = request.getParameter("shadowColor");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.shadow.color", shadowColor);
+	
+	String initialToolbarTimeout = request.getParameter("initialToolbarTimeout");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.initial.toolbar.timeout", initialToolbarTimeout);
+	
+	String toolbarTimeout = request.getParameter("toolbarTimeout");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.toolbar.timeout", toolbarTimeout);
+	
+	String defRemoteDisplName = request.getParameter("defRemoteDisplName");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.default.remote.displayname", defRemoteDisplName);
+	
+	String defDomSpkrDisplName = request.getParameter("defDomSpkrDisplName");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.default.speaker.displayname", defDomSpkrDisplName);
+	
+	String defLocalDisplName = request.getParameter("defLocalDisplName");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.default.local.displayname", defLocalDisplName);
+	
+	String watermarkLink = request.getParameter("watermarkLink");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.watermark.link", watermarkLink);
+	
+	String showWatermark = request.getParameter("showWatermark");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.show.watermark", showWatermark);
+	
+	String brandWatermarkLink = request.getParameter("brandWatermarkLink");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.brand.watermark.link", brandWatermarkLink);
+	
+	String brandShowWatermark = request.getParameter("brandShowWatermark");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.brand.show.watermark", brandShowWatermark);
+	
+	String showPoweredBy = request.getParameter("showPoweredBy");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.show.poweredby", showPoweredBy);
+	
+	String randomRoomNames = request.getParameter("randomRoomNames");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.random.roomnames", randomRoomNames);
+	
+	String applicationName = request.getParameter("applicationName");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.application.name", applicationName);
+	
+	String activeSpkrAvatarSize = request.getParameter("activeSpkrAvatarSize");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.active.speaker.avatarsize", activeSpkrAvatarSize);
+
+	String enableSip = request.getParameter("enableSip");
+	JiveGlobals.setProperty("org.jitsi.videobridge.ofmeet.sip.enabled", enableSip);
+        
     }
 
 %>
@@ -159,15 +211,13 @@
 <br/>
 <% } %>
 
-<div class="jive-table">
-    <form action="ofmeet-settings.jsp" method="post">
+<form action="ofmeet-settings.jsp" method="post">
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.ofmeet.title"/>
+</div>
+<div class="jive-contentBox">
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.ofmeet.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody>             
 	    <tr>
 		    <td  nowrap colspan="2">
@@ -194,7 +244,7 @@
 		    </td>
 	    </tr>
 	    <tr>
-		<td colspan="2" align="left" width="150">
+		<td colspan="2" align="left" width="200">
 		    <fmt:message key="config.page.configuration.ofmeet.iceservers"/>
 		</td>
 	    </tr>	
@@ -204,7 +254,7 @@
 		</td>
 	    </tr>	
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.ofmeet.resolution"/>
 		</td>
 		<td><input type="text" size="10" maxlength="100" name="resolution"
@@ -212,7 +262,7 @@
 		</td>
 	    </tr>
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.ofmeet.audio.bandwidth"/>
 		</td>
 		<td><input type="text" size="10" maxlength="100" name="audiobandwidth"
@@ -220,7 +270,7 @@
 		</td>
 	    </tr>
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.ofmeet.video.bandwidth"/>
 		</td>
 		<td><input type="text" size="10" maxlength="100" name="videobandwidth"
@@ -230,42 +280,201 @@
             </tbody>
         </table>
     </p>
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.ui.title"/>
+</div>
+<div class="jive-contentBox">    
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead>
-            <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.media.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+            <tbody>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.application.name"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="applicationName"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.application.name", "Openfire Meetings") %>">
+		</td>
+	    </tr>  
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.active.speaker.avatarsize"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="activeSpkrAvatarSize"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.active.speaker.avatarsize", "100") %>">
+		</td>
+	    </tr>	    
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.canvas.extra"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="canvasExtra"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.canvas.extra", "104") %>">
+		</td>
+	    </tr>  	    
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.canvas.radius"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="canvasRadius"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.canvas.radius", "7") %>">
+		</td>		
+	    </tr>	
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.shadow.color"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="shadowColor"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.shadow.color", "#ffffff") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.initial.toolbar.timeout"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="initialToolbarTimeout"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.initial.toolbar.timeout", "20000") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.toolbar.timeout"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="toolbarTimeout"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.toolbar.timeout", "4000") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.default.remote.displayname"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="defRemoteDisplName"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.remote.displayname", "Change Me") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.default.speaker.displayname"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="defDomSpkrDisplName"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.speaker.displayname", "Speaker") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.default.local.displayname"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="defLocalDisplName"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.default.local.displayname", "Me") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="showWatermark" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.watermark", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.disabled" /></b> - <fmt:message key="ofmeet.show.watermark.disabled" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="showWatermark" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.watermark", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enabled" /></b> - <fmt:message key="ofmeet.show.watermark.enabled" />
+		    </td>
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.watermark.link"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="watermarkLink"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.watermark.link", "") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="brandShowWatermark" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.brand.show.watermark", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.disabled" /></b> - <fmt:message key="ofmeet.brand.show.watermark.disabled" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="brandShowWatermark" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.brand.show.watermark", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enabled" /></b> - <fmt:message key="ofmeet.brand.show.watermark.enabled" />
+		    </td>
+	    </tr>
+	    <tr>
+		<td align="left" width="200">
+		    <fmt:message key="ofmeet.brand.watermark.link"/>
+		</td>
+		<td><input type="text" size="60" maxlength="100" name="brandWatermarkLink"
+			   value="<%= JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.brand.watermark.link", "") %>">
+		</td>		
+	    </tr>
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="showPoweredBy" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.poweredby", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.disabled" /></b> - <fmt:message key="ofmeet.show.poweredby.disabled" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="showPoweredBy" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.show.poweredby", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enabled" /></b> - <fmt:message key="ofmeet.show.poweredby.enabled" />
+		    </td>
+	    </tr>
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="randomRoomNames" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.random.roomnames", "true")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.disabled" /></b> - <fmt:message key="ofmeet.random.roomnames.disabled" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="randomRoomNames" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.random.roomnames", "true")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enabled" /></b> - <fmt:message key="ofmeet.random.roomnames.enabled" />
+		    </td>
+	    </tr>	    
+            </tbody>
+        </table> 
+     </p>
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.media.title"/>
+</div>
+<div class="jive-contentBox">      
+    <p>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody>
             <tr>
-                <td><fmt:message key="config.page.configuration.min.port"/><br>
+                <td align="left" width="200">
+                	<fmt:message key="config.page.configuration.min.port"/><br>
                 </td>
-                <td align="left">
+ 		<td>
                     <input name="minport" type="text" maxlength="5" size="5"
                            value="<%=plugin.getMinPort()%>"/>
                 </td>
             </tr>
             <tr>
-                <td><fmt:message key="config.page.configuration.max.port"/><br>
+                <td align="left" width="200">
+                	<fmt:message key="config.page.configuration.max.port"/><br>
                 </td>
-                <td align="left">
+    		<td>
                     <input name="maxport" type="text" maxlength="5" size="5"
                            value="<%=plugin.getMaxPort()%>"/>
                 </td>
             </tr>
             <tr>
-                <td><fmt:message key="config.page.configuration.local.ip.address"/><br>
+                <td align="left" width="200">
+                	<fmt:message key="config.page.configuration.local.ip.address"/><br>
                 </td>
-                <td align="left">
+		<td>
                     <input name="localaddress" type="text" maxlength="20" size="15"
                            value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_LOCAL_ADDRESS, XMPPServer.getInstance().getServerInfo().getHostname())%>"/>
                 </td>
             </tr>
             <tr>
-                <td><fmt:message key="config.page.configuration.public.ip.address"/><br>
+                <td align="left" width="200">
+                	<fmt:message key="config.page.configuration.public.ip.address"/><br>
                 </td>
-                <td align="left">
+		<td>
                     <input name="publicaddress" type="text" maxlength="20" size="15"
                            value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_PUBLIC_ADDRESS, XMPPServer.getInstance().getServerInfo().getHostname())%>"/>
                 </td>
@@ -297,16 +506,16 @@
             </tbody>
         </table> 
      </p>   
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.security.title"/>
+</div>
+<div class="jive-contentBox">       
      <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead>
-            <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.security.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody>  
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.focus.jid"/>
 		</td>
 		<td><input type="text" size="20" maxlength="100" name="focusjid"
@@ -315,7 +524,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.focus.password"/>
 		</td>
 		<td><input type="password" size="20" maxlength="100" name="focuspassword"
@@ -337,13 +546,13 @@
             </tbody>
         </table> 
     </p>
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.recording.title"/>
+</div>
+<div class="jive-contentBox">      
     <p>        
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.recording.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody>             
 	    <tr>
 		    <td  nowrap colspan="2">
@@ -358,7 +567,7 @@
 		    </td>
 	    </tr> 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.record.path"/>
 		</td>
 		<td><input type="text" size="60" maxlength="100" name="recordpath"
@@ -367,7 +576,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.record.secret"/>
 		</td>
 		<td><input type="password" size="60" maxlength="100" name="recordsecret"
@@ -377,17 +586,38 @@
             </tbody>
         </table>
     </p> 
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.telephone.title"/>
+</div>
+<div class="jive-contentBox">      
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th><fmt:message key="config.page.configuration.telephone.client.title"/></th>
-                <th><%= container.sipRegisterStatus %></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody> 
 	    <tr>
-		<td align="left" width="150">
+		    <td  nowrap colspan="2">
+			<input type="radio" value="false" name="enableSip" <%= ("false".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.sip.enabled", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.disabled" /></b> - <fmt:message key="config.page.configuration.telephone.disabled" />
+		    </td>
+	    </tr>   
+	    <tr>
+		    <td  nowrap colspan="2">
+			<input type="radio" value="true" name="enableSip" <%= ("true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.sip.enabled", "false")) ? "checked" : "") %>>
+			<b><fmt:message key="config.page.configuration.enabled" /></b> - <fmt:message key="config.page.configuration.telephone.enabled" />
+		    </td>
+	    </tr> 	     	    
+        </table>
+   </p>  
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.telephone.client.title"/> &nbsp;<%= container.sipRegisterStatus %>
+</div>
+<div class="jive-contentBox">     
+    <p>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+            <tbody> 
+	    <tr>
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.authusername"/>
 		</td>
 		<td><input type="text" size="20" maxlength="100" name="authusername"
@@ -396,7 +626,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.sippassword"/>
 		</td>
 		<td><input type="password" size="20" maxlength="100" name="sippassword"
@@ -405,7 +635,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.server"/>
 		</td>
 		<td><input type="text" size="40" maxlength="100" name="server"
@@ -414,7 +644,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.outboundproxy"/>
 		</td>
 		<td><input type="text" size="40" maxlength="100" name="outboundproxy"
@@ -423,16 +653,16 @@
 	    </tr> 
         </table>
    </p>
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.telephone.server.title"/>
+</div>
+<div class="jive-contentBox">     
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th><fmt:message key="config.page.configuration.telephone.server.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody> 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.authusername"/>
 		</td>
 		<td><input type="text" size="20" maxlength="100" name="clientusername"
@@ -441,7 +671,7 @@
 	    </tr>
 
 	    <tr>
-		<td align="left" width="150">
+		<td align="left" width="200">
 		    <fmt:message key="config.page.configuration.sippassword"/>
 		</td>
 		<td><input type="password" size="20" maxlength="100" name="clientpassword"
@@ -462,13 +692,13 @@
 	    </tr> 	     	    
         </table>
    </p>   
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.advanced.features.title"/>
+</div>
+<div class="jive-contentBox">     
     <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th><fmt:message key="config.page.configuration.advanced.features.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody> 
 	    <tr>
 		    <td  nowrap colspan="2">
@@ -508,23 +738,22 @@
 		    </td>
 	    </tr>	    
         </table>
-   </p>    
+   </p>  
+</div>
+<div class="jive-contentBoxHeader">   
+	<fmt:message key="config.page.configuration.save.title"/>
+</div>
+<div class="jive-contentBox">     
    <p>
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="75%">
-            <thead> 
-            <tr>
-                <th colspan="2"><fmt:message key="config.page.configuration.save.title"/></th>
-            </tr>
-            </thead>
+        <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tbody> 	    
             <tr>
-                <th colspan="2"><input type="submit" name="update" value="<fmt:message key="config.page.configuration.submit" />"><fmt:message key="config.page.configuration.restart.warning"/></th>
+                <th colspan="2"><input type="submit" name="update" value="<fmt:message key="config.page.configuration.submit" />">&nbsp;&nbsp;<fmt:message key="config.page.configuration.restart.warning"/></th>
             </tr>	    
             </tbody>            
         </table> 
     </p>
-    </form>
 </div>
-
+</form>
 </body>
 </html>

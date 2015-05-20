@@ -271,6 +271,7 @@ Strophe.addConnectionPlugin('emuc', {
         }
         return true;
     },
+    
     lockRoom: function (key) {
         //http://xmpp.org/extensions/xep-0045.html#roomconfig
         var ob = this;
@@ -281,9 +282,8 @@ Strophe.addConnectionPlugin('emuc', {
                     formsubmit.c('x', {xmlns: 'jabber:x:data', type: 'submit'});
                     formsubmit.c('field', {'var': 'FORM_TYPE'}).c('value').t('http://jabber.org/protocol/muc#roomconfig').up().up();
                     formsubmit.c('field', {'var': 'muc#roomconfig_roomsecret'}).c('value').t(key).up().up();
-                    // Fixes a bug in prosody 0.9.+ https://code.google.com/p/lxmppd/issues/detail?id=373
-                    formsubmit.c('field', {'var': 'muc#roomconfig_whois'}).c('value').t('anyone').up().up();
-                    // FIXME: is muc#roomconfig_passwordprotectedroom required?
+		    formsubmit.c('field', {'var': 'muc#roomconfig_passwordprotectedroom'}).c('value').t('1').up().up(); 
+		    
                     this.connection.sendIQ(formsubmit,
                         function (res) {
                             // password is required

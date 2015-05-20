@@ -20,6 +20,9 @@ import org.jivesoftware.smackx.*;
 import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.packet.*;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MUCRoom;
+
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -45,6 +48,11 @@ public class ChatRoomImpl
      * Chat room name.
      */
     private final String roomName;
+
+    /**
+     * Openfire MUCRoom that is hosting Jitsi Meet conference.		BAO
+     */
+    private MUCRoom room = null;
 
     /**
      * Smack multi user chat backend instance.
@@ -104,57 +112,7 @@ public class ChatRoomImpl
      */
     private Presence lastPresenceSent;
 
-    /**
-     * Creates new instance of <tt>ChatRoomImpl</tt>.
-     *
-     * @param parentChatOperationSet parent multi user chat operation set.
-     * @param roomName the name of the chat room that will be handled by
-     *                 new <tt>ChatRoomImpl</tt>instance.
-     */
-    public ChatRoomImpl(OperationSetMultiUserChatImpl parentChatOperationSet,
-                        String roomName)
-    {
-        this.opSet = parentChatOperationSet;
-        this.roomName = roomName;
-
-        muc = new MultiUserChat(
-                parentChatOperationSet.getConnection(), roomName);
-
-        muc.addParticipantStatusListener(new MemberListener());
-        muc.addParticipantListener(new ParticipantListener());
-    }
-
-    @Override
-    public String getName()
-    {
-        return roomName;
-    }
-
-    @Override
-    public String getIdentifier()
-    {
-        return null;
-    }
-
-    @Override
-    public void join()
-        throws OperationFailedException
-    {
-		logger.info("before join as");
-        joinAs(getParentProvider().getAccountID().getAccountDisplayName());
-		logger.info("after join as");
-    }
-
-    @Override
-    public void join(byte[] password)
-        throws OperationFailedException
-    {
-        join();
-    }
-
-    @Override
-    public void joinAs(String nickname)
-        throws OperationFailedException
+    private void joinAs(String nickname, String password) throws OperationFailedException
     {
         try
         {
@@ -170,10 +128,26 @@ public class ChatRoomImpl
                 }
             });
 
-			logger.info("joinAs " + nickname);
+			String roomPassword = null;
+
+			if (room != null &&  room.isPasswordProtected())
+			{
+				roomPassword = room.getPassword();
+			}
+
+			logger.info("joinAs " + nickname + " " + password + " " + roomPassword);
 
 			try {
-            	muc.join(nickname);
+				if (password == null)
+				{
+					if (roomPassword != null)
+            			muc.join(nickname, roomPassword);
+            		else
+            			muc.join(nickname);
+				}
+            	else
+            		muc.join(nickname, password);
+
 			} catch (Exception e) {
             	muc.create(nickname);		// BAO
 			}
@@ -229,11 +203,91 @@ public class ChatRoomImpl
         }
     }
 
+
+    /**
+     * Creates new instance of <tt>ChatRoomImpl</tt>.
+     *
+     * @param parentChatOperationSet parent multi user chat operation set.
+     * @param roomName the name of the chat room that will be handled by
+     *                 new <tt>ChatRoomImpl</tt>instance.
+     */
+    public ChatRoomImpl(OperationSetMultiUserChatImpl parentChatOperationSet,
+                        String roomName)
+    {
+        this.opSet = parentChatOperationSet;
+        this.roomName = roomName;
+
+        muc = new MultiUserChat(
+                parentChatOperationSet.getConnection(), roomName);
+
+        muc.addParticipantStatusListener(new MemberListener());
+        muc.addParticipantListener(new ParticipantListener());
+
+		String roomId = roomName;
+		int pos = roomId.indexOf("@");
+		if (pos > -1) roomId = roomId.substring(0, pos);
+        this.room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService("conference").getChatRoom(roomId);
+    }
+
     @Override
-    public void joinAs(String nickname, byte[] password)
+    public String getName()
+    {
+        return roomName;
+    }
+
+    @Override
+    public String getIdentifier()
+    {
+        return null;
+    }
+
+    @Override
+    public void join()
         throws OperationFailedException
     {
-        joinAs(nickname);
+		logger.info("before join as");
+        joinAs(getParentProvider().getAccountID().getAccountDisplayName());
+		logger.info("after join as");
+    }
+
+    @Override
+    public void join(byte[] password) throws OperationFailedException
+    {
+		try {
+			String pass = new String(password, "UTF-8");
+        	joinAs(getParentProvider().getAccountID().getAccountDisplayName(), pass);
+
+		} catch (Exception e) {
+
+		}
+    }
+
+    public void join(String password)
+    {
+		try {
+        	joinAs(getParentProvider().getAccountID().getAccountDisplayName(), password);
+
+		} catch (Exception e) {
+
+		}
+    }
+
+    @Override
+    public void joinAs(String nickname, byte[] password) throws OperationFailedException
+    {
+		try {
+			String pass = new String(password, "UTF-8");
+        	joinAs(nickname, pass);
+
+		} catch (Exception e) {
+
+		}
+    }
+
+    @Override
+    public void joinAs(String nickname) throws OperationFailedException
+    {
+        joinAs(nickname, (String)null);
     }
 
     @Override

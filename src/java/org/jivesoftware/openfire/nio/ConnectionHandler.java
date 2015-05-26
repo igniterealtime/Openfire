@@ -145,30 +145,21 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
     @Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-        if (cause instanceof IOException) {
-            // TODO Verify if there were packets pending to be sent and decide what to do with them
-            Log.info("ConnectionHandler reports IOException for session: " + session, cause);
-            if (cause instanceof SSLHandshakeException) {
-                session.close(true);
-            }
-        }
-        else if (cause instanceof ProtocolDecoderException) {
-            Log.warn("Closing session due to exception: " + session, cause);
-            
-            // PIO-524: Determine stream:error message.
+        Log.warn("Closing session due to exception: " + session, cause);
+
+        try {
+            // OF-524: Determine stream:error message.
             final StreamError error;
-            if (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) {
-            	error = new StreamError(StreamError.Condition.not_well_formed);
+            if ( cause != null && (cause instanceof XMLNotWellFormedException || (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) ) ) {
+                error = new StreamError( StreamError.Condition.not_well_formed );
             } else {
-            	error = new StreamError(StreamError.Condition.internal_server_error);
+                error = new StreamError( StreamError.Condition.internal_server_error );
             }
 
-            final Connection connection = (Connection) session.getAttribute(CONNECTION);
-            connection.deliverRawText(error.toXML());
-            session.close(true);
-        }
-        else {
-            Log.error("ConnectionHandler reports unexpected exception for session: " + session, cause);
+            final Connection connection = (Connection) session.getAttribute( CONNECTION );
+            connection.deliverRawText( error.toXML() );
+        } finally {
+            session.close( false );
         }
     }
 

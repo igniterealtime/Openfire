@@ -185,7 +185,10 @@ public class NIOConnection implements Connection {
                 return sslSession.getPeerCertificates();
             }
         } catch (SSLPeerUnverifiedException e) {
-            Log.warn("Error retrieving client certificates of: " + session, e);
+            if (Log.isTraceEnabled()) {
+                // This is perfectly acceptable when mutual authentication is not enforced by Openfire configuration.
+                Log.trace( "Peer does not offer certificates in session: " + session, e);
+            }
         }
         return new Certificate[0];
     }

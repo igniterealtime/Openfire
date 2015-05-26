@@ -24,7 +24,9 @@ import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTE
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -159,15 +161,24 @@ public class NIOConnection implements Connection {
     }
 
     public byte[] getAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetAddress address = socketAddress.getAddress();
+        return address.getAddress();
     }
 
     public String getHostAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetAddress inetAddress = socketAddress.getAddress();
+        return inetAddress.getHostAddress();
     }
 
     public String getHostName() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetAddress inetAddress = socketAddress.getAddress();
+        return inetAddress.getHostName();
     }
 
     public Certificate[] getLocalCertificates() {

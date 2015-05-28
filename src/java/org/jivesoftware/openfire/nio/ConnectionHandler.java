@@ -108,6 +108,14 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     }
 
     @Override
+    public void inputClosed( IoSession session ) throws Exception {
+        // Get the connection for this session
+        Connection connection = (Connection) session.getAttribute(CONNECTION);
+        // Inform the connection that it was closed
+        connection.close();
+    }
+
+    @Override
 	public void sessionClosed(IoSession session) throws Exception {
         // Get the connection for this session
         Connection connection = (Connection) session.getAttribute(CONNECTION);

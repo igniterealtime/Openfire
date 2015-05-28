@@ -222,7 +222,7 @@ public class NIOConnection implements Connection {
     			return;
     		}
             try {
-                deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", false);
+                deliverRawText(flashClient ? "</flash:stream>" : "</stream:stream>", true);
             } catch (Exception e) {
                 // Ignore
             }
@@ -235,7 +235,7 @@ public class NIOConnection implements Connection {
     	// OF-881: Notify any close listeners after the synchronized block has completed. 
     	notifyCloseListeners(); // clean up session, etc.
     	
-        ioSession.close(false); // async via MINA
+        ioSession.close(true); // sync via MINA
     }
 
     public void systemShutdown() {

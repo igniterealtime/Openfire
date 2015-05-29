@@ -109,18 +109,18 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
     @Override
     public void inputClosed( IoSession session ) throws Exception {
-        // Get the connection for this session
-        Connection connection = (Connection) session.getAttribute(CONNECTION);
-        // Inform the connection that it was closed
-        connection.close();
+        final Connection connection = (Connection) session.getAttribute(CONNECTION);
+        if ( connection != null ) {
+            connection.close();
+        }
     }
 
     @Override
-	public void sessionClosed(IoSession session) throws Exception {
-        // Get the connection for this session
-        Connection connection = (Connection) session.getAttribute(CONNECTION);
-        // Inform the connection that it was closed
-        connection.close();
+    public void sessionClosed(IoSession session) throws Exception {
+        final Connection connection = (Connection) session.getAttribute(CONNECTION);
+        if ( connection != null ) {
+            connection.close();
+        }
     }
 
     /**
@@ -128,31 +128,32 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 	 * session idle time as specified by {@link #getMaxIdleTime()}. This method
 	 * will be invoked each time that such a period passes (even if no IO has
 	 * occurred in between).
-	 * 
+	 *
 	 * Openfire will disconnect a session the second time this method is
 	 * invoked, if no IO has occurred between the first and second invocation.
 	 * This allows extensions of this class to use the first invocation to check
 	 * for livelyness of the MINA session (e.g by polling the remote entity, as
 	 * {@link ClientConnectionHandler} does).
-	 * 
-	 * @see org.apache.mina.common.IoHandlerAdapter#sessionIdle(org.apache.mina.common.IoSession,
-	 *      org.apache.mina.common.IdleStatus)
+	 *
+	 * @see IoHandlerAdapter#sessionIdle(IoSession, IdleStatus)
 	 */
     @Override
 	public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
         if (session.getIdleCount(status) > 1) {
             // Get the connection for this session
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
-	        // Close idle connection
-	        if (Log.isDebugEnabled()) {
-	            Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
-	        }
-	        connection.close();
+            if (connection != null) {
+                // Close idle connection
+                if (Log.isDebugEnabled()) {
+                    Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
+                }
+                connection.close();
+            }
         }
     }
 
     @Override
-	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+    public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
         Log.warn("Closing connection due to exception in session: " + session, cause);
 
         try {
@@ -191,13 +192,16 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             handler.process((String) message, parser);
         } catch (Exception e) {
             Log.error("Closing connection due to error while processing message: " + message, e);
-            Connection connection = (Connection) session.getAttribute(CONNECTION);
-            connection.close();
+            final Connection connection = (Connection) session.getAttribute(CONNECTION);
+            if ( connection != null ) {
+                connection.close();
+            }
+
         }
     }
 
     @Override
-	public void messageSent(IoSession session, Object message) throws Exception {
+    public void messageSent(IoSession session, Object message) throws Exception {
         super.messageSent(session, message);
         // Update counter of written btyes
         updateWrittenBytesCounter(session);

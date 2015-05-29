@@ -219,7 +219,11 @@ public class NIOConnection implements Connection {
         return backupDeliverer;
     }
 
-    public void close()
+    public void close() {
+        close( false );
+    }
+
+    public void close( boolean peerIsKnownToBeDisconnected )
     {
         boolean notifyClose = false;
         synchronized ( this ) {
@@ -234,13 +238,16 @@ public class NIOConnection implements Connection {
                 if ( state != State.CLOSING )
                 {
                     state = State.CLOSING;
-                    try
+                    if ( !peerIsKnownToBeDisconnected )
                     {
-                        deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
-                    }
-                    catch ( Exception e )
-                    {
-                        // Ignore
+                        try
+                        {
+                            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+                        }
+                        catch ( Exception e )
+                        {
+                            // Ignore
+                        }
                     }
                 }
 

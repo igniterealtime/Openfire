@@ -32,6 +32,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -81,14 +82,11 @@ import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
 import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
 import org.jivesoftware.openfire.nio.XMPPCodecFactory;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener {
+public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener {
 
 	private static final int MB = 1024 * 1024;
 
@@ -825,7 +823,38 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
         restartClientSSLListeners();
     }
-    
+
+    // #####################################################################
+    // Property events
+    // #####################################################################
+    @Override
+    public void propertySet( String property, Map<String, Object> params ) {
+        processPropertyValueChange( property, params );
+    }
+
+    @Override
+    public void propertyDeleted( String property, Map<String, Object> params ) {
+        processPropertyValueChange( property, params );
+    }
+
+    @Override
+    public void xmlPropertySet( String property, Map<String, Object> params ) {
+        processPropertyValueChange( property, params );
+    }
+
+    @Override
+    public void xmlPropertyDeleted( String property, Map<String, Object> params ) {
+        processPropertyValueChange( property, params );
+    }
+
+    private void processPropertyValueChange( String property, Map<String, Object> params ) {
+        Log.debug( "Processing property value change for '"+property +"'." );
+
+        if ("xmpp.client.cert.policy".equalsIgnoreCase( property )) {
+            restartClientSSLListeners();
+        }
+    }
+
     private NioSocketAcceptor buildSocketAcceptor(String name) {
         NioSocketAcceptor socketAcceptor;
         // Create SocketAcceptor with correct number of processors

@@ -153,7 +153,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
     @Override
 	public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-        Log.warn("Closing session due to exception: " + session, cause);
+        Log.warn("Closing connection due to exception in session: " + session, cause);
 
         try {
             // OF-524: Determine stream:error message.
@@ -167,7 +167,10 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             final Connection connection = (Connection) session.getAttribute( CONNECTION );
             connection.deliverRawText( error.toXML() );
         } finally {
-            session.close( false );
+            final Connection connection = (Connection) session.getAttribute( CONNECTION );
+            if (connection != null) {
+                connection.close();
+            }
         }
     }
 

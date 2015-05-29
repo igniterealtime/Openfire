@@ -169,6 +169,10 @@ public abstract class VirtualConnection implements Connection {
      * has been closed.
      */
     public void close() {
+        close( false );
+    }
+
+    public void close(boolean peerIsKnownToBeDisconnected) {
         boolean wasClosed = false;
         synchronized (this) {
             if (!isClosed()) {

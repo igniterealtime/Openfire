@@ -111,7 +111,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     public void inputClosed( IoSession session ) throws Exception {
         final Connection connection = (Connection) session.getAttribute(CONNECTION);
         if ( connection != null ) {
-            connection.close();
+            connection.close( true );
         }
     }
 

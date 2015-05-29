@@ -442,6 +442,10 @@ public class SocketConnection implements Connection {
     }
 
     public void close() {
+        close( false );
+    }
+
+    public void close( boolean peerIsKnownToBeDisconnected ) {
         boolean wasClosed = false;
         synchronized (this) {
             if (!isClosed()) {
@@ -449,26 +453,29 @@ public class SocketConnection implements Connection {
                     if (session != null) {
                         session.setStatus(Session.STATUS_CLOSED);
                     }
-                    boolean allowedToWrite = false;
-                    try {
-                        requestWriting();
-                        allowedToWrite = true;
-                        // Register that we started sending data on the connection
-                        writeStarted();
-                        writer.write("</stream:stream>");
-                        if (flashClient) {
-                            writer.write('\0');
+
+                    if ( !peerIsKnownToBeDisconnected ) {
+                        boolean allowedToWrite = false;
+                        try {
+                            requestWriting();
+                            allowedToWrite = true;
+                            // Register that we started sending data on the connection
+                            writeStarted();
+                            writer.write("</stream:stream>");
+                            if (flashClient) {
+                                writer.write('\0');
+                            }
+                            writer.flush();
                         }
-                        writer.flush();
-                    }
-                    catch (IOException e) {
-                        // Do nothing
-                    }
-                    finally {
-                        // Register that we finished sending data on the connection
-                        writeFinished();
-                        if (allowedToWrite) {
-                            releaseWriting();
+                        catch (IOException e) {
+                            // Do nothing
+                        }
+                        finally {
+                            // Register that we finished sending data on the connection
+                            writeFinished();
+                            if (allowedToWrite) {
+                                releaseWriting();
+                            }
                         }
                     }
                 }

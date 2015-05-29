@@ -219,46 +219,52 @@ public class NIOConnection implements Connection {
         return backupDeliverer;
     }
 
-    public synchronized void close()
+    public void close()
     {
-        try
-        {
-            if ( state == State.CLOSED )
+        boolean notifyClose = false;
+        synchronized ( this ) {
+            try
             {
-                return;
-            }
-
-            // This prevents any action after the first invocation of close() on this connection.
-            if ( state != State.CLOSING )
-            {
-                state = State.CLOSING;
-                try
+                if ( state == State.CLOSED )
                 {
-                    deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+                    return;
                 }
-                catch ( Exception e )
+
+                // This prevents any action after the first invocation of close() on this connection.
+                if ( state != State.CLOSING )
                 {
-                    // Ignore
+                    state = State.CLOSING;
+                    try
+                    {
+                        deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+                    }
+                    catch ( Exception e )
+                    {
+                        // Ignore
+                    }
+                }
+
+                // deliverRawText might already have forced the state from Closing to Closed. In that case, there's no need
+                // to invoke the CloseListeners again.
+                if ( state == State.CLOSING )
+                {
+                    notifyClose = true;
                 }
             }
-
-            // deliverRawText might already have forced the state from Closing to Closed. In that case, there's no need
-            // to invoke the CloseListeners again.
-            if ( state == State.CLOSING )
+            finally
             {
-                // TODO Check for regression of OF-881 (which placed the call below outside of the synchronized block).
-                notifyCloseListeners(); // clean up session, etc.
+                // Ensure that the state of this connection, its session and the MINA context are eventually closed.
+                state = State.CLOSED;
+                if ( session != null )
+                {
+                    session.setStatus( Session.STATUS_CLOSED );
+                }
+                ioSession.close( true );
             }
         }
-        finally
+        if (notifyClose)
         {
-            // Ensure that the state of this connection, its session and the MINA context are eventually closed.
-            state = State.CLOSED;
-            if ( session != null )
-            {
-                session.setStatus( Session.STATUS_CLOSED );
-            }
-            ioSession.close( true );
+            notifyCloseListeners(); // clean up session, etc.
         }
     }
 

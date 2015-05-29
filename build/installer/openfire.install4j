@@ -44,6 +44,7 @@
       <mountPoint id="33" root="" location="resources" mode="755" />
       <mountPoint id="34" root="" location="resources/security" mode="755" />
       <mountPoint id="46" root="" location="conf" mode="755" />
+      <mountPoint id="47" root="" location="lib" mode="755" />
       <mountPoint id="1" root="" location="" mode="755" />
     </mountPoints>
     <entries>
@@ -51,10 +52,12 @@
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/keystore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/openfire.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/security.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
+      <fileEntry mountPoint="47" file="${compiler:RELEASE_FULL_PATH}/lib/log4j.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <dirEntry mountPoint="1" file="${compiler:RELEASE_FULL_PATH}" overwrite="4" shared="false" mode="644" uninstallMode="0" excludeSuffixes="" dirMode="755">
         <exclude>
           <entry location="conf/openfire.xml" launcher="false" />
           <entry location="conf/security.xml" launcher="false" />
+          <entry location="lib/log4j.xml" launcher="false" />
           <entry location="resources/security/keystore" launcher="false" />
           <entry location="resources/security/truststore" launcher="false" />
         </exclude>

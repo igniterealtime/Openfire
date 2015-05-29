@@ -25,6 +25,11 @@ if [ -f /tmp/openfireInstallBackup/client.truststore ]; then
 	/bin/chown daemon:daemon /opt/openfire/resources/security/client.truststore
 fi
 
+if [ -f /tmp/openfireInstallBackup/log4j.xml ]; then
+        /bin/mv /tmp/openfireInstallBackup/log4j.xml /opt/openfire/lib/log4j.xml
+	/bin/chown daemon:daemon /opt/openfire/lib/log4j.xml
+fi
+
 if [ -d "/tmp/openfireInstallBackup" ]; then
 	/bin/rm -rf /tmp/openfireInstallBackup
 fi

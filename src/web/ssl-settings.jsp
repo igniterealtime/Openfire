@@ -42,6 +42,8 @@
     String clientSecurityRequired = ParamUtils.getParameter(request, "clientSecurityRequired");
     String ssl = ParamUtils.getParameter(request, "ssl");
     String tls = ParamUtils.getParameter(request, "tls");
+	String clientMutualAuthenticationSocket = ParamUtils.getParameter(request, "clientMutualAuthenticationSocket");
+	String clientMutualAuthenticationBOSH   = ParamUtils.getParameter(request, "clientMutualAuthenticationBOSH");
     // Server configuration parameters
     String serverSecurityRequired = ParamUtils.getParameter(request, "serverSecurityRequired");
     String dialback = ParamUtils.getParameter(request, "dialback");
@@ -120,10 +122,18 @@
             }
         }
         ServerDialback.setEnabledForSelfSigned(selfSigned);
-        success = true;
+
+		JiveGlobals.setProperty("xmpp.client.cert.policy", clientMutualAuthenticationSocket);
+		JiveGlobals.setProperty("httpbind.client.cert.policy", clientMutualAuthenticationBOSH);
+
+		success = true;
         // Log the event
-        webManager.logEvent("updated SSL configuration", ConnectionSettings.Server.DIALBACK_ENABLED + " = "+JiveGlobals.getProperty(ConnectionSettings.Server.DIALBACK_ENABLED)+
-                "\n"+ ConnectionSettings.Server.TLS_ENABLED+" = "+JiveGlobals.getProperty(ConnectionSettings.Server.TLS_ENABLED));
+        webManager.logEvent("updated SSL configuration",
+                ConnectionSettings.Server.DIALBACK_ENABLED + " = " + JiveGlobals.getProperty(ConnectionSettings.Server.DIALBACK_ENABLED) + "\n" +
+                ConnectionSettings.Server.TLS_ENABLED      + " = " + JiveGlobals.getProperty(ConnectionSettings.Server.TLS_ENABLED) + "\n" +
+                "xmpp.client.cert.policy = "                       + JiveGlobals.getProperty("xmpp.client.cert.policy") + "\n" +
+                "httpbind.client.cert.policy = "                   + JiveGlobals.getProperty("httpbind.client.cert.policy")
+		);
     }
 
     // Set page vars
@@ -167,6 +177,13 @@
         server_tls = "notavailable";
     }
     selfSigned = ServerDialback.isEnabledForSelfSigned();
+
+    clientMutualAuthenticationSocket = JiveGlobals.getProperty( "xmpp.client.cert.policy",     "disabled" );
+    clientMutualAuthenticationBOSH   = JiveGlobals.getProperty( "httpbind.client.cert.policy", "disabled" );
+
+    if ( !"disabled".equals( clientMutualAuthenticationSocket ) || !"disabled".equals( clientMutualAuthenticationBOSH ) ) {
+        clientSecurityRequired = "custom";
+    }
 %>
 
 <html>
@@ -291,6 +308,32 @@
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb07"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
 								<input type="radio" name="tls" value="required" id="rb08" <%= ("required".equals(tls) ? "checked" : "") %>
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb08"><fmt:message key="ssl.settings.required" /></label>
+							</td>
+						</tr>
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.client.custom.mutualauth.socket" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="clientMutualAuthenticationSocket" value="disabled" id="rb16" <%= ("disabled".equals(clientMutualAuthenticationSocket) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb16"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="clientMutualAuthenticationSocket" value="wanted" id="rb17" <%= ("wanted".equals(clientMutualAuthenticationSocket) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb17"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
+								<input type="radio" name="clientMutualAuthenticationSocket" value="needed" id="rb18" <%= ("needed".equals(clientMutualAuthenticationSocket) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb18"><fmt:message key="ssl.settings.required" /></label>
+							</td>
+						</tr>
+						<tr valign="top">
+							<td width="1%" nowrap>
+								<fmt:message key="ssl.settings.client.custom.mutualauth.bosh" />
+							</td>
+							<td width="99%">
+								<input type="radio" name="clientMutualAuthenticationBOSH" value="disabled" id="rb19" <%= ("disabled".equals(clientMutualAuthenticationBOSH) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb19"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
+								<input type="radio" name="clientMutualAuthenticationBOSH" value="wanted" id="rb20" <%= ("wanted".equals(clientMutualAuthenticationBOSH) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb20"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
+								<input type="radio" name="clientMutualAuthenticationBOSH" value="needed" id="rb21" <%= ("needed".equals(clientMutualAuthenticationBOSH) ? "checked" : "") %>
+									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb21"><fmt:message key="ssl.settings.required" /></label>
 							</td>
 						</tr>
 						</table>

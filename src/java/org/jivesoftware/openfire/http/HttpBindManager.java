@@ -712,6 +712,9 @@ public final class HttpBindManager {
                 }
                 setSecureHttpBindPort(value);
             }
+            else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
+                restartServer();
+            }
         }
 
         public void propertyDeleted(String property, Map<String, Object> params) {
@@ -723,6 +726,9 @@ public final class HttpBindManager {
             }
             else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
                 setSecureHttpBindPort(HTTP_BIND_SECURE_PORT_DEFAULT);
+            }
+            else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
+                restartServer();
             }
         }
 

@@ -1452,9 +1452,8 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li>Lockout or unlock the user (enable / disable)</li>
 <li>Get overview over all or specific system properties and to create, update or delete system property</li>
 <li>Get overview over all or specific chat room and to create, update or delete a chat room</li>
+<li>Get overview over all or specific user sessions</li>
 </ul>
-
-
 
 <h2 id="installation">Installation</h2>
 
@@ -1768,6 +1767,79 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 </tbody></table>
 
 
+
+
+<h3 id="session">Session</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Optional</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>sessionId</td>
+  <td>No</td>
+  <td>Full JID of a user e.g. (testUser@testserver.de/SomeRessource)</td>
+</tr>
+<tr>
+  <td>username</td>
+  <td>No</td>
+  <td>The username associated with this session. Can be also “Anonymous”.</td>
+</tr>
+<tr>
+  <td>ressource</td>
+  <td>Yes</td>
+  <td>Ressource name</td>
+</tr>
+<tr>
+  <td>node</td>
+  <td>No</td>
+  <td>Can be “Local” or “Remote”</td>
+</tr>
+<tr>
+  <td>sessionStatus</td>
+  <td>No</td>
+  <td>The current status of this session. Can be “Closed”, “Connected”, “Authenticated” or “Unknown”.</td>
+</tr>
+<tr>
+  <td>presenceStatus</td>
+  <td>No</td>
+  <td>The status of this presence packet, a natural-language description of availability status.</td>
+</tr>
+<tr>
+  <td>priority</td>
+  <td>No</td>
+  <td>The priority of the session. The valid priority range is -128 through 128.</td>
+</tr>
+<tr>
+  <td>hostAddress</td>
+  <td>No</td>
+  <td>Tthe IP address string in textual presentation.</td>
+</tr>
+<tr>
+  <td>hostName</td>
+  <td>No</td>
+  <td>The host name for this IP address.</td>
+</tr>
+<tr>
+  <td>creationDate</td>
+  <td>No</td>
+  <td>The date the session was created.</td>
+</tr>
+<tr>
+  <td>lastActionDate</td>
+  <td>No</td>
+  <td>The time the session last had activity.</td>
+</tr>
+<tr>
+  <td>secure</td>
+  <td>No</td>
+  <td>Is “true” if this connection is secure.</td>
+</tr>
+</tbody></table>
 
 
 <h1 id="user-related-rest-endpoints">User related REST Endpoints</h1>
@@ -3639,6 +3711,64 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 
 
+<h1 id="session-related-rest-endpoints">Session related REST Endpoints</h1>
+
+<h2 id="retrieve-all-user-session">Retrieve all user session</h2>
+
+<p>Endpoint to get all user sessions</p>
+
+<blockquote>
+  <p><strong>GET</strong> /sessions</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Sessions</p>
+
+<h3 id="examples-31">Examples</h3>
+
+<blockquote>
+  <p><strong>Header</strong>: Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions">http://example.org:9090/plugins/restapi/v1/sessions</a></p>
+</blockquote>
+
+<h2 id="retrieve-the-user-sessions">Retrieve the user sessions</h2>
+
+<p>Endpoint to get sessions from a user</p>
+
+<blockquote>
+  <p><strong>GET</strong> /sessions/{username}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Sessions</p>
+
+<h3 id="possible-parameters-27">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>username</td>
+  <td>@Path</td>
+  <td>The username of the user</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+<h3 id="examples-32">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions/testuser">http://example.org:9090/plugins/restapi/v1/sessions/testuser</a></p>
+
 <h1 id="deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</h1>
 
 
@@ -3834,6 +3964,77 @@ If the strings are encoded incorrectly, double byte characters will look garbele
   <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
 </tr>
 </tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

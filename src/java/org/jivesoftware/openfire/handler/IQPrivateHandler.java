@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -87,8 +88,14 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 child.add(dataStored);
             }
             else {
-                privateStorage.add(packet.getFrom().getNode(), dataElement);
-                replyPacket = IQ.createResultIQ(packet);
+            	replyPacket = IQ.createResultIQ(packet);
+				
+				if (privateStorage.isEnabled()) {
+					privateStorage.add(packet.getFrom().getNode(), dataElement);
+				} else {
+					replyPacket.setChildElement(packet.getChildElement().createCopy());
+					replyPacket.setError(PacketError.Condition.service_unavailable);
+				}
             }
         }
         else {

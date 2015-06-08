@@ -118,7 +118,7 @@ public class NIOConnection implements Connection {
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
-    private State state;
+    private volatile State state;
     
     /**
      * Lock used to ensure the integrity of the underlying IoSession (refer to
@@ -302,7 +302,7 @@ public class NIOConnection implements Connection {
         session = owner;
     }
 
-    public synchronized boolean isClosed() {
+    public boolean isClosed() {
         return state == State.CLOSED;
     }
 
@@ -311,7 +311,7 @@ public class NIOConnection implements Connection {
     }
 
     public void deliver(Packet packet) throws UnauthorizedException {
-        if (isClosed()) {
+        if (state != State.RUNNING) {
         	// OF-857: Do not allow the backup deliverer to recurse
         	if (backupDeliverer == null) {
         		Log.error("Failed to deliver packet: " + packet.toXML());

@@ -162,15 +162,27 @@ public class NIOConnection implements Connection {
     }
 
     public byte[] getAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+        try {
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public String getHostAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+        try { 
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public String getHostName() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+        try {
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public Certificate[] getLocalCertificates() {
@@ -435,7 +447,7 @@ public class NIOConnection implements Connection {
             // good
             filter.setWantClientAuth(true);
         }
-        ioSession.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
+        ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
         ioSession.setAttribute(SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
 
         if (!clientMode) {

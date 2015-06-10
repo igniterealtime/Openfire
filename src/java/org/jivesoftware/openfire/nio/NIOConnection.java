@@ -162,15 +162,27 @@ public class NIOConnection implements Connection {
     }
 
     public byte[] getAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+        try {
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getAddress();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public String getHostAddress() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+        try { 
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostAddress();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public String getHostName() throws UnknownHostException {
-        return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+        try {
+            return ((InetSocketAddress) ioSession.getRemoteAddress()).getAddress().getHostName();
+        } catch (NullPointerException e) {
+            throw new UnknownHostException();
+        }
     }
 
     public Certificate[] getLocalCertificates() {

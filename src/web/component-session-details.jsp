@@ -151,13 +151,13 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-        	<% try { %>
-	            <%= StringUtils.escapeHTMLTags(componentSession.getHostAddress()) %>
-	            /
-	            <%= StringUtils.escapeHTMLTags(componentSession.getHostName()) %>
-	        <% } catch (java.net.UnknownHostException e) { %>
-	    	   	Invalid session/connection
-        	<% } %>
+            <% try { %>
+                <%= StringUtils.escapeHTMLTags(componentSession.getHostAddress()) %>
+                /
+                <%= StringUtils.escapeHTMLTags(componentSession.getHostName()) %>
+            <% } catch (java.net.UnknownHostException e) { %>
+                Invalid session/connection
+            <% } %>
         </td>
     </tr>
 </tbody>

@@ -168,10 +168,10 @@
     </td>
 
     <td width="1%" nowrap>
-    	<% try { %>
-        	<%= sess.getHostAddress() %>
+        <% try { %>
+            <%= sess.getHostAddress() %>
         <% } catch (java.net.UnknownHostException e) { %>
-	    	   Invalid session/connection
+            Invalid session/connection
         <% } %>
     </td>
 

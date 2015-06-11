@@ -100,17 +100,17 @@
         </td>
         <td>
         <% try {
-        	if (!inSessions.isEmpty()) { %>
-            	<%= inSessions.get(0).getHostAddress() %>
-            	/
-            	<%= inSessions.get(0).getHostName() %>
+            if (!inSessions.isEmpty()) { %>
+                <%= inSessions.get(0).getHostAddress() %>
+                /
+                <%= inSessions.get(0).getHostName() %>
 	        <% } else if (outSession != null) { %>
 	            <%= outSession.getHostAddress() %>
 	            /
 	            <%= outSession.getHostName() %>
 	        <% }
 	       } catch (java.net.UnknownHostException e) { %>
-	    	   Invalid session/connection
+                Invalid session/connection
         <% } %>
         </td>
     </tr>

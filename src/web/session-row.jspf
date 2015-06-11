@@ -170,7 +170,11 @@
     </td>
 
     <td width="1%" nowrap>
-        <%= sess.getHostAddress() %>
+        <% try { %>
+            <%= sess.getHostAddress() %>
+        <% } catch (java.net.UnknownHostException e) { %>
+            Invalid session/connection
+        <% } %>
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">

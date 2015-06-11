@@ -281,9 +281,13 @@
             <fmt:message key="session.details.hostname" />
         </td>
         <td>
-            <%= currentSess.getHostAddress() %>
-            /
-            <%= currentSess.getHostName() %>
+            <% try { %>
+                <%= currentSess.getHostAddress() %>
+                /
+                <%= currentSess.getHostName() %>
+            <% } catch (java.net.UnknownHostException e) { %>
+                Invalid session/connection
+            <% } %>
         </td>
     </tr>
 </tbody>

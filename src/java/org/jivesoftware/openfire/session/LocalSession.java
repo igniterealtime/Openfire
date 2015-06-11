@@ -359,11 +359,30 @@ public abstract class LocalSession implements Session {
     }
 
     public String getHostAddress() throws UnknownHostException {
-        return conn.getHostAddress();
+    	try {
+    		return conn.getHostAddress();
+    	}catch(UnknownHostException e){
+    		removeSession();
+    		return null;
+    	}
     }
 
     public String getHostName() throws UnknownHostException {
-        return conn.getHostName();
+    	try {
+    		return conn.getHostName();
+    	}catch(UnknownHostException e){
+    		removeSession();
+    		return null;
+    	}
+    }
+    
+    private void removeSession(){
+    	Log.warn("Local session connection is invalid. Removing session for {}", getAddress());
+		if (this instanceof LocalClientSession){
+			sessionManager.removeSession((LocalClientSession)this);
+		}else{
+			sessionManager.removeSession(null, getAddress(), false, false);
+		}
     }
 
     @Override

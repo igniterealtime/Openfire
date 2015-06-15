@@ -22,7 +22,7 @@
                  org.jivesoftware.openfire.session.OutgoingServerSession,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
-                java.text.NumberFormat"
+                 java.text.NumberFormat"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Calendar" %>
@@ -99,14 +99,18 @@
             <fmt:message key="server.session.details.hostname" />
         </td>
         <td>
-        <% if (!inSessions.isEmpty()) { %>
-            <%= inSessions.get(0).getHostAddress() %>
-            /
-            <%= inSessions.get(0).getHostName() %>
-        <% } else if (outSession != null) { %>
-            <%= outSession.getHostAddress() %>
-            /
-            <%= outSession.getHostName() %>
+        <% try {
+            if (!inSessions.isEmpty()) { %>
+                <%= inSessions.get(0).getHostAddress() %>
+                /
+                <%= inSessions.get(0).getHostName() %>
+	        <% } else if (outSession != null) { %>
+	            <%= outSession.getHostAddress() %>
+	            /
+	            <%= outSession.getHostName() %>
+	        <% }
+	       } catch (java.net.UnknownHostException e) { %>
+                Invalid session/connection
         <% } %>
         </td>
     </tr>

@@ -1176,6 +1176,7 @@
 
         <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
         <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/openfire.xml" file="${basedir}/build/solaris/openfire.xml" />
+        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/modules.xml" file="${basedir}/build/solaris/modules.xml" />
         <copy tofile="${target.solaris.root}/checkinstall" file="${basedir}/build/solaris/checkinstall" />
         <copy tofile="${target.solaris.root}/postinstall" file="${basedir}/build/solaris/postinstall" />
         <copy tofile="${target.solaris.root}/preremove" file="${basedir}/build/solaris/preremove" />
@@ -1187,6 +1188,7 @@
 
         <replaceregexp file="${target.solaris.root}/Prototype" match="(.* .* .* .*) .* .*" replace="\1 daemon daemon" byline="true"/>
         <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/openfire.xml=.* .* .* .*)" replace="e \1" byline="true"/>
+        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/modules.xml=.* .* .* .*)" replace="e \1" byline="true"/>
         <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/keystore=.* .* .* .*)" replace="e \1" byline="true"/>
         <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/truststore=.* .* .* .*)" replace="e \1" byline="true"/>
         <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/client.truststore=.* .* .* .*)" replace="e \1" byline="true"/>

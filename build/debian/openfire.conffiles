@@ -1,4 +1,5 @@
 /etc/openfire/openfire.xml
+/etc/openfire/modules.xml
 /etc/openfire/security.xml
 /etc/openfire/security/keystore
 /etc/openfire/security/truststore

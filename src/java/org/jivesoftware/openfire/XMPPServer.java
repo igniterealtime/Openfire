@@ -1063,7 +1063,7 @@ public class XMPPServer {
      * @return the <code>PresenceManager</code> registered with this server.
      */
     public PresenceManager getPresenceManager() {
-        return (PresenceManager) modules.get(PresenceManagerImpl.class.getName());
+        return (PresenceManager) modules.get(PresenceManager.class.getName());
     }
 
     /**

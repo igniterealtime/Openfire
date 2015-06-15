@@ -20,6 +20,9 @@ if [ -d "/opt/openfire" ]; then
 	if [ -f /opt/openfire/resources/security/client.truststore ]; then
 		/bin/cp -f /opt/openfire/resources/security/client.truststore /tmp/openfireInstallBackup/client.truststore
 	fi
+	if [ -f /opt/openfire/lib/log4j.xml ]; then
+		/bin/cp -f /opt/openfire/lib/log4j.xml /tmp/openfireInstallBackup/log4j.xml
+	fi
 
 	if [ -x "/usr/sbin/svcadm" ]; then
 		/usr/sbin/svcadm disable openfire

@@ -19,6 +19,10 @@ if [ -f /tmp/openfireInstallBackup/client.truststore ]; then
 	/bin/mv /tmp/openfireInstallBackup/client.truststore /usr/local/openfire/resources/security/client.truststore
 fi
 
+if [ -f /tmp/openfireInstallBackup/log4j.xml ]; then
+	/bin/mv /tmp/openfireInstallBackup/log4j.xml /usr/local/openfire/lib/log4j.xml
+fi
+
 OPENFIRE_HOME=/usr/local/openfire/
 OPENFIRE_GID=`cat /private/tmp/openfiregid`
 rm /private/tmp/openfiregid

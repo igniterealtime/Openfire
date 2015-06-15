@@ -27,5 +27,8 @@ if [ -d /usr/local/openfire ]; then
 	if [ -f /usr/local/openfire/resources/security/client.truststore ]; then
 		/bin/cp /usr/local/openfire/resources/security/client.truststore /tmp/openfireInstallBackup/client.truststore
 	fi
+	if [ -f /usr/local/openfire/lib/log4j.xml ]; then
+		/bin/cp /usr/local/openfire/lib/log4j.xml /tmp/openfireInstallBackup/log4j.xml
+	fi
 
 fi

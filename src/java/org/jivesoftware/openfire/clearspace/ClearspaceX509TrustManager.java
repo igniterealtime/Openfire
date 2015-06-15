@@ -77,7 +77,7 @@ public class ClearspaceX509TrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            List<String> peerIdentities = CertificateManager.getPeerIdentities(x509Certificates[0]);
+            List<String> peerIdentities = CertificateManager.getServerPeerIdentities(x509Certificates[0]);
 
             if (getBooleanProperty("clearspace.certificate.verify.chain", true)) {
                 // Working down the chain, for every certificate in the chain,

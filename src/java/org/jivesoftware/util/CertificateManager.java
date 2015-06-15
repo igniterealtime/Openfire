@@ -116,23 +116,25 @@ public class CertificateManager {
 
     private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<CertificateEventListener>();
 
-    private static List<CertificateIdentityMapping> certIdentityMapping = new ArrayList<CertificateIdentityMapping>();
+    private static List<CertificateIdentityMapping> serverCertIdentityMapping = new ArrayList<CertificateIdentityMapping>();
+    
+    private static List<CertificateIdentityMapping> clientCertIdentityMapping = new ArrayList<CertificateIdentityMapping>();
     
     static {
         // Add the BC provider to the list of security providers
         Security.addProvider(provider);
         
-        String classList = JiveGlobals.getProperty("provider.certIdentityMapping.classList");
-        if (classList != null) {
-        	StringTokenizer st = new StringTokenizer(classList, " ,\t\n\r\f");
+        String serverCertIdentityMapList = JiveGlobals.getProperty("provider.serverCertIdentityMap.classList");
+        if (serverCertIdentityMapList != null) {
+        	StringTokenizer st = new StringTokenizer(serverCertIdentityMapList, " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
                     Class c_provider = ClassUtils.forName(s_provider);
                     CertificateIdentityMapping provider =
                             (CertificateIdentityMapping)(c_provider.newInstance());
-                    Log.debug("CertificateManager: Loaded " + s_provider);
-                    certIdentityMapping.add(provider);
+                    Log.debug("CertificateManager: Loaded server identity mapping " + s_provider);
+                    serverCertIdentityMapping.add(provider);
                 }
                 catch (Exception e) {
                     Log.error("CertificateManager: Error loading CertificateIdentityMapping: " + s_provider + "\n" + e);
@@ -140,10 +142,33 @@ public class CertificateManager {
             }
         }
         
-        if (certIdentityMapping.isEmpty()) {
-        	Log.debug("CertificateManager: No CertificateIdentityMapping's found. Loading default mappings");
-        	certIdentityMapping.add(new SANCertificateIdentityMapping());
-        	certIdentityMapping.add(new CNCertificateIdentityMapping());
+        if (serverCertIdentityMapping.isEmpty()) {
+        	Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
+        	serverCertIdentityMapping.add(new SANCertificateIdentityMapping());
+        	serverCertIdentityMapping.add(new CNCertificateIdentityMapping());   	
+        }
+                
+        String clientCertMapList = JiveGlobals.getProperty("provider.clientCertIdentityMap.classList");
+        if (clientCertMapList != null) {
+        	StringTokenizer st = new StringTokenizer(clientCertMapList, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String s_provider = st.nextToken();
+                try {
+                    Class c_provider = ClassUtils.forName(s_provider);
+                    CertificateIdentityMapping provider =
+                            (CertificateIdentityMapping)(c_provider.newInstance());
+                    Log.debug("CertificateManager: Loaded client identity mapping " + s_provider);
+                    clientCertIdentityMapping.add(provider);
+                }
+                catch (Exception e) {
+                    Log.error("CertificateManager: Error loading CertificateIdentityMapping: " + s_provider + "\n" + e);
+                }
+            }
+        }
+        
+        if (clientCertIdentityMapping.isEmpty()) {
+        	Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
+        	clientCertIdentityMapping.add(new CNCertificateIdentityMapping());
         }
     }
 
@@ -359,19 +384,40 @@ public class CertificateManager {
     }
 
     /**
+     * Returns the identities of the remote client as defined in the specified certificate. The
+     * identities are mapped by the classes in the "provider.clientCertIdentityMap.classList" property. 
+     * By default, the subjectDN of the certificate is used.
+     *
+     * @param x509Certificate the certificate the holds the identities of the remote server.
+     * @return the identities of the remote client as defined in the specified certificate.
+     */
+    public static List<String> getClientPeerIdentities(X509Certificate x509Certificate) {
+    	
+    	List<String> names = new ArrayList<String>();
+    	for (CertificateIdentityMapping mapping : clientCertIdentityMapping) {
+    		List<String> identities = mapping.mapIdentity(x509Certificate);
+    		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
+    		names.addAll(identities);
+    	}
+
+        return names;
+    }
+    
+    /**
      * Returns the identities of the remote server as defined in the specified certificate. The
-     * identities are defined in the subjectDN of the certificate and it can also be defined in
-     * the subjectAltName extensions of type "xmpp". When the extension is being used then the
+     * identities are mapped by the classes in the "provider.serverCertIdentityMap.classList" property.
+     * By default, the identities are defined in the subjectDN of the certificate and it can also be 
+     * defined in the subjectAltName extensions of type "xmpp". When the extension is being used then the
      * identities defined in the extension are going to be returned. Otherwise, the value stored in
      * the subjectDN is returned.
      *
      * @param x509Certificate the certificate the holds the identities of the remote server.
      * @return the identities of the remote server as defined in the specified certificate.
      */
-    public static List<String> getPeerIdentities(X509Certificate x509Certificate) {
+    public static List<String> getServerPeerIdentities(X509Certificate x509Certificate) {
     	
     	List<String> names = new ArrayList<String>();
-    	for (CertificateIdentityMapping mapping : certIdentityMapping) {
+    	for (CertificateIdentityMapping mapping : serverCertIdentityMapping) {
     		List<String> identities = mapping.mapIdentity(x509Certificate);
     		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
     		names.addAll(identities);
@@ -438,7 +484,7 @@ public class CertificateManager {
             }
             else {
                 // Only accept certified domains that match the specified domain
-                for (String identity : getPeerIdentities(certificate)) {
+                for (String identity : getServerPeerIdentities(certificate)) {
                     if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
                         result = true;
                     }

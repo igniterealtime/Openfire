@@ -52,7 +52,7 @@ jmock.jar                           | 2.1.0                                     
 jmock-junit4.jar                    | 2.1.0                                                        |
 jmock-legacy.jar                    | 2.1.0                                                        |
 jsp-api.jar                         | Jetty 6.0.1 (2.0)                                            |
-jtds.jar                            | 1.2.2                                                        | LGPL
+jtds.jar                            | 1.3.1                                                        | LGPL
 junit.jar                           | 4.11                                                         | EPL 1.0
 hamcrest-core.jar                   | 1.3 (required by junit)                                      | new BSD licence
 jzlib.jar                           | 1.1.3 (Apache Mina 2.0.9)                                    | GPL

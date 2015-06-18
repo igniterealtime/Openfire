@@ -1176,7 +1176,7 @@
 
         <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
         <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/openfire.xml" file="${basedir}/build/solaris/openfire.xml" />
-        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/modules.xml" file="${basedir}/build/solaris/modules.xml" />
+        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/modules.xml" file="${basedir}/src/conf/modules.xml" />
         <copy tofile="${target.solaris.root}/checkinstall" file="${basedir}/build/solaris/checkinstall" />
         <copy tofile="${target.solaris.root}/postinstall" file="${basedir}/build/solaris/postinstall" />
         <copy tofile="${target.solaris.root}/preremove" file="${basedir}/build/solaris/preremove" />

@@ -11,6 +11,9 @@ if [ -d "/opt/openfire" ]; then
 	if [ -f /opt/openfire/conf/security.xml ]; then
 		/bin/cp -f /opt/openfire/conf/security.xml /tmp/openfireInstallBackup/security.xml
 	fi
+	if [ -f /opt/openfire/conf/modules.xml ]; then
+		/bin/cp -f /opt/openfire/conf/modules.xml /tmp/openfireInstallBackup/modules.xml
+	fi
 	if [ -f /opt/openfire/resources/security/keystore ]; then
 		/bin/cp -f /opt/openfire/resources/security/keystore /tmp/openfireInstallBackup/keystore
 	fi

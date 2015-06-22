@@ -31,6 +31,8 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -45,12 +47,13 @@ import java.util.List;
  */
 public class DefaultFileTransferManager extends BasicModule implements FileTransferManager {
 
+    private static final Logger Log = LoggerFactory.getLogger( DefaultFileTransferManager.class );
+
     private static final String CACHE_NAME = "File Transfer Cache";
 
     private final Cache<String, FileTransfer> fileTransferMap;
 
-    private final List<FileTransferInterceptor> fileTransferInterceptorList
-            = new ArrayList<FileTransferInterceptor>();
+    private final List<FileTransferEventListener> eventListeners = new ArrayList<>();
 
     /**
      * Default constructor creates the cache.
@@ -99,8 +102,8 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
     public boolean acceptIncomingFileTransferRequest(FileTransfer transfer)
             throws FileTransferRejectedException
     {
-        fireFileTransferIntercept(transfer, false);
         if(transfer != null) {
+            fireFileTransferStart( transfer.getSessionID(), false );
             String streamID = transfer.getSessionID();
             JID from = new JID(transfer.getInitiator());
             JID to = new JID(transfer.getTarget());
@@ -152,25 +155,54 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return new FileTransfer(from.toString(), to.toString(), streamID, fileName, size, mimeType);
     }
 
-    public void addFileTransferInterceptor(FileTransferInterceptor interceptor) {
-        fileTransferInterceptorList.add(interceptor);
-    }
-
-    public void removeFileTransferInterceptor(FileTransferInterceptor interceptor) {
-        fileTransferInterceptorList.remove(interceptor);
-    }
-
-    public void fireFileTransferIntercept(FileTransferProgress transfer, boolean isReady)
-            throws FileTransferRejectedException
+    @Override
+    public void addListener( FileTransferEventListener eventListener )
     {
-        fireFileTransferIntercept(fileTransferMap.get(transfer.getSessionID()), isReady);
+        eventListeners.add( eventListener );
     }
 
-    private void fireFileTransferIntercept(FileTransfer transfer, boolean isReady)
-            throws FileTransferRejectedException
+    @Override
+    public void removeListener( FileTransferEventListener eventListener )
     {
-        for(FileTransferInterceptor interceptor : fileTransferInterceptorList) {
-            interceptor.interceptFileTransfer(transfer, isReady);
+        eventListeners.remove( eventListener );
+    }
+
+    @Override
+    public void fireFileTransferStart( String sid, boolean isReady ) throws FileTransferRejectedException
+    {
+        final FileTransfer transfer = fileTransferMap.get( sid );
+        for ( FileTransferEventListener listener : eventListeners )
+        {
+            try
+            {
+                listener.fileTransferStart( transfer, isReady );
+            }
+            catch ( FileTransferRejectedException ex )
+            {
+                Log.debug( "Listener '{}' rejected file transfer '{}'.", listener, transfer );
+                throw ex;
+            }
+            catch ( Exception ex )
+            {
+                Log.warn( "Listener '{}' threw exception when being informed of file transfer complete for transfer '{}'.", listener, transfer, ex );
+            }
+        }
+    }
+
+    @Override
+    public void fireFileTransferCompleted( String sid, boolean wasSuccessful )
+    {
+        final FileTransfer transfer = fileTransferMap.get( sid );
+        for ( FileTransferEventListener listener : eventListeners )
+        {
+            try
+            {
+                listener.fileTransferComplete( transfer, wasSuccessful );
+            }
+            catch ( Exception ex )
+            {
+                Log.warn( "Listener '{}' threw exception when being informed of file transfer complete for transfer '{}'.", listener, transfer, ex );
+            }
         }
     }
 
@@ -182,7 +214,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
                                     boolean processed)
                 throws PacketRejectedException
         {
-            // We only want packets recieved by the server
+            // We only want packets received by the server
             if (!processed && incoming && packet instanceof IQ) {
                 IQ iq = (IQ) packet;
                 Element childElement = iq.getChildElement();

@@ -30,7 +30,14 @@ import java.io.OutputStream;
  * @author Alexander Wenckus
  */
 public interface FileTransferProgress {
-    public long getAmountTransfered() throws UnsupportedOperationException;
+
+    /**
+     * Returns the number of bytes that has been transferred.
+     *
+     * @return the number of bytes that has been transferred.
+     * @throws UnsupportedOperationException
+     */
+    public long getAmountTransferred() throws UnsupportedOperationException;
 
     /**
      * Returns the fully qualified JID of the initiator of the file transfer.

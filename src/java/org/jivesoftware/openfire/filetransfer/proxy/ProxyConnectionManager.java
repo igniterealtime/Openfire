@@ -277,11 +277,10 @@ public class ProxyConnectionManager {
      * packet after both parties have connected to the proxy.
      *
      * @param initiator The initiator or sender of the file transfer.
-     * @param target The target or reciever of the file transfer.
-     * @param sid The sessionid the uniquely identifies the transfer between
-     * the two participants.
+     * @param target The target or receiver of the file transfer.
+     * @param sid The session id that uniquely identifies the transfer between the two participants.
      * @throws IllegalArgumentException This exception is thrown when the activated transfer does
-     *                                  not exist or is missing one or both of the realted sockets.
+     *                                  not exist or is missing one or both of the sockets.
      */
     void activate(JID initiator, JID target, String sid) {
         final String digest = createDigest(sid, initiator, target);
@@ -303,7 +302,7 @@ public class ProxyConnectionManager {
         transfer.setTransferFuture(executor.submit(new Runnable() {
             public void run() {
                 try {
-                    transferManager.fireFileTransferIntercept(transfer, true);
+                    transferManager.fireFileTransferStart( transfer.getSessionID(), true );
                 }
                 catch (FileTransferRejectedException e) {
                     notifyFailure(transfer, e);
@@ -311,9 +310,11 @@ public class ProxyConnectionManager {
                 }
                 try {
                     transfer.doTransfer();
+                    transferManager.fireFileTransferCompleted( transfer.getSessionID(), true );
                 }
                 catch (IOException e) {
                     Log.error("Error during file transfer", e);
+                    transferManager.fireFileTransferCompleted( transfer.getSessionID(), false );
                 }
                 finally {
                     connectionMap.remove(digest);
@@ -331,7 +332,7 @@ public class ProxyConnectionManager {
      * initiator + target).
      *
      * @param sessionID The sessionID of the stream negotiation
-     * @param initiator The inititator of the stream negotiation
+     * @param initiator The initiator of the stream negotiation
      * @param target The target of the stream negotiation
      * @return SHA-1 hash of the three parameters
      */
@@ -374,7 +375,7 @@ public class ProxyConnectionManager {
         }
 
         public double sample() {
-            return (ProxyOutputStream.amountTransfered.getAndSet(0) / 1000d);
+            return (ProxyOutputStream.amountTransferred.getAndSet(0) / 1000d);
         }
 
         public boolean isPartialSample() {

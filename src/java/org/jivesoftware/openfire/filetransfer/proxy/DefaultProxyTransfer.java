@@ -117,7 +117,7 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         this.future = future;
     }
 
-    public long getAmountTransfered() {
+    public long getAmountTransferred() {
         return amountWritten;
     }
 

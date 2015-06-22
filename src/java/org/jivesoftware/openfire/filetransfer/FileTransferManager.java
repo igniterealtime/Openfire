@@ -67,10 +67,40 @@ public interface FileTransferManager extends Module {
     void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException;
 
-    void addFileTransferInterceptor(FileTransferInterceptor interceptor);
+    /**
+     * Registers an event listener that will be notified of file transfer related events.
+     *
+     * @param eventListener an event listener (cannot be null).
+     */
+    void addListener( FileTransferEventListener eventListener );
 
-    void removeFileTransferInterceptor(FileTransferInterceptor interceptor);
+    /**
+     * Unregisters an event listener from the list of event listeners that are notified of file transfer related events.
+     *
+     * @param eventListener an event listener (cannot be null).
+     */
+    void removeListener( FileTransferEventListener eventListener );
 
-    void fireFileTransferIntercept(FileTransferProgress transfer, boolean isReady)
+    /**
+     * Invokes {@link FileTransferEventListener#fileTransferStart(FileTransfer, boolean)} for all registered event
+     * listeners.
+     *
+     * @param sid The session id of the file transfer that is being intercepted (cannot be null).
+     * @param isReady true if the transfer is ready to commence or false if this is related to the
+     *                 initial file transfer request. An exception at this point will cause the transfer to
+     *                 not go through.
+     * @throws FileTransferRejectedException When at least one of the listeners aborts the file transfer.
+     */
+    void fireFileTransferStart( String sid, boolean isReady )
             throws FileTransferRejectedException;
+
+    /**
+     * Invokes {@link FileTransferEventListener#fileTransferComplete(FileTransfer, boolean)} for all registered event
+     * listeners.
+     *
+     * @param sid The session id of the file transfer that is being intercepted (cannot be null).
+     * @param wasSuccessful false when an exception was thrown during file transfer, otherwise true.
+     * @throws FileTransferRejectedException When at least one of the listeners aborts the file transfer.
+     */
+    void fireFileTransferCompleted( String sid, boolean wasSuccessful );
 }

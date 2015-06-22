@@ -23,7 +23,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * Thrown by a FileTransferInterceptor when a file transfer is rejected my the Interceptor. The file
+ * Thrown by a {@link FileTransferEventListener} when a file transfer is rejected by the Interceptor. The file
  * transfer is aborted and the participating parties are notified.
  *
  * @author Alexander Wenckus
@@ -82,7 +82,7 @@ public class FileTransferRejectedException extends Exception {
     }
 
     /**
-     * Retuns the text to include in a message that will be sent to the intitiator and target
+     * Returns the text to include in a message that will be sent to the intitiator and target
      * of the file transfer that got rejected or <tt>null</tt> if none was defined. If no text was
      * specified then no message will be sent to the parties of the rejected file transfer.
      *

@@ -50,11 +50,11 @@ public class FileTransferFilterManager {
     }
 
     public void start() {
-        manager.addFileTransferInterceptor(transferInterceptor);
+        manager.addListener(transferInterceptor);
     }
 
     public void stop() {
-        manager.removeFileTransferInterceptor(transferInterceptor);
+        manager.removeListener(transferInterceptor);
     }
 
     public void enableFileTransfer(boolean isEnabled) {
@@ -66,16 +66,18 @@ public class FileTransferFilterManager {
                 DEFAULT_IS_FILE_TRANSFER_ENABLED);
     }
 
-    private class TransferInterceptor implements FileTransferInterceptor {
-
-        public void interceptFileTransfer(FileTransfer transfer, boolean isReady)
-                throws FileTransferRejectedException
+    private class TransferInterceptor implements FileTransferEventListener
+    {
+        @Override
+        public void fileTransferStart( FileTransfer transfer, boolean isReady ) throws FileTransferRejectedException
         {
             if(!isFileTransferEnabled()) {
                 throw new FileTransferRejectedException();
             }
         }
 
-
+        @Override
+        public void fileTransferComplete( FileTransfer transfer, boolean wasSuccessful )
+        {}
     }
 }

@@ -59,7 +59,7 @@ public class SessionData {
      */
     private int stage;
 
-    SessionData(String sessionid, JID owner) {
+    protected SessionData(String sessionid, JID owner) {
         this.id = sessionid;
         this.creationStamp = System.currentTimeMillis();
         this.stage = -1;
@@ -83,11 +83,11 @@ public class SessionData {
         return creationStamp;
     }
 
-    AdHocCommand.Action getExecuteAction() {
+    protected AdHocCommand.Action getExecuteAction() {
         return executeAction;
     }
 
-    void setExecuteAction(AdHocCommand.Action executeAction) {
+    protected void setExecuteAction(AdHocCommand.Action executeAction) {
         this.executeAction = executeAction;
     }
 
@@ -96,7 +96,7 @@ public class SessionData {
      *
      * @param allowedActions list of valid actions.
      */
-    void setAllowedActions(List<AdHocCommand.Action> allowedActions) {
+    protected void setAllowedActions(List<AdHocCommand.Action> allowedActions) {
         if (allowedActions == null) {
             allowedActions = new ArrayList<AdHocCommand.Action>();
         }
@@ -110,7 +110,7 @@ public class SessionData {
      * @param actionName the name of the action to validate.
      * @return true if the specified action is valid in the current stage.
      */
-    boolean isValidAction(String actionName) {
+    protected boolean isValidAction(String actionName) {
         for (AdHocCommand.Action action : allowedActions) {
             if (actionName.equals(action.name())) {
                 return true;
@@ -119,7 +119,7 @@ public class SessionData {
         return false;
     }
 
-    void addStageForm(Map<String, List<String>> data) {
+    protected void addStageForm(Map<String, List<String>> data) {
         stagesData.put(stage, data);
     }
 
@@ -156,7 +156,7 @@ public class SessionData {
      *
      * @param stage the current stage where the requester is located.
      */
-    void setStage(int stage) {
+    protected void setStage(int stage) {
         this.stage = stage;
     }
 

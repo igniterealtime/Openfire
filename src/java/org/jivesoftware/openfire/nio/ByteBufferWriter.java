@@ -26,7 +26,7 @@ import java.io.Writer;
 import java.nio.charset.CharsetEncoder;
 
 /**
- * Wrapper on a MINA {@link ByteBuffer} that extends the Writer class.
+ * Wrapper on a MINA {@link IoBuffer} that extends the Writer class.
  *
  * @author Gaston Dombia
  */

@@ -1152,7 +1152,7 @@ public class PubSubEngine {
      * @param iq
      * @param childElement
      * @param createElement
-     * @return
+     * @return {@link CreateNodeResponse}
      */
     private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement) {
         // Get sender of the IQ packet

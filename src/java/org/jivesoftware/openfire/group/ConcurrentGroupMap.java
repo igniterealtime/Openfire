@@ -32,7 +32,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 * is not found in the key list, search the key list for groups and 
 	 * look for the JID in each of the corresponding groups.
 	 * 
-	 * @param o The target, presumably a JID
+	 * @param key The target, presumably a JID
 	 * @return True if the target is in the key list, or in any groups in the key list
 	 */
 	public boolean includesKey(Object key) {

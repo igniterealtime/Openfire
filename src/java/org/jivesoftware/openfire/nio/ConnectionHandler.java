@@ -19,14 +19,9 @@
 
 package org.jivesoftware.openfire.nio;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
@@ -37,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
-
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -104,14 +97,6 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         final int idleTime = getMaxIdleTime() / 2;
         if (idleTime > 0) {
             session.getConfig().setIdleTime(IdleStatus.READER_IDLE, idleTime);
-        }
-    }
-
-    @Override
-    public void inputClosed( IoSession session ) throws Exception {
-        final Connection connection = (Connection) session.getAttribute(CONNECTION);
-        if ( connection != null ) {
-            connection.close( true );
         }
     }
 

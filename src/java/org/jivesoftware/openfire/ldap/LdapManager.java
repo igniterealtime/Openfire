@@ -495,8 +495,6 @@ public class LdapManager {
 
         // SSL
         if (sslEnabled) {
-            env.put("java.naming.ldap.factory.socket",
-                    "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
@@ -523,6 +521,7 @@ public class LdapManager {
         if (connectionPoolEnabled) {
             if (!startTlsEnabled) {
                 env.put("com.sun.jndi.ldap.connect.pool", "true");
+                System.setProperty("com.sun.jndi.ldap.connect.pool.protocol", "plain ssl");
             } else {
                 if (debug) {
                     // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
@@ -566,7 +565,7 @@ public class LdapManager {
                get details of the negotiated TLS session: cipher suite,
                peer certificate, etc. */
             try {
-                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
+                SSLSession session = tls.negotiate();
 
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
@@ -630,8 +629,6 @@ public class LdapManager {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
-                env.put("java.naming.ldap.factory.socket",
-                        "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -687,7 +684,7 @@ public class LdapManager {
                    get details of the negotiated TLS session: cipher suite,
                    peer certificate, etc. */
                 try {
-                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
+                    SSLSession session = tls.negotiate();
 
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
@@ -736,7 +733,6 @@ public class LdapManager {
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
-                        env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 
@@ -780,7 +776,7 @@ public class LdapManager {
                            get details of the negotiated TLS session: cipher suite,
                            peer certificate, etc. */
                         try {
-                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
+                            SSLSession session = tls.negotiate();
 
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);

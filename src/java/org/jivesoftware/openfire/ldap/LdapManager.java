@@ -57,6 +57,7 @@ import org.jivesoftware.util.JiveInitialLdapContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.jivesoftware.util.XTrustProvider;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -176,6 +177,7 @@ public class LdapManager {
     private boolean encloseDNs;
     private boolean ldapDebugEnabled = false;
     private boolean sslEnabled = false;
+    private boolean disableSslValidation = true;
     private String initialContextFactory;
     private boolean followReferrals = false;
     private boolean followAliasReferrals = true;
@@ -246,7 +248,7 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.pagedResultsSize");
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
-
+        JiveGlobals.migrateProperty("ldap.disableSslValidation");
         String host = properties.get("ldap.host");
         if (host != null) {
             // Parse the property and check if many hosts were defined. Hosts can be separated
@@ -371,6 +373,10 @@ public class LdapManager {
         if (sslEnabledStr != null) {
             sslEnabled = Boolean.valueOf(sslEnabledStr);
         }
+        disableSslValidation = true;
+        String disableSslValidationStr = properties.get("ldap.disableSslValidation");
+        if (disableSslValidationStr != null) {disableSslValidation = Boolean.valueOf(disableSslValidationStr);
+        }
         startTlsEnabled = false;
         String startTlsEnabledStr = properties.get("ldap.startTlsEnabled");
         if (startTlsEnabledStr != null) {
@@ -429,6 +435,7 @@ public class LdapManager {
         buf.append("\t subTreeSearch:").append(subTreeSearch).append("\n");
         buf.append("\t ldapDebugEnabled: ").append(ldapDebugEnabled).append("\n");
         buf.append("\t sslEnabled: ").append(sslEnabled).append("\n");
+        buf.append("\t disableSslValidation: ").append(disableSslValidation).append("\n");
         buf.append("\t startTlsEnabled: ").append(startTlsEnabled).append("\n");
         buf.append("\t initialContextFactory: ").append(initialContextFactory).append("\n");
         buf.append("\t connectionPoolEnabled: ").append(connectionPoolEnabled).append("\n");
@@ -495,7 +502,11 @@ public class LdapManager {
 
         // SSL
         if (sslEnabled) {
+            if (disableSslValidation) {
+                XTrustProvider.install();
+            }
             env.put(Context.SECURITY_PROTOCOL, "ssl");
+
         }
 
         // Use simple authentication to connect as the admin.
@@ -520,9 +531,11 @@ public class LdapManager {
         }
         if (connectionPoolEnabled) {
             if (!startTlsEnabled) {
-                env.put("com.sun.jndi.ldap.connect.pool", "true");
-                System.setProperty("com.sun.jndi.ldap.connect.pool.protocol", "plain ssl");
+            env.put("com.sun.jndi.ldap.connect.pool", "true");
+            System.setProperty("com.sun.jndi.ldap.connect.pool.protocol", "plain ssl");
+
             } else {
+
                 if (debug) {
                     // See http://java.sun.com/products/jndi/tutorial/ldap/connect/pool.html
                     // "When Not to Use Pooling"
@@ -549,6 +562,9 @@ public class LdapManager {
 
         // TLS http://www.ietf.org/rfc/rfc2830.txt ("1.3.6.1.4.1.1466.20037")
         if (startTlsEnabled && !sslEnabled) {
+            if (disableSslValidation) {
+                XTrustProvider.install();
+            }
             if (debug) {
                 Log.debug("LdapManager: ... StartTlsRequest");
             }
@@ -566,7 +582,6 @@ public class LdapManager {
                peer certificate, etc. */
             try {
                 SSLSession session = tls.negotiate();
-
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
 
@@ -629,6 +644,9 @@ public class LdapManager {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
+                if (disableSslValidation) {
+                    XTrustProvider.install();
+                }
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -671,6 +689,9 @@ public class LdapManager {
             ctx = new JiveInitialLdapContext(env, null);
 
             if (startTlsEnabled && !sslEnabled) {
+                if (disableSslValidation) {
+                    XTrustProvider.install();
+                }
 
                 if (debug) {
                     Log.debug("LdapManager: ... StartTlsRequest");
@@ -685,7 +706,6 @@ public class LdapManager {
                    peer certificate, etc. */
                 try {
                     SSLSession session = tls.negotiate();
-
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
 
@@ -733,6 +753,9 @@ public class LdapManager {
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
+                        if (disableSslValidation) {
+                            XTrustProvider.install();
+                        }
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 
@@ -763,6 +786,9 @@ public class LdapManager {
                     ctx = new JiveInitialLdapContext(env, null);
 
                     if (startTlsEnabled && !sslEnabled) {
+                        if (disableSslValidation) {
+                            XTrustProvider.install();
+                        }
 
                         if (debug) {
                             Log.debug("LdapManager: ... StartTlsRequest");
@@ -777,7 +803,6 @@ public class LdapManager {
                            peer certificate, etc. */
                         try {
                             SSLSession session = tls.negotiate();
-
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);
 
@@ -1295,7 +1320,24 @@ public class LdapManager {
         this.sslEnabled = sslEnabled;
         properties.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
     }
+    /**
+     * Returns true if connection can accept Self Signed Certificates. This is turned on by default.
+     *
+     * @return true if connections can use self signed certificates are enabled or not.
+     */
+    public boolean isDisableSslValidation() {
+        return disableSslValidation;
+    }
 
+    /**
+     * Sets whether the connection to the LDAP can use self signed ssl or not.
+     *
+     * @param DisableSslValidation true if ssl should be enabled, false otherwise.
+     */
+    public void setDisableSslValidation(boolean DisableSslValidation) {
+        this.disableSslValidation = disableSslValidation;
+        properties.put("ldap.disableSslValidation", Boolean.toString(disableSslValidation));
+    }
     /**
      * Returns true if LDAP connection is via START or not. TLS is turned off by default.
      *

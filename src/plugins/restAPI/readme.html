@@ -1246,6 +1246,7 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#rosteritem">RosterItem</a></li>
 <li><a href="#chatroom">Chatroom</a></li>
 <li><a href="#system-property">System Property</a></li>
+<li><a href="#session">Session</a></li>
 </ul>
 </li>
 </ul>
@@ -1427,6 +1428,18 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 </li>
 </ul>
 </li>
+<li><a href="#session-related-rest-endpoints">Session related REST Endpoints</a><ul>
+<li><a href="#retrieve-all-user-session">Retrieve all user session</a><ul>
+<li><a href="#examples-31">Examples</a></li>
+</ul>
+</li>
+<li><a href="#retrieve-the-user-sessions">Retrieve the user sessions</a><ul>
+<li><a href="#possible-parameters-27">Possible parameters</a></li>
+<li><a href="#examples-32">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</a><ul>
 <li><a href="#overview">Overview</a></li>
 <li><a href="#installation-1">Installation</a></li>
@@ -1449,10 +1462,22 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li>Get overview over all or specific group and to create, update or delete a group</li>
 <li>Get overview over all user roster entries and to add, update or delete a roster entry</li>
 <li>Add user to a group and remove a user from a group</li>
-<li>Lockout or unlock the user (enable / disable)</li>
+<li>Lockout, unlock or kick the user (enable / disable)</li>
 <li>Get overview over all or specific system properties and to create, update or delete system property</li>
 <li>Get overview over all or specific chat room and to create, update or delete a chat room</li>
 <li>Get overview over all or specific user sessions</li>
+</ul>
+
+
+
+<h2 id="available-rest-api-clients">Available REST API clients</h2>
+
+<p>REST API clients are implementations of the REST API in a specific programming language.</p>
+
+<ul>
+<li>JAVA: <a href="https://github.com/Redor/REST-API-Client">https://github.com/Redor/REST-API-Client</a> (fully implemented)</li>
+<li>PHP: <a href="https://github.com/gidkom/php-openfire-restapi">https://github.com/gidkom/php-openfire-restapi</a> party implemented)</li>
+<li>GO Lang <a href="https://github.com/Urethramancer/fireman">https://github.com/Urethramancer/fireman</a> (party implemented)</li>
 </ul>
 
 <h2 id="installation">Installation</h2>
@@ -1840,6 +1865,8 @@ If you want to create a resource with JSON data format, please add “<strong>Co
   <td>Is “true” if this connection is secure.</td>
 </tr>
 </tbody></table>
+
+
 
 
 <h1 id="user-related-rest-endpoints">User related REST Endpoints</h1>
@@ -3713,6 +3740,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 <h1 id="session-related-rest-endpoints">Session related REST Endpoints</h1>
 
+
+
 <h2 id="retrieve-all-user-session">Retrieve all user session</h2>
 
 <p>Endpoint to get all user sessions</p>
@@ -3724,6 +3753,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Sessions</p>
 
+
+
 <h3 id="examples-31">Examples</h3>
 
 <blockquote>
@@ -3732,7 +3763,7 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
   <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions">http://example.org:9090/plugins/restapi/v1/sessions</a></p>
 </blockquote>
 
-<h2 id="retrieve-the-user-sessions">Retrieve the user sessions</h2>
+<h2 id="retrieve-the-user-sessions-1">Retrieve the user sessions</h2>
 
 <p>Endpoint to get sessions from a user</p>
 
@@ -3742,6 +3773,51 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Sessions</p>
+
+
+
+<h3 id="possible-parameters-28">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>username</td>
+  <td>@Path</td>
+  <td>The username of the user</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-32">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions/testuser">http://example.org:9090/plugins/restapi/v1/sessions/testuser</a></p>
+
+
+
+<h2 id="close-all-user-sessions">Close all user sessions</h2>
+
+<p>Endpoint to close/kick sessions from a user</p>
+
+<blockquote>
+  <p><strong>DELETE</strong> /sessions/{username}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
 
 <h3 id="possible-parameters-27">Possible parameters</h3>
 
@@ -3763,11 +3839,13 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 </tbody></table>
 
 
-<h3 id="examples-32">Examples</h3>
+
+
+<h3 id="examples-33">Examples</h3>
 
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
 
-<p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions/testuser">http://example.org:9090/plugins/restapi/v1/sessions/testuser</a></p>
+<p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions/testuser">http://example.org:9090/plugins/restapi/v1/sessions/testuser</a></p>
 
 <h1 id="deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</h1>
 
@@ -3964,6 +4042,54 @@ If the strings are encoded incorrectly, double byte characters will look garbele
   <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
 </tr>
 </tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

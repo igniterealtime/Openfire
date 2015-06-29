@@ -5,8 +5,8 @@
     <name>REST API</name>
     <description>Allows administration over a RESTful API.</description>
     <author>Roman Soldatow</author>
-    <version>1.1.0</version>
-    <date>06/03/2015</date>
+    <version>1.1.1</version>
+    <date>06/29/2015</date>
     <minServerVersion>3.9.0</minServerVersion>
     
     <adminconsole>		

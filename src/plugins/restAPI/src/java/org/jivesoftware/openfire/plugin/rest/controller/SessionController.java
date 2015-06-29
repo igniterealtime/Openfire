@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.StreamError;
 
 /**
  * The Class SessionController.
@@ -60,6 +61,20 @@ public class SessionController {
 		Collection<ClientSession> clientSessions = SessionManager.getInstance().getSessions();
 		SessionEntities sessionEntities = convertToSessionEntities(clientSessions);
 		return sessionEntities;
+	}
+	
+	/**
+	 * Removes the user sessions.
+	 *
+	 * @param username the username
+	 * @throws ServiceException the service exception
+	 */
+	public void removeUserSessions(String username) throws ServiceException {
+	    final StreamError error = new StreamError(StreamError.Condition.not_authorized);
+	    for (ClientSession session : SessionManager.getInstance().getSessions(username)) {
+		    session.deliverRawText(error.toXML());
+		    session.close();
+	    }
 	}
 
 	/**

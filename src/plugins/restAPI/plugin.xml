@@ -6,7 +6,7 @@
     <description>Allows administration over a RESTful API.</description>
     <author>Roman Soldatow</author>
     <version>1.1.1</version>
-    <date>29/03/2015</date>
+    <date>06/29/2015</date>
     <minServerVersion>3.9.0</minServerVersion>
     
     <adminconsole>		

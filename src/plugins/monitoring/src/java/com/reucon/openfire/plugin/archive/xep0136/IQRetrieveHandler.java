@@ -61,7 +61,10 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 				fromIndex = resultSet.getAfter().intValue() + 1;
 				toIndex = fromIndex + max;
 			} else if (resultSet.getBefore() != null) {
-				toIndex = resultSet.getBefore().intValue();
+				if (resultSet.getBefore()!=Long.MAX_VALUE)
+                    			toIndex = resultSet.getBefore().intValue();
+                		else
+                    			toIndex = conversation.getMessages().size();
 				fromIndex = toIndex - max;
 			}
 		}

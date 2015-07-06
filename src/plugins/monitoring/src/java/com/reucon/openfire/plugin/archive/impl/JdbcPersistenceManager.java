@@ -242,9 +242,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		if (whereSB.length() != 0) {
 			querySB.append(" WHERE ").append(whereSB);
 		}
-		
 		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
-		
 		if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
 			querySB.insert(0,"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY "+CONVERSATION_ID+") AS RowNum FROM ( ");
 			querySB.append(") ofConversation ) t2 WHERE RowNum");
@@ -687,7 +685,6 @@ public class JdbcPersistenceManager implements PersistenceManager {
 				querySB.append(CONVERSATION_START_TIME).append(" = ? ");
 			}
 		}
-		
 		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 
 		try {

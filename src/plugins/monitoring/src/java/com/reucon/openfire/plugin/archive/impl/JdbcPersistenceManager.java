@@ -629,6 +629,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			}
 		}
 		querySB.append(" )");
+		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 		querySB.append(" ORDER BY ").append(CONVERSATION_END_TIME);
 
 		Connection con = null;
@@ -686,6 +687,8 @@ public class JdbcPersistenceManager implements PersistenceManager {
 				querySB.append(CONVERSATION_START_TIME).append(" = ? ");
 			}
 		}
+		
+		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 
 		try {
 			con = DbConnectionManager.getConnection();

@@ -189,7 +189,7 @@ public class ClientTrustManager implements X509TrustManager {
         if (verify) {
             int nSize = x509Certificates.length;
 
-            List<String> peerIdentities = CertificateManager.getClientPeerIdentities(x509Certificates[0]);
+            List<String> peerIdentities = CertificateManager.getClientIdentities(x509Certificates[0]);
 
             if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.verify.chain", true)) {
                 // Working down the chain, for every certificate in the chain,

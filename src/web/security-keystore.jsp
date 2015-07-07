@@ -210,7 +210,7 @@
                 String a = (String) aliases.nextElement();
                 X509Certificate c = (X509Certificate) keyStore.getCertificate(a);
                 StringBuffer identities = new StringBuffer();
-                for (String identity : CertificateManager.getServerPeerIdentities(c)) {
+                for (String identity : CertificateManager.getServerIdentities(c)) {
                     identities.append(identity).append(", ");
                 }
                 if (identities.length() > 0) {

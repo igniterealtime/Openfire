@@ -79,7 +79,7 @@ import org.xmpp.packet.Message;
  *
  * @author Matt Tucker
  */
-public class ConversationManager implements Startable, ComponentEventListener {
+public class ConversationManager implements Startable, ComponentEventListener{
 
 	private static final Logger Log = LoggerFactory.getLogger(ConversationManager.class);
 
@@ -95,6 +95,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	private static final int DEFAULT_IDLE_TIME = 10;
 	private static final int DEFAULT_MAX_TIME = 60;
+	public static final int DEFAULT_MAX_TIME_DEBUG = 30;
 
 	public static final int DEFAULT_MAX_RETRIEVABLE = 0;
 	private static final int DEFAULT_MAX_AGE = 0;
@@ -191,6 +192,11 @@ public class ConversationManager implements Startable, ComponentEventListener {
 		};
 		taskEngine.scheduleAtFixedRate(archiveTask, JiveConstants.MINUTE, JiveConstants.MINUTE);
 
+		if (JiveGlobals.getProperty("conversation.maxTimeDebug") != null) {
+			Log.info("Monitoring plugin max time value deleted. Must be left over from stalled userCreation plugin run.");
+			JiveGlobals.deleteProperty("conversation.maxTimeDebug");
+		}
+		
 		// Schedule a task to do conversation cleanup.
 		cleanupTask = new TimerTask() {
 			@Override
@@ -1119,8 +1125,17 @@ public class ConversationManager implements Startable, ComponentEventListener {
 					Log.error(e.getMessage(), e);
 					maxAge = DEFAULT_MAX_AGE * JiveConstants.DAY;
 				}
+			} else if (property.equals("conversation.maxTimeDebug")) {
+				String value = (String) params.get("value");
+				try {
+					Log.info("Monitoring plugin max time overridden (as used by userCreation plugin)");
+					maxTime = Integer.parseInt(value);
+				} catch (Exception e) {
+					Log.error(e.getMessage(), e);
+					Log.info("Monitoring plugin max time reset back to " + DEFAULT_MAX_TIME + " minutes");
+					maxTime = DEFAULT_MAX_TIME * JiveConstants.MINUTE;
+				}
 			}
-
 		}
 
 		public void propertyDeleted(String property, Map<String, Object> params) {
@@ -1140,8 +1155,10 @@ public class ConversationManager implements Startable, ComponentEventListener {
 				maxAge = DEFAULT_MAX_AGE * JiveConstants.DAY;
 			} else if (property.equals("conversation.maxRetrievable")) {
 				maxRetrievable = DEFAULT_MAX_RETRIEVABLE * JiveConstants.DAY;
+			}  else if (property.equals("conversation.maxTimeDebug")) {
+				Log.info("Monitoring plugin max time reset back to " + DEFAULT_MAX_TIME + " minutes");
+				maxTime = DEFAULT_MAX_TIME * JiveConstants.MINUTE;
 			}
-
 		}
 
 		public void xmlPropertySet(String property, Map<String, Object> params) {

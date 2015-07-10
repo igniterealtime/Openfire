@@ -73,6 +73,13 @@ public class PubSubPersistenceManager {
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
 			"ofPubsubItem.serviceID = ? AND nodeID = ?";
     
+    private static final String PURGE_FOR_SIZE_MYSQL =
+		"DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+			"(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
+			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
+			"ofPubsubItem.serviceID = ? AND nodeID = ?";
+
     private static final String PURGE_FOR_SIZE_POSTGRESQL = 
     		"DELETE from ofPubsubItem where id in " +
     		"(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
@@ -1924,6 +1931,8 @@ public class PubSubPersistenceManager {
 		{
 		case postgresql:
 			return PURGE_FOR_SIZE_POSTGRESQL;
+		case mysql:
+			return PURGE_FOR_SIZE_MYSQL;
 		case hsqldb:
 			return PURGE_FOR_SIZE_HSQLDB;
 

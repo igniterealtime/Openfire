@@ -15,7 +15,7 @@ import org.xmpp.packet.*;
 import java.io.*;
 
 /**
- * FIXME: copied fro JVB
+ * FIXME: copied from JVB
  *
  * Provides functionality which aids the manipulation of
  * <tt>org.jivesoftware.smack.packet.IQ</tt> and <tt>org.xmpp.packet.IQ</tt>

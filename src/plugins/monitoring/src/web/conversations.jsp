@@ -131,7 +131,7 @@ function updateConversations(data) {
 <!-- <a href="#" onclick="conversationUpdater(); return false;">click me</a> -->
 <p>
     <fmt:message key="archive.conversations" />
-    <span id="activeConversations"><%= conversationManager.getConversationCount() %></span
+    <span id="activeConversations"><%= conversationManager.getConversationCount() %></span>
 </p>
 
 <%
@@ -169,9 +169,9 @@ function updateConversations(data) {
             <% if (conversation.getRoom() == null) { %>
                 <% for (JID jid : participants) { %>
                     <% if (server.isLocal(jid) && userManager.isRegisteredUser(jid.getNode())) { %>
-                        <a href="/user-properties.jsp?username=<%= jid.getNode() %>"><%= jid %></a><br />
+                        <a title='User Link' href="/user-properties.jsp?username=<%= jid.getNode() %>"><%= StringUtils.escapeHTMLTags(jid.toBareJID()) %></a><br />
                     <% } else { %>
-                        <%= jid.toBareJID() %><br/>
+                        <%= StringUtils.escapeHTMLTags(jid.toBareJID()) %><br/>
                     <% } %>
                 <% } %>
             <% } else { %>

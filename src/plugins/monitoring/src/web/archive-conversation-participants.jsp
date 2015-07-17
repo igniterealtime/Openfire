@@ -7,6 +7,7 @@
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.NotFoundException" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.*" %>
 
@@ -179,14 +180,14 @@
             %>
             <tr>
                 
-                <td><%=nickname%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
+                <td><%=StringUtils.escapeHTMLTags(nickname)%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
 
                 <% if (it.hasNext()) {
                     participation = it.next();
                     nickname = participation[0];
                     participant = new  JID(participation[1]);
                 %>
-                <td><%=nickname%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
+                <td><%=StringUtils.escapeHTMLTags(nickname)%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
                 <% } else { %>
                 <td>&nbsp;</td>
                 <% } %>

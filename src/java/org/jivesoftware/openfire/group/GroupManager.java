@@ -300,7 +300,7 @@ public class GroupManager {
     /**
      * Returns the corresponding group if the given JID represents a group. 
      *
-     * @param groupJID The JID for the group to retrieve
+     * @param jid The JID for the group to retrieve
      * @return The group corresponding to the JID, or null if the JID does not represent a group
      * @throws GroupNotFoundException if the JID represents a group that does not exist
      */

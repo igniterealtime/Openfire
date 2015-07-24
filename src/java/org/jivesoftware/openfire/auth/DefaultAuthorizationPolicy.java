@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.auth;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +63,11 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
 	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
 
     private Vector<String> approvedRealms;
+    private boolean proxyAuth;
 
     public DefaultAuthorizationPolicy() {
         approvedRealms = new Vector<String>();
+        proxyAuth = false;
         
         String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {
@@ -73,6 +76,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
                 approvedRealms.add(st.nextToken());
             }
         }
+        proxyAuth = JiveGlobals.getBooleanProperty("sasl.proxyAuth", false);
     }
 
     /**
@@ -100,18 +104,20 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             authenRealm = authenID.substring((authenID.lastIndexOf("@")+1));
         }
 
-        if(!userUser.equals(authenUser)) {
-            //for this policy the user portion of both must match, so lets short circut here if we can
-            if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
-                if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+        if (!proxyAuth || !AdminManager.getInstance().isUserAdmin(authenUser, true)) {
+            if(!userUser.equals(authenUser)) {
+                //for this policy the user portion of both must match, so lets short circut here if we can
+                if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
+                    if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+                        }
+                        return false;
                     }
+                } else {
+                    Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
                     return false;
                 }
-            } else {
-                Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
-                return false;
             }
         }
         Log.debug("DefaultAuthorizationPolicy: Checking authenID realm");

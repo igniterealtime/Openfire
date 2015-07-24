@@ -123,7 +123,7 @@ public class BridgeSelector
         else
         {
             logger.warn("No pub-sub node mapped for " + bridgeJid
-                        + " statistics will not be tracked fro this instance.");
+                        + " statistics will not be tracked for this instance.");
         }
 
         bridges.put(bridgeJid, new BridgeState(bridgeJid));

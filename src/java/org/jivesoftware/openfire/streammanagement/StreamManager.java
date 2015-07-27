@@ -6,6 +6,7 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 
 /**
  * XEP-0198 Stream Manager.
@@ -24,7 +25,7 @@ public class StreamManager {
 	/**
 	 * Connection (stream) to client for the session the manager belongs to
 	 */
-	private Connection connection;
+	private final Connection connection;
 
 	/**
 	 * Whether Stream Management is enabled for session
@@ -61,7 +62,7 @@ public class StreamManager {
     private Map<Long, Packet> unacknowledgedServerStanzas = new HashMap<Long, Packet>();
 
     public StreamManager(Connection connection) {
-    	this.setConnection(connection);
+    	this.connection = connection;
     }
 
     /**
@@ -91,9 +92,9 @@ public class StreamManager {
 	public void sendUnexpectedError() {
 		StringBuilder sb = new StringBuilder(340);
 		sb.append(String.format("<failed xmlns='%s'>", getNamespace()));
-		sb.append("<unexpected-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>");
+		sb.append(new PacketError(PacketError.Condition.unexpected_request).toXML());
 		sb.append("</failed>");
-		getConnection().deliverRawText(sb.toString());
+		getConnection().deliverRawText(sb.toString());	
 	}
 
 	/**
@@ -125,14 +126,6 @@ public class StreamManager {
 	 */
 	public Connection getConnection() {
 		return connection;
-	}
-
-	/**
-	 * Set connection for the session
-	 * @param connection
-	 */
-	public void setConnection(Connection connection) {
-		this.connection = connection;
 	}
 
 	/**

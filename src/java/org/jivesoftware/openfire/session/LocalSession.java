@@ -98,7 +98,7 @@ public abstract class LocalSession implements Session {
     /**
      * XEP-0198 Stream Manager
      */
-    protected StreamManager streamManager = null;
+    protected final StreamManager streamManager;
 
     /**
      * Creates a session with an underlying connection and permission protection.
@@ -432,7 +432,7 @@ public abstract class LocalSession implements Session {
 
     /**
      * Enables stream management for session
-     * @param enable XEP-0198 <enable/> stanza
+     * @param enable XEP-0198 <enable/> element
      */
     public void enableStreamMangement(Element enable) {
 

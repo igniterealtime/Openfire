@@ -397,7 +397,10 @@ public class CertificateManager {
     	for (CertificateIdentityMapping mapping : clientCertMapping) {
     		List<String> identities = mapping.mapIdentity(x509Certificate);
     		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
-    		names.addAll(identities);
+    		if (!identities.isEmpty()) {
+    			names.addAll(identities);
+    			break;
+    		}
     	}
 
         return names;
@@ -420,7 +423,10 @@ public class CertificateManager {
     	for (CertificateIdentityMapping mapping : serverCertMapping) {
     		List<String> identities = mapping.mapIdentity(x509Certificate);
     		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
-    		names.addAll(identities);
+    		if (!identities.isEmpty()) {
+    			names.addAll(identities);
+    			break;
+    		}
     	}
 
         return names;

@@ -21,6 +21,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -867,7 +868,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if(streamManager.isEnabled()) {
         	streamManager.incrementServerSentStanzas();
         	// Temporarily store packet until delivery confirmed
-        	streamManager.getUnacknowledgedServerStanzas().put(streamManager.getServerSentStanzas(), packet.createCopy());
+        	streamManager.getUnacknowledgedServerStanzas().addLast(new StreamManager.UnackedPacket(new Date(), packet.createCopy()));
 	        if(getNumServerPackets() % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
 	        	streamManager.sendServerRequest();
 	        }

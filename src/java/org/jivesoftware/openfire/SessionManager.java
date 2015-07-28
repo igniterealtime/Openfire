@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -67,11 +69,13 @@ import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -1245,10 +1249,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
                     // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
                     if(session.getStreamManager().isEnabled()) {
-	                    Map<Long,Packet> unacknowledgedStanzas = session.getStreamManager().getUnacknowledgedServerStanzas();
+                            session.getStreamManager().setEnabled(false); // Avoid concurrent usage.
+	                    Deque<StreamManager.UnackedPacket> unacknowledgedStanzas = session.getStreamManager().getUnacknowledgedServerStanzas();
 	                    if(!unacknowledgedStanzas.isEmpty()) {
-	                    	for(Entry<Long,Packet> unacknowledgedStanza : unacknowledgedStanzas.entrySet()) {
-	                    		router.route(unacknowledgedStanza.getValue());
+	                    	for(StreamManager.UnackedPacket unacked : unacknowledgedStanzas) {
+	                    	    if (unacked.packet instanceof Message) {
+	                    	        Message m = (Message)unacked.packet;
+        	                        Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+        	                        Element delayInformationOld = m.addChildElement("x", "jabber:x:delay");
+                                        delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(unacked.timestamp));
+                                        delayInformation.addAttribute("from", serverAddress.toBareJID());
+                                        delayInformationOld.addAttribute("from", serverAddress.toBareJID());
+	                    	    }
+    	                            router.route(unacked.packet);
 	                    	}
 	                    }
                     }

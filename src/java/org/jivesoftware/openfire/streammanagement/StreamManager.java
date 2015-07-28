@@ -1,7 +1,8 @@
 package org.jivesoftware.openfire.streammanagement;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
+import java.util.Deque;
+import java.util.LinkedList;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
@@ -15,6 +16,15 @@ import org.xmpp.packet.PacketError;
  * @author jonnyheavey
  */
 public class StreamManager {
+    public static class UnackedPacket {
+        public final Date timestamp;
+        public final Packet packet;
+        
+        public UnackedPacket(Date date, Packet p) {
+            timestamp = date;
+            packet = p;
+        }
+    }
 
     /**
      * Stanza namespaces
@@ -55,11 +65,13 @@ public class StreamManager {
      * sent from the server that the client has processed
      */
     private long clientProcessedStanzas = 0;
+    
+    static private long mask = 0xFFFFFFFF; /* 2**32 - 1; this is used to emulate rollover */
 
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
      */
-    private Map<Long, Packet> unacknowledgedServerStanzas = new HashMap<Long, Packet>();
+    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<UnackedPacket>();
 
     public StreamManager(Connection connection) {
     	this.connection = connection;
@@ -70,13 +82,13 @@ public class StreamManager {
      */
 	public void sendServerAcknowledgement() {
 		if(isEnabled()) {
-			String ack = String.format("<a xmlns='%s' h='%s' />", getNamespace(), getServerProcessedStanzas());
+			String ack = String.format("<a xmlns='%s' h='%s' />", getNamespace(), getServerProcessedStanzas() & mask);
 			getConnection().deliverRawText(ack);
 		}
 	}
 
 	/**
-     * Sends XEP-0198 request <r /> to client from server
+         * Sends XEP-0198 request <r /> to client from server
 	 */
 	public void sendServerRequest() {
 		if(isEnabled()) {
@@ -106,12 +118,18 @@ public class StreamManager {
 			if(ack.attribute("h") != null) {
 				long count = Long.valueOf(ack.attributeValue("h"));
 				// Remove stanzas from temporary storage as now acknowledged
-				Map<Long,Packet> unacknowledgedStanzas = getUnacknowledgedServerStanzas();
+				Deque<UnackedPacket> unacknowledgedStanzas = getUnacknowledgedServerStanzas();
 				long i = getClientProcessedStanzas();
-				while(i <= count) {
-					if(unacknowledgedStanzas.containsKey(i)) {
-						unacknowledgedStanzas.remove(i);
-					}
+                                if (count < i) {
+                                    /* Consider rollover? */
+                                    if (i > mask) {
+                                        while (count < i) {
+                                            count += mask + 1; 
+                                        }
+                                    }
+                                }
+				while(i < count) {
+					unacknowledgedStanzas.removeFirst();
 					i++;
 				}
 
@@ -224,7 +242,7 @@ public class StreamManager {
 	 * Retrieves all unacknowledged stanzas sent to client from server.
 	 * @return
 	 */
-	public Map<Long, Packet> getUnacknowledgedServerStanzas() {
+	public Deque<UnackedPacket> getUnacknowledgedServerStanzas() {
 		return unacknowledgedServerStanzas;
 	}
 

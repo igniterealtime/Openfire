@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SASLAuthentication.Status;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -201,7 +200,12 @@ public class XmppWebSocket {
 	            configureStream();
 	        } else if (Status.authenticated.equals(saslStatus)) {
 	    		if (router == null) {
-	    			router = new StreamManagementPacketRouter(xmppSession); 
+	    			if (isStreamManagementAvailable()) {
+	    				router = new StreamManagementPacketRouter(xmppSession); 
+	    			} else {
+	    				// fall back for older Openfire installations
+	    				router = new SessionPacketRouter(xmppSession);
+	    			}
 	    		}
 	    		router.route(stanza);
 	        } else {
@@ -278,8 +282,8 @@ public class XmppWebSocket {
             sb.append(String.format("<bind xmlns='%s'/>", "urn:ietf:params:xml:ns:xmpp-bind"));
             sb.append(String.format("<session xmlns='%s'><optional/></session>", "urn:ietf:params:xml:ns:xmpp-session"));
 
-            if (JiveGlobals.getBooleanProperty("stream.management.active", true)) {
-            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+            if (isStreamManagementAvailable()) {
+            	sb.append(String.format("<sm xmlns='%s'/>", "urn:xmpp:sm:3"));
             }
         }
         
@@ -336,6 +340,16 @@ public class XmppWebSocket {
 			readerPool.setTestOnReturn(true);
 			readerPool.setNumTestsPerEvictionRun(-2); // evict half of the idle instances
 			readerPool.setTimeBetweenEvictionRunsMillis(JiveConstants.HOUR);
+		}
+	}
+
+	private boolean isStreamManagementAvailable() {
+		try {
+			// use reflection to determine whether stream management is supported
+			Class.forName("org.jivesoftware.openfire.streammanagement.StreamManager");
+			return JiveGlobals.getBooleanProperty("stream.management.active", true);
+		} catch (ClassNotFoundException cnfe) {
+			return false;
 		}
 	}
 

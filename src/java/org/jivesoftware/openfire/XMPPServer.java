@@ -49,6 +49,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -420,6 +421,9 @@ public class XMPPServer {
                     JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
                 }
             }
+            
+            // Set default SASL SCRAM-SHA-1 iteration count
+            JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
             // Update certificates (if required)
             try {

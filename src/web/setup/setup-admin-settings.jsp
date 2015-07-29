@@ -71,6 +71,11 @@
         if (password == null) {
             errors.put("password", "password");
         }
+        try {
+            AuthFactory.authenticate("admin", "admin");
+        } catch (Exception e) {
+            errors.put("password", "password");
+        }
         if (email == null) {
             errors.put("email", "email");
         }
@@ -248,14 +253,15 @@ function checkClick() {
 <%
     // If the current password is "admin", don't show the text box for them to type
     // the current password. This makes setup simpler for first-time users.
-    String currentPass = null;
+    boolean defaultPassword = false;
     try {
-        currentPass = AuthFactory.getPassword("admin");
+        AuthFactory.authenticate("admin", "admin");
+        defaultPassword = true;
     }
     catch (Exception e) {
         // Ignore.
     }
-    if ("admin".equals(currentPass)) {
+    if (defaultPassword) {
 %>
 <input type="hidden" name="password" value="admin">
 <%

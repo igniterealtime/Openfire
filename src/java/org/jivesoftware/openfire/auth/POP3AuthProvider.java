@@ -245,4 +245,8 @@ public class POP3AuthProvider implements AuthProvider {
     public boolean supportsPasswordRetrieval() {
         return false;
     }
+    
+    public boolean isScramSupported() {
+        return false;
+    }
 }

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -133,7 +134,39 @@ public class LdapUserProvider implements UserProvider {
             }
             // Escape the username so that it can be used as a JID.
             username = JID.escapeNode(username);
-            return new User(username, name, email, creationDate, modificationDate);
+            
+            // As defined by RFC5803.
+            Attribute authPassword = attrs.get("authPassword");
+            User user = new User(username, name, email, creationDate, modificationDate);
+            if (authPassword != null) {
+            	// The authPassword attribute can be multivalued.
+            	// Not sure if this is the right API to loop through them.
+            	NamingEnumeration values = authPassword.getAll();
+            	while (values.hasMore()) {
+            		Attribute authPasswordValue = (Attribute) values.next();
+	        		String[] parts = ((String) authPasswordValue.get()).split("$");
+	        		String[] authInfo = parts[1].split(":");
+	        		String[] authValue = parts[2].split(":");
+	
+	        		String scheme = parts[0].trim();
+	
+	            	// We only support SCRAM-SHA-1 at the moment.
+	        		if ("SCRAM-SHA-1".equals(scheme)) {
+	            		int iterations = Integer.valueOf(authInfo[0].trim());
+	            		String salt = authInfo[1].trim();
+	            		String storedKey = authValue[0].trim();
+	            		String serverKey = authValue[1].trim();
+	            		
+	            		user.setSalt(salt);
+	            		user.setStoredKey(storedKey);
+	            		user.setServerKey(serverKey);
+	            		user.setIterations(iterations);
+	            		
+	            		break;
+	        		}
+            	}
+            }
+            return user;
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);

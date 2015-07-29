@@ -25,6 +25,8 @@
             JiveGlobals.getProperty("provider.auth.className"));
     boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
             JiveGlobals.getProperty("provider.auth.className"));
+    boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+    boolean requestedScramOnly = (request.getParameter("scramOnly") != null);
     boolean next = request.getParameter("continue") != null;
     if (next) {
         // Figure out where to send the user.
@@ -49,6 +51,9 @@
                     org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
             xmppSettings.put("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
                     org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+            if (requestedScramOnly) {
+                JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+            }
 
             // Redirect
             response.sendRedirect("setup-admin-settings.jsp");
@@ -91,6 +96,15 @@
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
 	    <fmt:message key="setup.profile.default_description" />
+    </td>
+</tr>
+<tr>
+    <td align="center" valign="top">
+        <input type="checkbox" name="scramOnly" value="scramOnly" id="rb01-0" <% if (scramOnly) { %>checked<% } %>>
+    </td>
+    <td>
+        <label for="rb01-0"><b><fmt:message key="setup.profile.default.scramOnly" /></b></label><br>
+	    <fmt:message key="setup.profile.default.scramOnly_description" />
     </td>
 </tr>
 <tr>

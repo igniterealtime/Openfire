@@ -1,2 +1,3 @@
+sudo: false
 language: java
 script: ant -Dhalt.on.plugin.error=true -f build/build.xml openfire test plugins

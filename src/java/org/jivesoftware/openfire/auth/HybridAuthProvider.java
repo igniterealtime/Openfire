@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *
  * <ul>
  * <li><tt>hybridAuthProvider.primaryProvider = org.jivesoftware.openfire.auth.DefaultAuthProvider</tt></li>
- * <li><tt>hybrodAuthProvider.secondaryProvider = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
+ * <li><tt>hybridAuthProvider.secondaryProvider = org.jivesoftware.openfire.auth.NativeAuthProvider</tt></li>
  * </ul>
  *
  * Each of the chained providers can have a list of override users. If a user is in
@@ -89,7 +89,6 @@ public class HybridAuthProvider implements AuthProvider {
 
     public HybridAuthProvider() {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.className");
         JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.className");
         JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.className");
         JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.className");

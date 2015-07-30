@@ -590,7 +590,7 @@ public class SASLAuthentication {
                 authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed;
             }
-            principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)trusted));
+            principals.addAll(CertificateManager.getClientIdentities((X509Certificate)trusted));
 
             if(principals.size() == 1) {
                 principal = principals.get(0);
@@ -640,7 +640,7 @@ public class SASLAuthentication {
     }
     
     public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
-        for (String identity : CertificateManager.getPeerIdentities(trustedCert)) {
+        for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
             // Verify that either the identity is the same as the hostname, or for wildcarded
             // identities that the hostname ends with .domainspecified or -is- domainspecified.
             if ((identity.startsWith("*.")

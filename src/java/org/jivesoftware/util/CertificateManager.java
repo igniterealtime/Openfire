@@ -49,7 +49,6 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -58,11 +57,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,7 +69,6 @@ import java.util.regex.Pattern;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERObjectIdentifier;
@@ -87,11 +85,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PasswordFinder;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.jivesoftware.util.cert.CertificateIdentityMapping;
+import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
+import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,9 +105,6 @@ public class CertificateManager {
 
 	private static final Logger Log = LoggerFactory.getLogger(CertificateManager.class);
 
-    private static final String OTHERNAME_XMPP_OID = "1.3.6.1.5.5.7.8.5";
-
-    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
     private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
     private static Provider provider = new BouncyCastleProvider();
@@ -119,9 +116,60 @@ public class CertificateManager {
 
     private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<CertificateEventListener>();
 
+    private static List<CertificateIdentityMapping> serverCertMapping = new ArrayList<CertificateIdentityMapping>();
+    
+    private static List<CertificateIdentityMapping> clientCertMapping = new ArrayList<CertificateIdentityMapping>();
+    
     static {
         // Add the BC provider to the list of security providers
         Security.addProvider(provider);
+        
+        String serverCertIdentityMapList = JiveGlobals.getProperty("provider.serverCertIdentityMap.classList");
+        if (serverCertIdentityMapList != null) {
+        	StringTokenizer st = new StringTokenizer(serverCertIdentityMapList, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String s_provider = st.nextToken();
+                try {
+                    Class c_provider = ClassUtils.forName(s_provider);
+                    CertificateIdentityMapping provider =
+                            (CertificateIdentityMapping)(c_provider.newInstance());
+                    Log.debug("CertificateManager: Loaded server identity mapping " + s_provider);
+                    serverCertMapping.add(provider);
+                }
+                catch (Exception e) {
+                    Log.error("CertificateManager: Error loading CertificateIdentityMapping: " + s_provider + "\n" + e);
+                }
+            }
+        }
+        
+        if (serverCertMapping.isEmpty()) {
+        	Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
+        	serverCertMapping.add(new SANCertificateIdentityMapping());
+        	serverCertMapping.add(new CNCertificateIdentityMapping());   	
+        }
+                
+        String clientCertMapList = JiveGlobals.getProperty("provider.clientCertIdentityMap.classList");
+        if (clientCertMapList != null) {
+        	StringTokenizer st = new StringTokenizer(clientCertMapList, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String s_provider = st.nextToken();
+                try {
+                    Class c_provider = ClassUtils.forName(s_provider);
+                    CertificateIdentityMapping provider =
+                            (CertificateIdentityMapping)(c_provider.newInstance());
+                    Log.debug("CertificateManager: Loaded client identity mapping " + s_provider);
+                    clientCertMapping.add(provider);
+                }
+                catch (Exception e) {
+                    Log.error("CertificateManager: Error loading CertificateIdentityMapping: " + s_provider + "\n" + e);
+                }
+            }
+        }
+        
+        if (clientCertMapping.isEmpty()) {
+        	Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
+        	clientCertMapping.add(new CNCertificateIdentityMapping());
+        }
     }
 
     /**
@@ -336,111 +384,52 @@ public class CertificateManager {
     }
 
     /**
+     * Returns the identities of the remote client as defined in the specified certificate. The
+     * identities are mapped by the classes in the "provider.clientCertIdentityMap.classList" property. 
+     * By default, the subjectDN of the certificate is used.
+     *
+     * @param x509Certificate the certificate the holds the identities of the remote server.
+     * @return the identities of the remote client as defined in the specified certificate.
+     */
+    public static List<String> getClientIdentities(X509Certificate x509Certificate) {
+    	
+    	List<String> names = new ArrayList<String>();
+    	for (CertificateIdentityMapping mapping : clientCertMapping) {
+    		List<String> identities = mapping.mapIdentity(x509Certificate);
+    		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
+    		if (!identities.isEmpty()) {
+    			names.addAll(identities);
+    			break;
+    		}
+    	}
+
+        return names;
+    }
+    
+    /**
      * Returns the identities of the remote server as defined in the specified certificate. The
-     * identities are defined in the subjectDN of the certificate and it can also be defined in
-     * the subjectAltName extensions of type "xmpp". When the extension is being used then the
+     * identities are mapped by the classes in the "provider.serverCertIdentityMap.classList" property.
+     * By default, the identities are defined in the subjectDN of the certificate and it can also be 
+     * defined in the subjectAltName extensions of type "xmpp". When the extension is being used then the
      * identities defined in the extension are going to be returned. Otherwise, the value stored in
      * the subjectDN is returned.
      *
      * @param x509Certificate the certificate the holds the identities of the remote server.
      * @return the identities of the remote server as defined in the specified certificate.
      */
-    public static List<String> getPeerIdentities(X509Certificate x509Certificate) {
-        // Look the identity in the subjectAltName extension if available
-        List<String> names = getSubjectAlternativeNames(x509Certificate);
-        if (names.isEmpty()) {
-            String name = x509Certificate.getSubjectDN().getName();
-            Matcher matcher = cnPattern.matcher(name);
-            // Create an array with the detected identities
-            names = new ArrayList<String>();
-            while (matcher.find()) {
-                names.add(matcher.group(2));
-            }
-        }
+    public static List<String> getServerIdentities(X509Certificate x509Certificate) {
+    	
+    	List<String> names = new ArrayList<String>();
+    	for (CertificateIdentityMapping mapping : serverCertMapping) {
+    		List<String> identities = mapping.mapIdentity(x509Certificate);
+    		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
+    		if (!identities.isEmpty()) {
+    			names.addAll(identities);
+    			break;
+    		}
+    	}
+
         return names;
-    }
-
-    /**
-     * Returns the JID representation of an XMPP entity contained as a SubjectAltName extension
-     * in the certificate. If none was found then return <tt>null</tt>.
-     *
-     * @param certificate the certificate presented by the remote entity.
-     * @return the JID representation of an XMPP entity contained as a SubjectAltName extension
-     *         in the certificate. If none was found then return <tt>null</tt>.
-     */
-    private static List<String> getSubjectAlternativeNames(X509Certificate certificate) {
-        List<String> identities = new ArrayList<String>();
-        try {
-            Collection<List<?>> altNames = certificate.getSubjectAlternativeNames();
-            // Check that the certificate includes the SubjectAltName extension
-            if (altNames == null) {
-                return Collections.emptyList();
-            }
-            // Use the type OtherName to search for the certified server name
-            for (List<?> item : altNames) {
-                Integer type = (Integer) item.get(0);
-                if (type == 0) {
-                    // Type OtherName found so return the associated value
-                    try {
-                        // Value is encoded using ASN.1 so decode it to get the server's identity
-                        ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
-                        Object object = decoder.readObject();
-                        ASN1Sequence otherNameSeq = null;
-                        if (object != null && object instanceof ASN1Sequence) {
-                        	otherNameSeq = (ASN1Sequence) object;
-                        } else {
-                        	continue;
-                        }
-                        // Check the object identifier
-                        ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
-                    	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
-
-                        if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
-                            // Not a XMPP otherName
-                            Log.debug("Ignoring non-XMPP otherName, " + objectId.getId());
-                            continue;
-                        }
-
-                        // Get identity string
-                        try {
-                        	final String identity;
-	                        ASN1Encodable o = otherNameSeq.getObjectAt(1);
-	                        if (o instanceof DERTaggedObject) {
-	                        	ASN1TaggedObject ato = DERTaggedObject.getInstance(o);
-	                        	Log.debug("... processing DERTaggedObject: " + ato.toString());
-	                        	// TODO: there's bound to be a better way...
-	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
-	                        } else {
-	                        	DERUTF8String derStr = DERUTF8String.getInstance(o);
-		                        identity = derStr.getString();
-	                        }
-	                        if (identity != null && identity.length() > 0) {
-	                            // Add the decoded server name to the list of identities
-	                            identities.add(identity);
-	                        }
-	                        decoder.close();
-                        } catch (IllegalArgumentException ex) {
-                        	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
-                        	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
-                        }
-                    }
-                    catch (UnsupportedEncodingException e) {
-                        // Ignore
-                    }
-                    catch (IOException e) {
-                        // Ignore
-                    }
-                    catch (Exception e) {
-                        Log.error("Error decoding subjectAltName", e);
-                    }
-                }
-                // Other types are not applicable for XMPP, so silently ignore them
-            }
-        }
-        catch (CertificateParsingException e) {
-            Log.error("Error parsing SubjectAltName in certificate: " + certificate.getSubjectDN(), e);
-        }
-        return identities;
     }
 
     /**
@@ -501,7 +490,7 @@ public class CertificateManager {
             }
             else {
                 // Only accept certified domains that match the specified domain
-                for (String identity : getPeerIdentities(certificate)) {
+                for (String identity : getServerIdentities(certificate)) {
                     if (identity.endsWith(domain) && certificate.getPublicKey().getAlgorithm().equals(algorithm)) {
                         result = true;
                     }

@@ -188,7 +188,7 @@
     </patternset>
 
 	<presetdef name="of.javac">
-		<javac encoding="utf8" source="${javac.source}" target="${javac.target}"/>
+		<javac encoding="utf8" source="${javac.source}" target="${javac.target}" includeAntRuntime="no" debug="on"/>
 	</presetdef>
     <!-- ======================================================================================= -->
     <!-- GLOBAL TASKDEFs                                                                         -->
@@ -266,11 +266,7 @@
     <!-- compile =============================================================================== -->
     <target name="compile" depends="init" description="Compiles Openfire app code">
         <mkdir dir="${compile.dir}"/>
-        <of.javac
-                destdir="${compile.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                >
+        <of.javac destdir="${compile.dir}">
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
             <classpath>
@@ -295,11 +291,7 @@
             <equals arg1="${overlay.source.found}" arg2="true"/>
             <then>
                 <mkdir dir="${overlay.compile.dir}"/>
-                <of.javac
-                        destdir="${overlay.compile.dir}"
-                        includeAntRuntime="no"
-                        debug="on"
-                        >
+                <of.javac destdir="${overlay.compile.dir}">
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
                     <classpath>
@@ -551,12 +543,8 @@
         </java>
 
         <!-- Compile java source -->
-        <of.javac
-                destdir="${jspc.classes.dest.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                includes="org/jivesoftware/openfire/admin/**/*.java"
-                >
+        <of.javac destdir="${jspc.classes.dest.dir}">
+            <include name="org/jivesoftware/openfire/admin/**/*.java"/>
             <src path="${jspc.java.dest.dir}"/>
             <classpath>
                 <pathelement path="${compile.dir}"/>
@@ -599,11 +587,7 @@
     <target name="test" depends="openfire" description="Compiles and runs test cases">
         <!-- Compile all test code -->
         <mkdir dir="${test.classes.dest.dir}"/>
-        <of.javac
-                destdir="${test.classes.dest.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                >
+        <of.javac destdir="${test.classes.dest.dir}">
             <src path="${src.test.java.dir}"/>
             <patternset refid="test.sources"/>
             <classpath>
@@ -1312,11 +1296,7 @@
 
                 <!-- Compile plugin source code -->
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
-                <of.javac
-                        destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
-                        includeAntRuntime="no"
-                        debug="on"
-                        >
+                <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes">
                     <src path="@{pluginsrc}/@{plugin}/src/java"/>
                     <classpath>
                         <path refid="plugin.dependencies"/>
@@ -1350,12 +1330,7 @@
                         <mapper type="merge" to="@{pluginlib}/@{plugin}-lib.jar"/>
                     </uptodate></not>
                     <then>
-                        <of.javac
-                            destdir="@{pluginlib}/classes"
-                            includeAntRuntime="no"
-                            debug="on"
-                            includes="**/*.java"
-                        >
+                        <of.javac destdir="@{pluginlib}/classes">
                             <src path="@{pluginlib}/source"/>
                             <classpath>
                                 <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
@@ -1517,11 +1492,7 @@
                         </if>
 
                         <!-- Compile java classes -->
-                        <of.javac
-                                destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
-                                includeAntRuntime="no"
-                                debug="on"
-                                >
+                        <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes">
                             <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                             <classpath>
                                 <path refid="jspc.dependencies"/>
@@ -1589,10 +1560,7 @@
         <mkdir dir="${anttools.target.dir}"/>
         <mkdir dir="${anttools.target.dir}/classes"/>
 
-        <of.javac
-                destdir="${anttools.target.dir}/classes"
-                debug="on"
-                >
+        <of.javac destdir="${anttools.target.dir}/classes" includeAntRuntime="yes">
             <src path="${anttools.src.dir}"/>
             <patternset refid="compile.sources"/>
             <classpath>

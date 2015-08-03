@@ -121,18 +121,58 @@
     <!-- For auto-running and debugging -->
     <property name="debug" value="false"/>
 
-    <!-- ======================================================================================= -->
-    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
-    <!-- ======================================================================================= -->
-
     <path id="ant.dependencies">
         <fileset dir="${lib.ant.dir}" includes="*.jar" />
         <fileset dir="${ant.home}/lib" includes="ant.jar" />
     </path>
-    
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFs                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
+        <classpath refid="ant.dependencies" />
+    </typedef>
+
+    <!-- ======================================================================================= -->
+    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
+    <!-- ======================================================================================= -->
+
+    <available type="dir"  file="${overlay.dir}"                property="overlay.dir.found"/>
+    <available type="dir"  file="${overlay.src.dir}"            property="overlay.src.dir.found"/>
+    <available type="dir"  file="${overlay.web.dir}"            property="overlay.web.dir.found"/>
+    <available type="dir"  file="${overlay.lib.dir}"            property="overlay.lib.dir.found"/>
+    <available type="dir"  file="${overlay.conf.dir}"           property="overlay.conf.dir.found"/>
+    <available type="file" file="${overlay.properties.file}"    property="overlay.properties.file.found"/>
+
+    <!-- When overlay is used the content of "lib.merge.dir" needs to be combined with the content of "overlay.lib.dir"
+         Here, "libs.to.merge" is created which will always refer to the correct combination. "libs.to.merge" should be
+         used instead of "lib.merge.dir" and/or "overlay.lib.dir" from this point onwards.
+      -->
+    <if>
+        <equals arg1="${overlay.lib.dir.found}" arg2="true"/>
+        <then>
+            <path id="libs.to.merge">
+                <fileset dir="${lib.merge.dir}"   includes="**/*.jar"/>
+                <fileset dir="${overlay.lib.dir}" includes="**/*.jar"/>
+            </path>
+        </then>
+        <else>
+            <path id="libs.to.merge">
+                <fileset dir="${lib.merge.dir}"   includes="**/*.jar"/>
+            </path>
+        </else>
+    </if>
+
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
-        <fileset dir="${lib.merge.dir}" includes="*.jar"/>
+        <path refid="libs.to.merge" />
         <fileset dir="${lib.dist.dir}" includes="servlet-api.jar, servlet-api-schemas.jar, mail.jar, jdic.jar"/>
         <fileset dir="${lib.dist.dir}" includes="bcpg-jdk15on.jar, bcpkix-jdk15on.jar, bcprov-jdk15on.jar"/>
     </path>
@@ -146,10 +186,6 @@
         <path refid="compile.dependencies"/>
         <path refid="ant.dependencies"/>
         <fileset dir="${lib.web.dir}" includes="*.jar"/>
-    </path>
-
-    <path id="custom.dependencies">
-        <fileset dir="${overlay.lib.dir}" includes="**/*.jar"/>
     </path>
 
     <path id="test.dependencies">
@@ -187,22 +223,9 @@
         <include name="**/*.js"/>
     </patternset>
 
-	<presetdef name="of.javac">
-		<javac encoding="utf8" source="${javac.source}" target="${javac.target}" includeAntRuntime="no" debug="on"/>
-	</presetdef>
-    <!-- ======================================================================================= -->
-    <!-- GLOBAL TASKDEFs                                                                         -->
-    <!-- ======================================================================================= -->
-
-    <taskdef resource="net/sf/antcontrib/antlib.xml">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
-        <classpath refid="ant.dependencies" />
-    </typedef>
+    <presetdef name="of.javac">
+        <javac encoding="utf8" source="${javac.source}" target="${javac.target}" includeAntRuntime="no" debug="on"/>
+    </presetdef>
 
     <!-- ======================================================================================= -->
     <!-- TARGETs                                                                                 -->
@@ -243,7 +266,6 @@
         </tstamp>
 
         <mkdir dir="${work.dir}"/>
-        <mkdir dir="${overlay.compile.dir}"/>
 
         <!-- Setup the full version property correctly -->
         <if>
@@ -265,44 +287,38 @@
 
     <!-- compile =============================================================================== -->
     <target name="compile" depends="init" description="Compiles Openfire app code">
+
         <mkdir dir="${compile.dir}"/>
         <of.javac destdir="${compile.dir}">
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
-            <classpath>
-                <path refid="compile.dependencies"/>
-            </classpath>
+            <classpath refid="compile.dependencies"/>
         </of.javac>
 
-        <available file="${overlay.lib.dir}" type="dir" property="overlay.lib.found"/>
+        <!-- The Ant 'javac' tasks does not allow one to use more than one source directory and simultaneously exclude
+             duplicates from one. As a work-around, the overlay-sources are compiled in a second iteration, overwriting
+             any compiled files from the first iteration.
+        -->
         <if>
-            <equals arg1="${overlay.lib.found}" arg2="true"/>
-            <then>
-                <mkdir dir="${jar.dest.dir}"/>
-                <copy todir="${jar.dest.dir}" overwrite="true">
-                    <fileset dir="${overlay.lib.dir}" includes="**/*.*"/>
-                </copy>
-            </then>
-            <else><echo>No custom lib here </echo></else>
-        </if>
-
-        <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
-        <if>
-            <equals arg1="${overlay.source.found}" arg2="true"/>
+            <equals arg1="${overlay.src.dir.found}" arg2="true"/>
             <then>
                 <mkdir dir="${overlay.compile.dir}"/>
                 <of.javac destdir="${overlay.compile.dir}">
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
                     <classpath>
-                        <path refid="custom.dependencies"/>
-                        <path refid="compile.dependencies"/>
                         <path location="${compile.dir}"/>
+                        <path refid="compile.dependencies"/>
                     </classpath>
                 </of.javac>
 
+                <!-- By copying/overwriting overlays directly into compile.dir, all tasks executed after this one need
+                     not consider both compile.dir and overlay.compile.dir (which simplifies further tasks considerably).
+                -->
+                <copy todir="${compile.dir}" overwrite="true">
+                    <fileset dir="${overlay.compile.dir}"/>
+                </copy>
             </then>
-            <else><echo>Nothing to compile from custom here </echo></else>
         </if>
     </target>
 
@@ -315,18 +331,15 @@
               tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
 
         <!-- if title override file exists, overwrite all i18n files -->
-        <available file="${overlay.dir}/${overlay.properties.file}" type="file" property="overlay.props.found"/>
         <if>
-                <equals arg1="${overlay.props.found}" arg2="true"/>
-                <then>
-                  <echo>Found overlay file: ${overlay.dir}/${overlay.properties.file}</echo>
-		          <property file="${overlay.dir}/${overlay.properties.file}"/>
-                    <replace dir="${target.i18n.dir}">
-                        <replacefilter token="title = Wildfire" value="title=${title}"/>
-                        <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
-                    </replace>
-
-                </then>
+            <equals arg1="${overlay.properties.file.found}" arg2="true"/>
+            <then>
+                <property file="${overlay.properties.file}"/>
+                <replace dir="${target.i18n.dir}">
+                    <replacefilter token="title = Wildfire" value="title=${title}"/>
+                    <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
+                </replace>
+            </then>
         </if>
     </target>
 
@@ -372,17 +385,15 @@
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
-            <fileset dir="${compile.dir}" includes="**/*.class"
-                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class">
-                <!-- don't include files that have an overlay counterpart -->
-                 <present present="srconly" targetdir="${overlay.compile.dir}"/>
-            </fileset>
-            <!-- now include overlay files -->
-            <fileset dir="${overlay.compile.dir}" includes="**/*.class"/>                      
+            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
-            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <archives>
+                <zips>
+                    <path refid="libs.to.merge"/>
+                </zips>
+            </archives>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
             </manifest>
@@ -508,20 +519,22 @@
 
         <antcall target="-jspc-impl"/>
     </target>
-    
+
     <target name="-jspc-impl" unless="no.jspc">
 
-        <!-- we're forced to create a temp dir to properly overwrite sources from overlay directory -->
+        <!-- In a different approach to 'overlay' as compared with the 'compile' task, this task first creates a new
+             directory that combines of the original files, overwritten by the 'overlay' files before processing
+             occurs. This approach is simpler, but requires quite some disk operations (and is therefor not used in the
+             'compile' task).
+        -->
         <mkdir dir="${jspc.jsp.src.dir}"/>
 
         <copy todir="${jspc.jsp.src.dir}">
             <fileset dir="${web.dir}" includes="**/*"/>
         </copy>
-        <!-- copy overlay -->
 
-        <available file="${overlay.web.dir}" type="dir" property="overlay.webdir.found"/>
         <if>
-            <equals arg1="${overlay.webdir.found}" arg2="true"/>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
             <then>
                 <copy todir="${jspc.jsp.src.dir}" overwrite="true">
                     <fileset dir="${overlay.web.dir}" includes="**/*"/>
@@ -529,7 +542,7 @@
             </then>
         </if>
 
-
+        <!-- Generate .java files from the .jsp files. -->
         <java classname="org.apache.jasper.JspC" fork="true">
             <classpath>
                 <pathelement location="${java.home}/../lib/tools.jar"/>
@@ -542,7 +555,7 @@
             <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>
         </java>
 
-        <!-- Compile java source -->
+        <!-- Compile the .java files-->
         <of.javac destdir="${jspc.classes.dest.dir}">
             <include name="org/jivesoftware/openfire/admin/**/*.java"/>
             <src path="${jspc.java.dest.dir}"/>
@@ -636,9 +649,8 @@
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
         </copy>
 
-        <available file="${overlay.conf.dir}" type="dir" property="overlay.conf.found"/>
         <if>
-            <equals arg1="${overlay.conf.found}" arg2="true"/>
+            <equals arg1="${overlay.conf.dir.found}" arg2="true"/>
             <then>
                 <copy todir="${target.openfireHome}" overwrite="true">
                     <fileset dir="${overlay.conf.dir}" includes="**/*"/>
@@ -744,6 +756,22 @@
                 <exclude name="**/*.jspf"/>
             </fileset>
         </copy>
+
+        <!-- Copy admin plugin overlay resources -->
+        <if>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
+            <then>
+                <copy todir="${plugin.dest.dir}/admin/webapp" overwrite="true">
+                    <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+                    <fileset dir="${overlay.web.dir}">
+                        <patternset refid="web.sources"/>
+                        <exclude name="**/*.jsp"/>
+                        <exclude name="**/*.jspf"/>
+                    </fileset>
+                </copy>
+            </then>
+        </if>
+
         <!-- Copy other admin WEB-INF stuff -->
         <copy todir="${plugin.dest.dir}/admin/webapp">
             <fileset dir="${webapp.dest.dir}"/>

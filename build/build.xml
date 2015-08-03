@@ -149,7 +149,7 @@
     </path>
 
     <path id="custom.dependencies">
-        <fileset dir="${overlay.lib.dir}" includes="*.jar"/>
+        <fileset dir="${overlay.lib.dir}" includes="**/*.jar"/>
     </path>
 
     <path id="test.dependencies">
@@ -280,7 +280,7 @@
             <then>
                 <mkdir dir="${jar.dest.dir}"/>
                 <copy todir="${jar.dest.dir}" overwrite="true">
-                    <fileset dir="${overlay.lib.dir}" includes="*.*"/>
+                    <fileset dir="${overlay.lib.dir}" includes="**/*.*"/>
                 </copy>
             </then>
             <else><echo>No custom lib here </echo></else>
@@ -515,7 +515,7 @@
         <mkdir dir="${jspc.jsp.src.dir}"/>
 
         <copy todir="${jspc.jsp.src.dir}">
-            <fileset dir="${web.dir}"/>
+            <fileset dir="${web.dir}" includes="**/*"/>
         </copy>
         <!-- copy overlay -->
 
@@ -524,7 +524,7 @@
             <equals arg1="${overlay.webdir.found}" arg2="true"/>
             <then>
                 <copy todir="${jspc.jsp.src.dir}" overwrite="true">
-                    <fileset dir="${overlay.web.dir}"/>
+                    <fileset dir="${overlay.web.dir}" includes="**/*"/>
                 </copy>
             </then>
         </if>

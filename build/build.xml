@@ -1245,22 +1245,20 @@
         <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml"
                     except="admin"/>
 
-        <antcall target="-plugins-impl-dev"/>
         <antcall target="-plugins-impl"/>
 
         <!-- Update/create target/openfire directory -->
         <antcall target="openfireHome"/>
-
     </target>
     <target name="-plugins-impl" if="dirlist">
 
-        <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
+        <!-- First, do all plugins that do not have a parent plugin (some of them could be parents of others) -->
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
+                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
                 <if>
-                    <equals arg1="@{plugin}" arg2="clustering"/>
+                    <isset property="plugin.parentPlugin"/>
                     <then>
-                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
                     </then>
                     <else>
                         <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
@@ -1269,28 +1267,15 @@
             </sequential>
         </for>
 
-    </target>
-    <target name="-plugins-impl-dev" if="plugin.dev.dir" depends="anttasks">
-
-        <!-- Get a list of plugins in the optional dev dir -->
-        <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml"/>
-
-        <antcall target="-plugin-impl-dev-build"/>
-
-    </target>
-    <target name="-plugin-impl-dev-build" if="dirlist2">
-
-        <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
-        <for list="${dirlist2}" param="plugin" trim="true">
+        <!-- Lastly, do all plugins that have defined a parent plugin. This works, as long as there are no 'chains' -->
+        <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
+                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
                 <if>
-                    <equals arg1="@{plugin}" arg2="clustering"/>
+                    <isset property="plugin.parentPlugin"/>
                     <then>
-                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
+                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
                     </then>
-                    <else>
-                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}"/>
-                    </else>
                 </if>
             </sequential>
         </for>
@@ -1322,15 +1307,32 @@
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}"/>
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target"/>
 
+                <!-- Determine if this plugin has a parent plugin and if so, add it to the classpath. Note that it is
+                     up to the caller to guarantee that a parent plugin has already been compiled!
+                -->
+                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
+                <if>
+                    <isset property="plugin.parentPlugin"/>
+                    <then>
+                        <echo>Parent plugin found: ${plugin.parentPlugin}</echo>
+                        <path id="plugin.classpath.source">
+                            <path refid="plugin.dependencies"/>
+                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                            <fileset dir="${plugin.dev.dest.dir}/${plugin.parentPlugin}/target/" includes="lib/*.jar"/>
+                        </path>
+                    </then>
+                    <else>
+                        <path id="plugin.classpath.source">
+                            <path refid="plugin.dependencies"/>
+                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                        </path>
+                    </else>
+                </if>
+
                 <!-- Compile plugin source code -->
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
-                <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes">
+                <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes" classpathref="plugin.classpath.source">
                     <src path="@{pluginsrc}/@{plugin}/src/java"/>
-                    <classpath>
-                        <path refid="plugin.dependencies"/>
-                        <!-- Jars used by the plugin to compile with -->
-                        <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                    </classpath>
                 </of.javac>
 
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
@@ -1362,14 +1364,9 @@
                             <src path="@{pluginlib}/source"/>
                             <classpath>
                                 <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
-                                <path>
-                                    <path refid="plugin.dependencies"/>
-                                    <!-- Jars used by the plugin to compile with -->
-                                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                                </path>
+                                <path refid="plugin.classpath.source"/>
                             </classpath>
                         </of.javac>
-
 
                         <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/@{plugin}-lib.jar">
                             <fileset dir="@{pluginlib}/classes" />

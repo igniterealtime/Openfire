@@ -641,7 +641,7 @@
             <equals arg1="${overlay.conf.found}" arg2="true"/>
             <then>
                 <copy todir="${target.openfireHome}" overwrite="true">
-                    <fileset dir="${overlay.dir}" includes="conf/**/*.*"/>
+                    <fileset dir="${overlay.conf.dir}" includes="**/*"/>
                 </copy>
             </then>
             <else><echo>No custom config here </echo></else>

@@ -90,6 +90,7 @@
     <property name="plugin.dev.dest.dir" value="${work.dir}/plugins-dev"/>
     <property name="plugin.dest.dir" value="${work.dir}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
+    <property name="halt.on.plugin.error" value="true"/>
     <property name="webapp.dest.dir" value="${work.dir}/webapp"/>
 
     <property name="release.dest.dir" value="${target.dir}/release"/>
@@ -1575,7 +1576,11 @@
                     <property name="exception" refid="exception_ref" />
                     <property name="message" value="Error building plugin: @{plugin}. Exception:${line.separator}${exception}" />
                     <echo message="${message}" />
-                    <fail if="halt.on.plugin.error" message="${message}" />
+                    <fail message="${message}">
+                        <condition>
+                            <istrue value="${halt.on.plugin.error}"/>
+                        </condition>
+                    </fail>
                 </catch>
             </trycatch>
         </sequential>

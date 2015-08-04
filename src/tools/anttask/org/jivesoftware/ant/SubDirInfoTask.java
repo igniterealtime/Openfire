@@ -25,6 +25,9 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple ant task to return the sub directories of a given dir as a comma delimited string.
@@ -89,6 +92,12 @@ public class SubDirInfoTask extends Task {
 
     public void execute() throws BuildException {
         // Get the siblings of the given directory, add sub directory names to the property
+        List excepts;
+        if (except != null) {
+            excepts = Arrays.asList( except.split( getDelimiter() ) );
+        } else {
+            excepts = Collections.EMPTY_LIST;
+        }
         File[] subdirs = dir.listFiles();
         StringBuffer buf = new StringBuffer();
         String value = null;
@@ -108,7 +117,7 @@ public class SubDirInfoTask extends Task {
                         add = true;
                     }
                 }
-                if (add && !subdir.getName().equals(except)) {
+                if (add && !excepts.contains(subdir.getName())) {
                     buf.append(sep).append(subdir.getName());
                     sep = getDelimiter();
                 }

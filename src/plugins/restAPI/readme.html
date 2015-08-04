@@ -1233,6 +1233,7 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <ul>
 <li><a href="#rest-api-plugin-readme">REST API Plugin Readme</a><ul>
 <li><a href="#feature-list">Feature list</a></li>
+<li><a href="#available-rest-api-clients">Available REST API clients</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#explanation-of-rest">Explanation of REST</a></li>
 <li><a href="#authentication">Authentication</a><ul>
@@ -1438,6 +1439,11 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#examples-32">Examples</a></li>
 </ul>
 </li>
+<li><a href="#close-all-user-sessions">Close all user sessions</a><ul>
+<li><a href="#possible-parameters-28">Possible parameters</a></li>
+<li><a href="#examples-33">Examples</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</a><ul>
@@ -1452,8 +1458,6 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 </ul>
 </div>
 </p>
-
-
 
 <h2 id="feature-list">Feature list</h2>
 
@@ -1479,6 +1483,8 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li>PHP: <a href="https://github.com/gidkom/php-openfire-restapi">https://github.com/gidkom/php-openfire-restapi</a> party implemented)</li>
 <li>GO Lang <a href="https://github.com/Urethramancer/fireman">https://github.com/Urethramancer/fireman</a> (party implemented)</li>
 </ul>
+
+
 
 <h2 id="installation">Installation</h2>
 
@@ -3763,7 +3769,9 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
   <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions">http://example.org:9090/plugins/restapi/v1/sessions</a></p>
 </blockquote>
 
-<h2 id="retrieve-the-user-sessions-1">Retrieve the user sessions</h2>
+
+
+<h2 id="retrieve-the-user-sessions">Retrieve the user sessions</h2>
 
 <p>Endpoint to get sessions from a user</p>
 
@@ -3776,7 +3784,7 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 
 
-<h3 id="possible-parameters-28">Possible parameters</h3>
+<h3 id="possible-parameters-27">Possible parameters</h3>
 
 <table>
 <thead>
@@ -3819,7 +3827,7 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 
 
-<h3 id="possible-parameters-27">Possible parameters</h3>
+<h3 id="possible-parameters-28">Possible parameters</h3>
 
 <table>
 <thead>
@@ -3846,6 +3854,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
 
 <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/sessions/testuser">http://example.org:9090/plugins/restapi/v1/sessions/testuser</a></p>
+
+
 
 <h1 id="deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</h1>
 

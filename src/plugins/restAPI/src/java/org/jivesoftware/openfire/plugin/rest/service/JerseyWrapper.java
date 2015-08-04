@@ -21,9 +21,15 @@ public class JerseyWrapper extends ServletContainer {
 
 	/** The Constant AUTHFILTER. */
 	private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.rest.AuthFilter";
+	
+	/** The Constant CORSFILTER. */
+	private static final String CORSFILTER = "org.jivesoftware.openfire.plugin.rest.CORSFilter";
 
 	/** The Constant CONTAINER_REQUEST_FILTERS. */
 	private static final String CONTAINER_REQUEST_FILTERS = "com.sun.jersey.spi.container.ContainerRequestFilters";
+
+	/** The Constant CONTAINER_RESPONSE_FILTERS. */
+	private static final String CONTAINER_RESPONSE_FILTERS = "com.sun.jersey.spi.container.ContainerResponseFilters";
 
 	/** The Constant RESOURCE_CONFIG_CLASS_KEY. */
 	private static final String RESOURCE_CONFIG_CLASS_KEY = "com.sun.jersey.config.property.resourceConfigClass";
@@ -56,6 +62,7 @@ public class JerseyWrapper extends ServletContainer {
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
 		prc.setPropertiesAndFeatures(config);
 		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, AUTHFILTER);
+		prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
 
 		prc.getClasses().add(RestAPIService.class);
 		

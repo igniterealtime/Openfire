@@ -44,7 +44,6 @@ public class HazelcastClusterNodeInfo implements ClusterNodeInfo {
     }
 
     public HazelcastClusterNodeInfo(Member member, Long joinedTime) {
-        hostname = member.getSocketAddress().getHostName();
         hostname = member.getSocketAddress().getHostString();
         nodeID = NodeID.getInstance(StringUtils.getBytes(member.getUuid()));
         this.joinedTime = joinedTime;

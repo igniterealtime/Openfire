@@ -131,4 +131,9 @@ public class ClearspaceAuthProvider implements AuthProvider {
     public boolean supportsPasswordRetrieval() {
         return false;
     }
+
+    @Override
+    public boolean isScramSupported() {
+        return false;
+    }
 }

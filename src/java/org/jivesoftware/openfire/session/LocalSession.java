@@ -24,6 +24,7 @@ import java.util.Map;
 
 import javax.net.ssl.SSLSession;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -33,7 +34,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.net.TLSStreamHandler;
-import org.jivesoftware.openfire.spi.RoutingTableImpl;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,11 @@ public abstract class LocalSession implements Session {
 	private final Map<String, Object> sessionData = new HashMap<String, Object>();
 
     /**
+     * XEP-0198 Stream Manager
+     */
+    protected final StreamManager streamManager;
+
+    /**
      * Creates a session with an underlying connection and permission protection.
      *
      * @param serverName domain of the XMPP server where the new session belongs.
@@ -111,6 +117,7 @@ public abstract class LocalSession implements Session {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
+        this.streamManager = new StreamManager(conn);
     }
 
     /**
@@ -209,6 +216,7 @@ public abstract class LocalSession implements Session {
     public void incrementClientPacketCount() {
         clientPacketCount++;
         lastActiveDate = System.currentTimeMillis();
+        streamManager.incrementServerProcessedStanzas();
     }
 
     /**
@@ -277,6 +285,14 @@ public abstract class LocalSession implements Session {
         synchronized (sessionData) {
             sessionData.remove(key);
         }
+    }
+
+    /**
+     * Get XEP-0198 Stream manager for session
+     * @return
+     */
+    public StreamManager getStreamManager() {
+    	return streamManager;
     }
 
     public void process(Packet packet) {
@@ -413,4 +429,27 @@ public abstract class LocalSession implements Session {
         }
         return "NONE";
     }
+
+    /**
+     * Enables stream management for session
+     * @param enable XEP-0198 <enable/> element
+     */
+    public void enableStreamMangement(Element enable) {
+
+    	// Do nothing if already enabled
+    	if(streamManager.isEnabled()) {
+    		return;
+    	}
+
+		streamManager.setNamespace(enable.getNamespace().getStringValue());
+
+    	// Ensure that resource binding has occurred
+    	if(getAddress().getResource() == null) {
+    		streamManager.sendUnexpectedError();
+    		return;
+    	}
+
+    	streamManager.setEnabled(true);
+	}
+
 }

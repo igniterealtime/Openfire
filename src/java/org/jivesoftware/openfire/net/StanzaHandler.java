@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
@@ -182,13 +183,28 @@ public abstract class StanzaHandler {
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
+        } else if(isStreamManagementStanza(doc)) {
+        	switch(tag) {
+        		case "enable":
+        			session.enableStreamMangement(doc);
+        			break;
+        		case "r":
+        			session.getStreamManager().sendServerAcknowledgement();
+        			break;
+        		case "a":
+        			session.getStreamManager().processClientAcknowledgement(doc);
+        			break;
+        		default:
+        			process(doc);
+        			break;
+        	}
         }
         else {
             process(doc);
         }
     }
 
-    private void process(Element doc) throws UnauthorizedException {
+	private void process(Element doc) throws UnauthorizedException {
         if (doc == null) {
             return;
         }
@@ -535,6 +551,16 @@ public abstract class StanzaHandler {
         sb.append("</stream:features>");
         connection.deliverRawText(sb.toString());
     }
+
+	/**
+	 * Determines whether stanza's namespace matches XEP-0198 namespace
+	 * @param stanza Stanza to be checked
+	 * @return whether stanza's namespace matches XEP-0198 namespace
+	 */
+	private boolean isStreamManagementStanza(Element stanza) {
+		return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
+				StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
+	}
 
     private String geStreamHeader() {
         StringBuilder sb = new StringBuilder(200);

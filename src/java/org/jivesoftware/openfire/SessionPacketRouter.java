@@ -35,7 +35,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class SessionPacketRouter implements PacketRouter {
 
-    private LocalClientSession session;
+    protected LocalClientSession session;
     private PacketRouter router;
     private boolean skipJIDValidation = false;
 

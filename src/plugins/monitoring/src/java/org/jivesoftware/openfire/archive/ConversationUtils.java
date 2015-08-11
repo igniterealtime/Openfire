@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -328,8 +329,9 @@ public class ConversationUtils {
             if (conversation.getRoom() != null) {
                 from = message.getToJID().getResource();
             }
+            from = StringUtils.escapeHTMLTags(from);
             String cssLabel = cssLabels.get(message.getFromJID().toBareJID());
-            String body = message.getBody();
+            String body = StringUtils.escapeHTMLTags(message.getBody());
             builder.append("<tr valign=top>");
             if (!message.isRoomEvent()) {
                 builder.append("<td width=1% nowrap class=" + cssLabel + ">").append("[")

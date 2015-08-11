@@ -65,7 +65,7 @@ open source <a href="http://www.hazelcast.org">Hazelcast</a> data distribution
 framework in lieu of an expensive proprietary third-party product.
 </p>
 <p>
-The current Hazelcast release is version 3.4.
+The current Hazelcast release is version 3.5.1.
 </p>
 <h3>Clustering vs. Federation</h3>
 <p>XMPP is designed to scale in ways that are similar to email. Each Openfire
@@ -206,10 +206,10 @@ that will be added to the plugin's classpath. This allows a custom Hazelcast
 configuration file to be located outside the Openfire home directory.</li>
 <li><i>hazelcast.config.jmx.enabled</i> (false): Enables JMX support for
 the Hazelcast cluster if JMX has been enabled via the Openfire admin console.
-Refer to the <a href="http://docs.hazelcast.org/docs/3.4/manual/html/monitoringwithjmx.html">
+Refer to the <a href="http://docs.hazelcast.org/docs/3.5/manual/html/monitoringwithjmx.html">
 Hazelcast JMX docs</a> for additional information.</li>
 </ol>
-<p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.4/manual/html/configurationoverview.html">
+<p>The Hazelcast plugin uses the <a href="http://docs.hazelcast.org/docs/3.5/manual/html/configurationoverview.html">
 XML configuration builder</a> to initialize the cluster from the XML file described above.
 By default the cluster members will attempt to discover each other via multicast at the
 following location:
@@ -235,7 +235,7 @@ following alternative:
 &lt;/join&gt;
 ...
 </pre>
-<p>Please refer to the <a href="http://docs.hazelcast.org/docs/3.4/manual/html-single/">
+<p>Please refer to the <a href="http://docs.hazelcast.org/docs/3.5/manual/html-single/">
 Hazelcast reference manual</a> for more information.
 </p>
 <h3>A Word About Garbage Collection</h3>
@@ -244,7 +244,7 @@ of servers using a default runtime JVM configuration. In most cases it will be p
 concurrent garbage collector (CMS) or the new G1 garbage collector to minimize blocking within the JVM.
 When using CMS, you may be able to counter the effects of heap fragmentation by using JMX to invoke 
 System.gc() when the cluster is relatively idle (e.g. overnight). This has the effect of temporarily 
-interrupting the concurrent GC algortithm in favor of the default GC to collect and compact the heap.
+interrupting the concurrent GC algorithm in favor of the default GC to collect and compact the heap.
 </p>
 <p>In addition, the runtime characteristics of your Openfire cluster will vary greatly depending on the
 number and type of clients that are connected, and which XMPP services you are using in your deployment.

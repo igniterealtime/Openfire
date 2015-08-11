@@ -409,4 +409,10 @@ public class JDBCAuthProvider implements AuthProvider {
             }
         }
     }
+
+    @Override
+    public boolean isScramSupported() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

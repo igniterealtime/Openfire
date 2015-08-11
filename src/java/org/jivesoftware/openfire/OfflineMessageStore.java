@@ -210,14 +210,18 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
                 }
 
-                // Add a delayed delivery (XEP-0203) element to the message.
-                Element delay = message.addChildElement("delay", "urn:xmpp:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
-                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
-                delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
+                // if there is already a delay stamp, we shouldn't add another.
+                Element delaytest = message.getChildElement("delay", "urn:xmpp:delay");
+                if (delaytest == null) {
+                    // Add a delayed delivery (XEP-0203) element to the message.
+                    Element delay = message.addChildElement("delay", "urn:xmpp:delay");
+                    delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                    delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
+                    // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
+                    delay = message.addChildElement("x", "jabber:x:delay");
+                    delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                    delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
+                }
                 messages.add(message);
             }
             // Check if the offline messages loaded should be deleted, and that there are

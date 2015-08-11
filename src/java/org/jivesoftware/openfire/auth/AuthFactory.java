@@ -328,4 +328,9 @@ public class AuthFactory {
         }
         return cipher;
     }
+
+    public static boolean supportsScram() {
+        // TODO Auto-generated method stub
+        return authProvider.isScramSupported();
+    }
 }

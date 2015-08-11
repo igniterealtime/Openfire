@@ -590,7 +590,7 @@ public class SASLAuthentication {
                 authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed;
             }
-            principals.addAll(CertificateManager.getPeerIdentities((X509Certificate)trusted));
+            principals.addAll(CertificateManager.getClientIdentities((X509Certificate)trusted));
 
             if(principals.size() == 1) {
                 principal = principals.get(0);
@@ -640,7 +640,7 @@ public class SASLAuthentication {
     }
     
     public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
-        for (String identity : CertificateManager.getPeerIdentities(trustedCert)) {
+        for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
             // Verify that either the identity is the same as the hostname, or for wildcarded
             // identities that the hostname ends with .domainspecified or -is- domainspecified.
             if ((identity.startsWith("*.")
@@ -802,6 +802,11 @@ public class SASLAuthentication {
                     it.remove();
                 }
             }
+            else if (mech.equals("SCRAM-SHA-1")) {
+                if (!AuthFactory.supportsPasswordRetrieval() && !AuthFactory.supportsScram()) {
+                    it.remove();
+                }
+            }
             else if (mech.equals("ANONYMOUS")) {
                 // Check anonymous is supported
                 if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
@@ -832,6 +837,7 @@ public class SASLAuthentication {
             mechanisms.add("PLAIN");
             mechanisms.add("DIGEST-MD5");
             mechanisms.add("CRAM-MD5");
+            mechanisms.add("SCRAM-SHA-1");
             mechanisms.add("JIVE-SHAREDSECRET");
         }
         else {
@@ -843,6 +849,7 @@ public class SASLAuthentication {
                         mech.equals("PLAIN") ||
                         mech.equals("DIGEST-MD5") ||
                         mech.equals("CRAM-MD5") ||
+                        mech.equals("SCRAM-SHA-1") ||
                         mech.equals("GSSAPI") ||
                         mech.equals("EXTERNAL") ||
                         mech.equals("JIVE-SHAREDSECRET")) 

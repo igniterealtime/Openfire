@@ -204,4 +204,10 @@ public class NativeAuthProvider implements AuthProvider {
     public boolean supportsPasswordRetrieval() {
         return false;
     }
+
+    @Override
+    public boolean isScramSupported() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

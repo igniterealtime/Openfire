@@ -20,11 +20,18 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+
+import javax.security.sasl.SaslException;
+import javax.xml.bind.DatatypeConverter;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -46,10 +53,14 @@ public class DefaultAuthProvider implements AuthProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthProvider.class);
 
-    private static final String LOAD_PASSWORD =
-            "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
+	    private static final String LOAD_PASSWORD =
+	            "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
+	    private static final String TEST_PASSWORD =
+	            "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
+            "UPDATE ofUser SET plainPassword=?, encryptedPassword=?, storedKey=?, serverKey=?, salt=?, iterations=? WHERE username=?";
+    
+    private static final SecureRandom random = new SecureRandom();
 
     /**
      * Constructs a new DefaultAuthProvider.
@@ -75,7 +86,7 @@ public class DefaultAuthProvider implements AuthProvider {
             }
         }
         try {
-            if (!password.equals(getPassword(username))) {
+            if (!checkPassword(username, password)) {
                 throw new UnauthorizedException();
             }
         }
@@ -119,7 +130,8 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     public boolean isDigestSupported() {
-        return true;
+        boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+        return !scramOnly;
     }
 
     public String getPassword(String username) throws UserNotFoundException {
@@ -159,6 +171,9 @@ public class DefaultAuthProvider implements AuthProvider {
                     // Ignore and return plain password instead.
                 }
             }
+            if (plainText == null) {
+                throw new UnsupportedOperationException();
+            }
             return plainText;
         }
         catch (SQLException sqle) {
@@ -169,9 +184,80 @@ public class DefaultAuthProvider implements AuthProvider {
         }
     }
 
+    public boolean checkPassword(String username, String testPassword) throws UserNotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain.
+                throw new UserNotFoundException();
+            }
+        }
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(TEST_PASSWORD);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new UserNotFoundException(username);
+            }
+            String plainText = rs.getString(1);
+            String encrypted = rs.getString(2);
+            int iterations = rs.getInt(3);
+            String salt = rs.getString(4);
+            String storedKey = rs.getString(5);
+            if (encrypted != null) {
+                try {
+                    plainText = AuthFactory.decryptPassword(encrypted);
+                }
+                catch (UnsupportedOperationException uoe) {
+                    // Ignore and return plain password instead.
+                }
+            }
+            if (plainText != null) {
+                boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+                if (scramOnly) {
+                    // If we have a password here, but we're meant to be scramOnly, we should reset it.
+                    setPassword(username, plainText);
+                }
+                return testPassword.equals(plainText);
+            }
+            // Don't have either plain or encrypted, so test SCRAM hash.
+            if (salt == null || iterations == 0 || storedKey == null) {
+                Log.warn("No available credentials for checkPassword.");
+                return false;
+            }
+            byte[] saltShaker = DatatypeConverter.parseBase64Binary(salt);
+            byte[] saltedPassword = null, clientKey = null, testStoredKey = null;
+            try {
+                   saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, iterations);
+                   clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
+                   testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
+            } catch(SaslException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+                Log.warn("Unable to check SCRAM values for PLAIN authentication.");
+                return false;
+            }
+            return DatatypeConverter.printBase64Binary(testStoredKey).equals(storedKey);
+        }
+        catch (SQLException sqle) {
+            Log.error("User SQL failure:", sqle);
+            throw new UserNotFoundException(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
     public void setPassword(String username, String password) throws UserNotFoundException {
         // Determine if the password should be stored as plain text or encrypted.
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
+        boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
         String encryptedPassword = null;
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
@@ -184,7 +270,26 @@ public class DefaultAuthProvider implements AuthProvider {
                 throw new UserNotFoundException();
             }
         }
-        if (!usePlainPassword) {
+        
+        // Store the salt and salted password so SCRAM-SHA-1 SASL auth can be used later.
+        byte[] saltShaker = new byte[32];
+        random.nextBytes(saltShaker);
+        String salt = DatatypeConverter.printBase64Binary(saltShaker);
+
+        
+        int iterations = JiveGlobals.getIntProperty("sasl.scram-sha-1.iteration-count",
+                        ScramUtils.DEFAULT_ITERATION_COUNT);
+        byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
+	try {
+	       saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
+               clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
+               storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
+               serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
+       } catch (SaslException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+           Log.warn("Unable to persist values for SCRAM authentication.");
+       }
+   
+        if (!scramOnly && !usePlainPassword) {
             try {
                 encryptedPassword = AuthFactory.encryptPassword(password);
                 // Set password to null so that it's inserted that way.
@@ -194,6 +299,10 @@ public class DefaultAuthProvider implements AuthProvider {
                 // Encryption may fail. In that case, ignore the error and
                 // the plain password will be stored.
             }
+        }
+        if (scramOnly) {
+            encryptedPassword = null;
+            password = null;
         }
 
         Connection con = null;
@@ -213,7 +322,21 @@ public class DefaultAuthProvider implements AuthProvider {
             else {
                 pstmt.setString(2, encryptedPassword);
             }
-            pstmt.setString(3, username);
+            if (storedKey == null) {
+            	pstmt.setNull(3, Types.VARCHAR);
+            }
+            else {
+            	pstmt.setString(3, DatatypeConverter.printBase64Binary(storedKey));
+            }
+            if (serverKey == null) {
+            	pstmt.setNull(4, Types.VARCHAR);
+            }
+            else {
+            	pstmt.setString(4, DatatypeConverter.printBase64Binary(serverKey));
+            }
+            pstmt.setString(5, salt);
+            pstmt.setInt(6, iterations);
+            pstmt.setString(7, username);
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
@@ -225,6 +348,12 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     public boolean supportsPasswordRetrieval() {
+        boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+        return !scramOnly;
+    }
+
+    @Override
+    public boolean isScramSupported() {
         return true;
     }
 }

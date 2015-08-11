@@ -178,41 +178,50 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="pt_PT" <%= ("pt_PT".equals(locale.toString()) ? "checked" : "") %>
                      id="loc08" />
                 </td>
                 <td colspan="2">
-                    <label for="loc08">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+                    <label for="loc08">Portugu&ecirc;s Portugal (pt_PT)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc09" />
+                </td>
+                <td colspan="2">
+                    <label for="loc09">Portugu&ecirc;s Brasileiro (pt_BR)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="ru_RU" <%= ("ru_RU".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc09" />
+                     id="loc10" />
                 </td>
                 <td colspan="2">
-                    <label for="loc09">&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439; (ru_RU)</label>
+                    <label for="loc10">&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439; (ru_RU)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="sk" <%= ("sk".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc10" />
+                     id="loc11" />
                 </td>
                 <td colspan="2">
-                    <label for="loc10">Sloven&#269;ina (sk)</label>
+                    <label for="loc11">Sloven&#269;ina (sk)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc11" />
+                     id="loc12" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" alt="" /></a>
                 </td>
                 <td>
-                    <label for="loc11">Simplified Chinese (zh_CN)</label>
+                    <label for="loc12">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

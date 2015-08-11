@@ -2208,7 +2208,7 @@ public class LdapManager {
      * Escapes any special chars (RFC 4515) from a string representing
      * a search filter assertion value.
      *
-     * @param input The input string.
+     * @param value The input string.
      *
      * @return A assertion value string ready for insertion into a 
      *         search filter string.

@@ -86,7 +86,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	private static final String UPDATE_CONVERSATION = "UPDATE ofConversation SET lastActivity=?, messageCount=? WHERE conversationID=?";
 	private static final String UPDATE_PARTICIPANT = "UPDATE ofConParticipant SET leftDate=? WHERE conversationID=? AND bareJID=? AND jidResource=? AND joinedDate=?";
 	private static final String INSERT_MESSAGE = "INSERT INTO ofMessageArchive(messageID, conversationID, fromJID, fromJIDResource, toJID, toJIDResource, sentDate, body, stanza) "
-			+ "VALUES ((SELECT COUNT(*) FROM ofMessageArchive),?,?,?,?,?,?,?,?)";
+			+ "VALUES (?,?,?,?,?,?,?,?,?)";
 	private static final String CONVERSATION_COUNT = "SELECT COUNT(*) FROM ofConversation";
 	private static final String MESSAGE_COUNT = "SELECT COUNT(*) FROM ofMessageArchive";
 	private static final String DELETE_CONVERSATION_1 = "DELETE FROM ofMessageArchive WHERE conversationID=?";
@@ -988,14 +988,15 @@ public class ConversationManager implements Startable, ComponentEventListener{
 					ArchivedMessage message;
 					int count = 0;
 					while ((message = messageQueue.poll()) != null) {
-						pstmt.setLong(1, message.getConversationID());
-						pstmt.setString(2, message.getFromJID().toBareJID());
-						pstmt.setString(3, message.getFromJID().getResource());
-						pstmt.setString(4, message.getToJID().toBareJID());
-						pstmt.setString(5, message.getToJID().getResource());
-						pstmt.setLong(6, message.getSentDate().getTime());
-						DbConnectionManager.setLargeTextField(pstmt, 7, message.getBody());
-						DbConnectionManager.setLargeTextField(pstmt, 8, message.getStanza());
+						pstmt.setInt(1, getArchivedMessageCount());
+						pstmt.setLong(2, message.getConversationID());
+						pstmt.setString(3, message.getFromJID().toBareJID());
+						pstmt.setString(4, message.getFromJID().getResource());
+						pstmt.setString(5, message.getToJID().toBareJID());
+						pstmt.setString(6, message.getToJID().getResource());
+						pstmt.setLong(7, message.getSentDate().getTime());
+						DbConnectionManager.setLargeTextField(pstmt, 8, message.getBody());
+						DbConnectionManager.setLargeTextField(pstmt, 9, message.getStanza());
 						if (DbConnectionManager.isBatchUpdatesSupported()) {
 							pstmt.addBatch();
 						} else {

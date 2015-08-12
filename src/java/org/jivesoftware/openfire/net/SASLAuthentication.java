@@ -275,7 +275,7 @@ public class SASLAuthentication {
                                 props.put(Sasl.SERVER_AUTH, "TRUE");
                             }
                             SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
-                                    session.getServerName(), props,
+                                    JiveGlobals.getProperty("xmpp.fqdn", session.getServerName()), props,
                                     new XMPPCallbackHandler());
 
                             if (ss == null) {
@@ -343,9 +343,11 @@ public class SASLAuthentication {
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
-                            if (!BASE64_ENCODED.matcher(response).matches()) {
-                                authenticationFailed(session, Failure.INCORRECT_ENCODING);
-                                return Status.failed;
+                            if (response.length() > 0) {
+                                if (!BASE64_ENCODED.matcher(response).matches()) {
+                                    authenticationFailed(session, Failure.INCORRECT_ENCODING);
+                                    return Status.failed;
+                                }
                             }
                             try {
                                 if (ssComplete) {

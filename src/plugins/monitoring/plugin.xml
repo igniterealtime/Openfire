@@ -6,7 +6,7 @@
     <description>Monitors conversations and statistics of the server.</description>
     <author>Jive Software</author>
     <version>1.4.6</version>
-    <date>11/08/2015</date>
+    <date>08/11/2015</date>
     <minServerVersion>3.9.0</minServerVersion>
     <databaseKey>monitoring</databaseKey>
     <databaseVersion>3</databaseVersion>

@@ -119,11 +119,4 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
         }
     }
 
-
-    public static void main(String... args) throws PacketRejectedException {
-        CallbackOnOffline c = new CallbackOnOffline();
-        c.initializePlugin(null, null);
-        c.interceptPacket(null, null, false, false);
-    }
-
 }

@@ -23,6 +23,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 public class CallbackOnOffline implements Plugin, PacketInterceptor {
@@ -31,6 +32,7 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
 
     private boolean debug;
     private String url;
+    private String token;
     private InterceptorManager interceptorManager;
     private UserManager userManager;
     private PresenceManager presenceManager;
@@ -47,12 +49,8 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
         userManager = XMPPServer.getInstance().getUserManager();
         client = ClientBuilder.newClient();
 
-        String code = "plugin.callback_on_offline.url";
-        url = JiveGlobals.getProperty(code, null);
-        if (url == null || url.length() == 0) {
-            String url = "http://localhost:8080/user/offline/callback/url";  //default url
-            JiveGlobals.setProperty(code, url);
-        }
+        url = getProperty("plugin.callback_on_offline.url", "http://localhost:8080/user/offline/callback/url");
+        token = getProperty("plugin.callback_on_offline.token", UUID.randomUUID().toString());
 
         // register with interceptor manager
         interceptorManager.addInterceptor(this);
@@ -60,6 +58,16 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
         if (debug) {
             Log.debug("initialize CallbackOnOffline plugin. Finish.");
         }
+    }
+
+    private String getProperty(String code, String defaultSetValue) {
+        String value = JiveGlobals.getProperty(code, null);
+        if (value == null || value.length() == 0) {
+            JiveGlobals.setProperty(code, defaultSetValue);
+            value = defaultSetValue;
+        }
+
+        return value;
     }
 
     public void destroyPlugin() {
@@ -97,6 +105,7 @@ public class CallbackOnOffline implements Plugin, PacketInterceptor {
                     JID from = packet.getFrom();
 
                     WebTarget target = client.target(url)
+                            .queryParam("token", token)
                             .queryParam("from", from.toBareJID())
                             .queryParam("to", to.toBareJID());
 

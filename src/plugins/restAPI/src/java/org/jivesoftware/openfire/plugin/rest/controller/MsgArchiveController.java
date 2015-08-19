@@ -1,30 +1,27 @@
 package org.jivesoftware.openfire.plugin.rest.controller;
 
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The Class MsgArchiveController.
  */
 public class MsgArchiveController {
 
-    private static final Logger Log = LoggerFactory.getLogger(MsgArchiveController.class);
+    /** The Constant LOG. */
+    private static final Logger LOG = LoggerFactory.getLogger(MsgArchiveController.class);
 
 	/** The Constant INSTANCE. */
 	public static final MsgArchiveController INSTANCE = new MsgArchiveController();
 
-	/** The server. */
-	private XMPPServer server;
-
-
+    /** The Constant USER_MESSAGE_COUNT. */
     private static final String USER_MESSAGE_COUNT = "select COUNT(1) from ofMessageArchive a " +
             "join ofPresence p on (a.sentDate > p.offlineDate) " +
             "WHERE a.toJID = ? AND p.username = ?";
@@ -39,15 +36,15 @@ public class MsgArchiveController {
 	}
 
 	/**
-	 * Instantiates a new user service controller.
+	 * The Constructor.
 	 */
 	private MsgArchiveController() {
-		server = XMPPServer.getInstance();
 	}
 
     /**
      * Returns the total number of messages that haven't been delivered to the user.
      *
+     * @param jid the jid
      * @return the total number of user unread messages.
      */
     public int getUnReadMessagesCount(JID jid) {
@@ -65,7 +62,7 @@ public class MsgArchiveController {
                 messageCount = rs.getInt(1);
             }
         } catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            LOG.error(sqle.getMessage(), sqle);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }

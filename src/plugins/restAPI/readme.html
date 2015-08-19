@@ -1248,6 +1248,7 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#chatroom">Chatroom</a></li>
 <li><a href="#system-property">System Property</a></li>
 <li><a href="#session">Session</a></li>
+<li><a href="#sessions-count">Sessions count</a></li>
 </ul>
 </li>
 </ul>
@@ -1401,15 +1402,19 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#examples-25">Examples</a></li>
 </ul>
 </li>
+<li><a href="#retrieve-concurrent-sessions">Retrieve concurrent sessions</a><ul>
+<li><a href="#examples-26">Examples</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#group-related-rest-endpoints">Group related REST Endpoints</a><ul>
 <li><a href="#retrieve-all-groups">Retrieve all groups</a><ul>
-<li><a href="#examples-26">Examples</a></li>
+<li><a href="#examples-26-1">Examples</a></li>
 </ul>
 </li>
 <li><a href="#retrieve-a-group">Retrieve a group</a><ul>
-<li><a href="#possible-parameters-24">Possible parameters</a></li>
+<li><a href="#possible-parameters-24-1">Possible parameters</a></li>
 <li><a href="#examples-27">Examples</a></li>
 </ul>
 </li>
@@ -1873,6 +1878,27 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 </tbody></table>
 
 
+<h3 id="sessions-count">Sessions count</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Optional</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>clusterSessions</td>
+  <td>No</td>
+  <td>Number of client sessions that are authenticated with the server. This includes anonymous and non-anoymous users from the whole cluster.</td>
+</tr>
+<tr>
+  <td>localSessions</td>
+  <td>No</td>
+  <td>Number of client sessions that are authenticated with the server. This includes anonymous and non-anoymous users.</td>
+</tr>
+</tbody></table>
 
 
 <h1 id="user-related-rest-endpoints">User related REST Endpoints</h1>
@@ -3539,6 +3565,23 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 
 
+<h2 id="retrieve-concurrent-sessions">Retrieve concurrent sessions</h2>
+
+<p>Endpoint to get count of concurrent sessions</p>
+
+<blockquote>
+  <p><strong>GET</strong> /system/statistics/sessions</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Sessions count</p>
+
+<h3 id="examples-26">Examples</h3>
+
+<p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+
+<p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/system/statistics/sessions">http://example.org:9090/plugins/restapi/v1/system/statistics/sessions</a></p>
+
 <h1 id="group-related-rest-endpoints">Group related REST Endpoints</h1>
 
 
@@ -4052,6 +4095,57 @@ If the strings are encoded incorrectly, double byte characters will look garbele
   <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
 </tr>
 </tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

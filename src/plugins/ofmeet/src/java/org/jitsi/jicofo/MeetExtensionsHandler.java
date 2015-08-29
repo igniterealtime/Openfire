@@ -7,6 +7,7 @@
 package org.jitsi.jicofo;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.ColibriConferenceIQ.Recording.*;
 import net.java.sip.communicator.util.Logger;
 
 import org.jitsi.impl.protocol.xmpp.extensions.*;
@@ -125,12 +126,13 @@ public class MeetExtensionsHandler
     {
         ColibriConferenceIQ.Recording recording = colibriIQ.getRecording();
 
-        boolean recordingState =
+        State recordingState =
             conference.modifyRecordingState(
                 colibriIQ.getFrom(),
                 recording.getToken(),
                 recording.getState(),
-                recording.getDirectory());
+                recording.getDirectory(),
+                colibriIQ.getTo());
 
         ColibriConferenceIQ response = new ColibriConferenceIQ();
 

@@ -9,6 +9,7 @@
 <%@ page import="org.jivesoftware.openfire.*" %>
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.io.File" %>
+<%@ page import="java.net.InetAddress" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -21,6 +22,15 @@
     OfMeetPlugin container = (OfMeetPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("ofmeet");
     PluginImpl plugin = container.getPlugin();
 
+    String ourIpAddress = "127.0.0.1";  
+    String ourHostname = XMPPServer.getInstance().getServerInfo().getHostname();
+    
+    try {
+	ourIpAddress = InetAddress.getByName(ourHostname).getHostAddress();
+    } catch (Exception e) {
+
+    }  
+    
     if (update)
     {
         String minPort = request.getParameter("minport");
@@ -467,7 +477,7 @@
                 </td>
 		<td>
                     <input name="localaddress" type="text" maxlength="20" size="15"
-                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_LOCAL_ADDRESS, XMPPServer.getInstance().getServerInfo().getHostname())%>"/>
+                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_LOCAL_ADDRESS, ourIpAddress)%>"/>
                 </td>
             </tr>
             <tr>
@@ -476,7 +486,7 @@
                 </td>
 		<td>
                     <input name="publicaddress" type="text" maxlength="20" size="15"
-                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_PUBLIC_ADDRESS, XMPPServer.getInstance().getServerInfo().getHostname())%>"/>
+                           value="<%=JiveGlobals.getProperty(PluginImpl.NAT_HARVESTER_PUBLIC_ADDRESS, ourIpAddress)%>"/>
                 </td>
             </tr>            
 	    <tr>

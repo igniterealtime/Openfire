@@ -15,6 +15,7 @@ import java.util.jar.*;
 import org.jitsi.service.neomedia.*;
 import org.jitsi.util.*;
 import org.jitsi.videobridge.xmpp.*;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.util.*;
 import org.slf4j.*;
@@ -145,8 +146,16 @@ public class PluginImpl
 		String recordingPath = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.recording.path", pluginDirectory.getAbsolutePath() + File.separator + "recordings");
 		String recordingSecret = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.recording.secret", "secret");
 
-		String localAddress = JiveGlobals.getProperty(NAT_HARVESTER_LOCAL_ADDRESS, null);
-		String publicAddress = JiveGlobals.getProperty(NAT_HARVESTER_PUBLIC_ADDRESS, null);
+		String ourIpAddress = "127.0.0.1";
+		String ourHostname = XMPPServer.getInstance().getServerInfo().getHostname();
+
+		try {
+			ourIpAddress = InetAddress.getByName(ourHostname).getHostAddress();
+		} catch (Exception e) {
+
+		}
+		String localAddress = JiveGlobals.getProperty(NAT_HARVESTER_LOCAL_ADDRESS, ourIpAddress);
+		String publicAddress = JiveGlobals.getProperty(NAT_HARVESTER_PUBLIC_ADDRESS, ourIpAddress);
 
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_LOCATION", pluginDirectory.getPath());
 		System.setProperty("net.java.sip.communicator.SC_HOME_DIR_NAME", ".");
@@ -155,17 +164,8 @@ public class PluginImpl
 		System.setProperty("org.jitsi.videobridge.ENABLE_MEDIA_RECORDING", enableRecording);
 		System.setProperty("org.jitsi.videobridge.MEDIA_RECORDING_PATH", recordingPath);
 		System.setProperty("org.jitsi.videobridge.MEDIA_RECORDING_TOKEN", recordingSecret);
-
-
-		if (localAddress != null && !"".equals(localAddress))
-		{
-			System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_LOCAL_ADDRESS", localAddress);
-		}
-
-		if (publicAddress != null && !"".equals(publicAddress))
-		{
-			System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_PUBLIC_ADDRESS", publicAddress);
-		}
+		System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_LOCAL_ADDRESS", localAddress);
+		System.setProperty("org.jitsi.videobridge.NAT_HARVESTER_PUBLIC_ADDRESS", publicAddress);
 
         PropertyEventDispatcher.addListener(this);
 

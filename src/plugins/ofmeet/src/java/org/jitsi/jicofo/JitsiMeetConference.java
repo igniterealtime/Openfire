@@ -7,6 +7,7 @@
 package org.jitsi.jicofo;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.ColibriConferenceIQ.Recording.*;
 import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.impl.protocol.jabber.jinglesdp.*;
 import net.java.sip.communicator.service.protocol.*;
@@ -186,6 +187,12 @@ public class JitsiMeetConference
      */
     private final PacketListener messageListener
         = new MessageListener();
+
+    /**
+     * Keeps a record whether user has activated recording before other
+     * participants has joined and the actual conference has been created.
+     */
+    private RecordingState earlyRecordingState = null;
 
     /**
      * Creates new instance of {@link JitsiMeetConference}.
@@ -655,6 +662,9 @@ public class JitsiMeetConference
         boolean useBundle = peer.hasBundleSupport();
 
         ColibriConferenceIQ peerChannels = allocateChannels(peer, contents);
+
+        if (peerChannels == null)
+            return null;
 
         peer.setColibriChannelsInfo(peerChannels);
 
@@ -1552,31 +1562,41 @@ public class JitsiMeetConference
      * @param state the new recording state to set.
      * @param path output recording path(recorder implementation and deployment
      *             dependent).
+     * @param to the received colibri packet destination.
      * @return new recording state(unchanged if modify attempt has failed).
      */
-    public boolean modifyRecordingState(
-            String from, String token, boolean state, String path)
+    public State modifyRecordingState(
+            String from, String token, State state, String path, String to)
     {
         ChatRoomMember member = findMember(from);
         if (member == null)
         {
             logger.error("No member found for address: " + from);
-            return false;
+            return State.OFF;
         }
         if (ChatRoomMemberRole.MODERATOR.compareTo(member.getRole()) < 0)
         {
             logger.info("Recording - request denied, not a moderator: " + from);
-            return false;
+            return State.OFF;
         }
 
         Recorder recorder = getRecorder();
         if (recorder == null)
         {
-            return false;
+            if(state.equals(State.OFF))
+            {
+                earlyRecordingState = null;
+                return State.OFF;
+            }
+
+            // save for later dispatching
+            earlyRecordingState = new RecordingState(
+                from, token, state, path, to);
+            return State.PENDING;
         }
 
         boolean isTokenCorrect
-            = recorder.setRecording(from, token, state, path);
+            = recorder.setRecording(from, token, state.equals(State.ON), path);
         if (!isTokenCorrect)
         {
             logger.info(
@@ -1584,7 +1604,7 @@ public class JitsiMeetConference
                     + chatRoom.getName());
         }
 
-        return recorder.isRecording();
+        return recorder.isRecording() ? State.ON : State.OFF;
     }
 
     private ChatRoomMember findMember(String from)
@@ -1865,7 +1885,7 @@ public class JitsiMeetConference
         private String getContent(LogPacketExtension log)
         {
             String messageBase64 = log.getMessage();
-            byte[] messageBytes = Base64.decode(messageBase64);
+            byte[] messageBytes = net.java.sip.communicator.util.Base64.decode(messageBase64);
 
             if (Boolean.parseBoolean(log.getTagValue("deflated")))
             {
@@ -1898,6 +1918,50 @@ public class JitsiMeetConference
             {
                 return new String(messageBytes);
             }
+        }
+    }
+
+
+    /**
+     * Saves early recording requests by user. Dispatched when new participant
+     * joins.
+     */
+    private class RecordingState
+    {
+        /**
+         * JID of the participant that wants to modify recording state.
+         */
+        String from;
+
+        /**
+         * Recording security token that will be verified on modify attempt.
+         */
+        String token;
+
+        /**
+         * The new recording state to set.
+         */
+        State state;
+
+        /**
+         * Output recording path(recorder implementation
+         * and deployment dependent).
+         */
+        String path;
+
+        /**
+         * The received colibri packet destination.
+         */
+        String to;
+
+        public RecordingState(String from, String token,
+            State state, String path, String to)
+        {
+            this.from = from;
+            this.token = token;
+            this.state = state;
+            this.path = path;
+            this.to = to;
         }
     }
 }

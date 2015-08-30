@@ -164,7 +164,7 @@ public class XmppProtocolProvider
 
         discoInfoManager = new ScServiceDiscoveryManager(
             this, connection,
-            new String[]{}, new String[]{});
+            new String[]{}, new String[]{}, false);
 
         registrationState = RegistrationState.REGISTERED;
 

@@ -230,7 +230,7 @@ public class FocusComponent extends AbstractComponent
         {
             org.jivesoftware.smack.packet.IQ smackIq = IQUtils.convert(iq);
 
-            if (smackIq instanceof ConferenceIq)
+            if (focusManager != null && smackIq instanceof ConferenceIq)
             {
                 ConferenceIq query = (ConferenceIq) smackIq;
                 ConferenceIq response = new ConferenceIq();

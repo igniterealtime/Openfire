@@ -104,26 +104,32 @@ public class ScramSha1SaslServer implements SaslServer {
      */
     @Override
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
-        byte[] challenge;
-        switch (state) {
-            case INITIAL:
-                challenge = generateServerFirstMessage(response);
-                state = State.IN_PROGRESS;
-                break;
-            case IN_PROGRESS:
-                challenge = generateServerFinalMessage(response);
-                state = State.COMPLETE;
-                break;
-            case COMPLETE:
-                if (response == null || response.length == 0) {
-                    challenge = new byte[0];
+        try {
+            byte[] challenge;
+            switch (state)
+            {
+                case INITIAL:
+                    challenge = generateServerFirstMessage(response);
+                    state = State.IN_PROGRESS;
                     break;
-                }
-            default:
-                throw new SaslException("No response expected in state " + state);
+                case IN_PROGRESS:
+                    challenge = generateServerFinalMessage(response);
+                    state = State.COMPLETE;
+                    break;
+                case COMPLETE:
+                    if (response == null || response.length == 0)
+                    {
+                        challenge = new byte[0];
+                        break;
+                    }
+                default:
+                    throw new SaslException("No response expected in state " + state);
 
+            }
+            return challenge;
+        } catch (RuntimeException ex) {
+           throw new SaslException("Unexpected exception while evaluating SASL response.", ex);
         }
-        return challenge;
     }
 
     /**
@@ -182,8 +188,14 @@ public class ScramSha1SaslServer implements SaslServer {
 
         try {
             String authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
-            byte[] storedKey = getStoredKey(username);
+            byte[] storedKey = getStoredKey( username );
+            if (storedKey == null) {
+                throw new SaslException("No stored key for user '"+username+"'");
+            }
             byte[] serverKey = getServerKey(username);
+            if (serverKey == null) {
+                throw new SaslException("No server key for user '"+username+"'");
+            }
 
             byte[] clientSignature = ScramUtils.computeHmac(storedKey, authMessage);
             byte[] serverSignature = ScramUtils.computeHmac(serverKey, authMessage);
@@ -328,15 +340,23 @@ public class ScramSha1SaslServer implements SaslServer {
      * Retrieve the server key from the database for a given username.
      */
     private byte[] getServerKey(final String username) throws UserNotFoundException {
-    	return DatatypeConverter.parseBase64Binary(
-    			UserManager.getUserProvider().loadUser(username).getServerKey());
+        final String serverKey = UserManager.getUserProvider().loadUser( username ).getServerKey();
+        if (serverKey == null) {
+            return null;
+        } else {
+            return DatatypeConverter.parseBase64Binary( serverKey );
+        }
     }
     
     /**
      * Retrieve the stored key from the database for a given username.
      */
     private byte[] getStoredKey(final String username) throws UserNotFoundException {
-    	return DatatypeConverter.parseBase64Binary(
-    			UserManager.getUserProvider().loadUser(username).getStoredKey());
+        final String storedKey = UserManager.getUserProvider().loadUser( username ).getStoredKey();
+        if (storedKey == null) {
+            return null;
+        } else {
+            return DatatypeConverter.parseBase64Binary( storedKey );
+        }
     }
 }

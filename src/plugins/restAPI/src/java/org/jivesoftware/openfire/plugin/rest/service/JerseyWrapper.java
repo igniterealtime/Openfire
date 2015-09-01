@@ -21,7 +21,7 @@ public class JerseyWrapper extends ServletContainer {
 
 	/** The Constant AUTHFILTER. */
 	private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.rest.AuthFilter";
-	
+
 	/** The Constant CORSFILTER. */
 	private static final String CORSFILTER = "org.jivesoftware.openfire.plugin.rest.CORSFilter";
 
@@ -51,12 +51,12 @@ public class JerseyWrapper extends ServletContainer {
 
 	/** The prc. */
 	private static PackagesResourceConfig prc;
-	
+
 	/** The Constant JERSEY_LOGGER. */
 	private final static Logger JERSEY_LOGGER = Logger.getLogger("com.sun.jersey");
 
 	static {
-		JERSEY_LOGGER.setLevel(Level.SEVERE); 
+		JERSEY_LOGGER.setLevel(Level.SEVERE);
 		config = new HashMap<String, Object>();
 		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
@@ -65,13 +65,13 @@ public class JerseyWrapper extends ServletContainer {
 		prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
 
 		prc.getClasses().add(RestAPIService.class);
-		
+
 		prc.getClasses().add(MUCRoomService.class);
 		prc.getClasses().add(MUCRoomOwnersService.class);
 		prc.getClasses().add(MUCRoomAdminsService.class);
 		prc.getClasses().add(MUCRoomMembersService.class);
 		prc.getClasses().add(MUCRoomOutcastsService.class);
-		
+
 		prc.getClasses().add(UserServiceLegacy.class);
 		prc.getClasses().add(UserService.class);
 		prc.getClasses().add(UserRosterService.class);
@@ -82,6 +82,7 @@ public class JerseyWrapper extends ServletContainer {
 		prc.getClasses().add(SessionService.class);
 		prc.getClasses().add(MsgArchiveService.class);
 		prc.getClasses().add(StatisticsService.class);
+		prc.getClasses().add(MessageService.class);
 
 		prc.getClasses().add(RESTExceptionMapper.class);
 	}

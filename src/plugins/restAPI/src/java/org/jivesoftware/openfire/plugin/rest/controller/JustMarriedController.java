@@ -11,6 +11,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.roster.Roster;
@@ -130,6 +131,7 @@ public class JustMarriedController {
 	 */
 	private static void deleteUser(User oldUser) {
 		UserManager.getInstance().deleteUser(oldUser);
+		LockOutManager.getInstance().enableAccount(oldUser.getUsername());
 		final StreamError error = new StreamError(StreamError.Condition.not_authorized);
 		for (ClientSession sess : SessionManager.getInstance().getSessions(oldUser.getUsername())) {
 			sess.deliverRawText(error.toXML());

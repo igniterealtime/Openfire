@@ -333,7 +333,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		for (Future<Object> future : futures.values()) {
         			long start = System.nanoTime();
         			result.add(future.get(nanosLeft, TimeUnit.NANOSECONDS));
-        			nanosLeft = (System.nanoTime() - start);
+        			nanosLeft = nanosLeft - (System.nanoTime() - start);
         		}
         	} catch (TimeoutException te) {
         		logger.error("Failed to execute cluster task within " + MAX_CLUSTER_EXECUTION_TIME + " seconds", te);

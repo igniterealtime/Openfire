@@ -1,7 +1,12 @@
 package org.jivesoftware.openfire.plugin.rest.exceptions;
 
+import java.util.List;
+
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
@@ -16,6 +21,11 @@ public class RESTExceptionMapper implements ExceptionMapper<ServiceException> {
 
 	/** The log. */
 	private static Logger LOG = LoggerFactory.getLogger(RESTExceptionMapper.class);
+	
+	/** The headers. */
+	@Context
+    private HttpHeaders headers;
+	
 
 	/**
 	 * Instantiates a new REST exception mapper.
@@ -36,7 +46,17 @@ public class RESTExceptionMapper implements ExceptionMapper<ServiceException> {
 		LOG.error(
 				exception.getException() + ": " + exception.getMessage() + " with ressource "
 						+ exception.getRessource(), exception.getException());
-		return Response.status(exception.getStatus()).entity(errorResponse).type(MediaType.APPLICATION_XML).build();
+		
+		ResponseBuilder responseBuilder = Response.status(exception.getStatus()).entity(errorResponse);
+		List<MediaType> accepts = headers.getAcceptableMediaTypes();
+	    if (accepts!=null && accepts.size() > 0) {
+	        MediaType mediaType = accepts.get(0);
+	        responseBuilder = responseBuilder.type(mediaType);
+	    }
+	    else {
+	    	responseBuilder = responseBuilder.type(headers.getMediaType());
+	    }
+	    return responseBuilder.build();
 	}
 
 }

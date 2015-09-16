@@ -54,7 +54,7 @@ public class GroupService {
 
 	@DELETE
 	@Path("/{groupName}")
-	public Response deleteUserFromGroups(@PathParam("groupName") String groupName) throws ServiceException {
+	public Response deleteGroup(@PathParam("groupName") String groupName) throws ServiceException {
 		groupController.deleteGroup(groupName);
 		return Response.status(Response.Status.OK).build();
 	}

@@ -36,6 +36,22 @@ public class UserGroupService {
 		plugin.addUserToGroups(username, userGroupsEntity);
 		return Response.status(Response.Status.CREATED).build();
 	}
+	
+	@POST
+	@Path("/{groupName}")
+	public Response addUserToGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
+			throws ServiceException {
+		plugin.addUserToGroup(username, groupName);
+		return Response.status(Response.Status.CREATED).build();
+	}
+	
+	@DELETE
+	@Path("/{groupName}")
+	public Response deleteUserFromGroup(@PathParam("username") String username, @PathParam("groupName") String groupName)
+			throws ServiceException {
+		plugin.deleteUserFromGroup(username, groupName);
+		return Response.status(Response.Status.OK).build();
+	}
 
 	@DELETE
 	public Response deleteUserFromGroups(@PathParam("username") String username, UserGroupsEntity userGroupsEntity)

@@ -394,6 +394,25 @@ public class UserServiceController {
 			}
 		}
 	}
+	
+	/**
+	 * Adds the user to group.
+	 *
+	 * @param username the username
+	 * @param groupName the group name
+	 * @throws ServiceException the service exception
+	 */
+	public void addUserToGroup(String username, String groupName) throws ServiceException {
+		Group group = null;
+		try {
+			group = GroupManager.getInstance().getGroup(groupName);
+		} catch (GroupNotFoundException e) {
+			// Create this group
+			group = GroupController.getInstance().createGroup(new GroupEntity(groupName, ""));
+		}
+		
+		group.getMembers().add(server.createJID(username, null));
+	}
 
 	/**
 	 * Delete user from groups.
@@ -418,6 +437,24 @@ public class UserServiceController {
 				group.getMembers().remove(server.createJID(username, null));
 			}
 		}
+	}
+	
+	/**
+	 * Delete user from group.
+	 *
+	 * @param username the username
+	 * @param groupName the group name
+	 * @throws ServiceException the service exception
+	 */
+	public void deleteUserFromGroup(String username, String groupName) throws ServiceException {
+		Group group = null;
+		try {
+			group = GroupManager.getInstance().getGroup(groupName);
+		} catch (GroupNotFoundException e) {
+			throw new ServiceException("Could not find group", groupName, ExceptionType.GROUP_NOT_FOUND,
+					Response.Status.NOT_FOUND, e);
+		}
+		group.getMembers().remove(server.createJID(username, null));
 	}
 
 	/**

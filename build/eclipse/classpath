@@ -63,7 +63,6 @@
 	<classpathentry kind="lib" path="build/lib/merge/jetty-servlet.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-util.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-webapp.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/jetty-websocket.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-xml.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jmdns.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jsp-api.jar"/>
@@ -73,7 +72,6 @@
 	<classpathentry kind="lib" path="build/lib/merge/log4j.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/mina-core.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/mina-filter-compression.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/mina-filter-ssl.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/proxool.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/rome-fetcher.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/rome.jar"/>
@@ -85,21 +83,14 @@
 	<classpathentry kind="lib" path="build/lib/merge/tinder.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="lib" path="build/lib/objenesis.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant/pack200task.jar"/>
 	<classpathentry kind="lib" path="build/lib/ant/qdox.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/commons-lang-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/src/mina-core-1.1.7-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/src/mina-filter-compression-1.1.7-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/src/mina-filter-ssl-1.1.7-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/src/slf4j-api-1.5.8-sources.jar"/>
-	<classpathentry kind="lib" path="build/lib/src/slf4j-log4j12-1.5.8-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/ant/xmltask.jar"/>
 	<classpathentry kind="lib" path="src/plugins/clientControl/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/lucene.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/xstream.jar"/>
 	<classpathentry kind="lib" path="src/plugins/gojara/lib/json.jar"/>
-	<classpathentry kind="lib" path="src/plugins/jingleNodes/lib/jnsapi.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/concurrent.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/dwr.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/httpclient.jar"/>
@@ -122,6 +113,7 @@
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/smackx.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/stcomm.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/xmlrpc.jar"/>
+	<classpathentry kind="lib" path="src/plugins/jingleNodes/lib/jnsapi.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/dwr.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/itext.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/jcommon.jar"/>
@@ -149,5 +141,16 @@
 	<classpathentry kind="lib" path="build/lib/dist/bcpg-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcpkix-jdk15on.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/bcprov-jdk15on.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty-servlets.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-client.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-core.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-http-common.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-http-server.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-http.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/spdy-server.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/javax-websocket-client-impl.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/javax-websocket-server-impl.jar"/>
+	<classpathentry kind="lib" path="src/plugins/callbackOnOffline/lib/javax.ws.rs-api-2.0.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/userservice/lib/jersey-bundle-1.18.jar"/>
 	<classpathentry kind="output" path="work/classes"/>
 </classpath>

@@ -1292,73 +1292,83 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#examples-5">Examples</a></li>
 </ul>
 </li>
-<li><a href="#add-user-to-group">Add user to group</a><ul>
+<li><a href="#add-user-to-groups">Add user to groups</a><ul>
 <li><a href="#possible-parameters-5">Possible parameters</a></li>
 <li><a href="#examples-6">Examples</a></li>
 </ul>
 </li>
-<li><a href="#delete-a-user-from-a-group">Delete a user from a group</a><ul>
+<li><a href="#add-user-to-group">Add user to group</a><ul>
 <li><a href="#possible-parameters-6">Possible parameters</a></li>
 <li><a href="#examples-7">Examples</a></li>
 </ul>
 </li>
-<li><a href="#lockout-a-user">Lockout a user</a><ul>
+<li><a href="#delete-a-user-from-a-groups">Delete a user from a groups</a><ul>
 <li><a href="#possible-parameters-7">Possible parameters</a></li>
 <li><a href="#examples-8">Examples</a></li>
 </ul>
 </li>
-<li><a href="#unlock-a-user">Unlock a user</a><ul>
+<li><a href="#delete-a-user-from-a-group">Delete a user from a group</a><ul>
 <li><a href="#possible-parameters-8">Possible parameters</a></li>
 <li><a href="#examples-9">Examples</a></li>
 </ul>
 </li>
-<li><a href="#retrieve-user-roster">Retrieve user roster</a><ul>
+<li><a href="#lockout-a-user">Lockout a user</a><ul>
+<li><a href="#possible-parameters-8-1">Possible parameters</a></li>
+<li><a href="#examples-9-1">Examples</a></li>
+</ul>
+</li>
+<li><a href="#unlock-a-user">Unlock a user</a><ul>
 <li><a href="#possible-parameters-9">Possible parameters</a></li>
 <li><a href="#examples-10">Examples</a></li>
 </ul>
 </li>
-<li><a href="#create-a-user-roster-entry">Create a user roster entry</a><ul>
+<li><a href="#retrieve-user-roster">Retrieve user roster</a><ul>
 <li><a href="#possible-parameters-10">Possible parameters</a></li>
 <li><a href="#examples-11">Examples</a></li>
 </ul>
 </li>
-<li><a href="#delete-a-user-roster-entry">Delete a user roster entry</a><ul>
+<li><a href="#create-a-user-roster-entry">Create a user roster entry</a><ul>
 <li><a href="#possible-parameters-11">Possible parameters</a></li>
 <li><a href="#examples-12">Examples</a></li>
 </ul>
 </li>
-<li><a href="#update-a-user-roster-entry">Update a user roster entry</a><ul>
+<li><a href="#delete-a-user-roster-entry">Delete a user roster entry</a><ul>
 <li><a href="#possible-parameters-12">Possible parameters</a></li>
 <li><a href="#examples-13">Examples</a></li>
+</ul>
+</li>
+<li><a href="#update-a-user-roster-entry">Update a user roster entry</a><ul>
+<li><a href="#possible-parameters-13">Possible parameters</a></li>
+<li><a href="#examples-14">Examples</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><a href="#chat-room-related-rest-endpoints">Chat room related REST Endpoints</a><ul>
 <li><a href="#retrieve-all-chat-rooms">Retrieve all chat rooms</a><ul>
-<li><a href="#possible-parameters-13">Possible parameters</a></li>
-<li><a href="#examples-14">Examples</a></li>
-</ul>
-</li>
-<li><a href="#retrieve-a-chat-room">Retrieve a chat room</a><ul>
 <li><a href="#possible-parameters-14">Possible parameters</a></li>
 <li><a href="#examples-15">Examples</a></li>
 </ul>
 </li>
-<li><a href="#retrieve-chat-room-participants">Retrieve chat room participants</a><ul>
+<li><a href="#retrieve-a-chat-room">Retrieve a chat room</a><ul>
 <li><a href="#possible-parameters-15">Possible parameters</a></li>
 <li><a href="#examples-16">Examples</a></li>
 </ul>
 </li>
-<li><a href="#create-a-chat-room">Create a chat room</a><ul>
+<li><a href="#retrieve-chat-room-participants">Retrieve chat room participants</a><ul>
 <li><a href="#possible-parameters-16">Possible parameters</a></li>
+<li><a href="#examples-17">Examples</a></li>
+</ul>
+</li>
+<li><a href="#create-a-chat-room">Create a chat room</a><ul>
+<li><a href="#possible-parameters-17">Possible parameters</a></li>
 <li><a href="#xml-examples-1">XML Examples</a></li>
 <li><a href="#json-examples-1">JSON Examples</a></li>
 </ul>
 </li>
 <li><a href="#delete-a-chat-room">Delete a chat room</a><ul>
-<li><a href="#possible-parameters-17">Possible parameters</a></li>
-<li><a href="#examples-17">Examples</a></li>
+<li><a href="#possible-parameters-17-1">Possible parameters</a></li>
+<li><a href="#examples-17-1">Examples</a></li>
 </ul>
 </li>
 <li><a href="#update-a-chat-room">Update a chat room</a><ul>
@@ -1484,6 +1494,8 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li>Get overview over all or specific user sessions</li>
 <li>Send broadcast message to all online users</li>
 </ul>
+
+
 
 <h2 id="available-rest-api-clients">Available REST API clients</h2>
 
@@ -2322,9 +2334,9 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 
 
-<h2 id="add-user-to-group">Add user to group</h2>
+<h2 id="add-user-to-groups">Add user to groups</h2>
 
-<p>Endpoint to add user to a group(s)</p>
+<p>Endpoint to add user to a groups</p>
 
 <blockquote>
   <p><strong>POST</strong> /users/{username}/groups</p>
@@ -2332,8 +2344,6 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 <p><strong>Payload:</strong> Groups <br>
 <strong>Return value:</strong> HTTP status 201 (Created)</p>
-
-
 
 <h3 id="possible-parameters-5">Possible parameters</h3>
 
@@ -2378,18 +2388,16 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 
 
-<h2 id="delete-a-user-from-a-group">Delete a user from a group</h2>
+<h2 id="add-user-to-group">Add user to group</h2>
 
-<p>Endpoint to remove a user from a group(s)</p>
+<p>Endpoint to add user to a group</p>
 
 <blockquote>
-  <p><strong>DELETE</strong> /users/{username}/groups</p>
+  <p><strong>POST</strong> /users/{username}/groups/{groupName}</p>
 </blockquote>
 
-<p><strong>Payload:</strong> Groups <br>
-<strong>Return value:</strong> HTTP status 200 (OK)</p>
-
-
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
 
 <h3 id="possible-parameters-6">Possible parameters</h3>
 
@@ -2408,9 +2416,13 @@ If you want to create a resource with JSON data format, please add “<strong>Co
   <td>Exact username</td>
   <td></td>
 </tr>
+<tr>
+  <td>groupName</td>
+  <td>@Path</td>
+  <td>Exact group name</td>
+  <td></td>
+</tr>
 </tbody></table>
-
-
 
 
 <h3 id="examples-7">Examples</h3>
@@ -2419,33 +2431,19 @@ If you want to create a resource with JSON data format, please add “<strong>Co
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
   <strong>Header:</strong> Content-Type application/xml</p>
   
-  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/groups">http://example.org:9090/plugins/restapi/v1/users/testuser/groups</a></p>
+  <p><strong>POST</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/groups/testGroup">http://example.org:9090/plugins/restapi/v1/users/testuser/groups/testGroup</a></p>
 </blockquote>
 
-<p><strong>Payload:</strong></p>
+<h2 id="delete-a-user-from-a-groups">Delete a user from a groups</h2>
 
-
-
-<pre class="prettyprint"><code class=" hljs xml"><span class="hljs-pi">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-title">groups</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-title">groupname</span>&gt;</span>Admins<span class="hljs-tag">&lt;/<span class="hljs-title">groupname</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-title">groupname</span>&gt;</span>Support<span class="hljs-tag">&lt;/<span class="hljs-title">groupname</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-title">groups</span>&gt;</span></code></pre>
-
-
-
-<h2 id="lockout-a-user">Lockout a user</h2>
-
-<p>Endpoint to lockout / ban the user from the chat server. The user will be kicked if the user is online.</p>
+<p>Endpoint to remove a user from a groups</p>
 
 <blockquote>
-  <p><strong>POST</strong> /lockouts/{username}</p>
+  <p><strong>DELETE</strong> /users/{username}/groups</p>
 </blockquote>
 
-<p><strong>Payload:</strong> none <br>
-<strong>Return value:</strong> HTTP status 201 (Created)</p>
-
-
+<p><strong>Payload:</strong> Groups <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
 
 <h3 id="possible-parameters-7">Possible parameters</h3>
 
@@ -2472,23 +2470,80 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <h3 id="examples-8">Examples</h3>
 
 <blockquote>
-  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
+  <strong>Header:</strong> Content-Type application/xml</p>
   
-  <p><strong>POST</strong> <a href="http://example.org:9090/plugins/restapi/v1/lockouts/testuser">http://example.org:9090/plugins/restapi/v1/lockouts/testuser</a></p>
+  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/groups">http://example.org:9090/plugins/restapi/v1/users/testuser/groups</a></p>
 </blockquote>
 
+<p><strong>Payload:</strong></p>
 
 
-<h2 id="unlock-a-user">Unlock a user</h2>
 
-<p>Endpoint to unlock / unban the user</p>
+<pre class="prettyprint"><code class=" hljs xml"><span class="hljs-pi">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">groups</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">groupname</span>&gt;</span>Admins<span class="hljs-tag">&lt;/<span class="hljs-title">groupname</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-title">groupname</span>&gt;</span>Support<span class="hljs-tag">&lt;/<span class="hljs-title">groupname</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-title">groups</span>&gt;</span></code></pre>
+
+
+
+<h2 id="delete-a-user-from-a-group">Delete a user from a group</h2>
+
+<p>Endpoint to remove a user from a group</p>
 
 <blockquote>
-  <p><strong>DELETE</strong> /lockouts/{username}</p>
+  <p><strong>DELETE</strong> /users/{username}/groups/{groupName}</p>
 </blockquote>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+<h3 id="possible-parameters-8">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>username</td>
+  <td>@Path</td>
+  <td>Exact username</td>
+  <td></td>
+</tr>
+<tr>
+  <td>groupName</td>
+  <td>@Path</td>
+  <td>Exact group name</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+<h3 id="examples-9">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
+  <strong>Header:</strong> Content-Type application/xml</p>
+  
+  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/groups/testGroup">http://example.org:9090/plugins/restapi/v1/users/testuser/groups/testGroup</a></p>
+</blockquote>
+
+<h2 id="lockout-a-user">Lockout a user</h2>
+
+<p>Endpoint to lockout / ban the user from the chat server. The user will be kicked if the user is online.</p>
+
+<blockquote>
+  <p><strong>POST</strong> /lockouts/{username}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
 
 
 
@@ -2519,21 +2574,21 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
   
-  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/lockouts/testuser">http://example.org:9090/plugins/restapi/v1/lockouts/testuser</a></p>
+  <p><strong>POST</strong> <a href="http://example.org:9090/plugins/restapi/v1/lockouts/testuser">http://example.org:9090/plugins/restapi/v1/lockouts/testuser</a></p>
 </blockquote>
 
 
 
-<h2 id="retrieve-user-roster">Retrieve user roster</h2>
+<h2 id="unlock-a-user">Unlock a user</h2>
 
-<p>Endpoint to get roster entries (buddies) from a specific user</p>
+<p>Endpoint to unlock / unban the user</p>
 
 <blockquote>
-  <p><strong>GET</strong> /users/{username}/roster</p>
+  <p><strong>DELETE</strong> /lockouts/{username}</p>
 </blockquote>
 
 <p><strong>Payload:</strong> none <br>
-<strong>Return value:</strong> Roster</p>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
 
 
 
@@ -2564,21 +2619,21 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
   
-  <p><strong>GET </strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/roster">http://example.org:9090/plugins/restapi/v1/users/testuser/roster</a></p>
+  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/lockouts/testuser">http://example.org:9090/plugins/restapi/v1/lockouts/testuser</a></p>
 </blockquote>
 
 
 
-<h2 id="create-a-user-roster-entry">Create a user roster entry</h2>
+<h2 id="retrieve-user-roster">Retrieve user roster</h2>
 
-<p>Endpoint to add a new roster entry to a user</p>
+<p>Endpoint to get roster entries (buddies) from a specific user</p>
 
 <blockquote>
-  <p><strong>POST</strong> /users/{username}/roster</p>
+  <p><strong>GET</strong> /users/{username}/roster</p>
 </blockquote>
 
-<p><strong>Payload:</strong> RosterItem <br>
-<strong>Return value:</strong> HTTP status 201 (Created)</p>
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Roster</p>
 
 
 
@@ -2605,6 +2660,51 @@ If you want to create a resource with JSON data format, please add “<strong>Co
 
 
 <h3 id="examples-11">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>GET </strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/roster">http://example.org:9090/plugins/restapi/v1/users/testuser/roster</a></p>
+</blockquote>
+
+
+
+<h2 id="create-a-user-roster-entry">Create a user roster entry</h2>
+
+<p>Endpoint to add a new roster entry to a user</p>
+
+<blockquote>
+  <p><strong>POST</strong> /users/{username}/roster</p>
+</blockquote>
+
+<p><strong>Payload:</strong> RosterItem <br>
+<strong>Return value:</strong> HTTP status 201 (Created)</p>
+
+
+
+<h3 id="possible-parameters-11">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>username</td>
+  <td>@Path</td>
+  <td>Exact username</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-12">Examples</h3>
 
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
@@ -2652,57 +2752,6 @@ Payload Example 1 (required parameters):</p>
 
 
 
-<h3 id="possible-parameters-11">Possible parameters</h3>
-
-<table>
-<thead>
-<tr>
-  <th>Parameter</th>
-  <th>Parameter Type</th>
-  <th>Description</th>
-  <th>Default value</th>
-</tr>
-</thead>
-<tbody><tr>
-  <td>username</td>
-  <td>@Path</td>
-  <td>Exact username</td>
-  <td></td>
-</tr>
-<tr>
-  <td>jid</td>
-  <td>@Path</td>
-  <td>JID of the roster item</td>
-  <td></td>
-</tr>
-</tbody></table>
-
-
-
-
-<h3 id="examples-12">Examples</h3>
-
-<blockquote>
-  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
-  
-  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/roster/peter@pan.de">http://example.org:9090/plugins/restapi/v1/users/testuser/roster/peter@pan.de</a></p>
-</blockquote>
-
-
-
-<h2 id="update-a-user-roster-entry">Update a user roster entry</h2>
-
-<p>Endpoint to update a roster entry</p>
-
-<blockquote>
-  <p><strong>PUT</strong> /users/{username}/roster/{jid}</p>
-</blockquote>
-
-<p><strong>Payload:</strong> RosterItem <br>
-<strong>Return value:</strong> HTTP status 200 (OK)</p>
-
-
-
 <h3 id="possible-parameters-12">Possible parameters</h3>
 
 <table>
@@ -2732,6 +2781,57 @@ Payload Example 1 (required parameters):</p>
 
 
 <h3 id="examples-13">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>DELETE</strong> <a href="http://example.org:9090/plugins/restapi/v1/users/testuser/roster/peter@pan.de">http://example.org:9090/plugins/restapi/v1/users/testuser/roster/peter@pan.de</a></p>
+</blockquote>
+
+
+
+<h2 id="update-a-user-roster-entry">Update a user roster entry</h2>
+
+<p>Endpoint to update a roster entry</p>
+
+<blockquote>
+  <p><strong>PUT</strong> /users/{username}/roster/{jid}</p>
+</blockquote>
+
+<p><strong>Payload:</strong> RosterItem <br>
+<strong>Return value:</strong> HTTP status 200 (OK)</p>
+
+
+
+<h3 id="possible-parameters-13">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>username</td>
+  <td>@Path</td>
+  <td>Exact username</td>
+  <td></td>
+</tr>
+<tr>
+  <td>jid</td>
+  <td>@Path</td>
+  <td>JID of the roster item</td>
+  <td></td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-14">Examples</h3>
 
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU= <br>
@@ -2773,7 +2873,7 @@ Payload Example 1 (required parameters):</p>
 
 
 
-<h3 id="possible-parameters-13">Possible parameters</h3>
+<h3 id="possible-parameters-14">Possible parameters</h3>
 
 <table>
 <thead>
@@ -2807,7 +2907,7 @@ Payload Example 1 (required parameters):</p>
 
 
 
-<h3 id="examples-14">Examples</h3>
+<h3 id="examples-15">Examples</h3>
 
 <blockquote>
   <p><strong>Header</strong>: Authorization: Basic YWRtaW46MTIzNDU=</p>
@@ -2830,58 +2930,6 @@ Payload Example 1 (required parameters):</p>
 
 <p><strong>Payload:</strong> none <br>
 <strong>Return value:</strong> Chatroom</p>
-
-
-
-<h3 id="possible-parameters-14">Possible parameters</h3>
-
-<table>
-<thead>
-<tr>
-  <th>Parameter</th>
-  <th>Parameter Type</th>
-  <th>Description</th>
-  <th>Default value</th>
-</tr>
-</thead>
-<tbody><tr>
-  <td>roomname</td>
-  <td>@Path</td>
-  <td>Exact room name</td>
-  <td></td>
-</tr>
-<tr>
-  <td>servicename</td>
-  <td>@QueryParam</td>
-  <td>The name of the Group Chat Service</td>
-  <td>conference</td>
-</tr>
-</tbody></table>
-
-
-
-
-<h3 id="examples-15">Examples</h3>
-
-<blockquote>
-  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
-  
-  <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/test">http://example.org:9090/plugins/restapi/v1/chatrooms/test</a> <br>
-  <strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/test?servicename=privateconf">http://example.org:9090/plugins/restapi/v1/chatrooms/test?servicename=privateconf</a></p>
-</blockquote>
-
-
-
-<h2 id="retrieve-chat-room-participants">Retrieve chat room participants</h2>
-
-<p>Endpoint to get all participants with a role of specified room.</p>
-
-<blockquote>
-  <p><strong>GET</strong> /chatrooms/{roomName}/participants</p>
-</blockquote>
-
-<p><strong>Payload:</strong> none <br>
-<strong>Return value:</strong> Participants</p>
 
 
 
@@ -2918,6 +2966,58 @@ Payload Example 1 (required parameters):</p>
 <blockquote>
   <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
   
+  <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/test">http://example.org:9090/plugins/restapi/v1/chatrooms/test</a> <br>
+  <strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/test?servicename=privateconf">http://example.org:9090/plugins/restapi/v1/chatrooms/test?servicename=privateconf</a></p>
+</blockquote>
+
+
+
+<h2 id="retrieve-chat-room-participants">Retrieve chat room participants</h2>
+
+<p>Endpoint to get all participants with a role of specified room.</p>
+
+<blockquote>
+  <p><strong>GET</strong> /chatrooms/{roomName}/participants</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Participants</p>
+
+
+
+<h3 id="possible-parameters-16">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>roomname</td>
+  <td>@Path</td>
+  <td>Exact room name</td>
+  <td></td>
+</tr>
+<tr>
+  <td>servicename</td>
+  <td>@QueryParam</td>
+  <td>The name of the Group Chat Service</td>
+  <td>conference</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-17">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
   <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/room1/participants">http://example.org:9090/plugins/restapi/v1/chatrooms/room1/participants</a></p>
 </blockquote>
 
@@ -2936,7 +3036,7 @@ Payload Example 1 (required parameters):</p>
 
 
 
-<h3 id="possible-parameters-16">Possible parameters</h3>
+<h3 id="possible-parameters-17">Possible parameters</h3>
 
 <table>
 <thead>
@@ -3094,8 +3194,6 @@ Payload Example 1 (required parameters):</p>
         ]
     }
 }</code></pre>
-
-
 
 <h2 id="delete-a-chat-room">Delete a chat room</h2>
 
@@ -3916,6 +4014,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 <h1 id="message-related-rest-endpoints">Message related REST Endpoints</h1>
 
+
+
 <h2 id="send-a-broadcast-message">Send a broadcast message</h2>
 
 <p>Endpoint to send a broadcast/server message to all online users</p>
@@ -3926,6 +4026,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 
 <p><strong>Payload:</strong> Message <br>
 <strong>Return value:</strong> HTTP status 201 (Created)</p>
+
+
 
 <h3 id="examples-35">Examples</h3>
 
@@ -3943,6 +4045,8 @@ DELETE /chatrooms/{roomName}/{roles}/{name}</p>
 <span class="hljs-tag">&lt;<span class="hljs-title">message</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-title">body</span>&gt;</span>Your message<span class="hljs-tag">&lt;/<span class="hljs-title">body</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-title">message</span>&gt;</span></code></pre>
+
+
 
 <h1 id="deprecated-user-service-plugin-readme">(Deprecated) User Service Plugin Readme</h1>
 
@@ -4139,6 +4243,47 @@ If the strings are encoded incorrectly, double byte characters will look garbele
   <td>Roster item can not be added/deleted to/from a shared group for operations with roster.</td>
 </tr>
 </tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

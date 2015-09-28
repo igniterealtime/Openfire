@@ -29,12 +29,12 @@
 
         <h2><a name="mysql">File Structure</a></h2>
 
-        <p>To cusomize files, create the following file structure in your <tt>openfireHome</tt>
+        <p>To customize files, create the following file structure in your <tt>openfireHome</tt>
         directory (where all the source files are on your filesystem).
         </p>
 
         <pre>custom/
-        | - overlay.properties       &lt;- Properties file to replace text in i18n files (optional)
+        | - i18n/                    &lt;- Directory to place translation files to be overridden
         | - conf/                    &lt;- Directory to place configuration files to be overridden
         | - lib/                     &lt;- Directory to place any private or 3rd prty jar files
         | - source/                  &lt;- Directory to place java source files to be overridden
@@ -74,24 +74,13 @@
             functionality to bundle these changes in a separate jar file.
         </p>
 
-        <h2>Overlay Properties File</h2>
-
-        <p>The i18n files have been modified to be as generic as possible (not to mention this project
-            by name).  In cases where that could not be avioded, two keys are responsible.  We have
-            made it possible to modify these keys by means of an optional properties file, <tt>overlay.properties</tt>
-            which you place in your <tt>custom/</tt> folder.  If you want to override these
-            default properties just create this file.  The build will continue to work if you haven't
-            created the file.
-        </p>
-
         <p>
-        The overlay.properties file will currently replace the following keys in the i18n files.
-            Note: this properties file should follow the java.util.Properties text file format.
+            The texts that are used in the administration panel (as well as some other texts) are taken from various
+            translation files under the <tt>src/i18n</tt> directory. To customize such a file, a file by the same name
+            can be added in the <tt>custom/i18n</tt> directory. The build process will merge both files, which you to
+            add your own properties, as well as override existing properties, without the need to copy all properties
+            that aren't of interest to you.
         </p>
-        <ul>
-            <li><em>title</em> - Title key (usually in the title bar of an HTML page)</li>
-            <li><em>short.title</em> - Short title, also used frequently</li>
-        </ul>
 
         <h2>Build</h2>
         <p>Simply build the application as normal.  You may need to run the ant <tt>clean</tt>

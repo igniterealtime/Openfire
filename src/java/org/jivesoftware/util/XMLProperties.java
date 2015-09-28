@@ -113,8 +113,9 @@ public class XMLProperties {
      * @throws IOException if an exception occurs when reading the stream.
      */
     public XMLProperties(InputStream in) throws IOException {
-        Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        buildDoc(reader);
+        try (Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
+            buildDoc(reader);
+        }
     }
 
     /**
@@ -153,8 +154,9 @@ public class XMLProperties {
             throw new IOException("XML properties file must be writable: " + file.getName());
         }
 
-        FileReader reader = new FileReader(file);
-        buildDoc(reader);
+        try (FileReader reader = new FileReader(file)) {
+             buildDoc(reader);
+        }
     }
 
     /**
@@ -728,11 +730,6 @@ public class XMLProperties {
         catch (Exception e) {
             Log.error("Error reading XML properties", e);
             throw new IOException(e.getMessage());
-        }
-        finally {
-            if (in != null) {
-                in.close();
-            }
         }
     }
 

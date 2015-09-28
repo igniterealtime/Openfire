@@ -59,7 +59,7 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
-        Assert.assertEquals(1, result.size());
+        Assert.assertEquals( 1, result.size() );
         Assert.assertEquals(host, result.get(0));
     }
 
@@ -113,7 +113,7 @@ public class DNSUtilTest {
         // verify
         Assert.assertEquals(3, result.size());
         Assert.assertEquals(hostA, result.get(0));
-        Assert.assertEquals(hostC, result.get(1));
+        Assert.assertEquals(hostC, result.get( 1 ));
         Assert.assertEquals(hostB, result.get(2));
     }
 
@@ -174,8 +174,8 @@ public class DNSUtilTest {
         }
 
         // verify
-        Assert.assertTrue(hostAWasFirst);
-        Assert.assertTrue(hostBWasFirst);
+        Assert.assertTrue( hostAWasFirst );
+        Assert.assertTrue( hostBWasFirst );
     }
 
     /**
@@ -216,4 +216,131 @@ public class DNSUtilTest {
         Assert.assertTrue(hostBWasFirst);
     }
 
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when both
+     * arguments have the same value.
+     */
+    @Test
+    public void testNameCoverageExactMatch() throws Exception
+    {
+        // setup
+        final String name = "xmpp.example.org";
+        final String pattern = name;
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertTrue( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} does not find a match when both
+     * arguments have different values.
+     */
+    @Test
+    public void testNameCoverageUnequal() throws Exception
+    {
+        // setup
+        final String name = "xmpp.example.org";
+        final String pattern = "something.completely.different";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertFalse( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} does not find a match when the
+     * needle/name is a subdomain of the DNS pattern, without the DNS pattern including a wildcard.
+     */
+    @Test
+    public void testNameCoverageSubdomainNoWildcard() throws Exception
+    {
+        // setup
+        final String name = "xmpp.example.org";
+        final String pattern = "example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertFalse( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} does not find a match when the
+     * last part of the needle/name equals the pattern.
+     */
+    @Test
+    public void testNameCoveragePartialMatchButNoSubdomain() throws Exception
+    {
+        // setup
+        final String name = "xmppexample.org";
+        final String pattern = "example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertFalse( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when the
+     * needle/name is a subdomain of the DNS pattern, while the DNS pattern includes a wildcard.
+     */
+    @Test
+    public void testNameCoverageSubdomainWithWildcard() throws Exception
+    {
+        // setup
+        final String name = "xmpp.example.org";
+        final String pattern = "*.example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertTrue( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when the
+     * needle/name is a subdomain of a subdomain of the DNS pattern, while the DNS pattern includes a wildcard.
+     */
+    @Test
+    public void testNameCoverageSubSubdomainWithWildcard() throws Exception
+    {
+        // setup
+        final String name = "deeper.xmpp.example.org";
+        final String pattern = "*.example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertTrue( result );
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when the
+     * needle/name equals the domain part of the DNS pattern, while the DNS pattern includes a wildcard.
+     *
+     * Although somewhat shady, the certificate management in Openfire depends on this to hold true.
+     */
+    @Test
+    public void testNameCoverageSubdomainWithWildcardOfSameDomain() throws Exception
+    {
+        // setup
+        final String name = "xmpp.example.org";
+        final String pattern = "*.xmpp.example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        Assert.assertTrue( result );
+    }
 }

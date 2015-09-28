@@ -35,6 +35,7 @@ import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.HttpClientError;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,12 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
             SSLContext context = SSLContext.getInstance("SSL");
             context.init(
                     null,
-                    new TrustManager[]{new ClearspaceX509TrustManager(host, manager.getProperties(), SSLConfig.gets2sTrustStore())},
+                    new TrustManager[] {
+                            new ClearspaceX509TrustManager(
+                                    host,
+                                    manager.getProperties(),
+                                    SSLConfig.getStore( Purpose.ADMINISTRATIVE_TRUSTSTORE ) )
+                    },
                     null);
             return context;
         } catch (Exception e) {

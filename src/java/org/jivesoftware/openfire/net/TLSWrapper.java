@@ -20,13 +20,9 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -37,6 +33,9 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.TrustStoreConfig;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,17 +57,6 @@ public class TLSWrapper {
      */
     private boolean logging = false;
 
-    /*
-     * Enables the JSSE system debugging system property:
-     *
-     * -Djavax.net.debug=all
-     *
-     * This gives a lot of low-level information about operations underway, including specific
-     * handshake messages, and might be best examined after gaining some familiarity with this
-     * application.
-     */
-    private static boolean debug = false;
-
     private SSLEngine tlsEngine;
     private SSLEngineResult tlsEngineResult;
 
@@ -76,42 +64,41 @@ public class TLSWrapper {
     private int appBuffSize;
 
     public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer) {
-
-        boolean c2sConnection = (remoteServer == null);
-        if (debug) {
-            System.setProperty("javax.net.debug", "all");
-        }
-
-        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+        final boolean isClientToServer = (remoteServer == null);
 
         // Create/initialize the SSLContext with key material
         try {
             // First initialize the key and trust material.
-            KeyStore ksKeys = SSLConfig.getKeyStore();
-            String keypass = SSLConfig.getKeyPassword();
-
-            KeyStore ksTrust = (c2sConnection ? SSLConfig.getc2sTrustStore() : SSLConfig.gets2sTrustStore());
-            String trustpass = (c2sConnection ? SSLConfig.getc2sTrustPassword() : SSLConfig.gets2sTrustPassword());
-
-            // KeyManager's decide which key material to use.
-            KeyManager[] km = SSLJiveKeyManagerFactory.getKeyManagers(ksKeys, keypass);
+            final SSLConfig sslConfig = SSLConfig.getInstance();
+            final Purpose purpose = (isClientToServer ? Purpose.SOCKETBASED_C2S_TRUSTSTORE : Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+            final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) sslConfig.getStoreConfig( purpose );
 
             // TrustManager's decide whether to allow connections.
-            TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
-            if (clientMode || needClientAuth) {
-                if (c2sConnection) {
+            final TrustManager[] tm;
+
+            if (clientMode || needClientAuth)
+            {
+                final KeyStore ksTrust = trustStoreConfig.getStore();
+                if (isClientToServer)
+                {
                     // Check if we can trust certificates presented by the client
                     tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
                 }
-                else {
+                else
+                {
                     // Check if we can trust certificates presented by the server
                     tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, connection)};
                 }
             }
+            else
+            {
+                tm = trustStoreConfig.getTrustManagers();
+            }
 
-            SSLContext tlsContext = SSLContext.getInstance(algorithm);
-
-            tlsContext.init(km, tm, null);
+            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
+            final String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+            final SSLContext tlsContext = SSLContext.getInstance(algorithm);
+            tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
 
             /*
                 * Configure the tlsEngine to act as a server in the SSL/TLS handshake. We're a server,
@@ -126,13 +113,10 @@ public class TLSWrapper {
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
 
-        } catch (KeyManagementException e) {
-            Log.error("TLSHandler startup problem.\n" + "  SSLContext initialisation failed.", e);
-        } catch (NoSuchAlgorithmException e) {
-            Log.error("TLSHandler startup problem.\n" + "  The " + algorithm + " does not exist", e);
-        } catch (IOException e) {
-            Log.error("TLSHandler startup problem.\n"
-                    + "  the KeyStore or TrustStore does not exist", e);
+        }
+        catch ( NoSuchAlgorithmException | KeyManagementException ex )
+        {
+            Log.error("TLSHandler startup problem. SSLContext initialisation failed.", ex );
         }
     }
 

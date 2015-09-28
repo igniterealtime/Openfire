@@ -57,6 +57,9 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
@@ -243,21 +246,26 @@ public final class HttpBindManager {
     private void createSSLConnector(int securePort, int bindThreads) {
         httpsConnector = null;
         try {
-            if (securePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*")) {
-                if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                        XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_IDENTITYSTORE );
+            final KeyStore keyStore = identityStoreConfig.getStore();
+
+            if (securePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() ) {
+                if ( !identityStoreConfig.containsDomainCertificate( "RSA" ) ) {
                     Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
                             "the hosted domain");
                 }
 
+                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_C2S_TRUSTSTORE );
+
                 final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.addExcludeProtocols("SSLv3");
-                sslContextFactory.setTrustStorePath(SSLConfig.getc2sTruststoreLocation());
-                sslContextFactory.setTrustStorePassword(SSLConfig.getc2sTrustPassword());
-                sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
-                sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
-                sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
-                sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
+                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
+                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
+                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
+                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
+                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
+                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
+
+                sslContextFactory.addExcludeProtocols( "SSLv3" );
 
                 // Set policy for checking client certificates
                 String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");

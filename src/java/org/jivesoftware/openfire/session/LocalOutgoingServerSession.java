@@ -387,7 +387,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 throw e;
             }
             log.debug("TLS negotiation was successful.");
-            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname)) {
+            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname, true)) {
                 log.debug("X.509/PKIX failure on outbound session");
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     log.debug("Will continue with dialback.");

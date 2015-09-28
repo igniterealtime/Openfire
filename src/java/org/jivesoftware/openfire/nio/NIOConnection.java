@@ -35,7 +35,6 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
@@ -51,11 +50,10 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.ClientTrustManager;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
-import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
-import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -393,35 +391,38 @@ public class NIOConnection implements Connection {
     }
 
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        boolean c2s = (remoteServer == null);
-        KeyStore ksKeys = SSLConfig.getKeyStore();
-        String keypass = SSLConfig.getKeyPassword();
+        final boolean isClientToServer = (remoteServer == null);
 
-        KeyStore ksTrust = (c2s ? SSLConfig.getc2sTrustStore() : SSLConfig.gets2sTrustStore() );
-        String trustpass = (c2s ? SSLConfig.getc2sTrustPassword() : SSLConfig.gets2sTrustPassword() );
-        if (c2s)  Log.debug("NIOConnection: startTLS: using c2s");
-        else Log.debug("NIOConnection: startTLS: using s2s");
-        // KeyManager's decide which key material to use.
-        KeyManager[] km = SSLJiveKeyManagerFactory.getKeyManagers(ksKeys, keypass);
+        Log.debug( "StartTLS: using {}", isClientToServer ? "c2s" : "s2s" );
 
-        // TrustManager's decide whether to allow connections.
-        TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
+        final SSLConfig sslConfig = SSLConfig.getInstance();
+        final TrustStoreConfig storeConfig;
+        if (isClientToServer) {
+            storeConfig = (TrustStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+        } else {
+            storeConfig = (TrustStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+        }
 
+        final TrustManager[] tm;
         if (clientMode || authentication == ClientAuth.needed || authentication == ClientAuth.wanted) {
             // We might need to verify a certificate from our peer, so get different TrustManager[]'s
-            if(c2s) {
+            final KeyStore ksTrust = storeConfig.getStore();
+            if(isClientToServer) {
                 // Check if we can trust certificates presented by the client
                 tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
             } else {
                 // Check if we can trust certificates presented by the server
                 tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, this)};
             }
+        } else {
+            tm = storeConfig.getTrustManagers();
         }
 
         String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
-        SSLContext tlsContext = SSLContext.getInstance(algorithm);
+        SSLContext tlsContext = SSLContext.getInstance( algorithm );
 
-        tlsContext.init(km, tm, null);
+        final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
+        tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
 
         SslFilter filter = new SslFilter(tlsContext);
         filter.setUseClientMode(clientMode);

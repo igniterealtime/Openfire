@@ -20,10 +20,9 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
-import java.security.KeyStoreException;
+import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -49,6 +48,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -192,21 +192,19 @@ public class SASLAuthentication {
             return null;
         }
 
-        Element mechs = DocumentHelper.createElement(new QName("mechanisms",
-                new Namespace("", "urn:ietf:params:xml:ns:xmpp-sasl")));
+        Element mechs = DocumentHelper.createElement( new QName( "mechanisms",
+                new Namespace( "", "urn:ietf:params:xml:ns:xmpp-sasl" ) ) );
         if (session instanceof LocalIncomingServerSession) {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
-                boolean haveTrustedCertificate = false;
-                try {
-                    LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                    X509Certificate trusted = CertificateManager.getEndEntityCertificate(svr.getConnection().getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
-                    haveTrustedCertificate = trusted != null;
-                    if (trusted != null && svr.getDefaultIdentity() != null) {
-                        haveTrustedCertificate = verifyCertificate(trusted, svr.getDefaultIdentity());
-                    }
-                } catch (IOException ex) {
-                    Log.warn("Exception occurred while trying to determine whether remote certificate is trusted. Treating as untrusted.", ex);
+                LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
+                final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
+                final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+                final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
+
+                boolean haveTrustedCertificate = trusted != null;
+                if (trusted != null && svr.getDefaultIdentity() != null) {
+                    haveTrustedCertificate = verifyCertificate(trusted, svr.getDefaultIdentity());
                 }
                 if (haveTrustedCertificate) {
                     // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
@@ -471,7 +469,7 @@ public class SASLAuthentication {
             return false;
         }
         String sharedSecert = getSharedSecret();
-        return StringUtils.hash(sharedSecert).equals(digest);
+        return StringUtils.hash(sharedSecert).equals( digest );
     }
 
 
@@ -557,7 +555,7 @@ public class SASLAuthentication {
             if (!verify) {
                 authenticationSuccessful(session, hostname, null);
                 return Status.authenticated;
-            } else if(verifyCertificates(session.getConnection().getPeerCertificates(), hostname)) {
+            } else if(verifyCertificates(session.getConnection().getPeerCertificates(), hostname, true)) {
                 authenticationSuccessful(session, hostname, null);
                 LocalIncomingServerSession s = (LocalIncomingServerSession)session;
                 if (s != null) {
@@ -567,7 +565,7 @@ public class SASLAuthentication {
             }
         }
         else if (session instanceof LocalClientSession) {
-            // Client EXTERNALL login
+            // Client EXTERNAL login
             Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
             
             // This may be null, we will deal with that later
@@ -581,12 +579,10 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            X509Certificate trusted;
-            try {
-                trusted = CertificateManager.getEndEntityCertificate(connection.getPeerCertificates(), SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
-            } catch (IOException e) {
-                trusted = null;
-            }
+            final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
+            final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+            final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
+
             if (trusted == null) {
                 Log.debug("SASLAuthentication: EXTERNAL authentication requested, but EE cert untrusted.");
                 authenticationFailed(session, Failure.NOT_AUTHORIZED);
@@ -655,15 +651,20 @@ public class SASLAuthentication {
         return false;
     }
 
+    /**
+     * @deprecated Use {@link #verifyCertificates(Certificate[], String, boolean)} instead.
+     */
+    @Deprecated
     public static boolean verifyCertificates(Certificate[] chain, String hostname) {
-        try {
-            X509Certificate trusted = CertificateManager.getEndEntityCertificate(chain, SSLConfig.getKeyStore(), SSLConfig.gets2sTrustStore());
+        return verifyCertificates( chain, hostname, true );
+    }
 
-            if (trusted != null) {
-                return verifyCertificate(trusted, hostname);
-            }
-        } catch(IOException e) {
-            Log.warn("Keystore issue while verifying certificate chain: {}", e.getMessage());
+    public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
+        final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
+        final KeyStore trustStore = SSLConfig.getStore( isS2S ? Purpose.SOCKETBASED_S2S_TRUSTSTORE : Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+        final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
+        if (trusted != null) {
+            return verifyCertificate(trusted, hostname);
         }
         return false;
     }
@@ -726,7 +727,7 @@ public class SASLAuthentication {
         else {
             reply.append("/>");
         }
-        session.deliverRawText(reply.toString());
+        session.deliverRawText( reply.toString() );
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((LocalClientSession) session).setAuthToken(new AuthToken(username));

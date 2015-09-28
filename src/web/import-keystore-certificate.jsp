@@ -1,13 +1,11 @@
-<%@ page import="org.jivesoftware.util.CertificateManager,
-                org.jivesoftware.util.ParamUtils,
-                org.jivesoftware.util.StringUtils,
-                org.jivesoftware.openfire.XMPPServer,
-                org.jivesoftware.openfire.net.SSLConfig,
-                java.io.ByteArrayInputStream,
-                java.util.HashMap,
-                java.util.Map"
-         errorPage="error.jsp"%>
-<%@ page import="java.security.KeyStore" %>
+<%@ page errorPage="error.jsp" %>
+<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -16,12 +14,30 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <% // Get parameters:
-    boolean save = ParamUtils.getParameter(request, "save") != null;
-    String privateKey = ParamUtils.getParameter(request, "private-key");
-    String passPhrase = ParamUtils.getParameter(request, "passPhrase");
-    String certificate = ParamUtils.getParameter(request, "certificate");
+    final boolean save            = ParamUtils.getParameter( request, "save" ) != null;
+    final String privateKey       = ParamUtils.getParameter(request, "private-key");
+    final String passPhrase       = ParamUtils.getParameter(request, "passPhrase");
+    final String certificate      = ParamUtils.getParameter(request, "certificate");
+    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
 
-    Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<String, String>();
+
+    Purpose storePurpose;
+    try
+    {
+        storePurpose = Purpose.valueOf( storePurposeText );
+    } catch (RuntimeException ex) {
+        errors.put( "storePurpose", ex.getMessage() );
+        storePurpose = null;
+    }
+
+    if (! storePurpose.isIdentityStore() ) {
+        errors.put( "storePurpose", "shoud be an identity store (not a trust store)");
+        storePurpose = null;
+    }
+
+    pageContext.setAttribute( "storePurpose", storePurpose );
+
     if (save) {
         if (privateKey == null || "".equals(privateKey)) {
             errors.put("privateKey", "privateKey");
@@ -31,30 +47,24 @@
         }
         if (errors.isEmpty()) {
             try {
-                KeyStore keystore;
-                try {
-                    keystore = SSLConfig.getKeyStore();
-                }
-                catch (Exception e) {
-                    keystore = SSLConfig.initializeKeyStore();
-                }
+                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
+
                 // Create an alias for the signed certificate
                 String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 int index = 1;
                 String alias = domain + "_" + index;
-                while (keystore.containsAlias(alias)) {
+                while ( identityStoreConfig.getStore().containsAlias( alias )) {
                     index = index + 1;
                     alias = domain + "_" + index;
                 }
+
                 // Import certificate
-                CertificateManager.installCert(keystore, SSLConfig.gets2sTrustStore(),
-                        SSLConfig.getKeyPassword(), alias, new ByteArrayInputStream(privateKey.getBytes()), passPhrase,
-                        new ByteArrayInputStream(certificate.getBytes()), true, true);
-                // Save keystore
-                SSLConfig.saveStores();
+                identityStoreConfig.installCertificate( alias, privateKey, passPhrase, certificate );
+
                 // Log the event
-                webManager.logEvent("imported SSL certificate", "alias = "+alias);
-                response.sendRedirect("security-keystore.jsp");
+                webManager.logEvent("imported SSL certificate in "+ storePurposeText, "alias = "+alias);
+
+                response.sendRedirect("security-keystore.jsp?storePurpose="+storePurposeText);
                 return;
             }
             catch (Exception e) {
@@ -67,8 +77,8 @@
 
 <html>
   <head>
-      <title><fmt:message key="ssl.import.certificate.keystore.title"/></title>
-      <meta name="pageID" content="security-keystore"/>
+      <title><fmt:message key="ssl.import.certificate.keystore.${connectivityType}.title"/></title>
+      <meta name="pageID" content="security-keystore-${connectivityType}"/>
   </head>
   <body>
 
@@ -110,6 +120,7 @@
 
   <!-- BEGIN 'Import Private Key and Certificate' -->
   <form action="import-keystore-certificate.jsp" method="post" name="f">
+      <input type="hidden" name="connectivityType" value="${connectivityType}"/>
       <div class="jive-contentBoxHeader">
           <fmt:message key="ssl.import.certificate.keystore.boxtitle" />
       </div>

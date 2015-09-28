@@ -41,9 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.buffer.SimpleBufferAllocator;
@@ -70,13 +68,10 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.ServerSocketReader;
-import org.jivesoftware.openfire.net.SocketAcceptThread;
-import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.openfire.net.SocketReader;
-import org.jivesoftware.openfire.net.SocketSendingTracker;
-import org.jivesoftware.openfire.net.StalledSessionsFilter;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
 import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
@@ -457,15 +452,11 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 		                  sslSocketAcceptor, maxBufferSize);
 
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
-                SSLContext sslContext = SSLContext.getInstance(algorithm);
-                KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                keyFactory.init(SSLConfig.getKeyStore(), SSLConfig.getKeyPassword().toCharArray());
-                TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustFactory.init(SSLConfig.getc2sTrustStore());
+                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
+                final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
 
-                sslContext.init(keyFactory.getKeyManagers(),
-                        trustFactory.getTrustManagers(),
-                        new java.security.SecureRandom());
+                final SSLContext sslContext = SSLContext.getInstance( algorithm );
+                sslContext.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom());
 
                 SslFilter sslFilter = new SslFilter(sslContext);
                 if (JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("needed")) {
@@ -623,10 +614,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public boolean isClientSSLListenerEnabled() {
         try {
-            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getKeyStore().size() > 0;
+            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
         } catch (KeyStoreException e) {
-            return false;
-        } catch (IOException e) {
             return false;
         }
     }

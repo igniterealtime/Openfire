@@ -17,30 +17,6 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -50,7 +26,6 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.openfire.auth.ScramUtils;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.commands.AdHocCommandHandler;
@@ -58,68 +33,42 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
-import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.openfire.handler.IQAuthHandler;
-import org.jivesoftware.openfire.handler.IQBindHandler;
-import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
-import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.handler.IQLastActivityHandler;
-import org.jivesoftware.openfire.handler.IQMessageCarbonsHandler;
-import org.jivesoftware.openfire.handler.IQOfflineMessagesHandler;
-import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.handler.IQPrivacyHandler;
-import org.jivesoftware.openfire.handler.IQPrivateHandler;
-import org.jivesoftware.openfire.handler.IQRegisterHandler;
-import org.jivesoftware.openfire.handler.IQRosterHandler;
-import org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler;
-import org.jivesoftware.openfire.handler.IQSharedGroupHandler;
-import org.jivesoftware.openfire.handler.IQTimeHandler;
-import org.jivesoftware.openfire.handler.IQVersionHandler;
-import org.jivesoftware.openfire.handler.IQvCardHandler;
-import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
-import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
-import org.jivesoftware.openfire.net.MulticastDNSService;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
-import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
-import org.jivesoftware.openfire.spi.PacketDelivererImpl;
-import org.jivesoftware.openfire.spi.PacketRouterImpl;
-import org.jivesoftware.openfire.spi.PacketTransporterImpl;
-import org.jivesoftware.openfire.spi.PresenceManagerImpl;
-import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -421,31 +370,14 @@ public class XMPPServer {
                     JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
                 }
             }
-            
             // Set default SASL SCRAM-SHA-1 iteration count
             JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
             // Update certificates (if required)
             try {
                 // Check if keystore already has certificates for current domain
-                KeyStore ksKeys = SSLConfig.getKeyStore();
-                boolean dsaFound = CertificateManager.isDSACertificate(ksKeys, name);
-                boolean rsaFound = CertificateManager.isRSACertificate(ksKeys, name);
-
-                // No certificates were found so create new self-signed certificates
-                if (!dsaFound) {
-                    CertificateManager.createDSACert(ksKeys, SSLConfig.getKeyPassword(),
-                            name + "_dsa", "cn=" + name, "cn=" + name, "*." + name);
-                }
-                if (!rsaFound) {
-                    CertificateManager.createRSACert(ksKeys, SSLConfig.getKeyPassword(),
-                            name + "_rsa", "cn=" + name, "cn=" + name, "*." + name);
-                }
-                // Save new certificates into the key store
-                if (!dsaFound || !rsaFound) {
-                    SSLConfig.saveStores();
-                }
-
+                final IdentityStoreConfig storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
+                storeConfig.ensureDomainCertificates( "DSA", "RSA" );
             } catch (Exception e) {
                 logger.error("Error generating self-signed certificates", e);
             }
@@ -580,7 +512,7 @@ public class XMPPServer {
     /**
      * Loads a module.
      *
-     * @param module the name of the class that implements the Module interface.
+     * @param moduleName the name of the class that implements the Module interface.
      */
     @SuppressWarnings("unchecked")
 	private void loadModule(String moduleName, String moduleImpl) {

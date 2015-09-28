@@ -213,6 +213,37 @@ public class DNSUtil {
     }
 
     /**
+     * Checks if the provided DNS pattern matches the provided name. For example, this method will:
+     * return <em>true</em>  for name: <tt>xmpp.example.org</tt>, pattern: <tt>*.example.org</tt>
+     * return <em>false</em> for name: <tt>xmpp.example.org</tt>, pattern: <tt>example.org</tt>
+     *
+     * This method is not case sensitive.
+     *
+     * @param name The name to check against a pattern (cannot be null or empty).
+     * @param pattern the pattern (cannot be null or empty).
+     * @return true when the name is covered by the pattern, otherwise false.
+     */
+    public static boolean isNameCoveredByPattern( String name, String pattern )
+    {
+        if ( name == null || name.isEmpty() || pattern == null || pattern.isEmpty() )
+        {
+            throw new IllegalArgumentException( "Arguments cannot be null or empty." );
+        }
+
+        final String needle = name.toLowerCase();
+        final String hayStack = pattern.toLowerCase();
+
+        if ( needle.equals( hayStack )) {
+            return true;
+        }
+
+        if ( hayStack.startsWith( "*." ) ) {
+            return needle.endsWith( hayStack.substring( 2 ) );
+        }
+        return false;
+    }
+
+    /**
      * Encapsulates a hostname and port.
      */
     public static class HostAddress {

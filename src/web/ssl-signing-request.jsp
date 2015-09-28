@@ -2,12 +2,13 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
-<%@ page import="java.security.KeyStore" %>
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
+<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -17,90 +18,102 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <% // Get parameters:
-    boolean save = ParamUtils.getParameter(request, "save") != null;
-    String name = ParamUtils.getParameter(request, "name");
-    String organizationalUnit = ParamUtils.getParameter(request, "ou");
-    String organization = ParamUtils.getParameter(request, "o");
-    String city = ParamUtils.getParameter(request, "city");
-    String state = ParamUtils.getParameter(request, "state");
-    String countryCode = ParamUtils.getParameter(request, "country");
+    final boolean save              = ParamUtils.getParameter(request, "save") != null;
+    final String name               = ParamUtils.getParameter(request, "name");
+    final String organizationalUnit = ParamUtils.getParameter(request, "ou");
+    final String organization       = ParamUtils.getParameter(request, "o");
+    final String city               = ParamUtils.getParameter(request, "city");
+    final String state              = ParamUtils.getParameter(request, "state");
+    final String countryCode        = ParamUtils.getParameter(request, "country");
+    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
 
-    Map<String, Object> errors = new HashMap<String, Object>();
+    final Map<String, String> errors = new HashMap<String, String>();
 
-    if (save) {
-        KeyStore keyStore;
-        try {
-            keyStore = SSLConfig.getKeyStore();
-        }
-        catch (Exception e) {
-            keyStore = SSLConfig.initializeKeyStore();
-        }
-
-        // Verify that fields were completed
-        if (name == null) {
-            errors.put("name", "");
-        }
-        if (organizationalUnit == null) {
-            errors.put("organizationalUnit", "");
-        }
-        if (organization == null) {
-            errors.put("organization", "");
-        }
-        if (city == null) {
-            errors.put("city", "");
-        }
-        if (state == null) {
-            errors.put("state", "");
-        }
-        if (countryCode == null) {
-            errors.put("countryCode", "");
-        }
-        if (errors.size() == 0) {
-            try {
-                // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN
-                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                StringBuilder issuerDN = new StringBuilder();
-                issuerDN.append("CN=").append(name);
-                issuerDN.append(", OU=").append(organizationalUnit);
-                issuerDN.append(", O=").append(organization);
-                issuerDN.append(", L=").append(city);
-                issuerDN.append(", ST=").append(state);
-                issuerDN.append(", C=").append(countryCode);
-                StringBuilder subjectDN = new StringBuilder();
-                subjectDN.append("CN=").append(domain);
-                subjectDN.append(", OU=").append(organizationalUnit);
-                subjectDN.append(", O=").append(organization);
-                subjectDN.append(", L=").append(city);
-                subjectDN.append(", ST=").append(state);
-                subjectDN.append(", C=").append(countryCode);
-                // Update certs with new issuerDN information
-                for (Enumeration<String> certAliases = keyStore.aliases(); certAliases.hasMoreElements();) {
-                    String alias = certAliases.nextElement();
-                    X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
-                    // Update only Self-signed certs
-                    if (CertificateManager.isSelfSignedCertificate(keyStore, alias)) {
-                        if (CertificateManager.isDSACertificate(certificate)) {
-                            CertificateManager.createDSACert(keyStore, SSLConfig.getKeyPassword(), alias,
-                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
-                        } else {
-                            CertificateManager.createRSACert(keyStore, SSLConfig.getKeyPassword(), alias,
-                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
-                        }
-                    }
-                }
-                // Save keystore
-                SSLConfig.saveStores();
-                // Log the event
-                webManager.logEvent("generated SSL signing request", null);
-                response.sendRedirect("security-keystore.jsp");
-                return;
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-                errors.put("general", "");
-            }
-        }
+    Purpose storePurpose;
+    try
+    {
+        storePurpose = Purpose.valueOf( storePurposeText );
+    } catch (RuntimeException ex) {
+        errors.put( "storePurpose", ex.getMessage() );
+        storePurpose = null;
     }
+
+    if (! storePurpose.isIdentityStore() ) {
+        errors.put( "storePurpose", "shoud be an identity store (not a trust store)");
+        storePurpose = null;
+    }
+    pageContext.setAttribute( "storePurpose", storePurpose );
+
+//    if (save) {
+//
+//        // Verify that fields were completed
+//        if (name == null) {
+//            errors.put("name", "");
+//        }
+//        if (organizationalUnit == null) {
+//            errors.put("organizationalUnit", "");
+//        }
+//        if (organization == null) {
+//            errors.put("organization", "");
+//        }
+//        if (city == null) {
+//            errors.put("city", "");
+//        }
+//        if (state == null) {
+//            errors.put("state", "");
+//        }
+//        if (countryCode == null) {
+//            errors.put("countryCode", "");
+//        }
+//        if (errors.size() == 0) {
+//            try {
+//                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
+//
+//                identityStoreConfig.ensureSelfSignedDomainCertificates( name, organizationalUnit, organization, city, state, countryCode, "rsa", "dsa" );
+//                // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN
+//                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+//                StringBuilder issuerDN = new StringBuilder();
+//                issuerDN.append("CN=").append(name);
+//                issuerDN.append(", OU=").append(organizationalUnit);
+//                issuerDN.append(", O=").append(organization);
+//                issuerDN.append(", L=").append(city);
+//                issuerDN.append(", ST=").append(state);
+//                issuerDN.append(", C=").append(countryCode);
+//                StringBuilder subjectDN = new StringBuilder();
+//                subjectDN.append("CN=").append(domain);
+//                subjectDN.append(", OU=").append(organizationalUnit);
+//                subjectDN.append(", O=").append(organization);
+//                subjectDN.append(", L=").append(city);
+//                subjectDN.append(", ST=").append(state);
+//                subjectDN.append(", C=").append(countryCode);
+//                // Update certs with new issuerDN information
+//                for (Enumeration<String> certAliases = keyStore.aliases(); certAliases.hasMoreElements();) {
+//                    String alias = certAliases.nextElement();
+//                    X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+//                    // Update only Self-signed certs
+//                    if (CertificateManager.isSelfSignedCertificate(keyStore, alias)) {
+//                        if (CertificateManager.isDSACertificate(certificate)) {
+//                            CertificateManager.createDSACert(keyStore, sslConfig.getKeyStorePassword(), alias,
+//                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
+//                        } else {
+//                            CertificateManager.createRSACert(keyStore, sslConfig.getKeyStorePassword(), alias,
+//                                    issuerDN.toString(), subjectDN.toString(), "*." + domain);
+//                        }
+//                    }
+//                }
+//                // Save keystore
+//                sslConfig.saveStores();
+//                // Log the event
+//                webManager.logEvent("generated SSL signing request", null);
+//                response.sendRedirect("security-keystore.jsp?connectivityType="+connectivityType);
+//                return;
+//            }
+//            catch (Exception e) {
+//                e.printStackTrace();
+//                errors.put("general", "");
+//            }
+//        }
+//    }
 %>
 
 <html>
@@ -108,7 +121,7 @@
     <title>
         <fmt:message key="ssl.signing-request.title"/>
     </title>
-    <meta name="pageID" content="security-keystore"/>
+    <meta name="pageID" content="security-keystore-${connectivityType}"/>
 </head>
 <body>
 
@@ -147,6 +160,7 @@
 <!-- BEGIN 'Issuer information form' -->
 <form action="ssl-signing-request.jsp" method="post">
     <input type="hidden" name="save" value="true">
+    <input type="hidden" name="connectivityType" value="${connectivityType}">
     <div class="jive-contentBoxHeader">
         <fmt:message key="ssl.signing-request.issuer_information"/>
     </div>

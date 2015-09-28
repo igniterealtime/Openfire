@@ -142,20 +142,65 @@
         <!-- TLS / SSL-->
         <sidebar id="sidebar-certificates" name="${sidebar.sidebar-certificates}">
 
-            <!-- Server Certificates -->
-            <item id="security-keystore" name="${sidebar.security-keystore}"
-                  url="security-keystore.jsp"
-                  description="${sidebar.security-keystore.descr}"/>
+            <item id="security-certificate-store-management" name="Certificate Stores"
+                  url="security-certificate-store-management.jsp"
+                  description="Manage Openfire Certificate stores">
 
-            <!-- C2S Certificate Truststore -->
-            <item id="security-truststore-c2s" name="${sidebar.security-truststore-c2s}"
-                  url="security-truststore.jsp?type=c2s"
-                  description="${sidebar.security-truststore-c2s.descr}"/>
+            <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->
+            <!--<item id="sidebar-certificates-keys" name="${sidebar.sidebar-certificates-keys}"-->
+                    <!--url="security-keystore.jsp">-->
 
-            <!-- S2S Certificate Truststore -->
-            <item id="security-truststore-s2s" name="${sidebar.security-truststore-s2s}"
-                  url="security-truststore.jsp?type=s2s"
-                  description="${sidebar.security-truststore-s2s.descr}"/>
+                <sidebar id="sidebar-certificates-keys-submenu" name="${sidebar.sidebar-certificates-keys-submenu}">
+
+                    <!-- Socket Server Certificates -->
+                    <item id="security-keystore-socket" name="${sidebar.security-keystore-socket}"
+                          url="security-keystore.jsp?connectivityType=socket"
+                          description="${sidebar.security-keystore-socket.descr}"/>
+
+                    <!-- BOSH Server Certificates -->
+                    <item id="security-keystore-bosh" name="${sidebar.security-keystore-bosh}"
+                          url="security-keystore.jsp?connectivityType=bosh"
+                          description="${sidebar.security-keystore-bosh.descr}"/>
+
+                    <!-- Administrative Server Certificates -->
+                    <item id="security-keystore-administrative" name="${sidebar.security-keystore-administrative}"
+                          url="security-keystore.jsp?connectivityType=administrative"
+                          description="${sidebar.security-keystore-administrative.descr}"/>
+
+                </sidebar>
+
+            </item>
+
+            <!--&lt;!&ndash; Socket C2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-socket-c2s" name="${sidebar.security-truststore-socket-c2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=socket&amp;type=c2s"-->
+                  <!--description="${sidebar.security-truststore-socket-c2s.descr}"/>-->
+
+            <!--&lt;!&ndash; Socket S2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-socket-s2s" name="${sidebar.security-truststore-socket-s2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=socket&amp;type=s2s"-->
+                  <!--description="${sidebar.security-truststore-socket-s2s.descr}"/>-->
+
+
+            <!--&lt;!&ndash; BOSH C2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-bosh-c2s" name="${sidebar.security-truststore-bosh-c2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=bosh&amp;type=c2s"-->
+                  <!--description="${sidebar.security-truststore-bosh-c2s.descr}"/>-->
+
+            <!--&lt;!&ndash; BOSH S2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-bosh-s2s" name="${sidebar.security-truststore-bosh-s2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=bosh&amp;type=s2s"-->
+                  <!--description="${sidebar.security-truststore-bosh-s2s.descr}"/>-->
+
+            <!--&lt;!&ndash; Administrative C2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-administrative-c2s" name="${sidebar.security-truststore-administrative-c2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=administrative&amp;type=c2s"-->
+                  <!--description="${sidebar.security-truststore-administrative-c2s.descr}"/>-->
+
+            <!--&lt;!&ndash; Administrative S2S Certificate Truststore &ndash;&gt;-->
+            <!--<item id="security-truststore-administrative-s2s" name="${sidebar.security-truststore-administrative-s2s}"-->
+                  <!--url="security-truststore.jsp?connectivityType=administrative&amp;type=s2s"-->
+                  <!--description="${sidebar.security-truststore-administrative-s2s.descr}"/>-->
 
         </sidebar>
 

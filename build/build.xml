@@ -64,13 +64,13 @@
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
 
-    <property name="overlay.dir"   value="${basedir}/custom"/>
-    <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
-    <property name="overlay.web.dir"   value="${overlay.dir}/webapp"/>
-    <property name="overlay.lib.dir"   value="${overlay.dir}/lib"/>
-    <property name="overlay.conf.dir"   value="${overlay.dir}/conf"/>
-    <property name="overlay.properties.file"   value="overlay.properties"/>
-    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>    
+    <property name="overlay.dir" value="${basedir}/custom"/>
+    <property name="overlay.src.dir" value="${overlay.dir}/source"/>
+    <property name="overlay.web.dir" value="${overlay.dir}/webapp"/>
+    <property name="overlay.lib.dir" value="${overlay.dir}/lib"/>
+    <property name="overlay.conf.dir" value="${overlay.dir}/conf"/>
+    <property name="overlay.i18n.dir" value="${overlay.dir}/i18n"/>
+    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>
 
     <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
     <property name="javadoc.dest.dir" value="${work.dir}/javadoc"/>
@@ -137,6 +137,9 @@
     <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
         <classpath refid="ant.dependencies" />
     </taskdef>
+    <taskdef name="propertymerge" classname="org.jugbb.ant.propertymerge.PropertyMergeTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
     <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
         <classpath refid="ant.dependencies" />
     </typedef>
@@ -150,7 +153,7 @@
     <available type="dir"  file="${overlay.web.dir}"            property="overlay.web.dir.found"/>
     <available type="dir"  file="${overlay.lib.dir}"            property="overlay.lib.dir.found"/>
     <available type="dir"  file="${overlay.conf.dir}"           property="overlay.conf.dir.found"/>
-    <available type="file" file="${overlay.properties.file}"    property="overlay.properties.file.found"/>
+    <available type="dir"  file="${overlay.i18n.dir}"           property="overlay.i18n.dir.found"/>
 
     <!-- When overlay is used the content of "lib.merge.dir" needs to be combined with the content of "overlay.lib.dir"
          Here, "libs.to.merge" is created which will always refer to the correct combination. "libs.to.merge" should be
@@ -326,21 +329,50 @@
     <!-- i18n ================================================================================== -->
     <!-- Note, this is a "private" target - no need to call it externally -->
     <target name="-i18n">
-        <!-- Auto generates a default base i18n file -->
+
         <mkdir dir="${target.i18n.dir}"/>
-        <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
+
+        <if>
+            <equals arg1="${overlay.i18n.dir.found}" arg2="true"/>
+            <then>
+                <!-- Overlay files exist for i18n: append/override the files that ship with Openfire. -->
+                <foreach target="-i18n-overlay" param="i18n-propertyfile">
+                    <path>
+                        <fileset dir="${src.i18n.dir}">
+                            <include name="${i18n.basename}*.properties"/>
+                        </fileset>
+                    </path>
+                </foreach>
+            </then>
+            <else>
+                <!-- No overlay for i18n: simply copy all files. -->
+                <copy todir="${target.i18n.dir}">
+                    <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+                </copy>
+            </else>
+        </if>
+
+        <!-- Auto generates a default base i18n file -->
+        <copy file="${target.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
               tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
 
-        <!-- if title override file exists, overwrite all i18n files -->
+    </target>
+
+    <!-- Note, this is a "private" target - no need to call it externally -->
+    <target name="-i18n-overlay">
+        <basename property="filename" file="${i18n-propertyfile}"/>
         <if>
-            <equals arg1="${overlay.properties.file.found}" arg2="true"/>
+            <available file="${overlay.i18n.dir}/${filename}"/>
             <then>
-                <property file="${overlay.properties.file}"/>
-                <replace dir="${target.i18n.dir}">
-                    <replacefilter token="title = Wildfire" value="title=${title}"/>
-                    <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
-                </replace>
+                <propertymerge
+                        inputpropertyfile="${src.i18n.dir}/${filename}"
+                        mergepropertyfile="${overlay.i18n.dir}/${filename}"
+                        outputpropertyfile="${target.i18n.dir}/${filename}"
+                        ignoreMissingMergeFile="true" />
             </then>
+            <else>
+                <copy file="${src.i18n.dir}/${filename}" tofile="${target.i18n.dir}/${filename}"/>
+            </else>
         </if>
     </target>
 
@@ -387,7 +419,6 @@
         <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
             <archives>
@@ -886,7 +917,6 @@
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.src.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
         </copy>
         <!-- Copy build -->
         <copy todir="${release.src.out.dir}/build">
@@ -972,7 +1002,6 @@
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
         </copy>
 
         <!-- Package the release -->

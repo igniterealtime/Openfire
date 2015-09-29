@@ -70,6 +70,7 @@
     <property name="overlay.lib.dir" value="${overlay.dir}/lib"/>
     <property name="overlay.conf.dir" value="${overlay.dir}/conf"/>
     <property name="overlay.i18n.dir" value="${overlay.dir}/i18n"/>
+    <property name="overlay.resources.dir" value="${overlay.dir}/resources"/>
     <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>
 
     <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
@@ -154,6 +155,7 @@
     <available type="dir"  file="${overlay.lib.dir}"            property="overlay.lib.dir.found"/>
     <available type="dir"  file="${overlay.conf.dir}"           property="overlay.conf.dir.found"/>
     <available type="dir"  file="${overlay.i18n.dir}"           property="overlay.i18n.dir.found"/>
+    <available type="dir"  file="${overlay.resources.dir}"      property="overlay.resources.dir.found"/>
 
     <!-- When overlay is used the content of "lib.merge.dir" needs to be combined with the content of "overlay.lib.dir"
          Here, "libs.to.merge" is created which will always refer to the correct combination. "libs.to.merge" should be
@@ -420,6 +422,7 @@
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
             <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${overlay.resources.dir}/jar" includes="**" erroronmissingdir="false"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
             <archives>
                 <zips>
@@ -711,7 +714,12 @@
 
         <!-- Copy native authentication files -->
         <copy todir="${target.openfireHome}/resources">
-            <fileset dir="${src.dir}/resources">
+            <fileset dir="${resources.dir}">
+                <include name="nativeAuth/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${target.openfireHome}/resources">
+            <fileset dir="${overlay.resources.dir}" erroronmissingdir="false">
                 <include name="nativeAuth/**"/>
             </fileset>
         </copy>

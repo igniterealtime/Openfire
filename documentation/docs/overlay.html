@@ -70,6 +70,17 @@
         </p>
 
         <p>
+            In the <tt>custom/resources/jar</tt> directory, mirror the contents of the <tt>src/resources/jar</tt>
+            directory. Any files you place there will override the current source files in the build. These files will
+            be placed in the root of the generated Openfire.jar file.
+        </p>
+
+        <p>
+            In the <tt>custom/resources/nativeAuth</tt> directory, mirror the contents of the <tt>src/resources/nativeAuth</tt>
+            directory. Any files you place there will override the current source files in the build.
+        </p>
+
+        <p>
             Currently, overridden files will simply be included in the built war or jar files.  We have not added
             functionality to bundle these changes in a separate jar file.
         </p>

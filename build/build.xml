@@ -8,7 +8,7 @@
 <!--
     Build Requirements:
 
-        * Ant 1.6 or 1.7 (including optional tasks)
+        * Ant 1.7.1 or higher (including optional tasks)
         * JDK 1.7 or higher
         * jUnit in your Ant or Java classpath
 -->
@@ -244,12 +244,7 @@
 
         <condition property="ant.not.ok" value="true">
             <not>
-                <or>
-                    <contains string="${ant.version}" substring="1.6"/>
-                    <contains string="${ant.version}" substring="1.7"/>
-                    <contains string="${ant.version}" substring="1.8"/>
-                    <contains string="${ant.version}" substring="1.9"/>
-                </or>
+                <antversion atleast="1.7.1"/>
             </not>
         </condition>
         <condition property="java.not.ok" value="true">
@@ -257,11 +252,12 @@
                 <or>
                     <contains string="${ant.java.version}" substring="1.7"/>
                     <contains string="${ant.java.version}" substring="1.8"/>
+                    <contains string="${ant.java.version}" substring="1.9"/>
                 </or>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Openfire"/>
-        <fail if="java.not.ok" message="Must use JDK 1.7.x or higher to build Openfire"/>
+        <fail if="ant.not.ok" message="Must use Ant 1.7.1 or higher to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.7 or higher to build Openfire"/>
 
         <tstamp/>
         <tstamp>

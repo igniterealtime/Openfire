@@ -206,8 +206,13 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     if (matcher.find()) {
                         msgXML = matcher.replaceAll("");
                     }
-                    message = new OfflineMessage(creationDate,
+                    try {
+                    	message = new OfflineMessage(creationDate,
                             xmlReader.read(new StringReader(msgXML)).getRootElement());
+                    } catch (DocumentException de) {
+                    	Log.error("Failed to route packet (offline message): " + msgXML, de);
+                    	continue; // skip and process remaining offline messages
+                    }
                 }
 
                 // if there is already a delay stamp, we shouldn't add another.

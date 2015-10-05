@@ -169,7 +169,7 @@ public final class GraphicUtils {
             Rectangle screenBounds = screensBounds[i];
             if (screenBounds.x <= x && x <= (screenBounds.x + screenBounds.width)) {
                 Dimension sizeScreen = screenBounds.getSize();
-                sizeScreen.height -= 32;  // Hack to help prevent menu being clipped by Windows/Linux/Solaris Taskbar.
+                sizeScreen.height -= 32;  // Hack to help prevent menu being clipped by Windows/Linux Taskbar.
 
                 int xOffset = 0;
                 if (bottomRightMenu.x > (screenBounds.x + sizeScreen.width))

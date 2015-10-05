@@ -1660,26 +1660,26 @@
         </if>
     </target>
 
-    <!-- clean-jspc ============================================================================ -->
-    <!-- Cleans all JSPC output -->
-    <target name="clean-jspc">
+    <target name="clean-jspc" description="Cleans up all JSPC output">
         <delete dir="${jspc.dest.dir}"/>
     </target>
 
-    <!-- clean-test ============================================================================ -->
-    <!-- Cleans all compiled test classes -->
-    <target name="clean-test">
+    <target name="clean-test" description="Cleans up all compiled test classes">
         <delete dir="${test.classes.dest.dir}"/>
     </target>
 
-    <!-- clean-plugins ========================================================================= -->
-    <!-- Cleans all generated plugins -->
-    <target name="clean-plugins">
+    <target name="clean-plugins" description="Cleans up all generated plugins">
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*"/>
         </delete>
-        <!--<delete dir="${plugin.dest.dir}"/> -->
         <delete dir="${plugin.dev.dest.dir}"/>
+    </target>
+
+    <target name="clean-plugin" description="Cleans up one generated plugin">
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${plugin.dest.dir}/${plugin}.jar" excludes="admin/**/*.*"/>
+        </delete>
+        <delete dir="${plugin.dev.dest.dir}/${plugin}" failonerror="false"/>
     </target>
 
     <!-- Mac installer ========================================================================= -->

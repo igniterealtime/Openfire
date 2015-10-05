@@ -74,7 +74,6 @@ mv $RPM_BUILD_ROOT%{homedir}/bin/extra/embedded-db-viewer.sh $RPM_BUILD_ROOT%{ho
 rm -rf $RPM_BUILD_ROOT%{homedir}/bin/extra
 rm -f $RPM_BUILD_ROOT%{homedir}/bin/*.bat
 rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/osx-ppc
-rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/solaris-sparc
 rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/win32-x86
 rm -f $RPM_BUILD_ROOT%{homedir}/lib/*.dll
 

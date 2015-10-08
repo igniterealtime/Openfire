@@ -243,10 +243,13 @@ public class SipService
 			}
 			else
 			{
-				req = cs.sipDialog.createRequest(Request.BYE);
-				ClientTransaction t = sipProvider.getNewClientTransaction(req);
-				cs.sipDialog.sendRequest(t);
-				cs.sendBye();
+				if (cs.sipDialog != null)
+				{
+					req = cs.sipDialog.createRequest(Request.BYE);
+					ClientTransaction t = sipProvider.getNewClientTransaction(req);
+					cs.sipDialog.sendRequest(t);
+					cs.sendBye();
+				}
 			}
 		}
 		catch (SipException e)

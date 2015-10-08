@@ -327,11 +327,11 @@ var ChromeUi = (function(self) {
 	{
 		console.log('background-ui.js load event');
 		
-		chrome.systemIndicator.enable();
+		//chrome.systemIndicator.enable();
 		
 		chrome.browserAction.onClicked.addListener(function()
 		{
-			ChromeUi.doOptions();			
+			ChromeUi.doOptions();	
 		});		
 		
 		chrome.windows.onRemoved.addListener(function(win) 
@@ -377,20 +377,7 @@ var ChromeUi = (function(self) {
 					delete callbacks[notificationId];
 				});
 			}
-		})
-
-		chrome.systemIndicator.onClicked.addListener(function() 
-		{
-			console.log("background-ui.js systemIndicator.onClicked");
-
-			if (windowClosed)
-			{
-				ChromeUi.createRootWindow();
-			} else {
-
-				ChromeUi.destroyRootWindow();
-			}	    
-		});	
+		})	
 
 		chrome.runtime.onMessageExternal.addListener(function(request, sender, sendResponse) 
 		{
@@ -416,6 +403,8 @@ var ChromeUi = (function(self) {
 		{	
 		
 		});	
+		
+		ChromeUi.createRootWindow();		
 		
 	});
 

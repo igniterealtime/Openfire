@@ -21,6 +21,7 @@ import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.provider.*;
 
 import java.util.*;
+import org.jivesoftware.util.JiveGlobals;
 
 /**
  * Default implementation of {@link OperationSetColibriConference} that uses
@@ -141,12 +142,11 @@ public class OperationSetColibriConferenceImpl
         ColibriConferenceIQ allocateRequest
             = colibriBuilder.getRequest(jitsiVideobridge);
 
-		boolean useAudioMixer = false;
-
-		String useAudioString = System.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer");	// BAO
-		if (useAudioString != null) useAudioMixer = useAudioString.equals("true");
-
 		ColibriConferenceIQ.Content colibriContent = allocateRequest.getContent("audio");
+
+		boolean useAudioMixer = false;
+		String useAudioString = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer");	// BAO
+		if (useAudioString != null) useAudioMixer = useAudioString.equals("true");
 
 		if (useAudioMixer  && colibriContent != null)
 		{

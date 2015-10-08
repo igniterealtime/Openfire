@@ -1157,7 +1157,7 @@ public class VideoBridgeSipListener implements SipListener
 		 */
 		public boolean doAuthenticate(Request request, AuthorizationHeader authHeader, String user, String password)
 		{
-			Log.info("doAuthenticate " + user + " " + password);
+			Log.info("doAuthenticate " + user + " " + password + " " + authHeader.getRealm() + " " + defaultRealm + " " + authHeader.getURI());
 
 			String username = authHeader.getUsername();
 			if (username == null || !username.equals(user))

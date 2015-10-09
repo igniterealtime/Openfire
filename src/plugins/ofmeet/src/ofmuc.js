@@ -237,7 +237,6 @@ Strophe.addConnectionPlugin('ofmuc', {
 	var jid = null;
 	var videoSpanId = null;
 	var node = null;
-	var button = $("#sipCallButton > a");
 
 	$(packet).find('header').each(function() 
 	{		
@@ -280,8 +279,6 @@ Strophe.addConnectionPlugin('ofmuc', {
 				$(container).attr("title", Strophe.getBareJidFromJid(jid));
 			}
 		}
-		
-		button.addClass("glow");
 	});
 	
 	$(packet).find('hangup').each(function() 
@@ -301,8 +298,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 			    $(container).hide();
 			    VideoLayout.resizeThumbnails();
 			}
-		}
-		button.removeClass("glow");		
+		}	
 	});	
 	
 	return true;
@@ -600,7 +596,10 @@ Strophe.addConnectionPlugin('ofmuc', {
 	    	
 	    	for (var i=0; i<that.urls.length; i++)
 	    	{
-	    		if (that.urls[i].url.indexOf(".pdf") == -1 ) appsList = appsList + '<option value="' + that.urls[i].url + '">' + that.urls[i].name + '</option>'
+	    		if (that.urls[i].url.indexOf(".pdf") == -1 && that.urls[i].url.indexOf("mrtp:") == -1 )
+	    		{
+	    			appsList = appsList + '<option value="' + that.urls[i].url + '">' + that.urls[i].name + '</option>'
+	    		}
 	    	}
 	    	appsList = appsList + '</select>'
 	    	

@@ -17,10 +17,8 @@
 package org.ifsoft.sip;
 
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 import java.net.*;
 
 import javax.sdp.Attribute;
@@ -47,6 +45,13 @@ import org.jitsi.service.libjitsi.*;
 import org.xmpp.packet.*;
 import org.jitsi.jigasi.openfire.*;
 
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
+
+import net.sf.fmj.media.rtp.*;
+
+import org.jivesoftware.util.JiveGlobals;
+
 /**
  *
  * Represents a call, contains the information for the Jingle as well as the sip side of the call
@@ -55,8 +60,10 @@ import org.jitsi.jigasi.openfire.*;
 public class CallSession
 {
     private static final Logger Log = LoggerFactory.getLogger(CallSession.class);
-
 	private static LinkedList<Payload> supported = new LinkedList<Payload>();
+
+	public SSRCFactoryImpl ssrcFactory = new SSRCFactoryImpl();
+    private long initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
 
 	public static Payload PAYLOAD_SPEEX = new Payload(99, "speex", 16000, 22000);
 	public static Payload PAYLOAD_SPEEX2 = new Payload(98, "speex", 8000, 11000);
@@ -66,6 +73,10 @@ public class CallSession
 	public static VPayload PAYLOAD_H263 = new VPayload(34, "H263", 90000, 512000, 320, 200, 15);
 	public static VPayload PAYLOAD_H264 = new VPayload(97, "H264", 90000, 512000, 640, 480, 15);
 	public static VPayload PAYLOAD_H264SVC = new VPayload(96, "H264-SVC", 90000, 512000, 640, 480, 15);
+
+	private int remotePort;
+	private String remoteParty;
+	private boolean started = false;
 
 
 	static
@@ -147,14 +158,13 @@ public class CallSession
 	public long startTimestamp = 0;
 
 	private CallControlComponent callControl;
+	private RtpChannel channel;
 
 
-
-	public CallSession(MediaStream mediaStream, String host, CallControlComponent callControl, String callId, String focusJID, String roomJID)
+	public CallSession(Conference conference, String host, CallControlComponent callControl, String callId, String focusJID, String roomJID)
 	{
 		Log.info("CallSession creation " + host);
 
-		this.mediaStream = mediaStream;
 		this.callControl = callControl;
 		this.callId = callId;
 		this.focusJID = focusJID;
@@ -166,18 +176,45 @@ public class CallSession
 		answerPayloads.add(PAYLOAD_PCMU);
 
 		try {
+			MediaService mediaService = LibJitsi.getMediaService();
+
+			Content content = conference.getOrCreateContent("audio");
+			mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, null);
+			mediaStream.setName("ofmeet-" + System.currentTimeMillis());
+
+			boolean useAudioMixer = false;
+			String useAudioString = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer");	// BAO
+			if (useAudioString != null) useAudioMixer = useAudioString.equals("true");
+
+			if (useAudioMixer)
+			{
+				mediaStream.setSSRCFactory(ssrcFactory);
+				mediaStream.setDevice(content.getMixer());
+			} else {
+				mediaStream.setRTPTranslator(content.getRTPTranslator());
+			}
+
 			InetAddress bindAddr = InetAddress.getByName(host);
 			connector = new DefaultStreamConnector(bindAddr);
         	connector.getDataSocket();
         	connector.getControlSocket();
 
-			mediaStream.setDirection(MediaDirection.RECVONLY);
-			mediaStream.setConnector(connector);
-			mediaStream.start();
+        	mediaStream.setConnector(connector);
+			mediaStream.addDynamicRTPPayloadType((byte)0, mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1));
+			mediaStream.setFormat(mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1));
+
+
+			//channel = content.createRtpChannel(null, RawUdpTransportPacketExtension.NAMESPACE, false);
+			//mediaStream = channel.getStream();
+			//channel.setRTPLevelRelayType(RTPLevelRelayType.MIXER);
+			//connector = channel.getTransportManager().getStreamConnector(channel);
+			//mediaStream.addDynamicRTPPayloadType((byte)111, mediaService.getFormatFactory().createMediaFormat("opus", 48000, 2));
+			//channel.getTransportManager().payloadTypesChanged(channel);
 
 		} catch (Exception e) {
 			Log.error("CallSession failure", e);
 		}
+
 	}
 
 	public void sendBye()
@@ -638,7 +675,6 @@ public class CallSession
 			}
 
 			sd.setMediaDescriptions(mds);
-			Log.info("buildSDP " + sd);
 			return sd;
 		}
 		catch (SdpException e)
@@ -686,8 +722,8 @@ public class CallSession
 						}
 					}
 
-					int  remotePort = media.getMediaPort();
-					String remoteParty = null;
+					remotePort = media.getMediaPort();
+
 					if (md.getConnection() != null)
 					{
 						remoteParty = md.getConnection().getAddress();
@@ -710,7 +746,8 @@ public class CallSession
 							int codec = Integer.parseInt(fields[0]);
 							String name = fields[1].split("/")[0];
 							int clockRate = Integer.parseInt(fields[1].split("/")[1]);
-							Log.debug("[[" + internalCallId + "]] Payload " + codec + " rate " + clockRate + " is mapped to " + name);
+
+							Log.info("[[" + internalCallId + "]] Payload " + codec + " rate " + clockRate + " is mapped to " + name);
 
 							if (codec >= 96)
 							{
@@ -735,8 +772,8 @@ public class CallSession
 				}
 				else
 				{
-					int remotePort = media.getMediaPort();
-					String remoteParty = null;
+					remotePort = media.getMediaPort();
+
 					if (md.getConnection() != null)
 					{
 						remoteParty = md.getConnection().getAddress();
@@ -746,19 +783,7 @@ public class CallSession
 						remoteParty = sd.getConnection().getAddress();
 					}
 
-					InetAddress remoteAddr = InetAddress.getByName(remoteParty);
-
-					Log.info("CallSession parseSDP " + remoteAddr + " " + remoteParty + " " + remotePort);
-
-					MediaService mediaService = LibJitsi.getMediaService();
-
-					mediaStream.setTarget(new MediaStreamTarget(new InetSocketAddress(remoteAddr, remotePort),new InetSocketAddress(remoteAddr, remotePort + 1)));
-
-					mediaStream.addDynamicRTPPayloadType((byte)111, mediaService.getFormatFactory().createMediaFormat("opus", 48000, 2));
-					mediaStream.addDynamicRTPPayloadType((byte)0, mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1));
-
-					mediaStream.setFormat(mediaService.getFormatFactory().createMediaFormat("PCMU", 8000, 1));
-					mediaStream.setDirection(MediaDirection.SENDRECV);
+					Log.info("CallSession parseSDP " + remoteParty + " " + remotePort);
 
 					@SuppressWarnings("unchecked")
 					Vector<String> codecs = (Vector<String>) media.getMediaFormats(false);
@@ -794,7 +819,8 @@ public class CallSession
 							int codec = Integer.parseInt(fields[0]);
 							String name = fields[1].split("/")[0];
 							int clockRate = Integer.parseInt(fields[1].split("/")[1]);
-							Log.debug("[[" + internalCallId + "]] Payload " + codec + " rate " + clockRate + " is mapped to " + name);
+
+							Log.info("[[" + internalCallId + "]] Payload " + codec + " rate " + clockRate + " is mapped to " + name);
 
 							if (codec >= 96)
 							{
@@ -818,6 +844,18 @@ public class CallSession
 				}
 			}
 
+			try {
+				InetAddress remoteAddr = InetAddress.getByName(remoteParty);
+
+				Log.info("CallSession buildSDP " + remoteAddr + " " + remoteParty + " " + remotePort + "\n" + sd);
+
+				mediaStream.setTarget(new MediaStreamTarget(new InetSocketAddress(remoteAddr, remotePort),new InetSocketAddress(remoteAddr, remotePort + 1)));
+				mediaStream.setDirection(MediaDirection.SENDRECV);
+				mediaStream.start();
+
+			} catch (Exception e) {
+				Log.error("Error building SDP", e);
+			}
 			callControl.inviteEvent(true, callId);
 		}
 		catch (Exception e)
@@ -833,4 +871,40 @@ public class CallSession
 		parseSDP(new String(message.getRawContent()), true);
 	}
 
+	private long ssrcFactoryGenerateSSRC(String cause, int i)
+	{
+		if (initialLocalSSRC != -1)
+		{
+			if (i == 0)
+				return (int) initialLocalSSRC;
+			else if (cause.equals(GenerateSSRCCause.REMOVE_SEND_STREAM.name()))
+				return Long.MAX_VALUE;
+		}
+		return ssrcFactory.doGenerateSSRC();
+	}
+
+	private class SSRCFactoryImpl implements SSRCFactory
+	{
+		private int i = 0;
+
+		/**
+		 * The <tt>Random</tt> instance used by this <tt>SSRCFactory</tt> to
+		 * generate new synchronization source (SSRC) identifiers.
+		 */
+		private final Random random = new Random();
+
+		public int doGenerateSSRC()
+		{
+			return random.nextInt();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public long generateSSRC(String cause)
+		{
+			return ssrcFactoryGenerateSSRC(cause, i++);
+		}
+	}
 }

@@ -35,6 +35,7 @@ public class JingleOfferFactory
     public static ContentPacketExtension createContentForMedia(
             MediaType mediaType, boolean enableFirefoxHacks)
     {
+
         ContentPacketExtension content
             = new ContentPacketExtension(
                     ContentPacketExtension.CreatorEnum.initiator,
@@ -58,34 +59,42 @@ public class JingleOfferFactory
                 URI.create("urn:ietf:params:rtp-hdrext:ssrc-audio-level"));
             rtpDesc.addExtmap(ssrcAudioLevel);
 
-            // a=rtpmap:111 opus/48000/2
-            PayloadTypePacketExtension opus
-                = new PayloadTypePacketExtension();
-            opus.setId(111);
-            opus.setName("opus");
-            opus.setClockrate(48000);
-            opus.setChannels(2);
-            rtpDesc.addPayloadType(opus);
-            // fmtp:111 minptime=10
-            ParameterPacketExtension opusMinptime
-                = new ParameterPacketExtension();
-            opusMinptime.setName("minptime");
-            opusMinptime.setValue("10");
-            opus.addParameter(opusMinptime);
-            // a=rtpmap:103 ISAC/16000
-            PayloadTypePacketExtension isac16
-                = new PayloadTypePacketExtension();
-            isac16.setId(103);
-            isac16.setName("ISAC");
-            isac16.setClockrate(16000);
-            rtpDesc.addPayloadType(isac16);
-            // a=rtpmap:104 ISAC/32000
-            PayloadTypePacketExtension isac32
-                = new PayloadTypePacketExtension();
-            isac32.setId(104);
-            isac32.setName("ISAC");
-            isac32.setClockrate(32000);
-            rtpDesc.addPayloadType(isac32);
+			boolean sipEnabled = false;
+			String sipEnabledString = System.getProperty("org.jitsi.videobridge.ofmeet.sip.enabled");	// BAO
+			if (sipEnabledString != null) sipEnabled = sipEnabledString.equals("true");
+
+			if (sipEnabled == false)
+			{
+				// a=rtpmap:111 opus/48000/2
+				PayloadTypePacketExtension opus
+					= new PayloadTypePacketExtension();
+				opus.setId(111);
+				opus.setName("opus");
+				opus.setClockrate(48000);
+				opus.setChannels(2);
+				rtpDesc.addPayloadType(opus);
+				// fmtp:111 minptime=10
+				ParameterPacketExtension opusMinptime
+					= new ParameterPacketExtension();
+				opusMinptime.setName("minptime");
+				opusMinptime.setValue("10");
+				opus.addParameter(opusMinptime);
+				// a=rtpmap:103 ISAC/16000
+				PayloadTypePacketExtension isac16
+					= new PayloadTypePacketExtension();
+				isac16.setId(103);
+				isac16.setName("ISAC");
+				isac16.setClockrate(16000);
+				rtpDesc.addPayloadType(isac16);
+				// a=rtpmap:104 ISAC/32000
+				PayloadTypePacketExtension isac32
+					= new PayloadTypePacketExtension();
+				isac32.setId(104);
+				isac32.setName("ISAC");
+				isac32.setClockrate(32000);
+				rtpDesc.addPayloadType(isac32);
+			}
+
             // a=rtpmap:0 PCMU/8000
             PayloadTypePacketExtension pcmu
                 = new PayloadTypePacketExtension();

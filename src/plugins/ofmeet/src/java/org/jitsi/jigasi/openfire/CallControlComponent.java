@@ -32,7 +32,12 @@ import org.slf4j.*;
 import org.slf4j.Logger;
 
 import net.java.sip.communicator.impl.protocol.jabber.extensions.rayo.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
 import net.java.sip.communicator.util.*;
+
+import net.sf.fmj.media.rtp.*;
+
 import org.dom4j.*;
 import org.jitsi.jigasi.*;
 import org.osgi.framework.*;
@@ -62,17 +67,18 @@ import net.sf.fmj.media.rtp.*;
 import org.ifsoft.rtp.*;
 import uk.nominet.DDDS.*;
 
+
 public class CallControlComponent extends AbstractComponent
 {
     private static final Logger Log = LoggerFactory.getLogger(JigasiPlugin.class);
-	public SSRCFactoryImpl ssrcFactory = new SSRCFactoryImpl();
-    private long initialLocalSSRC = ssrcFactory.doGenerateSSRC() & 0xFFFFFFFFL;
 	public ConcurrentHashMap<String, CallSession> callSessions = new ConcurrentHashMap<String, CallSession>();
 	public ConcurrentHashMap<String, String> conferences = new ConcurrentHashMap<String, String>();
 	public ConcurrentHashMap<String, String> registrations = new ConcurrentHashMap<String, String>();
+
 	public static CallControlComponent self;
 	private SipService sipService = null;
 	private MultiUserChatManager mucManager = XMPPServer.getInstance().getMultiUserChatManager();
+	private String hostName;
 
 	private Videobridge getVideobridge()
 	{
@@ -85,7 +91,14 @@ public class CallControlComponent extends AbstractComponent
 		self = this;
 
 		Properties properties = new Properties();
-		String hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+		hostName = JiveGlobals.getProperty("org.jitsi.videobridge.nat.harvester.public.address", XMPPServer.getInstance().getServerInfo().getHostname());
+
+		try {
+			hostName = InetAddress.getByName(hostName).getHostAddress();
+		} catch (Exception e) {
+
+		}
+
 		String logDir = pluginDirectory.getAbsolutePath() + File.separator + ".." + File.separator + ".." + File.separator + "logs" + File.separator;
 		String port = JiveGlobals.getProperty("org.jitsi.videobridge.sip.port.number", "5060");
 
@@ -106,7 +119,7 @@ public class CallControlComponent extends AbstractComponent
 			sipService = new SipService(properties);
 
 		} else {
-			Log.info("CallControlComponent -enabling SIP gateway");
+			Log.info("CallControlComponent - disabling SIP gateway");
 		}
 	}
 
@@ -166,35 +179,19 @@ public class CallControlComponent extends AbstractComponent
 		Log.info("CallControlComponent - makeCall " + confJid + " " + to + " " + callId);
 
 		try {
-			String hostname = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String callerId = (new JID(confJid)).getNode();
 			String focusJid = conference.getFocus();
 
-			MediaService mediaService = LibJitsi.getMediaService();
-			MediaStream mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, mediaService.createSrtpControl(SrtpControlType.MIKEY));
-			mediaStream.setName("rayo-" + System.currentTimeMillis());
-
-			Content content = conference.getOrCreateContent("audio");
-			boolean audioMixer = "true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
-
-			if (audioMixer)
-			{
-				mediaStream.setSSRCFactory(ssrcFactory);
-				mediaStream.setDevice(content.getMixer());
-			} else {
-				mediaStream.setRTPTranslator(content.getRTPTranslator());
-			}
-
-			content.createRtpChannel(null, null, null);
-
-			CallSession cs = new CallSession(mediaStream, hostname, this, callId, focusJid, confJid);
+			CallSession cs = new CallSession(conference, hostName, this, callId, focusJid, confJid);
 			callSessions.put(callId, cs);
 
 			boolean toSip = to.indexOf("sip:") == 0 ;
 			boolean toPhone = to.indexOf("tel:") == 0;
-			String from = null;
+			boolean toMulticast = to.indexOf("mrtp:") == 0;
 
-			if (!toSip && !toPhone)
+			String from = "sip:" + callerId + "@" + hostName;
+
+			if (!toSip && !toPhone && !toMulticast)
 			{
 				String sipUri = null;
 
@@ -233,18 +230,18 @@ public class CallControlComponent extends AbstractComponent
 
 			if (toSip)
 			{
-				from = "sip:" + callerId + "@" + hostname;
+				from = "sip:" + callerId + "@" + hostName;
 
 				Log.info("CallControlComponent - makeCall with direct sip "  + to + " " + from);
 
-			} else {
+			} else if (toPhone) {
 
 				to = to.substring(4);
 
 				if (registrations.containsKey(to))
 				{
 					to = registrations.get(to);
-					from = "sip:" + callerId + "@" + hostname;
+					from = "sip:" + callerId + "@" + hostName;
 
 					Log.info("CallControlComponent - makeCall with registration "  + to + " " + from);
 
@@ -265,14 +262,29 @@ public class CallControlComponent extends AbstractComponent
 						return;
 					}
 				}
+
+			} else if (toMulticast) {
+				String params[] = to.split(":");
+
+				InetAddress remoteAddr = InetAddress.getByName(params[1]);
+				cs.mediaStream.setTarget(new MediaStreamTarget(new InetSocketAddress(remoteAddr, Integer.parseInt(params[2])), null));
+				cs.mediaStream.setDirection(MediaDirection.SENDONLY);
+				cs.mediaStream.start();
 			}
 
-			cs.jabberRemote = to;
+
 			cs.jabberLocal = from;
 			cs.username = username;
 			cs.startTimestamp = startTimestamp;
 
-			SipService.sendInvite(cs);
+			if (!toMulticast)
+			{
+				cs.jabberRemote = to;
+				SipService.sendInvite(cs);
+			} else {
+				cs.jabberRemote = "multicast";
+				inviteEvent(true, callId);
+			}
 
 		} catch (Exception e) {
 
@@ -284,11 +296,18 @@ public class CallControlComponent extends AbstractComponent
 	{
 		Log.info("hangupCall " + callId);
 
-		CallSession cs = callSessions.remove(callId);
+		CallSession cs = callSessions.get(callId);
 
 		if (cs != null)
 		{
-			SipService.sendBye(cs);
+			if (cs.jabberRemote != null && cs.jabberRemote.startsWith("multicast"))
+			{
+				cs.sendBye();
+
+			} else {
+				SipService.sendBye(cs);
+			}
+
 			updateCallRecord(cs.startTimestamp, (int)(System.currentTimeMillis() - cs.startTimestamp));
 
 		} else {
@@ -301,14 +320,13 @@ public class CallControlComponent extends AbstractComponent
 		Log.info("CallControlComponent - findCreateSession " + from + " " + to + " " + destination);
 
 		CallSession session = null;
-		String hostname = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 		String callerId = to;
 		String confJID = null;
 		Conference conference =  null;
 
 		boolean allowDirectSIP = "true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.allow.direct.sip", "false"));
 
-		if (!allowDirectSIP || !registrations.containsKey(from))
+		if (!allowDirectSIP && !registrations.containsKey(from))
 		{
 			Log.warn("CallControlComponent - call rejected from " + from + " " + to);
 			return null;	// only accept calls from registered SIP user endpoint
@@ -329,6 +347,8 @@ public class CallControlComponent extends AbstractComponent
 
 			if (confJID != null) break;
 		}
+
+		Log.info("CallControlComponent - findCreateSession conference looking for id " + confJID);
 
 		if (confJID != null && conferences.containsKey(confJID))
 		{
@@ -352,25 +372,8 @@ public class CallControlComponent extends AbstractComponent
 
 			try
 			{
-				MediaService mediaService = LibJitsi.getMediaService();
-				MediaStream mediaStream = mediaService.createMediaStream(null, org.jitsi.service.neomedia.MediaType.AUDIO, mediaService.createSrtpControl(SrtpControlType.MIKEY));
-				mediaStream.setName("rayo-" + System.currentTimeMillis());
-
-				Content content = conference.getOrCreateContent("audio");
-				boolean audioMixer = "true".equals(JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.audio.mixer", "false"));
-
-				if (audioMixer)
-				{
-					mediaStream.setSSRCFactory(ssrcFactory);
-					mediaStream.setDevice(content.getMixer());
-				} else {
-					mediaStream.setRTPTranslator(content.getRTPTranslator());
-				}
-
-				content.createRtpChannel(null, null, null);
-
 				String callId = Long.toHexString(System.currentTimeMillis());
-				session = new CallSession(mediaStream, hostname, this, callId, conference.getFocus(), confJID);
+				session = new CallSession(conference, hostName, this, callId, conference.getFocus(), confJID);
 
 				session.jabberRemote = from;
 				session.jabberLocal = to;
@@ -382,6 +385,8 @@ public class CallControlComponent extends AbstractComponent
 			{
 				Log.error("CallControlComponent findCreateSession", e);
 			}
+		} else {
+			Log.warn("conferennce not found " + confJID);
 		}
 
 		if (session != null)
@@ -480,6 +485,8 @@ public class CallControlComponent extends AbstractComponent
 			} catch (Exception e) {
 				Log.error("CallControlComponent inviteEvent. error" + session.roomJID, e);
 			}
+
+			if (!accepted) callSessions.remove(callId);
 
 		} else {
 			Log.error("CallControlComponent inviteEvent. cannot find callid " + callId);
@@ -683,43 +690,6 @@ public class CallControlComponent extends AbstractComponent
 		}
 
 		return reply;
-	}
-
-	private long ssrcFactoryGenerateSSRC(String cause, int i)
-	{
-		if (initialLocalSSRC != -1)
-		{
-			if (i == 0)
-				return (int) initialLocalSSRC;
-			else if (cause.equals(GenerateSSRCCause.REMOVE_SEND_STREAM.name()))
-				return Long.MAX_VALUE;
-		}
-		return ssrcFactory.doGenerateSSRC();
-	}
-
-	private class SSRCFactoryImpl implements SSRCFactory
-	{
-		private int i = 0;
-
-		/**
-		 * The <tt>Random</tt> instance used by this <tt>SSRCFactory</tt> to
-		 * generate new synchronization source (SSRC) identifiers.
-		 */
-		private final Random random = new Random();
-
-		public int doGenerateSSRC()
-		{
-			return random.nextInt();
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public long generateSSRC(String cause)
-		{
-			return ssrcFactoryGenerateSSRC(cause, i++);
-		}
 	}
 
 	private void sendPacket(Packet packet)

@@ -71,6 +71,8 @@ public class OpenfireEventService implements LoggingService
         //    }
         //  ]
 
+		if ("focus_created".equals(e.getName())) return;
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", e.getName());
 

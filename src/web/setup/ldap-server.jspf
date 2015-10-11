@@ -14,6 +14,7 @@
     String adminPassword;
     boolean connectionPoolEnabled = true;
     boolean sslEnabled = false;
+    boolean startTlsEnabled = false;
     boolean debugEnabled = false;
     boolean referralsEnabled = false;
     boolean aliasReferralsEnabled = true;
@@ -47,6 +48,7 @@
         connectionPoolEnabled =
                 ParamUtils.getBooleanParameter(request, "connectionpool", connectionPoolEnabled);
         sslEnabled = ParamUtils.getBooleanParameter(request, "ssl", sslEnabled);
+        startTlsEnabled = ParamUtils.getBooleanParameter(request, "starttls", startTlsEnabled);
         debugEnabled = ParamUtils.getBooleanParameter(request, "debug", debugEnabled);
         referralsEnabled = ParamUtils.getBooleanParameter(request, "referrals", referralsEnabled);
         aliasReferralsEnabled = ParamUtils.getBooleanParameter(request, "aliasreferrals", aliasReferralsEnabled);
@@ -68,6 +70,7 @@
             settings.put("ldap.connectionPoolEnabled",
                     Boolean.toString(connectionPoolEnabled));
             settings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
+            settings.put("ldap.startTlsEnabled", Boolean.toString(startTlsEnabled));
             settings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
             settings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
             settings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
@@ -91,6 +94,7 @@
                 manager.setAdminPassword(adminPassword);
                 manager.setConnectionPoolEnabled(connectionPoolEnabled);
                 manager.setSslEnabled(sslEnabled);
+                manager.setStartTlsEnabled(startTlsEnabled);
                 manager.setDebugEnabled(debugEnabled);
                 manager.setFollowReferralsEnabled(referralsEnabled);
                 manager.setFollowAliasReferralsEnabled(aliasReferralsEnabled);
@@ -105,6 +109,7 @@
                     xmppSettings.put("ldap.adminPassword", adminPassword);
                     xmppSettings.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
                     xmppSettings.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
+                    xmppSettings.put("ldap.startTlsEnabled", Boolean.toString(startTlsEnabled));
                     xmppSettings.put("ldap.debugEnabled", Boolean.toString(debugEnabled));
                     xmppSettings.put("ldap.autoFollowReferrals", Boolean.toString(referralsEnabled));
                     xmppSettings.put("ldap.autoFollowAliasReferrals", Boolean.toString(aliasReferralsEnabled));
@@ -137,6 +142,7 @@
         adminPassword = manager.getAdminPassword();
         connectionPoolEnabled = manager.isConnectionPoolEnabled();
         sslEnabled = manager.isSslEnabled();
+        startTlsEnabled = manager.isStartTlsEnabled();
         debugEnabled = manager.isDebugEnabled();
         referralsEnabled = manager.isFollowReferralsEnabled();
         aliasReferralsEnabled = manager.isFollowAliasReferralsEnabled();
@@ -302,6 +308,20 @@
 					</td>
 					<td class="jive-advancedBorderBottom" align="center">
 						<input type="radio" name="ssl" value="false" <% if (!sslEnabled) { %>checked <% } %>>
+					</td>
+				</tr>
+				<tr>
+					<td class="jive-advancedLabel" nowrap>
+						<fmt:message key="setup.ldap.server.starttls" />:
+					</td>
+					<td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+						<fmt:message key="setup.ldap.server.starttls_help" />
+					</td>
+					<td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+						<input type="radio" name="starttls" value="true" <% if (startTlsEnabled) { %>checked <% } %>>
+					</td>
+					<td class="jive-advancedBorderBottom" align="center">
+						<input type="radio" name="starttls" value="false" <% if (!startTlsEnabled) { %>checked <% } %>>
 					</td>
 				</tr>
 				<tr>

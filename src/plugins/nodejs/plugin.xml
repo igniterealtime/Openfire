@@ -2,11 +2,12 @@
 <plugin>
     <author>igniterealtime.org</author>
     <class>org.ifsoft.nodejs.openfire.PluginImpl</class>
+    <name>NodeJs</name>
     <description>Integrates NodeJs Applications with Openfire.</description>
     <licenseType>Apache 2.0</licenseType>
-    <minServerVersion>3.8.2</minServerVersion>
-    <name>NodeJ</name>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
+    <date>10/12/2015</date>
+    <minServerVersion>3.11.0</minServerVersion>
 
    <adminconsole>
         <tab id="tab-server">

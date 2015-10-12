@@ -8,9 +8,9 @@
     <name>Debugger Plugin</name>
     <description>Prints XML traffic to the stdout (raw and interpreted XML)</description>
     <author>Jive Software</author>
-    <version>1.4.0</version>
-    <date>10/20/2014</date>
-    <minServerVersion>3.9.4</minServerVersion>
+    <version>1.5.0</version>
+    <date>10/12/2015</date>
+    <minServerVersion>3.11.0</minServerVersion>
 
    <adminconsole>
       <tab id="tab-server">

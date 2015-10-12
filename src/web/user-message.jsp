@@ -31,8 +31,8 @@
 %>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%  // Get parameters
     String username = ParamUtils.getParameter(request,"username");
     boolean send = ParamUtils.getBooleanParameter(request,"send");

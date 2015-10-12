@@ -64,6 +64,7 @@
     if (!jdk13Installed || !servlet22Installed || !jsp11Installed || !jiveJarsInstalled
             || !openfireHomeExists)
     {
+        pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
 %>
         <html>
         <head>
@@ -82,7 +83,7 @@
 
         <p>
         <fmt:message key="setup.env.check.error_info">
-            <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+            <fmt:param value="${localizedTitle}" />
         </fmt:message>
         </p>
 

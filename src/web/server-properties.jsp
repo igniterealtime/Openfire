@@ -23,7 +23,7 @@
                  org.jivesoftware.util.JiveGlobals"
     errorPage="error.jsp"
 %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />

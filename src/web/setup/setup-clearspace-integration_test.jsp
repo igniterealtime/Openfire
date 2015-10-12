@@ -5,8 +5,8 @@
 <%@ page import="javax.net.ssl.SSLException" %>
 <%@ page import="org.jivesoftware.openfire.clearspace.ConnectionException" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     boolean success = false;

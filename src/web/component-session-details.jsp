@@ -27,8 +27,9 @@
 %>
 <%@ page import="java.text.NumberFormat" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -45,6 +46,8 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     ComponentSession componentSession = sessionManager.getComponentSession(jid);
+    
+    pageContext.setAttribute( "componentSession", componentSession );
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
@@ -59,7 +62,7 @@
 
 <p>
 <fmt:message key="component.session.details.info">
-    <fmt:param value="<%= "<b>"+jid+"</b>" %>" />
+    <fmt:param value="<b>${fn:escapeXml(jid)}</b>" />
 </fmt:message>
 
 </p>
@@ -79,7 +82,7 @@
             <fmt:message key="component.session.label.domain" />
         </td>
         <td>
-            <%= componentSession.getAddress() %>
+            <c:out value="${componentSession.address}"/>
         </td>
     </tr>
     <tr>
@@ -87,7 +90,7 @@
             <fmt:message key="component.session.label.name" />
         </td>
         <td>
-            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
+            <c:out value="${componentSession.externalComponent.name}"/>
         </td>
     </tr>
     <tr>
@@ -95,7 +98,7 @@
             <fmt:message key="component.session.label.category" />:
         </td>
         <td>
-            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
+            <c:out value="${componentSession.externalComponent.category}"/>
         </td>
     </tr>
     <tr>
@@ -103,22 +106,23 @@
             <fmt:message key="component.session.label.type" />:
         </td>
         <td>
-            <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
-                if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
-             <% }
-                else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
-             <% }
-                else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
-             <% }
-                else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
-             <% }
-            }
-            %>
-            <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %>
+            <c:if test="${componentSession.externalComponent.category eq 'gateway'}">
+                <c:choose>
+                    <c:when test="${componentSession.externalComponent.type eq 'msn'}">
+                        <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
+                    </c:when>
+                    <c:when test="${componentSession.externalComponent.type eq 'aim'}">
+                        <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
+                    </c:when>
+                    <c:when test="${componentSession.externalComponent.type eq 'yahoo'}">
+                        <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
+                    </c:when>
+                    <c:when test="${componentSession.externalComponent.type eq 'icq'}">
+                        <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
+                    </c:when>
+                </c:choose>
+            </c:if>
+            <c:out value="${componentSession.externalComponent.type}"/>
         </td>
     </tr>
     <tr>

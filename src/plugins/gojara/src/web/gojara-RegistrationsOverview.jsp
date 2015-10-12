@@ -12,7 +12,7 @@
 <%@ page import="java.util.Date"%>
 <%@ page import="java.util.ArrayList"%>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
 <%
 	TransportSessionManager transportManager = TransportSessionManager.getInstance();

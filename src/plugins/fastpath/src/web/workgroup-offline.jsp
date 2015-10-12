@@ -1,4 +1,4 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <% try { %>
 <%@ page import=" org.jivesoftware.xmpp.workgroup.utils.ModelUtil,
                  org.jivesoftware.xmpp.workgroup.WorkgroupManager,

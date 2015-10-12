@@ -3,7 +3,7 @@
    -	$Revision: 32926 $
    -	$Date: 2006-08-04 15:39:24 -0700 (Fri, 04 Aug 2006) $
 --%>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page import="org.jivesoftware.xmpp.workgroup.RequestQueue,
                  org.jivesoftware.xmpp.workgroup.Workgroup,
                  org.jivesoftware.util.ParamUtils,

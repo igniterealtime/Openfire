@@ -35,8 +35,8 @@
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%
@@ -61,6 +61,10 @@
 
     // Get parameters //
     String username = ParamUtils.getParameter(request, "username");
+
+    String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
+    pageContext.setAttribute( "usernameUrlEncoded", usernameUrlEncoded);
+    pageContext.setAttribute( "usernameHtmlEscaped", StringUtils.escapeHTMLTags(JID.unescapeNode(username)) );
 
     // Load the roster object
     Roster roster = null;
@@ -98,7 +102,7 @@
     <head>
         <title><fmt:message key="user.roster.title"/></title>
         <meta name="subPageID" content="user-roster"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="username=${usernameUrlEncoded}"/>
     </head>
     <body>
 
@@ -149,7 +153,7 @@
 
 <p>
 <fmt:message key="user.roster.info">
-    <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(JID.unescapeNode(username))+"</b>" %>" />
+    <fmt:param value="<b>${usernameHtmlEscaped}</b>"/>
 </fmt:message>
 </p>
 
@@ -181,7 +185,7 @@
         }
         if (s > 2) {
     %>
-        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=<%= range %>&filter=<%= filter %>">1</a> ...
+        <a href="user-roster.jsp?username=${usernameUrlEncoded}&start=0&range=<%= range %>&filter=<%= filter %>">1</a> ...
 
     <%
         }
@@ -190,7 +194,7 @@
             String sep = ((i + 1) < numPages) ? " " : "";
             boolean isCurrent = (i + 1) == curPage;
     %>
-        <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= (i*range) %>&range=<%= range %>&filter=<%= filter %>"
+        <a href="user-roster.jsp?username=${usernameUrlEncoded}&start=<%= (i*range) %>&range=<%= range %>&filter=<%= filter %>"
         class="<%= ((isCurrent) ? "jive-current" : "") %>"
         ><%= (i+1) %></a><%= sep %>
 
@@ -198,7 +202,7 @@
 
     <%  if (i < numPages) { %>
 
-        ... <a href="user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=<%= ((numPages-1)*range) %>&range=<%= range %>&filter=<%= filter %>"><%= numPages %></a>
+        ... <a href="user-roster.jsp?username=${usernameUrlEncoded}&start=<%= ((numPages-1)*range) %>&range=<%= range %>&filter=<%= filter %>"><%= numPages %></a>
 
     <%  } %>
 
@@ -208,12 +212,12 @@
 </p>
 
 <div style="float:right; vertical-align: bottom; padding: 0; margin-bottom: 0; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
-    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><fmt:message key="user.roster.add"/><img style="position: relative; left: 3px; top: 3px" src="images/add-16x16.gif" alt="" width="16" height="16" border="0"></a>
+    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=${usernameUrlEncoded}"><fmt:message key="user.roster.add"/><img style="position: relative; left: 3px; top: 3px" src="images/add-16x16.gif" alt="" width="16" height="16" border="0"></a>
 </div>
 
 <p style="margin-bottom: 2px">
     <fmt:message key="user.roster.items_per_page" />:
-    <select size="1" onchange="location.href='user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=' + this.options[this.selectedIndex].value;">
+    <select size="1" onchange="location.href='user-roster.jsp?username=${usernameUrlEncoded}&start=0&range=' + this.options[this.selectedIndex].value;">
 
         <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
@@ -228,7 +232,7 @@
     --
 
     <fmt:message key="user.roster.filter" />:
-<select size="1" onchange="location.href='user-roster.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&start=0&range=<%= range %>&filter=' + this.options[this.selectedIndex].value;">
+<select size="1" onchange="location.href='user-roster.jsp?username=${usernameUrlEncoded}&start=0&range=<%= range %>&filter=' + this.options[this.selectedIndex].value;">
 
     <option value="0"<%= filter == 0 ? " SELECTED" : "" %>><fmt:message key="user.roster.filter.all" /></option>
     <option value="1"<%= filter == 1 ? " SELECTED" : "" %>><fmt:message key="user.roster.filter.noshared" /></option>
@@ -293,7 +297,7 @@
             <%= i %>
         </td>
         <td>
-            <a href="user-roster-view.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+            <a href="user-roster-view.jsp?username=${usernameUrlEncoded}&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="user.roster.click_view" />"
              ><%= rosterItem.getJid() %></a>
         </td>
@@ -338,13 +342,13 @@
             <%= rosterItem.getSubStatus().getName() %>
         </td>
         <td width="1%" align="center">
-            <a href="user-roster-edit.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+            <a href="user-roster-edit.jsp?username=${usernameUrlEncoded}&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <% if (sharedGroups.isEmpty()) { %>
-            <a href="user-roster-delete.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
+            <a href="user-roster-delete.jsp?username=${usernameUrlEncoded}&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
             <% } else { %>

@@ -11,8 +11,8 @@
 <%@ page import="org.apache.commons.fileupload.FileItem"%>
 <%@ page import="java.util.Iterator"%>
 <%@ page import="java.io.FileOutputStream"%>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <html>
 <head>

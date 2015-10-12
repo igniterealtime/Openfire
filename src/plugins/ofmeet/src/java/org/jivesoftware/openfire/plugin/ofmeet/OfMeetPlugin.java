@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 import java.text.*;
 import java.util.regex.*;
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
 import org.xmpp.packet.*;
 
 import org.jivesoftware.util.*;
@@ -50,6 +52,8 @@ import org.xmpp.component.ComponentManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -194,9 +198,21 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			Log.info("OfMeet Plugin - Initialize websockets ");
 			ServletContextHandler context = new ServletContextHandler(contexts, "/ofmeetws", ServletContextHandler.SESSIONS);
 			context.addServlet(new ServletHolder(new XMPPServlet()),"/server");
+			// Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+			final List<ContainerInitializer> initializers = new ArrayList<>();
+			initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+			context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+			context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 
 			WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath(), "/ofmeet");
 			context2.setClassLoader(this.getClass().getClassLoader());
+
+			// Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+			final List<ContainerInitializer> initializers2 = new ArrayList<>();
+			initializers2.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+			context2.setAttribute("org.eclipse.jetty.containerInitializers", initializers2);
+			context2.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+
 			context2.setWelcomeFiles(new String[]{"index.html"});
 
 			String securityEnabled = JiveGlobals.getProperty("ofmeet.security.enabled", "true");

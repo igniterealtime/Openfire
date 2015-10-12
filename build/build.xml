@@ -180,7 +180,7 @@
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
         <path refid="libs.to.merge" />
-        <fileset dir="${lib.dist.dir}" includes="servlet-api.jar, servlet-api-schemas.jar, mail.jar, jdic.jar"/>
+        <fileset dir="${lib.dist.dir}" includes="mail.jar, jdic.jar"/>
         <fileset dir="${lib.dist.dir}" includes="bcpg-jdk15on.jar, bcpkix-jdk15on.jar, bcprov-jdk15on.jar"/>
     </path>
 
@@ -451,9 +451,14 @@
             <fileset dir="${lib.dist.dir}" includes="*.*"/>
         </copy>
 
-        <!-- Copy in tag library support -->
+        <!-- Copy in JSP support -->
         <copy todir="${jar.dest.dir}">
-            <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.apache.taglibs.taglibs-standard-impl.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.apache.taglibs.taglibs-standard-spec.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.eclipse.jetty.apache-jsp.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.mortbay.jasper.apache-el.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.mortbay.jasper.apache-jsp.jar"/>
         </copy>
 
         <!-- Copy in jasper runtime jar -->
@@ -1433,26 +1438,20 @@
                             </fileset>
                         </copy>
 
-                        <!-- Declare the jspc task with our plugin's classpath -->
-                        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperB">
+                        <!-- JSP to Java -->
+                        <java classname="org.apache.jasper.JspC" fork="true">
                             <classpath>
                                 <pathelement location="${java.home}/../lib/tools.jar"/>
-                                <pathelement
-                                        location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
-                                <path refid="jspc.dependencies"/>
                                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
+                                <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
                                 <pathelement path="${compile.dir}"/>
+                                <path refid="jspc.dependencies"/>
                             </classpath>
-                        </taskdef>
-
-                        <!-- JSP to Java -->
-                        <jasper2
-                                validateXml="false"
-                                uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
-                                outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                                package="org.jivesoftware.openfire.plugin.@{plugin}"
-                                webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
-                                />
+                            <arg line="-uriroot '${plugin.dev.dest.dir}/@{plugin}/target/web'"/>
+                            <arg line="-d '${plugin.dev.dest.dir}/@{plugin}/target/jspc/java'"/>
+                            <arg line="-p org.jivesoftware.openfire.plugin.@{plugin}"/>
+                            <arg line="-webxml '${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml'"/>
+                        </java>
 
                         <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
                         <available property="plugin.@{plugin}.webxml.available"

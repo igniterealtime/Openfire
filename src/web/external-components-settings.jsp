@@ -18,8 +18,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.component.ExternalComponentConfiguration,
@@ -207,8 +207,8 @@
 
 <p>
 <fmt:message key="component.settings.info">
-    <fmt:param value="<%= "<a href='component-session-summary.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href=\"component-session-summary.jsp\">'" />
+    <fmt:param value="</a>" />
 </fmt:message>
 </p>
 

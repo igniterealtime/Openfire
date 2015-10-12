@@ -3,8 +3,8 @@
   -	$Date: 2005-07-19 09:05:10 -0700 (Tue, 19 Jul 2005) $
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
@@ -42,6 +42,8 @@
     }
     // Notify that the XMPP server that setup is finished.
     XMPPServer.getInstance().finishSetup();
+
+    pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString( "title" ) );
 %>
 
 <html>
@@ -73,7 +75,7 @@
 
 	<p>
 	<fmt:message key="setup.finished.info">
-	    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+	    <fmt:param value="${localizedTitle}" />
 	</fmt:message>
 	</p>
 

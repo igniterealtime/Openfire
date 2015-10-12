@@ -22,8 +22,13 @@ package org.jivesoftware.openfire.container;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -338,6 +343,13 @@ public class AdminConsolePlugin implements Plugin {
             context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp",
                     "/");
         }
+
+        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+        final List<ContainerInitializer> initializers = new ArrayList<>();
+        initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+        context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+
         context.setWelcomeFiles(new String[]{"index.jsp"});
     }
 

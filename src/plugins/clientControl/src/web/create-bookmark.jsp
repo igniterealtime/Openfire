@@ -13,8 +13,8 @@
 <%@ page import="java.util.StringTokenizer" %>
 <%@ page import="org.jivesoftware.util.NotFoundException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%
     boolean urlType = false;
     boolean groupchatType = false;

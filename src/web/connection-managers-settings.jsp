@@ -18,8 +18,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.SessionManager,
@@ -125,8 +125,8 @@
 
 <p>
 <fmt:message key="connection-manager.settings.info">
-    <fmt:param value="<%= "<a href='connection-manager-session-summary.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href='connection-manager-session-summary.jsp'>"/>
+    <fmt:param value="</a>"/>
 </fmt:message>
 </p>
 

@@ -490,23 +490,17 @@ public class PluginServlet extends HttpServlet {
             jspc.setCompile(true);
 
             jspc.setClassPath(getClasspathForPlugin(plugin));
+            jspc.execute();
+
             try {
-                jspc.execute();
-
-                try {
-                    Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
-                        relativeDir + filename).newInstance();
-                    HttpServlet servlet = (HttpServlet)servletInstance;
-                    servlet.init(servletConfig);
-                    servlet.service(request, response);
-                    return true;
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-
+                Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
+                    relativeDir + filename).newInstance();
+                HttpServlet servlet = (HttpServlet)servletInstance;
+                servlet.init(servletConfig);
+                servlet.service(request, response);
+                return true;
             }
-            catch (JasperException e) {
+            catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
         }

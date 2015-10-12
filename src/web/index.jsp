@@ -47,8 +47,8 @@
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -113,32 +113,32 @@
 <%
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     Update serverUpdate = updateManager.getServerUpdate();
-    if (serverUpdate != null) { %>
-    <div class="warning">
-    <table cellpadding="0" cellspacing="0" border="0" >
-    <tbody>
-        <tr>
-            <td class="jive-icon-label">
-            <b><fmt:message key="index.update.alert" /></b><br/><br/>
-            </td>
-        </tr>
-        <td valign="top" align="left" colspan="2">
-        <span><fmt:message key="index.update.info">
-                <fmt:param value="<%= serverUpdate.getLatestVersion()%>" />
-                <fmt:param value="<%= "<a href='"+serverUpdate.getURL()+"'>" %>" />
-                <fmt:param value="<%= "</a>" %>" />
-                <fmt:param value="<%= "<a href='"+serverUpdate.getChangelog()+"'>" %>" />
-                <fmt:param value="<%= "</a>" %>" />
-            </fmt:message></span>
-        </td>
-    </tbody>
-    </table>
-    </div>
-    <br>
+    pageContext.setAttribute( "serverUpdate", serverUpdate ); %>
 
-<%
-    }
-%>
+    <c:if test="${not empty serverUpdate}">
+        <div class="warning">
+            <table cellpadding="0" cellspacing="0" border="0" >
+                <tbody>
+                <tr>
+                    <td class="jive-icon-label">
+                        <b><fmt:message key="index.update.alert" /></b><br/><br/>
+                    </td>
+                </tr>
+                <td valign="top" align="left" colspan="2">
+                    <span><fmt:message key="index.update.info">
+                        <fmt:param value="${serverUpdate.latestVersion}" />
+                        <fmt:param value="<a href=\"${serverUpdate.URL}\">" />
+                        <fmt:param value="</a>"/>
+                        <fmt:param value="<a href=\"${serverUpdate.changelog}\">"/>
+                        <fmt:param value="</a>"/>
+                    </fmt:message></span>
+                </td>
+                </tbody>
+            </table>
+        </div>
+        <br>
+    </c:if>
+
 <style type="text/css">
 .bar TD {
     padding : 0;

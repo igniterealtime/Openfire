@@ -24,8 +24,9 @@
 %>
 <%@ page import="org.jivesoftware.openfire.roster.Roster" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -34,11 +35,16 @@
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
     String username = ParamUtils.getParameter(request, "username");
+    String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
     String jid = ParamUtils.getParameter(request, "jid");
+
+    pageContext.setAttribute( "username", username);
+    pageContext.setAttribute( "usernameUrlEncoded", usernameUrlEncoded);
+    pageContext.setAttribute( "jid", jid);
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-roster.jsp?username=" + usernameUrlEncoded);
         return;
     }
 
@@ -52,7 +58,7 @@
         // Log the event
         webManager.logEvent("deleted roster item from "+username, "roster item:\njid = "+jid);
         // Done, so redirect
-        response.sendRedirect("user-roster.jsp?username="+URLEncoder.encode(username, "UTF-8")+"&deletesuccess=true");
+        response.sendRedirect("user-roster.jsp?username="+usernameUrlEncoded+"&deletesuccess=true");
         return;
     }
 %>
@@ -61,20 +67,20 @@
     <head>
         <title><fmt:message key="user.roster.delete.title"/></title>
         <meta name="subPageID" content="user-roster"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="username=${usernameUrlEncoded}"/>
     </head>
     <body>
 
     <p>
     <fmt:message key="user.roster.delete.info">
-        <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(jid)+"</b>" %>" />
-        <fmt:param value="<%= "<b>"+StringUtils.escapeForXML(username)+"</b>" %>" />
+        <fmt:param value="<b>${fn:escapeXml(jid)}</b>" />
+        <fmt:param value="<b>${fn:escapeXml(username)}</b>" />
     </fmt:message>
     </p>
 
     <form action="user-roster-delete.jsp">
-    <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
-    <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
+    <input type="hidden" name="username" value="${usernameUrlEncoded}">
+    <input type="hidden" name="jid" value="${jid}">
     <input type="submit" name="delete" value="<fmt:message key="user.roster.delete.delete" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
     </form>

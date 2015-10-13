@@ -20,8 +20,8 @@
 <%@ page import="net.sf.kraken.session.TransportSession" %>
 <%@ page import="net.sf.kraken.BaseTransport" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
@@ -520,7 +520,7 @@
 
 	<!-- BEGIN results -->
 	<div class="jive-registrations-results">
-		<fmt:message key="gateway.web.registrations.registrations" />: <fmt:message key="gateway.web.registrations.xofy"><fmt:param value="<%= "<strong>"+(start+1)+"-"+topRange+"</strong>" %>"/><fmt:param value="<%= "<strong>"+resCount+"</strong>" %>"/></fmt:message>
+		<fmt:message key="gateway.web.registrations.registrations" />: <fmt:message key="gateway.web.registrations.xofy"><fmt:param value="<%=(start+1)%>"/><fmt:param value="<%=topRange%>"/><fmt:param value="<%=resCount%>"/></fmt:message>
 	</div>
 	<!-- END results -->
 

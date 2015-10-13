@@ -1,4 +1,4 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%--
   -	$RCSfile$
   -	$Revision$
@@ -10,7 +10,7 @@
                  org.jivesoftware.openfire.user.*"
     
 %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%-- Define Administration Bean --%>
 <jsp:useBean id="ad" class="org.jivesoftware.util.WebManager"  />
 <% ad.init(request, response, session, application, out ); %>

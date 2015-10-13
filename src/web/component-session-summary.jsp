@@ -32,8 +32,8 @@
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.Date"%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%!
     final int DEFAULT_RANGE = 15;
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
@@ -144,8 +144,8 @@
 
 <p>
 <fmt:message key="component.session.summary.info">
-    <fmt:param value="<%= "<a href='external-components-settings.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href=\"external-components-settings.jsp\">" />
+    <fmt:param value="</a>" />
 </fmt:message>
 </p>
 

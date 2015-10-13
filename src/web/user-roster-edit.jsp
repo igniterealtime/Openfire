@@ -29,8 +29,8 @@
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="java.util.Collection" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -115,7 +115,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="nickname"
-                 value="<%= StringUtils.escapeForXML(item.getNickname()) %>">
+                 value="<%= item.getNickname() == null || item.getNickname().isEmpty() ? "" : StringUtils.escapeForXML(item.getNickname()) %>">
             </td>
         </tr>
         <tr>

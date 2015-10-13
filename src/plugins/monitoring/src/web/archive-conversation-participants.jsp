@@ -11,8 +11,8 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     long conversationID = ParamUtils.getLongParameter(request, "conversationID", -1);
@@ -26,6 +26,7 @@
     ConversationManager conversationmanager = (ConversationManager) plugin.getModule(ConversationManager.class);
     List<String[]> values = new ArrayList<String[]>();
     JID room = null;
+    String roomName = "";
     try {
         Conversation conversation = conversationmanager.getConversation(conversationID);
         List<JID> participants = new ArrayList<JID>(conversation.getParticipants());
@@ -40,6 +41,9 @@
             }
         });
         room = conversation.getRoom();
+        if (room != null) {
+            roomName = room.getNode();
+        }
     }
     catch (NotFoundException e) {
         Log.error("Conversation not found: " + conversationID, e);
@@ -131,7 +135,7 @@
 		<h2><fmt:message key="archive.group_conversation.participants.title"/></h2>
 
 		<p><fmt:message key="archive.group_conversation.participants.description">
-                <fmt:param value="<%= room != null ? "<b>"+room.getNode()+"</b>" : "" %>" />
+                <fmt:param value="<%=roomName%>" />
             </fmt:message>
         </p>
 

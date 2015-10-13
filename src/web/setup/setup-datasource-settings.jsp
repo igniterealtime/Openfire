@@ -1,5 +1,5 @@
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%--
   -	$RCSfile$
   -	$Revision: 1410 $
@@ -122,6 +122,7 @@
             mode = STANDARD;
         }
     }
+    pageContext.setAttribute("localizedShortTitle", LocaleUtils.getLocalizedString("short.title") );
 %>
 
 <html>
@@ -137,7 +138,7 @@
 
 	<p>
 	<fmt:message key="setup.datasource.settings.info">
-	    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
+	    <fmt:param value="${localizedShortTitle}"/>
 	</fmt:message>
 	</p>
 

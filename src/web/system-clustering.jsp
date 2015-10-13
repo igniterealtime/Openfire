@@ -18,8 +18,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.database.DbConnectionManager"
     errorPage="error.jsp"
@@ -233,8 +233,8 @@
         <fmt:message key="system.clustering.overview.info">
             <fmt:param value="<%= clusterNodesInfo.size() %>" />
             <fmt:param value="<%= maxClusterNodes %>" />
-            <fmt:param value="<%= "<span style='background-color:#ffc;'>" %>" />
-            <fmt:param value="<%= "</span>" %>" />
+            <fmt:param value="<span style='background-color:#ffc;'>" />
+            <fmt:param value="</span>" />
         </fmt:message>
     </p>
 
@@ -365,8 +365,8 @@
               <tr valign="middle" align="middle" class="local">
                   <td colspan=8>
                       <fmt:message key="system.clustering.starting">
-                          <fmt:param value="<%= "<a href='system-clustering.jsp'>" %>" />
-                          <fmt:param value="<%= "</a>" %>" />
+                          <fmt:param value="<a href=\"system-clustering.jsp\">"/>
+                          <fmt:param value="</a>"/>
                       </fmt:message>
                   </td>
               </tr>

@@ -24,7 +24,7 @@
 %><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="admin" prefix="admin" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/decorator" prefix="decorator" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/page" prefix="page" %>
 
@@ -46,6 +46,8 @@
 
     // Message HTML can be passed in:
     String message = decoratedPage.getProperty("page.message");
+
+    pageContext.setAttribute( "usernameHtmlEscaped", StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername())) );
 %>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -94,7 +96,7 @@
         </div>
         <div id="jive-userstatus">
             <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
-            <fmt:message key="admin.logged_in_as"><fmt:param value="<%= "<strong>"+StringUtils.escapeHTMLTags(JID.unescapeNode(webManager.getUser().getUsername()))+"</strong>" %>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a>
+            <fmt:message key="admin.logged_in_as"><fmt:param value="<strong>${usernameHtmlEscaped}</strong>"/></fmt:message> - <a href="<%= path %>/index.jsp?logout=true"><%= LocaleUtils.getLocalizedString("global.logout") %></a>
         </div>
         <div id="jive-nav">
             <div id="jive-nav-left"></div>

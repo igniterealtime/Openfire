@@ -5,9 +5,9 @@
     <name>Rayo Plugin</name>
     <description>Provides support for XEP-0327</description>
     <author>Ignite Realtime Community</author>
-    <version>0.0.2</version>
-    <date>2/4/2014</date>
-    <minServerVersion>3.9.0</minServerVersion>
+    <version>0.1.0</version>
+    <date>10/12/2015</date>
+    <minServerVersion>3.11.0</minServerVersion>
 
     <adminconsole>
         <tab id="tab-rayo" name="Rayo" url="rayo.jsp" description="${admin.item.rayo.description}">

@@ -191,12 +191,6 @@ public class MonitoringPlugin implements Plugin {
 		}
 
 		picoContainer.start();
-
-		xep0136Support = new Xep0136Support(XMPPServer.getInstance());
-		xep0136Support.start();
-
-		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
-		xep0313Support.start();
 	}
 
 	public void destroyPlugin() {

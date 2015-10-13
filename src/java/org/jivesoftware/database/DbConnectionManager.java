@@ -993,8 +993,4 @@ public class DbConnectionManager {
 
         unknown;
     }
-
-    private DbConnectionManager() {
-        // Not instantiable.
-    }
 }

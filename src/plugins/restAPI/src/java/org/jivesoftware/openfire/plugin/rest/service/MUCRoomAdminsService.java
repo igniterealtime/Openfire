@@ -23,6 +23,14 @@ public class MUCRoomAdminsService {
 		return Response.status(Status.CREATED).build();
 	}
 
+	@POST
+	@Path("/group/{groupname}")
+	public Response addMUCRoomAdminGroup(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+			@PathParam("groupname") String groupname, @PathParam("roomName") String roomName) throws ServiceException {
+		MUCRoomController.getInstance().addAdmin(serviceName, roomName, groupname);
+		return Response.status(Status.CREATED).build();
+	}
+
 	@DELETE
 	@Path("/{jid}")
 	public Response deleteMUCRoomAdmin(@PathParam("jid") String jid,

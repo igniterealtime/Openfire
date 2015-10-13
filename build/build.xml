@@ -1208,35 +1208,11 @@
     </target>
 
     <target name="-plugins-impl" if="dirlist">
-
-        <!-- First, do all plugins that do not have a parent plugin (some of them could be parents of others) -->
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
-                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
-                <if>
-                    <isset property="plugin.parentPlugin"/>
-                    <then>
-                    </then>
-                    <else>
-                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
-                    </else>
-                </if>
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
             </sequential>
         </for>
-
-        <!-- Lastly, do all plugins that have defined a parent plugin. This works, as long as there are no 'chains' -->
-        <for list="${dirlist}" param="plugin" trim="true">
-            <sequential>
-                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
-                <if>
-                    <isset property="plugin.parentPlugin"/>
-                    <then>
-                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
-                    </then>
-                </if>
-            </sequential>
-        </for>
-
     </target>
 
     <target name="plugin" description="build one plugin">
@@ -1251,6 +1227,40 @@
         <antcall target="openfireHome"/>
     </target>
 
+    <macrodef name="buildparentplugin">
+        <attribute name="plugin"/>
+        <attribute name="pluginsrc"/>
+        <attribute name="pluginlib" default="${plugin.dev.dest.dir}/@{plugin}/work/lib" />
+        <attribute name="parentPlug"/>
+        <sequential>
+            <echo message="Read XML properties of @{pluginsrc}/@{parentPlug}/plugin.xml"/>
+            <xmlproperty file="@{pluginsrc}/@{parentPlug}/plugin.xml" prefix="@{parentPlug}" keepRoot="false"/>
+            <if>
+                <isset property="@{parentPlug}.parentPlugin"/>
+                <then>
+                    <echo message="Compile parent of parent plugin ${@{parentPlug}.parentPlugin}"/>
+                    <buildparentplugin parentPlug="${@{parentPlug}.parentPlugin}" plugin="@{plugin}" pluginsrc="@{pluginsrc}" pluginlib="@{pluginlib}"/>
+                </then>
+            </if>
+            <echo message="Compile parent plugin @{parentPlug}"/>
+            <javac
+                    destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
+                    includeAntRuntime="no"
+                    debug="on"
+                    source="1.5"
+                    target="1.5"
+                    >
+                <src path="@{pluginsrc}/@{parentPlug}/src/java"/>
+                <classpath>
+                    <path refid="plugin.dependencies"/>
+                    <!-- Jars used by the plugin to compile with -->
+                    <fileset dir="@{pluginsrc}/@{parentPlug}" includes="lib/*.jar"/>
+                </classpath>
+            </javac>
+        </sequential>
+
+    </macrodef>
+
     <!-- buildplugin (MACRO) =================================================================== -->
     <macrodef name="buildplugin">
         <attribute name="plugin"/>
@@ -1264,31 +1274,23 @@
                 <mkdir dir="${plugin.dev.dest.dir}"/>
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}"/>
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target"/>
+                <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
 
-                <!-- Determine if this plugin has a parent plugin and if so, add it to the classpath. Note that it is
-                     up to the caller to guarantee that a parent plugin has already been compiled!
-                -->
-                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" keeproot="true"/>
+                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" prefix="@{plugin}" keeproot="false"/>
                 <if>
-                    <isset property="plugin.parentPlugin"/>
+                    <isset property="@{plugin}.parentPlugin"/>
                     <then>
-                        <echo>Parent plugin found: ${plugin.parentPlugin}</echo>
-                        <path id="plugin.classpath.source">
-                            <path refid="plugin.dependencies"/>
-                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                            <fileset dir="${plugin.dev.dest.dir}/${plugin.parentPlugin}/target/" includes="lib/*.jar"/>
-                        </path>
+                        <echo>Parent plugin found: ${@{plugin}.parentPlugin}</echo>
+                        <buildparentplugin parentPlug="${@{plugin}.parentPlugin}" plugin="@{plugin}" pluginsrc="@{pluginsrc}" pluginlib="@{pluginlib}"/>
                     </then>
-                    <else>
-                        <path id="plugin.classpath.source">
-                            <path refid="plugin.dependencies"/>
-                            <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                        </path>
-                    </else>
                 </if>
 
+                <path id="plugin.classpath.source">
+                    <path refid="plugin.dependencies"/>
+                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                </path>
+
                 <!-- Compile plugin source code -->
-                <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
                 <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes" classpathref="plugin.classpath.source">
                     <src path="@{pluginsrc}/@{plugin}/src/java"/>
                 </of.javac>

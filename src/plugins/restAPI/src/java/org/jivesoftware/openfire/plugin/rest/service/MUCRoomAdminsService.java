@@ -39,4 +39,13 @@ public class MUCRoomAdminsService {
 		MUCRoomController.getInstance().deleteAffiliation(serviceName, roomName, jid);
 		return Response.status(Status.OK).build();
 	}
+
+	@DELETE
+	@Path("/group/{groupname}")
+	public Response deleteMUCRoomAdminGroup(@PathParam("groupname") String groupname,
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+			@PathParam("roomName") String roomName) throws ServiceException {
+		MUCRoomController.getInstance().deleteAffiliation(serviceName, roomName, groupname);
+		return Response.status(Status.OK).build();
+	}
 }

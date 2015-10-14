@@ -23,12 +23,29 @@ public class MUCRoomMembersService {
 		return Response.status(Status.CREATED).build();
 	}
 
+	@POST
+	@Path("/group/{groupname}")
+	public Response addMUCRoomMemberGroup(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+			@PathParam("groupname") String groupname, @PathParam("roomName") String roomName) throws ServiceException {
+		MUCRoomController.getInstance().addMember(serviceName, roomName, groupname);
+		return Response.status(Status.CREATED).build();
+	}
+
 	@DELETE
 	@Path("/{jid}")
 	public Response deleteMUCRoomMember(@PathParam("jid") String jid,
 			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@PathParam("roomName") String roomName) throws ServiceException {
 		MUCRoomController.getInstance().deleteAffiliation(serviceName, roomName, jid);
+		return Response.status(Status.OK).build();
+	}
+
+	@DELETE
+	@Path("/group/{groupname}")
+	public Response deleteMUCRoomMemberGroup(@PathParam("groupname") String groupname,
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+			@PathParam("roomName") String roomName) throws ServiceException {
+		MUCRoomController.getInstance().deleteAffiliation(serviceName, roomName, groupname);
 		return Response.status(Status.OK).build();
 	}
 }

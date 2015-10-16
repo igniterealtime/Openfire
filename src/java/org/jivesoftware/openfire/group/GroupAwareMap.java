@@ -23,7 +23,7 @@ public interface GroupAwareMap<K, V> extends Map<K, V> {
 	public boolean includesKey(Object key);
 
 	/**
-	 * Returns true if the map has a key referencing the given JID. If the JID
+	 * Returns true if the map contains a value referencing the given JID. If the JID
 	 * is not found explicitly, search the values for groups and look 
 	 * for the JID in each of the corresponding groups.
 	 * 

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.GroupEventListener;
 import org.xmpp.packet.JID;
 
 /**
@@ -15,7 +17,7 @@ import org.xmpp.packet.JID;
  * @author Tom Evans
  */
 
-public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implements GroupAwareMap<K, V> {
+public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implements GroupAwareMap<K, V>, GroupEventListener {
 
 	private static final long serialVersionUID = -2068242013524715293L;
 
@@ -26,6 +28,12 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	private transient Set<Group> groupsFromKeys;
 	private transient Set<Group> groupsFromValues;
 	
+	/**
+	 * Register this instance with the GroupEventDispatcher
+	 */
+	public ConcurrentGroupMap () {
+		GroupEventDispatcher.addListener(this);
+	}
 
 	/**
 	 * Returns true if the key list contains the given JID. If the JID
@@ -180,10 +188,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	public void putAll(Map<? extends K, ? extends V> m) {
 		super.putAll(m);
 		// drop the transient sets; will be rebuilt when/if needed
-		synchronized(this) {
-			groupsFromKeys = null;
-			groupsFromValues = null;
-		}
+		clearCache();
 	}
 
 
@@ -234,14 +239,61 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	@Override
 	public void clear() {
 		super.clear();
-		synchronized(this) {
-			groupsFromKeys = null;
-			groupsFromValues = null;
-		}
+		clearCache();
+	}
+	
+	/**
+	 * Certain operations imply that our locally cached group list(s) should
+	 * be dropped and recreated. For example, when an ad-hoc client command
+	 * is used to add a member to a group, the underlying group instance is
+	 * actually dropped from the global Group cache, with the effect that our
+	 * cache would be referring to an orphaned Group instance.
+	 */
+	private synchronized void clearCache() {
+		groupsFromKeys = null;
+		groupsFromValues = null;
 	}
 
 	private static final boolean KEYS = true;
 	private static final boolean VALUES = false;
 	private static final boolean ADD = true;
 	private static final boolean REMOVE = false;
+
+	// Implement GroupEventListener to clear Group caches as appropriate (OF-921)
+	
+	@Override
+	public void groupCreated(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void groupModified(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void groupDeleting(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void memberAdded(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void memberRemoved(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void adminAdded(Group group, Map params) {
+		clearCache();
+	}
+
+	@Override
+	public void adminRemoved(Group group, Map params) {
+		clearCache();
+	}
+
 }

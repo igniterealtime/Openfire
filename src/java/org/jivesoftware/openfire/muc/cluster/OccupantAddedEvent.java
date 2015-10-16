@@ -69,7 +69,7 @@ public class OccupantAddedEvent extends MUCRoomTask {
     }
 
     public String getNickname() {
-        return presence.getTo().getResource().trim();
+        return presence.getFrom().getResource().trim();
     }
 
     public MUCRole.Role getRole() {

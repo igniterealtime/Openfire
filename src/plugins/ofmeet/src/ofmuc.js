@@ -536,7 +536,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	        
 	        } else {
 	        
-			$.prompt("Are you sure you would like to remove your shared applicationt",
+			$.prompt("Are you sure you would like to remove your shared application?",
 				{
 				title: "Remove application sharing",
 				buttons: removeButtons,

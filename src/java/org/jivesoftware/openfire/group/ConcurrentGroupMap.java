@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.openfire.event.GroupEventListener;
 import org.xmpp.packet.JID;
 
 /**
@@ -17,28 +15,22 @@ import org.xmpp.packet.JID;
  * @author Tom Evans
  */
 
-public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implements GroupAwareMap<K, V>, GroupEventListener {
+public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implements GroupAwareMap<K, V> {
 
-	private static final long serialVersionUID = -2068242013524715293L;
+	private static final long serialVersionUID = 5479781418678223200L;
 
 	// These sets are used to optimize group operations within this map.
 	// We only populate these sets when they are needed to dereference the
 	// groups in the base map, but once they exist we keep them in sync
 	// via the various put/remove operations.
-	private transient Set<Group> groupsFromKeys;
-	private transient Set<Group> groupsFromValues;
-	
-	/**
-	 * Register this instance with the GroupEventDispatcher
-	 */
-	public ConcurrentGroupMap () {
-		GroupEventDispatcher.addListener(this);
-	}
+	// NOTE: added volatile keyword for double-check idiom (lazy instantiation)
+	private volatile transient Set<String> knownGroupNamesFromKeys;
+	private volatile transient Set<String> knownGroupNamesFromValues;
 
 	/**
-	 * Returns true if the key list contains the given JID. If the JID
-	 * is not found in the key list, search the key list for groups and 
-	 * look for the JID in each of the corresponding groups.
+	 * Returns true if the key list contains the given JID. If the JID is not found in the 
+	 * key list (exact match), search the key list for groups and look for the JID in 
+	 * each of the corresponding groups (implied match).
 	 * 
 	 * @param key The target, presumably a JID
 	 * @return True if the target is in the key list, or in any groups in the key list
@@ -60,9 +52,9 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 
 
 	/**
-	 * Returns true if the map has an entry value matching the given JID. If the JID
-	 * is not found explicitly, search the values for groups and search 
-	 * for the JID in each of the corresponding groups.
+	 * Returns true if the map has an entry value matching the given JID. If the JID is not 
+	 * found in the value set (exact match), search the value set for groups and look for the 
+	 * JID in each of the corresponding groups (implied match).
 	 * 
 	 * @param value The target, presumably a JID
 	 * @return True if the target is in the value set, or in any groups in the value set
@@ -72,7 +64,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 		if (containsValue(value)) {
 			found = true;
 		} else if (value instanceof JID) {
-			// look for group JIDs in the list of keys and dereference as needed
+			// look for group JIDs in the list of values and dereference as needed
 			JID target = (JID) value;
 			Iterator<Group> iterator = getGroupsFromValues().iterator();
 			while (!found && iterator.hasNext()) {
@@ -89,19 +81,11 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 */
 	@Override
 	public synchronized Set<Group> getGroupsFromKeys() {
-		if (groupsFromKeys == null) {
-			groupsFromKeys = new HashSet<Group>();
-			// add all the groups into the group set
-			Iterator<K> iterator = keySet().iterator();
-			while (iterator.hasNext()) {
-				K key = iterator.next();
-				Group group = Group.resolveFrom(key);
-				if (group != null) {
-					groupsFromKeys.add(group);
-				};
-			}
+		Set<Group> result = new HashSet<Group>();
+		for(String groupName : getKnownGroupNamesFromKeys()) {
+			result.add(Group.resolveFrom(groupName));
 		}
-		return groupsFromKeys;
+		return result;
 	}
 
 	/**
@@ -111,19 +95,71 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 */
 	@Override
 	public synchronized Set<Group> getGroupsFromValues() {
-		if (groupsFromValues == null) {
-			groupsFromValues = new HashSet<Group>();
-			// add all the groups into the group set
-			Iterator<V> iterator = values().iterator();
-			while (iterator.hasNext()) {
-				V value = iterator.next();
-				Group group = Group.resolveFrom(value);
-				if (group != null) {
-					groupsFromValues.add(group);
-				};
+		Set<Group> result = new HashSet<Group>();
+		for(String groupName : getKnownGroupNamesFromValues()) {
+			result.add(Group.resolveFrom(groupName));
+		}
+		return result;
+	}
+
+	
+	/**
+	 * Accessor uses the  "double-check idiom" (j2se 5.0+) for proper lazy instantiation.
+	 * Additionally, nothing is cached until there is at least one group in the map's keys.
+	 * 
+	 * @return the known group names among the items in the list
+	 */
+	private Set<String> getKnownGroupNamesFromKeys() {
+		Set<String> result = knownGroupNamesFromKeys;
+		if (result == null) {
+			synchronized(this) {
+				result = knownGroupNamesFromKeys;
+				if (result == null) {
+					result = new HashSet<String>();
+					// add all the groups into the group set
+					Iterator<K> iterator = keySet().iterator();
+					while (iterator.hasNext()) {
+						K key = iterator.next();
+						Group group = Group.resolveFrom(key);
+						if (group != null) {
+							result.add(group.getName());
+						};
+					}
+					knownGroupNamesFromKeys = result.isEmpty() ? null : result;
+				}
 			}
 		}
-		return groupsFromValues;
+		return result;
+	}
+
+	
+	/**
+	 * Accessor uses the  "double-check idiom" (j2se 5.0+) for proper lazy instantiation.
+	 * Additionally, nothing is cached until there is at least one group in the map's value set.
+	 * 
+	 * @return the known group names among the items in the list
+	 */
+	private Set<String> getKnownGroupNamesFromValues() {
+		Set<String> result = knownGroupNamesFromValues;
+		if (result == null) {
+			synchronized(this) {
+				result = knownGroupNamesFromValues;
+				if (result == null) {
+					result = new HashSet<String>();
+					// add all the groups into the group set
+					Iterator<V> iterator = values().iterator();
+					while (iterator.hasNext()) {
+						V key = iterator.next();
+						Group group = Group.resolveFrom(key);
+						if (group != null) {
+							result.add(group.getName());
+						};
+					}
+					knownGroupNamesFromValues = result.isEmpty() ? null : result;
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -137,16 +173,23 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 */
 	private synchronized boolean syncGroups(Object item, boolean keyOrValue, boolean addOrRemove) {
 		boolean result = false;
-		Set<Group> groupSet = (keyOrValue == KEYS) ? groupsFromKeys : groupsFromValues;
+		Set<String> groupSet = (keyOrValue == KEYS) ? knownGroupNamesFromKeys : knownGroupNamesFromValues;
 		// only sync if the group list has been instantiated
 		if (groupSet != null) {
 			Group group = Group.resolveFrom(item);
 			if (group != null) {
 				result = true;
 				if (addOrRemove == ADD) {
-					groupSet.add(group);
+					groupSet.add(group.getName());
 				} else if (addOrRemove == REMOVE) {
-					groupSet.remove(group);
+					groupSet.remove(group.getName());
+					if (groupSet.isEmpty()) {
+						if (keyOrValue == KEYS) {
+							knownGroupNamesFromKeys = null;
+						} else {
+							knownGroupNamesFromValues = null;
+						}
+					}
 				}
 			}
 		}
@@ -250,50 +293,13 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 * cache would be referring to an orphaned Group instance.
 	 */
 	private synchronized void clearCache() {
-		groupsFromKeys = null;
-		groupsFromValues = null;
+		knownGroupNamesFromKeys = null;
+		knownGroupNamesFromValues = null;
 	}
 
 	private static final boolean KEYS = true;
 	private static final boolean VALUES = false;
 	private static final boolean ADD = true;
 	private static final boolean REMOVE = false;
-
-	// Implement GroupEventListener to clear Group caches as appropriate (OF-921)
-	
-	@Override
-	public void groupCreated(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void groupModified(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void groupDeleting(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void memberAdded(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void memberRemoved(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void adminAdded(Group group, Map params) {
-		clearCache();
-	}
-
-	@Override
-	public void adminRemoved(Group group, Map params) {
-		clearCache();
-	}
 
 }

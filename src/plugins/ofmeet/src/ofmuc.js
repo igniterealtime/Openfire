@@ -786,7 +786,7 @@ Strophe.addConnectionPlugin('ofmuc', {
 	    	}
 	    	urlsList = urlsList + '</datalist>'
 	    	
-		$.prompt('<h2>Share a Presentation</h2><input id="pdfiUrl" type="text" list="urls-list" autofocus >' + urlsList,
+		$.prompt('<h2>Share a Presentation</h2> <br> Full URL to a public PDF:<input id="pdfiUrl" type="text" list="urls-list" autofocus >' + urlsList,
 		{
 			title: "Share a PDF Presentation",
 			persistent: false,

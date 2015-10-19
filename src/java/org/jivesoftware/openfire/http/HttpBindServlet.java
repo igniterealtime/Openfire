@@ -414,7 +414,7 @@ public class HttpBindServlet extends HttpServlet {
             byte b[] = new byte[1024];
             int length;
             while (inputStream.isReady() && (length = inputStream.read(b)) != -1) {
-                buffer.append(new String(b, 0, length));
+                buffer.append(new String(b, 0, length, "UTF-8" ));
             }
         }
 

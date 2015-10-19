@@ -1,0 +1,7 @@
+1. 在run as->run configuration 下
+1.1 修订classpath,添加log4j,admin-sidebar.xml和i18n
+	classpath -> user entris->advanced -> add ->folders下
+	添加build/lib/dist(以添加log4j.xml),src/resources/jar(admin-sidebar.xml)和src/i18n
+
+1.2 修订arguments
+	arguments->vm arguments添加 -DopenfireHome="${workspace_loc:openfire-phone}/target/openfire"

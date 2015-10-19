@@ -1,2 +1,0 @@
-再run as->run configuration -> classpath -> user entris
-依次在advanced -> add folders下添加build/lib/dist(以添加log4j.xml)和src/resources/jar(admin-sidebar.xml)

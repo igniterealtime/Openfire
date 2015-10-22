@@ -74,8 +74,8 @@ public class DbConnectionManager {
     /** True if the database supports the Statement.setFetchSize()) method. */
     static boolean pstmt_fetchSizeSupported = true;
 
-    private static final String SETTING_DATABASE_MAX_RETRIES = "database.defaultProvider.maxRetries";
-    private static final String SETTING_DATABASE_RETRY_DELAY = "database.defaultProvider.retryDelay";
+    private static final String SETTING_DATABASE_MAX_RETRIES = "database.maxRetries";
+    private static final String SETTING_DATABASE_RETRY_DELAY = "database.retryDelay";
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 
@@ -121,8 +121,8 @@ public class DbConnectionManager {
         ensureConnectionProvider();
 
         Integer currentRetryCount = 0;
-        Integer maxRetries = JiveGlobals.getIntProperty(SETTING_DATABASE_MAX_RETRIES, 10);
-        Integer retryWait = JiveGlobals.getIntProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
+        Integer maxRetries = JiveGlobals.getXMLProperty(SETTING_DATABASE_MAX_RETRIES, 10);
+        Integer retryWait = JiveGlobals.getXMLProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
         SQLException lastException = null;
         do {
             try {

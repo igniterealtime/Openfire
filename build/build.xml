@@ -606,19 +606,26 @@
             </filterset>
         </copy>
 
-        <!-- Copy over Sitemesh files. -->
-        <copy file="${web.dir}/WEB-INF/decorators.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
-              overwrite="true">
+        <!-- Copy over other WEB-INF files. -->
+        <copy todir="${webapp.dest.dir}/WEB-INF" overwrite="true">
+            <fileset dir="${web.dir}/WEB-INF">
+                <include name="**/*"/>
+                <exclude name="web.xml"/>
+            </fileset>
         </copy>
-        <copy file="${web.dir}/WEB-INF/sitemesh.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
-              overwrite="true">
-        </copy>
-        <copy file="${web.dir}/WEB-INF/dwr.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
-              overwrite="true">
-        </copy>
+
+        <!-- When there are WEB-INF overlay files, use those. -->
+        <if>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
+            <then>
+                <copy todir="${webapp.dest.dir}/WEB-INF" overwrite="true">
+                    <fileset dir="${overlay.web.dir}/WEB-INF">
+                        <include name="**/*"/>
+                        <exclude name="web.xml"/>
+                    </fileset>
+                </copy>
+            </then>
+        </if>
 
         <!-- Create a jar of compiled servlets -->
         <jar jarfile="${jspc.dest.dir}/${jspc.jar.name}">

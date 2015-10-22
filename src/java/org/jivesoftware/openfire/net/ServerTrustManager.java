@@ -54,20 +54,18 @@ public class ServerTrustManager implements X509TrustManager {
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-    /**
-     * Holds the domain of the remote server we are trying to connect
-     */
-    private String server;
-    /**
-     * Holds the LocalIncomingServerSession that is part of the TLS negotiation.
-     */
-    private Connection connection;
 
-    public ServerTrustManager(String server, KeyStore trustTrust, Connection connection) {
+    /**
+     * @deprecated Use ServerTrustManager(KeyStore trustStore) instead (there's no functional difference).
+     */
+    @Deprecated
+    public ServerTrustManager(String server, KeyStore trustStore, Connection connection) {
+        this(trustStore);
+    }
+
+    public ServerTrustManager(KeyStore trustTrust) {
         super();
-        this.server = server;
         this.trustStore = trustTrust;
-        this.connection = connection;
     }
 
     @Override

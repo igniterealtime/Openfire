@@ -53,9 +53,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.openfire.net.ClientTrustManager;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.ServerTrustManager;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -75,6 +73,7 @@ import org.xmpp.packet.Packet;
 public class NIOConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
+
 
     private LocalSession session;
     private IoSession ioSession;
@@ -232,23 +231,21 @@ public class NIOConnection implements Connection {
 
     		if ( session != null ) {
                 session.setStatus( Session.STATUS_CLOSED );
-            }
+                }
 
             try {
-                deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+                            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
             } catch ( Exception e ) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
-            }
-            
+                }
+
             try {
-            	ioSession.close( true );
+                ioSession.close( true );
             } catch (Exception e) {
                 Log.error("Exception while closing MINA session", e);
             }
-        
             notifyCloseListeners(); // clean up session, etc.
-
-    	}
+        }
     }
 
     @Override
@@ -368,10 +365,14 @@ public class NIOConnection implements Connection {
         }
     }
 
-    @Override
+    @Deprecated
+	@Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         final boolean isClientToServer = (remoteServer == null);
+        startTLS( clientMode, isClientToServer, authentication );
+    }
 
+    public void startTLS(boolean clientMode, boolean isClientToServer, ClientAuth authentication) throws Exception {
         Log.debug( "StartTLS: using {}", isClientToServer ? "c2s" : "s2s" );
 
         final SSLConfig sslConfig = SSLConfig.getInstance();
@@ -391,7 +392,7 @@ public class NIOConnection implements Connection {
                 tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
             } else {
                 // Check if we can trust certificates presented by the server
-                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, this)};
+                tm = new TrustManager[]{new ServerTrustManager(ksTrust)};
             }
         } else {
             tm = storeConfig.getTrustManagers();

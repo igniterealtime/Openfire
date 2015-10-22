@@ -116,6 +116,6 @@ public class ClientStanzaHandler extends StanzaHandler {
         } catch (IllegalArgumentException e) {
             policy = Connection.ClientAuth.disabled;
         }
-        connection.startTLS(false, null, policy);
+        connection.startTLS(false, true, policy);
     }
 }

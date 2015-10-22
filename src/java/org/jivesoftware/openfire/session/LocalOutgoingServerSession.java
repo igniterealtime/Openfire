@@ -382,7 +382,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                         		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
                         		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-                connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+                connection.startTLS(true, false, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
             } catch(Exception e) {
                 log.debug("Got an exception whilst negotiating TLS: " + e.getMessage());
                 throw e;

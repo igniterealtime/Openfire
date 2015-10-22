@@ -88,24 +88,31 @@ public class TLSStreamHandler {
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
+     * @deprecated Use the other constructor. There's no functional change.
+     */
+    @Deprecated
+    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
+                            boolean needClientAuth) throws IOException
+    {
+        this(socket,clientMode,(remoteServer==null),needClientAuth);
+    }
+
+    /**
      * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
      * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
      * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
      * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
-     * @param connection the connection to secure
      * @param socket the plain socket connection to secure
      * @param clientMode boolean indicating if this entity is a client or a server.
-     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
-     *        when not in client mode.
+     * @param isClientToServer indicates if the remote party is a server.
      * @param needClientAuth boolean that indicates if client should authenticate during the TLS
      *        negotiation. This option is only required when the client is a server since
      *        EXTERNAL SASL is going to be used.
      * @throws java.io.IOException
      */
-    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
-                            boolean needClientAuth) throws IOException {
-        wrapper = new TLSWrapper(connection, clientMode, needClientAuth, remoteServer);
+    public TLSStreamHandler(Socket socket, boolean clientMode, boolean isClientToServer, boolean needClientAuth) throws IOException {
+        wrapper = new TLSWrapper(clientMode, needClientAuth, isClientToServer);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);

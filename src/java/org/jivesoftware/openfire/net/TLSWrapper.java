@@ -64,8 +64,16 @@ public class TLSWrapper {
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer) {
-        final boolean isClientToServer = (remoteServer == null);
+    /**
+     * @deprecated Use the other constructor. There's no functional change.
+     */
+    @Deprecated
+    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
+    {
+        this(clientMode,needClientAuth,(remoteServer == null));
+    }
+
+    public TLSWrapper(boolean clientMode, boolean needClientAuth, boolean isClientToServer) {
 
         // Create/initialize the SSLContext with key material
         try {
@@ -88,7 +96,7 @@ public class TLSWrapper {
                 else
                 {
                     // Check if we can trust certificates presented by the server
-                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, connection)};
+                    tm = new TrustManager[]{new ServerTrustManager(ksTrust)};
                 }
             }
             else

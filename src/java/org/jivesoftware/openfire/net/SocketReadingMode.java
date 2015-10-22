@@ -81,8 +81,8 @@ abstract class SocketReadingMode {
         }
         // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
-            // Temporary workaround to force the usage of ServerTrustManager. This code is only used for s2s
-            socketReader.connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+            // This code is only used for s2s
+            socketReader.connection.startTLS(false, false, Connection.ClientAuth.disabled);
         }
         catch (IOException e) {
             Log.error("Error while negotiating TLS: " + socketReader.connection, e);

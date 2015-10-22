@@ -166,8 +166,13 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    @Override
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws IOException {
+    @Deprecated
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
+        final boolean isClientToServer = ( remoteServer == null );
+        startTLS( clientMode, isClientToServer, authentication );
+    }
+
+    public void startTLS(boolean clientMode, boolean isClientToServer, ClientAuth authentication) throws IOException {
         if (!secure) {
             secure = true;
             // Prepare for TLS
@@ -467,7 +472,7 @@ public class SocketConnection implements Connection {
 
     @Override
     public void close() {
-    	close(false);
+        close( false );
     }
 
     /**

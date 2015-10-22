@@ -151,7 +151,6 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
 
     @Override
 	void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
-        connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+        connection.startTLS(false, false, Connection.ClientAuth.disabled);
     }
 }

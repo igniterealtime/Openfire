@@ -20,6 +20,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -34,6 +35,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
@@ -151,7 +153,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 	                            Connection.TLSPolicy.required;
 	            boolean hasCertificates = false;
 	            try {
-	                hasCertificates = SSLConfig.getKeyStore().size() > 0;
+	                hasCertificates = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
 	            }
 	            catch (Exception e) {
 	                Log.error(e.getMessage(), e);
@@ -371,11 +373,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         	usingSelfSigned = true;
         } else {
         	try {
-				usingSelfSigned = CertificateManager.isSelfSignedCertificate(SSLConfig.getKeyStore(), (X509Certificate) chain[0]);
+                final KeyStore keyStore = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
+				usingSelfSigned = CertificateManager.isSelfSignedCertificate(keyStore, (X509Certificate) chain[0]);
 			} catch (KeyStoreException ex) {
-				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
-				usingSelfSigned = true;
-			} catch (IOException ex) {
 				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);
 				usingSelfSigned = true;
 			}

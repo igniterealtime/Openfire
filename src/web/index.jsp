@@ -43,6 +43,9 @@
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -73,7 +76,6 @@
     boolean serverOn = (webManager.getXMPPServer() != null);
 
     String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-
     ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
     NioSocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
     NioSocketAcceptor sslSocketAcceptor = connectionManager.getSSLSocketAcceptor();
@@ -251,8 +253,9 @@
                     <fmt:message key="index.server_name" />
                 </td>
                 <td class="c2">
+                    <% final IdentityStoreConfig storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE ); %>
                     <% try { %>
-                    <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {%>
+                    <% if (!storeConfig.containsDomainCertificate( "RSA" )) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>
@@ -452,7 +455,8 @@
         <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
         <td><%= address.getPort() %></td>
         <% try { %>
-        <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getXMPPDomain()) || LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
+
+        <% if (!storeConfig.containsDomainCertificate( "RSA" ) || LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
             <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
         <% } else { %>
             <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>

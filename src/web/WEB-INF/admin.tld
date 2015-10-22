@@ -155,4 +155,14 @@
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
         <function-signature>java.lang.String[] split(java.lang.String, java.lang.String)</function-signature>
     </function>
+    <function>
+        <name>serverIdentities</name>
+        <function-class>org.jivesoftware.util.CertificateManager</function-class>
+        <function-signature>java.util.List getServerIdentities(java.security.cert.X509Certificate)</function-signature>
+    </function>
+    <function>
+        <name>clientIdentities</name>
+        <function-class>org.jivesoftware.util.CertificateManager</function-class>
+        <function-signature>java.util.List getClientIdentities(java.security.cert.X509Certificate)</function-signature>
+    </function>
 </taglib>

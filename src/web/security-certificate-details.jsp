@@ -4,10 +4,11 @@
 <%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.security.KeyStore" %>
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
+<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -18,80 +19,69 @@
 <jsp:useBean id="now" class="java.util.Date"/>
 <%  webManager.init(request, response, session, application, out );
 
-    final String type  = ParamUtils.getParameter(request, "type");
-    final String alias = ParamUtils.getParameter(request, "alias");
+    final String alias            = ParamUtils.getParameter( request, "alias" );
+    final String storePurposeText = ParamUtils.getParameter( request, "storePurpose" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    KeyStore store = null;
-
-    if (type == null)
+    Purpose storePurpose;
+    try
     {
-        errors.put("type", "The store type has not been specified.");
+        storePurpose = Purpose.valueOf( storePurposeText );
+    } catch (RuntimeException ex) {
+        errors.put( "storePurpose", ex.getMessage() );
+        storePurpose = null;
     }
-    else if (alias == null) {
+
+    pageContext.setAttribute( "storePurpose", storePurpose );
+
+    if (alias == null) {
         errors.put("alias", "The alias has not been specified.");
     }
     else
     {
         try
         {
-            switch (type)
-            {
-                case "s2s":
-                    store = SSLConfig.gets2sTrustStore();
-                    break;
-
-                case "c2s":
-                    store = SSLConfig.getc2sTrustStore();
-                    break;
-
-                case "server":
-                    store = SSLConfig.getKeyStore();
-                    break;
-
-                default:
-                    throw new Exception("Unknown store type: " + type);
-            }
+            final CertificateStoreConfig certificateStoreConfig = SSLConfig.getInstance().getStoreConfig( storePurpose );
 
             // Get the certificate
-            final X509Certificate certificate = (X509Certificate) store.getCertificate(alias);
+            final X509Certificate certificate = (X509Certificate) certificateStoreConfig.getStore().getCertificate( alias );
 
-            if (certificate == null) {
-                errors.put("alias", "alias");
+            if ( certificate == null ) {
+                errors.put( "alias", "alias" );
             } else {
-                pageContext.setAttribute("certificate", certificate);
+                pageContext.setAttribute( "certificate", certificate );
             }
         }
-        catch (Exception e)
+        catch ( Exception e )
         {
             e.printStackTrace();
-            errors.put("type", e.getMessage());
+            errors.put( "type", e.getMessage() );
         }
     }
 
     // Handle a "go back" click:
-    if (request.getParameter("back") != null) {
-        if ("server".equals(type)) {
-            response.sendRedirect("security-keystore.jsp");
+    if ( request.getParameter( "back" ) != null ) {
+        if ( storePurpose.isTrustStore() ) {
+            response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurpose );
         } else {
-            response.sendRedirect("security-truststore.jsp?type=" + type);
+            response.sendRedirect( "security-keystore.jsp?storePurpose=" + storePurpose );
         }
         return;
     }
 
-    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute( "errors", errors );
 %>
 
 <html>
 <head>
     <title><fmt:message key="ssl.certificate.details.title"/></title>
     <c:choose>
-        <c:when test="${param.type eq 'server'}">
+        <c:when test="${storePurpose.identityStore}">
             <meta name="pageID" content="security-keystore"/>
         </c:when>
         <c:otherwise>
-            <meta name="pageID" content="security-truststore-${param.type}"/>
+            <meta name="pageID" content="security-truststore"/>
         </c:otherwise>
     </c:choose>
 </head>
@@ -414,6 +404,7 @@
                 </tr>
                 <c:if test="${not empty certificate.sigAlgParams}">
                     <%
+
                         final X509Certificate certificate = (X509Certificate) pageContext.getAttribute("certificate");
                         final AlgorithmParameters sigParams = AlgorithmParameters.getInstance(certificate.getSigAlgName());
                         sigParams.init( certificate.getSigAlgParams() );
@@ -450,7 +441,7 @@
     <br/>
 
     <form action="security-certificate-details.jsp">
-        <input type="hidden" name="type" value="${param.type}"/>
+        <input type="hidden" name="storePurpose" value="${storePurpose}"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

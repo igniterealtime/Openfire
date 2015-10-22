@@ -42,6 +42,9 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
+import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -113,18 +116,14 @@ public class AdminConsolePlugin implements Plugin {
         	adminServer.addBean(jmx.getContainer());
         }
 
-        ServerConnector httpConnector = null;
-		ServerConnector httpsConnector = null;
-		HttpConfiguration httpConfig = null;
-
         // Create connector for http traffic if it's enabled.
         if (adminPort > 0) {
-			httpConfig = new HttpConfiguration();
+            final HttpConfiguration httpConfig = new HttpConfiguration();
 
         	// Do not send Jetty info in HTTP headers
 			httpConfig.setSendServerVersion( false );
-            httpConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
-            		new HttpConnectionFactory(httpConfig));
+
+            final ServerConnector httpConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
             String bindInterface = getBindInterface();
@@ -136,24 +135,29 @@ public class AdminConsolePlugin implements Plugin {
         // Create a connector for https traffic if it's enabled.
         sslEnabled = false;
         try {
-            if (adminSecurePort > 0 && CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), "*"))
+            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.WEBADMIN_IDENTITYSTORE );
+            if (adminSecurePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() )
             {
-                if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(),
-                        XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                if ( !identityStoreConfig.containsDomainCertificate( "RSA" )) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
 
-                final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.addExcludeProtocols("SSLv3");
-                sslContextFactory.setTrustStorePassword(SSLConfig.gets2sTrustPassword());
-                sslContextFactory.setTrustStoreType(SSLConfig.getStoreType());
-                sslContextFactory.setKeyStorePath(SSLConfig.getKeystoreLocation());
-                sslContextFactory.setNeedClientAuth(false);
-                sslContextFactory.setWantClientAuth(false);
-                sslContextFactory.setKeyStorePassword(SSLConfig.getKeyPassword());
-                sslContextFactory.setKeyStoreType(SSLConfig.getStoreType());
+                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.WEBADMIN_TRUSTSTORE );
 
-				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
+                final SslContextFactory sslContextFactory = new SslContextFactory();
+                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
+                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
+                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
+                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
+                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
+                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
+
+                sslContextFactory.addExcludeProtocols( "SSLv3" );
+                sslContextFactory.setNeedClientAuth( false );
+                sslContextFactory.setWantClientAuth( false );
+
+                final ServerConnector httpsConnector;
+                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
 				{
 					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
 

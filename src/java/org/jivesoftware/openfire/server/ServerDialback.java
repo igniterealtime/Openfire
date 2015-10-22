@@ -541,7 +541,7 @@ public class ServerDialback {
                 return false;
             }
             else {
-                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname)) {
+                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname, true)) {
                     // If the remote host passes strong auth, just skip the dialback.
                     Log.debug("ServerDialback: RS - Sending key verification result to OS: " + hostname);
                     sb = new StringBuilder();

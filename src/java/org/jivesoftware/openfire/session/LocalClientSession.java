@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
@@ -255,7 +256,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
             try {
-                hasCertificates = SSLConfig.getKeyStore().size() > 0;
+                hasCertificates = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

@@ -174,7 +174,6 @@
 		<tr>
 			<td width="1%" nowrap>
 				<label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label>
-			</td>
 			<td width="99%">
 				<input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? StringUtils.escapeForXML(nickname) : "") %>"
 				 id="nicknametf">

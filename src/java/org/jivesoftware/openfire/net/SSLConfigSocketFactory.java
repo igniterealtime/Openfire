@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.net;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -104,7 +105,7 @@ public class SSLConfigSocketFactory
         final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
         final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
 
-        final String algorithm = JiveGlobals.getProperty( "xmpp.socket.ssl.algorithm", "TLS" );
+        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
         final SSLContext context = SSLContext.getInstance( algorithm );
         context.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom() );
 
@@ -116,7 +117,7 @@ public class SSLConfigSocketFactory
         final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
         final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
 
-        final String algorithm = JiveGlobals.getProperty( "xmpp.socket.ssl.algorithm", "TLS" );
+        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
         final SSLContext context = SSLContext.getInstance( algorithm );
         context.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom() );
 

@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +97,7 @@ public class TLSWrapper {
             }
 
             final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+            final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
             final SSLContext tlsContext = SSLContext.getInstance(algorithm);
             tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
 

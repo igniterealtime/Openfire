@@ -49,7 +49,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
 
         try
         {
-            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm(), PROVIDER );
+            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
             keyFactory.init( store, password.toCharArray() );
         }
         catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )

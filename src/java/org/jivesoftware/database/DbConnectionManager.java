@@ -74,8 +74,8 @@ public class DbConnectionManager {
     /** True if the database supports the Statement.setFetchSize()) method. */
     static boolean pstmt_fetchSizeSupported = true;
 
-    private static final String SETTING_DATABASE_MAX_RETRIES = "database.defaultProvider.maxRetries";
-    private static final String SETTING_DATABASE_RETRY_DELAY = "database.defaultProvider.retryDelay";
+    private static final String SETTING_DATABASE_MAX_RETRIES = "database.maxRetries";
+    private static final String SETTING_DATABASE_RETRY_DELAY = "database.retryDelay";
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 

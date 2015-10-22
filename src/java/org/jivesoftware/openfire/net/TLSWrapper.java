@@ -97,8 +97,7 @@ public class TLSWrapper {
             }
 
             final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
-            final SSLContext tlsContext = SSLContext.getInstance(algorithm);
+            final SSLContext tlsContext = SSLConfig.getSSLContext();
             tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
 
             /*

@@ -105,8 +105,7 @@ public class SSLConfigSocketFactory
         final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
         final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
 
-        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
-        final SSLContext context = SSLContext.getInstance( algorithm );
+        final SSLContext context = SSLConfig.getSSLContext();
         context.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom() );
 
         return context.getServerSocketFactory();
@@ -117,8 +116,7 @@ public class SSLConfigSocketFactory
         final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
         final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
 
-        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
-        final SSLContext context = SSLContext.getInstance( algorithm );
+        final SSLContext context = SSLConfig.getSSLContext();
         context.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom() );
 
         return context.getServerSocketFactory();

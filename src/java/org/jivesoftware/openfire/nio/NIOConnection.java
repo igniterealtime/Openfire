@@ -397,8 +397,7 @@ public class NIOConnection implements Connection {
             tm = storeConfig.getTrustManagers();
         }
 
-        String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
-        SSLContext tlsContext = SSLContext.getInstance( algorithm );
+        final SSLContext tlsContext = SSLConfig.getSSLContext();
 
         final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
         tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);

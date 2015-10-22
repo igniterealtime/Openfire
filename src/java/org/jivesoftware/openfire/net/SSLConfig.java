@@ -21,10 +21,12 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.keystore.*;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -367,5 +369,12 @@ public class SSLConfig
         }
 
         return file.getCanonicalPath();
+    }
+
+    public static SSLContext getSSLContext() throws NoSuchAlgorithmException
+    {
+        // TODO: allow different algorithms for differetn connection types (eg client/server/bosh etc)
+        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
+        return SSLContext.getInstance( algorithm );
     }
 }

@@ -266,7 +266,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.connectionManager));
 
-                List<String> params = new ArrayList<>();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.multiplexer", params));
             }
@@ -328,7 +328,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.component));
 
-                List<String> params = new ArrayList<>();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
             }
@@ -398,7 +398,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.client));
 
-                List<String> params = new ArrayList<>();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
             }
@@ -456,7 +456,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
                 final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
 
-                final SSLContext sslContext = SSLContext.getInstance( algorithm );
+                final SSLContext sslContext = SSLConfig.getSSLContext();
                 sslContext.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom());
 
                 SslFilter sslFilter = new SslFilter(sslContext);
@@ -919,7 +919,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     	if (JiveGlobals.getBooleanProperty("xmpp.socket.jmx.sessions", false)) {
 	    	acceptor.addListener(new IoServiceListener() {
 	    	    @Override
-                public void sessionCreated(IoSession session) {
+	    	    public void sessionCreated(IoSession session) {
 	    	        try {
                         IoSessionMBean mbean = new IoSessionMBean(session);
 	    	            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
@@ -931,7 +931,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 	    	        }      
 	    	    }
 	    	    @Override
-                public void sessionDestroyed(IoSession session) {
+	    	    public void sessionDestroyed(IoSession session) {
 	    	        try {
 	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
 	    	            					session.getRemoteAddress().toString().replace(':', '/'));

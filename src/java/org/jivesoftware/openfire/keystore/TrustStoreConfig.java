@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
 import java.security.cert.*;
 import java.util.*;
 
@@ -38,8 +39,8 @@ public class TrustStoreConfig extends CertificateStoreConfig
 
         try
         {
-            certPathValidator = CertPathValidator.getInstance( "PKIX", PROVIDER );
-            certificateFactory = CertificateFactory.getInstance( "X.509", PROVIDER );
+            certPathValidator = CertPathValidator.getInstance( "PKIX" );
+            certificateFactory = CertificateFactory.getInstance( "X.509" );
             trustFactory = TrustManagerFactory.getInstance( TrustManagerFactory.getDefaultAlgorithm() );
             trustFactory.init( store );
         }
@@ -106,23 +107,33 @@ public class TrustStoreConfig extends CertificateStoreConfig
             return false;
         }
 
-        try
+        // For some reason, the default validation fails to iterate over all providers and will fail if the default
+        // provider does not support the algorithm of the chain. To work around this issue, this code iterates over
+        // each provider explicitly, returning success when at least one provider validates the chain successfully.
+        Log.debug( "Iterating over all available security providers in order to validate a certificate chain." );
+        for (Provider p : Security.getProviders())
         {
-            final Set<TrustAnchor> trustAnchors = getAllValidTrustAnchors();
-            final CertPath certPath = getCertPath( chain );
+            try
+            {
+                final Set<TrustAnchor> trustAnchors = getAllValidTrustAnchors();
+                final CertPath certPath = getCertPath( chain );
 
-            final PKIXParameters pkixp = new PKIXParameters( trustAnchors );
-            pkixp.setRevocationEnabled( false ); // TODO: enable revocation list validation.
+                final PKIXParameters parameters = new PKIXParameters( trustAnchors );
+                parameters.setRevocationEnabled( false ); // TODO: enable revocation list validation.
+                parameters.setSigProvider( p.getName() ); // Explicitly iterate over each signature provider. See comment above.
 
-            certPathValidator.validate( certPath, pkixp );
+                certPathValidator.validate( certPath, parameters );
+
+                Log.debug( "Provider "+p.getName()+": Able to validate certificate chain." );
+                return true;
+            }
+            catch ( Exception ex )
+            {
+                Log.debug( "Provider "+p.getName()+": Unable to validate certificate chain.", ex );
+            }
         }
-        catch ( Exception ex )
-        {
-            Log.info( "Unable to trust certificate chain.", ex );
-            return false;
-        }
 
-        return true;
+        return false;
     }
 
     /**

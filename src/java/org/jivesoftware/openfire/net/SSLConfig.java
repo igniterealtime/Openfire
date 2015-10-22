@@ -36,30 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Configuration of Openfire's SSL settings.
- *
- * Openfire distinguishes up to three distinct sets of certificate stores.
- *
- * <ul>
- *     <li>"Socket" - TCP-based XMPP communication (examples: desktop XMPP clients, server-to-server federation);</li>
- *     <li>"BOSH" - HTTP-based XMPP communication (examples: most mobile clients, web-based clients);</li>
- *     <li>"Administrative" - non-XMPP based communication (example: the web-based admin panel)</li>
- * </ul>
- *
- * By default, the same set of stores is reused for all three purposes.
- *
- * A set consists of three stores: one key store and two trust stores.
- *
- * <em>key store</em>
- * Contains certificates that identify this instance of Openfire. On request, these certificates are transmitted to
- * other parties which use these certificates to identify your server,
- *
- * <em>server-to-server trust store</em>
- * Contains certificates that identify remote servers that you choose to trust (applies to server-to-server federation).
- *
- * <em>client-to-server trust store</em>
- * Contains certificates that identify clients that you choose to trust (applies to mutual authentication). By default,
- * the client-to-server trust store that ships with Openfire is empty.
+ * Utility functions for TLS / SSL.
  *
  * @author Iain Shigeoka
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
@@ -67,6 +44,9 @@ import java.util.concurrent.ConcurrentMap;
 public class SSLConfig
 {
     private static final Logger Log = LoggerFactory.getLogger( SSLConfig.class );
+
+    private final ConcurrentMap<Purpose, String> locationByPurpose = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CertificateStoreConfig> storesByLocation = new ConcurrentHashMap<>();
 
     private static SSLConfig INSTANCE;
 
@@ -123,9 +103,6 @@ public class SSLConfig
 
         return results;
     }
-
-    private final ConcurrentMap<Purpose, String> locationByPurpose = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CertificateStoreConfig> storesByLocation = new ConcurrentHashMap<>();
 
     public static String getNonCanonicalizedLocation(Purpose purpose)
     {
@@ -285,7 +262,6 @@ public class SSLConfig
         return storesByLocation.get( locationByPurpose.get( purpose ) );
     }
 
-
     public void useStoreForPurpose( Purpose purpose, String location, String password, String storeType, boolean createIfAbsent ) throws IOException, CertificateStoreConfigException
     {
         final String newPath = canonicalize( location );
@@ -392,5 +368,4 @@ public class SSLConfig
 
         return file.getCanonicalPath();
     }
-
 }

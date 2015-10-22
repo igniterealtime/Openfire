@@ -121,8 +121,8 @@ public class DbConnectionManager {
         ensureConnectionProvider();
 
         Integer currentRetryCount = 0;
-        Integer maxRetries = JiveGlobals.getIntProperty(SETTING_DATABASE_MAX_RETRIES, 10);
-        Integer retryWait = JiveGlobals.getIntProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
+        Integer maxRetries = JiveGlobals.getXMLProperty(SETTING_DATABASE_MAX_RETRIES, 10);
+        Integer retryWait = JiveGlobals.getXMLProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
         SQLException lastException = null;
         do {
             try {

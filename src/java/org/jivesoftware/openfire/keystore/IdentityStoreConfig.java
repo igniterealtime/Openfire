@@ -41,14 +41,6 @@ public class IdentityStoreConfig extends CertificateStoreConfig
 {
     private static final Logger Log = LoggerFactory.getLogger( IdentityStoreConfig.class );
 
-    private static final Provider PROVIDER = new BouncyCastleProvider();
-
-    static
-    {
-        // Add the BC provider to the list of security providers
-        Security.addProvider( PROVIDER );
-    }
-
     protected final KeyManagerFactory keyFactory;
 
     public IdentityStoreConfig( String path, String password, String type, boolean createIfAbsent ) throws CertificateStoreConfigException
@@ -57,7 +49,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
 
         try
         {
-            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm(), PROVIDER );
             keyFactory.init( store, password.toCharArray() );
         }
         catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )

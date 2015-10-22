@@ -122,7 +122,7 @@ public class TrustStoreConfigTest
         // Setup fixture.
 
         // Execute system under test.
-        final Set<X509Certificate> result = trustStoreConfig.getAllCertificates();
+        final Map<String, X509Certificate> result = trustStoreConfig.getAllCertificates();
 
         // Verify results.
         Assert.assertEquals( 2, result.size() );

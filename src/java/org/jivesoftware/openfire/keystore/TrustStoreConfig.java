@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jivesoftware.util.CertificateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.cert.*;
 import java.util.*;
 
@@ -36,8 +38,8 @@ public class TrustStoreConfig extends CertificateStoreConfig
 
         try
         {
-            certPathValidator = CertPathValidator.getInstance( "PKIX" );
-            certificateFactory = CertificateFactory.getInstance( "X.509" );
+            certPathValidator = CertPathValidator.getInstance( "PKIX", PROVIDER );
+            certificateFactory = CertificateFactory.getInstance( "X.509", PROVIDER );
             trustFactory = TrustManagerFactory.getInstance( TrustManagerFactory.getDefaultAlgorithm() );
             trustFactory.init( store );
         }

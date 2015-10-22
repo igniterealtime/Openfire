@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.JiveGlobals;
@@ -12,9 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -38,6 +37,14 @@ import java.util.*;
 public abstract class CertificateStoreConfig
 {
     private static final Logger Log = LoggerFactory.getLogger( CertificateStoreConfig.class );
+
+    protected static final Provider PROVIDER = new BouncyCastleProvider();
+
+    static
+    {
+        // Add the BC provider to the list of security providers
+        Security.addProvider( PROVIDER );
+    }
 
     protected final KeyStore store;
     protected final char[] password;

@@ -1300,7 +1300,7 @@ public class XMPPServer {
      * @return the <code>AuditManager</code> registered with this server.
      */
     public AuditManager getAuditManager() {
-        return (AuditManager) modules.get(AuditManagerImpl.class.getName());
+        return (AuditManager) modules.get(AuditManager.class.getName());
     }
 
     /**

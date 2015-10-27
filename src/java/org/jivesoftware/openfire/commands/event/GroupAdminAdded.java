@@ -84,7 +84,7 @@ public class GroupAdminAdded extends AdHocCommand {
             String admin = get(data, "admin", 0);
 
             // Adds the admin
-            params = new HashMap<String, Object>();
+            params = new HashMap<>();
             params.put("admin", admin);
         }
         catch (NullPointerException npe) {

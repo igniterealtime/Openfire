@@ -63,7 +63,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 	 */
 	@Override
 	public Set<Group> getGroups() {
-		Set<Group> result = new HashSet<Group>();
+		Set<Group> result = new HashSet<>();
 		for (String groupName : getKnownGroupNamesInList()) {
 			result.add(Group.resolveFrom(groupName));
 		}
@@ -82,7 +82,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 			synchronized(this) {
 				result = knownGroupNamesInList;
 				if (result == null) {
-					result = new HashSet<String>();
+					result = new HashSet<>();
 					// add all the groups into the group set
 					Iterator<T> iterator = iterator();
 					while (iterator.hasNext()) {

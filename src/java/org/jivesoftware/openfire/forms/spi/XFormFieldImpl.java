@@ -44,8 +44,8 @@ public class XFormFieldImpl implements FormField {
     private String label;
     private String variable;
     private String type;
-    private List<Option> options = new ArrayList<Option>();
-    private List<String> values = new ArrayList<String>();
+    private List<Option> options = new ArrayList<>();
+    private List<String> values = new ArrayList<>();
 
     public XFormFieldImpl() {
         super();
@@ -175,7 +175,7 @@ public class XFormFieldImpl implements FormField {
     @Override
     public Iterator<String> getValues() {
         synchronized (values) {
-            return Collections.unmodifiableList(new ArrayList<String>(values)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(values)).iterator();
         }
     }
 
@@ -192,7 +192,7 @@ public class XFormFieldImpl implements FormField {
      */
     private Iterator<Option> getOptions() {
         synchronized (options) {
-            return Collections.unmodifiableList(new ArrayList<Option>(options)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(options)).iterator();
         }
     }
 

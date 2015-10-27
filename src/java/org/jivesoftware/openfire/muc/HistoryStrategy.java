@@ -56,7 +56,7 @@ public class HistoryStrategy {
     /**
      * List containing the history of messages.
      */
-    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<Message>();
+    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
     /**
      * Default max number.
      */
@@ -230,7 +230,7 @@ public class HistoryStrategy {
      * @return An iterator of Message objects to be sent to the new room member.
      */
     public Iterator<Message> getMessageHistory(){
-        LinkedList<Message> list = new LinkedList<Message>(history);
+        LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
         Collections.sort(list, new MessageComparator());
         return list.iterator();
@@ -244,7 +244,7 @@ public class HistoryStrategy {
      * @return A list iterator of Message objects positioned at the end of the list.
      */
     public ListIterator<Message> getReverseMessageHistory(){
-        LinkedList<Message> list = new LinkedList<Message>(history);
+        LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
         Collections.sort(list, new MessageComparator());
         return list.listIterator(list.size());

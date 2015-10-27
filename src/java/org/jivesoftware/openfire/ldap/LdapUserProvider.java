@@ -72,7 +72,7 @@ public class LdapUserProvider implements UserProvider {
         JiveGlobals.migrateProperty("ldap.searchFields");
 
         manager = LdapManager.getInstance();
-        searchFields = new LinkedHashMap<String,String>();
+        searchFields = new LinkedHashMap<>();
         String fieldList = JiveGlobals.getProperty("ldap.searchFields");
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
@@ -266,7 +266,7 @@ public class LdapUserProvider implements UserProvider {
     }
 
     public void setSearchFields(String fieldList) {
-        this.searchFields = new LinkedHashMap<String,String>();
+        this.searchFields = new LinkedHashMap<>();
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());

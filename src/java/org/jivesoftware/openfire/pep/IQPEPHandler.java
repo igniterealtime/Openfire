@@ -280,7 +280,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     @Override
     public Iterator<String> getFeatures() {
         Iterator<String> it = XMPPServer.getInstance().getPubSubModule().getFeatures(null, null, null);
-        ArrayList<String> features = new ArrayList<String>();
+        ArrayList<String> features = new ArrayList<>();
         while (it.hasNext()) {
             features.add(it.next());
         }
@@ -521,7 +521,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     @Override
     public Iterator<Element> getUserItems(String name, JID senderJID) {
-        ArrayList<Element> items = new ArrayList<Element>();
+        ArrayList<Element> items = new ArrayList<>();
 
         String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);

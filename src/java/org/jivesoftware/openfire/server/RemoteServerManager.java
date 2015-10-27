@@ -265,7 +265,7 @@ public class RemoteServerManager {
     private static Collection<RemoteServerConfiguration> getConfigurations(
             Permission permission) {
         Collection<RemoteServerConfiguration> answer =
-                new ArrayList<RemoteServerConfiguration>();
+                new ArrayList<>();
         java.sql.Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

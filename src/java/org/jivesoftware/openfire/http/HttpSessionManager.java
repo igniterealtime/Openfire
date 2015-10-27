@@ -51,7 +51,7 @@ public class HttpSessionManager {
 	private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
 
     private SessionManager sessionManager;
-    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>(
+    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>(
     		JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;

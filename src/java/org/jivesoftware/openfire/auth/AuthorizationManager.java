@@ -58,8 +58,8 @@ public class AuthorizationManager {
 
 	private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
 
-    private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<AuthorizationPolicy>();
-    private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<AuthorizationMapping>();
+    private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<>();
+    private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<>();
 
     static {
         // Convert XML based provider setup to Database based

@@ -55,7 +55,7 @@ public class GetBasicStatistics implements ClusterTask {
     @Override
     public void run() {
         SessionManager manager = SessionManager.getInstance();
-        values = new HashMap<String, Object>();
+        values = new HashMap<>();
         values.put(NODE, CacheFactory.getClusterMemberID());
         // Collect number of authenticated users
         values.put(CLIENT, manager.getUserSessionsCount(true));

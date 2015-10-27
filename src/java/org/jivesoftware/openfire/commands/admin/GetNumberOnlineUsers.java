@@ -60,7 +60,7 @@ public class GetNumberOnlineUsers extends AdHocCommand {
         field.setVariable("onlineusersnum");
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<String>(sessions.size());
+        Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
             users.add(session.getAddress().toBareJID());
         }

@@ -83,9 +83,9 @@ public class HybridAuthProvider implements AuthProvider {
     private AuthProvider secondaryProvider;
     private AuthProvider tertiaryProvider;
 
-    private Set<String> primaryOverrides = new HashSet<String>();
-    private Set<String> secondaryOverrides = new HashSet<String>();
-    private Set<String> tertiaryOverrides = new HashSet<String>();
+    private Set<String> primaryOverrides = new HashSet<>();
+    private Set<String> secondaryOverrides = new HashSet<>();
+    private Set<String> tertiaryOverrides = new HashSet<>();
 
     public HybridAuthProvider() {
         // Convert XML based provider setup to Database based

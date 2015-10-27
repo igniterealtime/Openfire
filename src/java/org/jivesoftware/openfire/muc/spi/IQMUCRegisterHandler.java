@@ -165,7 +165,7 @@ class IQMUCRegisterHandler {
         else if (IQ.Type.set ==  packet.getType()) {
             try {
                 // Keep a registry of the updated presences
-                List<Presence> presences = new ArrayList<Presence>();
+                List<Presence> presences = new ArrayList<>();
 
                 reply = IQ.createResultIQ(packet);
                 Element iq = packet.getChildElement();

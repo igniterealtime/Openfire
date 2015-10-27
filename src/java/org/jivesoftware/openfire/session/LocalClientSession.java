@@ -74,8 +74,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Note: Key = IP address or IP range; Value = empty string. A hash map is being used for
      * performance reasons.
      */
-    private static Map<String,String> allowedIPs = new HashMap<String,String>();
-    private static Map<String,String> allowedAnonymIPs = new HashMap<String,String>();
+    private static Map<String,String> allowedIPs = new HashMap<>();
+    private static Map<String,String> allowedAnonymIPs = new HashMap<>();
 
     private boolean messageCarbonsEnabled;
 

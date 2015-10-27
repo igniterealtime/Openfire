@@ -87,11 +87,11 @@ public class CertificateManager {
      */
     private static final int CERT_REQ_LINE_LENGTH = 76;
 
-    private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<CertificateEventListener>();
+    private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<>();
 
-    private static List<CertificateIdentityMapping> serverCertMapping = new ArrayList<CertificateIdentityMapping>();
+    private static List<CertificateIdentityMapping> serverCertMapping = new ArrayList<>();
     
-    private static List<CertificateIdentityMapping> clientCertMapping = new ArrayList<CertificateIdentityMapping>();
+    private static List<CertificateIdentityMapping> clientCertMapping = new ArrayList<>();
     
     static {
 
@@ -207,7 +207,7 @@ public class CertificateManager {
             }
             return null;
         }
-        final List<Certificate> all_certs = new ArrayList<Certificate>();
+        final List<Certificate> all_certs = new ArrayList<>();
         try {
             // First, load up certStore contents into a CertStore.
             // It's a mystery why these objects are different.
@@ -294,7 +294,7 @@ public class CertificateManager {
      */
     public static List<String> getClientIdentities(X509Certificate x509Certificate) {
     	
-    	List<String> names = new ArrayList<String>();
+    	List<String> names = new ArrayList<>();
     	for (CertificateIdentityMapping mapping : clientCertMapping) {
     		List<String> identities = mapping.mapIdentity(x509Certificate);
     		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
@@ -320,7 +320,7 @@ public class CertificateManager {
      */
     public static List<String> getServerIdentities(X509Certificate x509Certificate) {
     	
-    	List<String> names = new ArrayList<String>();
+    	List<String> names = new ArrayList<>();
     	for (CertificateIdentityMapping mapping : serverCertMapping) {
     		List<String> identities = mapping.mapIdentity(x509Certificate);
     		Log.debug("CertificateManager: " + mapping.name() + " returned " + identities.toString());
@@ -746,7 +746,7 @@ public class CertificateManager {
                 throw new Exception("Certificate reply and certificate in keystore are identical");
             }
         }
-        Map<Principal, List<X509Certificate>> knownCerts = new Hashtable<Principal, List<X509Certificate>>();
+        Map<Principal, List<X509Certificate>> knownCerts = new Hashtable<>();
 
         // TODO Figure out why we add keystore issuers. This implies that we always trust the issuer of our identitity (which probably is right, but shouldn't be required)
         if (keyStore.size() > 0) {
@@ -755,7 +755,7 @@ public class CertificateManager {
         if (trustStore.size() > 0) {
             knownCerts.putAll(getCertsByIssuer(trustStore));
         }
-        LinkedList<X509Certificate> answer = new LinkedList<X509Certificate>();
+        LinkedList<X509Certificate> answer = new LinkedList<>();
         if (buildChain(certReply, answer, knownCerts)) {
             return answer;
         } else {
@@ -818,7 +818,7 @@ public class CertificateManager {
      */
     private static Map<Principal, List<X509Certificate>> getCertsByIssuer(KeyStore ks)
             throws Exception {
-        Map<Principal, List<X509Certificate>> answer = new HashMap<Principal, List<X509Certificate>>();
+        Map<Principal, List<X509Certificate>> answer = new HashMap<>();
         Enumeration<String> aliases = ks.aliases();
         while (aliases.hasMoreElements()) {
             String alias = aliases.nextElement();
@@ -827,7 +827,7 @@ public class CertificateManager {
                 Principal subjectDN = cert.getSubjectDN();
                 List<X509Certificate> vec = answer.get(subjectDN);
                 if (vec == null) {
-                    vec = new ArrayList<X509Certificate>();
+                    vec = new ArrayList<>();
                     vec.add(cert);
                 }
                 else {

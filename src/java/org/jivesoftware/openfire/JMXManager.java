@@ -108,7 +108,7 @@ public class JMXManager {
 		setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
 		int jmxPort = JMXManager.getPort();
 		String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
-		Map<String, Object> env = new HashMap<String, Object>();
+		Map<String, Object> env = new HashMap<>();
 		if (JMXManager.isSecure()) {
     		env.put("jmx.remote.authenticator", new JMXAuthenticator() {
 				@Override

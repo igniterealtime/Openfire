@@ -71,7 +71,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     /**
      * Queue that holds the packets pending to be sent to remote servers.
      */
-    private BlockingQueue<Packet> packets = new LinkedBlockingQueue<Packet>(10000);
+    private BlockingQueue<Packet> packets = new LinkedBlockingQueue<>(10000);
 
     /**
      * Pool of threads that will create outgoing sessions to remote servers and send
@@ -79,7 +79,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      */
     private ThreadPoolExecutor threadPool;
 
-    private Map<String, PacketsProcessor> packetsProcessors = new HashMap<String, PacketsProcessor>();
+    private Map<String, PacketsProcessor> packetsProcessors = new HashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
@@ -203,7 +203,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
         private OutgoingSessionPromise promise;
         private String domain;
-        private Queue<Packet> packetQueue = new ConcurrentLinkedQueue<Packet>();
+        private Queue<Packet> packetQueue = new ConcurrentLinkedQueue<>();
         /**
          * Keep track of the last time s2s failed. Once a packet failed to be sent to a
          * remote server this stamp will be used so that for the next 5 seconds future packets
@@ -306,7 +306,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 else if (packet instanceof Presence) {
                 	// workaround for OF-23. "undo" the 'setFrom' to a bare JID 
                 	// by sending the error to all available resources.
-                	final List<JID> routes = new ArrayList<JID>(); 
+                	final List<JID> routes = new ArrayList<>();
                 	if (from.getResource() == null || from.getResource().trim().length() == 0) {
                     	routes.addAll(routingTable.getRoutes(from, null));
                     } else {

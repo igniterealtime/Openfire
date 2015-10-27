@@ -60,7 +60,7 @@ public class LdapGroupTester {
      * @return fist N groups found in the LDAP.
      */
     public Collection<Group> getGroups(int maxGroups) {
-        Collection<Group> groups = new ArrayList<Group>();
+        Collection<Group> groups = new ArrayList<>();
         LdapContext ctx = null;
         try {
             ctx = manager.getContext();

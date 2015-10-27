@@ -278,7 +278,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
          * Keeps track of the IQ (get/set) packets that were sent from a given component's connection. This
          * information will be used to ensure that the IQ reply will be sent to the same component's connection.
          */
-        private static final Map<String, LocalExternalComponent> iqs = new HashMap<String, LocalExternalComponent>();
+        private static final Map<String, LocalExternalComponent> iqs = new HashMap<>();
 
         private LocalComponentSession session;
         private Connection connection;
@@ -289,7 +289,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
          * List of subdomains that were binded for this component. The list will include
          * the initial subdomain.
          */
-        private List<String> subdomains = new ArrayList<String>();
+        private List<String> subdomains = new ArrayList<>();
 
 
         public LocalExternalComponent(LocalComponentSession session, Connection connection) {
@@ -401,7 +401,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         public void shutdown() {
             // Remove tracking of IQ packets sent from this component
             synchronized (iqs) {
-                List<String> toRemove = new ArrayList<String>();
+                List<String> toRemove = new ArrayList<>();
                 for (Map.Entry<String,LocalExternalComponent> entry : iqs.entrySet()) {
                     if (entry.getValue() == this) {
                         toRemove.add(entry.getKey());

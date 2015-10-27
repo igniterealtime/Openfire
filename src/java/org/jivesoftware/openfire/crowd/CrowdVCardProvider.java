@@ -41,7 +41,7 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
 	
 	private static final String VCARD_TEMPLATE
 		= "<vCard xmlns=\"vcard-temp\"><FN>@displayname@</FN><N><FAMILY>@lastname@</FAMILY><GIVEN>@firstname@</GIVEN></N><NICKNAME>@nickname@</NICKNAME><EMAIL><USERID>@email@</USERID></EMAIL></vCard>";
-	private static final ConcurrentHashMap<String, Object> MUTEX = new ConcurrentHashMap<String, Object>();
+	private static final ConcurrentHashMap<String, Object> MUTEX = new ConcurrentHashMap<>();
 
 	/**
 	 * @see org.jivesoftware.openfire.vcard.DefaultVCardProvider#loadVCard(java.lang.String)

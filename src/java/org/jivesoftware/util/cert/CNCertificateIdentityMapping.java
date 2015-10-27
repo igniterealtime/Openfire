@@ -28,7 +28,7 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
         String name = certificate.getSubjectDN().getName();
         Matcher matcher = cnPattern.matcher(name);
         // Create an array with the detected identities
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         while (matcher.find()) {
             names.add(matcher.group(2));
         }

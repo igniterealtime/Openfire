@@ -99,7 +99,7 @@ public class PluginCacheConfigurator {
     }
 
     private Map<String, String> readInitParams(Node configData) {
-        Map<String, String> paramMap = new HashMap<String, String>();
+        Map<String, String> paramMap = new HashMap<>();
         List<Node> params = configData.selectNodes("init-params/init-param");
         for (Node param : params) {
             String paramName = param.selectSingleNode("param-name").getStringValue();

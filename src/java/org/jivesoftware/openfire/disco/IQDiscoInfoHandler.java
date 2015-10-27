@@ -69,16 +69,16 @@ import java.util.concurrent.locks.Lock;
 public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListener {
 
     public static final String NAMESPACE_DISCO_INFO = "http://jabber.org/protocol/disco#info";
-	private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
-    private Set<String> localServerFeatures = new CopyOnWriteArraySet<String>();
+	private Map<String, DiscoInfoProvider> entities = new HashMap<>();
+    private Set<String> localServerFeatures = new CopyOnWriteArraySet<>();
     private Cache<String, Set<NodeID>> serverFeatures;
-    private List<Element> serverIdentities = new ArrayList<Element>();
-    private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoInfoProvider>();
+    private List<Element> serverIdentities = new ArrayList<>();
+    private Map<String, DiscoInfoProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
 
-    private List<Element> anonymousUserIdentities = new ArrayList<Element>();
-    private List<Element> registeredUserIdentities = new ArrayList<Element>();
-    private List<String> userFeatures = new ArrayList<String>();
+    private List<Element> anonymousUserIdentities = new ArrayList<>();
+    private List<Element> registeredUserIdentities = new ArrayList<>();
+    private List<String> userFeatures = new ArrayList<>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -275,7 +275,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 lock.lock();
                 Set<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs == null) {
-                    nodeIDs = new HashSet<NodeID>();
+                    nodeIDs = new HashSet<>();
                 }
                 nodeIDs.add(XMPPServer.getInstance().getNodeID());
                 serverFeatures.put(namespace, nodeIDs);
@@ -400,7 +400,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 lock.lock();
                 Set<NodeID> nodeIDs = serverFeatures.get(feature);
                 if (nodeIDs == null) {
-                    nodeIDs = new HashSet<NodeID>();
+                    nodeIDs = new HashSet<>();
                 }
                 nodeIDs.add(XMPPServer.getInstance().getNodeID());
                 serverFeatures.put(feature, nodeIDs);
@@ -420,7 +420,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     private DiscoInfoProvider getServerInfoProvider() {
         return new DiscoInfoProvider() {
-            final ArrayList<Element> identities = new ArrayList<Element>();
+            final ArrayList<Element> identities = new ArrayList<>();
 
             @Override
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
@@ -469,7 +469,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 if (name == null) {
                     // Answer features of the server
-                    return new HashSet<String>(serverFeatures.keySet()).iterator();
+                    return new HashSet<>(serverFeatures.keySet()).iterator();
                 }
                 else {
                     // Answer features of the user

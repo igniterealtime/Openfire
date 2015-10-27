@@ -40,7 +40,7 @@ public class VCardEventDispatcher {
     /**
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
-    private static List<VCardListener> listeners = new CopyOnWriteArrayList<VCardListener>();
+    private static List<VCardListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events when a vCard is created, updated or deleted.

@@ -117,7 +117,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     public ConnectionManagerImpl() {
         super("Connection Manager");
-        ports = new ArrayList<ServerPort>(4);
+        ports = new ArrayList<>(4);
     }
 
     private synchronized void createListeners() {
@@ -207,7 +207,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             try {
                 serverSocketThread.start();
 
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(Integer.toString(serverSocketThread.getPort()));
                 Log.info(LocaleUtils.getLocalizedString("startup.server", params));
             }
@@ -266,7 +266,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.connectionManager));
 
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.multiplexer", params));
             }
@@ -328,7 +328,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.component));
 
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.component", params));
             }
@@ -398,7 +398,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.client));
 
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
             }
@@ -496,7 +496,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, true, null, ServerPort.Type.client));
 
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }

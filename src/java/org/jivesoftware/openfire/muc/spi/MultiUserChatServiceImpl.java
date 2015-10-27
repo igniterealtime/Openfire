@@ -76,7 +76,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
@@ -137,7 +136,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * chatrooms managed by this manager, table: key room name (String); value ChatRoom
      */
-    private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<String, LocalMUCRoom>();
+    private Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
 
     /**
      * Chat users managed by this manager. This includes only users connected to this JVM.
@@ -146,7 +145,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * table: key user jid (XMPPAddress); value ChatUser
      */
-    private Map<JID, LocalMUCUser> users = new ConcurrentHashMap<JID, LocalMUCUser>();
+    private Map<JID, LocalMUCUser> users = new ConcurrentHashMap<>();
     private HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
@@ -194,18 +193,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Bare jids of users that are allowed to create MUC rooms. An empty list means that anyone can
      * create a room. Might also include group jids.
      */
-    private GroupAwareList<JID> allowedToCreate = new ConcurrentGroupList<JID>();
+    private GroupAwareList<JID> allowedToCreate = new ConcurrentGroupList<>();
 
     /**
      * Bare jids of users that are system administrators of the MUC service. A sysadmin has the same
      * permissions as a room owner. Might also contain group jids.
      */
-    private GroupAwareList<JID> sysadmins = new ConcurrentGroupList<JID>();
+    private GroupAwareList<JID> sysadmins = new ConcurrentGroupList<>();
 
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<ConversationLogEntry>(100000);
+    private Queue<ConversationLogEntry> logQueue = new LinkedBlockingQueue<>(100000);
 
     /**
      * Max number of hours that a persistent room may be empty before the service removes the
@@ -252,12 +251,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Additional features to be added to the disco response for the service.
      */
-    private List<String> extraDiscoFeatures = new ArrayList<String>();
+    private List<String> extraDiscoFeatures = new ArrayList<>();
 
     /**
      * Additional identities to be added to the disco response for the service.
      */
-    private List<Element> extraDiscoIdentities = new ArrayList<Element>();
+    private List<Element> extraDiscoIdentities = new ArrayList<>();
 
     /**
 	 * Create a new group chat server.
@@ -754,7 +753,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public Collection<MUCRole> getMUCRoles(JID user) {
-        List<MUCRole> userRoles = new ArrayList<MUCRole>();
+        List<MUCRole> userRoles = new ArrayList<>();
         for (LocalMUCRoom room : rooms.values()) {
             MUCRole role = room.getOccupantByFullJID(user);
             if (role != null) {
@@ -878,9 +877,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-        ArrayList<JID> tempList = new ArrayList<JID>(sysadmins);
+        ArrayList<JID> tempList = new ArrayList<>(sysadmins);
         Collections.sort(tempList);
-        sysadmins = new ConcurrentGroupList<JID>(tempList);
+        sysadmins = new ConcurrentGroupList<>(tempList);
 
         // Update the config.
         String[] jids = new String[sysadmins.size()];
@@ -980,9 +979,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     	// if nothing was added, there's nothing to update
     	if(listChanged) {
             // CopyOnWriteArray does not allow sorting, so do sorting in temp list.
-            List<JID> tempList = new ArrayList<JID>(allowedToCreate);
+            List<JID> tempList = new ArrayList<>(allowedToCreate);
             Collections.sort(tempList);
-            allowedToCreate = new ConcurrentGroupList<JID>(tempList);
+            allowedToCreate = new ConcurrentGroupList<>(tempList);
             // Update the config.
             MUCPersistenceManager.setProperty(chatServiceName, "create.jid", fromCollection(allowedToCreate));
     	}
@@ -990,7 +989,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void addUserAllowedToCreate(JID userJID) {
-        List<JID> asList = new ArrayList<JID>();
+        List<JID> asList = new ArrayList<>();
         asList.add(userJID);
     	addUsersAllowedToCreate(asList);
     }
@@ -1144,7 +1143,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         XMPPServer.getInstance().getIQDiscoInfoHandler().setServerNodeInfoProvider(this.getServiceDomain(), this);
         XMPPServer.getInstance().getServerItemsProviders().add(this);
 
-        ArrayList<String> params = new ArrayList<String>();
+        ArrayList<String> params = new ArrayList<>();
         params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
@@ -1305,7 +1304,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 			return null;
 		}
 
-		final ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+		final ArrayList<DiscoServerItem> items = new ArrayList<>();
 		final DiscoServerItem item = new DiscoServerItem(new JID(
 			getServiceDomain()), getDescription(), null, null, this, this);
 		items.add(item);
@@ -1314,7 +1313,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
+        ArrayList<Element> identities = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the identity of the MUC service
             Element identity = DocumentHelper.createElement("identity");
@@ -1366,7 +1365,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        ArrayList<String> features = new ArrayList<String>();
+        ArrayList<String> features = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the features of the MUC service
             features.add("http://jabber.org/protocol/muc");
@@ -1555,7 +1554,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (!isServiceEnabled()) {
             return null;
         }
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
 		if (name == null && node == null)
 		{
 			// Answer all the public rooms as items

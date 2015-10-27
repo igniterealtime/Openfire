@@ -92,8 +92,8 @@ public class PluginManager {
     private Map<Plugin, String> childPluginMap;
     private Set<String> devPlugins;
     private PluginMonitor pluginMonitor;
-    private Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<PluginListener>();
-    private Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<PluginManagerListener>();
+    private Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<>();
+    private Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<>();
 
     /**
      * Constructs a new plugin manager.
@@ -102,14 +102,14 @@ public class PluginManager {
      */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir;
-        plugins = new ConcurrentHashMap<String, Plugin>();
-        pluginDirs = new HashMap<Plugin, File>();
-        pluginFiles = new HashMap<String, File>();
-        classloaders = new HashMap<Plugin, PluginClassLoader>();
-        pluginDevelopment = new HashMap<Plugin, PluginDevEnvironment>();
-        parentPluginMap = new HashMap<Plugin, List<String>>();
-        childPluginMap = new HashMap<Plugin, String>();
-        devPlugins = new HashSet<String>();
+        plugins = new ConcurrentHashMap<>();
+        pluginDirs = new HashMap<>();
+        pluginFiles = new HashMap<>();
+        classloaders = new HashMap<>();
+        pluginDevelopment = new HashMap<>();
+        parentPluginMap = new HashMap<>();
+        childPluginMap = new HashMap<>();
+        devPlugins = new HashSet<>();
         pluginMonitor = new PluginMonitor();
     }
 
@@ -429,7 +429,7 @@ public class PluginManager {
                     String parentPlugin = parentPluginNode.getTextTrim();
                     List<String> childrenPlugins = parentPluginMap.get(plugins.get(parentPlugin));
                     if (childrenPlugins == null) {
-                        childrenPlugins = new ArrayList<String>();
+                        childrenPlugins = new ArrayList<>();
                         parentPluginMap.put(plugins.get(parentPlugin), childrenPlugins);
                     }
                     childrenPlugins.add(pluginName);
@@ -1040,7 +1040,7 @@ public class PluginManager {
                 });
 
                 // Turn the list of JAR/WAR files into a set so that we can do lookups.
-                Set<String> jarSet = new HashSet<String>();
+                Set<String> jarSet = new HashSet<>();
                 for (File file : jars) {
                     jarSet.add(file.getName().toLowerCase());
                 }
@@ -1049,7 +1049,7 @@ public class PluginManager {
                 // due to the JAR file being deleted (ignore admin plugin).
                 // Build a list of plugins to delete first so that the plugins
                 // keyset isn't modified as we're iterating through it.
-                List<String> toDelete = new ArrayList<String>();
+                List<String> toDelete = new ArrayList<>();
                 for (File pluginDir : dirs) {
                     String pluginName = pluginDir.getName();
                     if (pluginName.equals("admin")) {
@@ -1150,7 +1150,7 @@ public class PluginManager {
             // Always try to delete JAR files first since that's what will
             // be under contention. We do this by always sorting the lib directory
             // first.
-            List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
+            List<String> children = new ArrayList<>(Arrays.asList(childDirs));
             Collections.sort(children, new Comparator<String>() {
                 @Override
                 public int compare(String o1, String o2) {

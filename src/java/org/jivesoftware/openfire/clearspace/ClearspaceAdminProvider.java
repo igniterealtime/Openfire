@@ -61,7 +61,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
             Log.debug("ClearspaceAdminProvider: permissions query url is: "+path);
             Element element = ClearspaceManager.getInstance().executeRequest(GET, path);
 
-            List<JID> admins = new ArrayList<JID>();
+            List<JID> admins = new ArrayList<>();
             for (String idStr : parseStringArray(element)) {
                 Log.debug("Admin provider got ID number "+idStr);
                 Long id = Long.valueOf(idStr);
@@ -78,7 +78,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
         }
         catch (ConnectionException e) {
             Log.error(e.getMessage(), e);
-            return new ArrayList<JID>();
+            return new ArrayList<>();
         }
         catch (Exception e) {
             // It is not supported exception, wrap it into an UnsupportedOperationException

@@ -93,7 +93,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      */
     @Override
     public List<SecurityAuditEvent> getEvents(String username, Integer skipEvents, Integer numEvents, Date startTime, Date endTime) {
-        List<SecurityAuditEvent> events = new ArrayList<SecurityAuditEvent>();
+        List<SecurityAuditEvent> events = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

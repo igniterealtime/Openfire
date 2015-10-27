@@ -132,7 +132,7 @@ public class AdHocCommandHandler extends IQHandler
 
     @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         if (!NAMESPACE.equals(node)) {
             answer = Collections.emptyList();
         }

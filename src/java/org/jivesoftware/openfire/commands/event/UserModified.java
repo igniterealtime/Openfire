@@ -105,7 +105,7 @@ public class UserModified extends AdHocCommand {
         }
 
         // Creates event params.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
 
         // Gets the value of the change if it exist
         String value;

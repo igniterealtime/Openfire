@@ -742,5 +742,4 @@ public class PluginClassLoader extends URLClassLoader {
 		result.addAll(Arrays.asList(super.getURLs()));
 		return result.toArray(new URL[result.size()]);
 	}
-
 }

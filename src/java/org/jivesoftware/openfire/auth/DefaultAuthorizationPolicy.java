@@ -66,7 +66,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
     private boolean proxyAuth;
 
     public DefaultAuthorizationPolicy() {
-        approvedRealms = new Vector<String>();
+        approvedRealms = new Vector<>();
         proxyAuth = false;
         
         String realmList = JiveGlobals.getProperty("sasl.approvedRealms");

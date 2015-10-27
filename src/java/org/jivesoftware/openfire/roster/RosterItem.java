@@ -227,8 +227,8 @@ public class RosterItem implements Cacheable, Externalizable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<String> sharedGroups = new HashSet<String>();
-    protected Set<String> invisibleSharedGroups = new HashSet<String>();
+    protected Set<String> sharedGroups = new HashSet<>();
+    protected Set<String> invisibleSharedGroups = new HashSet<>();
     protected SubType subStatus;
     protected AskType askStatus;
     /**
@@ -265,7 +265,7 @@ public class RosterItem implements Cacheable, Externalizable {
         this.askStatus = askStatus;
         this.recvStatus = recvStatus;
         this.nickname = nickname;
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         if (groups != null) {
             for (String group : groups) {
                 this.groups.add(group);
@@ -284,7 +284,7 @@ public class RosterItem implements Cacheable, Externalizable {
                 getAskStatus(item),
                 RosterItem.RECV_NONE,
                 item.getName(),
-                new LinkedList<String>(item.getGroups()));
+                new LinkedList<>(item.getGroups()));
     }
 
     private static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
@@ -430,7 +430,7 @@ public class RosterItem implements Cacheable, Externalizable {
      */
     public void setGroups(List<String> groups) throws SharedGroupException {
         if (groups == null) {
-            this.groups = new LinkedList<String>();
+            this.groups = new LinkedList<>();
         }
         else {
             // Raise an error if the user is trying to remove the item from a shared group
@@ -475,7 +475,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(sharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(sharedGroups.size());
         for (String groupName : sharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -495,7 +495,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getInvisibleSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(invisibleSharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(invisibleSharedGroups.size());
         for (String groupName : invisibleSharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -599,7 +599,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @throws org.jivesoftware.openfire.SharedGroupException if trying to remove shared group.
      */
     public void setAsCopyOf(org.xmpp.packet.Roster.Item item) throws SharedGroupException {
-        setGroups(new LinkedList<String>(item.getGroups()));
+        setGroups(new LinkedList<>(item.getGroups()));
         setNickname(item.getName());
     }
 
@@ -644,7 +644,7 @@ public class RosterItem implements Cacheable, Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         ExternalizableUtil.getInstance().readStrings(in, groups);
         ExternalizableUtil.getInstance().readStrings(in, sharedGroups);
         ExternalizableUtil.getInstance().readStrings(in, invisibleSharedGroups);

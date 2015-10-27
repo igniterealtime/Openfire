@@ -172,7 +172,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     private Map<String, String> getLdapAttributes(String username) {
         // Un-escape username
         username = JID.unescapeNode(username);
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         DirContext ctx = null;
         try {
@@ -483,7 +483,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         private String[] attributes;
 
         public VCardTemplate(Document document) {
-            Set<String> set = new HashSet<String>();
+            Set<String> set = new HashSet<>();
             this.document = document;
             treeWalk(this.document.getRootElement(), set);
             attributes = set.toArray(new String[set.size()]);

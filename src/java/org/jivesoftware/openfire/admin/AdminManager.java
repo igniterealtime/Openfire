@@ -284,7 +284,7 @@ public class AdminManager {
     public void clearAdminUsers() {
         // Clear the admin list cache.
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
@@ -300,12 +300,12 @@ public class AdminManager {
      */
     public void setAdminUsers(List<String> usernames) {
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
         }
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         for (String username : usernames) {
             admins.add(XMPPServer.getInstance().createJID(username, null));
         }
@@ -320,13 +320,13 @@ public class AdminManager {
      */
     public void setAdminJIDs(List<JID> jids) {
         if (adminList == null) {
-            adminList = new ArrayList<JID>();
+            adminList = new ArrayList<>();
         }
         else {
             adminList.clear();
         }
 
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         for (JID jid : jids)
 		{
             if (jid != null) {

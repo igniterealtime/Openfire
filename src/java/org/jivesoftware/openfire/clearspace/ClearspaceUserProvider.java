@@ -216,7 +216,7 @@ public class ClearspaceUserProvider implements UserProvider {
         } catch (Exception e) {
             Log.error(e.getMessage(), e);
         }
-        return new ArrayList<String>();
+        return new ArrayList<>();
     }
 
     /**
@@ -229,7 +229,7 @@ public class ClearspaceUserProvider implements UserProvider {
     @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         String[] usernamesAll = getUsernames().toArray(new String[0]);
-        Collection<String> usernames = new ArrayList<String>();
+        Collection<String> usernames = new ArrayList<>();
 
         // Filters the user
         for (int i = startIndex; (i < startIndex + numResults) && (i < usernamesAll.length); i++) {
@@ -416,7 +416,7 @@ public class ClearspaceUserProvider implements UserProvider {
      */
     @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
     /**
@@ -442,7 +442,7 @@ public class ClearspaceUserProvider implements UserProvider {
         queryE.addElement("searchEmail").addText("true");
         queryE.addElement("searchProfile").addText("false");
 
-        List<String> usernames = new ArrayList<String>();
+        List<String> usernames = new ArrayList<>();
         try {
 
             //TODO create a service on CS to get only the username field
@@ -492,7 +492,7 @@ public class ClearspaceUserProvider implements UserProvider {
         paramsE.addElement("startIndex").addText(String.valueOf(startIndex));
         paramsE.addElement("numResults").addText(String.valueOf(numResults));
 
-        List<String> usernames = new ArrayList<String>();
+        List<String> usernames = new ArrayList<>();
         try {
 
             //TODO create a service on CS to get only the username field

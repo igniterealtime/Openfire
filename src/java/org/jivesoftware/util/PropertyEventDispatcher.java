@@ -49,7 +49,7 @@ public class PropertyEventDispatcher {
 	private static final Logger Log = LoggerFactory.getLogger(PropertyEventDispatcher.class);
 
     private static Set<PropertyEventListener> listeners =
-            new CopyOnWriteArraySet<PropertyEventListener>();
+            new CopyOnWriteArraySet<>();
 
     private PropertyEventDispatcher() {
         // Not instantiable.

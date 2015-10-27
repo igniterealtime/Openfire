@@ -41,7 +41,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      */
 	@Override
 	public List<String> mapIdentity(X509Certificate certificate) {
-		List<String> identities = new ArrayList<String>();
+		List<String> identities = new ArrayList<>();
         try {
             Collection<List<?>> altNames = certificate.getSubjectAlternativeNames();
             // Check that the certificate includes the SubjectAltName extension

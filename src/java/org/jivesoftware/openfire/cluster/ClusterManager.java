@@ -47,8 +47,8 @@ public class ClusterManager {
 	private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
 
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
-    private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
-    private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>(10000);
+    private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<>();
+    private static BlockingQueue<Event> events = new LinkedBlockingQueue<>(10000);
     private static Thread dispatcher;
 
     static {

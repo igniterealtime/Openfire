@@ -34,7 +34,7 @@ import java.util.List;
 public class ServerPort {
 
     private int port;
-    private List<String> names = new ArrayList<String>(1);
+    private List<String> names = new ArrayList<>(1);
     private String address;
     private boolean secure;
     private String algorithm;

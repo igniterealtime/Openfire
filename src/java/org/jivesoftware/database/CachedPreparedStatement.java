@@ -51,8 +51,8 @@ public class CachedPreparedStatement  {
      * Constructs a new CachedPreparedStatement.
      */
     public CachedPreparedStatement() {
-        params = new ArrayList<Object>();
-        types = new ArrayList<Integer>();
+        params = new ArrayList<>();
+        types = new ArrayList<>();
     }
 
     /**

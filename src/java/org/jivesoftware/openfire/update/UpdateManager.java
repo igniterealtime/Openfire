@@ -91,12 +91,12 @@ public class UpdateManager extends BasicModule {
     /**
      * List of plugins that need to be updated.
      */
-    private Collection<Update> pluginUpdates = new ArrayList<Update>();
+    private Collection<Update> pluginUpdates = new ArrayList<>();
 
     /**
      * List of plugins available at igniterealtime.org.
      */
-    private Map<String, AvailablePlugin> availablePlugins = new HashMap<String, AvailablePlugin>();
+    private Map<String, AvailablePlugin> availablePlugins = new HashMap<>();
 
     /**
      * Thread that performs the periodic checks for updates.
@@ -325,7 +325,7 @@ public class UpdateManager extends BasicModule {
      * @return the list of available plugins to install as reported by igniterealtime.org.
      */
     public List<AvailablePlugin> getNotInstalledPlugins() {
-        List<AvailablePlugin> plugins = new ArrayList<AvailablePlugin>(availablePlugins.values());
+        List<AvailablePlugin> plugins = new ArrayList<>(availablePlugins.values());
         XMPPServer server = XMPPServer.getInstance();
         // Remove installed plugins from the list of available plugins
         for (Plugin plugin : server.getPluginManager().getPlugins()) {
@@ -567,7 +567,7 @@ public class UpdateManager extends BasicModule {
     private void processAvailablePluginsResponse(String response, boolean notificationsEnabled)
             throws DocumentException {
         // Reset last known list of available plugins
-        availablePlugins = new HashMap<String, AvailablePlugin>();
+        availablePlugins = new HashMap<>();
 
         // Parse response and keep info as AvailablePlugin objects
         SAXReader xmlReader = new SAXReader();
@@ -621,7 +621,7 @@ public class UpdateManager extends BasicModule {
      */
     private void buildPluginsUpdateList() {
         // Reset list of plugins that need to be updated
-        pluginUpdates = new ArrayList<Update>();
+        pluginUpdates = new ArrayList<>();
         XMPPServer server = XMPPServer.getInstance();
         Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
         // Compare local plugins versions with latest ones

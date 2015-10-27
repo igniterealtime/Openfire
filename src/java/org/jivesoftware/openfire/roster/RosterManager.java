@@ -190,7 +190,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return a collection with all the groups that the user may include in his roster.
      */
     public Collection<Group> getSharedGroups(String username) {
-        Collection<Group> answer = new HashSet<Group>();
+        Collection<Group> answer = new HashSet<>();
         Collection<Group> groups = GroupManager.getInstance().getSharedGroups(username);
         for (Group group : groups) {
             String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
@@ -235,7 +235,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      *         of groups.
      */
     private Collection<Group> parseGroups(String groupNames) {
-        Collection<Group> answer = new HashSet<Group>();
+        Collection<Group> answer = new HashSet<>();
         for (String groupName : parseGroupNames(groupNames)) {
             try {
                 answer.add(GroupManager.getInstance().getGroup(groupName));
@@ -256,7 +256,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      *         of groups.
      */
     private static Collection<String> parseGroupNames(String groupNames) {
-        Collection<String> answer = new HashSet<String>();
+        Collection<String> answer = new HashSet<>();
         if (groupNames != null) {
             StringTokenizer tokenizer = new StringTokenizer(groupNames, ",");
             while (tokenizer.hasMoreTokens()) {
@@ -274,7 +274,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     @Override
     public void groupDeleting(Group group, Map params) {
         // Get group members
-        Collection<JID> users = new HashSet<JID>(group.getMembers());
+        Collection<JID> users = new HashSet<>(group.getMembers());
         users.addAll(group.getAdmins());
         // Get users whose roster will be updated
         Collection<JID> affectedUsers = getAffectedUsers(group);
@@ -301,7 +301,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<JID>(group.getMembers());
+            Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
             Collection<JID> affectedUsers = getAffectedUsers(group, originalValue,
@@ -324,7 +324,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Get the users of the group
-            Collection<JID> users = new HashSet<JID>(group.getMembers());
+            Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Get the users whose roster will be affected
             Collection<JID> affectedUsers = getAffectedUsers(group,
@@ -448,7 +448,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
                 users.addAll(visibleGroup.getAdmins());
                 groupUserAdded(visibleGroup, users, addedUser);
             }
@@ -472,7 +472,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
                 users.addAll(visibleGroup.getAdmins());
                 groupUserDeleted(visibleGroup, users, deletedUser);
             }
@@ -492,7 +492,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
                 users.addAll(visibleGroup.getAdmins());
                 groupUserAdded(visibleGroup, users, addedUser);
             }
@@ -513,7 +513,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (!isSharedGroup(group)) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
-                Collection<JID> users = new HashSet<JID>(visibleGroup.getMembers());
+                Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
                 users.addAll(visibleGroup.getAdmins());
                 groupUserDeleted(visibleGroup, users, deletedUser);
             }
@@ -538,7 +538,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // of type FROM for the new user
         for (Group group : getPublicSharedGroups()) {
             // Get group members of public group
-            Collection<JID> users = new HashSet<JID>(group.getMembers());
+            Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Update the roster of each group member to include a subscription of type FROM
             for (JID userToUpdate : users) {
@@ -577,7 +577,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // of type FROM for the new user
         for (Group group : getPublicSharedGroups()) {
             // Get group members of public group
-            Collection<JID> users = new HashSet<JID>(group.getMembers());
+            Collection<JID> users = new HashSet<>(group.getMembers());
             users.addAll(group.getAdmins());
             // Update the roster of each group member to include a subscription of type FROM
             for (JID userToUpdate : users) {
@@ -820,10 +820,10 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     private Collection<JID> getAffectedUsers(Group group, String showInRoster, String groupNames) {
         // Answer an empty collection if the group is not being shown in users' rosters
         if (!"onlyGroup".equals(showInRoster) && !"everybody".equals(showInRoster)) {
-            return new ArrayList<JID>();
+            return new ArrayList<>();
         }
         // Add the users of the group
-        Collection<JID> users = new HashSet<JID>(group.getMembers());
+        Collection<JID> users = new HashSet<>(group.getMembers());
         users.addAll(group.getAdmins());
         // Check if anyone can see this shared group
         if ("everybody".equals(showInRoster)) {
@@ -852,11 +852,11 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
 
         // Answer an empty collection if the group is not being shown in users' rosters
         if (!"onlyGroup".equals(showInRoster) && !"everybody".equals(showInRoster)) {
-            return new ArrayList<JID>();
+            return new ArrayList<>();
         }
 
         // Add the users of the group
-        Collection<JID> users = new HashSet<JID>(group.getMembers());
+        Collection<JID> users = new HashSet<>(group.getMembers());
         users.addAll(group.getAdmins());
 
         // If the user of the roster belongs to the shared group then we should return

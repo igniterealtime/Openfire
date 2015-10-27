@@ -114,7 +114,7 @@ public class NodeSubscription {
     /**
      * The presence states for which an entity wants to receive notifications.
      */
-    private Collection<String> presenceStates = new ArrayList<String>();
+    private Collection<String> presenceStates = new ArrayList<>();
     /**
      * When subscribing to collection nodes it is possible to be interested in new nodes
      * added to the collection node or new items published in the children nodes. The default
@@ -467,7 +467,7 @@ public class NodeSubscription {
             else if ("pubsub#show-values".equals(field.getVariable())) {
                 // Get the new list of presence states for which an entity wants to
                 // receive notifications
-                presenceStates = new ArrayList<String>();
+                presenceStates = new ArrayList<>();
                 for (String value : field.getValues()) {
                     try {
                         presenceStates.add(value);
@@ -518,7 +518,7 @@ public class NodeSubscription {
     public DataForm getConfigurationForm() {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.subscription.title"));
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add(node.getNodeID());
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.subscription.instruction", params));
         // Add the form fields and configure them for edition

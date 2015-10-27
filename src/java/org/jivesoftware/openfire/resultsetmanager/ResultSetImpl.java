@@ -105,13 +105,13 @@ public class ResultSetImpl<E extends Result> extends ResultSet<E> {
 		}
 
 		final int size = results.size();
-		resultList = new ArrayList<E>(size);
-		uidToIndex = new Hashtable<String, Integer>(size);
+		resultList = new ArrayList<>(size);
+		uidToIndex = new Hashtable<>(size);
 
 		// sort the collection, if need be.
 		List<E> sortedResults = null;
 		if (comparator != null) {
-			sortedResults = new ArrayList<E>(results);
+			sortedResults = new ArrayList<>(results);
 			Collections.sort(sortedResults, comparator);
 		}
 
@@ -258,7 +258,7 @@ public class ResultSetImpl<E extends Result> extends ResultSet<E> {
 		}
 
 		if (fromIndex >= size()) {
-			return new ArrayList<E>(0);
+			return new ArrayList<>(0);
 		}
 
 		// calculate the last index to return, or return up to the end of last

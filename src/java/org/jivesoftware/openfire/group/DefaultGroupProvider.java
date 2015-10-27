@@ -245,7 +245,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames() {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -267,7 +267,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames(int startIndex, int numResults) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -293,7 +293,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames(JID user) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -398,7 +398,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -446,7 +446,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     }
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
-        List<JID> members = new ArrayList<JID>();
+        List<JID> members = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

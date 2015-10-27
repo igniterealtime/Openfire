@@ -133,7 +133,7 @@ public class MUCPersistenceManager {
         "VALUES (?,?,?,?,?,?)";
 
     /* Map of subdomains to their associated properties */
-    private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<String,MUCServiceProperties>();
+    private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
 
     /**
      * Returns the reserved room nickname for the bare JID in a given room or null if none.
@@ -207,7 +207,7 @@ public class MUCPersistenceManager {
             room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1);
             room.setLogEnabled(rs.getInt(16) == 1);
             room.setSubject(rs.getString(17));
-            List<String> rolesToBroadcast = new ArrayList<String>();
+            List<String> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt(18)), 3);
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
@@ -469,7 +469,7 @@ public class MUCPersistenceManager {
     }
 
     private static Map<Long, LocalMUCRoom> loadRooms(Long serviceID, Date emptyDate, MultiUserChatService chatserver, PacketRouter packetRouter) throws SQLException {
-        final Map<Long, LocalMUCRoom> rooms = new HashMap<Long, LocalMUCRoom>();
+        final Map<Long, LocalMUCRoom> rooms = new HashMap<>();
 
         Connection connection = null;
         PreparedStatement statement = null;
@@ -506,7 +506,7 @@ public class MUCPersistenceManager {
                     room.setCanAnyoneDiscoverJID(resultSet.getInt(16) == 1);
                     room.setLogEnabled(resultSet.getInt(17) == 1);
                     room.setSubject(resultSet.getString(18));
-                    List<String> rolesToBroadcast = new ArrayList<String>();
+                    List<String> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt(19)), 3);
                     if (roles.charAt(0) == '1') {
                         rolesToBroadcast.add("moderator");
@@ -1196,7 +1196,7 @@ public class MUCPersistenceManager {
     	if (oldProps != null) {
     		properties = oldProps;
     	} 
-        return new ArrayList<String>(properties.getChildrenNames(parent));
+        return new ArrayList<>(properties.getChildrenNames(parent));
     }
 
     /**
@@ -1218,7 +1218,7 @@ public class MUCPersistenceManager {
     	} 
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (String propertyName : propertyNames) {
             String value = getProperty(subdomain, propertyName);
             if (value != null) {
@@ -1241,7 +1241,7 @@ public class MUCPersistenceManager {
     	if (oldProps != null) {
     		properties = oldProps;
     	} 
-        return new ArrayList<String>(properties.getPropertyNames());
+        return new ArrayList<>(properties.getPropertyNames());
     }
 
     /**

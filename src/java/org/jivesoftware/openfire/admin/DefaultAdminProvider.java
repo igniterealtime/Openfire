@@ -92,7 +92,7 @@ public class DefaultAdminProvider implements AdminProvider {
      */
     @Override
     public List<JID> getAdmins() {
-        List<JID> adminList = new ArrayList<JID>();
+        List<JID> adminList = new ArrayList<>();
 
         // Add bare JIDs of users that are admins (may include remote users), primarily used to override/add to list of admin users
         String jids = JiveGlobals.getProperty("admin.authorizedJIDs");
@@ -123,7 +123,7 @@ public class DefaultAdminProvider implements AdminProvider {
      */
     @Override
     public void setAdmins(List<JID> admins) {
-        Collection<String> adminList = new ArrayList<String>();
+        Collection<String> adminList = new ArrayList<>();
         for (JID admin : admins) {
             adminList.add(admin.toBareJID());
         }
@@ -150,7 +150,7 @@ public class DefaultAdminProvider implements AdminProvider {
             return;
         }
 
-        List<JID> adminList = new ArrayList<JID>();
+        List<JID> adminList = new ArrayList<>();
 
         // Add bare JIDs of users that are admins (may include remote users), primarily used to override/add to list of admin users
         String jids = JiveGlobals.getXMLProperty("admin.authorizedJIDs");

@@ -67,7 +67,7 @@ public class SocketConnection implements Connection {
 	private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
     private static Map<SocketConnection, String> instances =
-            new ConcurrentHashMap<SocketConnection, String>();
+            new ConcurrentHashMap<>();
 
     /**
      * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
@@ -81,7 +81,7 @@ public class SocketConnection implements Connection {
     private long idleTimeout = -1;
 
     final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<ConnectionCloseListener, Object>();
+            new HashMap<>();
 
     private Socket socket;
     private SocketReader socketReader;

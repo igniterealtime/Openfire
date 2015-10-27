@@ -130,7 +130,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     public PresenceUpdateHandler() {
         super("Presence update handler");
-        localDirectedPresences = new ConcurrentHashMap<String, Collection<DirectedPresence>>();
+        localDirectedPresences = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -429,7 +429,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                             // sends several directed presences to the same handler. The Map also
                             // ensures that if the user sends several presences to the same handler
                             // we will have only one entry in the Map
-                            directedPresences = new ConcurrentLinkedQueue<DirectedPresence>();
+                            directedPresences = new ConcurrentLinkedQueue<>();
                         }
                         // Add the handler to the list of handler that processed the directed
                         // presence sent by the user. This handler will be used to send
@@ -518,7 +518,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      */
     public void removedExpiredPresences() {
         Map<String, Collection<DirectedPresence>> copy =
-                new HashMap<String, Collection<DirectedPresence>>(localDirectedPresences);
+                new HashMap<>(localDirectedPresences);
         for (Map.Entry<String, Collection<DirectedPresence>> entry : copy.entrySet()) {
             for (DirectedPresence directedPresence : entry.getValue()) {
                 if (!routingTable.hasClientRoute(directedPresence.getHandler()) &&

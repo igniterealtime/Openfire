@@ -38,7 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class LockOutEventDispatcher {
 
     private static List<LockOutEventListener> listeners =
-            new CopyOnWriteArrayList<LockOutEventListener>();
+            new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events.

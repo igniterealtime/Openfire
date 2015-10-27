@@ -39,7 +39,7 @@ public class CrowdAdminProvider implements AdminProvider {
 
 	@Override
 	public List<JID> getAdmins() {
-		List<JID> results = new ArrayList<JID>();
+		List<JID> results = new ArrayList<>();
 		
 		GroupProvider provider = GroupManager.getInstance().getProvider();
 		

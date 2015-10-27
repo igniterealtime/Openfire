@@ -91,7 +91,7 @@ public class GetListActiveUsers extends AdHocCommand {
 
         // Get list of users (i.e. bareJIDs) that are connected to the server
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<String>(sessions.size());
+        Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
             if (session.getPresence().isAvailable()) {
                 users.add(session.getAddress().toBareJID());

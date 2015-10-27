@@ -106,7 +106,7 @@ public class WSUtils {
      * @return An array of strings from the REST response.
      */
     protected static List<String> parseStringArray(Element element) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         @SuppressWarnings("unchecked")
         List<Node> nodes = (List<Node>) element.selectNodes("return");
         for (Node node : nodes) {
@@ -131,7 +131,7 @@ public class WSUtils {
      * @return An array of strings from the REST response.
      */
     protected static List<String> parseUsernameArray(Element element) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         @SuppressWarnings("unchecked")
         List<Node> nodes = (List<Node>) element.selectNodes("return");
         for (Node node : nodes) {

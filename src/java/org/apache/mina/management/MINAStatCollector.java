@@ -124,7 +124,7 @@ public class MINAStatCollector {
 
             // add all current sessions
 
-            polledSessions = new ConcurrentLinkedQueue<IoSession>();
+            polledSessions = new ConcurrentLinkedQueue<>();
 
             Map<Long, IoSession> sessions = service.getManagedSessions();
             if (sessions != null) {

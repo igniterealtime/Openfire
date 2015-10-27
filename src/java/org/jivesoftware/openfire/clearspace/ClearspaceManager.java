@@ -164,7 +164,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         };
 
         // Add a new exception map from CS to OF and it will be automatically translated.
-        exceptionMap = new HashMap<String, String>();
+        exceptionMap = new HashMap<>();
         exceptionMap.put("com.jivesoftware.base.UserNotFoundException", "org.jivesoftware.openfire.user.UserNotFoundException");
         exceptionMap.put("com.jivesoftware.base.UserAlreadyExistsException", "org.jivesoftware.openfire.user.UserAlreadyExistsException");
         exceptionMap.put("com.jivesoftware.base.GroupNotFoundException", "org.jivesoftware.openfire.group.GroupNotFoundException");
@@ -195,7 +195,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     /**
      * Keep the domains of Clearspace components
      */
-    private final List<String> clearspaces = new ArrayList<String>();
+    private final List<String> clearspaces = new ArrayList<>();
 
     /**
      * Provides singleton access to an instance of the ClearspaceManager class.
@@ -351,9 +351,9 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         sharedSecret = properties.get("clearspace.sharedSecret");
 
         // Creates the cache maps
-        userIDCache = new DefaultCache<String, Long>("clearspace.userid", 1000, JiveConstants.DAY);
-        groupIDCache = new DefaultCache<String, Long>("clearspace.groupid", 1000, JiveConstants.DAY);
-        usernameCache = new DefaultCache<Long, String>("clearspace.username", 1000, JiveConstants.DAY);
+        userIDCache = new DefaultCache<>("clearspace.userid", 1000, JiveConstants.DAY);
+        groupIDCache = new DefaultCache<>("clearspace.groupid", 1000, JiveConstants.DAY);
+        usernameCache = new DefaultCache<>("clearspace.username", 1000, JiveConstants.DAY);
 
 
         if (Log.isDebugEnabled()) {
@@ -710,7 +710,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     private List<String> getServerInterfaces() {
 
-        List<String> bindInterfaces = new ArrayList<String>();
+        List<String> bindInterfaces = new ArrayList<>();
 
         String interfaceName = JiveGlobals.getXMLProperty("network.interface");
         String bindInterface = null;
@@ -1224,7 +1224,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             Collections.rotate(clearspaces, 1);
         }
         packet.setTo(component);
-        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<>(8);
         final IQRouter router = XMPPServer.getInstance().getIQRouter();
         router.addIQResultListener(packet.getID(), new IQResultListener() {
             @Override

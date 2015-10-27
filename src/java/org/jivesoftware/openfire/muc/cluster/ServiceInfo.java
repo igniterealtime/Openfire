@@ -45,7 +45,7 @@ public class ServiceInfo implements Externalizable {
     private String subdomain;
     private String description;
     private Boolean isHidden;
-    private List<RoomInfo> rooms = new ArrayList<RoomInfo>();
+    private List<RoomInfo> rooms = new ArrayList<>();
 
     /**
      * Do not use this constructor. Needed for Externalizable interface.
@@ -57,7 +57,7 @@ public class ServiceInfo implements Externalizable {
         this.subdomain = service.getServiceName();
         this.description = service.getDescription();
         this.isHidden = service.isHidden();
-        rooms = new ArrayList<RoomInfo>();
+        rooms = new ArrayList<>();
         // Get rooms that have occupants and include them in the reply
         for (MUCRoom room : service.getChatRooms()) {
             LocalMUCRoom localRoom = (LocalMUCRoom) room;

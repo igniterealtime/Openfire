@@ -111,7 +111,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
     private EntityCapabilitiesManager() {
         entityCapabilitiesMap = CacheFactory.createLocalCache("Entity Capabilities");
         entityCapabilitiesUserMap = CacheFactory.createLocalCache("Entity Capabilities Users");
-        verAttributes = new HashMap<String, EntityCapabilities>();
+        verAttributes = new HashMap<>();
     }
 
     /**
@@ -336,7 +336,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      * @return a list of identities
      */
     private static List<String> getIdentitiesFrom(IQ packet) {
-        List<String> discoIdentities = new ArrayList<String>();
+        List<String> discoIdentities = new ArrayList<>();
         Element query = packet.getChildElement();
         Iterator<Element> identitiesIterator = query.elementIterator("identity");
         if (identitiesIterator != null) {
@@ -382,7 +382,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
      * @return a list of features
      */
     private static List<String> getFeaturesFrom(IQ packet) {
-        List<String> discoFeatures = new ArrayList<String>();
+        List<String> discoFeatures = new ArrayList<>();
         Element query = packet.getChildElement();
         Iterator<Element> featuresIterator = query.elementIterator("feature");
         if (featuresIterator != null) {
@@ -405,7 +405,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 	 * @return a list of extended service discoverin information features.
 	 */
 	private static List<String> getExtendedDataForms(IQ packet) {
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		Element query = packet.getChildElement();
 		Iterator<Element> extensionIterator = query.elementIterator(QName.get(
 				"x", "jabber:x:data"));
@@ -416,7 +416,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 
 				Iterator<Element> fieldIterator = extensionElement
 						.elementIterator("field");
-				List<String> vars = new ArrayList<String>();
+				List<String> vars = new ArrayList<>();
 				while (fieldIterator != null && fieldIterator.hasNext()) {
 					final Element fieldElement = fieldIterator.next();
 					if (fieldElement.attributeValue("var").equals("FORM_TYPE")) {
@@ -429,7 +429,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 						var.append('<');
 						Iterator<Element> valIter = fieldElement
 								.elementIterator("value");
-						List<String> values = new ArrayList<String>();
+						List<String> values = new ArrayList<>();
 						while (valIter != null && valIter.hasNext()) {
 							Element value = valIter.next();
 							values.add(value.getText());

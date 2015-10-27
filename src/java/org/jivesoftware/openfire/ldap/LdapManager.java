@@ -172,7 +172,7 @@ public class LdapManager {
     }
 
 
-    private Collection<String> hosts = new ArrayList<String>();
+    private Collection<String> hosts = new ArrayList<>();
     private int port;
     private int connTimeout = -1;
     private int readTimeout = -1;
@@ -500,7 +500,7 @@ public class LdapManager {
         }
 
         // Set up the environment for creating the initial context
-        Hashtable<String, Object> env = new Hashtable<String, Object>();
+        Hashtable<String, Object> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
         env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
 
@@ -636,7 +636,7 @@ public class LdapManager {
         JiveInitialLdapContext ctx = null;
         try {
             // See if the user authenticates.
-            Hashtable<String, Object> env = new Hashtable<String, Object>();
+            Hashtable<String, Object> env = new Hashtable<>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
@@ -739,7 +739,7 @@ public class LdapManager {
                 }
                 try {
                     // See if the user authenticates.
-                    Hashtable<String, Object> env = new Hashtable<String, Object>();
+                    Hashtable<String, Object> env = new Hashtable<>();
                     // Use a custom initial context factory if specified. Otherwise, use the default.
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
@@ -1871,7 +1871,7 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
         if (pageSizeStr != null)
@@ -1894,7 +1894,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (!clientSideSort) {
                 // Server side sort on username field.
                 baseTmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -1968,7 +1968,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (!clientSideSort) {
                     // Server side sort on username field.
                     tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2025,7 +2025,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (!clientSideSort) {
                         // Server side sort on username field.
                         tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2106,7 +2106,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (pageSize > 0) {
                 // Server side paging.
                 baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
@@ -2147,7 +2147,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (pageSize > 0) {
                     // Server side paging.
                     tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
@@ -2184,7 +2184,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (pageSize > 0) {
                         // Server side paging.
                         tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));

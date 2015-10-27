@@ -84,7 +84,7 @@ public class GroupMemberAdded extends AdHocCommand {
             String member = get(data, "member", 0);
 
             // Adds the member
-            params = new HashMap<String, Object>();
+            params = new HashMap<>();
             params.put("member", member);
         }
         catch (NullPointerException npe) {

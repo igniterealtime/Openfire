@@ -250,7 +250,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         catch (Exception e) {
             description = "";
         }
-        Set<JID> members = new TreeSet<JID>();
+        Set<JID> members = new TreeSet<>();
         Attribute memberField = a.get(manager.getGroupMemberField());
         if (memberField != null) {
             NamingEnumeration ne = memberField.getAll();

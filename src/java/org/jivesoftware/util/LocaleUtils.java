@@ -52,7 +52,7 @@ public class LocaleUtils {
 	private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
 
     private static final Map<Locale, String[][]> timeZoneLists =
-            new ConcurrentHashMap<Locale, String[][]>();
+            new ConcurrentHashMap<>();
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
@@ -173,7 +173,7 @@ public class LocaleUtils {
     };
 
     // A mapping from the supported timezone ids to friendly english names.
-    private static final Map<String, String> nameMap = new HashMap<String, String>();
+    private static final Map<String, String> nameMap = new HashMap<>();
 
     static {
         nameMap.put(timeZoneIds[0], "International Date Line West");

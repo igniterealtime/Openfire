@@ -79,7 +79,7 @@ public class JiveProperties implements Map<String, String> {
      */
     public void init() {
         if (properties == null) {
-            properties = new ConcurrentHashMap<String, String>();
+            properties = new ConcurrentHashMap<>();
         }
         else {
             properties.clear();
@@ -151,7 +151,7 @@ public class JiveProperties implements Map<String, String> {
      * @return all child property names for the given parent.
      */
     public Collection<String> getChildrenNames(String parentKey) {
-        Collection<String> results = new HashSet<String>();
+        Collection<String> results = new HashSet<>();
         for (String key : properties.keySet()) {
             if (key.startsWith(parentKey + ".")) {
                 if (key.equals(parentKey)) {
@@ -250,7 +250,7 @@ public class JiveProperties implements Map<String, String> {
         }
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
 
@@ -264,7 +264,7 @@ public class JiveProperties implements Map<String, String> {
         properties.put(key, value);
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
     }

@@ -158,7 +158,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
     }
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
-        List<JID> members = new ArrayList<JID>();
+        List<JID> members = new ArrayList<>();
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -225,7 +225,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames() {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -248,7 +248,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames(int start, int num) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -274,7 +274,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames(JID user) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

@@ -59,7 +59,7 @@ public class GetNumberActiveUsers extends AdHocCommand {
         field.setVariable("activeusersnum");
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<String>(sessions.size());
+        Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
             if (session.getPresence().isAvailable()) {
                 users.add(session.getAddress().toBareJID());

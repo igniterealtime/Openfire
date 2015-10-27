@@ -20,13 +20,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -51,6 +44,13 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implements JEP-0013: Flexible Offline Message Retrieval. Allows users to request number of
@@ -156,7 +156,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        return Arrays.asList(NAMESPACE).iterator();
+        return Collections.singletonList(NAMESPACE).iterator();
     }
 
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {

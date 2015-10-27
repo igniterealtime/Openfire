@@ -20,17 +20,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -53,8 +42,17 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
-import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.packet.Presence;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A PubSubEngine is responsible for handling packets sent to a pub-sub service.
@@ -1841,7 +1839,7 @@ public class PubSubEngine {
                 return Collections.emptyList();
             }
             // User is connected at specified resource so answer list with presence show value
-            return Arrays.asList(show);
+            return Collections.singletonList(show);
         }
     }
 

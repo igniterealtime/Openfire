@@ -119,7 +119,7 @@ public class GetListActiveUsers extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

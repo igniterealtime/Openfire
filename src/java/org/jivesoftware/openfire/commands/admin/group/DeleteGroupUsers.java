@@ -19,9 +19,6 @@
 
 package org.jivesoftware.openfire.commands.admin.group;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -33,6 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Command that allows to delete members or admins from a given group.
@@ -119,7 +119,7 @@ public class DeleteGroupUsers extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

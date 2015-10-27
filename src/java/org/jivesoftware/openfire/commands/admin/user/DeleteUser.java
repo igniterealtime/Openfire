@@ -19,10 +19,6 @@
  */
 package org.jivesoftware.openfire.commands.admin.user;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
@@ -34,6 +30,10 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Delete a user from Openfire if the provider is not read-only. See
@@ -122,7 +122,7 @@ public class DeleteUser extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

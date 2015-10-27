@@ -193,20 +193,11 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                     }
                 }
             }
-            catch (UserNotFoundException e) {
+            catch (UserNotFoundException | UnauthorizedException e) {
                 response = IQ.createResultIQ(packet);
                 response.setChildElement(packet.getChildElement().createCopy());
                 response.setError(PacketError.Condition.not_authorized);
-            }
-            catch (UnauthorizedException e) {
-                response = IQ.createResultIQ(packet);
-                response.setChildElement(packet.getChildElement().createCopy());
-                response.setError(PacketError.Condition.not_authorized);
-            } catch (ConnectionException e) {
-                response = IQ.createResultIQ(packet);
-                response.setChildElement(packet.getChildElement().createCopy());
-                response.setError(PacketError.Condition.internal_server_error);
-            } catch (InternalUnauthenticatedException e) {
+            } catch (ConnectionException | InternalUnauthenticatedException e) {
                 response = IQ.createResultIQ(packet);
                 response.setChildElement(packet.getChildElement().createCopy());
                 response.setError(PacketError.Condition.internal_server_error);

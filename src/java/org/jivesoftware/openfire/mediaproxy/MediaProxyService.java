@@ -114,9 +114,7 @@ public class MediaProxyService extends BasicModule
                 echo = new Echo(echoPort);
                 Thread t = new Thread(echo);
                 t.start();
-            } catch (UnknownHostException e) {
-                // Ignore
-            } catch (SocketException e) {
+            } catch (UnknownHostException | SocketException e) {
                 // Ignore
             }
 

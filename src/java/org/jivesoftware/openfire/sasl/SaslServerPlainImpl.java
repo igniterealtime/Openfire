@@ -143,10 +143,7 @@ public class SaslServerPlainImpl implements SaslServer {
                 }
                 return null;
             }
-        } catch (UnsupportedCallbackException e) {
-            aborted = true;
-            throw new SaslException("PLAIN authentication failed for: "+username, e);
-        } catch (IOException e) {
+        } catch (UnsupportedCallbackException | IOException e) {
             aborted = true;
             throw new SaslException("PLAIN authentication failed for: "+username, e);
         }

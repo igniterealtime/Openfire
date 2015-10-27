@@ -501,7 +501,7 @@ public class LocalMUCUser implements MUCUser {
                         catch (ServiceUnavailableException e) {
                             sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
-                        catch (UserAlreadyExistsException e) {
+                        catch (UserAlreadyExistsException | ConflictException e) {
                             sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                         catch (RoomLockedException e) {
@@ -513,11 +513,7 @@ public class LocalMUCUser implements MUCUser {
                         }
                         catch (RegistrationRequiredException e) {
                             sendErrorPacket(packet, PacketError.Condition.registration_required);
-                        }
-                        catch (ConflictException e) {
-                            sendErrorPacket(packet, PacketError.Condition.conflict);
-                        }
-                        catch (NotAcceptableException e) {
+                        } catch (NotAcceptableException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                         }
                         catch (NotAllowedException e) {

@@ -641,11 +641,7 @@ public class MUCPersistenceManager {
                             default:
                                 Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
                         }
-                    } catch (ForbiddenException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    } catch (ConflictException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    } catch (NotAllowedException e) {
+                    } catch (ForbiddenException | ConflictException | NotAllowedException e) {
                         Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
                     }
                 } catch (SQLException e) {
@@ -680,9 +676,7 @@ public class MUCPersistenceManager {
                     	// might be a group JID
                     	affiliationJID = GroupJID.fromString(resultSet.getString(2));
                     	room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
-                    } catch (ForbiddenException e) {
-                        Log.warn("Unable to add member to room.", e);
-                    } catch (ConflictException e) {
+                    } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }
                 } catch (SQLException e) {

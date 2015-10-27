@@ -93,8 +93,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
                         	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
                         	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
                         }
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         // Ignore
                     }
                     catch (Exception e) {

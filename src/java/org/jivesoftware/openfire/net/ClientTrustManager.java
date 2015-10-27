@@ -113,12 +113,10 @@ public class ClientTrustManager implements X509TrustManager {
         try {
             crlStore = CertStore.getInstance("Collection", params);
         }
-        catch (InvalidAlgorithmParameterException ex) {
-            Log.warn("ClientTrustManager: ",ex);
-        } catch (NoSuchAlgorithmException ex) {
+        catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
             Log.warn("ClientTrustManager: ",ex);
         }
-          
+
         loadCRL();
        
     }
@@ -311,15 +309,10 @@ public class ClientTrustManager implements X509TrustManager {
                     Log.debug("ClientTrustManager: Trusted CA: "+trustedCert.getSubjectDN());
                 }
             }
-            catch(CertPathBuilderException e) {
+            catch(CertPathBuilderException | CertPathValidatorException e) {
                 Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("certificate path failed: "+e.getMessage());
-            }
-            catch(CertPathValidatorException e) {
-                Log.debug("ClientTrustManager:",e);
-                throw new CertificateException("certificate path failed: "+e.getMessage());
-            }
-            catch(Exception e) {
+            } catch(Exception e) {
                 Log.debug("ClientTrustManager:",e);
                 throw new CertificateException("unexpected error: "+e.getMessage());
             }

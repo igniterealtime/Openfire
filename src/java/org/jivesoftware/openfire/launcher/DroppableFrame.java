@@ -110,12 +110,8 @@ public class DroppableFrame extends JFrame implements DropTargetListener, DragSo
                 dropTargetDropEvent.rejectDrop();
             }
         }
-        catch (IOException io) {
+        catch (IOException | UnsupportedFlavorException io) {
             io.printStackTrace();
-            dropTargetDropEvent.rejectDrop();
-        }
-        catch (UnsupportedFlavorException ufe) {
-            ufe.printStackTrace();
             dropTargetDropEvent.rejectDrop();
         }
     }

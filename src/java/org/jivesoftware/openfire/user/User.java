@@ -195,13 +195,9 @@ public class User implements Cacheable, Externalizable, Result {
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
         }
-        catch (UserNotFoundException e) {
+        catch (UserNotFoundException | ConnectionException | InternalUnauthenticatedException e) {
             Log.error(e.getMessage(), e);
-        } catch (ConnectionException e) {
-            Log.error(e.getMessage(), e);
-		} catch (InternalUnauthenticatedException e) {
-            Log.error(e.getMessage(), e);
-		}
+        }
     }
     
     public String getStoredKey() {

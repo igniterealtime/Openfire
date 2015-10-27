@@ -110,12 +110,8 @@ public abstract class DroppableTextPane extends JTextPane implements DropTargetL
                 dropTargetDropEvent.rejectDrop();
             }
         }
-        catch (IOException io) {
+        catch (IOException | UnsupportedFlavorException io) {
             io.printStackTrace();
-            dropTargetDropEvent.rejectDrop();
-        }
-        catch (UnsupportedFlavorException ufe) {
-            ufe.printStackTrace();
             dropTargetDropEvent.rejectDrop();
         }
     }

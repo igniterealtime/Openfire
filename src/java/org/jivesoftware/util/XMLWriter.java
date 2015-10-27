@@ -1097,10 +1097,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                 parent.setProperty(LEXICAL_HANDLER_NAMES[i], this);
                 break;
             }
-            catch (SAXNotRecognizedException ex) {
-                // ignore
-            }
-            catch (SAXNotSupportedException ex) {
+            catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
                 // ignore
             }
         }

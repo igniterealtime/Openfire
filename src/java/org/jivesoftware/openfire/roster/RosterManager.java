@@ -170,11 +170,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
             }
         }
-        catch (UnsupportedOperationException e) {
+        catch (UnsupportedOperationException | UserNotFoundException e) {
             // Do nothing
-        }
-        catch (UserNotFoundException e) {
-            // Do nothing.
         }
     }
 

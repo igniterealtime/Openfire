@@ -219,11 +219,8 @@ public class HttpBindServlet extends HttpServlet {
                 Log.info(new Date() + ": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + rootNode.asXML());
             }
         }
-        catch (UnauthorizedException e) {
+        catch (UnauthorizedException | HttpBindException e) {
             // Server wasn't initialized yet.
-            sendLegacyError(context, BoshBindingError.internalServerError, "Server has not finished initialization." );
-        }
-        catch (HttpBindException e) {
             sendLegacyError(context, BoshBindingError.internalServerError, "Server has not finished initialization." );
         }
     }

@@ -73,6 +73,7 @@ public class IQPingHandler extends IQHandler implements ServerFeaturesProvider {
 	/*
 	 * @see org.jivesoftware.openfire.disco.ServerFeaturesProvider#getFeatures()
 	 */
+	@Override
 	public Iterator<String> getFeatures() {
 		return Collections.singleton(NAMESPACE).iterator();
 	}

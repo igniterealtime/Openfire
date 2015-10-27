@@ -86,6 +86,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      * @param authenID The authenticated ID (principal) requesting the username.
      * @return true if the authenticated ID is authorized to the requested user.
      */
+    @Override
     public boolean authorize(String username, String authenID) {
         boolean authorized = false;
 
@@ -181,6 +182,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "Default Policy";
     }
@@ -190,6 +192,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Different clients perform authentication differently, so this policy "+ 
                "will authorize any principal to a requested user that match specific "+

@@ -117,6 +117,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         // while creating the remote session or sending the packet then a packet with error 502
         // will be sent to the sender of the packet
         Thread thread = new Thread(new Runnable() {
+            @Override
             public void run() {
                 while (!shutdown) {
                     try {
@@ -175,11 +176,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         shutdown = true;
     }
 
+    @Override
     public JID getAddress() {
         // TODO Will somebody send this message to me????
         return null;
     }
 
+    @Override
     public void process(Packet packet) {
         // Queue the packet. Another process will process the queued packets.
         packets.add(packet.createCopy());
@@ -216,6 +219,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             this.domain = domain;
         }
 
+        @Override
         public void run() {
             while (!isDone()) {
                 Packet packet = packetQueue.poll();

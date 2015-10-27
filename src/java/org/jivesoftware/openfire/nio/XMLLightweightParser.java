@@ -451,6 +451,7 @@ class XMLLightweightParser {
 	}
 	
     private static class PropertyListener implements PropertyEventListener {
+        @Override
         public void propertySet(String property, Map<String, Object> params) {
             if (MAX_PROPERTY_NAME.equals(property)) {
                 String value = (String) params.get("value");
@@ -460,6 +461,7 @@ class XMLLightweightParser {
             }
         }
 
+        @Override
         public void propertyDeleted(String property, Map<String, Object> params) {
             if (MAX_PROPERTY_NAME.equals(property)) {
                 // Use default value when none was specified
@@ -467,10 +469,12 @@ class XMLLightweightParser {
             }
         }
 
+        @Override
         public void xmlPropertySet(String property, Map<String, Object> params) {
             // Do nothing
         }
 
+        @Override
         public void xmlPropertyDeleted(String property, Map<String, Object> params) {
             // Do nothing
         }

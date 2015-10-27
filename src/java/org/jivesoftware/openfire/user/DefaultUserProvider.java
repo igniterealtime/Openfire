@@ -86,6 +86,7 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE ofUser SET modificationDate=? WHERE username=?";
     private static final boolean IS_READ_ONLY = false;
     
+    @Override
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -128,6 +129,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
@@ -177,6 +179,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void deleteUser(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -209,6 +212,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public int getUserCount() {
         int count = 0;
         Connection con = null;
@@ -231,11 +235,13 @@ public class DefaultUserProvider implements UserProvider {
         return count;
     }
 
+    @Override
     public Collection<User> getUsers() {
         Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public Collection<String> getUsernames() {
         return getUsernames(0, Integer.MAX_VALUE);
     }
@@ -283,11 +289,13 @@ public class DefaultUserProvider implements UserProvider {
         return usernames;
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public void setName(String username, String name) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -311,6 +319,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setEmail(String username, String email) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -334,6 +343,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -352,6 +362,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -370,14 +381,17 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
         return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
         return findUsers(fields, query, 0, Integer.MAX_VALUE);
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
@@ -471,14 +485,17 @@ public class DefaultUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return IS_READ_ONLY;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }

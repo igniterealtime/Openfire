@@ -412,24 +412,29 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE_DISCO_ITEMS).iterator();
     }
 
+    @Override
     public void joinedCluster() {
         restoreCacheContent();
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             restoreCacheContent();
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         if (ClusterManager.isSeniorClusterMember()) {
             NodeID leftNode = NodeID.getInstance(nodeID);
@@ -456,6 +461,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
@@ -485,6 +491,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private DiscoItemsProvider getServerItemsProvider() {
         return new DiscoItemsProvider() {
+            @Override
             public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
                 if (node != null) {
                     // Check if there is a provider for the requested node
@@ -538,17 +545,20 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         public ClusteredServerItem() {
         }
 
+        @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) element);
             ExternalizableUtil.getInstance().writeExternalizableCollection(out, nodes);
         }
 
+        @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             element = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             ExternalizableUtil.getInstance().readExternalizableCollection(in, nodes, getClass().getClassLoader());
         }
     }
 
+    @Override
     public Iterator<Element> getUserItems(String name, JID senderJID) {
         List<Element> answer = new ArrayList<Element>();
         try {

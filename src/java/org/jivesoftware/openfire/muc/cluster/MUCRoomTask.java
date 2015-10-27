@@ -105,12 +105,14 @@ public abstract class MUCRoomTask implements ClusterTask {
         this.originator = originator;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, originator);
         ExternalizableUtil.getInstance().writeSafeUTF(out, roomName);
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         originator = ExternalizableUtil.getInstance().readBoolean(in);
         roomName = ExternalizableUtil.getInstance().readSafeUTF(in);

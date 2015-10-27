@@ -47,6 +47,7 @@ public class Uninstaller extends UninstallAction {
         // If the directory still exists, remove all JAR files.
         if (libDirectory.exists() && libDirectory.isDirectory()) {
             File[] jars = libDirectory.listFiles(new FilenameFilter() {
+                @Override
                 public boolean accept(File dir, String name) {
                     return name.endsWith(".jar");
                 }

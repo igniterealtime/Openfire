@@ -37,6 +37,7 @@ public class CrowdAdminProvider implements AdminProvider {
 	private static final Logger LOG = LoggerFactory.getLogger(CrowdAdminProvider.class);
 	private static final String JIVE_AUTHORIZED_GROUPS = "admin.authorizedGroups";
 
+	@Override
 	public List<JID> getAdmins() {
 		List<JID> results = new ArrayList<JID>();
 		
@@ -76,10 +77,12 @@ public class CrowdAdminProvider implements AdminProvider {
 		return results;
 	}
 
+	@Override
 	public void setAdmins(List<JID> admins) {
 		return;
 	}
 
+	@Override
 	public boolean isReadOnly() {
 		return true;
 	}

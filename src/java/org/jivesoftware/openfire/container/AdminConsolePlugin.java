@@ -230,6 +230,7 @@ public class AdminConsolePlugin implements Plugin {
         adminServer = null;
     }
 
+    @Override
     public void initializePlugin(PluginManager manager, File pluginDir) {
         this.pluginDir = pluginDir;
 
@@ -238,6 +239,7 @@ public class AdminConsolePlugin implements Plugin {
         startup();
     }
 
+    @Override
     public void destroyPlugin() {
         shutdown();
     }
@@ -388,6 +390,7 @@ public class AdminConsolePlugin implements Plugin {
      */
     private class CertificateListener implements CertificateEventListener {
 
+        @Override
         public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
             // If new certificate is RSA then (re)start the HTTPS service
             if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
@@ -395,10 +398,12 @@ public class AdminConsolePlugin implements Plugin {
             }
         }
 
+        @Override
         public void certificateDeleted(KeyStore keyStore, String alias) {
             restartNeeded = true;
         }
 
+        @Override
         public void certificateSigned(KeyStore keyStore, String alias,
                                       List<X509Certificate> certificates) {
             // If new certificate is RSA then (re)start the HTTPS service

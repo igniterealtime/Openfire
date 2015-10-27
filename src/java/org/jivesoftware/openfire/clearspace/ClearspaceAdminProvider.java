@@ -54,6 +54,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
      * The clearspace provider pulls the admin list from the userPermissions web service
      * @see org.jivesoftware.openfire.admin.AdminProvider#getAdmins()
      */
+    @Override
     public List<JID> getAdmins() {
         try {
             String path = PERMISSION_URL_PREFIX + "userPermissions/"+SYSTEM_ADMIN_PERM+"/true";
@@ -89,6 +90,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
      * The clearspace provider does not allow setting admin lists from this interface
      * @see org.jivesoftware.openfire.admin.AdminProvider#setAdmins(java.util.List)  
      */
+    @Override
     public void setAdmins(List<JID> admins) {
         // Silently do nothing.  This shouldn't come up, but more inportantly, we don't want to bother Clearspace.
     }
@@ -97,6 +99,7 @@ public class ClearspaceAdminProvider implements AdminProvider {
      * The clearspace provider is read only
      * @see org.jivesoftware.openfire.admin.AdminProvider#isReadOnly()
      */
+    @Override
     public boolean isReadOnly() {
         return true;
     }

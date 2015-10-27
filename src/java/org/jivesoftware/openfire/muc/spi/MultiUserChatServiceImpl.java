@@ -289,6 +289,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         historyStrategy = new HistoryStrategy(null);
     }
 
+    @Override
     public String getDescription() {
         return chatDescription;
     }
@@ -297,6 +298,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         this.chatDescription = desc;
     }
 
+    @Override
     public void processPacket(Packet packet) {
         if (!isServiceEnabled()) {
             return;
@@ -382,15 +384,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return true;
     }
 
+    @Override
     public void initialize(JID jid, ComponentManager componentManager) {
         initialize(XMPPServer.getInstance());
 
     }
 
+    @Override
     public void shutdown() {
 		stop();
     }
 
+    @Override
     public String getServiceDomain() {
         return chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
@@ -521,6 +526,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException {
         LocalMUCRoom room;
         boolean loaded = false;
@@ -589,6 +595,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return room;
     }
 
+    @Override
     public MUCRoom getChatRoom(String roomName) {
         boolean loaded = false;
         LocalMUCRoom room = rooms.get(roomName);
@@ -621,6 +628,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return room;
     }
 
+    @Override
     public void refreshChatRoom(String roomName) {
         rooms.remove(roomName);
         getChatRoom(roomName);
@@ -630,14 +638,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return rooms.get(roomName);
     }
 
+    @Override
     public List<MUCRoom> getChatRooms() {
         return new ArrayList<MUCRoom>(rooms.values());
     }
 
+    @Override
     public boolean hasChatRoom(String roomName) {
         return getChatRoom(roomName) != null;
     }
 
+    @Override
     public void removeChatRoom(String roomName) {
         removeChatRoom(roomName, true);
     }
@@ -648,6 +659,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param room the removed room in another cluster node.
      */
+    @Override
     public void chatRoomRemoved(LocalMUCRoom room) {
         removeChatRoom(room.getName(), false);
     }
@@ -658,6 +670,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param room the created room in another cluster node.
      */
+    @Override
     public void chatRoomAdded(LocalMUCRoom room) {
         rooms.put(room.getName(), room);
     }
@@ -673,14 +686,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public String getServiceName() {
         return chatServiceName;
     }
 
+    @Override
     public String getName() {
         return getServiceName();
     }
 
+    @Override
     public HistoryStrategy getHistoryStrategy() {
         return historyStrategy;
     }
@@ -736,6 +752,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return user;
     }
 
+    @Override
     public Collection<MUCRole> getMUCRoles(JID user) {
         List<MUCRole> userRoles = new ArrayList<MUCRole>();
         for (LocalMUCRoom room : rooms.values()) {
@@ -756,6 +773,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return new Date(System.currentTimeMillis() - (emptyLimit * 3600000));
     }
 
+    @Override
     public void setKickIdleUsersTimeout(int timeout) {
         if (this.user_timeout == timeout) {
             return;
@@ -772,10 +790,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Integer.toString(timeout));
     }
 
+    @Override
     public int getKickIdleUsersTimeout() {
         return user_timeout;
     }
 
+    @Override
     public void setUserIdleTime(int idleTime) {
         if (this.user_idle == idleTime) {
             return;
@@ -785,10 +805,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.idle", Integer.toString(idleTime));
     }
 
+    @Override
     public int getUserIdleTime() {
         return user_idle;
     }
 
+    @Override
     public void setLogConversationsTimeout(int timeout) {
         if (this.log_timeout == timeout) {
             return;
@@ -805,10 +827,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.timeout", Integer.toString(timeout));
     }
 
+    @Override
     public int getLogConversationsTimeout() {
         return log_timeout;
     }
 
+    @Override
     public void setLogConversationBatchSize(int size) {
         if (this.log_batch_size == size) {
             return;
@@ -818,28 +842,34 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchsize", Integer.toString(size));
     }
 
+    @Override
     public int getLogConversationBatchSize() {
         return log_batch_size;
     }
 
+    @Override
     public Collection<JID> getUsersAllowedToCreate() {
         return Collections.unmodifiableCollection(allowedToCreate);
     }
 
+    @Override
     public Collection<JID> getSysadmins() {
         return Collections.unmodifiableCollection(sysadmins);
     }
 
+    @Override
     public boolean isSysadmin(JID bareJID) {
         return sysadmins.includes(bareJID);
     }
 
+    @Override
     public void addSysadmins(Collection<JID> userJIDs) {
     	for (JID userJID : userJIDs) {
     		addSysadmin(userJID);
     	}
     }
 
+    @Override
     public void addSysadmin(JID userJID) {
     	final JID bareJID = userJID.asBareJID();
 
@@ -860,6 +890,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "sysadmin.jid", fromArray(jids));
     }
 
+    @Override
     public void removeSysadmin(JID userJID) {
     	final JID bareJID = userJID.asBareJID();
 
@@ -922,15 +953,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Boolean.toString(allowToDiscoverLockedRooms));
     }
 
+    @Override
     public boolean isRoomCreationRestricted() {
         return roomCreationRestricted;
     }
 
+    @Override
     public void setRoomCreationRestricted(boolean roomCreationRestricted) {
         this.roomCreationRestricted = roomCreationRestricted;
         MUCPersistenceManager.setProperty(chatServiceName, "create.anyone", Boolean.toString(roomCreationRestricted));
     }
 
+    @Override
     public void addUsersAllowedToCreate(Collection<JID> userJIDs) {
     	boolean listChanged = false;
 
@@ -954,12 +988,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     	}
     }
 
+    @Override
     public void addUserAllowedToCreate(JID userJID) {
         List<JID> asList = new ArrayList<JID>();
         asList.add(userJID);
     	addUsersAllowedToCreate(asList);
     }
 
+    @Override
     public void removeUsersAllowedToCreate(Collection<JID> userJIDs) {
     	boolean listChanged = false;
 
@@ -975,6 +1011,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     	}
     }
 
+    @Override
     public void removeUserAllowedToCreate(JID userJID) {
     	removeUsersAllowedToCreate(Collections.singleton(userJID));
     }
@@ -1088,6 +1125,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public void start() {
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
@@ -1126,6 +1164,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     }
 
+    @Override
     public void enableService(boolean enabled, boolean persistent) {
         if (isServiceEnabled() == enabled) {
             // Do nothing if the service status has not changed
@@ -1145,10 +1184,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public boolean isServiceEnabled() {
         return serviceEnabled;
     }
 
+    @Override
     public long getTotalChatTime() {
         return totalChatTime;
     }
@@ -1159,6 +1200,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @return the number of existing rooms in the server.
      */
+    @Override
     public int getNumberChatRooms() {
         return rooms.size();
     }
@@ -1169,6 +1211,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
      * @return the number of existing rooms in the server.
      */
+    @Override
     public int getNumberConnectedUsers(boolean onlyLocal) {
         int total = 0;
         for (LocalMUCUser user : users.values()) {
@@ -1195,6 +1238,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @return the number of existing rooms in the server.
      */
+    @Override
     public int getNumberRoomOccupants() {
         int total = 0;
         for (MUCRoom room : rooms.values()) {
@@ -1209,6 +1253,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of incoming messages through the service.
      */
+    @Override
     public long getIncomingMessageCount(boolean resetAfter) {
         if (resetAfter) {
             return inMessages.getAndSet(0);
@@ -1224,6 +1269,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of outgoing messages through the service.
      */
+    @Override
     public long getOutgoingMessageCount(boolean resetAfter) {
         if (resetAfter) {
             return outMessages.getAndSet(0);
@@ -1233,6 +1279,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public void logConversation(MUCRoom room, Message message, JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
@@ -1240,6 +1287,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
+    @Override
     public void messageBroadcastedTo(int numOccupants) {
         // Increment counter of received messages that where broadcasted by one
         inMessages.incrementAndGet();
@@ -1248,6 +1296,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         outMessages.addAndGet(numOccupants);
     }
 
+    @Override
     public Iterator<DiscoServerItem> getItems() {
         // Check if the service is disabled. Info is not available when
 		// disabled.
@@ -1263,6 +1312,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 		return items.iterator();
 	}
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         ArrayList<Element> identities = new ArrayList<Element>();
         if (name == null && node == null) {
@@ -1314,6 +1364,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return identities.iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         ArrayList<String> features = new ArrayList<String>();
         if (name == null && node == null) {
@@ -1372,6 +1423,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return features.iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         if (name != null && node == null) {
             // Answer the extended info of a given room
@@ -1476,6 +1528,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return mucEventDelegate;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
@@ -1496,6 +1549,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return false;
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Check if the service is disabled. Info is not available when disabled.
         if (!isServiceEnabled()) {
@@ -1578,6 +1632,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return buf.substring(0, endPos);
     }
 
+    @Override
     public boolean isHidden() {
         return isHidden;
     }

@@ -206,6 +206,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         component.deliver(packet);
     }
 
+    @Override
     public ExternalComponent getExternalComponent() {
         return component;
     }
@@ -296,6 +297,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             this.connection = connection;
         }
 
+        @Override
         public void processPacket(Packet packet) {
             if (packet instanceof IQ) {
                 IQ iq = (IQ) packet;
@@ -334,34 +336,42 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             }
         }
 
+        @Override
         public String getName() {
             return name;
         }
 
+        @Override
         public String getDescription() {
             return category + " - " + type;
         }
 
+        @Override
         public void setName(String name) {
             this.name = name;
         }
 
+        @Override
         public String getType() {
             return type;
         }
 
+        @Override
         public void setType(String type) {
             this.type = type;
         }
 
+        @Override
         public String getCategory() {
             return category;
         }
 
+        @Override
         public void setCategory(String category) {
             this.category = category;
         }
 
+        @Override
         public String getInitialSubdomain() {
             if (subdomains.isEmpty()) {
                 return null;
@@ -373,17 +383,21 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             subdomains.add(subdomain);
         }
 
+        @Override
         public Collection<String> getSubdomains() {
             return subdomains;
         }
 
+        @Override
         public void initialize(JID jid, ComponentManager componentManager) {
             addSubdomain(jid.toString());
         }
 
+        @Override
         public void start() {
         }
 
+        @Override
         public void shutdown() {
             // Remove tracking of IQ packets sent from this component
             synchronized (iqs) {

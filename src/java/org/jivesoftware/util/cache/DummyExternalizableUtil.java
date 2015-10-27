@@ -37,6 +37,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @param stringMap the Map of String key/value pairs.
      * @throws java.io.IOException if an error occurs.
      */
+    @Override
     public void writeStringMap(DataOutput out, Map<String, String> stringMap) throws IOException {
         // Do nothing
     }
@@ -49,6 +50,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @return a Map of String key/value pairs.
      * @throws IOException if an error occurs.
      */
+    @Override
     public Map<String, String> readStringMap(DataInput in) throws IOException {
         // Do nothing
         return Collections.emptyMap();
@@ -62,6 +64,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @param map the Map of Long key/Integer value pairs.
      * @throws IOException if an error occurs.
      */
+    @Override
     public void writeLongIntMap(DataOutput out, Map<Long, Integer> map) throws IOException {
         // Do nothing
     }
@@ -74,6 +77,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @return a Map of Long key/Integer value pairs.
      * @throws IOException if an error occurs.
      */
+    @Override
     public Map<Long, Integer> readLongIntMap(DataInput in) throws IOException {
         // Do nothing
         return Collections.emptyMap();
@@ -87,6 +91,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @param stringList the List of Strings.
      * @throws IOException if an error occurs.
      */
+    @Override
     public void writeStringList(DataOutput out, List<String> stringList) throws IOException {
         // Do nothing
     }
@@ -99,6 +104,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @return a List of Strings.
      * @throws IOException if an error occurs.
      */
+    @Override
     public List<String> readStringList(DataInput in) throws IOException {
         // Do nothing
         return Collections.emptyList();
@@ -112,6 +118,7 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @param array the array of long values.
      * @throws IOException if an error occurs.
      */
+    @Override
     public void writeLongArray(DataOutput out, long[] array) throws IOException {
         // Do nothing
     }
@@ -124,119 +131,144 @@ public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
      * @return an array of long values.
      * @throws IOException if an error occurs.
      */
+    @Override
     public long[] readLongArray(DataInput in) throws IOException {
         // Do nothing
         return new long[]{};
     }
 
+    @Override
     public void writeLong(DataOutput out, long value) {
         // Do nothing
     }
 
+    @Override
     public long readLong(DataInput in) {
         // Do nothing
         return 0;
     }
 
+    @Override
     public void writeBoolean(DataOutput out, boolean value) {
         // Do nothing
     }
 
+    @Override
     public boolean readBoolean(DataInput in) {
         // Do nothing
         return false;
     }
 
+    @Override
     public void writeByteArray(DataOutput out, byte[] value) throws IOException {
         // Do nothing
     }
 
+    @Override
     public byte[] readByteArray(DataInput in) throws IOException {
         // Do nothing
         return new byte[0];
     }
 
+    @Override
     public void writeSerializable(DataOutput out, Serializable value) throws IOException {
         // Do nothing
     }
 
+    @Override
     public Serializable readSerializable(DataInput in) throws IOException {
         // Do nothing
         return null;
     }
 
+    @Override
     public void writeSafeUTF(DataOutput out, String value) {
         // Do nothing
     }
 
+    @Override
     public String readSafeUTF(DataInput in) {
         // Do nothing
         return "";
     }
 
+    @Override
     public void writeExternalizableCollection(DataOutput out, Collection<? extends Externalizable> value)
             throws IOException {
         // Do nothing
     }
 
+    @Override
     public int readExternalizableCollection(DataInput in, Collection<? extends Externalizable> value,
                                             ClassLoader loader) throws IOException {
         // Do nothing
         return 0;
     }
 
+    @Override
     public void writeSerializableCollection(DataOutput out, Collection<? extends Serializable> value)
 	    throws IOException {
     	// Do nothing
 	}
 	
+	@Override
 	public int readSerializableCollection(DataInput in, Collection<? extends Serializable> value,
 	                                    ClassLoader loader) throws IOException {
 		// Do nothing
 		return 0;
 	}
 	
+    @Override
     public void writeExternalizableMap(DataOutput out, Map<String, ? extends Externalizable> map) throws IOException {
         // Do nothing
     }
 
+    @Override
     public int readExternalizableMap(DataInput in, Map<String, ? extends Externalizable> map, ClassLoader loader)
             throws IOException {
         // Do nothing
         return 0;
     }
 
+    @Override
     public void writeSerializableMap(DataOutput out, Map<? extends Serializable, ? extends Serializable> map) throws IOException {
         // Do nothing
     }
 
+    @Override
     public int readSerializableMap(DataInput in, Map<? extends Serializable, ? extends Serializable> map, ClassLoader loader)
             throws IOException {
         // Do nothing
         return 0;
     }
+    @Override
     public void writeStringsMap(DataOutput out, Map<String, Set<String>> map) throws IOException {
         // Do nothing
     }
 
+    @Override
     public int readStringsMap(DataInput in, Map<String, Set<String>> map) throws IOException {
         // Do nothing
         return 0;
     }
 
+    @Override
     public void writeStrings(DataOutput out, Collection<String> collection) throws IOException {
         // Do nothing
     }
 
+    @Override
     public int readStrings(DataInput in, Collection<String> collection) throws IOException {
         // Do nothing
         return 0;
     }
 
+    @Override
     public void writeInt(DataOutput out, int value) {
         // Do nothing
     }
 
+    @Override
     public int readInt(DataInput in) {
         // Do nothing
         return 0;

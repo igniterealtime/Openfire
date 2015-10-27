@@ -111,7 +111,8 @@ public class JMXManager {
 		Map<String, Object> env = new HashMap<String, Object>();
 		if (JMXManager.isSecure()) {
     		env.put("jmx.remote.authenticator", new JMXAuthenticator() {
-    			public Subject authenticate(Object credentials) {
+				@Override
+				public Subject authenticate(Object credentials) {
     	            if (!(credentials instanceof String[])) {
     	                if (credentials == null) {
     	                    throw new SecurityException("Credentials required");

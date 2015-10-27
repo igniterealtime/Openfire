@@ -104,10 +104,12 @@ public class NodeID implements Externalizable {
         return nodeID;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         nodeID = ExternalizableUtil.getInstance().readByteArray(in);
     }

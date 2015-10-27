@@ -124,6 +124,7 @@ public class HttpSession extends LocalClientSession {
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
+        @Override
         public int compare(HttpConnection o1, HttpConnection o2) {
             return (int) (o1.getRequestId() - o2.getRequestId());
         }
@@ -665,6 +666,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the X509Certificate associated with this session.
      */
+    @Override
     public X509Certificate[] getPeerCertificates() {
         return sslCertificates;
     }
@@ -960,6 +962,7 @@ public class HttpSession extends LocalClientSession {
         deliver(new Deliverable(text));
     }
 
+    @Override
     public void deliver(Packet stanza) {
         deliver(new Deliverable(Arrays.asList(stanza)));
     }
@@ -1071,6 +1074,7 @@ public class HttpSession extends LocalClientSession {
         }
         // use a separate thread to schedule backup delivery
    		TaskEngine.getInstance().submit(new Runnable() {
+			@Override
 			public void run() {
 		        for (Packet packet : packets) {
     	            try {
@@ -1124,26 +1128,32 @@ public class HttpSession extends LocalClientSession {
             ((HttpSession) session).closeSession();
         }
 
+        @Override
         public byte[] getAddress() throws UnknownHostException {
             return address.getAddress();
         }
 
+        @Override
         public String getHostAddress() throws UnknownHostException {
             return address.getHostAddress();
         }
 
+        @Override
         public String getHostName() throws UnknownHostException {
             return address.getHostName();
         }
 
+        @Override
         public void systemShutdown() {
             close();
         }
 
+        @Override
         public void deliver(Packet packet) throws UnauthorizedException {
             ((HttpSession) session).deliver(packet);
         }
 
+        @Override
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
         }
@@ -1265,6 +1275,7 @@ public class HttpSession extends LocalClientSession {
             this.session = session;
         }
 
+        @Override
         public void run() {
             session.sendPendingPackets();
         }

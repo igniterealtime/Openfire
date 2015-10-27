@@ -47,18 +47,22 @@ public class IsPluginInstalledTask implements ClusterTask {
         this.pluginName = pluginName;
     }
 
+    @Override
     public Object getResult() {
         return installed;
     }
 
+    @Override
     public void run() {
         installed = XMPPServer.getInstance().getPluginManager().getPlugin(pluginName) != null;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, pluginName);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         pluginName = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

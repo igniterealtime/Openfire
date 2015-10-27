@@ -59,6 +59,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         super(moduleName);
     }
 
+    @Override
     public void process(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
         try {

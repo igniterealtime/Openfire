@@ -277,12 +277,14 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         return StringUtils.encodeBase64(StringUtils.decodeHex(hashed));
     }
 
+    @Override
     public void answerTimeout(String packetId) {
         // If we never received an answer, we can discard the cached
         // 'ver' attribute.
         verAttributes.remove(packetId);
     }
 
+    @Override
     public void receivedAnswer(IQ packet) {
         String packetId = packet.getID();
 
@@ -451,6 +453,7 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
 		return results;
 	}
     
+    @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
         JID jid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
@@ -470,10 +473,12 @@ public class EntityCapabilitiesManager implements IQResultListener, UserEventLis
         entityCapabilitiesMap.remove(verHashOfUser);
     }
 
+    @Override
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing.
     }
 
+    @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing.
     }

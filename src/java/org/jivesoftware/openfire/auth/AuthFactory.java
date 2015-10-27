@@ -68,20 +68,24 @@ public class AuthFactory {
 
         // Detect when a new auth provider class is set 
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.auth.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }

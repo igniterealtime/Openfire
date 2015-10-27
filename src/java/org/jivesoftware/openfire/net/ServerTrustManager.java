@@ -70,6 +70,7 @@ public class ServerTrustManager implements X509TrustManager {
         this.connection = connection;
     }
 
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates,
             String string) {
         // Do not validate the certificate at this point. The certificate is going to be used
@@ -96,11 +97,13 @@ public class ServerTrustManager implements X509TrustManager {
      * @param string the key exchange algorithm used.
      * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         // Do nothing here. As before, the certificate will be validated when the remote server authenticates.
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
             // Answer an empty list since we accept any issuer

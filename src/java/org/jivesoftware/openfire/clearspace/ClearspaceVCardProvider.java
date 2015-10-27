@@ -66,6 +66,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
      * @param username username of user to load VCard of
      * @return the user's VCard
      */
+    @Override
     public Element loadVCard(String username) {
         // if the fields id are not loaded
         if (!fieldsIDLoaded) {
@@ -117,6 +118,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
      * @throws UnsupportedOperationException if the provider does not support the
      *                                       operation.
      */
+    @Override
     public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
         return saveVCard(username, vCardElement);
     }
@@ -132,6 +134,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
      * @throws UnsupportedOperationException if the provider does not support the
      *                                       operation.
      */
+    @Override
     public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
         return saveVCard(username, vCardElement);
     }
@@ -141,6 +144,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
      *
      * @return true
      */
+    @Override
     public boolean isReadOnly() {
         // Return always false, since some changes are always allowed
         return false;
@@ -256,6 +260,7 @@ public class ClearspaceVCardProvider implements VCardProvider {
      *
      * @param username the username.
      */
+    @Override
     public void deleteVCard(String username) {
         ClearspaceUserProvider userProvider = (ClearspaceUserProvider) UserManager.getUserProvider();
         if (userProvider.isReadOnly() || isAvatarReadOnly()) {

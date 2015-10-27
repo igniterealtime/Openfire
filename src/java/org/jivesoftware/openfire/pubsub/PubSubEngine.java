@@ -1767,10 +1767,12 @@ public class PubSubEngine {
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                @Override
                 public void serverStarted() {
                     probePresences(service);
                 }
 
+                @Override
                 public void serverStopping() {
                 }
             });

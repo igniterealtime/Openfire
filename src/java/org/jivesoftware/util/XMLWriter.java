@@ -644,6 +644,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     // LexicalHandler interface
     //-------------------------------------------------------------------------
+    @Override
     public void startDTD(String name, String publicID, String systemID) throws SAXException {
         inDTD = true;
         try {
@@ -658,6 +659,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endDTD() throws SAXException {
         inDTD = false;
         if (lexicalHandler != null) {
@@ -665,6 +667,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void startCDATA() throws SAXException {
         try {
             writer.write( "<![CDATA[" );
@@ -678,6 +681,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endCDATA() throws SAXException {
         try {
             writer.write( "]]>" );
@@ -691,6 +695,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void startEntity(String name) throws SAXException {
         try {
             writeEntityRef(name);
@@ -704,12 +709,14 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endEntity(String name) throws SAXException {
         if (lexicalHandler != null) {
             lexicalHandler.endEntity(name);
         }
     }
 
+    @Override
     public void comment(char[] ch, int start, int length) throws SAXException {
         if ( showCommentsInDTDs || ! inDTD ) {
             try {

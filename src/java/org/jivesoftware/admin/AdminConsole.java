@@ -66,6 +66,7 @@ public class AdminConsole {
         // then rebuild the model to add the Clearspace tab
         // This is to add the tab after Openfire setup
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.auth.className".equals(property)) {
                     String value = (String) params.get("value");
@@ -75,12 +76,15 @@ public class AdminConsole {
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }

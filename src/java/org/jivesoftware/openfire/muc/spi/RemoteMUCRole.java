@@ -77,30 +77,37 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         this.nodeID = event.getNodeID();
     }
 
+    @Override
     public Presence getPresence() {
         return presence;
     }
 
+    @Override
     public void setPresence(Presence presence) {
         this.presence = presence;
     }
 
+    @Override
     public void setRole(Role newRole) {
         this.role = newRole;
     }
 
+    @Override
     public Role getRole() {
         return role;
     }
 
+    @Override
     public void setAffiliation(Affiliation newAffiliation) {
         this.affiliation = newAffiliation;
     }
 
+    @Override
     public Affiliation getAffiliation() {
         return affiliation;
     }
 
+    @Override
     public void changeNickname(String nickname) {
         this.nickname = nickname;
         setRoleAddress(new JID(room.getName(), serviceDomain, nickname, true));
@@ -112,42 +119,52 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         presence.setFrom(jid);
     }
 
+    @Override
     public String getNickname() {
         return nickname;
     }
 
+    @Override
     public void destroy() {
         // Do nothing
     }
 
+    @Override
     public boolean isVoiceOnly() {
         return voiceOnly;
     }
 
+    @Override
     public MUCRoom getChatRoom() {
         return room;
     }
 
+    @Override
     public JID getRoleAddress() {
         return roleAddress;
     }
 
+    @Override
     public JID getUserAddress() {
         return userAddress;
     }
 
+    @Override
     public boolean isLocal() {
         return false;
     }
 
+    @Override
     public NodeID getNodeID() {
         return nodeID;
     }
 
+    @Override
     public void send(Packet packet) {
         XMPPServer.getInstance().getRoutingTable().routePacket(userAddress, packet, false);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, serviceDomain);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
@@ -160,6 +177,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID.toByteArray());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         serviceDomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         presence = new Presence((Element)ExternalizableUtil.getInstance().readSerializable(in), true);

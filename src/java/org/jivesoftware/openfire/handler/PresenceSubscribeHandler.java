@@ -105,6 +105,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         super("Presence subscription handler");
     }
 
+    @Override
     public void process(Presence presence) throws PacketException {
     	if (presence == null) {
     		throw new IllegalArgumentException("Argument 'presence' cannot be null.");

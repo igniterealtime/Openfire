@@ -147,10 +147,12 @@ public class LocalMUCRole implements MUCRole {
         user.addRole(room.getName(), this);
     }
 
+    @Override
     public Presence getPresence() {
         return presence;
     }
 
+    @Override
     public void setPresence(Presence newPresence) {
         // Try to remove the element whose namespace is "http://jabber.org/protocol/muc" since we
         // don't need to include that element in future presence broadcasts
@@ -166,6 +168,7 @@ public class LocalMUCRole implements MUCRole {
         }
     }
 
+    @Override
     public void setRole(MUCRole.Role newRole) throws NotAllowedException {
         // Don't allow to change the role to an owner or admin unless the new role is moderator
         if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin == affiliation) {
@@ -188,10 +191,12 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
     }
 
+    @Override
     public MUCRole.Role getRole() {
         return role;
     }
 
+    @Override
     public void setAffiliation(MUCRole.Affiliation newAffiliation) throws NotAllowedException {
         // Don't allow to ban an owner or an admin
         if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin== affiliation) {
@@ -204,40 +209,49 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
     }
 
+    @Override
     public MUCRole.Affiliation getAffiliation() {
         return affiliation;
     }
 
+    @Override
     public String getNickname() {
         return nick;
     }
 
+    @Override
     public void changeNickname(String nickname) {
         this.nick = nickname;
         setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
     }
 
+    @Override
     public void destroy() {
         // Notify the user that he/she is no longer in the room
         user.removeRole(room.getName());
     }
 
+    @Override
     public MUCRoom getChatRoom() {
         return room;
     }
 
+    @Override
     public JID getRoleAddress() {
         return rJID;
     }
 
+    @Override
     public JID getUserAddress() {
         return user.getAddress();
     }
 
+    @Override
     public boolean isLocal() {
         return true;
     }
 
+    @Override
     public NodeID getNodeID() {
         return XMPPServer.getInstance().getNodeID();
     }
@@ -248,10 +262,12 @@ public class LocalMUCRole implements MUCRole {
         presence.setFrom(jid);
     }
 
+    @Override
     public boolean isVoiceOnly() {
         return voiceOnly;
     }
 
+    @Override
     public void send(Packet packet) {
         if (packet == null) {
             return;

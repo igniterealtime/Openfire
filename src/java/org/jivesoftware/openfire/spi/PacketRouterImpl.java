@@ -57,6 +57,7 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      *
      * @param packet The packet to route
      */
+    @Override
     public void route(Packet packet) {
         if (packet instanceof Message) {
             route((Message)packet);
@@ -72,14 +73,17 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
         }
     }
 
+    @Override
     public void route(IQ packet) {
         iqRouter.route(packet);
     }
 
+    @Override
     public void route(Message packet) {
         messageRouter.route(packet);
     }
 
+    @Override
     public void route(Presence packet) {
         presenceRouter.route(packet);
     }

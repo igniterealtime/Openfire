@@ -95,6 +95,7 @@ public class IQTimeHandler extends IQHandler implements ServerFeaturesProvider {
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:time").iterator();
     }

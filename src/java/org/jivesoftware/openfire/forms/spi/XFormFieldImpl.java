@@ -118,6 +118,7 @@ public class XFormFieldImpl implements FormField {
         return field;
     }
 
+    @Override
     public void addValue(String value) {
         if (value == null) {
             value = "";
@@ -127,48 +128,58 @@ public class XFormFieldImpl implements FormField {
         }
     }
 
+    @Override
     public void clearValues() {
         synchronized (values) {
             values.clear();
         }
     }
 
+    @Override
     public void addOption(String label, String value) {
         synchronized (options) {
             options.add(new Option(label, value));
         }
     }
 
+    @Override
     public void setType(String type) {
         this.type = type;
     }
 
+    @Override
     public void setRequired(boolean required) {
         this.required = required;
     }
 
+    @Override
     public void setLabel(String label) {
         this.label = label;
     }
 
+    @Override
     public void setDescription(String description) {
         this.description = description;
     }
 
+    @Override
     public boolean isRequired() {
         return required;
     }
 
+    @Override
     public String getVariable() {
         return variable;
     }
 
+    @Override
     public Iterator<String> getValues() {
         synchronized (values) {
             return Collections.unmodifiableList(new ArrayList<String>(values)).iterator();
         }
     }
 
+    @Override
     public String getType() {
         return type;
     }
@@ -185,10 +196,12 @@ public class XFormFieldImpl implements FormField {
         }
     }
 
+    @Override
     public String getLabel() {
         return label;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }

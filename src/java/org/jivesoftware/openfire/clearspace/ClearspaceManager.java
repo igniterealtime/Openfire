@@ -233,16 +233,19 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         // makes it easier to perform LdapManager testing.
         this.properties = new Map<String, String>() {
 
+            @Override
             public String get(Object key) {
                 return JiveGlobals.getProperty((String) key);
             }
 
+            @Override
             public String put(String key, String value) {
                 JiveGlobals.setProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
+            @Override
             public String remove(Object key) {
                 JiveGlobals.deleteProperty((String) key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
@@ -250,36 +253,45 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             }
 
 
+            @Override
             public int size() {
                 return 0;
             }
 
+            @Override
             public boolean isEmpty() {
                 return false;
             }
 
+            @Override
             public boolean containsKey(Object key) {
                 return false;
             }
 
+            @Override
             public boolean containsValue(Object value) {
                 return false;
             }
 
+            @Override
             public void putAll(Map<? extends String, ? extends String> t) {
             }
 
+            @Override
             public void clear() {
             }
 
+            @Override
             public Set<String> keySet() {
                 return null;
             }
 
+            @Override
             public Collection<String> values() {
                 return null;
             }
 
+            @Override
             public Set<Entry<String, String>> entrySet() {
                 return null;
             }
@@ -804,6 +816,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
     }
 
+    @Override
     public void serviceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Do not let admins shutdown the external component service
         if (!enabled) {
@@ -811,19 +824,23 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
     }
 
+    @Override
     public void portChanged(int newPort) throws ModificationNotAllowedException {
         startClearspaceConfig();
     }
 
+    @Override
     public void defaultSecretChanged(String newSecret) throws ModificationNotAllowedException {
         // Do nothing
     }
 
+    @Override
     public void permissionPolicyChanged(ExternalComponentManager.PermissionPolicy newPolicy)
             throws ModificationNotAllowedException {
         // Do nothing
     }
 
+    @Override
     public void componentAllowed(String subdomain, ExternalComponentConfiguration configuration)
             throws ModificationNotAllowedException {
         if (subdomain.startsWith("clearspace")) {
@@ -831,18 +848,21 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
     }
 
+    @Override
     public void componentBlocked(String subdomain) throws ModificationNotAllowedException {
         if (subdomain.startsWith("clearspace")) {
             throw new ModificationNotAllowedException("Communication with Clearspace cannot be blocked.");
         }
     }
 
+    @Override
     public void componentSecretUpdated(String subdomain, String newSecret) throws ModificationNotAllowedException {
         if (subdomain.startsWith("clearspace")) {
             updateClearspaceSharedSecret(newSecret);
         }
     }
 
+    @Override
     public void componentConfigurationDeleted(String subdomain) throws ModificationNotAllowedException {
         // Do not let admins delete configuration of Clearspace component
         if (subdomain.startsWith("clearspace")) {
@@ -1207,10 +1227,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
         final IQRouter router = XMPPServer.getInstance().getIQRouter();
         router.addIQResultListener(packet.getID(), new IQResultListener() {
+            @Override
             public void receivedAnswer(IQ packet) {
                 answer.offer(packet);
             }
 
+            @Override
             public void answerTimeout(String packetId) {
                 Log.warn("No answer from Clearspace was received for IQ stanza: " + packet);
             }
@@ -1225,15 +1247,18 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         return reply;
     }
 
+    @Override
     public void componentRegistered(JID componentJID) {
         // Do nothing
     }
 
+    @Override
     public void componentUnregistered(JID componentJID) {
         // Remove stored information about this component
         clearspaces.remove(componentJID.getDomain());
     }
 
+    @Override
     public void componentInfoReceived(IQ iq) {
         // Check if it's a Clearspace component
         boolean isClearspace = false;
@@ -1296,6 +1321,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         return System.currentTimeMillis() - time < JiveConstants.MINUTE;
     }
 
+    @Override
     public void propertySet(String property, Map params) {
         if (property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_ENABLED) ||
                 property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_PORT) ||
@@ -1305,6 +1331,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
     }
 
+    @Override
     public void propertyDeleted(String property, Map params) {
         if (property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_ENABLED) ||
                 property.equalsIgnoreCase(HttpBindManager.HTTP_BIND_PORT) ||
@@ -1314,20 +1341,25 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
     }
 
+    @Override
     public void xmlPropertySet(String property, Map params) {
     }
 
+    @Override
     public void xmlPropertyDeleted(String property, Map params) {
     }
 
+    @Override
     public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
         updateClearspaceClientSettings();
     }
 
+    @Override
     public void certificateDeleted(KeyStore keyStore, String alias) {
         updateClearspaceClientSettings();
     }
 
+    @Override
     public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
     }
 

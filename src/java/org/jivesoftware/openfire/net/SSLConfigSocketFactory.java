@@ -50,16 +50,19 @@ public class SSLConfigSocketFactory
         CertificateManager.addListener( new CertificateEventListener()
         {
             // Reset SSL factory since key stores have changed
+            @Override
             public void certificateCreated( KeyStore keyStore, String alias, X509Certificate cert )
             {
                 resetFactory();
             }
 
+            @Override
             public void certificateDeleted( KeyStore keyStore, String alias )
             {
                 resetFactory();
             }
 
+            @Override
             public void certificateSigned( KeyStore keyStore, String alias, List<X509Certificate> certificates )
             {
                 resetFactory();

@@ -113,6 +113,7 @@ public class AuthCheckFilter implements Filter {
         return false;
     }
 
+    @Override
     public void init(FilterConfig config) throws ServletException {
         context = config.getServletContext();
         defaultLoginPage = config.getInitParameter("defaultLoginPage");
@@ -126,6 +127,7 @@ public class AuthCheckFilter implements Filter {
         }
     }
 
+    @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException
     {
@@ -160,6 +162,7 @@ public class AuthCheckFilter implements Filter {
         chain.doFilter(req, res);
     }
 
+    @Override
     public void destroy() {
     }
 

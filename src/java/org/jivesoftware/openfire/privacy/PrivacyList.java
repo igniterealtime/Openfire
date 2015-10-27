@@ -248,6 +248,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         return null;
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -278,6 +279,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, userJID);
         ExternalizableUtil.getInstance().writeSafeUTF(out, name);
@@ -285,6 +287,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeSafeUTF(out, asElement().asXML());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         userJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         name = ExternalizableUtil.getInstance().readSafeUTF(in);

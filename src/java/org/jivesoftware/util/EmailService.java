@@ -479,6 +479,7 @@ public class EmailService {
             this.messages = messages;
         }
 
+        @Override
         public void run() {
             try {
                 sendMessages();

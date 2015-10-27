@@ -37,10 +37,12 @@ import java.io.ObjectOutput;
 public class GetNumberConnectedUsers implements ClusterTask{
     private Integer count;
 
+    @Override
     public Object getResult() {
         return count;
     }
 
+    @Override
     public void run() {
         count = 0;
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
@@ -48,10 +50,12 @@ public class GetNumberConnectedUsers implements ClusterTask{
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

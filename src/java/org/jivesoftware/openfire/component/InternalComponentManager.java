@@ -127,6 +127,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    @Override
     public void addComponent(String subdomain, Component component) throws ComponentException {
         synchronized (routables) {
             RoutableComponents routable = routables.get(subdomain);
@@ -205,6 +206,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      *
      * @param subdomain the subdomain of the component's address.
      */
+    @Override
     public void removeComponent(String subdomain) {
     	RoutableComponents components = null;
     	if (routables == null || (components = routables.get(subdomain)) == null) {
@@ -275,6 +277,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         componentInfo.remove(componentJID.getDomain());
     }
 
+    @Override
     public void sendPacket(Component component, Packet packet) {
         if (packet != null && packet.getFrom() == null) {
             throw new IllegalArgumentException("Packet with no FROM address was received from component.");
@@ -286,13 +289,16 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         }
     }
 
+    @Override
     public IQ query(Component component, IQ packet, long timeout) throws ComponentException {
         final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
+            @Override
             public void receivedAnswer(IQ packet) {
                 answer.offer(packet);
             }
 
+            @Override
             public void answerTimeout(String packetId) {
                 Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
             }
@@ -307,6 +313,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return reply;
     }
 
+    @Override
     public void query(Component component, IQ packet, IQResultListener listener) throws ComponentException {
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), listener);
         sendPacket(component, packet);
@@ -343,14 +350,17 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         listeners.remove(listener);
     }
 
+    @Override
     public String getProperty(String name) {
         return JiveGlobals.getProperty(name);
     }
 
+    @Override
     public void setProperty(String name, String value) {
         //Ignore
     }
 
+    @Override
     public String getServerName() {
         return serverDomain;
     }
@@ -359,6 +369,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         return JiveGlobals.getHomeDirectory();
     }
 
+    @Override
     public boolean isExternalMode() {
         return false;
     }
@@ -462,6 +473,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
         component.processPacket(iq);
     }
 
+    @Override
     public JID getAddress() {
         return serviceAddress;
     }
@@ -474,6 +486,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
      *
      * @param packet the packet to process.
      */
+    @Override
     public void process(Packet packet) throws PacketException {
         List<Component> components = getComponents(packet.getFrom());
         // Only process packets that were sent by registered components
@@ -582,10 +595,12 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
             return component;
         }
 
+        @Override
         public JID getAddress() {
             return jid;
         }
 
+        @Override
         public void process(Packet packet) throws PacketException {
             Component component = getNextComponent();
             component.processPacket(packet);

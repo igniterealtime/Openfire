@@ -87,20 +87,24 @@ public class AdminManager {
 
         // Detect when a new admin provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map<String, Object> params) {
                 if ("provider.admin.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map<String, Object> params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map<String, Object> params) {
                 //Ignore
             }

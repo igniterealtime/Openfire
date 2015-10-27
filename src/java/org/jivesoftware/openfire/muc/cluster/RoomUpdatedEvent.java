@@ -44,13 +44,16 @@ public class RoomUpdatedEvent extends MUCRoomTask {
         this.room = room;
     }
 
+    @Override
     public Object getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().updateConfiguration(room);
             }

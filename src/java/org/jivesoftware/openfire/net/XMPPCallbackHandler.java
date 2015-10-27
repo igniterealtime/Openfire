@@ -56,6 +56,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
     public XMPPCallbackHandler() {
     }
 
+    @Override
     public void handle(final Callback[] callbacks)
             throws IOException, UnsupportedCallbackException {
 

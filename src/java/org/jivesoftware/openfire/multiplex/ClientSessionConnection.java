@@ -67,6 +67,7 @@ public class ClientSessionConnection extends VirtualConnection {
      *
      * @param packet the packet to send to the user.
      */
+    @Override
     public void deliver(Packet packet) {
         String streamID = session.getStreamID().getID();
         ConnectionMultiplexerSession multiplexerSession =
@@ -94,6 +95,7 @@ public class ClientSessionConnection extends VirtualConnection {
      *
      * @param text the stanza to send to the user.
      */
+    @Override
     public void deliverRawText(String text) {
         String streamID = session.getStreamID().getID();
         ConnectionMultiplexerSession multiplexerSession =
@@ -111,6 +113,7 @@ public class ClientSessionConnection extends VirtualConnection {
         }
     }
 
+    @Override
     public byte[] getAddress() throws UnknownHostException {
         if (hostAddress != null) {
             return InetAddress.getByName(hostAddress).getAddress();
@@ -118,6 +121,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         if (hostAddress != null) {
             return hostAddress;
@@ -131,6 +135,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         if (hostName != null) {
             return hostName;
@@ -144,6 +149,7 @@ public class ClientSessionConnection extends VirtualConnection {
         return null;
     }
 
+    @Override
     public void systemShutdown() {
         // Do nothing since a system-shutdown error will be sent to the Connection Manager
         // that in turn will send a system-shutdown to connected clients. This is an

@@ -140,10 +140,12 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
@@ -151,10 +153,12 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
@@ -173,10 +177,12 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return dataForm;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);

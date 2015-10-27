@@ -747,10 +747,12 @@ public class FastDateFormat {
             mValue = value;
         }
 
+        @Override
         public int estimateLength() {
             return 1;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             buffer.append(mValue);
         }
@@ -763,10 +765,12 @@ public class FastDateFormat {
             mValue = value;
         }
 
+        @Override
         public int estimateLength() {
             return mValue.length();
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             buffer.append(mValue);
         }
@@ -781,6 +785,7 @@ public class FastDateFormat {
             mValues = values;
         }
 
+        @Override
         public int estimateLength() {
             int max = 0;
             for (int i=mValues.length; --i >= 0; ) {
@@ -792,6 +797,7 @@ public class FastDateFormat {
             return max;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             buffer.append(mValues[calendar.get(mField)]);
         }
@@ -804,14 +810,17 @@ public class FastDateFormat {
             mField = field;
         }
 
+        @Override
         public int estimateLength() {
             return 4;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(mField));
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             if (value < 10) {
                 buffer.append((char)(value + '0'));
@@ -830,14 +839,17 @@ public class FastDateFormat {
         UnpaddedMonthField() {
         }
 
+        @Override
         public int estimateLength() {
             return 2;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(Calendar.MONTH) + 1);
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             if (value < 10) {
                 buffer.append((char)(value + '0'));
@@ -862,14 +874,17 @@ public class FastDateFormat {
             mSize = size;
         }
 
+        @Override
         public int estimateLength() {
             return 4;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(mField));
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             if (value < 100) {
                 for (int i = mSize; --i >= 2; ) {
@@ -901,14 +916,17 @@ public class FastDateFormat {
             mField = field;
         }
 
+        @Override
         public int estimateLength() {
             return 2;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(mField));
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             if (value < 100) {
                 buffer.append((char)(value / 10 + '0'));
@@ -924,14 +942,17 @@ public class FastDateFormat {
         TwoDigitYearField() {
         }
 
+        @Override
         public int estimateLength() {
             return 2;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(Calendar.YEAR) % 100);
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             buffer.append((char)(value / 10 + '0'));
             buffer.append((char)(value % 10 + '0'));
@@ -942,14 +963,17 @@ public class FastDateFormat {
         TwoDigitMonthField() {
         }
 
+        @Override
         public int estimateLength() {
             return 2;
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             appendTo(buffer, calendar.get(Calendar.MONTH) + 1);
         }
 
+        @Override
         public final void appendTo(StringBuffer buffer, int value) {
             buffer.append((char)(value / 10 + '0'));
             buffer.append((char)(value % 10 + '0'));
@@ -963,10 +987,12 @@ public class FastDateFormat {
             mRule = rule;
         }
 
+        @Override
         public int estimateLength() {
             return mRule.estimateLength();
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             int value = calendar.get(Calendar.HOUR);
             if (value == 0) {
@@ -975,6 +1001,7 @@ public class FastDateFormat {
             mRule.appendTo(buffer, value);
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, int value) {
             mRule.appendTo(buffer, value);
         }
@@ -987,10 +1014,12 @@ public class FastDateFormat {
             mRule = rule;
         }
 
+        @Override
         public int estimateLength() {
             return mRule.estimateLength();
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             int value = calendar.get(Calendar.HOUR_OF_DAY);
             if (value == 0) {
@@ -999,6 +1028,7 @@ public class FastDateFormat {
             mRule.appendTo(buffer, value);
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, int value) {
             mRule.appendTo(buffer, value);
         }
@@ -1026,6 +1056,7 @@ public class FastDateFormat {
             }
         }
 
+        @Override
         public int estimateLength() {
             if (mTimeZone != null) {
                 return Math.max(mStandard.length(), mDaylight.length());
@@ -1038,6 +1069,7 @@ public class FastDateFormat {
             }
         }
 
+        @Override
         public void appendTo(StringBuffer buffer, Calendar calendar) {
             TimeZone timeZone;
             if ((timeZone = mTimeZone) != null) {
@@ -1111,6 +1143,7 @@ public class FastDateFormat {
             mObj2 = obj2;
         }
 
+        @Override
         public int compareTo(Object obj) {
             if (this == obj) {
                 return 0;

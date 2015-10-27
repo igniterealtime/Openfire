@@ -125,27 +125,33 @@ public class ServerTrafficCounter {
     private static void addReadBytesStat() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.label");
             }
 
+            @Override
             public double sample() {
                 // Divide result by 1024 so that we return the result in Kb.
                 return incomingCounter.getAndSet(0)/1024d;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return true;
             }
@@ -157,26 +163,32 @@ public class ServerTrafficCounter {
     private static void addWrittenBytesStat() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.label");
             }
 
+            @Override
             public double sample() {
                 return outgoingCounter.getAndSet(0)/1024d;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return true;
             }
@@ -314,6 +326,7 @@ public class ServerTrafficCounter {
             this.originalChannel = originalChannel;
         }
 
+        @Override
         public int read(ByteBuffer dst) throws IOException {
             int bytes = originalChannel.read(dst);
             if (bytes > -1) {
@@ -322,10 +335,12 @@ public class ServerTrafficCounter {
             return bytes;
         }
 
+        @Override
         public void close() throws IOException {
             originalChannel.close();
         }
 
+        @Override
         public boolean isOpen() {
             return originalChannel.isOpen();
         }
@@ -341,14 +356,17 @@ public class ServerTrafficCounter {
             this.originalChannel = originalChannel;
         }
 
+        @Override
         public void close() throws IOException {
             originalChannel.close();
         }
 
+        @Override
         public boolean isOpen() {
             return originalChannel.isOpen();
         }
 
+        @Override
         public int write(ByteBuffer src) throws IOException {
             int bytes = originalChannel.write(src);
             incrementOutgoingCounter(bytes);

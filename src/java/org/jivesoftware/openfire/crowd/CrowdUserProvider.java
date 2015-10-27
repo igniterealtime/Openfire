@@ -72,6 +72,7 @@ public class CrowdUserProvider implements UserProvider {
 		new CrowdGroupProvider();
 	}
 
+	@Override
 	public User loadUser(String username) throws UserNotFoundException {
 		lock.readLock().lock();
 		try {
@@ -96,6 +97,7 @@ public class CrowdUserProvider implements UserProvider {
 	}
 
 	
+	@Override
 	public int getUserCount() {
 		lock.readLock().lock();
 		try {
@@ -105,6 +107,7 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public Collection<User> getUsers() {
 		lock.readLock().lock();
 		try {
@@ -118,6 +121,7 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> getUsernames() {
 		lock.readLock().lock();
 		try {
@@ -127,6 +131,7 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public Collection<User> getUsers(int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
@@ -142,10 +147,12 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public Set<String> getSearchFields() throws UnsupportedOperationException {
 		return SEARCH_FIELDS;
 	}
 
+	@Override
 	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 		lock.readLock().lock();
 		try {
@@ -194,6 +201,7 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
 		lock.readLock().lock();
 		try {
@@ -212,14 +220,17 @@ public class CrowdUserProvider implements UserProvider {
 		}
 	}
 
+	@Override
 	public boolean isReadOnly() {
 		return true;
 	}
 
+	@Override
 	public boolean isNameRequired() {
 		return false;
 	}
 
+	@Override
 	public boolean isEmailRequired() {
 		return false;
 	}
@@ -233,26 +244,32 @@ public class CrowdUserProvider implements UserProvider {
 	 * Not implemented methods
 	 */
 	
+	@Override
 	public User createUser(String username, String password, String name, String email) throws UserAlreadyExistsException {
 		throw new UnsupportedOperationException("Create new user not implemented by this version of user provider");
 	}
 
+	@Override
 	public void deleteUser(String username) {
 		throw new UnsupportedOperationException("Delete a user not implemented by this version of user provider");
 	}
 
+	@Override
 	public void setName(String username, String name) throws UserNotFoundException {
 		throw new UnsupportedOperationException("Setting user name not implemented by this version of user provider");
 	}
 
+	@Override
 	public void setEmail(String username, String email) throws UserNotFoundException {
 		throw new UnsupportedOperationException("Setting user email not implemented by this version of user provider");
 	}
 
+	@Override
 	public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
 		throw new UnsupportedOperationException("Setting user creation date unsupported by this version of user provider");
 	}
 
+	@Override
 	public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
 		throw new UnsupportedOperationException("Setting user modification date unsupported by this version of user provider");
 	}
@@ -268,6 +285,7 @@ public class CrowdUserProvider implements UserProvider {
 			this.userProvider = userProvider;
 		}
 		
+		@Override
 		public void run() {
 			LOG.info("running synch with crowd...");
 			CrowdManager manager = null;

@@ -285,6 +285,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      *
      * @return domains, subdomains and virtual hosts that where validated.
      */
+    @Override
     public Collection<String> getValidatedDomains() {
         return Collections.unmodifiableCollection(validatedDomains);
     }
@@ -329,6 +330,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @return the domain or subdomain of the local server used by the remote server
      *         when validating the session.
      */
+    @Override
     public String getLocalDomain() {
         return localDomain;
     }

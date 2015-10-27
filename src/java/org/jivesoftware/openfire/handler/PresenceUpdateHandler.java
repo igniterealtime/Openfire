@@ -133,6 +133,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         localDirectedPresences = new ConcurrentHashMap<String, Collection<DirectedPresence>>();
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         process((Presence) packet, sessionManager.getSession(packet.getFrom()));
     }
@@ -549,6 +550,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         ClusterManager.addListener(this);
     }
 
+    @Override
     public void joinedCluster() {
         // Populate directedPresencesCache with local content since when not in a cluster
         // we could still send directed presences to entities that when connected to a cluster
@@ -575,10 +577,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Populate directedPresencesCache with local content
@@ -607,10 +611,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }

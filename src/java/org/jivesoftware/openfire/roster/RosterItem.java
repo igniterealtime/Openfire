@@ -608,6 +608,7 @@ public class RosterItem implements Cacheable, Externalizable {
 	 * 
 	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
 	 */
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
@@ -621,6 +622,7 @@ public class RosterItem implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, jid);
         ExternalizableUtil.getInstance().writeBoolean(out, nickname != null);
@@ -636,6 +638,7 @@ public class RosterItem implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeLong(out, rosterID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {

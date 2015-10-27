@@ -94,12 +94,14 @@ public class DirectedPresence implements Externalizable {
         return receivers.isEmpty();
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID);
         ExternalizableUtil.getInstance().writeSerializable(out, handler);
         ExternalizableUtil.getInstance().writeStrings(out, receivers);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         nodeID = ExternalizableUtil.getInstance().readByteArray(in);
         handler = (JID) ExternalizableUtil.getInstance().readSerializable(in);

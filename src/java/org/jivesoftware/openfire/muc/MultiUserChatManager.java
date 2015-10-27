@@ -579,22 +579,27 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private void addTotalRoomStats() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.count;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.desc");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.units");
             }
 
+            @Override
             public double sample() {
                 double rooms = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
@@ -603,6 +608,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 return rooms;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return false;
             }
@@ -613,22 +619,27 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private void addTotalOccupantsStats() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.count;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.label");
             }
 
+            @Override
             public double sample() {
                 double occupants = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
@@ -637,6 +648,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 return occupants;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return false;
             }
@@ -647,22 +659,27 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private void addTotalConnectedUsers() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.count;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.label");
             }
 
+            @Override
             public double sample() {
                 double users = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
@@ -671,6 +688,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 return users;
             }
 
+            @Override
             public boolean isPartialSample() {
                 return false;
             }
@@ -681,22 +699,27 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private void addNumberIncomingMessages() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.label");
             }
 
+            @Override
             public double sample() {
                 double msgcnt = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
@@ -705,6 +728,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 return msgcnt;
             }
 
+            @Override
             public boolean isPartialSample() {
                 // Get this value from the other cluster nodes
                 return true;
@@ -716,22 +740,27 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private void addNumberOutgoingMessages() {
         // Register a statistic.
         Statistic statistic = new Statistic() {
+            @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.name");
             }
 
+            @Override
             public Type getStatType() {
                 return Type.rate;
             }
 
+            @Override
             public String getDescription() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.description");
             }
 
+            @Override
             public String getUnits() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.label");
             }
 
+            @Override
             public double sample() {
                 double msgcnt = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
@@ -740,6 +769,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 return msgcnt;
             }
 
+            @Override
             public boolean isPartialSample() {
                 // Each cluster node knows the total across the cluster
                 return false;
@@ -749,6 +779,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     }
 
     // Cluster management tasks
+    @Override
     public void joinedCluster() {
         if (!ClusterManager.isSeniorClusterMember()) {
             // Get transient rooms and persistent rooms with occupants from senior
@@ -793,6 +824,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
     }
     
+    @Override
     @SuppressWarnings("unchecked")
     public void joinedCluster(byte[] nodeID) {
         Object result = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
@@ -816,32 +848,39 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
     }
 
+    @Override
     public void leftCluster() {
         // Do nothing. An unavailable presence will be created for occupants hosted in other cluster nodes.
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         // Do nothing. An unavailable presence will be created for occupants hosted in the leaving cluster node.
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
 
+    @Override
     public void propertySet(String service, String property, Map<String, Object> params) {
         // Let everyone know we've had an update.
         CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(service), false);
     }
 
+    @Override
     public void propertyDeleted(String service, String property, Map<String, Object> params) {
         // Let everyone know we've had an update.
         CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(service), false);
     }
 
+    @Override
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing
     }
 
+    @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete any affiliation of the user to any room of any MUC service
         MUCPersistenceManager
@@ -849,11 +888,13 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         // TODO Delete any user information from the rooms loaded into memory
     }
 
+    @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing
     }
 
     private static class ServiceComparator implements Comparator<MultiUserChatService> {
+        @Override
         public int compare(MultiUserChatService o1, MultiUserChatService o2) {
             return o1.getServiceName().compareTo(o2.getServiceName());
         }

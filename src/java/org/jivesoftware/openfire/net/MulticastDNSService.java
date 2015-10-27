@@ -61,6 +61,7 @@ public class MulticastDNSService extends BasicModule {
 
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
 
+            @Override
             public void propertySet(String property, Map params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
@@ -71,6 +72,7 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
@@ -81,9 +83,11 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
             }
         });

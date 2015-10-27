@@ -216,6 +216,7 @@ public class SessionResultFilter {
      */
     private class SessionComparator implements Comparator<ClientSession> {
 
+        @Override
         public int compare(ClientSession lhs, ClientSession rhs) {
             int comparison;
             switch (sortField) {

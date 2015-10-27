@@ -127,6 +127,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         subscribers.remove(componentJID.toString());
     }
 
+    @Override
     public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
             throws PacketRejectedException {
         // Queue intercepted packet only if there are subscribers interested
@@ -151,14 +152,17 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         }
     }
 
+    @Override
     public void componentInfoReceived(IQ iq) {
         //Ignore
     }
 
+    @Override
     public void componentRegistered(JID componentJID) {
         //Ignore
     }
 
+    @Override
     public void componentUnregistered(JID componentJID) {
         //Remove component from the list of subscribers (if subscribed)
         removeSubscriber(componentJID);

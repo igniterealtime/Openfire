@@ -83,6 +83,7 @@ public class ServiceInfo implements Externalizable {
         return rooms;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
         ExternalizableUtil.getInstance().writeSafeUTF(out, description);
@@ -90,6 +91,7 @@ public class ServiceInfo implements Externalizable {
         ExternalizableUtil.getInstance().writeExternalizableCollection(out, rooms);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         description = ExternalizableUtil.getInstance().readSafeUTF(in);

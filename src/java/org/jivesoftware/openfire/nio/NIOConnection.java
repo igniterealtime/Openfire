@@ -130,6 +130,7 @@ public class NIOConnection implements Connection {
         state = State.RUNNING;
     }
 
+    @Override
     public boolean validate() {
         if (isClosed()) {
             return false;
@@ -138,6 +139,7 @@ public class NIOConnection implements Connection {
         return !isClosed();
     }
 
+    @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object ignore) {
         if (closeListener != null) {
             throw new IllegalStateException("Close listener already configured");
@@ -150,12 +152,14 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void removeCloseListener(ConnectionCloseListener listener) {
         if (closeListener == listener) {
             closeListener = null;
         }
     }
 
+    @Override
     public byte[] getAddress() throws UnknownHostException {
         final SocketAddress remoteAddress = ioSession.getRemoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
@@ -164,6 +168,7 @@ public class NIOConnection implements Connection {
         return address.getAddress();
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         final SocketAddress remoteAddress = ioSession.getRemoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
@@ -172,6 +177,7 @@ public class NIOConnection implements Connection {
         return inetAddress.getHostAddress();
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         final SocketAddress remoteAddress = ioSession.getRemoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
@@ -180,6 +186,7 @@ public class NIOConnection implements Connection {
         return inetAddress.getHostName();
     }
 
+    @Override
     public Certificate[] getLocalCertificates() {
         SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
         if (sslSession != null) {
@@ -188,6 +195,7 @@ public class NIOConnection implements Connection {
         return new Certificate[0];
     }
 
+    @Override
     public Certificate[] getPeerCertificates() {
         try {
             SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
@@ -203,22 +211,27 @@ public class NIOConnection implements Connection {
         return new Certificate[0];
     }
 
+    @Override
     public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
         this.usingSelfSignedCertificate = isSelfSigned;
     }
 
+    @Override
     public boolean isUsingSelfSignedCertificate() {
         return usingSelfSignedCertificate;
     }
 
+    @Override
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
 
+    @Override
     public void close() {
         close( false );
     }
 
+    @Override
     public void close( boolean peerIsKnownToBeDisconnected )
     {
         boolean notifyClose = false;
@@ -271,6 +284,7 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void systemShutdown() {
         deliverRawText("<stream:error><system-shutdown " +
                 "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
@@ -291,18 +305,22 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void init(LocalSession owner) {
         session = owner;
     }
 
+    @Override
     public boolean isClosed() {
         return state == State.CLOSED;
     }
 
+    @Override
     public boolean isSecure() {
         return ioSession.getFilterChain().contains(TLS_FILTER_NAME);
     }
 
+    @Override
     public void deliver(Packet packet) throws UnauthorizedException {
         if (state != State.RUNNING) {
         	backupDeliverer.deliver(packet);
@@ -348,6 +366,7 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void deliverRawText(String text) {
         if (state != State.CLOSED) {
             boolean errorDelivering = false;
@@ -385,6 +404,7 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
         final boolean isClientToServer = (remoteServer == null);
 
@@ -446,6 +466,7 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
     public void addCompression() {
         IoFilterChain chain = ioSession.getFilterChain();
         String baseFilter = EXECUTOR_FILTER_NAME;
@@ -455,56 +476,69 @@ public class NIOConnection implements Connection {
         chain.addAfter(baseFilter, COMPRESSION_FILTER_NAME, new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
     }
 
+    @Override
     public void startCompression() {
         CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get(COMPRESSION_FILTER_NAME);
         ioFilter.setCompressOutbound(true);
     }
 
+    @Override
     public boolean isFlashClient() {
         return flashClient;
     }
 
+    @Override
     public void setFlashClient(boolean flashClient) {
         this.flashClient = flashClient;
     }
 
+    @Override
     public int getMajorXMPPVersion() {
         return majorVersion;
     }
 
+    @Override
     public int getMinorXMPPVersion() {
         return minorVersion;
     }
 
+    @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
     }
 
+    @Override
     public String getLanguage() {
         return language;
     }
 
+    @Override
     public void setLanaguage(String language) {
         this.language = language;
     }
 
+    @Override
     public boolean isCompressed() {
         return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
     }
 
+    @Override
     public CompressionPolicy getCompressionPolicy() {
         return compressionPolicy;
     }
 
+    @Override
     public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
         this.compressionPolicy = compressionPolicy;
     }
 
+    @Override
     public TLSPolicy getTlsPolicy() {
         return tlsPolicy;
     }
 
+    @Override
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         this.tlsPolicy = tlsPolicy;
     }

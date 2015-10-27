@@ -53,6 +53,7 @@ public class DefaultAdminProvider implements AdminProvider {
 
         // Detect when the list of admin users is changed.
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 Log.debug("DefaultAdminProvider: Property was set: "+property);
                 if ("admin.authorizedJIDs".equals(property)) {
@@ -60,6 +61,7 @@ public class DefaultAdminProvider implements AdminProvider {
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 Log.debug("DefaultAdminProvider: Property was deleted: "+property);
                 if ("admin.authorizedJIDs".equals(property)) {
@@ -67,11 +69,13 @@ public class DefaultAdminProvider implements AdminProvider {
                 }
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 Log.debug("DefaultAdminProvider: XML Property was set: "+property);
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 Log.debug("DefaultAdminProvider: XML Property was deleted: "+property);
                 //Ignore
@@ -86,6 +90,7 @@ public class DefaultAdminProvider implements AdminProvider {
      * <tt>admin.authorizedJIDs</tt>
      * @see org.jivesoftware.openfire.admin.AdminProvider#getAdmins()
      */
+    @Override
     public List<JID> getAdmins() {
         List<JID> adminList = new ArrayList<JID>();
 
@@ -116,6 +121,7 @@ public class DefaultAdminProvider implements AdminProvider {
      * <tt>admin.authorizedJIDs</tt>
      * @see org.jivesoftware.openfire.admin.AdminProvider#setAdmins(java.util.List)
      */
+    @Override
     public void setAdmins(List<JID> admins) {
         Collection<String> adminList = new ArrayList<String>();
         for (JID admin : admins) {
@@ -128,6 +134,7 @@ public class DefaultAdminProvider implements AdminProvider {
      * The default provider is not read only
      * @see org.jivesoftware.openfire.admin.AdminProvider#isReadOnly()
      */
+    @Override
     public boolean isReadOnly() {
         return false;
     }

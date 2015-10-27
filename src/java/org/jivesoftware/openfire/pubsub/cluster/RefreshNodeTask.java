@@ -26,6 +26,7 @@ public class RefreshNodeTask extends NodeTask
 		super(node);
 	}
 
+	@Override
 	public void run()
 	{
 		log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());

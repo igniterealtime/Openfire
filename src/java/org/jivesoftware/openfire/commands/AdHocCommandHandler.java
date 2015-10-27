@@ -95,10 +95,12 @@ public class AdHocCommandHandler extends IQHandler
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
@@ -106,14 +108,17 @@ public class AdHocCommandHandler extends IQHandler
         return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE, "jabber:x:data").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         if (NAMESPACE.equals(node)) {
             return true;
@@ -125,6 +130,7 @@ public class AdHocCommandHandler extends IQHandler
         }
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         List<DiscoItem> answer = new ArrayList<DiscoItem>();
         if (!NAMESPACE.equals(node)) {

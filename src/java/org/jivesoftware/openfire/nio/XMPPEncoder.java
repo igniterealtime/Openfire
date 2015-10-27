@@ -33,6 +33,7 @@ import org.apache.mina.filter.codec.ProtocolEncoderOutput;
  */
 public class XMPPEncoder extends ProtocolEncoderAdapter {
 
+    @Override
     public void encode(IoSession session, Object message, ProtocolEncoderOutput out)
             throws Exception {
         // Ignore. Do nothing. Content being sent is already a bytebuffer (of strings) 

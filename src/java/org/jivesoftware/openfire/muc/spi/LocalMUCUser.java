@@ -182,10 +182,12 @@ public class LocalMUCUser implements MUCUser {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress() {
         return realjid;
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (packet instanceof IQ) {
             process((IQ)packet);

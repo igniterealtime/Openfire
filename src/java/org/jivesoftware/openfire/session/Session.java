@@ -59,6 +59,7 @@ public interface Session extends RoutableChannelHandler {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress();
 
     /**
@@ -179,6 +180,7 @@ public interface Session extends RoutableChannelHandler {
      */
     public String getHostName() throws UnknownHostException;
 
+    @Override
     public abstract void process(Packet packet);
 
     /**

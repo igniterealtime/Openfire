@@ -89,6 +89,7 @@ public class Channel<T extends Packet> {
      */
     public void add(final T packet) {
         Runnable r = new Runnable() {
+            @Override
             public void run() {
                 try {
                     channelHandler.process(packet);

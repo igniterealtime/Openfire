@@ -56,6 +56,7 @@ public class UserCollection extends AbstractCollection<User> {
         private int currentIndex = -1;
         private User nextElement = null;
 
+        @Override
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
             // to iterate through.
@@ -73,6 +74,7 @@ public class UserCollection extends AbstractCollection<User> {
             return true;
         }
 
+        @Override
         public User next() throws java.util.NoSuchElementException {
             User element;
             if (nextElement != null) {
@@ -88,6 +90,7 @@ public class UserCollection extends AbstractCollection<User> {
             return element;
         }
 
+        @Override
         public void remove() throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }

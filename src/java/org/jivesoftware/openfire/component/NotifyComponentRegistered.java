@@ -44,18 +44,22 @@ public class NotifyComponentRegistered implements ClusterTask {
         this.componentJID = componentJID;
     }
 
+    @Override
     public Object getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         InternalComponentManager.getInstance().notifyComponentRegistered(componentJID);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, componentJID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         componentJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }

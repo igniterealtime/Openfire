@@ -50,6 +50,7 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     }
 
 
+    @Override
     public boolean isUsingServerDialback() {
         return usingServerDialback;
     }

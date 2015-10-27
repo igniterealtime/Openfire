@@ -430,6 +430,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
     }
 
+    @Override
     public int getCachedSize()
             throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
@@ -525,15 +526,18 @@ public class User implements Cacheable, Externalizable, Result {
                 Iterator<Map.Entry<String, String>> iter = properties.entrySet().iterator();
                 Map.Entry<String,String> current = null;
 
+                @Override
                 public boolean hasNext() {
                     return iter.hasNext();
                 }
 
+                @Override
                 public Map.Entry<String, String> next() {
                     current = iter.next();
                     return current;
                 }
 
+                @Override
                 public void remove() {
                     if (current == null) {
                         throw new IllegalStateException();
@@ -629,6 +633,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeSafeUTF(out, getName());
@@ -640,6 +645,7 @@ public class User implements Cacheable, Externalizable, Result {
         ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         name = ExternalizableUtil.getInstance().readSafeUTF(in);
@@ -654,6 +660,7 @@ public class User implements Cacheable, Externalizable, Result {
      * (non-Javadoc)
      * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
      */
+	@Override
 	public String getUID()
 	{
 		return username;

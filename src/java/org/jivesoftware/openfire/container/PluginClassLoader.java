@@ -534,6 +534,7 @@ public class PluginClassLoader extends URLClassLoader {
 			// Add lib directory to classpath.
 			File libDir = new File(directory, "lib");
 			File[] jars = libDir.listFiles(new FilenameFilter() {
+				@Override
 				public boolean accept(File dir, String name) {
 					return name.endsWith(".jar") || name.endsWith(".zip");
 				}

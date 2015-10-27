@@ -43,10 +43,12 @@ public class CrowdAuthProvider implements AuthProvider {
 		}
 	}
 
+	@Override
 	public boolean isPlainSupported() {
 		return true;
 	}
 
+	@Override
 	public boolean isDigestSupported() {
 		return false;
 	}
@@ -65,6 +67,7 @@ public class CrowdAuthProvider implements AuthProvider {
      * @throws ConnectionException it there is a problem connecting to user and group sytem
      * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
+	@Override
 	public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
 		if (manager == null) {
 			throw new ConnectionException("Unable to connect to Crowd");
@@ -93,18 +96,22 @@ public class CrowdAuthProvider implements AuthProvider {
 		}
 	}
 
+	@Override
 	public void authenticate(String username, String token, String digest) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
 		throw new UnsupportedOperationException("XMPP digest authentication not supported by this version of authentication provider");
 	}
 
+	@Override
 	public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Retrieve password not supported by this version of authentication provider");
 	}
 
+	@Override
 	public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Setting password not implemented by this version of authentication provider");
 	}
 
+	@Override
 	public boolean supportsPasswordRetrieval() {
 		return false;
 	}

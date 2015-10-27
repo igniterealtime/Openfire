@@ -805,6 +805,7 @@ public class XMPPServer {
      */
     private class Terminator extends TimerTask {
     	private BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+    	@Override
     	public void run() {
         	try { 
         		if (stdin.ready()) {

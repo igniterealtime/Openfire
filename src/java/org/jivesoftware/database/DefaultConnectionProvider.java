@@ -76,10 +76,12 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
+    @Override
     public boolean isPooled() {
         return true;
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         try {
             Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
@@ -90,6 +92,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         }
     }
 
+    @Override
     public void start() {
         proxoolURL = "proxool.openfire:"+getDriver()+":"+getServerURL();
         settings = new Properties();
@@ -104,9 +107,11 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         settings.setProperty("password", (getPassword() != null ? getPassword() : ""));
     }
 
+    @Override
     public void restart() {
     }
 
+    @Override
     public void destroy() {
         settings = null;
     }

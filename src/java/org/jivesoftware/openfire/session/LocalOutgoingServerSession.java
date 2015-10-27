@@ -619,6 +619,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
     }
 
+    @Override
     public boolean authenticateSubdomain(String domain, String hostname) {
         if (!usingServerDialback) {
             // Using SASL so just assume that the domain was validated
@@ -690,20 +691,24 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
     }
 
+    @Override
     public Collection<String> getAuthenticatedDomains() {
         return Collections.unmodifiableCollection(authenticatedDomains);
     }
 
+    @Override
     public void addAuthenticatedDomain(String domain) {
         authenticatedDomains.add(domain);
     }
 
+    @Override
     public Collection<String> getHostnames() {
         synchronized (hostnames) {
             return Collections.unmodifiableCollection(hostnames);
         }
     }
 
+    @Override
     public void addHostname(String hostname) {
         synchronized (hostnames) {
             hostnames.add(hostname);

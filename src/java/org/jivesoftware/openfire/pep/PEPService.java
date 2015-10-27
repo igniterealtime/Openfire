@@ -200,35 +200,43 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
+    @Override
     public void addNode(Node node) {
         nodes.put(node.getNodeID(), node);
     }
 
+    @Override
     public void removeNode(String nodeID) {
         nodes.remove(nodeID);
     }
 
+    @Override
     public Node getNode(String nodeID) {
         return nodes.get(nodeID);
     }
 
+    @Override
     public Collection<Node> getNodes() {
         return nodes.values();
     }
 
+    @Override
     public CollectionNode getRootCollectionNode() {
         return rootCollectionNode;
     }
 
+    @Override
     public JID getAddress() {
         return new JID(serviceOwnerJID);
     }
 
+    @Override
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
         return serviceOwnerJID;
     }
 
+    @Override
     public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
         if (leafType) {
             return leafDefaultConfiguration;
@@ -236,10 +244,12 @@ public class PEPService implements PubSubService, Cacheable {
         return collectionDefaultConfiguration;
     }
 
+    @Override
     public Collection<String> getShowPresences(JID subscriber) {
         return PubSubEngine.getShowPresences(this, subscriber);
     }
 
+    @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
         if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
@@ -270,18 +280,22 @@ public class PEPService implements PubSubService, Cacheable {
         return false;
     }
 
+    @Override
     public boolean isCollectionNodesSupported() {
         return true;
     }
 
+    @Override
     public boolean isInstantNodeSupported() {
         return true;
     }
 
+    @Override
     public boolean isMultipleSubscriptionsEnabled() {
         return false;
     }
 
+    @Override
     public boolean isServiceAdmin(JID user) {
         // Here we consider a 'service admin' to be the user that this PEPService
         // is associated with.
@@ -297,18 +311,22 @@ public class PEPService implements PubSubService, Cacheable {
         return nodeCreationRestricted;
     }
 
+    @Override
     public void presenceSubscriptionNotRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionNotRequired(this, node, user);
     }
 
+    @Override
     public void presenceSubscriptionRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionRequired(this, node, user);
     }
 
+    @Override
     public void send(Packet packet) {
         router.route(packet);
     }
 
+    @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
         message.setFrom(getAddress());
         for (JID jid : jids) {
@@ -318,6 +336,7 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
+    @Override
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setTo(recipientJID);
         message.setFrom(getAddress());
@@ -498,14 +517,17 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
+    @Override
     public Map<String, Map<String, String>> getBarePresences() {
         return barePresences;
     }
 
+    @Override
     public AdHocCommandManager getManager() {
         return adHocCommandManager;
     }
 
+	@Override
 	public int getCachedSize() {
 		// Rather arbitrary. Don't use this for size-based eviction policies!
 		return 600;

@@ -46,10 +46,12 @@ public class GetNewMemberRoomsRequest implements ClusterTask {
     public GetNewMemberRoomsRequest() {
     }
 
+    @Override
     public Object getResult() {
         return rooms;
     }
 
+    @Override
     public void run() {
         rooms = new ArrayList<RoomInfo>();
         // Get all services that have local occupants and include them in the reply
@@ -70,10 +72,12 @@ public class GetNewMemberRoomsRequest implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

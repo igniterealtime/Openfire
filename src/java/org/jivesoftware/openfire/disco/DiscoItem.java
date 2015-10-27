@@ -167,6 +167,7 @@ public class DiscoItem implements Result {
 	 * 
 	 * @see org.jivesoftware.util.resultsetmanager.Result#getUID()
 	 */
+	@Override
 	public String getUID() {
 		final StringBuilder sb = new StringBuilder(jid.toString());
 		if (name != null) {

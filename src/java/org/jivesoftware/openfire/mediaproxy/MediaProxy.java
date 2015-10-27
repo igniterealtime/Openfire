@@ -183,6 +183,7 @@ public class MediaProxy implements SessionListener {
      *
      * @param session the session that stopped
      */
+    @Override
     public void sessionClosed(MediaProxySession session) {
         sessions.remove(session.getSID());
         if (Log.isDebugEnabled()) {

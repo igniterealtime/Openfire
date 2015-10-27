@@ -64,6 +64,7 @@ public class GroupCollection extends AbstractCollection<Group> {
         private int currentIndex = -1;
         private Group nextElement = null;
 
+        @Override
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
             // to iterate through.
@@ -81,6 +82,7 @@ public class GroupCollection extends AbstractCollection<Group> {
             return true;
         }
 
+        @Override
         public Group next() throws java.util.NoSuchElementException {
             Group element;
             if (nextElement != null) {
@@ -96,6 +98,7 @@ public class GroupCollection extends AbstractCollection<Group> {
             return element;
         }
 
+        @Override
         public void remove() throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }

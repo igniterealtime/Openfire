@@ -70,7 +70,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     private boolean inDTD;
 
     /** The namespaces used for the current element when consuming SAX events */
-    private Map namespacesMap;
+    private Map<String, String> namespacesMap;
 
     /**
      * what is the maximum allowed character code
@@ -493,7 +493,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     @Override
 	public void startPrefixMapping(String prefix, String uri) throws SAXException {
         if ( namespacesMap == null ) {
-            namespacesMap = new HashMap();
+            namespacesMap = new HashMap<>();
         }
         namespacesMap.put(prefix, uri);
         super.startPrefixMapping(prefix, uri);

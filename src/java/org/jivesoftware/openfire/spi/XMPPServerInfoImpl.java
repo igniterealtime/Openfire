@@ -104,8 +104,8 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         if (connectionManager == null) {
         	connectionManager = XMPPServer.getInstance().getConnectionManager();
         }
-        return (Collection<ServerPort>) (connectionManager == null ?
-        		Collections.emptyList() :
-        		connectionManager.getPorts());
+        return connectionManager == null ?
+        		Collections.<ServerPort>emptyList() :
+        		connectionManager.getPorts();
     }
 }

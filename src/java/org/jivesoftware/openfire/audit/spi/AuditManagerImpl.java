@@ -44,7 +44,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private boolean auditPresence;
     private boolean auditIQ;
     private boolean auditXPath;
-    private List xpath = new LinkedList();
+    private List<String> xpath = new LinkedList<>();
     private AuditorImpl auditor = null;
     /**
      * Max size in bytes that all audit log files may have. When the limit is reached
@@ -63,7 +63,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private int maxDays;
     private int logTimeout;
     private String logDir;
-    private Collection<String> ignoreList = new ArrayList<String>();
+    private Collection<String> ignoreList = new ArrayList<>();
     private static final int MAX_TOTAL_SIZE = 1000;
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_DAYS = -1;

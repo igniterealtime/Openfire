@@ -37,7 +37,7 @@ import java.util.*;
 public class IntEnum extends Enum {
 
     private int value;
-    protected static Hashtable enumTypes = new Hashtable();
+    protected static Hashtable<Class<?>, Map<Integer, IntEnum>> enumTypes = new Hashtable<>();
 
     protected IntEnum(String name, int val) {
         super(name);
@@ -72,9 +72,9 @@ public class IntEnum extends Enum {
      * @param enumeration The enum to be registered
      */
     protected static void register(IntEnum enumeration) {
-        Map enums = (Map)enumTypes.get(enumeration.getClass());
+        Map<Integer, IntEnum> enums = enumTypes.get(enumeration.getClass());
         if (enums == null) {
-            enums = new HashMap<Integer,Object>();
+            enums = new HashMap<>();
             enumTypes.put(enumeration.getClass(), enums);
         }
         enums.put(enumeration.getValue(), enumeration);

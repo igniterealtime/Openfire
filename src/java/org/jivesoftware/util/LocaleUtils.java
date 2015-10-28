@@ -407,7 +407,7 @@ public class LocaleUtils {
      *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
-    public static String getLocalizedString(String key, List arguments) {
+    public static String getLocalizedString(String key, List<?> arguments) {
         Locale locale = JiveGlobals.getLocale();
 
         ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
@@ -470,7 +470,7 @@ public class LocaleUtils {
 	 *            used if the requested locale is not available)
 	 * @return the localized string.
 	 */
-    public static String getLocalizedString(String key, String pluginName, List arguments, Locale locale, boolean fallback) {
+    public static String getLocalizedString(String key, String pluginName, List<?> arguments, Locale locale, boolean fallback) {
         if (pluginName == null) {
             return getLocalizedString(key, arguments);
         }

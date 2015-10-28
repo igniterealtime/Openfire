@@ -1022,7 +1022,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             //Tries to create an instance with the message
             Exception exception;
             try {
-                Class exceptionClass = Class.forName(className);
+                Class<?> exceptionClass = Class.forName(className);
                 if (message == null) {
                     exception = (Exception) exceptionClass.newInstance();
                 } else {

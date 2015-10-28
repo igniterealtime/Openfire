@@ -83,13 +83,13 @@ public class ParamUtils {
             return new String[0];
         }
         else {
-            java.util.List values = new java.util.ArrayList(paramValues.length);
+            java.util.List<String> values = new java.util.ArrayList<>(paramValues.length);
             for (int i = 0; i < paramValues.length; i++) {
                 if (paramValues[i] != null && !"".equals(paramValues[i])) {
                     values.add(paramValues[i]);
                 }
             }
-            return (String[])values.toArray(new String[]{});
+            return values.toArray(new String[]{});
         }
     }
 

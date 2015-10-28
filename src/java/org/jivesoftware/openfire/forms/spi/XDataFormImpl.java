@@ -57,10 +57,10 @@ public class XDataFormImpl {
 
     private String type;
     private String title;
-    private List instructions = new ArrayList();
-    private List fields = new ArrayList();
-    private List reportedFields = new ArrayList();
-    private List reportedItems = new ArrayList();
+    private List<String> instructions = new ArrayList<>();
+    private List<FormField> fields = new ArrayList<>();
+    private List<FormField> reportedFields = new ArrayList<>();
+    private List<List<FormField>> reportedItems = new ArrayList<>();
 
     public XDataFormImpl() {
         super();
@@ -74,7 +74,7 @@ public class XDataFormImpl {
         this.title = title;
     }
 
-    public void setInstructions(List instructions) {
+    public void setInstructions(List<String> instructions) {
         this.instructions = instructions;
     }
 
@@ -88,7 +88,7 @@ public class XDataFormImpl {
 
     public Iterator getInstructions() {
         synchronized (instructions) {
-            return Collections.unmodifiableList(new ArrayList(instructions)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(instructions)).iterator();
         }
     }
 
@@ -109,7 +109,7 @@ public class XDataFormImpl {
 
     public Iterator getFields() {
         synchronized (fields) {
-            return Collections.unmodifiableList(new ArrayList(fields)).iterator();
+            return Collections.unmodifiableList(new ArrayList<>(fields)).iterator();
         }
     }
 
@@ -135,7 +135,7 @@ public class XDataFormImpl {
         }
     }
 
-    public void addItemFields(ArrayList itemFields) {
+    public void addItemFields(List<FormField> itemFields) {
         synchronized (reportedItems) {
             // We are nesting a List (of fields) inside of the List of items
             reportedItems.add(itemFields);
@@ -245,7 +245,7 @@ public class XDataFormImpl {
         while (itemElements.hasNext()) {
             Element itemElement = (Element)itemElements.next();
             Iterator itemFieldElements = itemElement.elementIterator("field");
-            ArrayList itemFields = new ArrayList();
+            ArrayList<FormField> itemFields = new ArrayList<>();
             while (itemFieldElements.hasNext()) {
                 XFormFieldImpl field = new XFormFieldImpl();
                 field.parse((Element)itemFieldElements.next());

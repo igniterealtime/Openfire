@@ -121,7 +121,7 @@ public class CacheSizes {
      * @param map the Map object to determine the size of.
      * @return the size of the Map object.
      */
-    public static int sizeOfMap(Map map)
+    public static int sizeOfMap(Map<?,?> map)
 	    throws CannotCalculateSizeException {
         if (map == null) {
             return 0;

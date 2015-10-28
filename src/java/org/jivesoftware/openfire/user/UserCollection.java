@@ -30,7 +30,7 @@ import java.util.AbstractCollection;
  *
  * @author Matt Tucker
  */
-public class UserCollection extends AbstractCollection {
+public class UserCollection extends AbstractCollection<User> {
 
     private String[] elements;
 
@@ -42,7 +42,7 @@ public class UserCollection extends AbstractCollection {
     }
 
     @Override
-	public Iterator iterator() {
+	public Iterator<User> iterator() {
         return new UserIterator();
     }
 
@@ -51,10 +51,10 @@ public class UserCollection extends AbstractCollection {
         return elements.length;
     }
 
-    private class UserIterator implements Iterator {
+    private class UserIterator implements Iterator<User> {
 
         private int currentIndex = -1;
-        private Object nextElement = null;
+        private User nextElement = null;
 
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
@@ -73,8 +73,8 @@ public class UserCollection extends AbstractCollection {
             return true;
         }
 
-        public Object next() throws java.util.NoSuchElementException {
-            Object element;
+        public User next() throws java.util.NoSuchElementException {
+            User element;
             if (nextElement != null) {
                 element = nextElement;
                 nextElement = null;
@@ -97,10 +97,10 @@ public class UserCollection extends AbstractCollection {
          *
          * @return the next available element.
          */
-        private Object getNextElement() {
+        private User getNextElement() {
             while (currentIndex + 1 < elements.length) {
                 currentIndex++;
-                Object element = null;
+                User element = null;
                 try {
                     element = UserManager.getInstance().getUser(elements[currentIndex]);
                 }

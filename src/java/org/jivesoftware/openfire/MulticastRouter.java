@@ -81,7 +81,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
      * Cache for a day discovered information of remote servers. The local server will try
      * to discover if remote servers support multicast service.
      */
-    private Cache cache;
+    private Cache<String, String> cache;
     /**
      * Packets that include recipients that belong to remote servers are not processed by
      * the main thread since extra work is required. This variable holds the list of packets

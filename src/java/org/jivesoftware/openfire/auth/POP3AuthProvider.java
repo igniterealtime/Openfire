@@ -75,7 +75,7 @@ public class POP3AuthProvider implements AuthProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
 
-    private Cache authCache = null;
+    private Cache<String, String> authCache = null;
     private String host = null;
     private String domain = null;
     private int port = -1;

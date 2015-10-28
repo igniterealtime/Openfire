@@ -176,13 +176,13 @@ public class ElementUtil {
         }
         // We found matching property, return names of children.
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
-        ArrayList props = new ArrayList();
+        ArrayList<String> props = new ArrayList<>();
         while (iter.hasNext()) {
             Element e = (Element) iter.next();
             props.add(e.getName());
         }
         String[] childrenNames = new String[props.size()];
-        return (String[]) props.toArray(childrenNames);
+        return props.toArray(childrenNames);
     }
 
     /**
@@ -280,13 +280,13 @@ public class ElementUtil {
             return properties;
         }
         else {
-            List list = new ArrayList(15);
+            List<String> list = new ArrayList<>(15);
             for (int i = 0; i < properties.length; i++) {
                 String propName = parent + "." + properties[i];
                 list.add(propName);
                 list.addAll(Arrays.asList(getRecursiveChildrenProperties(element, propName)));
             }
-            return (String[]) list.toArray(new String[]{});
+            return list.toArray(new String[]{});
         }
     }
 
@@ -370,13 +370,13 @@ public class ElementUtil {
      * @return an array representation of the given Jive property.
      */
     private static String[] parsePropertyName(String name) {
-        List propName = new ArrayList(5);
+        List<String> propName = new ArrayList<>(5);
         // Use a StringTokenizer to tokenize the property name.
         StringTokenizer tokenizer = new StringTokenizer(name, ".");
         while (tokenizer.hasMoreTokens()) {
             propName.add(tokenizer.nextToken());
         }
-        return (String[]) propName.toArray(new String[propName.size()]);
+        return propName.toArray(new String[propName.size()]);
     }
 
 

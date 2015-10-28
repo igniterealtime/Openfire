@@ -1,0 +1,68 @@
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <id>openfire-plugin-assembly</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+
+        <!-- metadata files (plugin.xml, icons, etc). -->
+        <fileSet>
+            <outputDirectory>/</outputDirectory>
+            <directory>${project.build.sourceDirectory}/../..</directory>
+            <includes>
+                <include>*.html</include>
+                <include>*.gif</include>
+                <include>plugin.xml</include>
+                <include>classes/**</include>
+            </includes>
+        </fileSet>
+
+        <!-- database, i18n and web directory -->
+        <fileSet>
+            <outputDirectory>/</outputDirectory>
+            <directory>${project.build.sourceDirectory}/..</directory>
+            <includes>
+                <include>database/**</include>
+                <include>i18n/**</include>
+                <include>web/**</include>
+            </includes>
+            <!-- Don't include jsp pages, they will be compiled -->
+            <excludes>
+                <exclude>**/*.jsp</exclude>
+            </excludes>
+        </fileSet>
+
+        <!-- The jar-file containing the compiled plugin code. This is assembled
+             by the assembly descriptor "openfire-plugin-jar" -->
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>/lib</outputDirectory>
+            <includes>
+                <include>plugin-${project.artifactId}.jar</include>
+            </includes>
+        </fileSet>
+
+        <!-- The jar-file containing the pre-compiled JSP pages. This is assembled
+             by the assembly descriptor "openfire-plugin-jspc" -->
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>/lib</outputDirectory>
+            <includes>
+                <include>plugin-${project.artifactId}-jspc.jar</include>
+            </includes>
+        </fileSet>
+
+    </fileSets>
+
+    <!-- Bundle the dependencies of this plugin -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/lib</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+        </dependencySet>
+    </dependencySets>
+</assembly>

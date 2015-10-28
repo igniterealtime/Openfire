@@ -22,6 +22,8 @@ package org.jivesoftware.openfire.http;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +40,10 @@ import java.io.*;
  * Combines and serves resources, such as javascript or css files.
  */
 public class ResourceServlet extends HttpServlet {
-//    private static String suffix = "";    // Set to "_src" to use source version
+
+    private static final Logger Log = LoggerFactory.getLogger(ResourceServlet.class);
+
+    //    private static String suffix = "";    // Set to "_src" to use source version
     private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;

@@ -20,7 +20,8 @@
 
 package org.jivesoftware.openfire.starter;
 
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 /**
@@ -45,6 +46,8 @@ import java.io.File;
  * @author Iain Shigeoka
  */
 public class ServerStarter {
+
+    private static final Logger Log = LoggerFactory.getLogger(ServerStarter.class);
 
     /**
      * Default to this location if one has not been specified

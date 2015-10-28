@@ -20,9 +20,10 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Base64;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -41,6 +42,8 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class LdapUserTester {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapUserTester.class);
 
     /**
      * Constants to access user properties

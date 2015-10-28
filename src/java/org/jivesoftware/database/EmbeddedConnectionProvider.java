@@ -21,14 +21,14 @@
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.DriverManager;
 import java.util.Properties;
 
@@ -41,6 +41,8 @@ import java.util.Properties;
  * @author Matt Tucker
  */
 public class EmbeddedConnectionProvider implements ConnectionProvider {
+
+    private static final Logger Log = LoggerFactory.getLogger(EmbeddedConnectionProvider.class);
 
     private Properties settings;
     private String serverURL;

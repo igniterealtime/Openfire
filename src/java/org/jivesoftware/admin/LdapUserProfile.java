@@ -25,8 +25,9 @@ import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.jivesoftware.openfire.ldap.LdapVCardProvider;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.XMLWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -39,6 +40,8 @@ import java.util.Iterator;
  * @author Gaston Dombiak
  */
 public class LdapUserProfile {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapUserProfile.class);
 
     private String name = "";
     private String email = "";

@@ -1,0 +1,36 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <!-- This assembly descriptor generates the zip archives which contain the source files for distribution -->
+    <id>src</id>
+    <formats>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+    <fileSets>
+        <!-- Copy the build directory -->
+        <fileSet>
+            <directory>${project.basedir}/build</directory>
+            <outputDirectory>build</outputDirectory>
+        </fileSet>
+        <!-- Copy the documentation/dist -->
+        <fileSet>
+            <directory>${project.basedir}/documentation/dist</directory>
+        </fileSet>
+        <!-- Copy the documentation -->
+        <fileSet>
+            <directory>${project.basedir}/documentation/docs</directory>
+            <outputDirectory>documentation</outputDirectory>
+        </fileSet>
+        <!-- Copy i18n -->
+        <fileSet>
+            <directory>${project.basedir}/src/i18n</directory>
+            <outputDirectory>resources/i18n</outputDirectory>
+        </fileSet>
+        <!-- Copy src -->
+        <fileSet>
+            <directory>${project.basedir}/src</directory>
+            <outputDirectory>src</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>

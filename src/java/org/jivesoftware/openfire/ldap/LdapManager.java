@@ -1191,11 +1191,11 @@ public class LdapManager {
             // Create a correctly-encoded ldap URL for the PROVIDER_URL
             ldapURL.append("ldap://");
             ldapURL.append(host);
-            ldapURL.append(":");
+            ldapURL.append(':');
             ldapURL.append(port);
-            ldapURL.append("/");
+            ldapURL.append('/');
             ldapURL.append(baseDN);
-            ldapURL.append(" ");
+            ldapURL.append(' ');
         }
         return ldapURL.toString();
     }
@@ -1224,7 +1224,7 @@ public class LdapManager {
         this.hosts = hosts;
         StringBuilder hostProperty = new StringBuilder();
         for (String host : hosts) {
-            hostProperty.append(host).append(",");
+            hostProperty.append(host).append(',');
         }
         if (!hosts.isEmpty()) {
             // Remove the last comma
@@ -1604,11 +1604,11 @@ public class LdapManager {
     public String getSearchFilter() {
         StringBuilder filter = new StringBuilder();
         if (searchFilter == null) {
-            filter.append("(").append(usernameField).append("={0})");
+            filter.append('(').append(usernameField).append("={0})");
         }
         else {
             filter.append("(&(").append(usernameField).append("={0})");
-            filter.append(searchFilter).append(")");
+            filter.append(searchFilter).append(')');
         }
         return filter.toString();
     }
@@ -1784,11 +1784,11 @@ public class LdapManager {
     public String getGroupSearchFilter() {
         StringBuilder groupFilter = new StringBuilder();
         if (groupSearchFilter == null) {
-            groupFilter.append("(").append(groupNameField).append("={0})");
+            groupFilter.append('(').append(groupNameField).append("={0})");
         }
         else {
             groupFilter.append("(&(").append(groupNameField).append("={0})");
-            groupFilter.append(groupSearchFilter).append(")");
+            groupFilter.append(groupSearchFilter).append(')');
         }
         return groupFilter.toString();
     }

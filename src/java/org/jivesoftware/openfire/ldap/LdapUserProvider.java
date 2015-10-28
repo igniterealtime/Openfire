@@ -295,7 +295,7 @@ public class LdapUserProvider implements UserProvider {
         //are returned from the directory
         filter.append("(&(");
         filter.append(MessageFormat.format(manager.getSearchFilter(),"*"));
-        filter.append(")");
+        filter.append(')');
         if (fields.size() > 1) {
             filter.append("(|");
         }
@@ -303,13 +303,13 @@ public class LdapUserProvider implements UserProvider {
             String attribute = searchFields.get(field);
             // Make the query be a wildcard search by default. So, if the user searches for
             // "John", make the sanitized search be "John*" instead.
-            filter.append("(").append(attribute).append("=")
+            filter.append('(').append(attribute).append('=')
             	.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         }
         if (fields.size() > 1) {
-            filter.append(")");
+            filter.append(')');
         }
-        filter.append(")");
+        filter.append(')');
         List<String> userlist = manager.retrieveList(
                 manager.getUsernameField(),
                 filter.toString(),

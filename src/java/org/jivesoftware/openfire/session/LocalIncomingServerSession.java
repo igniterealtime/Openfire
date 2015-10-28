@@ -139,7 +139,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (serverVersion[0] >= 1) {
                 openingStream.append(" version=\"1.0\">");
             } else {
-                openingStream.append(">");
+                openingStream.append('>');
             }
             
             connection.deliverRawText(openingStream.toString());

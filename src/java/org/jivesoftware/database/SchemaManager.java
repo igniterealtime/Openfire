@@ -385,7 +385,7 @@ public class SchemaManager {
                     }
                     // Ignore comments and blank lines.
                     if (isSQLCommandPart(line)) {
-                        command.append(" ").append(line);
+                        command.append(' ').append(line);
                     }
                     if (line.trim().endsWith(";")) {
                         break;

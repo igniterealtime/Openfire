@@ -259,9 +259,9 @@ abstract class SocketReadingMode {
             sb.append("<stream:stream ");
         }
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(socketReader.getNamespace()).append("\"");
+        sb.append(socketReader.getNamespace()).append('\"');
         if (socketReader.getExtraNamespaces() != null) {
-            sb.append(" ");
+            sb.append(' ');
             sb.append(socketReader.getExtraNamespaces());
         }
         sb.append(" from=\"");
@@ -271,7 +271,7 @@ abstract class SocketReadingMode {
         sb.append("\" xml:lang=\"");
         sb.append(socketReader.connection.getLanguage());
         sb.append("\" version=\"");
-        sb.append(Session.MAJOR_VERSION).append(".").append(Session.MINOR_VERSION);
+        sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
     }

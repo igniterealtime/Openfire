@@ -170,7 +170,7 @@ public class AuthCheckFilter implements Filter {
             buf.append(request.getRequestURI());
             String qs = request.getQueryString();
             if (qs != null) {
-                buf.append("?").append(qs);
+                buf.append('?').append(qs);
             }
         }
         catch (Exception e) {

@@ -156,7 +156,7 @@ public class FlashCrossDomainServlet extends HttpServlet {
         }
         if(XMPPServer.getInstance().getConnectionManager().getClientSSLListenerPort() > 0) {
             if(multiple) {
-                builder.append(",");
+                builder.append(',');
             }
             builder.append(XMPPServer.getInstance().getConnectionManager().getClientSSLListenerPort());
             multiple = true;
@@ -166,14 +166,14 @@ public class FlashCrossDomainServlet extends HttpServlet {
             // ports for http-binding may not be strictly needed in here, but it doesn't hurt
             if(HttpBindManager.getInstance().getHttpBindUnsecurePort() > 0) {
                 if(multiple) {
-                    builder.append(",");
+                    builder.append(',');
                 }
                 builder.append(HttpBindManager.getInstance().getHttpBindUnsecurePort());
                 multiple = true;
             }
             if (HttpBindManager.getInstance().isHttpsBindActive()) {
                 if (multiple) {
-                    builder.append(",");
+                    builder.append(',');
                 }
                 builder.append(HttpBindManager.getInstance().getHttpBindSecurePort());
             }

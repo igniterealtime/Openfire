@@ -165,11 +165,11 @@ public class DNSUtil {
         StringBuilder sb = new StringBuilder(100);
         for (String key : internalDNS.keySet()) {
             if (sb.length() > 0) {
-                sb.append(",");
+                sb.append(',');
             }
-            sb.append("{").append(key).append(",");
-            sb.append(internalDNS.get(key).getHost()).append(":");
-            sb.append(internalDNS.get(key).getPort()).append("}");
+            sb.append('{').append(key).append(',');
+            sb.append(internalDNS.get(key).getHost()).append(':');
+            sb.append(internalDNS.get(key).getPort()).append('}');
         }
         return sb.toString();
     }

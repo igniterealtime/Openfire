@@ -1559,7 +1559,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         for (int i=0; i<array.length; i++) {
             buf.append(array[i]);
             if (i != array.length-1) {
-                buf.append(",");
+                buf.append(',');
             }
         }
         return buf.toString();
@@ -1574,7 +1574,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private static String fromCollection(Collection<JID> coll) {
         StringBuilder buf = new StringBuilder();
         for (JID elem: coll) {
-            buf.append(elem.toBareJID()).append(",");
+            buf.append(elem.toBareJID()).append(',');
         }
         int endPos = buf.length() > 1 ? buf.length() - 1 : 0;
         return buf.substring(0, endPos);

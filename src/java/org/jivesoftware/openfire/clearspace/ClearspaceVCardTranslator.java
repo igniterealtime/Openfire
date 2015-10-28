@@ -960,7 +960,7 @@ class ClearspaceVCardTranslator {
     private void translateAddressField(Element addressElement, String vCardFieldName, String fieldName, StringBuilder sb) {
         String field = addressElement.elementTextTrim(vCardFieldName);
         if (field != null && !"".equals(field)) {
-            sb.append(fieldName).append(":").append(field).append(",");
+            sb.append(fieldName).append(':').append(field).append(',');
         }
     }
 

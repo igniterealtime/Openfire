@@ -582,7 +582,7 @@ public abstract class StanzaHandler {
         sb.append("\" xml:lang=\"");
         sb.append(connection.getLanguage());
         sb.append("\" version=\"");
-        sb.append(Session.MAJOR_VERSION).append(".").append(Session.MINOR_VERSION);
+        sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
     }

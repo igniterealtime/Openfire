@@ -60,7 +60,7 @@ public class ResourceServlet extends HttpServlet {
 
         if (!disableCompression) {
             if (request.getHeader("accept-encoding") != null &&
-                request.getHeader("accept-encoding").indexOf("gzip") != -1) {
+                    request.getHeader("accept-encoding").contains("gzip")) {
                 compress = true;
             }
             else if (request.getHeader("---------------") != null) {

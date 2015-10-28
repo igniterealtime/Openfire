@@ -105,7 +105,7 @@ public class NodeAffiliate {
                     //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
-                    if (getNode().getNodeID().indexOf("@") >= 0) {
+                    if (getNode().getNodeID().contains("@")) {
                         items.addAttribute("node", publishedItem.getNodeID());                        
                     }
 

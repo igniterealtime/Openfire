@@ -312,7 +312,7 @@ public class BrowserLauncher {
             }
         }
         else if (osName.startsWith("Windows")) {
-            if (osName.indexOf("9") != -1) {
+            if (osName.contains("9")) {
                 jvm = WINDOWS_9x;
             }
             else {

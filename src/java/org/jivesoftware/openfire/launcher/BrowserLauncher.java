@@ -284,7 +284,7 @@ public class BrowserLauncher {
             String mrjVersion = System.getProperty("mrj.version");
             String majorMRJVersion = mrjVersion.substring(0, 3);
             try {
-                double version = Double.valueOf(majorMRJVersion).doubleValue();
+                double version = Double.valueOf(majorMRJVersion);
                 if (version == 2) {
                     jvm = MRJ_2_0;
                 }

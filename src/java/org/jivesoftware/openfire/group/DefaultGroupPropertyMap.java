@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -13,7 +14,6 @@ import java.util.Set;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.util.Immutable;
 import org.jivesoftware.util.PersistableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 	@Override
 	public Collection<V> values() {
 		// custom class needed here to suppress value.remove()
-		return (Collection<V>) new Immutable.Collection<V>(super.values());
+		return Collections.unmodifiableCollection(super.values());
 	}
 
 	@Override

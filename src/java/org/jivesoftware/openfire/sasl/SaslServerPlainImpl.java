@@ -21,10 +21,10 @@
 package org.jivesoftware.openfire.sasl;
 
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
@@ -105,7 +105,7 @@ public class SaslServerPlainImpl implements SaslServer {
         }
         try {
             if(response.length != 0) {
-                String data = new String(response, "UTF8");
+                String data = new String(response, StandardCharsets.UTF_8);
                 StringTokenizer tokens = new StringTokenizer(data, "\0");
                 if (tokens.countTokens() > 2) {
                     username = tokens.nextToken();
@@ -141,9 +141,6 @@ public class SaslServerPlainImpl implements SaslServer {
                 }
                 return null;
             }
-        } catch (UnsupportedEncodingException e) {
-            aborted = true;
-            throw new SaslException("UTF8 not available on platform", e);
         } catch (UnsupportedCallbackException e) {
             aborted = true;
             throw new SaslException("PLAIN authentication failed for: "+username, e);

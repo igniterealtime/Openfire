@@ -20,8 +20,8 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.Certificate;
@@ -86,11 +86,6 @@ public class SASLAuthentication {
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
-
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
-     */
-    protected static String CHARSET = "UTF-8";
 
     private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
 
@@ -232,9 +227,8 @@ public class SASLAuthentication {
      * @param doc the stanza sent by the authenticating entity.
      * @return value that indicates whether the authentication has finished either successfully
      *         or not or if the entity is expected to send a response to a challenge.
-     * @throws UnsupportedEncodingException If UTF-8 charset is not supported.
      */
-    public static Status handle(LocalSession session, Element doc) throws UnsupportedEncodingException {
+    public static Status handle(LocalSession session, Element doc) {
         Status status;
         String mechanism;
         if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
@@ -511,8 +505,7 @@ public class SASLAuthentication {
         }
     }
 
-    private static Status doExternalAuthentication(LocalSession session, Element doc)
-            throws UnsupportedEncodingException {
+    private static Status doExternalAuthentication(LocalSession session, Element doc) {
         // At this point the connection has already been secured using TLS
 
         if (session instanceof IncomingServerSession) {
@@ -524,7 +517,7 @@ public class SASLAuthentication {
                 return Status.needResponse;
             }
     
-            hostname = new String(StringUtils.decodeBase64(hostname), CHARSET);
+            hostname = new String(StringUtils.decodeBase64(hostname), StandardCharsets.UTF_8);
             if (hostname.length() == 0) {
                 hostname = null;
             }
@@ -569,7 +562,7 @@ public class SASLAuthentication {
             Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
             
             // This may be null, we will deal with that later
-            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), CHARSET);
+            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), StandardCharsets.UTF_8);
             String principal = "";
             ArrayList<String> principals = new ArrayList<String>();
             Connection connection = session.getConnection();
@@ -669,9 +662,7 @@ public class SASLAuthentication {
         return false;
     }
 
-    private static Status doSharedSecretAuthentication(LocalSession session, Element doc)
-            throws UnsupportedEncodingException
-    {
+    private static Status doSharedSecretAuthentication(LocalSession session, Element doc) {
         String secretDigest;
         String response = doc.getTextTrim();
         if (response == null || response.length() == 0) {
@@ -681,7 +672,7 @@ public class SASLAuthentication {
         }
 
         // Parse data and obtain username & password
-        String data = new String(StringUtils.decodeBase64(response), CHARSET);
+        String data = new String(StringUtils.decodeBase64(response), StandardCharsets.UTF_8);
         StringTokenizer tokens = new StringTokenizer(data, "\0");
         tokens.nextToken();
         secretDigest = tokens.nextToken();

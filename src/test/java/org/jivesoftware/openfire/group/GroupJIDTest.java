@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.UnsupportedEncodingException;
-
 import org.jivesoftware.util.StringUtils;
 import org.junit.Test;
 import org.xmpp.packet.JID;
@@ -13,7 +11,7 @@ import org.xmpp.packet.JID;
 public class GroupJIDTest {
 
 	@Test
-	public void testBase32Encoding() throws UnsupportedEncodingException {
+	public void testBase32Encoding() {
 		
 		String testGroupName = "Test Group (1)";
 		String testDomainName = "localhost";

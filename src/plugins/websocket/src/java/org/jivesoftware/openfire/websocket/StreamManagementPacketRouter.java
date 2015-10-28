@@ -55,7 +55,7 @@ public class StreamManagementPacketRouter extends SessionPacketRouter {
 	}
 
 	@Override
-	public void route(Element wrappedElement) throws UnsupportedEncodingException, UnknownStanzaException {
+	public void route(Element wrappedElement) throws UnknownStanzaException {
 		
         String tag = wrappedElement.getName();
 		if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {

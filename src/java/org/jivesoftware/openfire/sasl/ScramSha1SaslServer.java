@@ -20,8 +20,6 @@
 
 package org.jivesoftware.openfire.sasl;
 
-
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -211,7 +209,7 @@ public class ScramSha1SaslServer implements SaslServer {
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
             		.getBytes(StandardCharsets.US_ASCII);
-        } catch (UnsupportedEncodingException | UserNotFoundException | NoSuchAlgorithmException e) {
+        } catch (UserNotFoundException | NoSuchAlgorithmException e) {
             throw new SaslException(e.getMessage(), e);
         }
     }

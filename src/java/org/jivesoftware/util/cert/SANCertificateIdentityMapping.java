@@ -1,7 +1,6 @@
 package org.jivesoftware.util.cert;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -96,9 +95,6 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
                         	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
                         	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
                         }
-                    }
-                    catch (UnsupportedEncodingException e) {
-                        // Ignore
                     }
                     catch (IOException e) {
                         // Ignore

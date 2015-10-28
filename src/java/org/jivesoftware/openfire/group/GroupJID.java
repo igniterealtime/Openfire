@@ -1,6 +1,6 @@
 package org.jivesoftware.openfire.group;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.StringUtils;
@@ -127,13 +127,7 @@ public class GroupJID extends JID {
 	 * @return The group name
 	 */
 	private static String decodeNode(String node) {
-		try {
-			return new String(StringUtils.decodeBase32(node), "UTF-8");
-		} catch (UnsupportedEncodingException uee) {
-			// this shouldn't happen, but ...
-			Log.error("Unexpected encoding exception", uee);
-			return null;
-		}
+		return new String(StringUtils.decodeBase32(node), StandardCharsets.UTF_8);
 	}
 
     /**

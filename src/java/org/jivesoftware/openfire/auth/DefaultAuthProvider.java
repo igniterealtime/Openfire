@@ -20,7 +20,6 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -239,7 +238,7 @@ public class DefaultAuthProvider implements AuthProvider {
                    saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, iterations);
                    clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
                    testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-            } catch(SaslException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            } catch(SaslException | NoSuchAlgorithmException e) {
                 Log.warn("Unable to check SCRAM values for PLAIN authentication.");
                 return false;
             }
@@ -285,7 +284,7 @@ public class DefaultAuthProvider implements AuthProvider {
                clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
                storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
                serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
-       } catch (SaslException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+       } catch (SaslException | NoSuchAlgorithmException e) {
            Log.warn("Unable to persist values for SCRAM authentication.");
        }
    

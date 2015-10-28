@@ -25,8 +25,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.xmpp.packet.*;
 
-import java.io.UnsupportedEncodingException;
-
 /**
  * Handles the routing of packets to a particular session. It will invoke all of the appropriate
  * interceptors, before and after having the server process the message.
@@ -60,7 +58,7 @@ public class SessionPacketRouter implements PacketRouter {
     }
 
     public void route(Element wrappedElement)
-            throws UnsupportedEncodingException, UnknownStanzaException {
+            throws UnknownStanzaException {
         String tag = wrappedElement.getName();
         if ("auth".equals(tag) || "response".equals(tag)) {
             SASLAuthentication.handle(session, wrappedElement);

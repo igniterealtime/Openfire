@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.http;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -295,7 +296,7 @@ public class HttpBindServlet extends HttpServlet {
             System.out.println(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
-        final byte[] byteContent = content.getBytes("UTF-8");
+        final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
         if (async) {
             response.getOutputStream().setWriteListener(new WriteListenerImpl(context, byteContent));
         } else {

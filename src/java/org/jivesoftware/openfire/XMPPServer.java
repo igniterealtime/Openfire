@@ -575,7 +575,7 @@ public class XMPPServer {
     public void restart() {
         if (isStandAlone() && isRestartable()) {
             try {
-                Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
+                Class<?> wrapperClass = Class.forName(WRAPPER_CLASSNAME);
                 Method restartMethod = wrapperClass.getMethod("restart", (Class []) null);
                 restartMethod.invoke(null, (Object []) null);
             }
@@ -626,7 +626,7 @@ public class XMPPServer {
             // if we're in a wrapper, we have to tell the wrapper to shut us down
             if (isRestartable()) {
                 try {
-                    Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
+                    Class<?> wrapperClass = Class.forName(WRAPPER_CLASSNAME);
                     Method stopMethod = wrapperClass.getMethod("stop", Integer.TYPE);
                     stopMethod.invoke(null, 0);
                 }

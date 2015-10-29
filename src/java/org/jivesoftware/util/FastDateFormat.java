@@ -87,12 +87,12 @@ public class FastDateFormat {
     private static String cDefaultPattern;
     private static TimeZone cDefaultTimeZone = TimeZone.getDefault();
 
-    private static Map cTimeZoneDisplayCache = new HashMap();
+    private static Map<Object, String> cTimeZoneDisplayCache = new HashMap<>();
 
-    private static Map cInstanceCache = new HashMap(7);
-    private static Map cDateInstanceCache = new HashMap(7);
-    private static Map cTimeInstanceCache = new HashMap(7);
-    private static Map cDateTimeInstanceCache = new HashMap(7);
+    private static Map<Object, FastDateFormat> cInstanceCache = new HashMap<>(7);
+    private static Map<Object, FastDateFormat> cDateInstanceCache = new HashMap<>(7);
+    private static Map<Object, FastDateFormat> cTimeInstanceCache = new HashMap<>(7);
+    private static Map<Object, FastDateFormat> cDateTimeInstanceCache = new HashMap<>(7);
 
     public static FastDateFormat getInstance() {
         return getInstance(getDefaultPattern(), null, null, null);
@@ -178,7 +178,7 @@ public class FastDateFormat {
             key = new Pair(key, symbols);
         }
 
-        FastDateFormat format = (FastDateFormat)cInstanceCache.get(key);
+        FastDateFormat format = cInstanceCache.get(key);
         if (format == null) {
             if (locale == null) {
                 locale = Locale.getDefault();
@@ -260,7 +260,7 @@ public class FastDateFormat {
             key = new Pair(key, locale);
         }
 
-        FastDateFormat format = (FastDateFormat)cTimeInstanceCache.get(key);
+        FastDateFormat format = cTimeInstanceCache.get(key);
 
         if (format == null) {
             int ts;
@@ -310,8 +310,7 @@ public class FastDateFormat {
             key = new Pair(key, locale);
         }
 
-        FastDateFormat format =
-            (FastDateFormat)cDateTimeInstanceCache.get(key);
+        FastDateFormat format = cDateTimeInstanceCache.get(key);
 
         if (format == null) {
             int ds;
@@ -355,7 +354,7 @@ public class FastDateFormat {
                                                   int style,
                                                   Locale locale) {
         Object key = new TimeZoneDisplayKey(tz, daylight, style, locale);
-        String value = (String)cTimeZoneDisplayCache.get(key);
+        String value = cTimeZoneDisplayCache.get(key);
         if (value == null) {
             // This is a very slow call, so cache the results.
             value = tz.getDisplayName(daylight, style, locale);
@@ -376,7 +375,7 @@ public class FastDateFormat {
      */
     private static List parse(String pattern, TimeZone timeZone, Locale locale,
                               DateFormatSymbols symbols) {
-        List rules = new ArrayList();
+        List<Rule> rules = new ArrayList<>();
 
         String[] ERAs = symbols.getEras();
         String[] months = symbols.getMonths();

@@ -39,7 +39,7 @@ public final class GraphicUtils {
     };
     protected final static MediaTracker tracker = new MediaTracker(component);
 
-    private static Hashtable imageCache = new Hashtable();
+    private static Hashtable<String, Image> imageCache = new Hashtable<>();
 
     private GraphicUtils() {
     }

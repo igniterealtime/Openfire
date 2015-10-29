@@ -41,6 +41,7 @@ import org.jivesoftware.openfire.stats.i18nStatistic;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class ProxyConnectionManager {
 
     private static final String proxyTransferRate = "proxyTransferRate";
 
-    private Map<String, ProxyTransfer> connectionMap;
+    private Cache<String, ProxyTransfer> connectionMap;
 
     private final Object connectionLock = new Object();
 

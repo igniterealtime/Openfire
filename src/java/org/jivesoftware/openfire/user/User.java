@@ -471,26 +471,26 @@ public class User implements Cacheable, Externalizable, Result {
     /**
      * Map implementation that updates the database when properties are modified.
      */
-    private class PropertiesMap extends AbstractMap {
+    private class PropertiesMap extends AbstractMap<String, String> {
 
         @Override
-		public Object put(Object key, Object value) {
-            Map<String,Object> eventParams = new HashMap<String,Object>();
-            Object answer;
-            String keyString = (String) key;
+		public String put(String key, String value) {
+            Map<String,Object> eventParams = new HashMap<>();
+            String answer;
+            String keyString = key;
             synchronized (getName() + keyString.intern()) {
                 if (properties.containsKey(keyString)) {
                     String originalValue = properties.get(keyString);
-                    answer = properties.put(keyString, (String)value);
-                    updateProperty(keyString, (String)value);
+                    answer = properties.put(keyString, value);
+                    updateProperty(keyString, value);
                     // Configure event.
                     eventParams.put("type", "propertyModified");
                     eventParams.put("propertyKey", key);
                     eventParams.put("originalValue", originalValue);
                 }
                 else {
-                    answer = properties.put(keyString, (String)value);
-                    insertProperty(keyString, (String)value);
+                    answer = properties.put(keyString, value);
+                    insertProperty(keyString, value);
                     // Configure event.
                     eventParams.put("type", "propertyAdded");
                     eventParams.put("propertyKey", key);
@@ -503,7 +503,7 @@ public class User implements Cacheable, Externalizable, Result {
         }
 
         @Override
-		public Set<Entry> entrySet() {
+		public Set<Entry<String, String>> entrySet() {
             return new PropertiesEntrySet();
         }
     }
@@ -511,26 +511,26 @@ public class User implements Cacheable, Externalizable, Result {
     /**
      * Set implementation that updates the database when properties are deleted.
      */
-    private class PropertiesEntrySet extends AbstractSet {
+    private class PropertiesEntrySet extends AbstractSet<Map.Entry<String, String>> {
 
         @Override
-		public int size() {
+        public int size() {
             return properties.entrySet().size();
         }
 
         @Override
-		public Iterator iterator() {
-            return new Iterator() {
+		public Iterator<Map.Entry<String, String>> iterator() {
+            return new Iterator<Map.Entry<String, String>>() {
 
-                Iterator iter = properties.entrySet().iterator();
-                Map.Entry current = null;
+                Iterator<Map.Entry<String, String>> iter = properties.entrySet().iterator();
+                Map.Entry<String,String> current = null;
 
                 public boolean hasNext() {
                     return iter.hasNext();
                 }
 
-                public Object next() {
-                    current = (Map.Entry)iter.next();
+                public Map.Entry<String, String> next() {
+                    current = iter.next();
                     return current;
                 }
 
@@ -538,11 +538,11 @@ public class User implements Cacheable, Externalizable, Result {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
-                    String key = (String)current.getKey();
+                    String key = current.getKey();
                     deleteProperty(key);
                     iter.remove();
                     // Fire event.
-                    Map<String,Object> params = new HashMap<String,Object>();
+                    Map<String,Object> params = new HashMap<>();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", key);
                     UserEventDispatcher.dispatchEvent(User.this,

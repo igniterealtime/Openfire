@@ -98,17 +98,17 @@ public class BrowserLauncher {
     /**
      * The com.apple.mrj.MRJFileUtils class
      */
-    private static Class mrjFileUtilsClass;
+    private static Class<?> mrjFileUtilsClass;
 
     /**
      * The com.apple.mrj.MRJOSType class
      */
-    private static Class mrjOSTypeClass;
+    private static Class<?> mrjOSTypeClass;
 
     /**
      * The com.apple.MacOS.AEDesc class
      */
-    private static Class aeDescClass;
+    private static Class<?> aeDescClass;
 
     /**
      * The <init>(int) method of com.apple.MacOS.AETarget
@@ -345,19 +345,19 @@ public class BrowserLauncher {
         switch (jvm) {
             case MRJ_2_0:
                 try {
-                    Class aeTargetClass = Class.forName("com.apple.MacOS.AETarget");
-                    Class osUtilsClass = Class.forName("com.apple.MacOS.OSUtils");
-                    Class appleEventClass = Class.forName("com.apple.MacOS.AppleEvent");
-                    Class aeClass = Class.forName("com.apple.MacOS.ae");
+                    Class<?> aeTargetClass = Class.forName("com.apple.MacOS.AETarget");
+                    Class<?> osUtilsClass = Class.forName("com.apple.MacOS.OSUtils");
+                    Class<?> appleEventClass = Class.forName("com.apple.MacOS.AppleEvent");
+                    Class<?> aeClass = Class.forName("com.apple.MacOS.ae");
                     aeDescClass = Class.forName("com.apple.MacOS.AEDesc");
 
-                    aeTargetConstructor = aeTargetClass.getDeclaredConstructor(new Class[]{int.class});
-                    appleEventConstructor = appleEventClass.getDeclaredConstructor(new Class[]{int.class, int.class, aeTargetClass, int.class, int.class});
-                    aeDescConstructor = aeDescClass.getDeclaredConstructor(new Class[]{String.class});
+                    aeTargetConstructor = aeTargetClass.getDeclaredConstructor(int.class);
+                    appleEventConstructor = appleEventClass.getDeclaredConstructor(int.class, int.class, aeTargetClass, int.class, int.class);
+                    aeDescConstructor = aeDescClass.getDeclaredConstructor(String.class);
 
-                    makeOSType = osUtilsClass.getDeclaredMethod("makeOSType", new Class[]{String.class});
-                    putParameter = appleEventClass.getDeclaredMethod("putParameter", new Class[]{int.class, aeDescClass});
-                    sendNoReply = appleEventClass.getDeclaredMethod("sendNoReply", new Class[]{});
+                    makeOSType = osUtilsClass.getDeclaredMethod("makeOSType", String.class);
+                    putParameter = appleEventClass.getDeclaredMethod("putParameter", int.class, aeDescClass);
+                    sendNoReply = appleEventClass.getDeclaredMethod("sendNoReply");
 
                     Field keyDirectObjectField = aeClass.getDeclaredField("keyDirectObject");
                     keyDirectObject = (Integer)keyDirectObjectField.get(null);
@@ -389,9 +389,9 @@ public class BrowserLauncher {
                     mrjOSTypeClass = Class.forName("com.apple.mrj.MRJOSType");
                     Field systemFolderField = mrjFileUtilsClass.getDeclaredField("kSystemFolderType");
                     kSystemFolderType = systemFolderField.get(null);
-                    findFolder = mrjFileUtilsClass.getDeclaredMethod("findFolder", new Class[]{mrjOSTypeClass});
-                    getFileCreator = mrjFileUtilsClass.getDeclaredMethod("getFileCreator", new Class[]{File.class});
-                    getFileType = mrjFileUtilsClass.getDeclaredMethod("getFileType", new Class[]{File.class});
+                    findFolder = mrjFileUtilsClass.getDeclaredMethod("findFolder", mrjOSTypeClass);
+                    getFileCreator = mrjFileUtilsClass.getDeclaredMethod("getFileCreator", File.class);
+                    getFileType = mrjFileUtilsClass.getDeclaredMethod("getFileType", File.class);
                 }
                 catch (ClassNotFoundException cnfe) {
                     errorMessage = cnfe.getMessage();
@@ -416,9 +416,9 @@ public class BrowserLauncher {
                 break;
             case MRJ_3_0:
                 try {
-                    Class linker = Class.forName("com.apple.mrj.jdirect.Linker");
-                    Constructor constructor = linker.getConstructor(new Class[]{Class.class});
-                    linkage = constructor.newInstance(new Object[]{BrowserLauncher.class});
+                    Class<?> linker = Class.forName("com.apple.mrj.jdirect.Linker");
+                    Constructor constructor = linker.getConstructor(Class.class);
+                    linkage = constructor.newInstance(BrowserLauncher.class);
                 }
                 catch (ClassNotFoundException cnfe) {
                     errorMessage = cnfe.getMessage();
@@ -444,7 +444,7 @@ public class BrowserLauncher {
             case MRJ_3_1:
                 try {
                     mrjFileUtilsClass = Class.forName("com.apple.mrj.MRJFileUtils");
-                    openURL = mrjFileUtilsClass.getDeclaredMethod("openURL", new Class[]{String.class});
+                    openURL = mrjFileUtilsClass.getDeclaredMethod("openURL", String.class);
                 }
                 catch (ClassNotFoundException cnfe) {
                     errorMessage = cnfe.getMessage();

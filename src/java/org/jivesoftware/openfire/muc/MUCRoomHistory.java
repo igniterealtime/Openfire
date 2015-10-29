@@ -80,7 +80,7 @@ public final class MUCRoomHistory {
             // TODO Make this update in a separate thread
             for (Iterator<Message> it = getMessageHistory(); it.hasNext();) {
                 Message message = it.next();
-                Element delayElement = message.getChildElement("x", "jabber:x:delay");
+                Element delayElement = message.getChildElement("delay", "urn:xmpp:delay");
                 if (room.canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute
                     try {
@@ -101,16 +101,13 @@ public final class MUCRoomHistory {
 
         // Add the delay information to the message
         Element delayInformation = packetToAdd.addChildElement("delay", "urn:xmpp:delay");
-        Element delayInformationOld = packetToAdd.addChildElement("x", "jabber:x:delay");
         Date current = new Date();
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(current));
-        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(current));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             try {
                 MUCRole role = room.getOccupant(packet.getFrom().getResource());
                 delayInformation.addAttribute("from", role.getUserAddress().toString());
-                delayInformationOld.addAttribute("from", role.getUserAddress().toString());
             }
             catch (UserNotFoundException e) {
                 // Ignore.
@@ -119,7 +116,6 @@ public final class MUCRoomHistory {
         else {
             // Set the Room JID as the "from" attribute
             delayInformation.addAttribute("from", packet.getFrom().toString());
-            delayInformationOld.addAttribute("from", packet.getFrom().toString());
         }
         historyStrategy.addMessage(packetToAdd);
     }
@@ -170,18 +166,14 @@ public final class MUCRoomHistory {
 
         // Add the delay information to the message
         Element delayInformation = message.addChildElement("delay", "urn:xmpp:delay");
-        Element delayInformationOld = message.addChildElement("x", "jabber:x:delay");
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(sentDate));
-        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(sentDate));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             delayInformation.addAttribute("from", senderJID);
-            delayInformationOld.addAttribute("from", senderJID);
         }
         else {
             // Set the Room JID as the "from" attribute
             delayInformation.addAttribute("from", room.getRole().getRoleAddress().toString());
-            delayInformationOld.addAttribute("from", room.getRole().getRoleAddress().toString());
         }
         historyStrategy.addMessage(message);
     }

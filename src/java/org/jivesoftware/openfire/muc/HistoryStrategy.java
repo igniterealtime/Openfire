@@ -325,8 +325,8 @@ public class HistoryStrategy {
     private static class MessageComparator implements Comparator<Message> {
         @Override
         public int compare(Message o1, Message o2) {
-            String stamp1 = o1.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
-            String stamp2 = o2.getChildElement("x", "jabber:x:delay").attributeValue("stamp");
+            String stamp1 = o1.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");
+            String stamp2 = o2.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");
             return stamp1.compareTo(stamp2);
         }
     }

@@ -200,7 +200,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                                 "http://jabber.org/protocol/packet#event");
                         childElement.addAttribute("incoming", subscription.isIncoming() ? "true" : "false");
                         childElement.addAttribute("processed", subscription.isProcessed() ? "true" : "false");
-                        childElement.addAttribute("date", XMPPDateTimeFormat.formatOld(interceptedPacket.getCreationDate()));
+                        childElement.addAttribute("date", XMPPDateTimeFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
                         routingTable.routePacket(message.getTo(), message, true);

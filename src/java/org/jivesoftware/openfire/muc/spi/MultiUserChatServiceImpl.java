@@ -976,9 +976,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     public void removeUserAllowedToCreate(JID userJID) {
-        List<JID> asList = new ArrayList<JID>();
-        asList.add(userJID);
-    	removeUsersAllowedToCreate(asList);
+    	removeUsersAllowedToCreate(Collections.singleton(userJID));
     }
 
     public void initialize(XMPPServer server) {

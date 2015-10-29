@@ -21,7 +21,7 @@
 package org.jivesoftware.openfire.pep;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -266,12 +266,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * the PEP identity to the respective disco#info results.
      */
     public Iterator<Element> getIdentities() {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "pubsub");
         identity.addAttribute("type", "pep");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
     /**

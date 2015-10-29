@@ -413,11 +413,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     }
 
     public Iterator<String> getFeatures() {
-        List<String> features = new ArrayList<String>();
-        features.add("http://jabber.org/protocol/disco#items");
-        // TODO Comment out this line when publishing of client items is implemented
-        //features.add("http://jabber.org/protocol/disco#publish");
-        return features.iterator();
+        return Collections.singleton(NAMESPACE_DISCO_ITEMS).iterator();
     }
 
     public void joinedCluster() {

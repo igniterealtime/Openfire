@@ -22,6 +22,7 @@ package org.jivesoftware.openfire;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -396,9 +397,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     }
 
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add(NAMESPACE);
-        return features.iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
     @Override

@@ -30,9 +30,8 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:private protocol. Clients
@@ -117,8 +116,6 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
     }
 
     public Iterator<String> getFeatures() {
-        List<String> features = new ArrayList<String>();
-        features.add("jabber:iq:private");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:private").iterator();
     }
 }

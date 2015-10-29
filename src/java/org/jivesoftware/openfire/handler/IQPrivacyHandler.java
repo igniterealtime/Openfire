@@ -36,7 +36,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -416,9 +416,7 @@ public class IQPrivacyHandler extends IQHandler
     }
 
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("jabber:iq:privacy");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:privacy").iterator();
     }
 
     public void userCreated(User user, Map params) {

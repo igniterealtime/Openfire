@@ -502,7 +502,7 @@ public class FastDateFormat {
     }
 
     private static String parseToken(String pattern, int[] indexRef) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         int i = indexRef[0];
         int length = pattern.length();

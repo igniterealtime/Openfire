@@ -300,7 +300,7 @@ public class LocaleUtils {
      */
     public static String getTimeZoneName(String zoneID, Locale locale) {
         TimeZone zone = TimeZone.getTimeZone(zoneID);
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         // Add in the GMT part to the name. First, figure out the offset.
         int offset = zone.getRawOffset();
         if (zone.inDaylightTime(new Date()) && zone.useDaylightTime()) {

@@ -221,7 +221,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
                 ignoreString.append(username);
             }
             else {
-                ignoreString.append(",").append(username);
+                ignoreString.append(',').append(username);
             }
         }
         JiveGlobals.setProperty("xmpp.audit.ignore", ignoreString.toString());

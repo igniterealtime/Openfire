@@ -756,7 +756,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         for (int i=0; i<array.length; i++) {
             buf.append(array[i]);
             if (i != array.length-1) {
-                buf.append(",");
+                buf.append(',');
             }
         }
         return buf.toString();

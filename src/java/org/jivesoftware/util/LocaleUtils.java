@@ -307,7 +307,7 @@ public class LocaleUtils {
             offset += (int)JiveConstants.HOUR;
         }
 
-        buf.append("(");
+        buf.append('(');
         if (offset < 0) {
             buf.append("GMT-");
         }
@@ -317,9 +317,9 @@ public class LocaleUtils {
         offset = Math.abs(offset);
         int hours = offset / (int)JiveConstants.HOUR;
         int minutes = (offset % (int)JiveConstants.HOUR) / (int)JiveConstants.MINUTE;
-        buf.append(hours).append(":");
+        buf.append(hours).append(':');
         if (minutes < 10) {
-            buf.append("0").append(minutes);
+            buf.append('0').append(minutes);
         }
         else {
             buf.append(minutes);

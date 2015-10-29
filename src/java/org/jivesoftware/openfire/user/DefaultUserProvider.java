@@ -500,10 +500,10 @@ public class DefaultUserProvider implements UserProvider {
                 sb.delete(0, sb.length());
                 count = 0;
             }
-            sb.append(element).append(",");
+            sb.append(element).append(',');
             count++;
         }
-        sb.append(".");
+        sb.append('.');
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 }

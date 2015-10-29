@@ -353,7 +353,7 @@ class XMLLightweightParser {
             } else if (status == XMLLightweightParser.HEAD) {
                 if (ch == ' ' || ch == '>') {
                     // Append > to head to allow searching </tag>
-                    head.append(">");
+                    head.append('>');
                     if(ch == '>')
                         status = XMLLightweightParser.OUTSIDE;
                     else

@@ -308,6 +308,6 @@ public class PublishedItem implements Serializable {
      */
     public static String getItemKey(String nodeId, String itemId) {
     	return new StringBuilder(nodeId)
-    		.append(":").append(itemId).toString();
+    		.append(':').append(itemId).toString();
     }
 }

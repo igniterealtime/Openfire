@@ -1818,14 +1818,14 @@ public class PubSubPersistenceManager {
 	private static String encodeWithComma(Collection<String> strings) {
         StringBuilder sb = new StringBuilder(90);
         for (String group : strings) {
-            sb.append(group).append(",");
+            sb.append(group).append(',');
         }
         if (!strings.isEmpty()) {
             sb.setLength(sb.length()-1);
         }
         else {
             // Add a blank so an empty string is never replaced with NULL (oracle...arggg!!!)
-            sb.append(" ");
+            sb.append(' ');
         }
         return sb.toString();
     }

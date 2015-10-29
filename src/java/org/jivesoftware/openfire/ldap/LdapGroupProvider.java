@@ -165,7 +165,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
-        filter.append("(").append(key).append("=").append(LdapManager.sanitizeSearchFilter(value));
+        filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value));
         filter.append("))");
         if (Log.isDebugEnabled()) {
             Log.debug("Trying to find group names using query: " + filter.toString());
@@ -191,7 +191,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         StringBuilder filter = new StringBuilder();
         // Make the query be a wildcard search by default. So, if the user searches for
         // "Test", make the sanitized search be "Test*" instead.
-        filter.append("(").append(manager.getGroupNameField()).append("=")
+        filter.append('(').append(manager.getGroupNameField()).append('=')
         		.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         // Perform the LDAP query
         return manager.retrieveList(
@@ -268,9 +268,9 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             StringBuilder userFilter = new StringBuilder();
                             userFilter.append("(&(");
                             userFilter.append(ldapName.get(ldapName.size() - 1));
-                            userFilter.append(")");
+                            userFilter.append(')');
                             userFilter.append(MessageFormat.format(manager.getSearchFilter(), "*"));
-                            userFilter.append(")");
+                            userFilter.append(')');
                             NamingEnumeration usrAnswer = ctx.search("",
                                     userFilter.toString(), searchControls);
                             if (usrAnswer != null && usrAnswer.hasMoreElements()) {

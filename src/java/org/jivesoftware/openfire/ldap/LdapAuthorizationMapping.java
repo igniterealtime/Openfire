@@ -79,7 +79,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
         princSearchFilter = JiveGlobals.getProperty("ldap.princSearchFilter");
         StringBuilder filter = new StringBuilder();
         if(princSearchFilter == null) {
-            filter.append("(").append(princField).append("={0})");
+            filter.append('(').append(princField).append("={0})");
         } else {
             filter.append("(&(").append(princField).append("={0})(");
             filter.append(princSearchFilter).append("))");

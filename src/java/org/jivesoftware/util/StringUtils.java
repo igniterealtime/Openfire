@@ -458,7 +458,7 @@ public class StringUtils {
 
         for (i = 0; i < bytes.length; i++) {
             if (((int)bytes[i] & 0xff) < 0x10) {
-                buf.append("0");
+                buf.append('0');
             }
             buf.append(Long.toString((int)bytes[i] & 0xff, 16));
         }
@@ -1010,7 +1010,7 @@ public class StringUtils {
         else if (delta < JiveConstants.HOUR) {
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins==1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         }
@@ -1019,10 +1019,10 @@ public class StringUtils {
             delta -= hours * JiveConstants.HOUR;
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(hours).append(" ");
+            sb.append(hours).append(' ');
             sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
             sb.append(", ");
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         } else {
@@ -1032,13 +1032,13 @@ public class StringUtils {
             delta -= hours * JiveConstants.HOUR;
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(days).append(" ");
+            sb.append(days).append(' ');
             sb.append((days == 1) ? LocaleUtils.getLocalizedString("global.day") : LocaleUtils.getLocalizedString("global.days"));
             sb.append(", ");
-            sb.append(hours).append(" ");
+            sb.append(hours).append(' ');
             sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
             sb.append(", ");
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         }

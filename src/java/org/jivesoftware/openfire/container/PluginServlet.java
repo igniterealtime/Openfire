@@ -547,7 +547,7 @@ public class PluginServlet extends HttpServlet {
         for (URL url : pluginClassloader.getURLs()) {
             File file = new File(url.getFile());
 
-            classpath.append(file.getAbsolutePath()).append(";");
+            classpath.append(file.getAbsolutePath()).append(';');
         }
 
         // Load all jars from lib
@@ -568,7 +568,7 @@ public class PluginServlet extends HttpServlet {
         classpath.append(openfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
 
         if (pluginEnv.getClassesDir() != null) {
-            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
+            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(';');
         }
         return classpath.toString();
     }

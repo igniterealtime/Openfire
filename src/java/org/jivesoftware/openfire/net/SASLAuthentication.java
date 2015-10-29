@@ -722,7 +722,7 @@ public class SASLAuthentication {
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {
             String successData_b64 = StringUtils.encodeBase64(successData).trim();
-            reply.append(">").append(successData_b64).append("</success>");
+            reply.append('>').append(successData_b64).append("</success>");
         }
         else {
             reply.append("/>");

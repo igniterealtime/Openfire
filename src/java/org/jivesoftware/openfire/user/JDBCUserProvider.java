@@ -319,7 +319,7 @@ public class JDBCUserProvider implements UserProvider {
             sql.append(searchSQL);
             boolean first = true;
             if (fields.contains("Username")) {
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(usernameField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -329,7 +329,7 @@ public class JDBCUserProvider implements UserProvider {
                 if (!first) {
                     sql.append(" AND");
                 }
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(nameField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -339,7 +339,7 @@ public class JDBCUserProvider implements UserProvider {
                 if (!first) {
                     sql.append(" AND");
                 }
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(emailField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -416,10 +416,10 @@ public class JDBCUserProvider implements UserProvider {
                 sb.delete(0, sb.length());
                 count = 0;
             }
-            sb.append(element).append(",");
+            sb.append(element).append(',');
             count++;
         }
-        sb.append(".");
+        sb.append('.');
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 

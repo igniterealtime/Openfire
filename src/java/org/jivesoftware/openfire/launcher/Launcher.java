@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.launcher;
 
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -30,6 +31,10 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -51,10 +56,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -64,11 +67,8 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.jdesktop.jdic.tray.SystemTray;
-import org.jdesktop.jdic.tray.TrayIcon;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
 /**
  * Graphical launcher for Openfire.
  *
@@ -95,11 +95,11 @@ public class Launcher {
     /**
      * Creates a new Launcher object.
      */
-    public Launcher() {
+    public Launcher() throws AWTException {
         // Initialize the SystemTray now (to avoid a bug!)
         SystemTray tray = null;
         try {
-            tray = SystemTray.getDefaultSystemTray();
+            tray = SystemTray.getSystemTray();
         }
         catch (Throwable e) {
             // Log to System error instead of standard error log.
@@ -190,27 +190,27 @@ public class Launcher {
         mainPanel.add(toolbar, BorderLayout.SOUTH);
 
         // create the main menu of the system tray icon
-        JPopupMenu menu = new JPopupMenu(appName + " Menu");
+        PopupMenu menu = new PopupMenu(appName + " Menu");
 
-        final JMenuItem showMenuItem = new JMenuItem("Hide");
+        final MenuItem showMenuItem = new MenuItem("Hide");
         showMenuItem.setActionCommand("Hide/Show");
         menu.add(showMenuItem);
 
-        final JMenuItem startMenuItem = new JMenuItem("Start");
+        final MenuItem startMenuItem = new MenuItem("Start");
         startMenuItem.setActionCommand("Start");
         menu.add(startMenuItem);
 
-        final JMenuItem stopMenuItem = new JMenuItem("Stop");
+        final MenuItem stopMenuItem = new MenuItem("Stop");
         stopMenuItem.setActionCommand("Stop");
         menu.add(stopMenuItem);
 
-        final JMenuItem browserMenuItem = new JMenuItem("Launch Admin");
+        final MenuItem browserMenuItem = new MenuItem("Launch Admin");
         browserMenuItem.setActionCommand("Launch Admin");
         menu.add(browserMenuItem);
 
         menu.addSeparator();
 
-        final JMenuItem quitMenuItem = new JMenuItem("Quit");
+        final MenuItem quitMenuItem = new MenuItem("Quit");
         quitMenuItem.setActionCommand("Quit");
         menu.add(quitMenuItem);
 
@@ -234,7 +234,7 @@ public class Launcher {
 
                     // Change to the "on" icon.
                     frame.setIconImage(onIcon.getImage());
-                    trayIcon.setIcon(onIcon);
+                    trayIcon.setImage(onIcon.getImage());
 
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
@@ -261,7 +261,7 @@ public class Launcher {
                     stopApplication();
                     // Change to the "off" button.
                     frame.setIconImage(offIcon.getImage());
-                    trayIcon.setIcon(offIcon);
+                    trayIcon.setImage(offIcon.getImage());
                     // Adjust buttons and menu items.
                     frame.setCursor(Cursor.getDefaultCursor());
                     browserButton.setEnabled(false);
@@ -284,12 +284,12 @@ public class Launcher {
                     if (frame.isVisible()) {
                         frame.setVisible(false);
                         frame.setState(Frame.ICONIFIED);
-                        showMenuItem.setText("Show");
+                        showMenuItem.setLabel("Show");
                     }
                     else {
                         frame.setVisible(true);
                         frame.setState(Frame.NORMAL);
-                        showMenuItem.setText("Hide");
+                        showMenuItem.setLabel("Hide");
                     }
                 }
             }
@@ -309,12 +309,12 @@ public class Launcher {
         showMenuItem.addActionListener(actionListener);
 
         // Set the system tray icon with the menu
-        trayIcon = new TrayIcon(offIcon, appName, menu);
-        trayIcon.setIconAutoSize(true);
+        trayIcon = new TrayIcon(offIcon.getImage(), appName, menu);
+        trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(actionListener);
 
         if (tray != null) {
-            tray.addTrayIcon(trayIcon);
+            tray.add(trayIcon);
         }
 
         frame.addWindowListener(new WindowAdapter() {
@@ -328,7 +328,7 @@ public class Launcher {
 			public void windowIconified(WindowEvent e) {
                 // Make the window disappear when minimized
                 frame.setVisible(false);
-                showMenuItem.setText("Show");
+                showMenuItem.setLabel("Show");
             }
         });
 
@@ -387,7 +387,7 @@ public class Launcher {
     /**
      * Creates a new GUI launcher instance.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws AWTException {
         new Launcher();
     }
 
@@ -521,7 +521,7 @@ public class Launcher {
             		}
             	};
             	waiter.start();
-            	try { 
+            	try {
             		// wait for a maximum of ten seconds
             		Thread.sleep(10000);
             		waiter.interrupt();

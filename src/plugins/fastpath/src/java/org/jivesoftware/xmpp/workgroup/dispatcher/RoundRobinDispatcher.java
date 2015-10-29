@@ -22,18 +22,20 @@ package org.jivesoftware.xmpp.workgroup.dispatcher;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
 import org.jivesoftware.openfire.fastpath.util.WorkgroupUtils;
 import org.jivesoftware.util.BeanUtils;
 import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.xmpp.workgroup.AgentSession;
@@ -82,7 +84,7 @@ public class RoundRobinDispatcher implements Dispatcher, AgentSessionListener {
      *
      * Let's the server route offer responses to the correct offer.
      */
-    private ConcurrentHashSet<Offer> offers = new ConcurrentHashSet<Offer>();
+    private Set<Offer> offers = Collections.newSetFromMap(new ConcurrentHashMap<Offer, Boolean>());
 
     /**
      * Creates a new dispatcher for the queue. The dispatcher will have a Timer with a unique task

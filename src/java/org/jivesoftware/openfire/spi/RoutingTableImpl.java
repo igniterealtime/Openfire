@@ -34,7 +34,6 @@ import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -43,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -194,7 +194,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                             jids = new HashSet<String>();
                         }
                         else {
-                            jids = new ConcurrentHashSet<String>();
+                            jids = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
                         }
                     }
                     jids.add(route.toString());

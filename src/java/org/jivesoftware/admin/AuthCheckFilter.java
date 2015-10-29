@@ -22,8 +22,10 @@ package org.jivesoftware.admin;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -35,7 +37,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class AuthCheckFilter implements Filter {
 
 	private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
 
-    private static Set<String> excludes = new ConcurrentHashSet<String>();
+    private static Set<String> excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     private ServletContext context;
     private String defaultLoginPage;

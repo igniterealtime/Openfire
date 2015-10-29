@@ -28,7 +28,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -122,7 +122,7 @@ public class ChangeSharedSecret extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

@@ -28,7 +28,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -98,7 +98,7 @@ public class DeleteGroup extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

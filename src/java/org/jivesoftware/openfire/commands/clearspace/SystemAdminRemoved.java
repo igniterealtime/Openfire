@@ -16,18 +16,18 @@
 
 package org.jivesoftware.openfire.commands.clearspace;
 
+import org.dom4j.Element;
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.dom4j.Element;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 /**
  * Notifies that a user has had its system administrator status revoked.
@@ -98,7 +98,7 @@ public class SystemAdminRemoved extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

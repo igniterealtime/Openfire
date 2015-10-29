@@ -28,7 +28,7 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +155,7 @@ public class GetListGroups extends AdHocCommand {
 
     @Override
 	protected List<AdHocCommand.Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

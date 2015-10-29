@@ -19,17 +19,17 @@
  */
 package org.jivesoftware.openfire.commands.admin.user;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.User;
-import org.dom4j.Element;
+import org.jivesoftware.openfire.user.UserManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  *  An adhoc command to retrieve the properties of the user.
@@ -120,7 +120,7 @@ public class UserProperties extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

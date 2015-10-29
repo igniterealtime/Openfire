@@ -19,10 +19,6 @@
 
 package org.jivesoftware.openfire.commands.admin.group;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -34,6 +30,10 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Command that allows to create and configure new goups.
@@ -188,7 +188,7 @@ public class AddGroup extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

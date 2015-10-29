@@ -21,7 +21,6 @@ package org.jivesoftware.openfire.http;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
@@ -653,11 +652,6 @@ public class HttpSession extends LocalClientSession {
             for (Element packet : packetsToSend.remove()) {
                 try {
                     router.route(packet);
-                }
-                catch (UnsupportedEncodingException e) {
-                    Log.error(
-                            "Client provided unsupported encoding type in auth request",
-                            e);
                 }
                 catch (UnknownStanzaException e) {
                     Log.error("Client provided unknown packet type", e);

@@ -20,8 +20,8 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -2239,16 +2238,11 @@ public class LdapManager {
                     }
                     else if (c >= 0x080) { 
                         // higher-order 2, 3 and 4-byte UTF-8 chars
-                        try {
-                            byte[] utf8bytes = String.valueOf(c).getBytes("UTF8");
-                            for (byte b: utf8bytes)
-                            {
-                            	result.append(String.format("\\%02x", b));
-                            }
-                        } catch (UnsupportedEncodingException e) {
-                            // ignore
+                        byte[] utf8bytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+                        for (byte b : utf8bytes) {
+                            result.append(String.format("\\%02x", b));
                         }
-            		}
+                    }
                 }
             }
             return result.toString();

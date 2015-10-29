@@ -28,9 +28,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.concurrent.locks.ReentrantLock;
@@ -76,11 +76,6 @@ public class NIOConnection implements Connection {
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
 
     public enum State { RUNNING, CLOSING, CLOSED }
-
-    /**
-     * The utf-8 charset for decoding and encoding XMPP packet streams.
-     */
-    public static final String CHARSET = "UTF-8";
 
     private LocalSession session;
     private IoSession ioSession;
@@ -361,7 +356,7 @@ public class NIOConnection implements Connection {
             try {
                 //Charset charset = Charset.forName(CHARSET);
                 //buffer.putString(text, charset.newEncoder());
-                buffer.put(text.getBytes(CHARSET));
+                buffer.put(text.getBytes(StandardCharsets.UTF_8));
                 if (flashClient) {
                     buffer.put((byte) '\0');
                 }
@@ -523,7 +518,7 @@ public class NIOConnection implements Connection {
 
         @Override
 		protected CharsetEncoder initialValue() {
-            return Charset.forName(CHARSET).newEncoder()
+            return StandardCharsets.UTF_8.newEncoder()
 				.onMalformedInput(CodingErrorAction.REPORT)
 				.onUnmappableCharacter(CodingErrorAction.REPORT);
         }

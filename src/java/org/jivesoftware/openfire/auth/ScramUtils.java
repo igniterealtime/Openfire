@@ -20,7 +20,6 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -28,8 +27,6 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
-
-import org.jivesoftware.util.JiveGlobals;
 
 /**
  * A utility class that provides methods that are useful for dealing with
@@ -62,7 +59,7 @@ public class ScramUtils {
     }
     
     public static byte[] computeHmac(final byte[] key, final String string)
-            throws SaslException, UnsupportedEncodingException {
+            throws SaslException {
         Mac mac = createSha1Hmac(key);
         mac.update(string.getBytes(StandardCharsets.US_ASCII));
         return mac.doFinal();

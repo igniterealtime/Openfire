@@ -59,7 +59,8 @@
     boolean update = request.getParameter("update") != null;
     boolean clusteringEnabled = ParamUtils.getBooleanParameter(request, "clusteringEnabled");
     boolean updateSucess = false;
-
+	String clusterPlugin = ParamUtils.getParameter(request, "clusterPlugin");
+    
     if (update) {
         if (!clusteringEnabled) {
             ClusterManager.setClusteringEnabled(false);
@@ -69,6 +70,8 @@
         }
         else {
             if (ClusterManager.isClusteringAvailable()) {
+            	// set cluster support plugin name 
+            	JiveGlobals.setProperty("cluster.plugin.name", clusterPlugin);
                 ClusterManager.setClusteringEnabled(true);
                 // Log the event
                 webManager.logEvent("enabled clustering", null);
@@ -84,8 +87,11 @@
     boolean clusteringAvailable = !usingEmbeddedDB && ClusterManager.isClusteringAvailable();
     int maxClusterNodes = ClusterManager.getMaxClusterNodes();
     clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
+    
+    Collection<String> supportClusterPlugins = CacheFactory.getClusterSupportPluginNames();
 
     Collection<ClusterNodeInfo> clusterNodesInfo = ClusterManager.getNodesInfo();
+   
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
     Collection<Object> statistics =
@@ -194,7 +200,26 @@
 		<table cellpadding="3" cellspacing="0" border="0">
 		<tbody>
 			<tr>
-				<td width="1%" valign="top" nowrap>
+				<td width="10%" style="text-align:center;vertical-align:middle;" nowrap>
+						<select name="clusterPlugin"> 
+							<%
+								for(String name : supportClusterPlugins) {
+									%>
+										<option><%=name%></option>
+									<%
+								}
+							%>
+							
+						</select>
+				</td>
+				<td  width="90%" valign="top" nowrap>
+					<label for="rb01">
+						<b><fmt:message key="system.clustering.select-support-plugin" /></b>
+					</label>
+				</td>
+			</tr>
+			<tr>
+				<td width="10%" style="text-align:center;vertical-align:middle;" nowrap>
 					<input type="radio" name="clusteringEnabled" value="false" id="rb01"
 					 <%= (!clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
 				</td>
@@ -205,7 +230,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td width="1%" valign="top" nowrap>
+				<td width="10%"  style="text-align:center;vertical-align:middle;" nowrap>
 					<input type="radio" name="clusteringEnabled" value="true" id="rb02"
 					 <%= (clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
 				</td>

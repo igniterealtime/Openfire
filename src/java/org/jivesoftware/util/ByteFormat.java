@@ -37,7 +37,7 @@ public class ByteFormat extends Format {
      * Formats a long which represent a number of bytes.
      */
     public String format(long bytes) {
-        return format(bytes);
+        return super.format(bytes);
     }
 
     /**

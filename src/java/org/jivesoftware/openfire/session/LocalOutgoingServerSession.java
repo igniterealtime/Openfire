@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -272,7 +273,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
             XMPPPacketReader reader = new XMPPPacketReader();
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                    CHARSET));
+                    StandardCharsets.UTF_8));
             // Get the answer from the Receiving Server
             XmlPullParser xpp = reader.getXPPParser();
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
@@ -401,7 +402,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             connection.deliverRawText(openingStream.toString());
 
             // Reset the parser to use the new secured reader
-            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), CHARSET));
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), StandardCharsets.UTF_8));
             // Skip new stream element
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
@@ -446,7 +447,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 ZInputStream in = new ZInputStream(
                                         connection.getTLSStreamHandler().getInputStream());
                                 in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                                xpp.setInput(new InputStreamReader(in, CHARSET));
+                                xpp.setInput(new InputStreamReader(in, StandardCharsets.UTF_8));
                                 // Skip the opening stream sent by the server
                                 for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
                                 {
@@ -551,7 +552,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Reset the parser
             //xpp.resetInput();
             //             // Reset the parser to use the new secured reader
-            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), CHARSET));
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), StandardCharsets.UTF_8));
             // Skip the opening stream sent by the server
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();

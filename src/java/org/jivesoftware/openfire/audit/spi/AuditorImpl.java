@@ -27,6 +27,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -346,7 +347,7 @@ public class AuditorImpl implements Auditor {
 		currentAuditFile = tmpAuditFile;
 		close();
 		// always append to an existing file (after restart)
-		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile, true), "UTF-8"));
+		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentAuditFile, true), StandardCharsets.UTF_8));
 		writer.write("<jive xmlns=\"http://www.jivesoftware.org\">");
 		xmlWriter = new org.jivesoftware.util.XMLWriter(writer);
 	}

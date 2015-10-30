@@ -33,6 +33,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
  * received XML stanzas to the proper StanzaHandler.
@@ -43,10 +45,6 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
 	private static final Logger Log = LoggerFactory.getLogger(ConnectionHandler.class);
 
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
-     */
-    static final String CHARSET = "UTF-8";
     static final String XML_PARSER = "XML-PARSER";
     protected static final String HANDLER = "HANDLER";
     protected static final String CONNECTION = "CONNECTION";
@@ -84,7 +82,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     @Override
 	public void sessionOpened(IoSession session) throws Exception {
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        final XMLLightweightParser parser = new XMLLightweightParser(CHARSET);
+        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
         session.setAttribute(XML_PARSER, parser);
         // Create a new NIOConnection for the new session
         final NIOConnection connection = createNIOConnection(session);

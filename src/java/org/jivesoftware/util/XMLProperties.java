@@ -35,6 +35,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,7 +114,7 @@ public class XMLProperties {
      * @throws IOException if an exception occurs when reading the stream.
      */
     public XMLProperties(InputStream in) throws IOException {
-        try (Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"))) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             buildDoc(reader);
         }
     }
@@ -745,7 +746,7 @@ public class XMLProperties {
         boolean error = false;
         // Write data out to a temporary file first.
         File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");;
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"))) {
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);

@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.Collection;
 import java.util.Date;
@@ -64,11 +65,6 @@ import com.jcraft.jzlib.ZOutputStream;
 public class SocketConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
-
-    /**
-     * The utf-8 charset for decoding and encoding XMPP packet streams.
-     */
-    public static final String CHARSET = "UTF-8";
 
     private static Map<SocketConnection, String> instances =
             new ConcurrentHashMap<SocketConnection, String>();
@@ -145,11 +141,11 @@ public class SocketConnection implements Connection {
         // DANIELE: Modify socket to use channel
         if (socket.getChannel() != null) {
             writer = Channels.newWriter(
-                    ServerTrafficCounter.wrapWritableChannel(socket.getChannel()), CHARSET);
+                    ServerTrafficCounter.wrapWritableChannel(socket.getChannel()), StandardCharsets.UTF_8.newEncoder(), -1);
         }
         else {
             writer = new BufferedWriter(new OutputStreamWriter(
-                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()), CHARSET));
+                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()), StandardCharsets.UTF_8));
         }
         this.backupDeliverer = backupDeliverer;
         xmlSerializer = new XMLSocketWriter(writer, this);
@@ -181,7 +177,7 @@ public class SocketConnection implements Connection {
             // Start handshake
             tlsStreamHandler.start();
             // Use new wrapped writers
-            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
+            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
     }
@@ -199,13 +195,13 @@ public class SocketConnection implements Connection {
                         ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()),
                         JZlib.Z_BEST_COMPRESSION);
                 out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+                writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
                 xmlSerializer = new XMLSocketWriter(writer, this);
             }
             else {
                 ZOutputStream out = new ZOutputStream(tlsStreamHandler.getOutputStream(), JZlib.Z_BEST_COMPRESSION);
                 out.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                writer = new BufferedWriter(new OutputStreamWriter(out, CHARSET));
+                writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
                 xmlSerializer = new XMLSocketWriter(writer, this);
             }
         } catch (IOException e) {

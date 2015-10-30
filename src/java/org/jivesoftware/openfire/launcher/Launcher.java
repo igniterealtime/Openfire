@@ -63,6 +63,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -457,9 +458,9 @@ public class Launcher {
             }
 
             final SimpleAttributeSet styles = new SimpleAttributeSet();
-            SwingWorker inputWorker = new SwingWorker() {
+            SwingWorker<String, Void> inputWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+				public String doInBackground() {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getInputStream()) {
@@ -482,12 +483,12 @@ public class Launcher {
                     return "ok";
                 }
             };
-            inputWorker.start();
+            inputWorker.execute();
 
 
-            SwingWorker errorWorker = new SwingWorker() {
+            SwingWorker<String, Void> errorWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+				public String doInBackground() {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getErrorStream()) {
@@ -509,7 +510,7 @@ public class Launcher {
                     return "ok";
                 }
             };
-            errorWorker.start();
+            errorWorker.execute();
 
             if (freshStart) {
                 try {
@@ -589,8 +590,7 @@ public class Launcher {
             }
             if ("-1".equals(port)) {
                 BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
-            }
-            else {
+            } else {
                 BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
             }
         }
@@ -612,9 +612,9 @@ public class Launcher {
         dialog.pack();
         dialog.setSize(225, 55);
 
-        final SwingWorker installerThread = new SwingWorker() {
+        final SwingWorker<File, Void> installerThread = new SwingWorker<File, Void>() {
             @Override
-			public Object construct() {
+			public File doInBackground() {
                 File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
@@ -638,13 +638,13 @@ public class Launcher {
             }
 
             @Override
-			public void finished() {
+			public void done() {
                 dialog.setVisible(false);
             }
         };
 
         // Start installation
-        installerThread.start();
+        installerThread.execute();
 
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);

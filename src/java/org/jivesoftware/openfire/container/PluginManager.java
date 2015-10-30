@@ -20,16 +20,31 @@
 
 package org.jivesoftware.openfire.container;
 
+import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.jivesoftware.admin.AdminConsole;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -49,18 +64,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
 
-import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.admin.AdminConsole;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Version;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Loads and manages plugins. The <tt>plugins</tt> directory is monitored for any
  * new plugins, and they are dynamically loaded.
@@ -77,15 +80,15 @@ public class PluginManager {
 
 	private static final Logger Log = LoggerFactory.getLogger(PluginManager.class);
 
-    private File pluginDirectory;
+    private Path pluginDirectory;
     private Map<String, Plugin> plugins;
     private Map<Plugin, PluginClassLoader> classloaders;
-    private Map<Plugin, File> pluginDirs;
+    private Map<Plugin, Path> pluginDirs;
     /**
      * Keep track of plugin names and their unzipped files. This list is updated when plugin
      * is exploded and not when is loaded.
      */
-    private Map<String, File> pluginFiles;
+    private Map<String, Path> pluginFiles;
     private ScheduledExecutorService executor = null;
     private Map<Plugin, PluginDevEnvironment> pluginDevelopment;
     private Map<Plugin, List<String>> parentPluginMap;
@@ -101,7 +104,7 @@ public class PluginManager {
      * @param pluginDir the plugin directory.
      */
     public PluginManager(File pluginDir) {
-        this.pluginDirectory = pluginDir;
+        this.pluginDirectory = pluginDir.toPath();
         plugins = new ConcurrentHashMap<>();
         pluginDirs = new HashMap<>();
         pluginFiles = new HashMap<>();
@@ -167,26 +170,19 @@ public class PluginManager {
             return false;
         }
         try {
-            byte[] b = new byte[1024];
-            int len;
             // If pluginFilename is a path instead of a simple file name, we only want the file name
             int index = pluginFilename.lastIndexOf(File.separator);
             if (index != -1) {
                 pluginFilename = pluginFilename.substring(index+1);
             }
             // Absolute path to the plugin file
-            String absolutePath = pluginDirectory + File.separator + pluginFilename;
+            Path absolutePath = pluginDirectory.resolve(pluginFilename);
+            Path partFile = pluginDirectory.resolve(pluginFilename + ".part");
             // Save input stream contents to a temp file
-            try (OutputStream out = new FileOutputStream(absolutePath + ".part")) {
-                while ((len = in.read(b)) != -1) {
-                    //write byte to file
-                    out.write(b, 0, len);
-                }
-            }
-            // Delete old .jar (if it exists)
-            new File(absolutePath).delete();
+            Files.copy(in, partFile, StandardCopyOption.REPLACE_EXISTING);
+
             // Rename temp file to .jar
-            new File(absolutePath + ".part").renameTo(new File(absolutePath));
+            Files.move(partFile, absolutePath, StandardCopyOption.REPLACE_EXISTING);
             // Ask the plugin monitor to update the plugin immediately.
             pluginMonitor.run();
         }
@@ -204,7 +200,7 @@ public class PluginManager {
      * @return true if the specified filename, that belongs to a plugin, exists.
      */
     public boolean isPluginDownloaded(String pluginFilename) {
-        return new File(pluginDirectory + File.separator + pluginFilename).exists();
+        return Files.exists(pluginDirectory.resolve(pluginFilename));
     }
 
     /**
@@ -235,7 +231,7 @@ public class PluginManager {
      * @return the plugin's directory.
      */
     public File getPluginDirectory(Plugin plugin) {
-        return pluginDirs.get(plugin);
+        return pluginDirs.get(plugin).toFile();
     }
 
     /**
@@ -245,7 +241,7 @@ public class PluginManager {
      * @return the plugin JAR or WAR file.
      */
     public File getPluginFile(String name) {
-        return pluginFiles.get(name);
+        return pluginFiles.get(name).toFile();
     }
 
     /**
@@ -275,19 +271,19 @@ public class PluginManager {
      *
      * @param pluginDir the plugin directory.
      */
-    private void loadPlugin(File pluginDir) {
+    private void loadPlugin(Path pluginDir) {
         // Only load the admin plugin during setup mode.
-        if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getName().equals("admin"))) {
+        if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getFileName().toString().equals("admin"))) {
             return;
         }
-        Log.debug("PluginManager: Loading plugin " + pluginDir.getName());
+        Log.debug("PluginManager: Loading plugin " + pluginDir.getFileName().toString());
         Plugin plugin;
         try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
-            if (pluginConfig.exists()) {
+            Path pluginConfig = pluginDir.resolve("plugin.xml");
+            if (Files.exists(pluginConfig)) {
                 SAXReader saxReader = new SAXReader();
                 saxReader.setEncoding("UTF-8");
-                Document pluginXML = saxReader.read(pluginConfig);
+                Document pluginXML = saxReader.read(pluginConfig.toFile());
 
                 // See if the plugin specifies a version of Openfire
                 // required to run.
@@ -296,7 +292,7 @@ public class PluginManager {
                     Version requiredVersion = new Version(minServerVersion.getTextTrim());
                     Version currentVersion = XMPPServer.getInstance().getServerInfo().getVersion();
                     if (requiredVersion.isNewerThan(currentVersion)) {
-                        String msg = "Ignoring plugin " + pluginDir.getName() + ": requires " +
+                        String msg = "Ignoring plugin " + pluginDir.getFileName() + ": requires " +
                             "server version " + requiredVersion;
                         Log.warn(msg);
                         System.out.println(msg);
@@ -310,18 +306,18 @@ public class PluginManager {
                 // re-use the parent plugin's class loader so that the plugins can interact.
                 Element parentPluginNode = (Element)pluginXML.selectSingleNode("/plugin/parentPlugin");
 
-                String pluginName = pluginDir.getName();
+                String pluginName = pluginDir.getFileName().toString();
                 String webRootKey = pluginName + ".webRoot";
                 String classesDirKey = pluginName + ".classes";
                 String webRoot = System.getProperty(webRootKey);
                 String classesDir = System.getProperty(classesDirKey);
 
                 if (webRoot != null) {
-                    final File compilationClassesDir = new File(pluginDir, "classes");
-                    if (!compilationClassesDir.exists()) {
-                        compilationClassesDir.mkdir();
+                    final Path compilationClassesDir = pluginDir.resolve("classes");
+                    if (Files.notExists(compilationClassesDir)) {
+                        Files.createDirectory(compilationClassesDir);
                     }
-                    compilationClassesDir.deleteOnExit();
+                    compilationClassesDir.toFile().deleteOnExit();
                 }
 
                 if (parentPluginNode != null) {
@@ -329,7 +325,7 @@ public class PluginManager {
                     // See if the parent is already loaded.
                     if (plugins.containsKey(parentPlugin)) {
                         pluginLoader = classloaders.get(getPlugin(parentPlugin));
-                        pluginLoader.addDirectory(pluginDir, classesDir != null);
+                        pluginLoader.addDirectory(pluginDir.toFile(), classesDir != null);
 
                     }
                     else {
@@ -338,15 +334,15 @@ public class PluginManager {
                         // the parent.
                         if (pluginName.compareTo(parentPlugin) < 0) {
                             // See if the parent exists.
-                            File file = new File(pluginDir.getParentFile(), parentPlugin + ".jar");
-                            if (file.exists()) {
+                            Path file = pluginDir.getParent().resolve(parentPlugin + ".jar");
+                            if (Files.exists(file)) {
                                 // Silently return. The child plugin will get loaded up on the next
                                 // plugin load run after the parent.
                                 return;
                             }
                             else {
-                                file = new File(pluginDir.getParentFile(), parentPlugin + ".war");
-                                if (file.exists()) {
+                                file = pluginDir.getParent().resolve(parentPlugin + ".war");
+                                if (Files.exists(file)) {
                                     // Silently return. The child plugin will get loaded up on the next
                                     // plugin load run after the parent.
                                     return;
@@ -372,7 +368,7 @@ public class PluginManager {
                 // This is not a child plugin, so create a new class loader.
                 else {
                     pluginLoader = new PluginClassLoader();
-                    pluginLoader.addDirectory(pluginDir, classesDir != null);
+                    pluginLoader.addDirectory(pluginDir.toFile(), classesDir != null);
                 }
 
                 // Check to see if development mode is turned on for the plugin. If it is,
@@ -385,27 +381,27 @@ public class PluginManager {
                     System.out.println("Plugin " + pluginName + " is running in development mode.");
                     Log.info("Plugin " + pluginName + " is running in development mode.");
                     if (webRoot != null) {
-                        File webRootDir = new File(webRoot);
-                        if (!webRootDir.exists()) {
+                        Path webRootDir = Paths.get(webRoot);
+                        if (Files.notExists(webRootDir)) {
                             // Ok, let's try it relative from this plugin dir?
-                            webRootDir = new File(pluginDir, webRoot);
+                            webRootDir = pluginDir.resolve(webRoot);
                         }
 
-                        if (webRootDir.exists()) {
-                            dev.setWebRoot(webRootDir);
+                        if (Files.exists(webRootDir)) {
+                            dev.setWebRoot(webRootDir.toFile());
                         }
                     }
 
                     if (classesDir != null) {
-                        File classes = new File(classesDir);
-                        if (!classes.exists()) {
+                        Path classes = Paths.get(classesDir);
+                        if (Files.notExists(classes)) {
                             // ok, let's try it relative from this plugin dir?
-                            classes = new File(pluginDir, classesDir);
+                            classes = pluginDir.resolve(classesDir);
                         }
 
-                        if (classes.exists()) {
-                            dev.setClassesDir(classes);
-                            pluginLoader.addURLFile(classes.getAbsoluteFile().toURI().toURL());
+                        if (Files.exists(classes)) {
+                            dev.setClassesDir(classes.toFile());
+                            pluginLoader.addURLFile(classes.toUri().toURL());
                         }
                     }
                 }
@@ -452,16 +448,14 @@ public class PluginManager {
                 }
 
                 // Load any JSP's defined by the plugin.
-                File webXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                    File.separator + "web.xml");
-                if (webXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, webXML);
+                Path webXML = pluginDir.resolve("web").resolve("WEB-INF").resolve("web.xml");
+                if (Files.exists(webXML)) {
+                    PluginServlet.registerServlets(this, plugin, webXML.toFile());
                 }
                 // Load any custom-defined servlets.
-                File customWebXML = new File(pluginDir, "web" + File.separator + "WEB-INF" +
-                    File.separator + "web-custom.xml");
-                if (customWebXML.exists()) {
-                    PluginServlet.registerServlets(this, plugin, customWebXML);
+                Path customWebXML = pluginDir.resolve("web").resolve("WEB-INF").resolve("web-custom.xml");
+                if (Files.exists(customWebXML)) {
+                    PluginServlet.registerServlets(this, plugin, customWebXML.toFile());
                 }
 
                 if (dev != null) {
@@ -474,7 +468,7 @@ public class PluginManager {
                 // Init the plugin.
                 ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
                 Thread.currentThread().setContextClassLoader(pluginLoader);
-                plugin.initializePlugin(this, pluginDir);
+                plugin.initializePlugin(this, pluginDir.toFile());
                 Thread.currentThread().setContextClassLoader(oldLoader);
 
                 // If there a <adminconsole> section defined, register it.
@@ -537,12 +531,12 @@ public class PluginManager {
         }
     }
 
-    private void configureCaches(File pluginDir, String pluginName) {
-        File cacheConfig = new File(pluginDir, "cache-config.xml");
-        if (cacheConfig.exists()) {
+    private void configureCaches(Path pluginDir, String pluginName) {
+        Path cacheConfig = pluginDir.resolve("cache-config.xml");
+        if (Files.exists(cacheConfig)) {
             PluginCacheConfigurator configurator = new PluginCacheConfigurator();
             try {
-                configurator.setInputStream(new BufferedInputStream(new FileInputStream(cacheConfig)));
+                configurator.setInputStream(new BufferedInputStream(Files.newInputStream(cacheConfig)));
                 configurator.configure(pluginName);
             }
             catch (Exception e) {
@@ -596,16 +590,14 @@ public class PluginManager {
                 }
             }
 
-            File webXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web.xml");
-            if (webXML.exists()) {
+            Path webXML = pluginDirectory.resolve(pluginName).resolve("web").resolve("WEB-INF").resolve("web.xml");
+            if (Files.exists(webXML)) {
                 AdminConsole.removeModel(pluginName);
-                PluginServlet.unregisterServlets(webXML);
+                PluginServlet.unregisterServlets(webXML.toFile());
             }
-            File customWebXML = new File(pluginDirectory, pluginName + File.separator + "web" + File.separator + "WEB-INF" +
-                File.separator + "web-custom.xml");
-            if (customWebXML.exists()) {
-                PluginServlet.unregisterServlets(customWebXML);
+            Path customWebXML = pluginDirectory.resolve(pluginName).resolve("web").resolve("WEB-INF").resolve("web-custom.xml");
+            if (Files.exists(customWebXML)) {
+                PluginServlet.unregisterServlets(customWebXML.toFile());
             }
 
             // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
@@ -626,7 +618,7 @@ public class PluginManager {
         // Anyway, for a few seconds admins may not see the plugin in the admin console
         // and in a subsequent refresh it will appear if failed to be removed
         plugins.remove(pluginName);
-        File pluginFile = pluginDirs.remove(plugin);
+        Path pluginFile = pluginDirs.remove(plugin);
         PluginClassLoader pluginLoader = classloaders.remove(plugin);
 
         // try to close the cached jar files from the plugin class loader
@@ -639,7 +631,7 @@ public class PluginManager {
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
-        File dir = new File(pluginDirectory, pluginName);
+        Path dir = pluginDirectory.resolve(pluginName);
         // Give the plugin 2 seconds to unload.
         try {
             Thread.sleep(2000);
@@ -656,7 +648,7 @@ public class PluginManager {
             Log.error(e.getMessage(), e);
         }
 
-        if (plugin != null && !dir.exists()) {
+        if (plugin != null && Files.notExists(dir)) {
             // Unregister plugin caches
             PluginCacheRegistry.getInstance().unregisterCaches(pluginName);
 
@@ -735,7 +727,7 @@ public class PluginManager {
      */
     public String getName(Plugin plugin) {
         String name = getElementValue(plugin, "/plugin/name");
-        String pluginName = pluginDirs.get(plugin).getName();
+        String pluginName = pluginDirs.get(plugin).getFileName().toString();
         if (name != null) {
             return AdminConsole.getAdminText(name, pluginName);
         }
@@ -752,7 +744,7 @@ public class PluginManager {
      * @return the plugin's description.
      */
     public String getDescription(Plugin plugin) {
-        String pluginName = pluginDirs.get(plugin).getName();
+        String pluginName = pluginDirs.get(plugin).getFileName().toString();
         return AdminConsole.getAdminText(getElementValue(plugin, "/plugin/description"), pluginName);
     }
 
@@ -866,16 +858,16 @@ public class PluginManager {
      * @return the value of the element selected by the xpath expression.
      */
     private String getElementValue(Plugin plugin, String xpath) {
-        File pluginDir = pluginDirs.get(plugin);
+        Path pluginDir = pluginDirs.get(plugin);
         if (pluginDir == null) {
             return null;
         }
         try {
-            File pluginConfig = new File(pluginDir, "plugin.xml");
-            if (pluginConfig.exists()) {
+            Path pluginConfig = pluginDir.resolve("plugin.xml");
+            if (Files.exists(pluginConfig)) {
                 SAXReader saxReader = new SAXReader();
                 saxReader.setEncoding("UTF-8");
-                Document pluginXML = saxReader.read(pluginConfig);
+                Document pluginXML = saxReader.read(pluginConfig.toFile());
                 Element element = (Element)pluginXML.selectSingleNode(xpath);
                 if (element != null) {
                     return element.getTextTrim();
@@ -964,94 +956,91 @@ public class PluginManager {
                     while (st.hasMoreTokens()) {
                         String dir = st.nextToken();
                         if (!devPlugins.contains(dir)) {
-                            loadPlugin(new File(dir));
+                            loadPlugin(Paths.get(dir));
                             devPlugins.add(dir);
                         }
                     }
                 }
 
-                File[] jars = pluginDirectory.listFiles(new FileFilter() {
+                // Turn the list of JAR/WAR files into a set so that we can do lookups.
+                Set<String> jarSet = new HashSet<String>();
+
+                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pluginDirectory, new DirectoryStream.Filter<Path>() {
                     @Override
-                    public boolean accept(File pathname) {
-                        String fileName = pathname.getName().toLowerCase();
+                    public boolean accept(Path pathname) throws IOException {
+                        String fileName = pathname.getFileName().toString().toLowerCase();
                         return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
                     }
-                });
-
-                if (jars == null) {
-                    return;
-                }
-
-                for (File jarFile : jars) {
-                    String pluginName = jarFile.getName().substring(0,
-                        jarFile.getName().length() - 4).toLowerCase();
-                    // See if the JAR has already been exploded.
-                    File dir = new File(pluginDirectory, pluginName);
-                    // Store the JAR/WAR file that created the plugin folder
-                    pluginFiles.put(pluginName, jarFile);
-                    // If the JAR hasn't been exploded, do so.
-                    if (!dir.exists()) {
-                        unzipPlugin(pluginName, jarFile, dir);
-                    }
-                    // See if the JAR is newer than the directory. If so, the plugin
-                    // needs to be unloaded and then reloaded.
-                    else if (jarFile.lastModified() > dir.lastModified()) {
-                        // If this is the first time that the monitor process is running, then
-                        // plugins won't be loaded yet. Therefore, just delete the directory.
-                        if (firstRun) {
-                            int count = 0;
-                            // Attempt to delete the folder for up to 5 seconds.
-                            while (!deleteDir(dir) && count++ < 5) {
-                                Thread.sleep(1000);
-                            }
-                        }
-                        else {
-                            unloadPlugin(pluginName);
-                        }
-                        // If the delete operation was a success, unzip the plugin.
-                        if (!dir.exists()) {
+                })) {
+                    for (Path jarFile : directoryStream) {
+                        jarSet.add(jarFile.getFileName().toString().toLowerCase());
+                        String pluginName = jarFile.getFileName().toString().substring(0,
+                                jarFile.getFileName().toString().length() - 4).toLowerCase();
+                        // See if the JAR has already been exploded.
+                        Path dir = pluginDirectory.resolve(pluginName);
+                        // Store the JAR/WAR file that created the plugin folder
+                        pluginFiles.put(pluginName, jarFile);
+                        // If the JAR hasn't been exploded, do so.
+                        if (Files.notExists(dir)) {
                             unzipPlugin(pluginName, jarFile, dir);
                         }
+                        // See if the JAR is newer than the directory. If so, the plugin
+                        // needs to be unloaded and then reloaded.
+                        else if (Files.getLastModifiedTime(jarFile).toMillis() > Files.getLastModifiedTime(dir).toMillis()) {
+                            // If this is the first time that the monitor process is running, then
+                            // plugins won't be loaded yet. Therefore, just delete the directory.
+                            if (firstRun) {
+                                int count = 0;
+                                // Attempt to delete the folder for up to 5 seconds.
+                                while (!deleteDir(dir) && count++ < 5) {
+                                    Thread.sleep(1000);
+                                }
+                            }
+                            else {
+                                unloadPlugin(pluginName);
+                            }
+                            // If the delete operation was a success, unzip the plugin.
+                            if (Files.notExists(dir)) {
+                                unzipPlugin(pluginName, jarFile, dir);
+                            }
+                        }
                     }
                 }
 
-                File[] dirs = pluginDirectory.listFiles(new FileFilter() {
+                List<Path> dirs = new ArrayList<>();
+
+                try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pluginDirectory, new DirectoryStream.Filter<Path>() {
                     @Override
-                    public boolean accept(File pathname) {
-                        return pathname.isDirectory();
+                    public boolean accept(Path pathname) throws IOException {
+                        return Files.isDirectory(pathname);
                     }
-                });
+                })) {
+                    for (Path path : directoryStream) {
+                        dirs.add(path);
+                    }
+                }
 
                 // Sort the list of directories so that the "admin" plugin is always
                 // first in the list.
-                Arrays.sort(dirs, new Comparator<File>() {
-                    @Override
-                    public int compare(File file1, File file2) {
-                        if (file1.getName().equals("admin")) {
+                Collections.sort(dirs, new Comparator<Path>() {
+                    public int compare(Path file1, Path file2) {
+                        if (file1.getFileName().toString().equals("admin")) {
                             return -1;
-                        }
-                        else if (file2.getName().equals("admin")) {
+                        } else if (file2.getFileName().toString().equals("admin")) {
                             return 1;
-                        }
-                        else {
+                        } else {
                             return file1.compareTo(file2);
                         }
                     }
                 });
 
-                // Turn the list of JAR/WAR files into a set so that we can do lookups.
-                Set<String> jarSet = new HashSet<>();
-                for (File file : jars) {
-                    jarSet.add(file.getName().toLowerCase());
-                }
-
                 // See if any currently running plugins need to be unloaded
                 // due to the JAR file being deleted (ignore admin plugin).
                 // Build a list of plugins to delete first so that the plugins
                 // keyset isn't modified as we're iterating through it.
-                List<String> toDelete = new ArrayList<>();
-                for (File pluginDir : dirs) {
-                    String pluginName = pluginDir.getName();
+                List<String> toDelete = new ArrayList<String>();
+                for (Path pluginDir : dirs) {
+                    String pluginName = pluginDir.getFileName().toString();
                     if (pluginName.equals("admin")) {
                         continue;
                     }
@@ -1066,9 +1055,9 @@ public class PluginManager {
                 }
 
                 // Load all plugins that need to be loaded.
-                for (File dirFile : dirs) {
+                for (Path dirFile : dirs) {
                     // If the plugin hasn't already been started, start it.
-                    if (dirFile.exists() && !plugins.containsKey(dirFile.getName())) {
+                    if (Files.exists(dirFile) && !plugins.containsKey(dirFile.getFileName().toString())) {
                         loadPlugin(dirFile);
                     }
                 }
@@ -1100,34 +1089,27 @@ public class PluginManager {
          * @param file the JAR file
          * @param dir the directory to extract the plugin to.
          */
-        private void unzipPlugin(String pluginName, File file, File dir) {
-            try (ZipFile zipFile = new JarFile(file)) {
+        private void unzipPlugin(String pluginName, Path file, Path dir) {
+            try (ZipFile zipFile = new JarFile(file.toFile())) {
                 // Ensure that this JAR is a plugin.
                 if (zipFile.getEntry("plugin.xml") == null) {
                     return;
                 }
-                dir.mkdir();
+                Files.createDirectory(dir);
                 // Set the date of the JAR file to the newly created folder
-                dir.setLastModified(file.lastModified());
+                Files.setLastModifiedTime(dir, Files.getLastModifiedTime(file));
                 Log.debug("PluginManager: Extracting plugin: " + pluginName);
                 for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
                     JarEntry entry = (JarEntry)e.nextElement();
-                    File entryFile = new File(dir, entry.getName());
+                    Path entryFile = dir.resolve(entry.getName());
                     // Ignore any manifest.mf entries.
                     if (entry.getName().toLowerCase().endsWith("manifest.mf")) {
                         continue;
                     }
                     if (!entry.isDirectory()) {
-                        entryFile.getParentFile().mkdirs();
-                        try (FileOutputStream out = new FileOutputStream(entryFile)) {
-                            try (InputStream zin = zipFile.getInputStream(entry)) {
-                                byte[] b = new byte[512];
-                                int len;
-                                while ((len = zin.read(b)) != -1) {
-                                    out.write(b, 0, len);
-                                }
-                                out.flush();
-                            }
+                        Files.createDirectories(entryFile.getParent());
+                        try (InputStream zin = zipFile.getInputStream(entry)) {
+                            Files.copy(zin, entryFile, StandardCopyOption.REPLACE_EXISTING);
                         }
                     }
                 }
@@ -1144,41 +1126,42 @@ public class PluginManager {
      * @param dir the directory to delete.
      * @return true if the directory was deleted.
      */
-    private boolean deleteDir(File dir) {
-        if (dir.isDirectory()) {
-            String[] childDirs = dir.list();
-            // Always try to delete JAR files first since that's what will
-            // be under contention. We do this by always sorting the lib directory
-            // first.
-            List<String> children = new ArrayList<>(Arrays.asList(childDirs));
-            Collections.sort(children, new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    if (o1.equals("lib")) {
-                        return -1;
+    private boolean deleteDir(Path dir) {
+        try {
+            if (Files.isDirectory(dir)) {
+                Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        try {
+                            Files.deleteIfExists(file);
+                        } catch (IOException e) {
+                            Log.debug("PluginManager: Plugin removal: could not delete: " + file);
+                            throw e;
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
-                    if (o2.equals("lib")) {
-                        return 1;
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        try {
+                            Files.deleteIfExists(dir);
+                        } catch (IOException e) {
+                            Log.debug("PluginManager: Plugin removal: could not delete: " + dir);
+                            throw e;
+                        }
+                        return FileVisitResult.CONTINUE;
                     }
-                    else {
-                        return o1.compareTo(o2);
-                    }
-                }
-            });
-            for (String file : children) {
-                boolean success = deleteDir(new File(dir, file));
-                if (!success) {
-                    Log.debug("PluginManager: Plugin removal: could not delete: " + new File(dir, file));
-                    return false;
-                }
+                });
             }
+            boolean deleted = Files.notExists(dir) || Files.deleteIfExists(dir);
+            if (deleted) {
+                // Remove the JAR/WAR file that created the plugin folder
+                pluginFiles.remove(dir.getFileName().toString());
+            }
+            return deleted;
+        } catch (IOException e) {
+            return Files.notExists(dir);
         }
-        boolean deleted = !dir.exists() || dir.delete();
-        if (deleted) {
-            // Remove the JAR/WAR file that created the plugin folder
-            pluginFiles.remove(dir.getName());
-        }
-        return deleted;
     }
 
     public void addPluginListener(PluginListener listener) {

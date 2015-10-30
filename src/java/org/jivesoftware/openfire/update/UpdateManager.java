@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -670,7 +671,7 @@ public class UpdateManager extends BasicModule {
                 file.delete();
             }
             // Create new version.xml with returned data
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
                 OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
                 XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
                 xmlWriter.write(xmlResponse);
@@ -717,7 +718,7 @@ public class UpdateManager extends BasicModule {
                 file.delete();
             }
             // Create new version.xml with returned data
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(xml);

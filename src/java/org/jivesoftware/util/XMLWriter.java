@@ -8,6 +8,7 @@ import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.XMLFilterImpl;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -91,7 +92,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     public XMLWriter() throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
-        this.writer = new BufferedWriter( new OutputStreamWriter( System.out, "UTF-8" ) );
+        this.writer = new BufferedWriter( new OutputStreamWriter( System.out, StandardCharsets.UTF_8) );
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }

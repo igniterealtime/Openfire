@@ -113,8 +113,8 @@ class XMLLightweightParser {
         PropertyEventDispatcher.addListener(new PropertyListener());
     }
 
-    public XMLLightweightParser(String charset) {
-        encoder = Charset.forName(charset).newDecoder()
+    public XMLLightweightParser(Charset charset) {
+        encoder = charset.newDecoder()
 			.onMalformedInput(CodingErrorAction.REPLACE)
 			.onUnmappableCharacter(CodingErrorAction.REPLACE);
     }

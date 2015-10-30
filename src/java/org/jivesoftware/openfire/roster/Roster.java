@@ -563,10 +563,10 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     private org.xmpp.packet.Roster.Ask getAskStatus(RosterItem.AskType askType) {
-        if (askType == null || "".equals(askType.getName())) {
+        if (askType == null || askType == RosterItem.AskType.NONE) {
             return null;
         }
-        return org.xmpp.packet.Roster.Ask.valueOf(askType.getName());
+        return org.xmpp.packet.Roster.Ask.valueOf(askType.name().toLowerCase());
     }
 
     /**

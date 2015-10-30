@@ -86,7 +86,7 @@ abstract class SocketReadingMode {
         }
         catch (IOException e) {
             Log.error("Error while negotiating TLS: " + socketReader.connection, e);
-            socketReader.connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            socketReader.connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             socketReader.connection.close();
             return false;
         }

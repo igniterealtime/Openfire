@@ -1169,9 +1169,13 @@ public class HttpSession extends LocalClientSession {
             for (Packet packet : elements) {
                 // Append packet namespace according XEP-0206 if needed
             	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
-            		packet.getElement().add(Namespace.get("jabber:client"));
+            		// use string-based operation here to avoid cascading xmlns wonkery
+            		StringBuilder packetXml = new StringBuilder(packet.toXML());
+            		packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
+            		this.packets.add(packetXml.toString());
+            	} else {
+            		this.packets.add(packet.toXML());
             	}
-            	this.packets.add(packet.toXML());
             }
         }
 

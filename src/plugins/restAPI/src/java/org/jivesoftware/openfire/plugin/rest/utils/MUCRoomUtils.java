@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.jivesoftware.openfire.group.Group;
 import org.xmpp.packet.JID;
 
 /**
@@ -20,6 +21,7 @@ public class MUCRoomUtils {
 
 	/**
 	 * Convert jids to string list.
+	 * In case the jid is not bare (=it is a group jid) exclude it
 	 *
 	 * @param jids
 	 *            the jids
@@ -29,7 +31,21 @@ public class MUCRoomUtils {
 		List<String> result = new ArrayList<String>();
 
 		for (JID jid : jids) {
-			result.add(jid.toBareJID());
+			if (jid.getResource() == null) result.add(jid.toBareJID());
+		}
+		return result;
+	}
+
+	/**
+	 * Convert groups to string list
+	 * @param groups
+	 * 			the groups
+	 * @return the array list of the group names
+	 */
+	public static List<String> convertGroupsToStringList(Collection<Group> groups) {
+		List<String> result = new ArrayList<String>();
+		for (Group group : groups) {
+			result.add(group.getName());
 		}
 		return result;
 	}

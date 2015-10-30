@@ -20,8 +20,9 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
@@ -41,6 +42,8 @@ import java.util.Collection;
  * @author Gaston Dombiak
  */
 public class LdapGroupTester {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapGroupTester.class);
 
     private LdapManager manager;
 

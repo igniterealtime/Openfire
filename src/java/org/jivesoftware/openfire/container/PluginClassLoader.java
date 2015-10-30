@@ -510,25 +510,25 @@ public class PluginClassLoader extends URLClassLoader {
 			// Add classes directory to classpath.
 			File classesDir = new File(directory, "classes");
 			if (classesDir.exists()) {
-				addResource(classesDir.toURI().toURL());
+				addResource(classesDir.toURI().toURL(), "/");
 			}
 
 			// Add i18n directory to classpath.
 			File databaseDir = new File(directory, "database");
 			if (databaseDir.exists()) {
-				addResource(databaseDir.toURI().toURL());
+				addResource(databaseDir.toURI().toURL(), "/");
 			}
 
 			// Add i18n directory to classpath.
 			File i18nDir = new File(directory, "i18n");
 			if (i18nDir.exists()) {
-				addResource(i18nDir.toURI().toURL());
+				addResource(i18nDir.toURI().toURL(), "/");
 			}
 
 			// Add web directory to classpath.
 			File webDir = new File(directory, "web");
 			if (webDir.exists()) {
-				addResource(webDir.toURI().toURL());
+				addResource(webDir.toURI().toURL(), "/");
 			}
 
 			// Add lib directory to classpath.
@@ -545,10 +545,10 @@ public class PluginClassLoader extends URLClassLoader {
 						if (developmentMode) {
 							// Do not add plugin-pluginName.jar to classpath.
 							if (!jars[i].getName().equals("plugin-" + directory.getName() + ".jar")) {
-								addResource(new URL("jar", "", -1, jarFileUri));
+								addResource(new URL("jar", "", -1, jarFileUri), "/");
 							}
 						} else {
-							addResource(new URL("jar", "", -1, jarFileUri));
+							addResource(new URL("jar", "", -1, jarFileUri), "/");
 						}
 					}
 				}
@@ -596,7 +596,7 @@ public class PluginClassLoader extends URLClassLoader {
 	 *            URL for the JAR file or directory to append to classpath
 	 */
 	public void addURLFile(URL file) {
-		addResource(file);
+		addResource(file, "/");
 	}
 
 	/**
@@ -606,14 +606,17 @@ public class PluginClassLoader extends URLClassLoader {
 		resourceEntries.clear();
 	}
 
-	private void addResource(URL url) {
+	private void addResource(URL url, String parent) {
 		// check file is directory and list files
 		try {
 			File file = new File(url.toURI());
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
 				for (File temp : files) {
-					addResource(temp.toURI().toURL());
+					if(temp.isDirectory()){
+						parent = String.format("%s%s/", parent, temp.getName());
+					}
+					addResource(temp.toURI().toURL(), parent);
 				}
 				return;
 			}
@@ -638,8 +641,9 @@ public class PluginClassLoader extends URLClassLoader {
 				entry.codeBase = url;
 				entry.lastModified = file.lastModified();
 				entry.binaryContent = readBytes(new FileInputStream(file));
-
-				resourceEntries.put("/" + file.getName(), entry);
+				if (Log.isDebugEnabled())
+					Log.debug("add resource path:" + parent + file.getName());
+				resourceEntries.put(parent + file.getName(), entry);
 			}
 		} catch (Exception e) {
 			Log.warn("Failed to load plugin resource: " + url.toExternalForm());
@@ -662,6 +666,8 @@ public class PluginClassLoader extends URLClassLoader {
 				entry.lastModified = jarEntry.getTime();
 				entry.binaryContent = readBytes(jarFile.getInputStream(jarEntry));
 				entry.codeBase = codebase;
+				if (Log.isDebugEnabled())
+					Log.debug("add resource path:/" + jarEntry.getName());
 				resourceEntries.put("/" + jarEntry.getName(), entry);
 			}
 		} catch (IOException e) {

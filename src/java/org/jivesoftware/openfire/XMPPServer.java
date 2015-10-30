@@ -365,7 +365,7 @@ public class XMPPServer {
 
             // Iterate through all the provided XML properties and set the ones that haven't
             // already been touched by setup prior to this method being called.
-            for (String propName : (List<String>)JiveGlobals.getXMLPropertyNames()) {
+            for (String propName : JiveGlobals.getXMLPropertyNames()) {
                 if (JiveGlobals.getProperty(propName) == null) {
                     JiveGlobals.setProperty(propName, JiveGlobals.getXMLProperty(propName));
                 }

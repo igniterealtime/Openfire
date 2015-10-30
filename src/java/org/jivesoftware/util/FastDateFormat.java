@@ -211,7 +211,7 @@ public class FastDateFormat {
             key = new Pair(key, locale);
         }
 
-        FastDateFormat format = (FastDateFormat)cDateInstanceCache.get(key);
+        FastDateFormat format = cDateInstanceCache.get(key);
 
         if (format == null) {
             int ds;

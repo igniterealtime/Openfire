@@ -32,7 +32,7 @@ public class AdminConsoleTest {
         Class c = AdminConsole.class;
         Method init = c.getDeclaredMethod("load", (Class[])null);
         init.setAccessible(true);
-        init.invoke((Object)null, (Object[])null);
+        init.invoke(null, (Object[])null);
     }
 
     @Test

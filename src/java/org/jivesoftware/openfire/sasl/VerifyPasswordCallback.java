@@ -52,7 +52,7 @@ public class VerifyPasswordCallback implements Callback, Serializable {
      * @param password the password to verify.
      */
     public VerifyPasswordCallback(char[] password) {
-        this.password = (password == null ? null : (char[])password.clone());
+        this.password = (password == null ? null : password.clone());
         this.verified = false;
     }
 
@@ -61,7 +61,7 @@ public class VerifyPasswordCallback implements Callback, Serializable {
      * @return the retrieved password, which may be null.
      */
     public char[] getPassword() {
-        return (password == null ? null : (char[])password.clone());
+        return (password == null ? null : password.clone());
     }
 
     /**

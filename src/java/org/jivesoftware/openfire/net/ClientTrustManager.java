@@ -303,7 +303,7 @@ public class ClientTrustManager implements X509TrustManager {
                     params.addCertPathChecker(ocspChecker);
                 }
                 PKIXCertPathValidatorResult cpvResult = (PKIXCertPathValidatorResult) cpv.validate(cp, params);
-                X509Certificate trustedCert = (X509Certificate) cpvResult.getTrustAnchor().getTrustedCert();
+                X509Certificate trustedCert = cpvResult.getTrustAnchor().getTrustedCert();
                 if(trustedCert == null) {
                     throw new CertificateException("certificate path failed: Trusted CA is NULL");
                 } else {

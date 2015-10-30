@@ -132,7 +132,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
 
             // Set the issuer certificate if we were passed a chain
             if (certIndex != 0) {
-                issuerCert = (X509Certificate) (certs[certIndex]);
+                issuerCert = certs[certIndex];
                 haveIssuerCert = true;
 
                 if (haveResponderCert) {

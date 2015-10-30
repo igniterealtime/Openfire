@@ -122,8 +122,8 @@ public class JMXManager {
     	            if (aCredentials.length < 2) {
     	                throw new SecurityException("Credentials should have at least two elements");
     	            }
-    	            String username = (String) aCredentials[0];
-    	            String password = (String) aCredentials[1];
+    	            String username = aCredentials[0];
+    	            String password = aCredentials[1];
 
     	            try {
     	            	AuthFactory.authenticate(username, password);

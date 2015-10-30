@@ -355,7 +355,7 @@ public final class GraphicUtils {
                 return null;
             }
 
-            Image image = (Image) imageCache.get(url.toString());
+            Image image = imageCache.get(url.toString());
 
             if (image == null) {
                 image = Toolkit.getDefaultToolkit().createImage(url);

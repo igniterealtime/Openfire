@@ -481,7 +481,7 @@ public class PEPService implements PubSubService, Cacheable {
             Element items = event.addElement("items");
             items.addAttribute("node", leafLastPublishedItem.getNodeID());
             Element item = items.addElement("item");
-            if (((LeafNode) leafLastPublishedItem.getNode()).isItemRequired()) {
+            if (leafLastPublishedItem.getNode().isItemRequired()) {
                 item.addAttribute("id", leafLastPublishedItem.getID());
             }
             if (leafLastPublishedItem.getNode().isPayloadDelivered() && leafLastPublishedItem.getPayload() != null) {

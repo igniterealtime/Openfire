@@ -195,7 +195,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
      */
     private void sendToRemoteEntity(String domain) {
         // Check if there is cached information about the requested domain
-        String multicastService = (String) cache.get(domain);
+        String multicastService = cache.get(domain);
         if (multicastService != null) {
             sendToRemoteServer(domain, multicastService);
         }

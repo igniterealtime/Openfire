@@ -150,7 +150,7 @@ public class POP3AuthProvider implements AuthProvider {
 
             // If cache is enabled, see if the auth is in cache.
             if (authCache != null && authCache.containsKey(username)) {
-                String hash = (String)authCache.get(username);
+                String hash = authCache.get(username);
                 if (StringUtils.hash(password).equals(hash)) {
                     return;
                 }

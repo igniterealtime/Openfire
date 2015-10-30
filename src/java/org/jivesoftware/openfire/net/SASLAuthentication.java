@@ -581,7 +581,7 @@ public class SASLAuthentication {
                 authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed;
             }
-            principals.addAll(CertificateManager.getClientIdentities((X509Certificate)trusted));
+            principals.addAll(CertificateManager.getClientIdentities(trusted));
 
             if(principals.size() == 1) {
                 principal = principals.get(0);

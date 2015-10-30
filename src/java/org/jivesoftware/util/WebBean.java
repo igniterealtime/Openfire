@@ -57,8 +57,8 @@ public abstract class WebBean {
     public void init(PageContext pageContext){
         this.request = (HttpServletRequest)pageContext.getRequest();
         this.response = (HttpServletResponse)pageContext.getResponse();
-        this.session = (HttpSession)pageContext.getSession();
-        this.application = (ServletContext)pageContext.getServletContext();
-        this.out = (JspWriter)pageContext.getOut();
+        this.session = pageContext.getSession();
+        this.application = pageContext.getServletContext();
+        this.out = pageContext.getOut();
     }
 }

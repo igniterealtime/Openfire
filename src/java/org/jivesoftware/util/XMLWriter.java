@@ -810,7 +810,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      * If it does, then retain whitespace.
      */
     protected final boolean isElementSpacePreserved(Element element) {
-      final Attribute attr = (Attribute)element.attribute("space");
+      final Attribute attr = element.attribute("space");
       boolean preserveFound=preserve; //default to global state
       if (attr!=null) {
         if ("xml".equals(attr.getNamespacePrefix()) &&
@@ -852,7 +852,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                         if (buffer == null) {
                             buffer = new StringBuilder( lastTextNode.getText() );
                         }
-                      buffer.append( ((Text) node).getText() );
+                      buffer.append( node.getText() );
                     }
                 }
                 else {

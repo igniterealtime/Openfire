@@ -464,7 +464,7 @@ public class XMLProperties {
             toRemove.add(iter.next());
         }
         for (iter = toRemove.iterator(); iter.hasNext();) {
-            element.remove((Element)iter.next());
+            element.remove(iter.next());
         }
         // Add the new children.
         for (String value : values) {

@@ -124,11 +124,9 @@ public class FaviconServlet extends HttpServlet {
         response.setContentType(CONTENT_TYPE);
 
         // Send image
-        try {
-            ServletOutputStream sos = response.getOutputStream();
+        try (ServletOutputStream sos = response.getOutputStream()) {
             sos.write(bytes);
             sos.flush();
-            sos.close();
         }
         catch (IOException e) {
             // Do nothing
@@ -195,20 +193,20 @@ public class FaviconServlet extends HttpServlet {
                 urlConnection.setReadTimeout(1000);
 
                 urlConnection.connect();
-                DataInputStream di = new DataInputStream(urlConnection.getInputStream());
+                try (DataInputStream di = new DataInputStream(urlConnection.getInputStream())) {
 
-                ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(byteStream);
+                    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+                    DataOutputStream out = new DataOutputStream(byteStream);
 
-                int len;
-                byte[] b = new byte[1024];
-                while ((len = di.read(b)) != -1) {
-                    out.write(b, 0, len);
+                    int len;
+                    byte[] b = new byte[1024];
+                    while ((len = di.read(b)) != -1) {
+                        out.write(b, 0, len);
+                    }
+                    out.flush();
+
+                    return byteStream.toByteArray();
                 }
-                di.close();
-                out.flush();
-
-                return byteStream.toByteArray();
             }
             catch (IOException ioe) {
                 // We failed again so return null

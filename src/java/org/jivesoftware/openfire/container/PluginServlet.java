@@ -405,34 +405,18 @@ public class PluginServlet extends HttpServlet {
             // response.setHeader("Content-disposition", "filename=\"" + file + "\";");
             response.setContentType(contentType);
             // Write out the resource to the user.
-            InputStream in = null;
-            ServletOutputStream out = null;
-            try {
-                in = new BufferedInputStream(new FileInputStream(file));
-                out = response.getOutputStream();
+            try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+                try (ServletOutputStream out = response.getOutputStream()) {
 
-                // Set the size of the file.
-                response.setContentLength((int)file.length());
+                    // Set the size of the file.
+                    response.setContentLength((int) file.length());
 
-                // Use a 1K buffer.
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) != -1) {
-                    out.write(buf, 0, len);
-                }
-            }
-            finally {
-                try {
-                    in.close();
-                }
-                catch (Exception ignored) {
-                    // Ignore.
-                }
-                try {
-                    out.close();
-                }
-                catch (Exception ignored) {
-                    // Ignore.
+                    // Use a 1K buffer.
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = in.read(buf)) != -1) {
+                        out.write(buf, 0, len);
+                    }
                 }
             }
         }

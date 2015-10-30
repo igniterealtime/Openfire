@@ -280,11 +280,11 @@ public class UpdateManager extends BasicModule {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode == 200) {
                 //get the resonse as an InputStream
-                InputStream in = getMethod.getResponseBodyAsStream();
-                String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
-                installed = XMPPServer.getInstance().getPluginManager()
-                        .installPlugin(in, pluginFilename);
-                in.close();
+                try (InputStream in = getMethod.getResponseBodyAsStream()) {
+                    String pluginFilename = url.substring(url.lastIndexOf("/") + 1);
+                    installed = XMPPServer.getInstance().getPluginManager()
+                            .installPlugin(in, pluginFilename);
+                }
                 if (installed) {
                     // Remove the plugin from the list of plugins to update
                     for (Update update : pluginUpdates) {
@@ -657,7 +657,6 @@ public class UpdateManager extends BasicModule {
             component.addAttribute("url", serverUpdate.getURL());
         }
         // Write data out to conf/server-update.xml file.
-        Writer writer = null;
         try {
             // Create the conf folder if required
             File file = new File(JiveGlobals.getHomeDirectory(), "conf");
@@ -671,23 +670,14 @@ public class UpdateManager extends BasicModule {
                 file.delete();
             }
             // Create new version.xml with returned data
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
-            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
-            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
-            xmlWriter.write(xmlResponse);
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+                OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
+                XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
+                xmlWriter.write(xmlResponse);
+            }
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
-        }
-        finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                }
-                catch (IOException e1) {
-                    Log.error(e1.getMessage(), e1);
-                }
-            }
         }
     }
 
@@ -772,27 +762,15 @@ public class UpdateManager extends BasicModule {
             Log.warn("Cannot retrieve server updates. File must be readable: " + file.getName());
             return;
         }
-        FileReader reader = null;
-        try {
-            reader = new FileReader(file);
+        try (FileReader reader = new FileReader(file)){
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlResponse = xmlReader.read(reader);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.error("Error reading server-update.xml", e);
             return;
         }
-        finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                }
-                catch (Exception e) {
-                    // Do nothing
-                }
-            }
-        }
+
         // Parse info and recreate update information (if still required)
         Element openfire = xmlResponse.getRootElement().element("openfire");
         if (openfire != null) {
@@ -819,27 +797,15 @@ public class UpdateManager extends BasicModule {
             Log.warn("Cannot retrieve available plugins. File must be readable: " + file.getName());
             return;
         }
-        FileReader reader = null;
-        try {
-            reader = new FileReader(file);
+        try (FileReader reader = new FileReader(file)) {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
             xmlResponse = xmlReader.read(reader);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.error("Error reading available-plugins.xml", e);
             return;
         }
-        finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                }
-                catch (Exception e) {
-                    // Do nothing
-                }
-            }
-        }
+
         // Parse info and recreate available plugins
         Iterator it = xmlResponse.getRootElement().elementIterator("plugin");
         while (it.hasNext()) {

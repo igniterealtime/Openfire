@@ -115,20 +115,17 @@ public class FlashCrossDomainServlet extends HttpServlet {
     private static String getContent(File file) {
 		final StringBuilder content = new StringBuilder();
 		if (file.canRead()) {
-			try {
-				final BufferedReader in = new BufferedReader(new FileReader(
-						file));
-				String str;
-				while ((str = in.readLine()) != null) {
-					content.append(str);
-					content.append('\n');
-				}
-				in.close();
-			} catch (IOException ex) {
-				Log.warn("Unexpected exception while trying to read file: " + file.getName(), ex);
-				return null;
-			}
-		}
+            try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+                String str;
+                while ((str = in.readLine()) != null) {
+                    content.append(str);
+                    content.append('\n');
+                }
+            } catch (IOException ex) {
+                Log.warn("Unexpected exception while trying to read file: " + file.getName(), ex);
+                return null;
+            }
+        }
 
 		return content.toString();
 	}

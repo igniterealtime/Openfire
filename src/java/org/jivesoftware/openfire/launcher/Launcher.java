@@ -25,6 +25,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -50,6 +51,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 
 import javax.swing.BorderFactory;
@@ -278,8 +280,7 @@ public class Launcher {
                 }
                 else if ("Launch Admin".equals(e.getActionCommand())) {
                     launchBrowser();
-                }
-                else if ("Quit".equals(e.getActionCommand())) {
+                } else if ("Quit".equals(e.getActionCommand())) {
                     stopApplication();
                     System.exit(0);
                 }
@@ -589,9 +590,9 @@ public class Launcher {
                 securePort = securePortElement.getTextContent();
             }
             if ("-1".equals(port)) {
-                BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
+                Desktop.getDesktop().browse(URI.create("https://127.0.0.1:" + securePort + "/index.html"));
             } else {
-                BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+                Desktop.getDesktop().browse(URI.create("http://127.0.0.1:" + port + "/index.html"));
             }
         }
         catch (Exception e) {

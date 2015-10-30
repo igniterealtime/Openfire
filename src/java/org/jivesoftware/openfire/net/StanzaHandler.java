@@ -420,7 +420,7 @@ public abstract class StanzaHandler {
         }
         catch (Exception e) {
             Log.error("Error while negotiating TLS", e);
-            connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             connection.close();
             return false;
         }

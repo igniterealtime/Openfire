@@ -77,6 +77,6 @@ public class ExternalComponentConfiguration {
         /**
          * The XMPP entity is NOT allowed to connect to the server.
          */
-        blocked;
+        blocked
     }
 }

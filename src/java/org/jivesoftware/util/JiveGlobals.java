@@ -1130,7 +1130,7 @@ public class JiveGlobals {
     				openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
     			} else if (!resetProperty(propertyName)) {
     				Log.warn("Failed to reset encrypted property value for " + propertyName);
-    			};
+    			}
     		}
     		securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
     		securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);

@@ -136,6 +136,6 @@ public class PropertyEventDispatcher {
         /**
          * An XML property was deleted.
          */
-        xml_property_deleted;
+        xml_property_deleted
     }
 }

@@ -162,7 +162,7 @@ public class SASLAuthentication {
         /**
          * SASL negotiation has been successful.
          */
-        authenticated;
+        authenticated
     }
 
     /**

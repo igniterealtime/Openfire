@@ -141,7 +141,7 @@ public class ClientTrustManager implements X509TrustManager {
             Log.debug("ClientTrustManager: Updating CRLs");
             useCRLs = false;
             try {
-                CertificateFactory cf = CertificateFactory.getInstance("X.509");;
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
                 X509CRL crl;
 

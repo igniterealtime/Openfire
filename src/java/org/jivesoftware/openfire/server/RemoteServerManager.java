@@ -383,6 +383,6 @@ public class RemoteServerManager {
          * Only the XMPP entities listed in the <b>allowed list</b> are able to connect to
          * the server.
          */
-        whitelist;
+        whitelist
     }
 }

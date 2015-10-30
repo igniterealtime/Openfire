@@ -745,7 +745,7 @@ public class XMLProperties {
     	}
         boolean error = false;
         // Write data out to a temporary file first.
-        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");;
+        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);

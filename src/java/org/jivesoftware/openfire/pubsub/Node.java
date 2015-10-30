@@ -2309,5 +2309,5 @@ public abstract class Node {
          * Dynamically specify a replyto of the item publisher.
          */
         publisher
-    };
+    }
 }

@@ -255,7 +255,7 @@ public class HistoryStrategy {
      */
     public enum Type {
         defaulType, none, all, number
-    };
+    }
 
     /**
      * Obtain the strategy type from string name. See the Type enumeration name

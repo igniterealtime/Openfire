@@ -446,6 +446,6 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         /**
          * These addressees are the primary recipients of the stanza.
          */
-        to;
+        to
     }
 }

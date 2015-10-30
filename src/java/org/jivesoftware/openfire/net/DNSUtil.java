@@ -194,7 +194,7 @@ public class DNSUtil {
             Attribute srvRecords = dnsLookup.get("SRV");
             if (srvRecords == null) {
                 logger.debug("No SRV record found for domain: " + lookup);
-                return new ArrayList<HostAddress>();
+                return Collections.emptyList();
             }
             WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
             for (int i = 0; i < srvRecords.size(); i++) {
@@ -209,7 +209,7 @@ public class DNSUtil {
         catch (NamingException e) {
             logger.error("Can't process DNS lookup!", e);
         }
-        return new ArrayList<HostAddress>();
+        return Collections.emptyList();
     }
 
     /**

@@ -20,7 +20,7 @@
 
 package org.jivesoftware.openfire.vcard;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -310,9 +310,7 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
     }
 
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("vcard-temp");
-        return features.iterator();
+        return Collections.singleton("vcard-temp").iterator();
     }
 
     private class EventHandler extends UserEventAdapter {

@@ -22,7 +22,7 @@ package org.jivesoftware.openfire.handler;
 
 import gnu.inet.encoding.IDNAException;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -345,8 +345,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
     @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("jabber:iq:roster");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:roster").iterator();
     }
 }

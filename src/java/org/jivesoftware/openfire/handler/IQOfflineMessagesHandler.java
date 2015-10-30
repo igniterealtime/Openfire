@@ -141,22 +141,18 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add(NAMESPACE);
-        return features.iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
         identity.addAttribute("type", "message-list");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        return Collections.singletonList(NAMESPACE).iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {

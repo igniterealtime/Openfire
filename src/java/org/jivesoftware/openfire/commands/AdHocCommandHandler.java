@@ -96,18 +96,14 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add(NAMESPACE);
-        return features.iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
         identity.addAttribute("type", NAMESPACE.equals(node) ? "command-list" : "command-node");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {

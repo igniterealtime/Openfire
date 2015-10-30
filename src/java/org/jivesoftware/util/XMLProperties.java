@@ -742,24 +742,40 @@ public class XMLProperties {
     		Log.error("Unable to save XML properties; no file specified");
     		return;
     	}
+        boolean error = false;
         // Write data out to a temporary file first.
-        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
+        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");;
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"))) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
+        }
+        catch (Exception e) {
+            Log.error(e.getMessage(), e);
+            // There were errors so abort replacing the old property file.
+            error = true;
+        }
+
+        // No errors occurred, so delete the main file.
+        if (!error) {
             // Delete the old file so we can replace it.
             if (!file.delete()) {
                 Log.error("Error deleting property file: " + file.getAbsolutePath());
                 return;
             }
             // Copy new contents to the file.
-            copy(tempFile, file);
-
+            try {
+                copy(tempFile, file);
+            }
+            catch (Exception e) {
+                Log.error(e.getMessage(), e);
+                // There were errors so abort replacing the old property file.
+                error = true;
+            }
             // If no errors, delete the temp file.
-            tempFile.delete();
-        } catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            if (!error) {
+                tempFile.delete();
+            }
         }
     }
 

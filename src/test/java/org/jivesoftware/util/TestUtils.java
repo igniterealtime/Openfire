@@ -43,18 +43,18 @@ public class TestUtils {
      * Returns the contents of the given file as a String.
      */
     public static String getAsString(File file) throws Exception {
-        BufferedReader in = new BufferedReader(new FileReader(file));
-        StringBuffer xml = new StringBuffer();
-        String lineSeparator = System.getProperty("line.separator");
-        if (lineSeparator == null) {
-            lineSeparator = "\n";
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            StringBuffer xml = new StringBuffer();
+            String lineSeparator = System.getProperty("line.separator");
+            if (lineSeparator == null) {
+                lineSeparator = "\n";
+            }
+            String line = null;
+            while ((line = in.readLine()) != null) {
+                xml.append(line).append(lineSeparator);
+            }
+            return xml.toString();
         }
-        String line = null;
-        while ((line=in.readLine()) != null) {
-            xml.append(line).append(lineSeparator);
-        }
-        in.close();
-        return xml.toString();
     }
 
     public static String prepareFilename(String filename) {

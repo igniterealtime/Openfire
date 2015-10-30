@@ -666,10 +666,8 @@ public class DbConnectionManager {
      */
     public static String getLargeTextField(ResultSet rs, int columnIndex) throws SQLException {
         if (isStreamTextRequired()) {
-            Reader bodyReader = null;
-            String value = null;
-            try {
-                bodyReader = rs.getCharacterStream(columnIndex);
+            String value;
+            try (Reader bodyReader = rs.getCharacterStream(columnIndex)) {
                 if (bodyReader == null) {
                     return null;
                 }
@@ -685,16 +683,6 @@ public class DbConnectionManager {
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
                 throw new SQLException("Failed to load text field");
-            }
-            finally {
-                try {
-                    if (bodyReader != null) {
-                        bodyReader.close();
-                    }
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
             }
             return value;
         }

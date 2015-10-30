@@ -474,13 +474,12 @@ public class XMPPServer {
 
     @SuppressWarnings("unchecked")
 	private void loadModules() {
-    	FileReader in = null;
-    	try {
-    		File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
-            logger.info("Loading modules from " + modulesXml.getAbsolutePath());
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
-            in = new FileReader(modulesXml);
+
+        File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
+        logger.info("Loading modules from " + modulesXml.getAbsolutePath());
+        SAXReader xmlReader = new SAXReader();
+        xmlReader.setEncoding("UTF-8");
+    	try (FileReader in = new FileReader(modulesXml)) {
             Document document = xmlReader.read(in);
             Element root = document.getRootElement();
             Iterator<Node> itr = root.nodeIterator();
@@ -495,14 +494,6 @@ public class XMPPServer {
     	} catch (Exception e) {
     		e.printStackTrace();
     		logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
-    	} finally {
-    		if (in != null) {
-    			try {
-					in.close();
-				} catch (IOException e) {
-					// Squash
-				}
-    		}
     	}
         
         // Keep a reference to the internal component manager
@@ -773,9 +764,7 @@ public class XMPPServer {
         // we have to attempt to load the value from openfire_init.xml,
         // which must be in the classpath.
         if (openfireHome == null) {
-            InputStream in = null;
-            try {
-                in = getClass().getResourceAsStream("/openfire_init.xml");
+            try (InputStream in = getClass().getResourceAsStream("/openfire_init.xml")) {
                 if (in != null) {
                     SAXReader reader = new SAXReader();
                     Document doc = reader.read(in);
@@ -793,17 +782,6 @@ public class XMPPServer {
             catch (Exception e) {
                 System.err.println("Error loading openfire_init.xml to find home.");
                 e.printStackTrace();
-            }
-            finally {
-                try {
-                    if (in != null) {
-                        in.close();
-                    }
-                }
-                catch (Exception e) {
-                    System.err.println("Could not close open connection");
-                    e.printStackTrace();
-                }
             }
         }
 

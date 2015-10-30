@@ -427,9 +427,8 @@ public class Launcher {
                 @Override
 				public Object construct() {
                     if (openfired != null) {
-                        try {
-                            // Get the input stream and read from it
-                            InputStream in = openfired.getInputStream();
+                        // Get the input stream and read from it
+                        try (InputStream in = openfired.getInputStream()) {
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -441,7 +440,6 @@ public class Launcher {
                                     // Ignore.
                                 }
                             }
-                            in.close();
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -457,9 +455,8 @@ public class Launcher {
                 @Override
 				public Object construct() {
                     if (openfired != null) {
-                        try {
-                            // Get the input stream and read from it
-                            InputStream in = openfired.getErrorStream();
+                        // Get the input stream and read from it
+                        try (InputStream in = openfired.getErrorStream()) {
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -470,7 +467,6 @@ public class Launcher {
                                     // Ignore.
                                 }
                             }
-                            in.close();
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -505,11 +501,11 @@ public class Launcher {
             try {
             	// attempt to perform a graceful shutdown by sending
             	// an "exit" command to the process (via stdin)
-            	Writer out = new OutputStreamWriter(
-            			new BufferedOutputStream(openfired.getOutputStream()));
-            	out.write("exit\n");
-            	out.close();
-            	final Thread waiting = Thread.currentThread();
+                try (Writer out = new OutputStreamWriter(
+                        new BufferedOutputStream(openfired.getOutputStream()))) {
+                    out.write("exit\n");
+                }
+                final Thread waiting = Thread.currentThread();
             	Thread waiter = new Thread() {
             		public void run() {
                         try {
@@ -620,30 +616,10 @@ public class Launcher {
     }
 
     private static void copy(URL src, File dst) throws IOException {
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-            in = src.openStream();
-            out = new FileOutputStream(dst);
-            dst.mkdirs();
-            copy(in, out);
-        }
-        finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
-            }
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
+        try (InputStream in = src.openStream()) {
+            try (OutputStream out = new FileOutputStream(dst)) {
+                dst.mkdirs();
+                copy(in, out);
             }
         }
     }

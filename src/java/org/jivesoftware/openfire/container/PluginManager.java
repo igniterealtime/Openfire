@@ -177,12 +177,12 @@ public class PluginManager {
             // Absolute path to the plugin file
             String absolutePath = pluginDirectory + File.separator + pluginFilename;
             // Save input stream contents to a temp file
-            OutputStream out = new FileOutputStream(absolutePath + ".part");
-            while ((len = in.read(b)) != -1) {
-                     //write byte to file
-                     out.write(b, 0, len);
+            try (OutputStream out = new FileOutputStream(absolutePath + ".part")) {
+                while ((len = in.read(b)) != -1) {
+                    //write byte to file
+                    out.write(b, 0, len);
+                }
             }
-            out.close();
             // Delete old .jar (if it exists)
             new File(absolutePath).delete();
             // Rename temp file to .jar
@@ -1097,8 +1097,7 @@ public class PluginManager {
          * @param dir the directory to extract the plugin to.
          */
         private void unzipPlugin(String pluginName, File file, File dir) {
-            try {
-                ZipFile zipFile = new JarFile(file);
+            try (ZipFile zipFile = new JarFile(file)) {
                 // Ensure that this JAR is a plugin.
                 if (zipFile.getEntry("plugin.xml") == null) {
                     return;
@@ -1116,20 +1115,18 @@ public class PluginManager {
                     }
                     if (!entry.isDirectory()) {
                         entryFile.getParentFile().mkdirs();
-                        FileOutputStream out = new FileOutputStream(entryFile);
-                        InputStream zin = zipFile.getInputStream(entry);
-                        byte[] b = new byte[512];
-                        int len;
-                        while ((len = zin.read(b)) != -1) {
-                            out.write(b, 0, len);
+                        try (FileOutputStream out = new FileOutputStream(entryFile)) {
+                            try (InputStream zin = zipFile.getInputStream(entry)) {
+                                byte[] b = new byte[512];
+                                int len;
+                                while ((len = zin.read(b)) != -1) {
+                                    out.write(b, 0, len);
+                                }
+                                out.flush();
+                            }
                         }
-                        out.flush();
-                        out.close();
-                        zin.close();
                     }
                 }
-                zipFile.close();
-
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

@@ -53,9 +53,8 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
                 Integer type = (Integer) item.get(0);
                 if (type == 0) {
                     // Type OtherName found so return the associated value
-                    try {
+                    try (ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1))) {
                         // Value is encoded using ASN.1 so decode it to get the server's identity
-                        ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1));
                         Object object = decoder.readObject();
                         ASN1Sequence otherNameSeq = null;
                         if (object != null && object instanceof ASN1Sequence) {
@@ -90,7 +89,6 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
 	                            // Add the decoded server name to the list of identities
 	                            identities.add(identity);
 	                        }
-	                        decoder.close();
                         } catch (IllegalArgumentException ex) {
                         	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
                         	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);

@@ -68,8 +68,6 @@ public class CacheFactory {
 	private static Map<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
 	private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
     
-    private static String localCacheFactoryClass;
-    private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy = new DefaultLocalCacheStrategy();
     private static CacheFactoryStrategy localCacheFactoryStrategy;
     private static CacheFactoryStrategy clusteredCacheFactoryStrategy;
@@ -90,10 +88,6 @@ public class CacheFactory {
     private static final Map<String, Long> cacheProps = new HashMap<String, Long>();
 
     static {
-        localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
-                "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
-        clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
-                "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
 
         cacheNames.put("Favicon Hits", "faviconHits");
         cacheNames.put("Favicon Misses", "faviconMisses");
@@ -374,7 +368,7 @@ public class CacheFactory {
         cache = (T) localCacheFactoryStrategy.createCache(name);
         localOnly.add(name);
 
-        log.info("Created local-only cache [" + localCacheFactoryClass + "] for " + name);
+        log.info("Created local-only cache [" + getLocalCacheFactoryClass() + "] for " + name);
         
         return wrapCache(cache, name);
     }
@@ -603,6 +597,7 @@ public class CacheFactory {
     }
 
     public static synchronized void initialize() throws InitializationException {
+        String localCacheFactoryClass = getLocalCacheFactoryClass();
         try {
         	localCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
             cacheFactoryStrategy = localCacheFactoryStrategy;
@@ -618,6 +613,7 @@ public class CacheFactory {
      * @return cluster support plugin names
      */
     public static List<String> getClusterSupportPluginNames(){
+    	String clusteredCacheFactoryClass = getClusteredCacheFactoryClass();
     	// list all plugin and check the clusteredCacheFactoryClass implement class
     	List<String> result = new ArrayList<String>();
     	PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
@@ -636,6 +632,7 @@ public class CacheFactory {
     }
     
     private static boolean createClusteredCacheFactoryStrategy() {
+    	String clusteredCacheFactoryClass = getClusteredCacheFactoryClass();
     	try {
     		PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
     		String clusterPluginName = JiveGlobals.getProperty("cluster.plugin.name");
@@ -665,6 +662,16 @@ public class CacheFactory {
 			  log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
 		} 
     	return false;
+    }
+    
+    private static String getClusteredCacheFactoryClass() {
+    	return JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME, 
+                "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
+    }
+    
+    private static String getLocalCacheFactoryClass() {
+    	return JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
+                "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
     }
 
     public static void startClustering() {

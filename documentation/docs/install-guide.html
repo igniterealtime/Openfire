@@ -249,12 +249,16 @@ or directly inside the administration console.
 
 <h3>Installing Plugins</h3>
 
-If you download a plugin from inside the Openfire administration console, it will automatically
+<p>If you download a plugin from inside the Openfire administration console, it will automatically
 be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
 by copying the plugin file to the <tt>plugins/</tt> directory of your Openfire installation. A
 plugin monitor will automatically extract the plugin into a directory and install the plugin in Openfire.
 You may also use the "upload plugin" feature in the admin console (under the Plugins tab) to load
-a plugin from your local file system to the server.
+a plugin from your local file system to the server.</p>
+
+<p><strong>Note:</strong> For nearly all plugins, a restart of the Openfire
+server software is not required.  You should be able to install and remove
+plugins on-demand without impacting Openfire.</p>
 
 
 <h3>Managing Plugins</h3>

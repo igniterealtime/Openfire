@@ -25,7 +25,7 @@ package org.jivesoftware.openfire.clearspace;
  */
 public class ConnectionException extends Exception {
 
-    public enum ErrorType {AUTHENTICATION, PAGE_NOT_FOUND, UPDATE_STATE, UNKNOWN_HOST, SERVICE_NOT_AVAIBLE, OTHER}
+    public enum ErrorType {AUTHENTICATION, PAGE_NOT_FOUND, UPDATE_STATE, UNKNOWN_HOST, SERVICE_NOT_AVAIBLE, OTHER;}
 
     private ErrorType errorType;
 

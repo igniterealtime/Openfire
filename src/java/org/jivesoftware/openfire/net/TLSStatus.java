@@ -53,5 +53,5 @@ public enum TLSStatus {
 	/**
 	 * Handshaking is OK.
 	 */
-	OK
+	OK;
 }

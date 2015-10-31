@@ -254,7 +254,7 @@ public class HistoryStrategy {
      * Strategy type.
      */
     public enum Type {
-        defaulType, none, all, number
+        defaulType, none, all, number;
     }
 
     /**

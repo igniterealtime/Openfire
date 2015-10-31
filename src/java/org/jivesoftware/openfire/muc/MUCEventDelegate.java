@@ -34,7 +34,7 @@ public abstract class MUCEventDelegate {
     public enum InvitationResult {
         HANDLED_BY_DELEGATE,
         HANDLED_BY_OPENFIRE,
-        REJECTED
+        REJECTED;
     }
 
     /**

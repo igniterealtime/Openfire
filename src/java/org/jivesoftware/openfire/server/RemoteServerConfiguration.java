@@ -103,6 +103,6 @@ public class RemoteServerConfiguration implements Cacheable, Externalizable {
         /**
          * The XMPP entity is NOT allowed to connect to the server.
          */
-        blocked
+        blocked;
     }
 }

@@ -28,19 +28,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
 import java.security.cert.Certificate;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.*;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.IoFilterChain;
@@ -52,26 +46,20 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.*;
-import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 
 /**
- * Implementation of {@link Connection} inteface specific for NIO connections when using
- * the MINA framework.<p>
- *
- * MINA project can be found at <a href="http://mina.apache.org">here</a>.
+ * Implementation of {@link Connection} interface specific for NIO connections when using the Apache MINA framework.
  *
  * @author Gaston Dombiak
+ * @see <a href="http://mina.apache.org">Apache MINA</a>
  */
 public class NIOConnection implements Connection {
 
@@ -378,65 +366,28 @@ public class NIOConnection implements Connection {
     @Deprecated
 	@Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        final boolean isClientToServer = ( remoteServer == null );
-        startTLS( clientMode, isClientToServer, authentication );
+        final boolean isPeerClient = ( remoteServer == null );
+        startTLS( clientMode, isPeerClient, authentication );
     }
 
-    public void startTLS(boolean clientMode, boolean isClientToServer, ClientAuth authentication) throws Exception {
-        Log.debug( "StartTLS: using {}", isClientToServer ? "c2s" : "s2s" );
+    public void startTLS(boolean clientMode, boolean isPeerClient, ClientAuth authentication) throws Exception {
 
-        final SSLConfig sslConfig = SSLConfig.getInstance();
-        final TrustStoreConfig storeConfig;
-        if (isClientToServer) {
-            storeConfig = (TrustStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
-        } else {
-            storeConfig = (TrustStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+        final SslFilter filter;
+        if ( clientMode ) {
+            filter = SSLConfig.getClientModeSslFilter( Purpose.SOCKET_S2S );
+        }
+        else
+        {
+            final Purpose purpose = isPeerClient ? Purpose.SOCKET_C2S : Purpose.SOCKET_S2S;
+            filter = SSLConfig.getServerModeSslFilter( purpose, authentication );
         }
 
-        final TrustManager[] tm;
-        if (clientMode || authentication == ClientAuth.needed || authentication == ClientAuth.wanted) {
-            // We might need to verify a certificate from our peer, so get different TrustManager[]'s
-            final KeyStore ksTrust = storeConfig.getStore();
-            if(isClientToServer) {
-                // Check if we can trust certificates presented by the client
-                tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
-            } else {
-                // Check if we can trust certificates presented by the server
-                tm = new TrustManager[]{new ServerTrustManager(ksTrust)};
-            }
-        } else {
-            tm = storeConfig.getTrustManagers();
-        }
-
-        final SSLContext tlsContext = SSLConfig.getSSLContext();
-
-        final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-        tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
-
-        SslFilter filter = new SslFilter(tlsContext);
-        filter.setUseClientMode(clientMode);
-        // Disable SSLv3 due to POODLE vulnerability.
-        if (clientMode) {
-            filter.setEnabledProtocols(new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"});
-        } else {
-            // ... but accept a SSLv2 Hello when in server mode.
-            filter.setEnabledProtocols(new String[]{"SSLv2Hello", "TLSv1", "TLSv1.1", "TLSv1.2"});
-        }
-        if (authentication == ClientAuth.needed) {
-            filter.setNeedClientAuth(true);
-        }
-        else if (authentication == ClientAuth.wanted) {
-            // Just indicate that we would like to authenticate the client but if client
-            // certificates are self-signed or have no certificate chain then we are still
-            // good
-            filter.setWantClientAuth(true);
-        }
         ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
         ioSession.setAttribute(SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE);
 
-        if (!clientMode) {
+        if ( !clientMode ) {
             // Indicate the client that the server is ready to negotiate TLS
-            deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+            deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
         }
     }
 

@@ -31,11 +31,6 @@
         storePurpose = null;
     }
 
-    if (! storePurpose.isIdentityStore() ) {
-        errors.put( "storePurpose", "shoud be an identity store (not a trust store)");
-        storePurpose = null;
-    }
-
     pageContext.setAttribute( "storePurpose", storePurpose );
 
     if (save) {
@@ -47,7 +42,7 @@
         }
         if (errors.isEmpty()) {
             try {
-                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
+                final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( storePurpose );
 
                 // Create an alias for the signed certificate
                 String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
@@ -62,7 +57,7 @@
                 identityStoreConfig.installCertificate( alias, privateKey, passPhrase, certificate );
 
                 // Log the event
-                webManager.logEvent("imported SSL certificate in "+ storePurposeText, "alias = "+alias);
+                webManager.logEvent("imported SSL certificate in identity store "+ storePurposeText, "alias = "+alias);
 
                 response.sendRedirect("security-keystore.jsp?storePurpose="+storePurposeText);
                 return;
@@ -77,8 +72,8 @@
 
 <html>
   <head>
-      <title><fmt:message key="ssl.import.certificate.keystore.${connectivityType}.title"/></title>
-      <meta name="pageID" content="security-keystore-${connectivityType}"/>
+      <title><fmt:message key="ssl.import.certificate.keystore.${storePurpose}.title"/></title>
+      <meta name="pageID" content="security-keystore-${storePurpose}"/>
   </head>
   <body>
 
@@ -120,7 +115,7 @@
 
   <!-- BEGIN 'Import Private Key and Certificate' -->
   <form action="import-keystore-certificate.jsp" method="post" name="f">
-      <input type="hidden" name="connectivityType" value="${connectivityType}"/>
+      <input type="hidden" name="storePurpose" value="${storePurpose}"/>
       <div class="jive-contentBoxHeader">
           <fmt:message key="ssl.import.certificate.keystore.boxtitle" />
       </div>

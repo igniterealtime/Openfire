@@ -56,14 +56,7 @@ import org.apache.mina.integration.jmx.IoServiceMBean;
 import org.apache.mina.integration.jmx.IoSessionMBean;
 import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.JMXManager;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.ServerPort;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
@@ -451,6 +444,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 		        Log.debug("Throttling read buffer for connections from sslSocketAcceptor={} to max={} bytes",
 		                  sslSocketAcceptor, maxBufferSize);
 
+
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
                 Connection.ClientAuth clientAuth;
                 try {
@@ -459,9 +453,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     clientAuth = Connection.ClientAuth.disabled;
                 }
 
-                final SslFilter sslFilter = SSLConfig.getServerModeSslFilter( SSLConfig.Type.SOCKET_C2S, clientAuth );
+                final SslFilter sslFilter = SSLConfig.getServerModeSslFilter( Purpose.SOCKET_C2S, clientAuth );
                 sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, sslFilter);
-
             }
             catch (Exception e) {
                 System.err.println("Error starting SSL XMPP listener on port " + port + ": " +
@@ -615,7 +608,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     @Override
     public boolean isClientSSLListenerEnabled() {
         try {
-            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
+            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getIdentityStore( Purpose.SOCKET_C2S ).size() > 0;
         } catch (KeyStoreException e) {
             return false;
         }

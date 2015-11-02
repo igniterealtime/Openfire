@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -86,6 +87,7 @@ public class SASLAuthentication {
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
+
 
     private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
 
@@ -193,8 +195,8 @@ public class SASLAuthentication {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
                 LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-                final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+                final KeyStore keyStore   = SSLConfig.getIdentityStore( Purpose.SOCKET_S2S );
+                final KeyStore trustStore = SSLConfig.getTrustStore( Purpose.SOCKET_S2S );
                 final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
 
                 boolean haveTrustedCertificate = trusted != null;
@@ -572,8 +574,8 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+            final KeyStore keyStore   = SSLConfig.getIdentityStore( Purpose.SOCKET_C2S );
+            final KeyStore trustStore = SSLConfig.getTrustStore( Purpose.SOCKET_C2S );
             final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
 
             if (trusted == null) {
@@ -653,8 +655,9 @@ public class SASLAuthentication {
     }
 
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
-        final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-        final KeyStore trustStore = SSLConfig.getStore( isS2S ? Purpose.SOCKETBASED_S2S_TRUSTSTORE : Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+        final Purpose purpose = isS2S ? Purpose.SOCKET_S2S : Purpose.SOCKET_C2S;
+        final KeyStore keyStore   = SSLConfig.getIdentityStore( purpose );
+        final KeyStore trustStore = SSLConfig.getTrustStore( purpose );
         final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
         if (trusted != null) {
             return verifyCertificate(trusted, hostname);

@@ -7,6 +7,7 @@
 <%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStoreConfig" %>
 <%@ page import="java.util.Set" %>
+<%@ page import="java.util.Collections" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -28,18 +29,10 @@
     try
     {
         storePurpose = Purpose.valueOf( storePurposeText );
-
-        if ( !storePurpose.isTrustStore() )
+        storeConfig = SSLConfig.getInstance().getTrustStoreConfig( storePurpose );
+        if ( storeConfig == null )
         {
-            errors.put( "storePurpose", "should be a trust store (not an identity store)");
-        }
-        else
-        {
-            storeConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
-            if ( storeConfig == null )
-            {
-                errors.put( "storeConfig", "Unable to get an instance." );
-            }
+            errors.put( "storeConfig", "Unable to get an instance." );
         }
     }
     catch (RuntimeException ex)
@@ -52,7 +45,7 @@
         pageContext.setAttribute( "storePurpose", storePurpose );
         pageContext.setAttribute( "storeConfig", storeConfig );
 
-        final Set<Purpose> sameStorePurposes = SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
+        final Set<Purpose> sameStorePurposes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
         pageContext.setAttribute( "sameStorePurposes", sameStorePurposes );
 
         if ( delete )

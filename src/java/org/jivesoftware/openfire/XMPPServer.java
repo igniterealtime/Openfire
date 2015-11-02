@@ -376,7 +376,7 @@ public class XMPPServer {
             // Update certificates (if required)
             try {
                 // Check if keystore already has certificates for current domain
-                final IdentityStoreConfig storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
+                final IdentityStoreConfig storeConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.SOCKET_C2S );
                 storeConfig.ensureDomainCertificates( "DSA", "RSA" );
             } catch (Exception e) {
                 logger.error("Error generating self-signed certificates", e);
@@ -475,10 +475,10 @@ public class XMPPServer {
     @SuppressWarnings("unchecked")
 	private void loadModules() {
 
-        File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
-        logger.info("Loading modules from " + modulesXml.getAbsolutePath());
-        SAXReader xmlReader = new SAXReader();
-        xmlReader.setEncoding("UTF-8");
+    		File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
+            logger.info("Loading modules from " + modulesXml.getAbsolutePath());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
     	try (FileReader in = new FileReader(modulesXml)) {
             Document document = xmlReader.read(in);
             Element root = document.getRootElement();
@@ -1207,7 +1207,7 @@ public class XMPPServer {
      * @return the <code>AuditManager</code> registered with this server.
      */
     public AuditManager getAuditManager() {
-        return (AuditManager) modules.get(AuditManager.class.getName());
+        return (AuditManager) modules.get(AuditManagerImpl.class.getName());
     }
 
     /**

@@ -256,7 +256,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
             try {
-                hasCertificates = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
+                hasCertificates = SSLConfig.getIdentityStore( Purpose.SOCKET_C2S ).size() > 0;
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

@@ -36,18 +36,10 @@
     try
     {
         storePurpose = Purpose.valueOf( storePurposeText );
-
-        if ( !storePurpose.isIdentityStore() )
+        storeConfig =  SSLConfig.getInstance().getIdentityStoreConfig( storePurpose );
+        if ( storeConfig == null )
         {
-            errors.put( "storePurpose", "should be an identity store (not a trust store)");
-        }
-        else
-        {
-            storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
-            if ( storeConfig == null )
-            {
-                errors.put( "storeConfig", "Unable to get an instance." );
-            }
+            errors.put( "storeConfig", "Unable to get an instance." );
         }
     }
     catch (RuntimeException ex)
@@ -60,7 +52,7 @@
         pageContext.setAttribute( "storePurpose", storePurpose );
         pageContext.setAttribute( "storeConfig", storeConfig );
 
-        final Set<Purpose> sameStorePurposes = SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
+        final Set<Purpose> sameStorePurposes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
         pageContext.setAttribute( "sameStorePurposes", sameStorePurposes );
 
         final Map<String, X509Certificate> certificates = storeConfig.getAllCertificates();

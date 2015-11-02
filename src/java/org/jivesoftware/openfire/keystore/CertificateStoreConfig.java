@@ -54,7 +54,7 @@ public abstract class CertificateStoreConfig
     {
         try
         {
-            this.canonicalPath = SSLConfig.canonicalize( path );
+            this.canonicalPath = Purpose.canonicalize( path );
             final File file = new File( canonicalPath );
 
             if ( createIfAbsent && !file.exists() )

@@ -31,6 +31,7 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.keystore.Purpose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,12 +78,12 @@ public class TLSWrapper {
             final SSLEngine sslEngine;
             if ( clientMode )
             {
-                sslEngine = SSLConfig.getClientModeSSLEngine( SSLConfig.Type.SOCKET_S2S );
+                sslEngine = SSLConfig.getClientModeSSLEngine( Purpose.SOCKET_S2S );
             }
             else
             {
-                final SSLConfig.Type type = isPeerClient ? SSLConfig.Type.SOCKET_C2S : SSLConfig.Type.SOCKET_S2S;
-                sslEngine = SSLConfig.getServerModeSSLEngine( type, clientAuth );
+                final Purpose purpose = isPeerClient ? Purpose.SOCKET_C2S : Purpose.SOCKET_S2S;
+                sslEngine = SSLConfig.getServerModeSSLEngine( purpose, clientAuth );
             }
 
             final SSLSession sslSession = sslEngine.getSession();

@@ -23,7 +23,10 @@ package org.jivesoftware.openfire.http;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
@@ -247,7 +250,7 @@ public final class HttpBindManager {
     private void createSSLConnector(int securePort, int bindThreads) {
         httpsConnector = null;
         try {
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_IDENTITYSTORE );
+            final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.BOSH_C2S );
             final KeyStore keyStore = identityStoreConfig.getStore();
 
             if (securePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() ) {
@@ -256,7 +259,7 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_C2S_TRUSTSTORE );
+                final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( Purpose.BOSH_C2S );
 
                 final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
@@ -570,13 +573,11 @@ public final class HttpBindManager {
     private void createBoshHandler(ContextHandlerCollection contexts, String boshPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
-
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-
         context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
         if (isHttpCompressionEnabled()) {
 	        Filter gzipFilter = new AsyncGzipFilter() {
@@ -601,13 +602,11 @@ public final class HttpBindManager {
 	private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
-
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-
         context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");
     }
 

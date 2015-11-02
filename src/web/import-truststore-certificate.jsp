@@ -16,7 +16,7 @@
 <%  final boolean save             = ParamUtils.getParameter(request, "save") != null;
     final String alias             = ParamUtils.getParameter(request, "alias");
     final String certificate       = ParamUtils.getParameter(request, "certificate");
-    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
+    final String storePurposeText  = ParamUtils.getParameter(request, "storePurpose");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
@@ -29,16 +29,11 @@
         storePurpose = null;
     }
 
-    if (! storePurpose.isTrustStore() ) {
-        errors.put( "storePurpose", "shoud be a trust store (not an identity store)");
-        storePurpose = null;
-    }
-
     pageContext.setAttribute( "storePurpose", storePurpose );
 
     if (save && errors.isEmpty())
     {
-        final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
+        final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( storePurpose );
 
         if (alias == null || "".equals(alias))
         {
@@ -62,7 +57,7 @@
                 trustStoreConfig.installCertificate( alias, certificate );
 
                 // Log the event
-                webManager.logEvent("imported SSL certificate in "+ storePurposeText, "alias = "+alias);
+                webManager.logEvent("imported SSL certificate in trust store "+ storePurposeText, "alias = "+alias);
 
                 response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurposeText + "&importsuccess=true" );
                 return;
@@ -79,9 +74,9 @@
 <html>
 <head>
     <title>
-        <fmt:message key="ssl.import.certificate.keystore.${connectivityType}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
+        <fmt:message key="ssl.import.certificate.keystore.${storePurpose}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
     </title>
-    <meta name="pageID" content="security-truststore-${connectivityType}-${param.type}"/>
+    <meta name="pageID" content="security-truststore-${storePurpose}-${param.type}"/>
 </head>
 <body>
 
@@ -129,7 +124,7 @@
 
     <!-- BEGIN 'Import Certificate' -->
     <form action="import-truststore-certificate.jsp?type=${param.type}" method="post" name="f">
-        <input type="hidden" name="connectivityType" value="${connectivityType}"/>
+        <input type="hidden" name="connectivityType" value="${storePurpose}"/>
         <div class="jive-contentBoxHeader">
             <fmt:message key="ssl.import.certificate.keystore.boxtitle"/>
         </div>

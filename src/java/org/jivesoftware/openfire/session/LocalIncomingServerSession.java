@@ -153,7 +153,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 	                            Connection.TLSPolicy.required;
 	            boolean hasCertificates = false;
 	            try {
-	                hasCertificates = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE ).size() > 0;
+	                hasCertificates = SSLConfig.getIdentityStore( Purpose.SOCKET_S2S ).size() > 0;
 	            }
 	            catch (Exception e) {
 	                Log.error(e.getMessage(), e);
@@ -285,7 +285,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      *
      * @return domains, subdomains and virtual hosts that where validated.
      */
-    @Override
     public Collection<String> getValidatedDomains() {
         return Collections.unmodifiableCollection(validatedDomains);
     }
@@ -375,7 +374,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         	usingSelfSigned = true;
         } else {
         	try {
-                final KeyStore keyStore = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
+                final KeyStore keyStore = SSLConfig.getIdentityStore( Purpose.SOCKET_S2S );
 				usingSelfSigned = CertificateManager.isSelfSignedCertificate(keyStore, (X509Certificate) chain[0]);
 			} catch (KeyStoreException ex) {
 				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);

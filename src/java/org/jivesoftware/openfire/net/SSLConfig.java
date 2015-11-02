@@ -51,7 +51,8 @@ public class SSLConfig
     private static final Logger Log = LoggerFactory.getLogger( SSLConfig.class );
 
     private final ConcurrentMap<Purpose, String> locationByPurpose = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CertificateStoreConfig> storesByLocation = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, IdentityStoreConfig> identityStoresByLocation = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TrustStoreConfig> trustStoresByLocation = new ConcurrentHashMap<>();
 
     private static SSLConfig INSTANCE;
 
@@ -73,201 +74,230 @@ public class SSLConfig
     }
 
     /**
-     * An utility method that is short-hand for getInstance().getStoreConfig(purpose).getStore();
+     * An utility method that is short-hand for getInstance().getIdentityStoreConfig(purpose).getStore();
      * @param purpose The purpose for which to return a store.
      * @return a store (never null).
      */
-    public static synchronized KeyStore getStore( Purpose purpose )
+    public static synchronized KeyStore getIdentityStore( Purpose purpose )
     {
-        return getInstance().getStoreConfig( purpose ).getStore();
+        return getInstance().getIdentityStoreConfig( purpose ).getStore();
     }
 
     /**
-     * Openfire allows a store to be re-used for multiple purposes. This method will find the store used for the
-     * provided purpose, and based on that will return all <em>other</em> purposes for which the same store is used.
-     *
-     * @param purpose The purpose for which to find a store (cannot be null).
-     * @return all <em>other</em> purposes for which the store is used (never null, but possibly an empty collection).
-     * @throws IOException
+     * An utility method that is short-hand for getInstance().getTrustStoreConfig(purpose).getStore();
+     * @param purpose The purpose for which to return a store.
+     * @return a store (never null).
      */
-    public Set<Purpose> getOtherPurposesForSameStore( Purpose purpose ) throws IOException
+    public static synchronized KeyStore getTrustStore( Purpose purpose )
     {
-        if ( purpose == null )
-        {
-            throw new IllegalArgumentException( "Argument 'purpose' cannot be null." );
-        }
-
-        final Set<Purpose> results = new HashSet<>();
-
-        final String location = getLocation( purpose );
-        for ( Map.Entry<Purpose, String> entry : locationByPurpose.entrySet() )
-        {
-            if ( entry.getValue().equalsIgnoreCase( location ) ) {
-                results.add( entry.getKey() );
-            }
-        }
-
-        return results;
+        return getInstance().getTrustStoreConfig( purpose ).getStore();
     }
 
-    public static String getNonCanonicalizedLocation(Purpose purpose)
-    {
-        final String path;
-        switch ( purpose )
-        {
-            // Identity store for socket-based IO (this is the default identity store)
-            case SOCKETBASED_IDENTITYSTORE:
-                path = JiveGlobals.getProperty( "xmpp.socket.ssl.keystore", "resources" + File.separator + "security" + File.separator + "keystore" );
-                break;
+//    /**
+//     * Openfire allows a store to be re-used for multiple purposes. This method will find the store used for the
+//     * provided purpose, and based on that will return all <em>other</em> purposes for which the same store is used.
+//     *
+//     * @param purpose The purpose for which to find a store (cannot be null).
+//     * @return all <em>other</em> purposes for which the store is used (never null, but possibly an empty collection).
+//     * @throws IOException
+//     */
+//    public Set<Purpose> getOtherPurposesForSameStore( Type type, boolean isTrustStore ) throws IOException
+//    {
+//        if ( type == null )
+//        {
+//            throw new IllegalArgumentException( "Argument 'type' cannot be null." );
+//        }
+//
+//        final Set<Purpose> results = new HashSet<>();
+//
+//        for ( Map.Entry<Purpose, String> entry : locationByPurpose.entrySet() )
+//        {
+//            if ( entry.getValue().equalsIgnoreCase( location ) )
+//            {
+//                results.add( entry.getKey() );
+//            }
+//        }
+//
+//        return results;
+//    }
 
-            // Identity store for BOSH-based IO (falls back to the default identity store when not configured)
-            case BOSHBASED_IDENTITYSTORE:
-                path = JiveGlobals.getProperty( "xmpp.bosh.ssl.keystore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_IDENTITYSTORE ) );
-                break;
+//    public static String getNonCanonicalizedLocation(Purpose purpose)
+//    {
+//        final String path;
+//        switch ( purpose )
+//        {
+//            // Identity store for socket-based IO (this is the default identity store)
+//            case SOCKETBASED_IDENTITYSTORE:
+//                path = JiveGlobals.getProperty( "xmpp.socket.ssl.keystore", "resources" + File.separator + "security" + File.separator + "keystore" );
+//                break;
+//
+//            // Identity store for BOSH-based IO (falls back to the default identity store when not configured)
+//            case BOSHBASED_IDENTITYSTORE:
+//                path = JiveGlobals.getProperty( "xmpp.bosh.ssl.keystore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_IDENTITYSTORE ) );
+//                break;
+//
+//            // Identity store for administrative IO (falls back to the default identity store when not configured)
+//            case ADMINISTRATIVE_IDENTITYSTORE:
+//                path = JiveGlobals.getProperty( "admin.ssl.keystore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_IDENTITYSTORE ) );
+//                break;
+//
+//            // Identity store for admin panel (falls back to the administrative identity store when not configured)
+//            case WEBADMIN_IDENTITYSTORE:
+//                path = JiveGlobals.getProperty( "admin.web.ssl.keystore", getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) );
+//                break;
+//
+//            // server-to-server trust store (This is the only / default S2S trust store. S2S over BOSH is unsupported by Openfire).
+//            case SOCKETBASED_S2S_TRUSTSTORE:
+//                path = JiveGlobals.getProperty( "xmpp.socket.ssl.truststore", "resources" + File.separator + "security" + File.separator + "truststore" );
+//                break;
+//
+//            // client-to-server trust store for socket-based IO (This is the default C2S trust store).
+//            case SOCKETBASED_C2S_TRUSTSTORE:
+//                path = JiveGlobals.getProperty( "xmpp.socket.ssl.client.truststore", "resources" + File.separator + "security" + File.separator + "client.truststore" );
+//                break;
+//
+//            // client-to-server trust store for BOSH-based IO (falls back to the default C2S trust store when not configured).
+//            case BOSHBASED_C2S_TRUSTSTORE:
+//                path = JiveGlobals.getProperty( "xmpp.bosh.ssl.client.truststore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) );
+//                break;
+//
+//            // Administrative trust store (falls back to the default trust store when not configured)
+//            case ADMINISTRATIVE_TRUSTSTORE:
+//                path = JiveGlobals.getProperty( "admin.ssl.truststore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) );
+//                break;
+//
+//            // Trust store for admin panel (falls back to the administrative trust store when not configured)
+//            case WEBADMIN_TRUSTSTORE:
+//                path = JiveGlobals.getProperty( "admin.web.ssl.truststore", getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_TRUSTSTORE ) );
+//                break;
+//
+//            default:
+//                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
+//        }
+//        return path;
+//    }
 
-            // Identity store for administrative IO (falls back to the default identity store when not configured)
-            case ADMINISTRATIVE_IDENTITYSTORE:
-                path = JiveGlobals.getProperty( "admin.ssl.keystore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_IDENTITYSTORE ) );
-                break;
+//    public static String getLocation(Purpose purpose, boolean isTrustStore) throws IOException
+//    {
+//        final String location;
+//        if ( isTrustStore ) {
+//            location = purpose.getTrustStoreLocationNonCanonicalized();
+//        } else {
+//            location = purpose.getIdentityStoreLocationNonCanonicalized();
+//        }
+//        return canonicalize( location );
+//    }
 
-            // Identity store for admin panel (falls back to the administrative identity store when not configured)
-            case WEBADMIN_IDENTITYSTORE:
-                path = JiveGlobals.getProperty( "admin.web.ssl.keystore", getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) );
-                break;
+//    protected String getPassword( Type type, boolean isTrustStore )
+//    {
+//        switch ( purpose ) {
+//            case SOCKETBASED_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.keypass", "changeit" ).trim();
+//
+//            case BOSHBASED_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "xmpp.bosh.ssl.keypass", getPassword( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
+//
+//            case ADMINISTRATIVE_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "admin.ssl.keypass",  getPassword( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
+//
+//            case WEBADMIN_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "admin.web.ssl.keypass", getPassword( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) ).trim();
+//
+//            case SOCKETBASED_S2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.trustpass", "changeit" ).trim();
+//
+//            case SOCKETBASED_C2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.client.trustpass", "changeit" ).trim();
+//
+//            case BOSHBASED_C2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.bosh.ssl.client.trustpass", getPassword( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) ).trim();
+//
+//            case ADMINISTRATIVE_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "admin.ssl.trustpass", getPassword( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) ).trim();
+//
+//            case WEBADMIN_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "admin..web.ssl.trustpass", getPassword( Purpose.ADMINISTRATIVE_TRUSTSTORE ) ).trim();
+//
+//            default:
+//                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
+//        }
+//    }
 
-            // server-to-server trust store (This is the only / default S2S trust store. S2S over BOSH is unsupported by Openfire).
-            case SOCKETBASED_S2S_TRUSTSTORE:
-                path = JiveGlobals.getProperty( "xmpp.socket.ssl.truststore", "resources" + File.separator + "security" + File.separator + "truststore" );
-                break;
-
-            // client-to-server trust store for socket-based IO (This is the default C2S trust store).
-            case SOCKETBASED_C2S_TRUSTSTORE:
-                path = JiveGlobals.getProperty( "xmpp.socket.ssl.client.truststore", "resources" + File.separator + "security" + File.separator + "client.truststore" );
-                break;
-
-            // client-to-server trust store for BOSH-based IO (falls back to the default C2S trust store when not configured).
-            case BOSHBASED_C2S_TRUSTSTORE:
-                path = JiveGlobals.getProperty( "xmpp.bosh.ssl.client.truststore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) );
-                break;
-
-            // Administrative trust store (falls back to the default trust store when not configured)
-            case ADMINISTRATIVE_TRUSTSTORE:
-                path = JiveGlobals.getProperty( "admin.ssl.truststore", getNonCanonicalizedLocation( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) );
-                break;
-
-            // Trust store for admin panel (falls back to the administrative trust store when not configured)
-            case WEBADMIN_TRUSTSTORE:
-                path = JiveGlobals.getProperty( "admin.web.ssl.truststore", getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_TRUSTSTORE ) );
-                break;
-
-            default:
-                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
-        }
-        return path;
-    }
-
-    public static String getLocation(Purpose purpose) throws IOException
-    {
-        return canonicalize( getNonCanonicalizedLocation( purpose ) );
-    }
-
-    protected String getPassword(Purpose purpose){
-        switch ( purpose ) {
-            case SOCKETBASED_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.keypass", "changeit" ).trim();
-
-            case BOSHBASED_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "xmpp.bosh.ssl.keypass", getPassword( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
-
-            case ADMINISTRATIVE_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "admin.ssl.keypass",  getPassword( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
-
-            case WEBADMIN_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "admin.web.ssl.keypass", getPassword( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) ).trim();
-
-            case SOCKETBASED_S2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.trustpass", "changeit" ).trim();
-
-            case SOCKETBASED_C2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.client.trustpass", "changeit" ).trim();
-
-            case BOSHBASED_C2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.bosh.ssl.client.trustpass", getPassword( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) ).trim();
-
-            case ADMINISTRATIVE_TRUSTSTORE:
-                return JiveGlobals.getProperty( "admin.ssl.trustpass", getPassword( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) ).trim();
-
-            case WEBADMIN_TRUSTSTORE:
-                return JiveGlobals.getProperty( "admin..web.ssl.trustpass", getPassword( Purpose.ADMINISTRATIVE_TRUSTSTORE ) ).trim();
-
-            default:
-                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
-        }
-    }
-
-    protected String getStoreType(Purpose purpose) {
-
-        // FIXME All properties should be unique, instead of being re-used by different stores.
-        switch ( purpose )
-        {
-            case SOCKETBASED_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.storeType", "jks" ).trim();
-
-            case BOSHBASED_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "xmpp.bosh.ssl.storeType", getStoreType( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
-
-            case ADMINISTRATIVE_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "admin.ssl.storeType", getStoreType( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
-
-            case WEBADMIN_IDENTITYSTORE:
-                return JiveGlobals.getProperty( "admin.web.ssl.storeType", getStoreType( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) ).trim();
-
-            case SOCKETBASED_S2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.storeType", "jks" ).trim();
-
-            case SOCKETBASED_C2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.socket.ssl.client.storeType", "jks" ).trim();
-
-            case BOSHBASED_C2S_TRUSTSTORE:
-                return JiveGlobals.getProperty( "xmpp.bosh.ssl.client.storeType", getStoreType( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) ).trim();
-
-            case ADMINISTRATIVE_TRUSTSTORE:
-                return JiveGlobals.getProperty( "admin.ssl.storeType", getStoreType( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) ).trim();
-
-            case WEBADMIN_TRUSTSTORE:
-                return JiveGlobals.getProperty( "admin.web.ssl.storeType", getStoreType( Purpose.ADMINISTRATIVE_TRUSTSTORE ) ).trim();
-
-            default:
-                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
-        }
-    }
+//    protected String getStoreType( Type type, boolean isTrustStore )
+//    {
+//        // FIXME All properties should be unique, instead of being re-used by different stores.
+//        switch ( purpose )
+//        {
+//            case SOCKETBASED_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.storeType", "jks" ).trim();
+//
+//            case BOSHBASED_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "xmpp.bosh.ssl.storeType", getStoreType( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
+//
+//            case ADMINISTRATIVE_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "admin.ssl.storeType", getStoreType( Purpose.SOCKETBASED_IDENTITYSTORE ) ).trim();
+//
+//            case WEBADMIN_IDENTITYSTORE:
+//                return JiveGlobals.getProperty( "admin.web.ssl.storeType", getStoreType( Purpose.ADMINISTRATIVE_IDENTITYSTORE ) ).trim();
+//
+//            case SOCKETBASED_S2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.storeType", "jks" ).trim();
+//
+//            case SOCKETBASED_C2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.socket.ssl.client.storeType", "jks" ).trim();
+//
+//            case BOSHBASED_C2S_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "xmpp.bosh.ssl.client.storeType", getStoreType( Purpose.SOCKETBASED_C2S_TRUSTSTORE ) ).trim();
+//
+//            case ADMINISTRATIVE_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "admin.ssl.storeType", getStoreType( Purpose.SOCKETBASED_S2S_TRUSTSTORE ) ).trim();
+//
+//            case WEBADMIN_TRUSTSTORE:
+//                return JiveGlobals.getProperty( "admin.web.ssl.storeType", getStoreType( Purpose.ADMINISTRATIVE_TRUSTSTORE ) ).trim();
+//
+//            default:
+//                throw new IllegalStateException( "Unrecognized purpose: " + purpose );
+//        }
+//    }
 
     private SSLConfig() throws CertificateStoreConfigException, IOException, NoSuchAlgorithmException
     {
-        for (Purpose purpose : Purpose.values()) {
-            final String location = getLocation( purpose );
-            if ( !storesByLocation.containsKey( location )) {
-                final CertificateStoreConfig storeConfig;
-                if (purpose.isTrustStore()) {
-                    final boolean acceptSelfSigned = false; // TODO make configurable
-                    final boolean checkValidity = true; ; // TODO make configurable
-                    storeConfig = new TrustStoreConfig( getLocation( purpose ), getPassword( purpose ), getStoreType( purpose ), false, acceptSelfSigned, checkValidity );
-                } else {
-                    storeConfig = new IdentityStoreConfig( getLocation( purpose ), getPassword( purpose ), getStoreType( purpose ), false );
-                }
-
-                storesByLocation.put( location, storeConfig );
+        for ( final Purpose purpose : Purpose.values() )
+        {
+            // Instantiate an identity store.
+            final String locationIdent = purpose.getIdentityStoreLocation();
+            locationByPurpose.put( purpose, locationIdent );
+            if ( !identityStoresByLocation.containsKey( locationIdent ) )
+            {
+                final IdentityStoreConfig storeConfig = new IdentityStoreConfig( purpose.getIdentityStoreLocation(), purpose.getIdentityStorePassword(), purpose.getIdentityStoreType(), false );
+                identityStoresByLocation.put( locationIdent, storeConfig );
             }
 
-            locationByPurpose.put(purpose, location);
+            // Instantiate trust store.
+            final String locationTrust = purpose.getTrustStoreLocation();
+            locationByPurpose.put( purpose, locationTrust );
+            if ( !trustStoresByLocation.containsKey( locationTrust ) )
+            {
+                final TrustStoreConfig storeConfig = new TrustStoreConfig( purpose.getTrustStoreLocation(), purpose.getTrustStorePassword(), purpose.getTrustStoreType(), false, purpose.acceptSelfSigned(), purpose.verifyValidity() );
+                trustStoresByLocation.put( locationTrust, storeConfig );
+            }
         }
     }
 
-    public CertificateStoreConfig getStoreConfig( Purpose purpose ) {
+    public IdentityStoreConfig getIdentityStoreConfig( Purpose purpose )
+    {
         if ( purpose == null ) {
             throw new IllegalArgumentException( "Argument 'purpose' cannot be null.");
         }
-        return storesByLocation.get( locationByPurpose.get( purpose ) );
+        return identityStoresByLocation.get( locationByPurpose.get( purpose ) );
+    }
+
+    public TrustStoreConfig getTrustStoreConfig( Purpose purpose )
+    {
+        if ( purpose == null ) {
+            throw new IllegalArgumentException( "Argument 'purpose' cannot be null.");
+        }
+        return trustStoresByLocation.get( locationByPurpose.get( purpose ) );
     }
 
 //    public void useStoreForPurpose( Purpose purpose, String location, String password, String storeType, boolean createIfAbsent ) throws IOException, CertificateStoreConfigException
@@ -369,83 +399,12 @@ public class SSLConfig
 //        // TODO notify listeners
 //    }
 
-    public static String canonicalize( String path ) throws IOException
+    public static SSLContext getSSLContext( final Purpose purpose ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
     {
-        File file = new File( path );
-        if (!file.isAbsolute()) {
-            file = new File( JiveGlobals.getHomeDirectory() + File.separator + path );
-        }
+        final KeyManager[] keyManagers = getInstance().getIdentityStoreConfig( purpose ).getKeyManagers();
+        final TrustManager[] trustManagers = getInstance().getTrustStoreConfig( purpose ).getTrustManagers();
 
-        return file.getCanonicalPath();
-    }
-
-
-    // TODO merge this with Purpose!
-    public enum Type {
-        SOCKET_S2S( "xmpp.socket.ssl.", null ),
-        SOCKET_C2S( "xmpp.socket.ssl.client.", null ),
-        BOSH_C2S( "xmpp.bosh.ssl.client.", SOCKET_C2S),
-        ADMIN( "admin.ssl.", SOCKET_S2S),
-        WEBADMIN( "admin.web.ssl.", ADMIN);
-
-        String prefix;
-        Type fallback;
-        Type( String prefix, Type fallback) {
-            this.prefix = prefix;
-            this.fallback = fallback;
-        }
-
-        public String getPrefix()
-        {
-            return prefix;
-        }
-
-        public Type getFallback()
-        {
-            return fallback;
-        }
-    }
-
-    public static SSLContext getSSLContext( final Type type ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
-    {
-        // TODO: allow different algorithms for different connection types (eg client/server/bosh etc)
-        final String algorithm = JiveGlobals.getProperty( ConnectionSettings.Client.TLS_ALGORITHM, "TLS" );
-        final Purpose idPurpose;
-        final Purpose trustPurpose;
-        switch ( type ) {
-            case SOCKET_S2S:
-                idPurpose = Purpose.SOCKETBASED_IDENTITYSTORE;
-                trustPurpose = Purpose.SOCKETBASED_S2S_TRUSTSTORE;
-                break;
-
-            case SOCKET_C2S:
-                idPurpose = Purpose.SOCKETBASED_IDENTITYSTORE;
-                trustPurpose = Purpose.SOCKETBASED_C2S_TRUSTSTORE;
-                break;
-
-            case BOSH_C2S:
-                idPurpose = Purpose.BOSHBASED_IDENTITYSTORE;
-                trustPurpose = Purpose.BOSHBASED_C2S_TRUSTSTORE;
-                break;
-
-            case ADMIN:
-                idPurpose = Purpose.ADMINISTRATIVE_IDENTITYSTORE;
-                trustPurpose = Purpose.ADMINISTRATIVE_TRUSTSTORE;
-                break;
-
-            case WEBADMIN:
-                idPurpose = Purpose.WEBADMIN_IDENTITYSTORE;
-                trustPurpose = Purpose.WEBADMIN_TRUSTSTORE;
-                break;
-
-            default:
-                throw new IllegalStateException( "Unsupported type: " + type );
-        }
-
-        final KeyManager[] keyManagers = ((IdentityStoreConfig) getInstance().getStoreConfig( idPurpose )).getKeyManagers();
-        final TrustManager[] trustManagers = ((TrustStoreConfig) getInstance().getStoreConfig( trustPurpose )).getTrustManagers();
-
-        final SSLContext sslContext = SSLContext.getInstance( algorithm );
+        final SSLContext sslContext = SSLContext.getInstance( purpose.getIdentityStoreType() );
         sslContext.init( keyManagers, trustManagers, new SecureRandom() );
 
         return sslContext;
@@ -456,13 +415,13 @@ public class SSLConfig
      *
      * For Openfire, an engine is of this mode used for most purposes (as Openfire is a server by nature).
      *
-     * @param type The type of connectivity for which to configure a new SSLEngine instance. Cannot be null.
+     * @param purpose The type of connectivity for which to configure a new SSLEngine instance. Cannot be null.
      * @param clientAuth indication of the desired level of client-sided authentication (mutual authentication). Cannot be null.
      * @return An initialized SSLEngine instance (never null).
      */
-    public static SSLEngine getServerModeSSLEngine( Type type, Connection.ClientAuth clientAuth ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
+    public static SSLEngine getServerModeSSLEngine( Purpose purpose, Connection.ClientAuth clientAuth ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
     {
-        final SSLEngine sslEngine = getSSLEngine( type );
+        final SSLEngine sslEngine = getSSLEngine( purpose );
         sslEngine.setUseClientMode( false );
 
         switch ( clientAuth )
@@ -488,12 +447,12 @@ public class SSLConfig
      *
      * For Openfire, an engine of this mode is typically used when the server tries to connect to another server.
      *
-     * @param type The type of connectivity for which to configure a new SSLEngine instance. Cannot be null.
+     * @param purpose The type of connectivity for which to configure a new SSLEngine instance. Cannot be null.
      * @return An initialized SSLEngine instance (never null).
      */
-    public static SSLEngine getClientModeSSLEngine( Type type ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
+    public static SSLEngine getClientModeSSLEngine( Purpose purpose ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
     {
-        final SSLEngine sslEngine = getSSLEngine( type );
+        final SSLEngine sslEngine = getSSLEngine( purpose );
         sslEngine.setUseClientMode( true );
 
         return sslEngine;
@@ -506,16 +465,16 @@ public class SSLConfig
      * The returned value lacks further configuration. In most cases, developers will want to use getClientModeSSLEngine
      * or getServerModeSSLEngine instead of this method.
      *
-     * @param type The type of connectivity for which to pre-configure a new SSLEngine instance. Cannot be null.
+     * @param purpose The type of connectivity for which to pre-configure a new SSLEngine instance. Cannot be null.
      * @return A pre-configured SSLEngine (never null).
      */
-    private static SSLEngine getSSLEngine( final Type type ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
+    private static SSLEngine getSSLEngine( final Purpose purpose ) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException
     {
-        final SSLContext sslContext = getSSLContext( type );
+        final SSLContext sslContext = getSSLContext( purpose );
 
         final SSLEngine sslEngine = sslContext.createSSLEngine();
-        configureProtocols( sslEngine, type );
-        configureCipherSuites( sslEngine, type );
+        configureProtocols( sslEngine, purpose );
+        configureCipherSuites( sslEngine, purpose );
 
         return sslEngine;
     }
@@ -533,16 +492,16 @@ public class SSLConfig
      * where the SSLEngine default gets filtered but not replaced.
      *
      * @param sslEngine The instance to configure. Cannot be null.
-     * @param type The type of configuration to use (used to select the relevent property). Cannot be null.
+     * @param purpose The type of configuration to use (used to select the relevent property). Cannot be null.
      */
-    private static void configureProtocols( SSLEngine sslEngine, Type type )
+    private static void configureProtocols( SSLEngine sslEngine, Purpose purpose )
     {
         // Find configuration, using fallback where applicable.
-        String enabledProtocols = JiveGlobals.getProperty( type.getPrefix() + "enabled.protocols" );
-        while (enabledProtocols == null && type.getFallback() != null)
+        String enabledProtocols = JiveGlobals.getProperty( purpose.getPrefix() + "enabled.protocols" );
+        while (enabledProtocols == null && purpose.getFallback() != null)
         {
-            type = type.getFallback();
-            enabledProtocols = JiveGlobals.getProperty( type.getPrefix() + "enabled.protocols" );
+            purpose = purpose.getFallback();
+            enabledProtocols = JiveGlobals.getProperty( purpose.getPrefix() + "enabled.protocols" );
         }
 
         if (enabledProtocols != null )
@@ -585,15 +544,15 @@ public class SSLConfig
      * entire SSLEngine default gets replaced.
      *
      * @param sslEngine The instance to configure. Cannot be null.
-     * @param type The type of configuration to use (used to select the relevent property). Cannot be null.
+     * @param purpose The type of configuration to use (used to select the relevent property). Cannot be null.
      */
-    private static void configureCipherSuites( SSLEngine sslEngine, Type type )
+    private static void configureCipherSuites( SSLEngine sslEngine, Purpose purpose )
     {
-        String enabledCipherSuites = JiveGlobals.getProperty( type.getPrefix() + "enabled.ciphersuites" );
-        while (enabledCipherSuites == null && type.getFallback() != null)
+        String enabledCipherSuites = JiveGlobals.getProperty( purpose.getPrefix() + "enabled.ciphersuites" );
+        while (enabledCipherSuites == null && purpose.getFallback() != null)
         {
-            type = type.getFallback();
-            enabledCipherSuites = JiveGlobals.getProperty( type.getPrefix() + "enabled.ciphersuites" );
+            purpose = purpose.getFallback();
+            enabledCipherSuites = JiveGlobals.getProperty( purpose.getPrefix() + "enabled.ciphersuites" );
         }
 
         if (enabledCipherSuites != null )
@@ -638,14 +597,14 @@ public class SSLConfig
      * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
      * create both SSLContext/SSLEngine as well as SslFilter instances.
      *
-     * @param type Communication type (used to select the relevant property). Cannot be null.
+     * @param purpose Communication type (used to select the relevant property). Cannot be null.
      * @param clientAuth indication of the desired level of client-sided authentication (mutual authentication). Cannot be null.
      * @return An initialized SslFilter instance (never null)
      */
-    public static SslFilter getServerModeSslFilter( SSLConfig.Type type, Connection.ClientAuth clientAuth ) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException
+    public static SslFilter getServerModeSslFilter( Purpose purpose, Connection.ClientAuth clientAuth ) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException
     {
-        final SSLContext sslContext = SSLConfig.getSSLContext( type );
-        final SSLEngine sslEngine = SSLConfig.getServerModeSSLEngine( type, clientAuth );
+        final SSLContext sslContext = SSLConfig.getSSLContext( purpose );
+        final SSLEngine sslEngine = SSLConfig.getServerModeSSLEngine( purpose, clientAuth );
 
         return getSslFilter( sslContext, sslEngine );
     }
@@ -658,13 +617,13 @@ public class SSLConfig
      * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
      * create both SSLContext/SSLEngine as well as SslFilter instances.
      *
-     * @param type Communication type (used to select the relevant property). Cannot be null.
+     * @param purpose Communication type (used to select the relevant property). Cannot be null.
      * @return An initialized SslFilter instance (never null)
      */
-    public static SslFilter getClientModeSslFilter( SSLConfig.Type type ) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException
+    public static SslFilter getClientModeSslFilter( Purpose purpose ) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException
     {
-        final SSLContext sslContext = SSLConfig.getSSLContext( type );
-        final SSLEngine sslEngine = SSLConfig.getClientModeSSLEngine( type );
+        final SSLContext sslContext = SSLConfig.getSSLContext( purpose );
+        final SSLEngine sslEngine = SSLConfig.getClientModeSSLEngine( purpose );
 
         return getSslFilter( sslContext, sslEngine );
     }

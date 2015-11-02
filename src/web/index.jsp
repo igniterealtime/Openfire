@@ -253,7 +253,7 @@
                     <fmt:message key="index.server_name" />
                 </td>
                 <td class="c2">
-                    <% final IdentityStoreConfig storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE ); %>
+                    <% final IdentityStoreConfig storeConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.SOCKET_C2S ); %>
                     <% try { %>
                     <% if (!storeConfig.containsDomainCertificate( "RSA" )) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;

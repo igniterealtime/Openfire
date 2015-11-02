@@ -38,10 +38,6 @@
         storePurpose = null;
     }
 
-    if (! storePurpose.isIdentityStore() ) {
-        errors.put( "storePurpose", "shoud be an identity store (not a trust store)");
-        storePurpose = null;
-    }
     pageContext.setAttribute( "storePurpose", storePurpose );
 
 //    if (save) {

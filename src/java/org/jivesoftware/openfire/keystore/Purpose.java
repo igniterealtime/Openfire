@@ -1,71 +1,189 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.jivesoftware.util.JiveGlobals;
+
+import java.io.File;
+import java.io.IOException;
+
 /**
- * Potential intended usages for keystores
+ * Potential intended usages (for TLS connectivity).
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public enum Purpose
 {
     /**
-     * Identification of this Openfire instance used by regular socket-based connections.
+     * Socket-based server-to-server (XMPP federation) connectivity.
      */
-    SOCKETBASED_IDENTITYSTORE( false ),
+    SOCKET_S2S( "xmpp.socket.ssl.", null ),
 
     /**
-     * Identification of remote servers that you choose to trust, applies to server-to-server federation via regular socket-based connections.
+     * Socket-based client connectivity.
      */
-    SOCKETBASED_S2S_TRUSTSTORE( true ),
+    SOCKET_C2S( "xmpp.socket.ssl.client.", null ),
 
     /**
-     * Identification of clients that you choose to trust, applies to mutual authentication via regular socket-based connections.
+     * BOSH (HTTP-bind) based client connectivity.
      */
-    SOCKETBASED_C2S_TRUSTSTORE( true ),
+    BOSH_C2S( "xmpp.bosh.ssl.client.", SOCKET_C2S),
 
     /**
-     * Identification of this Openfire instance used by regular BOSH (HTTP-bind) connections.
+     * Generic administrative services (eg: user providers).
      */
-    BOSHBASED_IDENTITYSTORE( false ),
-
-    /**
-     * Identification of clients that you choose to trust, applies to mutual authentication via BOSH (HTTP-bind) connections.
-     */
-    BOSHBASED_C2S_TRUSTSTORE( true ),
-
-    /**
-     * Identification of this Openfire instance used by connections to administrative services (eg: user providers).
-     */
-    ADMINISTRATIVE_IDENTITYSTORE( false ),
-
-    /**
-     * Identification of remote applications/servers that provide administrative functionality (eg: user providers).
-     */
-    ADMINISTRATIVE_TRUSTSTORE( true ),
+    ADMIN( "admin.ssl.", SOCKET_S2S),
 
     /**
      * Openfire web-admin console.
      */
-    WEBADMIN_IDENTITYSTORE( false ),
+    WEBADMIN( "admin.web.ssl.", ADMIN);
 
-    /**
-     * Openfire web-admin console.
-     */
-    WEBADMIN_TRUSTSTORE( true );
-
-    private final boolean isTrustStore;
-
-    Purpose( boolean isTrustStore )
-    {
-        this.isTrustStore = isTrustStore;
+    String prefix;
+    Purpose fallback;
+    Purpose( String prefix, Purpose fallback) {
+        this.prefix = prefix;
+        this.fallback = fallback;
     }
 
-    public boolean isIdentityStore()
+    public String getPrefix()
     {
-        return !isTrustStore;
+        return prefix;
     }
 
-    public boolean isTrustStore()
+    public Purpose getFallback()
     {
-        return isTrustStore;
+        return fallback;
     }
+
+    public String getIdentityStoreType()
+    {
+        final String propertyName = prefix + "storeType";
+        final String defaultValue = "jks";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getIdentityStoreType() ).trim();
+        }
+    }
+
+    public String getTrustStoreType()
+    {
+        return getIdentityStoreType();
+    }
+
+    public String getIdentityStorePassword()
+    {
+        final String propertyName = prefix + "keypass";
+        final String defaultValue = "changeit";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getIdentityStorePassword() ).trim();
+        }
+    }
+
+    public String getTrustStorePassword()
+    {
+        final String propertyName = prefix + "trustpass";
+        final String defaultValue = "changeit";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getTrustStorePassword() ).trim();
+        }
+    }
+
+    public boolean acceptSelfSigned()
+    {
+        // TODO these are new properties! Deprecate (migrate?) all existing 'accept-selfsigned properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS )
+        final String propertyName = prefix + "certificate.accept-selfsigned";
+        final boolean defaultValue = false;
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+        }
+        else
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, fallback.acceptSelfSigned() );
+        }
+    }
+
+    public boolean verifyValidity()
+    {
+        // TODO these are new properties! Deprecate (migrate?) all existing 'verify / verify-validity properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY )
+        final String propertyName = prefix + "certificate.verify.validity";
+        final boolean defaultValue = true;
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+        }
+        else
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, fallback.acceptSelfSigned() );
+        }
+    }
+
+    public String getIdentityStoreLocation() throws IOException
+    {
+        return canonicalize( getIdentityStoreLocation() );
+    }
+
+    public String getIdentityStoreLocationNonCanonicalized()
+    {
+        final String propertyName = prefix + "keystore";
+        final String defaultValue = "resources" + File.separator + "security" + File.separator + "keystore";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getIdentityStoreLocationNonCanonicalized() ).trim();
+        }
+    }
+
+    public String getTrustStoreLocation() throws IOException
+    {
+        return canonicalize( getTrustStoreLocation() );
+    }
+
+    public String getTrustStoreLocationNonCanonicalized()
+    {
+        final String propertyName = prefix + "truststore";
+        final String defaultValue = "resources" + File.separator + "security" + File.separator + "truststore";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getTrustStoreLocationNonCanonicalized() ).trim();
+        }
+    }
+
+    public static String canonicalize( String path ) throws IOException
+    {
+        File file = new File( path );
+        if (!file.isAbsolute()) {
+            file = new File( JiveGlobals.getHomeDirectory() + File.separator + path );
+        }
+
+        return file.getCanonicalPath();
+    }
+
 }

@@ -16,41 +16,12 @@
 
     // Read parameters
     final boolean save                       = request.getParameter("save") != null;
-    final String paramLocKeySocket           = ParamUtils.getParameter(request, "loc-key-socket");
-    final String paramLocTrustSocketS2S      = ParamUtils.getParameter(request, "loc-trust-socket-s2s");
-    final String paramLocTrustSocketC2S      = ParamUtils.getParameter(request, "loc-trust-socket-c2s");
-    final String paramLocKeyBosh             = ParamUtils.getParameter(request, "loc-key-bosh");
-    final String paramLocTrustBoshC2S        = ParamUtils.getParameter(request, "loc-trust-bosh-c2s");
-    final String paramLocKeyWebadmin         = ParamUtils.getParameter(request, "loc-key-webadmin");
-    final String paramLocTrustWebadmin       = ParamUtils.getParameter(request, "loc-trust-webadmin");
-    final String paramLocKeyAdministrative   = ParamUtils.getParameter( request, "loc-key-administrative" );
-    final String paramLocTrustAdministrative = ParamUtils.getParameter( request, "loc-trust-administrative" );
     // TODO actually save something!
 
     // Pre-update property values
-    final String locKeySocket           = SSLConfig.getNonCanonicalizedLocation( Purpose.SOCKETBASED_IDENTITYSTORE );
-    final String locTrustSocketS2S      = SSLConfig.getNonCanonicalizedLocation( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
-    final String locTrustSocketC2S      = SSLConfig.getNonCanonicalizedLocation( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
-    final String locKeyBosh             = SSLConfig.getNonCanonicalizedLocation( Purpose.BOSHBASED_IDENTITYSTORE );
-    final String locTrustBoshC2S        = SSLConfig.getNonCanonicalizedLocation( Purpose.BOSHBASED_C2S_TRUSTSTORE );
-    final String locKeyWebadmin         = SSLConfig.getNonCanonicalizedLocation( Purpose.WEBADMIN_IDENTITYSTORE );
-    final String locTrustWebadmin       = SSLConfig.getNonCanonicalizedLocation( Purpose.WEBADMIN_TRUSTSTORE );
-    final String locKeyAdministrative   = SSLConfig.getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_IDENTITYSTORE );
-    final String locTrustAdministrative = SSLConfig.getNonCanonicalizedLocation( Purpose.ADMINISTRATIVE_TRUSTSTORE );
-
     final Map<String, String> errors = new HashMap<>();
 
     pageContext.setAttribute( "errors", errors );
-
-    pageContext.setAttribute( "locKeySocket", locKeySocket );
-    pageContext.setAttribute( "locTrustSocketS2S",locTrustSocketS2S );
-    pageContext.setAttribute( "locTrustSocketC2S", locTrustSocketC2S );
-    pageContext.setAttribute( "locKeyBosh", locKeyBosh );
-    pageContext.setAttribute( "locTrustBoshC2S", locTrustBoshC2S );
-    pageContext.setAttribute( "locKeyWebadmin", locKeyWebadmin );
-    pageContext.setAttribute( "locTrustWebadmin", locTrustWebadmin );
-    pageContext.setAttribute( "locKeyAdministrative", locKeyAdministrative );
-    pageContext.setAttribute( "locTrustAdministrative", locTrustAdministrative );
 %>
 
 <html>

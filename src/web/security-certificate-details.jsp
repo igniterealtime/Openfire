@@ -9,6 +9,7 @@
 <%@ page import="java.security.AlgorithmParameters" %>
 <%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
+<%@ page import="java.security.KeyStore" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -21,6 +22,7 @@
 
     final String alias            = ParamUtils.getParameter( request, "alias" );
     final String storePurposeText = ParamUtils.getParameter( request, "storePurpose" );
+    final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
@@ -42,10 +44,15 @@
     {
         try
         {
-            final CertificateStoreConfig certificateStoreConfig = SSLConfig.getInstance().getStoreConfig( storePurpose );
+            final KeyStore store;
+            if (isTrustStore) {
+                store = SSLConfig.getTrustStore( storePurpose );
+            } else {
+                store = SSLConfig.getIdentityStore( storePurpose );
+            }
 
             // Get the certificate
-            final X509Certificate certificate = (X509Certificate) certificateStoreConfig.getStore().getCertificate( alias );
+            final X509Certificate certificate = (X509Certificate) store.getCertificate( alias );
 
             if ( certificate == null ) {
                 errors.put( "alias", "alias" );
@@ -62,7 +69,7 @@
 
     // Handle a "go back" click:
     if ( request.getParameter( "back" ) != null ) {
-        if ( storePurpose.isTrustStore() ) {
+        if ( isTrustStore ) {
             response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurpose );
         } else {
             response.sendRedirect( "security-keystore.jsp?storePurpose=" + storePurpose );
@@ -77,11 +84,11 @@
 <head>
     <title><fmt:message key="ssl.certificate.details.title"/></title>
     <c:choose>
-        <c:when test="${storePurpose.identityStore}">
-            <meta name="pageID" content="security-keystore"/>
+        <c:when test="${isTrustStore}">
+            <meta name="pageID" content="security-truststore"/>
         </c:when>
         <c:otherwise>
-            <meta name="pageID" content="security-truststore"/>
+            <meta name="pageID" content="security-keystore"/>
         </c:otherwise>
     </c:choose>
 </head>

@@ -63,14 +63,14 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
 
     private SSLContext createSSLContext(String host) {
         try {
-            final SSLContext context = SSLConfig.getSSLContext( SSLConfig.Type.ADMIN );
+            final SSLContext context = SSLConfig.getSSLContext( Purpose.ADMIN );
             context.init(
                     null,
                     new TrustManager[] {
                             new ClearspaceX509TrustManager(
                                     host,
                                     manager.getProperties(),
-                                    SSLConfig.getStore( Purpose.ADMINISTRATIVE_TRUSTSTORE ) )
+                                    SSLConfig.getTrustStore( Purpose.ADMIN ) )
                     },
                     null);
             return context;

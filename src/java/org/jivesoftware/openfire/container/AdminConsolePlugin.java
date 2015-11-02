@@ -50,6 +50,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
+import org.jivesoftware.openfire.keystore.TrustStoreConfig;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -140,14 +141,14 @@ public class AdminConsolePlugin implements Plugin {
         // Create a connector for https traffic if it's enabled.
         sslEnabled = false;
         try {
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.WEBADMIN_IDENTITYSTORE );
+            final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.WEBADMIN );
             if (adminSecurePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() )
             {
                 if ( !identityStoreConfig.containsDomainCertificate( "RSA" )) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
 
-                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.WEBADMIN_TRUSTSTORE );
+                final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( Purpose.WEBADMIN );
 
                 final SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
@@ -343,13 +344,6 @@ public class AdminConsolePlugin implements Plugin {
             context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp",
                     "/");
         }
-
-        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        final List<ContainerInitializer> initializers = new ArrayList<>();
-        initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
-        context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
-        context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-
         context.setWelcomeFiles(new String[]{"index.jsp"});
     }
 

@@ -135,7 +135,14 @@ public class MessageRouter extends BasicModule {
                     boolean isPrivate = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2")) != null;
                     try {
                         // Deliver stanza to requested route
-                        routingTable.routePacket(recipientJID, packet, false);
+                        if (recipientJID.getResource()!=null) {
+                            routingTable.routePacket(recipientJID, packet, false);
+                        } else {
+                            List<JID> routes = routingTable.getRoutes(recipientJID.asBareJID(), null);
+                            for (JID route : routes) {
+                                routingTable.routePacket(route, packet, false);
+                            }
+                        }
                     } catch (Exception e) {
                         log.error("Failed to route packet: " + packet.toXML(), e);
                         routingFailed(recipientJID, packet);

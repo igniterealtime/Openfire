@@ -151,7 +151,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
             }
 
             // Note that PKCS#7 does not require a specific order for the certificates in the file - ordering is needed.
-            final List<X509Certificate> ordered = CertificateManager.order( certificates );
+            final List<X509Certificate> ordered = CertificateUtils.order( certificates );
 
             // Of the ordered chain, the first certificate should be for our domain.
             if ( !isForThisDomain( ordered.get( 0 ) ) )
@@ -254,7 +254,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
             }
 
             // Note that PKCS#7 does not require a specific order for the certificates in the file - ordering is needed.
-            final List<X509Certificate> ordered = CertificateManager.order( certificates );
+            final List<X509Certificate> ordered = CertificateUtils.order( certificates );
 
             // Of the ordered chain, the first certificate should be for our domain.
             if ( !isForThisDomain( ordered.get( 0 ) ) )

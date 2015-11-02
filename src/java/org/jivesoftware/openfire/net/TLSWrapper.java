@@ -23,21 +23,14 @@ package org.jivesoftware.openfire.net;
 import java.nio.ByteBuffer;
 import java.security.*;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,59 +63,34 @@ public class TLSWrapper {
     @Deprecated
     public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
     {
-        this(clientMode,needClientAuth,(remoteServer == null));
+        this(
+            clientMode,
+            needClientAuth?Connection.ClientAuth.needed:Connection.ClientAuth.wanted,
+            remoteServer == null
+        );
     }
 
-    public TLSWrapper(boolean clientMode, boolean needClientAuth, boolean isClientToServer) {
+    public TLSWrapper(boolean clientMode, Connection.ClientAuth clientAuth, boolean isPeerClient) {
 
-        // Create/initialize the SSLContext with key material
-        try {
-            // First initialize the key and trust material.
-            final SSLConfig sslConfig = SSLConfig.getInstance();
-            final Purpose purpose = (isClientToServer ? Purpose.SOCKETBASED_C2S_TRUSTSTORE : Purpose.SOCKETBASED_S2S_TRUSTSTORE );
-            final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) sslConfig.getStoreConfig( purpose );
-
-            // TrustManager's decide whether to allow connections.
-            final TrustManager[] tm;
-
-            if (clientMode || needClientAuth)
+        try
+        {
+            final SSLEngine sslEngine;
+            if ( clientMode )
             {
-                final KeyStore ksTrust = trustStoreConfig.getStore();
-                if (isClientToServer)
-                {
-                    // Check if we can trust certificates presented by the client
-                    tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
-                }
-                else
-                {
-                    // Check if we can trust certificates presented by the server
-                    tm = new TrustManager[]{new ServerTrustManager(ksTrust)};
-                }
+                sslEngine = SSLConfig.getClientModeSSLEngine( SSLConfig.Type.SOCKET_S2S );
             }
             else
             {
-                tm = trustStoreConfig.getTrustManagers();
+                final SSLConfig.Type type = isPeerClient ? SSLConfig.Type.SOCKET_C2S : SSLConfig.Type.SOCKET_S2S;
+                sslEngine = SSLConfig.getServerModeSSLEngine( type, clientAuth );
             }
 
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final SSLContext tlsContext = SSLConfig.getSSLContext();
-            tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
-
-            /*
-                * Configure the tlsEngine to act as a server in the SSL/TLS handshake. We're a server,
-                * so no need to use host/port variant.
-                *
-                * The first call for a server is a NEED_UNWRAP.
-                */
-            tlsEngine = tlsContext.createSSLEngine();
-            tlsEngine.setUseClientMode(clientMode);
-            SSLSession sslSession = tlsEngine.getSession();
+            final SSLSession sslSession = sslEngine.getSession();
 
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
-
         }
-        catch ( NoSuchAlgorithmException | KeyManagementException ex )
+        catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException ex )
         {
             Log.error("TLSHandler startup problem. SSLContext initialisation failed.", ex );
         }

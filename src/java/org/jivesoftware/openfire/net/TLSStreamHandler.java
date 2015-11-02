@@ -94,7 +94,12 @@ public class TLSStreamHandler {
     public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
                             boolean needClientAuth) throws IOException
     {
-        this(socket,clientMode,(remoteServer==null),needClientAuth);
+        this(
+            socket,
+            clientMode,
+            remoteServer==null,
+            needClientAuth?Connection.ClientAuth.needed: Connection.ClientAuth.wanted
+        );
     }
 
     /**
@@ -105,14 +110,12 @@ public class TLSStreamHandler {
      *
      * @param socket the plain socket connection to secure
      * @param clientMode boolean indicating if this entity is a client or a server.
-     * @param isClientToServer indicates if the remote party is a server.
-     * @param needClientAuth boolean that indicates if client should authenticate during the TLS
-     *        negotiation. This option is only required when the client is a server since
-     *        EXTERNAL SASL is going to be used.
+     * @param isPeerClient indicates if the remote party is a client (or server).
+     * @param clientAuth indicates if client should authenticate during the TLS negotiation.
      * @throws java.io.IOException
      */
-    public TLSStreamHandler(Socket socket, boolean clientMode, boolean isClientToServer, boolean needClientAuth) throws IOException {
-        wrapper = new TLSWrapper(clientMode, needClientAuth, isClientToServer);
+    public TLSStreamHandler(Socket socket, boolean clientMode, boolean isPeerClient, Connection.ClientAuth clientAuth) throws IOException {
+        wrapper = new TLSWrapper(clientMode, clientAuth, isPeerClient);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);
@@ -145,7 +148,7 @@ public class TLSStreamHandler {
             initialHSStatus = HandshakeStatus.NEED_WRAP;
             tlsEngine.beginHandshake();
         }
-        else if (needClientAuth) {
+        else if (clientAuth == Connection.ClientAuth.needed) {
             // Only REQUIRE client authentication if we are fully verifying certificates
             if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                     JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&

@@ -63,6 +63,7 @@ import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
+import org.jivesoftware.openfire.keystore.CertificateUtils;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -851,69 +852,12 @@ public class CertificateManager {
      *
      * @param certificates an unordered collection of certificates (cannot be null).
      * @return An ordered list of certificates (possibly empty, but never null).
+     * @deprecated Moved to CertificateUtils
      */
+    @Deprecated
     public static List<X509Certificate> order( Collection<X509Certificate> certificates ) throws CertificateException
     {
-        final LinkedList<X509Certificate> orderedResult = new LinkedList<>();
-
-        if ( certificates.isEmpty() ) {
-            return orderedResult;
-        }
-
-        if (certificates.size() == 1) {
-            orderedResult.addAll( certificates );
-            return orderedResult;
-        }
-
-        final Map<Principal, X509Certificate> byIssuer = new HashMap<>();
-        final Map<Principal, X509Certificate> bySubject = new HashMap<>();
-
-        for ( final X509Certificate certificate : certificates ) {
-            final Principal issuer = certificate.getIssuerDN();
-            final Principal subject = certificate.getSubjectDN();
-
-            if ( byIssuer.put( issuer, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values." );
-            }
-            if ( bySubject.put( subject, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical subjectDN values." );
-            }
-        }
-
-        // The first certificate will have a 'subject' value that's not an 'issuer' of any other chain.
-        X509Certificate first = null;
-        for ( Map.Entry<Principal, X509Certificate> entry : bySubject.entrySet() ) {
-            final Principal subject = entry.getKey();
-            final X509Certificate certificate = entry.getValue();
-
-            if ( ! byIssuer.containsKey( subject ) ) {
-                if (first == null) {
-                    first = certificate;
-                } else {
-                    throw new CertificateException( "The provided input should not contain more than one certificates that has a subjectDN value that's not equal to the issuerDN value of another certificate." );
-                }
-            }
-        }
-
-        if (first == null) {
-            throw new CertificateException( "The provided input should contain a certificates that has a subjectDN value that's not equal to the issuerDN value of any other certificate." );
-        }
-
-        orderedResult.add( first );
-
-        // With the first certificate in hand, every following certificate should have a subject that's equal to the previous issuer value.
-        X509Certificate next = bySubject.get( first.getIssuerDN() );
-        while (next != null) {
-            orderedResult.add( next );
-            next = bySubject.get( next.getIssuerDN() );
-        }
-
-        // final check
-        if (orderedResult.size() != certificates.size()) {
-            throw new CertificateException( "Unable to recreate a certificate chain from the provided input." );
-        }
-
-        return orderedResult;
+        return CertificateUtils.order( certificates );
     }
 
     /**

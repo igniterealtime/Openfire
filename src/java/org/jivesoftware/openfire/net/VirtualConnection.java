@@ -160,6 +160,7 @@ public abstract class VirtualConnection implements Connection {
     }
 
     @Override
+
     public void addCompression() {
         //Ignore
     }

@@ -354,7 +354,7 @@ public interface Connection extends Closeable {
      *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
      * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
-     * @deprecated Use {@link #startTLS(boolean, boolean, ClientAuth)} instead, with isClientToServer = (remoteServer == null)
+     * @deprecated Use {@link #startTLS(boolean, boolean, ClientAuth)} instead, with isPeerClient = (remoteServer == null)
      */
     @Deprecated
     void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
@@ -373,13 +373,13 @@ public interface Connection extends Closeable {
      * <tt>remoteServer</tt> parameter will always be <tt>null</tt>.
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
-     * @param isClientToServer indicates if the remote party is a server. When false a
+     * @param isPeerClient indicates if the remote party is a client. When true a
      *       {@link org.jivesoftware.openfire.net.ClientTrustManager} will be used for verifying certificates
      *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
      * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
      */
-    void startTLS(boolean clientMode, boolean isClientToServer, ClientAuth authentication) throws Exception;
+    void startTLS(boolean clientMode, boolean isPeerClient, ClientAuth authentication) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter

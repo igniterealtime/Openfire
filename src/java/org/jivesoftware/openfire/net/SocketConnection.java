@@ -168,16 +168,24 @@ public class SocketConnection implements Connection {
 
     @Deprecated
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        final boolean isClientToServer = ( remoteServer == null );
-        startTLS( clientMode, isClientToServer, authentication );
+        final boolean isPeerClient = ( remoteServer == null );
+        startTLS( clientMode, isPeerClient, authentication );
     }
 
-    public void startTLS(boolean clientMode, boolean isClientToServer, ClientAuth authentication) throws IOException {
+    public void startTLS(boolean clientMode, boolean isPeerClient, ClientAuth authentication) throws IOException {
         if (!secure) {
             secure = true;
             // Prepare for TLS
-            tlsStreamHandler = new TLSStreamHandler(this, socket, clientMode, remoteServer,
-                    session instanceof IncomingServerSession);
+            final ClientAuth clientAuth;
+            if (session instanceof IncomingServerSession)
+            {
+                clientAuth = ClientAuth.needed;
+            }
+            else
+            {
+                clientAuth = ClientAuth.wanted;
+            }
+            tlsStreamHandler = new TLSStreamHandler(socket, clientMode, isPeerClient, clientAuth);
             if (!clientMode) {
                 // Indicate the client that the server is ready to negotiate TLS
                 deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -574,7 +582,7 @@ public class SocketConnection implements Connection {
     private void release() {
         writeStarted = -1;
         instances.remove(this);
-    }
+}
 
     private void closeConnection() {
         release();

@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +47,7 @@ import org.apache.mina.core.filterchain.IoFilterChain;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.compression.CompressionFilter;
 import org.apache.mina.filter.ssl.SslFilter;
+import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -58,6 +60,7 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
@@ -74,6 +77,12 @@ public class NIOConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
 
+    public enum State { RUNNING, CLOSING, CLOSED }
+
+    /**
+     * The utf-8 charset for decoding and encoding XMPP packet streams.
+     */
+    public static final String CHARSET = "UTF-8";
 
     private LocalSession session;
     private IoSession ioSession;
@@ -125,6 +134,7 @@ public class NIOConnection implements Connection {
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
+        state = State.RUNNING;
     }
 
     @Override
@@ -368,7 +378,7 @@ public class NIOConnection implements Connection {
     @Deprecated
 	@Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        final boolean isClientToServer = (remoteServer == null);
+        final boolean isClientToServer = ( remoteServer == null );
         startTLS( clientMode, isClientToServer, authentication );
     }
 

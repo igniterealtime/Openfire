@@ -63,7 +63,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
 
     private SSLContext createSSLContext(String host) {
         try {
-            final SSLContext context = SSLConfig.getSSLContext();
+            final SSLContext context = SSLConfig.getSSLContext( SSLConfig.Type.ADMIN );
             context.init(
                     null,
                     new TrustManager[] {

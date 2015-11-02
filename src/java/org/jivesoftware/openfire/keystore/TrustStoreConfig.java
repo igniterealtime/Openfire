@@ -1,6 +1,8 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jivesoftware.openfire.net.ClientTrustManager;
+import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.util.CertificateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,142 +30,67 @@ public class TrustStoreConfig extends CertificateStoreConfig
 {
     private static final Logger Log = LoggerFactory.getLogger( TrustStoreConfig.class );
 
-    private final TrustManagerFactory trustFactory;
+    private transient TrustManager[] trustManagers;
 
-    private final CertPathValidator certPathValidator; // not thread safe
-    private final CertificateFactory certificateFactory; // not thread safe.
+    private boolean acceptSelfSigned;
+    private boolean checkValidity;
 
-    public TrustStoreConfig( String path, String password, String type, boolean createIfAbsent ) throws CertificateStoreConfigException
+    public TrustStoreConfig( String path, String password, String type, boolean createIfAbsent, boolean acceptSelfSigned, boolean checkValidity ) throws CertificateStoreConfigException
     {
         super( path, password, type, createIfAbsent );
+        this.acceptSelfSigned = acceptSelfSigned;
+        this.checkValidity = checkValidity;
+    }
 
-        try
-        {
-            certPathValidator = CertPathValidator.getInstance( "PKIX" );
-            certificateFactory = CertificateFactory.getInstance( "X.509" );
-            trustFactory = TrustManagerFactory.getInstance( TrustManagerFactory.getDefaultAlgorithm() );
-            trustFactory.init( store );
+    public synchronized TrustManager[] getTrustManagers() throws KeyStoreException, NoSuchAlgorithmException
+    {
+        if ( trustManagers == null ) {
+            trustManagers = new TrustManager[] { new OpenfireX509ExtendedTrustManager( this.getStore(), acceptSelfSigned, checkValidity ) };
         }
-        catch ( CertificateException | NoSuchAlgorithmException | KeyStoreException ex )
+        return trustManagers;
+    }
+
+    public synchronized void reconfigure( boolean acceptSelfSigned, boolean checkValidity ) throws CertificateStoreConfigException
+    {
+        boolean needsReload = false;
+        if ( this.acceptSelfSigned != acceptSelfSigned )
         {
-            throw new CertificateStoreConfigException( "Unable to load store of type '" + type + "' from location '" + path + "'", ex );
+            this.acceptSelfSigned = acceptSelfSigned;
+            needsReload = true;
+        }
+
+        if ( this.checkValidity != checkValidity )
+        {
+            this.checkValidity = checkValidity;
+            needsReload = true;
+        }
+
+        if ( needsReload ) {
+            reload();
         }
     }
 
-    public TrustManager[] getTrustManagers()
+    public boolean isAcceptSelfSigned()
     {
-        return trustFactory.getTrustManagers();
+        return acceptSelfSigned;
     }
 
-    /**
-     * Returns all valid certificates from the store.
-     *
-     * @return A collection of certificates (possibly empty, but never null).
-     */
-    protected Set<TrustAnchor> getAllValidTrustAnchors() throws KeyStoreException
+    public boolean isCheckValidity()
     {
-        final Set<TrustAnchor> results = new HashSet<>();
-
-        for ( X509Certificate certificate : getAllCertificates().values() )
-        {
-            try
-            {
-                certificate.checkValidity();
-            }
-            catch ( CertificateExpiredException | CertificateNotYetValidException e )
-            {
-                // Not yet or no longer valid. Don't include in result.
-                continue;
-            }
-
-            final TrustAnchor trustAnchor = new TrustAnchor( certificate, null );
-            results.add( trustAnchor );
-        }
-
-        return results;
+        return checkValidity;
     }
 
-    /**
-     * Validates the provided certificate chain, by verifying (among others):
-     * <ul>
-     *     <li>The validity of each certificate in the chain</li>
-     *     <li>chain integrity (matching issuer/subject)</li>
-     *     <li>the root of the chain is validated by a trust anchor that is in this store.</li>
-     * </ul>
-     *
-     * @param chain A chain of certificates (cannot be null)
-     * @return true when the validity of the chain could be verified, otherwise false.
-     */
-    public synchronized boolean canTrust( Collection<X509Certificate> chain )
+    @Override
+    public synchronized void reload() throws CertificateStoreConfigException
     {
-        // Input validation
-        if ( chain == null )
-        {
-            throw new IllegalArgumentException( "Argument 'chain' cannot be null." );
-        }
-
-        if (chain.isEmpty() )
-        {
-            return false;
-        }
-
-        // For some reason, the default validation fails to iterate over all providers and will fail if the default
-        // provider does not support the algorithm of the chain. To work around this issue, this code iterates over
-        // each provider explicitly, returning success when at least one provider validates the chain successfully.
-        Log.debug( "Iterating over all available security providers in order to validate a certificate chain." );
-        for (Provider p : Security.getProviders())
-        {
-            try
-            {
-                final Set<TrustAnchor> trustAnchors = getAllValidTrustAnchors();
-                final CertPath certPath = getCertPath( chain );
-
-                final PKIXParameters parameters = new PKIXParameters( trustAnchors );
-                parameters.setRevocationEnabled( false ); // TODO: enable revocation list validation.
-                parameters.setSigProvider( p.getName() ); // Explicitly iterate over each signature provider. See comment above.
-
-                certPathValidator.validate( certPath, parameters );
-
-                Log.debug( "Provider "+p.getName()+": Able to validate certificate chain." );
-                return true;
-            }
-            catch ( Exception ex )
-            {
-                Log.debug( "Provider "+p.getName()+": Unable to validate certificate chain.", ex );
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Creates a CertPath instance from the provided certificate chain.
-     *
-     * This implementation can process unordered input (ordering will by applied).
-     *
-     * @param chain A certificate chain (cannot be null or an empty collection).
-     * @return A CertPath instance (never null).
-     * @throws CertificateException When no CertPath instance could be created.
-     */
-    protected synchronized CertPath getCertPath( Collection<X509Certificate> chain ) throws CertificateException
-    {
-        // Input validation
-        if ( chain == null || chain.isEmpty() )
-        {
-            throw new IllegalArgumentException( "Argument 'chain' cannot be null or empty." );
-        }
-
-        // Note that PKCS#7 does not require a specific order for the certificates in the file - ordering is needed.
-        final List<X509Certificate> ordered = CertificateManager.order( chain );
-
-        return certificateFactory.generateCertPath( ordered );
+        super.reload();
+        trustManagers = null;
     }
 
     /**
      * Imports one certificate as a trust anchor into this store.
      *
-     * Note that this method explicitly allows one to add invalid certificates. Other methods in this class might ignore
-     * such a certificate ({@link #canTrust(Collection)} being a prime example).
+     * Note that this method explicitly allows one to add invalid certificates.
      *
      * As this store is intended to contain certificates for "most-trusted" / root Certificate Authorities, this method
      * will fail when the PEM representation contains more than one certificate.
@@ -209,8 +136,11 @@ public class TrustStoreConfig extends CertificateStoreConfig
         }
         catch ( CertificateException | KeyStoreException | IOException e )
         {
-            reload(); // reset state of the store.
             throw new CertificateStoreConfigException( "Unable to install a certificate into a trust store.", e );
+        }
+        finally
+        {
+            reload(); // re-initialize store.
         }
 
         // TODO Notify listeners that a new certificate has been added.

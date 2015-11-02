@@ -427,7 +427,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // Start clients SSL unless it's been disabled.
         if (isClientSSLListenerEnabled()) {
             int port = getClientSSLListenerPort();
-            String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
             try {
                 // Customize Executor that will be used by processors to process incoming stanzas
                 int maxPoolSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS_SSL, 16);
@@ -453,19 +452,14 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 		                  sslSocketAcceptor, maxBufferSize);
 
                 // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
-                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-                final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
-
-                final SSLContext sslContext = SSLConfig.getSSLContext();
-                sslContext.init( identityStoreConfig.getKeyManagers(), trustStoreConfig.getTrustManagers(), new java.security.SecureRandom());
-
-                SslFilter sslFilter = new SslFilter(sslContext);
-                if (JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("needed")) {
-                    sslFilter.setNeedClientAuth(true);
+                Connection.ClientAuth clientAuth;
+                try {
+                    clientAuth = Connection.ClientAuth.valueOf(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY, "disabled"));
+                } catch (IllegalArgumentException e) {
+                    clientAuth = Connection.ClientAuth.disabled;
                 }
-                else if(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("wanted")) {
-                    sslFilter.setWantClientAuth(true);
-                }
+
+                final SslFilter sslFilter = SSLConfig.getServerModeSslFilter( SSLConfig.Type.SOCKET_C2S, clientAuth );
                 sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, sslFilter);
 
             }
@@ -496,7 +490,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
                 ports.add(new ServerPort(port, serverName, localIPAddress, true, null, ServerPort.Type.client));
 
-                List<String> params = new ArrayList<>();
+                List<String> params = new ArrayList<String>();
                 params.add(Integer.toString(port));
                 Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
             }

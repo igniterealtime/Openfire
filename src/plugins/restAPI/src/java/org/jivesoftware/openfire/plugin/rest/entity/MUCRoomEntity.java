@@ -13,7 +13,7 @@ import javax.xml.bind.annotation.XmlType;
 		"modificationDate", "maxUsers", "persistent", "publicRoom", "registrationEnabled", "canAnyoneDiscoverJID",
 		"canOccupantsChangeSubject", "canOccupantsInvite", "canChangeNickname", "logEnabled",
 		"loginRestrictedToNickname", "membersOnly", "moderated", "broadcastPresenceRoles", "owners", "admins",
-		"members", "outcasts" })
+		"members", "outcasts", "ownerGroups", "adminGroups", "memberGroups", "outcastGroups" })
 public class MUCRoomEntity {
 
 	private String roomName;
@@ -42,12 +42,16 @@ public class MUCRoomEntity {
 	private List<String> broadcastPresenceRoles;
 
 	private List<String> owners;
+	private List<String> ownerGroups;
 
 	private List<String> admins;
+	private List<String> adminGroups;
 
 	private List<String> members;
+	private List<String> memberGroups;
 
 	private List<String> outcasts;
+	private List<String> outcastGroups;
 
 	public MUCRoomEntity() {
 	}
@@ -245,8 +249,18 @@ public class MUCRoomEntity {
 		return owners;
 	}
 
+	@XmlElementWrapper(name = "ownerGroups")
+	@XmlElement(name = "ownerGroup")
+	public List<String> getOwnerGroups() {
+		return ownerGroups;
+	}
+
 	public void setOwners(List<String> owners) {
 		this.owners = owners;
+	}
+
+	public void setOwnerGroups(List<String> ownerGroups) {
+		this.ownerGroups = ownerGroups;
 	}
 
 	@XmlElementWrapper(name = "members")
@@ -255,8 +269,18 @@ public class MUCRoomEntity {
 		return members;
 	}
 
+	@XmlElementWrapper(name = "memberGroups")
+	@XmlElement(name = "memberGroup")
+	public List<String> getmemberGroups() {
+		return memberGroups;
+	}
+
 	public void setMembers(List<String> members) {
 		this.members = members;
+	}
+
+	public void setMemberGroups(List<String> memberGroups) {
+		this.memberGroups = memberGroups;
 	}
 
 	@XmlElementWrapper(name = "outcasts")
@@ -265,8 +289,18 @@ public class MUCRoomEntity {
 		return outcasts;
 	}
 
+	@XmlElementWrapper(name = "outcastGroups")
+	@XmlElement(name = "outcastGroup")
+	public List<String> getoutcastGroups() {
+		return outcastGroups;
+	}
+
 	public void setOutcasts(List<String> outcasts) {
 		this.outcasts = outcasts;
+	}
+
+	public void setOutcastGroups(List<String> outcastGroups) {
+		this.outcastGroups = outcastGroups;
 	}
 
 	@XmlElementWrapper(name = "admins")
@@ -275,8 +309,18 @@ public class MUCRoomEntity {
 		return admins;
 	}
 
+	@XmlElementWrapper(name = "adminGroups")
+	@XmlElement(name = "adminGroup")
+	public List<String> getadminGroups() {
+		return adminGroups;
+	}
+
 	public void setAdmins(List<String> admins) {
 		this.admins = admins;
+	}
+
+	public void setAdminGroups(List<String> adminGroups) {
+		this.adminGroups = adminGroups;
 	}
 
 }

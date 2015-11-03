@@ -27,16 +27,18 @@ public class MUCRoomService {
 	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public MUCRoomEntities getMUCRooms(@DefaultValue("conference") @QueryParam("servicename") String serviceName,
 			@DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType,
-			@QueryParam("search") String roomSearch) {
-		return MUCRoomController.getInstance().getChatRooms(serviceName, channelType, roomSearch);
+			@QueryParam("search") String roomSearch,
+			@DefaultValue("false") @QueryParam("expandGroups") Boolean expand) {
+		return MUCRoomController.getInstance().getChatRooms(serviceName, channelType, roomSearch, expand);
 	}
 	
 	@GET
 	@Path("/{roomName}")
 	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public MUCRoomEntity getMUCRoomJSON2(@PathParam("roomName") String roomName,
-			@DefaultValue("conference") @QueryParam("servicename") String serviceName) throws ServiceException {
-		return MUCRoomController.getInstance().getChatRoom(roomName, serviceName);
+			@DefaultValue("conference") @QueryParam("servicename") String serviceName,
+			@DefaultValue("false") @QueryParam("expandGroups") Boolean expand) throws ServiceException {
+		return MUCRoomController.getInstance().getChatRoom(roomName, serviceName, expand);
 	}
 
 

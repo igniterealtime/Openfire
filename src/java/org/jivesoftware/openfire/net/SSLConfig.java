@@ -21,6 +21,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.apache.mina.filter.ssl.SslFilter;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -406,7 +407,6 @@ public class SSLConfig
 
         final SSLContext sslContext = SSLContext.getInstance( purpose.getIdentityStoreType() );
         sslContext.init( keyManagers, trustManagers, new SecureRandom() );
-
         return sslContext;
     }
 
@@ -473,10 +473,87 @@ public class SSLConfig
         final SSLContext sslContext = getSSLContext( purpose );
 
         final SSLEngine sslEngine = sslContext.createSSLEngine();
-        configureProtocols( sslEngine, purpose );
-        configureCipherSuites( sslEngine, purpose );
+
+        // Configure protocol support.
+        if ( purpose.getProtocolsEnabled() != null && !purpose.getProtocolsEnabled().isEmpty() )
+        {
+            // When an explicit list of enabled protocols is defined, use only those.
+            sslEngine.setEnabledProtocols( purpose.getProtocolsEnabled().split( "," ) );
+        }
+        else if ( purpose.getProtocolsDisabled() != null && !purpose.getProtocolsDisabled().isEmpty() )
+        {
+            // Otherwise, use all supported protocols (except for the ones that are explicitly disabled).
+            final List<String> disabled = Arrays.asList( purpose.getProtocolsDisabled() );
+            final ArrayList<String> supported = new ArrayList<>(  );
+            for ( final String candidate : sslEngine.getSupportedProtocols() ) {
+                if ( !disabled.contains( candidate ) ) {
+                    supported.add( candidate );
+                }
+            }
+
+            sslEngine.setEnabledProtocols( supported.toArray( new String[ supported.size()] ) );
+        }
+
+        // Configure cipher suite support.
+        if ( purpose.getCipherSuitesEnabled() != null && !purpose.getCipherSuitesEnabled().isEmpty() )
+        {
+            // When an explicit list of enabled protocols is defined, use only those.
+            sslEngine.setEnabledCipherSuites( purpose.getCipherSuitesEnabled().split( "," ) );
+        }
+        else if ( purpose.getCipherSuitesDisabled() != null && !purpose.getCipherSuitesDisabled().isEmpty() )
+        {
+            // Otherwise, use all supported cipher suites (except for the ones that are explicitly disabled).
+            final List<String> disabled = Arrays.asList( purpose.getCipherSuitesDisabled() );
+            final ArrayList<String> supported = new ArrayList<>(  );
+            for ( final String candidate : sslEngine.getSupportedCipherSuites() ) {
+                if ( !disabled.contains( candidate ) ) {
+                    supported.add( candidate );
+                }
+            }
+
+            sslEngine.setEnabledCipherSuites( supported.toArray( new String[ supported.size() ] ) );
+        }
+
+        // TODO: Set policy for checking client certificates
 
         return sslEngine;
+    }
+
+    public static SslContextFactory getSslContextFactory( final Purpose purpose )
+    {
+        final SslContextFactory sslContextFactory = new SslContextFactory();
+
+        sslContextFactory.setTrustStore( SSLConfig.getTrustStore( purpose ) );
+        sslContextFactory.setKeyStore( SSLConfig.getIdentityStore( purpose ) );
+
+        // Configure protocol and cipher suite support.
+        if ( purpose.getProtocolsEnabled() != null ) {
+            sslContextFactory.setIncludeProtocols( purpose.getProtocolsEnabled().split( "," ) );
+        }
+        if ( purpose.getProtocolsDisabled() != null ) {
+            sslContextFactory.setExcludeProtocols( purpose.getProtocolsDisabled().split( "," ) );
+        }
+        if ( purpose.getCipherSuitesEnabled() != null) {
+            sslContextFactory.setIncludeCipherSuites( purpose.getCipherSuitesEnabled().split( "," ) );
+        }
+        if ( purpose.getCipherSuitesDisabled() != null ) {
+            sslContextFactory.setExcludeCipherSuites( purpose.getCipherSuitesDisabled().split( "," ) );
+        }
+
+// TODO: Set policy for checking client certificates
+//        String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");
+//        if(certPol.equals("needed")) {
+//            sslContextFactory.setNeedClientAuth(true);
+//            sslContextFactory.setWantClientAuth(true);
+//        } else if(certPol.equals("wanted")) {
+//            sslContextFactory.setNeedClientAuth(false);
+//            sslContextFactory.setWantClientAuth(true);
+//        } else {
+//            sslContextFactory.setNeedClientAuth(false);
+//            sslContextFactory.setWantClientAuth(false);
+//        }
+
+        return sslContextFactory;
     }
 
     /**
@@ -493,7 +570,7 @@ public class SSLConfig
      *
      * @param sslEngine The instance to configure. Cannot be null.
      * @param purpose The type of configuration to use (used to select the relevent property). Cannot be null.
-     */
+
     private static void configureProtocols( SSLEngine sslEngine, Purpose purpose )
     {
         // Find configuration, using fallback where applicable.
@@ -530,6 +607,7 @@ public class SSLConfig
             sslEngine.setEnabledProtocols( defaultEnabled.toArray( new String[ defaultEnabled.size()] ) );
         }
     }
+                      */
 
     /**
      * Enables a specific set of cipher suites in an SSLEngine instance.
@@ -545,7 +623,7 @@ public class SSLConfig
      *
      * @param sslEngine The instance to configure. Cannot be null.
      * @param purpose The type of configuration to use (used to select the relevent property). Cannot be null.
-     */
+
     private static void configureCipherSuites( SSLEngine sslEngine, Purpose purpose )
     {
         String enabledCipherSuites = JiveGlobals.getProperty( purpose.getPrefix() + "enabled.ciphersuites" );
@@ -588,6 +666,7 @@ public class SSLConfig
             sslEngine.setEnabledCipherSuites( defaultEnabled.toArray( new String[ defaultEnabled.size()] ) );
         }
     }
+                      */
 
     /**
      * Creates an Apache MINA SslFilter that is configured to use server mode when handshaking.

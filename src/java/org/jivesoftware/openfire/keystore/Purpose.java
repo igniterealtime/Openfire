@@ -4,6 +4,7 @@ import org.jivesoftware.util.JiveGlobals;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Potential intended usages (for TLS connectivity).
@@ -138,7 +139,7 @@ public enum Purpose
 
     public String getIdentityStoreLocation() throws IOException
     {
-        return canonicalize( getIdentityStoreLocation() );
+        return canonicalize( getIdentityStoreLocationNonCanonicalized() );
     }
 
     public String getIdentityStoreLocationNonCanonicalized()
@@ -158,7 +159,7 @@ public enum Purpose
 
     public String getTrustStoreLocation() throws IOException
     {
-        return canonicalize( getTrustStoreLocation() );
+        return canonicalize( getTrustStoreLocationNonCanonicalized() );
     }
 
     public String getTrustStoreLocationNonCanonicalized()
@@ -173,6 +174,67 @@ public enum Purpose
         else
         {
             return JiveGlobals.getProperty( propertyName, fallback.getTrustStoreLocationNonCanonicalized() ).trim();
+        }
+    }
+
+    public String getProtocolsEnabled()
+    {
+        final String propertyName = prefix + "protocols.enabled";
+        final String defaultValue = "TLSv1,TLSv1.1,TLSv1.2";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getProtocolsEnabled() ).trim();
+        }
+    }
+
+    public String getProtocolsDisabled()
+    {
+        final String propertyName = prefix + "protocols.disabled";
+        final String defaultValue = "SSLv1,SSLv2,SSLv2Hello,SSLv3";
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getProtocolsDisabled() ).trim();
+        }
+    }
+
+    public String getCipherSuitesEnabled()
+    {
+        final String propertyName = prefix + "ciphersuites.enabled";
+        final String defaultValue = "";
+
+        final String result;
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue );
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getCipherSuitesEnabled() );
+        }
+    }
+
+    public String getCipherSuitesDisabled()
+    {
+        final String propertyName = prefix + "ciphersuites.disabled";
+        final String defaultValue = null;
+
+        if ( fallback == null )
+        {
+            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+        }
+        else
+        {
+            return JiveGlobals.getProperty( propertyName, fallback.getCipherSuitesDisabled() ).trim();
         }
     }
 

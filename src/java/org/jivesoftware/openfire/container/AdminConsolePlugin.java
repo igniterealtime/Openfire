@@ -148,23 +148,10 @@ public class AdminConsolePlugin implements Plugin {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
 
-                final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( Purpose.WEBADMIN );
-
-                final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
-                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
-                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
-                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
-                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
-                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
-
-                sslContextFactory.addExcludeProtocols( "SSLv3" );
-                sslContextFactory.setNeedClientAuth( false );
-                sslContextFactory.setWantClientAuth( false );
+                final SslContextFactory sslContextFactory = SSLConfig.getSslContextFactory( Purpose.WEBADMIN );
 
                 final ServerConnector httpsConnector;
-                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
-				{
+                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", ""))) {
 					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
 
 				} else {

@@ -64,6 +64,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
+import org.jivesoftware.openfire.keystore.TrustStoreConfig;
 import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
@@ -259,38 +260,15 @@ public final class HttpBindManager {
                             "the hosted domain");
                 }
 
-                final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( Purpose.BOSH_C2S );
+                final SslContextFactory sslContextFactory = SSLConfig.getSslContextFactory( Purpose.BOSH_C2S );
 
-                final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
-                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
-                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
-                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
-                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
-                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
-
-                sslContextFactory.addExcludeProtocols( "SSLv3" );
-
-                // Set policy for checking client certificates
-                String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");
-                if(certPol.equals("needed")) {
-                	sslContextFactory.setNeedClientAuth(true);
-                	sslContextFactory.setWantClientAuth(true);
-                } else if(certPol.equals("wanted")) {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(true);
-                } else {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(false);
-                }
-
- 				HttpConfiguration httpsConfig = new HttpConfiguration();
+ 				final HttpConfiguration httpsConfig = new HttpConfiguration();
 				httpsConfig.setSecureScheme("https");
 				httpsConfig.setSecurePort(securePort);
  				configureProxiedConnector(httpsConfig);
  				httpsConfig.addCustomizer(new SecureRequestCustomizer());
 
- 				ServerConnector sslConnector = null;
+ 				final ServerConnector sslConnector;
 
 				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
 				{

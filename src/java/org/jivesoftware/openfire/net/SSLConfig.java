@@ -532,8 +532,13 @@ public class SSLConfig
     {
         final SslContextFactory sslContextFactory = new SslContextFactory();
 
-        sslContextFactory.setTrustStore( SSLConfig.getTrustStore( purpose ) );
-        sslContextFactory.setKeyStore( SSLConfig.getIdentityStore( purpose ) );
+        final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( purpose );
+        sslContextFactory.setTrustStore( trustStoreConfig.getStore() );
+        sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
+
+        final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( purpose );
+        sslContextFactory.setKeyStore( identityStoreConfig.getStore() );
+        sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
 
         // Configure protocol and cipher suite support.
         if ( purpose.getProtocolsEnabled() != null ) {

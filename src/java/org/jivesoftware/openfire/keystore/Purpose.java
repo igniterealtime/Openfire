@@ -226,7 +226,7 @@ public enum Purpose
     public String getCipherSuitesDisabled()
     {
         final String propertyName = prefix + "ciphersuites.disabled";
-        final String defaultValue = null;
+        final String defaultValue = "";
 
         if ( fallback == null )
         {

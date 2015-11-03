@@ -97,7 +97,7 @@ public class MultiplexerPacketHandler {
                             sendResultPacket(iq);
                         }
                         else {
-                            // Send error to CM. The CM should close the new-borned connection
+                            // Send error to CM. The CM should close the new-born connection
                             sendErrorPacket(iq, PacketError.Condition.not_allowed, null);
                         }
                     }

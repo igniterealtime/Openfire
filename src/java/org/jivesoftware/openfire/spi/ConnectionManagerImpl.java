@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.net.ssl.SSLContext;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.buffer.SimpleBufferAllocator;
@@ -61,9 +60,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
+import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
@@ -445,7 +442,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 		                  sslSocketAcceptor, maxBufferSize);
 
 
-                // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
+                // Add the SSL filter now since sockets are "born" encrypted when using the legacy SSL port. On the non-legacy port, a non-encrypted socket is elevated to an encrypted one after negotiation.
                 Connection.ClientAuth clientAuth;
                 try {
                     clientAuth = Connection.ClientAuth.valueOf(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY, "disabled"));

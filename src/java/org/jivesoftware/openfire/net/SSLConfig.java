@@ -51,8 +51,9 @@ public class SSLConfig
 {
     private static final Logger Log = LoggerFactory.getLogger( SSLConfig.class );
 
-    private final ConcurrentMap<Purpose, String> locationByPurpose = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Purpose, String> identityStoreLocationByPurpose = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityStoreConfig> identityStoresByLocation = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Purpose, String> trustStoreLocationByPurpose = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TrustStoreConfig> trustStoresByLocation = new ConcurrentHashMap<>();
 
     private static SSLConfig INSTANCE;
@@ -267,7 +268,7 @@ public class SSLConfig
         {
             // Instantiate an identity store.
             final String locationIdent = purpose.getIdentityStoreLocation();
-            locationByPurpose.put( purpose, locationIdent );
+            identityStoreLocationByPurpose.put( purpose, locationIdent );
             if ( !identityStoresByLocation.containsKey( locationIdent ) )
             {
                 final IdentityStoreConfig storeConfig = new IdentityStoreConfig( purpose.getIdentityStoreLocation(), purpose.getIdentityStorePassword(), purpose.getIdentityStoreType(), false );
@@ -276,7 +277,7 @@ public class SSLConfig
 
             // Instantiate trust store.
             final String locationTrust = purpose.getTrustStoreLocation();
-            locationByPurpose.put( purpose, locationTrust );
+            trustStoreLocationByPurpose.put( purpose, locationTrust );
             if ( !trustStoresByLocation.containsKey( locationTrust ) )
             {
                 final TrustStoreConfig storeConfig = new TrustStoreConfig( purpose.getTrustStoreLocation(), purpose.getTrustStorePassword(), purpose.getTrustStoreType(), false, purpose.acceptSelfSigned(), purpose.verifyValidity() );
@@ -290,7 +291,11 @@ public class SSLConfig
         if ( purpose == null ) {
             throw new IllegalArgumentException( "Argument 'purpose' cannot be null.");
         }
-        return identityStoresByLocation.get( locationByPurpose.get( purpose ) );
+        final IdentityStoreConfig config = identityStoresByLocation.get( identityStoreLocationByPurpose.get( purpose ) );
+        if (config == null) {
+            throw new IllegalStateException( "Cannot retrieve identity store for " + purpose );
+        }
+        return config;
     }
 
     public TrustStoreConfig getTrustStoreConfig( Purpose purpose )
@@ -298,7 +303,11 @@ public class SSLConfig
         if ( purpose == null ) {
             throw new IllegalArgumentException( "Argument 'purpose' cannot be null.");
         }
-        return trustStoresByLocation.get( locationByPurpose.get( purpose ) );
+        final TrustStoreConfig config = trustStoresByLocation.get( trustStoreLocationByPurpose.get( purpose ) );
+        if (config == null) {
+            throw new IllegalStateException( "Cannot retrieve trust store for " + purpose );
+        }
+        return config;
     }
 
 //    public void useStoreForPurpose( Purpose purpose, String location, String password, String storeType, boolean createIfAbsent ) throws IOException, CertificateStoreConfigException
@@ -405,7 +414,7 @@ public class SSLConfig
         final KeyManager[] keyManagers = getInstance().getIdentityStoreConfig( purpose ).getKeyManagers();
         final TrustManager[] trustManagers = getInstance().getTrustStoreConfig( purpose ).getTrustManagers();
 
-        final SSLContext sslContext = SSLContext.getInstance( purpose.getIdentityStoreType() );
+        final SSLContext sslContext = SSLContext.getInstance( "TLSv1" );
         sslContext.init( keyManagers, trustManagers, new SecureRandom() );
         return sslContext;
     }

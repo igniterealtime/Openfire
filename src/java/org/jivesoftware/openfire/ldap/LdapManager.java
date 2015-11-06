@@ -544,7 +544,15 @@ public class LdapManager {
         } else {
             env.put("com.sun.jndi.ldap.connect.pool", "false");
         }
+        if (connTimeout > 0) {
+            env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+        } else {
+            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+        }
 
+        if (readTimeout > 0) {
+            env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
+        }
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
         }

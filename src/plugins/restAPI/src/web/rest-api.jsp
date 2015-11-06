@@ -20,9 +20,10 @@
 	boolean success = request.getParameter("success") != null;
 	String secret = ParamUtils.getParameter(request, "secret");
 	boolean enabled = ParamUtils.getBooleanParameter(request, "enabled");
-	boolean httpBasicAuth = ParamUtils.getBooleanParameter(request, "authtype");
+	String httpAuth = ParamUtils.getParameter(request, "authtype");
 	String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
-
+	String customAuthFilterClassName = ParamUtils.getParameter(request, "customAuthFilterClassName");
+	
 	RESTServicePlugin plugin = (RESTServicePlugin) XMPPServer.getInstance().getPluginManager()
 			.getPlugin("restapi");
 
@@ -32,8 +33,9 @@
 		if (errors.size() == 0) {
 			plugin.setEnabled(enabled);
 			plugin.setSecret(secret);
-			plugin.setHttpBasicAuth(httpBasicAuth);
+			plugin.setHttpAuth(httpAuth);
 			plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
+			plugin.setCustomAuthFiIterClassName(customAuthFilterClassName);
 			response.sendRedirect("rest-api.jsp?success=true");
 			return;
 		}
@@ -41,8 +43,9 @@
 
 	secret = plugin.getSecret();
 	enabled = plugin.isEnabled();
-	httpBasicAuth = plugin.isHttpBasicAuth();
+	httpAuth = plugin.getHttpAuth();
 	allowedIPs = StringUtils.collectionToString(plugin.getAllowedIPs());
+	customAuthFilterClassName = plugin.getCustomAuthFilterClassName();
 %>
 
 <html>
@@ -101,13 +104,13 @@
 					<br>
 					<br>
 
-					<input type="radio" name="authtype" value="true"
-						id="http_basic_auth" <%=((httpBasicAuth) ? "checked" : "")%>>
+					<input type="radio" name="authtype" value="basic"
+						id="http_basic_auth" <%=("basic".equals(httpAuth) ? "checked" : "")%>>
 					<label for="http_basic_auth">HTTP basic auth - REST API
 						authentication with Openfire admin account.</label>
 					<br>
-					<input type="radio" name="authtype" value="false"
-						id="secretKeyAuth" <%=((!httpBasicAuth) ? "checked" : "")%>>
+					<input type="radio" name="authtype" value="secret"
+						id="secretKeyAuth" <%=("secret".equals(httpAuth) ? "checked" : "")%>>
 					<label for="secretKeyAuth">Secret key auth - REST API
 						authentication over specified secret key.</label>
 					<br>
@@ -115,6 +118,16 @@
 						key:</label>
 					<input type="text" name="secret" value="<%=secret%>"
 						id="text_secret">
+					<br>
+					<input type="radio" name="authtype" value="custom"
+						id="customFilterAuth" <%=("custom".equals(httpAuth) ? "checked" : "")%>>
+					<label for="secretKeyAuth">Custom authentication filter classname - REST API
+						authentication delegates to a custom filter implemented in some other plugin.</label>
+					<br>
+					<label style="padding-left: 25px" for="text_secret">Filter 
+						classname:</label>
+					<input type="text" name="customAuthFilterClassName" value="<%=customAuthFilterClassName%>"
+						id="custom_auth_filter_class_name">
 					<br>
 					<br>
 

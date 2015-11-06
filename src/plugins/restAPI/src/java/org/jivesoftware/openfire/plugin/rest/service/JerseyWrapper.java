@@ -2,32 +2,39 @@ package org.jivesoftware.openfire.plugin.rest.service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import java.lang.ClassNotFoundException;
+import java.lang.Class;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.plugin.rest.exceptions.RESTExceptionMapper;
+import org.jivesoftware.util.JiveGlobals;
 
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+
+import org.apache.log4j.Logger;
 
 /**
  * The Class JerseyWrapper.
  */
 public class JerseyWrapper extends ServletContainer {
+	
+	/** The Constant CUSTOM_AUTH_PROPERTY_NAME */
+	private static final String CUSTOM_AUTH_PROPERTY_NAME = "plugin.restapi.customAuthFilter";
 
 	/** The Constant AUTHFILTER. */
 	private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.rest.AuthFilter";
-
+	
 	/** The Constant CORSFILTER. */
 	private static final String CORSFILTER = "org.jivesoftware.openfire.plugin.rest.CORSFilter";
 
 	/** The Constant CONTAINER_REQUEST_FILTERS. */
 	private static final String CONTAINER_REQUEST_FILTERS = "com.sun.jersey.spi.container.ContainerRequestFilters";
-
+	
 	/** The Constant CONTAINER_RESPONSE_FILTERS. */
 	private static final String CONTAINER_RESPONSE_FILTERS = "com.sun.jersey.spi.container.ContainerResponseFilters";
 
@@ -52,26 +59,40 @@ public class JerseyWrapper extends ServletContainer {
 	/** The prc. */
 	private static PackagesResourceConfig prc;
 
-	/** The Constant JERSEY_LOGGER. */
-	private final static Logger JERSEY_LOGGER = Logger.getLogger("com.sun.jersey");
-
+	private static Logger LOGGER = Logger.getLogger(JerseyWrapper.class);
+	
 	static {
-		JERSEY_LOGGER.setLevel(Level.SEVERE);
+		
+		// Check if custom AuthFilter is available
+		String customAuthFilterClassName = JiveGlobals.getProperty(CUSTOM_AUTH_PROPERTY_NAME);
+		String pickedAuthFilter = AUTHFILTER;
+		
+		
+		try {
+			if(customAuthFilterClassName != null) {
+				LOGGER.info("Trying to set a custom authentication filter for restAPI plugin with classname: " + customAuthFilterClassName);
+				Class.forName(customAuthFilterClassName, false, JerseyWrapper.class.getClassLoader());
+				pickedAuthFilter = customAuthFilterClassName;
+			}
+		} catch (ClassNotFoundException e) {
+			LOGGER.info("No custom auth filter found for restAPI plugin! Still using the default one");
+        }
+		
 		config = new HashMap<String, Object>();
 		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
-		prc.setPropertiesAndFeatures(config);
-		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, AUTHFILTER);
+		prc.setPropertiesAndFeatures(config);		
+		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);
 		prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
 
 		prc.getClasses().add(RestAPIService.class);
-
+		
 		prc.getClasses().add(MUCRoomService.class);
 		prc.getClasses().add(MUCRoomOwnersService.class);
 		prc.getClasses().add(MUCRoomAdminsService.class);
 		prc.getClasses().add(MUCRoomMembersService.class);
 		prc.getClasses().add(MUCRoomOutcastsService.class);
-
+		
 		prc.getClasses().add(UserServiceLegacy.class);
 		prc.getClasses().add(UserService.class);
 		prc.getClasses().add(UserRosterService.class);

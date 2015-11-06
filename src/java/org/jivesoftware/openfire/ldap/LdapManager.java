@@ -584,7 +584,7 @@ public class LdapManager {
                get details of the negotiated TLS session: cipher suite,
                peer certificate, etc. */
             try {
-                SSLSession session = tls.negotiate();
+                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
@@ -703,7 +703,7 @@ public class LdapManager {
                    get details of the negotiated TLS session: cipher suite,
                    peer certificate, etc. */
                 try {
-                    SSLSession session = tls.negotiate();
+                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
@@ -793,7 +793,7 @@ public class LdapManager {
                            get details of the negotiated TLS session: cipher suite,
                            peer certificate, etc. */
                         try {
-                            SSLSession session = tls.negotiate();
+                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);

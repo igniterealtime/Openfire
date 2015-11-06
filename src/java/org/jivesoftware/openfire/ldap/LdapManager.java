@@ -663,14 +663,14 @@ public class LdapManager {
                 }
             }
 
-            // Set only on non SSL since SSL connections break with a timeout.
-            if (!sslEnabled) {
-                if (connTimeout > 0) {
+
+
+            if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
                     env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                 }
-            }
+
             if (readTimeout > 0) {
                 env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
@@ -762,11 +762,9 @@ public class LdapManager {
                         env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
-                    // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a timemout.
-                    if (!sslEnabled) {
+
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
-                    }
+
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }

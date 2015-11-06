@@ -495,6 +495,7 @@ public class LdapManager {
 
         // SSL
         if (sslEnabled) {
+            env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
@@ -629,6 +630,7 @@ public class LdapManager {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
+                env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -733,6 +735,7 @@ public class LdapManager {
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
+                        env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 

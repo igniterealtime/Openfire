@@ -20,6 +20,14 @@
 
 package org.jivesoftware.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -29,15 +37,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Comparator;
 
 /**
  * SSLSocketFactory that accepts any certificate chain and also accepts expired
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Matt Tucker
  */
-public class SimpleSSLSocketFactory extends SSLSocketFactory {
+public class SimpleSSLSocketFactory extends SSLSocketFactory implements Comparator<Object> {
 
 	private static final Logger Log = LoggerFactory.getLogger(SimpleSSLSocketFactory.class);
 
@@ -120,6 +120,11 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
         return factory.getSupportedCipherSuites();
     }
 
+    //Workaround for ssl pooling when using a custom ssl factory
+    @Override
+    public int compare(Object o1, Object o2) {
+        return o1.toString().compareTo(o2.toString());
+    }
     private static class DummyTrustManager implements X509TrustManager {
 
         public boolean isClientTrusted(X509Certificate[] cert) {

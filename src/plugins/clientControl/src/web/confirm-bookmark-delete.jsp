@@ -128,6 +128,10 @@ else { %>
             <td><b><fmt:message key="bookmark.delete.chat.autojoin" /></b></td>
             <td><%= bookmark.getProperty("autojoin") != null ? "<img src='/images/check.gif'>" : "&nbsp;"%></td>
         </tr>
+		<tr>
+            <td><b><fmt:message key="bookmark.delete.chat.nameasnick" /></b></td>
+            <td><%= bookmark.getProperty("nameasnick") != null ? "<img src='/images/check.gif'>" : "&nbsp;"%></td>
+        </tr>
         <tr>
             <td></td>
             <td>

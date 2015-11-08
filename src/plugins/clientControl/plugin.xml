@@ -8,8 +8,8 @@
     <name>Client Control</name>
     <description>Controls clients allowed to connect and available features</description>
     <author>Jive Software</author>
-    <version>1.2.0</version>
-    <date>6/22/2015</date>
+    <version>1.3.1</version>
+    <date>11/05/2015</date>
     <minServerVersion>3.11.0</minServerVersion>
     <databaseKey>clientcontrol</databaseKey>
     <databaseVersion>0</databaseVersion>

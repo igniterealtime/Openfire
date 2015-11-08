@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
@@ -198,6 +199,12 @@ public class BookmarkInterceptor implements PacketInterceptor {
                     boolean autojoin = Boolean.valueOf(bookmark.getProperty("autojoin"));
                     conferenceElement.addAttribute("autojoin", Boolean.toString(autojoin));
                     conferenceElement.addAttribute("jid", bookmark.getValue());
+                    boolean nameasnick = Boolean.valueOf(bookmark.getProperty("nameasnick"));
+                    if (nameasnick) {
+                    	User currentUser = userManager.getUser(jid.getNode());
+                    	Element nick = conferenceElement.addElement("nick");
+                    	nick.addText(currentUser.getName());
+                    }
                 }
                 appendSharedElement(conferenceElement);
 

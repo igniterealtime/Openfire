@@ -24,12 +24,19 @@
 	String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
 	String customAuthFilterClassName = ParamUtils.getParameter(request, "customAuthFilterClassName");
 	
+	String loadingStatus = null;
+	
 	RESTServicePlugin plugin = (RESTServicePlugin) XMPPServer.getInstance().getPluginManager()
 			.getPlugin("restapi");
 
 	// Handle a save
 	Map errors = new HashMap();
 	if (save) {
+		loadingStatus = plugin.getLoadingStatusMessage();
+		if (loadingStatus != null) {
+            errors.put("loadingStatus", loadingStatus);
+		}
+		
 		if (errors.size() == 0) {
 			plugin.setEnabled(enabled);
 			plugin.setSecret(secret);
@@ -78,7 +85,25 @@
 	<%
 		}
 	%>
-
+	
+	<%  
+		if (errors.get("loadingStatus") != null) { 
+	%>
+	<div class="jive-error">
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tbody>
+				<tr>
+					<td class="jive-icon"><img src="images/error-16x16.gif"
+						width="16" height="16" border="0"></td>
+					<td class="jive-icon-label"><%= loadingStatus %></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<br>
+	<%
+		}
+	%>
 	<form action="rest-api.jsp?save" method="post">
 
 		<fieldset>

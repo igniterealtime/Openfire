@@ -39,6 +39,8 @@ import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 
+import org.jivesoftware.openfire.plugin.rest.service.JerseyWrapper;
+
 /**
  * The Class RESTServicePlugin.
  */
@@ -190,6 +192,16 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 		}
 	}
 
+	
+	/**
+	 * Returns the loading status message.
+	 *
+	 * @return the loading status message.
+	 */
+	public String getLoadingStatusMessage() {
+		return JerseyWrapper.getLoadingStatusMessage();
+	}
+	
 	/**
 	 * Returns the secret key that only valid requests should know.
 	 *

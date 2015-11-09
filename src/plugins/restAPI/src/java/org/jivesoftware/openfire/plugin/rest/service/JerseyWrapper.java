@@ -2,6 +2,8 @@ package org.jivesoftware.openfire.plugin.rest.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.lang.ClassNotFoundException;
 import java.lang.Class;
@@ -16,8 +18,6 @@ import org.jivesoftware.util.JiveGlobals;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
-import org.apache.log4j.Logger;
-
 /**
  * The Class JerseyWrapper.
  */
@@ -25,6 +25,9 @@ public class JerseyWrapper extends ServletContainer {
 	
 	/** The Constant CUSTOM_AUTH_PROPERTY_NAME */
 	private static final String CUSTOM_AUTH_PROPERTY_NAME = "plugin.restapi.customAuthFilter";
+	
+	/** The Constant REST_AUTH_TYPE */
+	private static final String REST_AUTH_TYPE  = "plugin.restapi.httpAuth";
 
 	/** The Constant AUTHFILTER. */
 	private static final String AUTHFILTER = "org.jivesoftware.openfire.plugin.rest.AuthFilter";
@@ -58,26 +61,30 @@ public class JerseyWrapper extends ServletContainer {
 
 	/** The prc. */
 	private static PackagesResourceConfig prc;
-
-	private static Logger LOGGER = Logger.getLogger(JerseyWrapper.class);
+	
+	/** The Constant JERSEY_LOGGER. */
+	private final static Logger JERSEY_LOGGER = Logger.getLogger("com.sun.jersey");
+	
+	private static String loadingStatusMessage = null;
 	
 	static {
 		
 		// Check if custom AuthFilter is available
 		String customAuthFilterClassName = JiveGlobals.getProperty(CUSTOM_AUTH_PROPERTY_NAME);
+		String restAuthType = JiveGlobals.getProperty(REST_AUTH_TYPE);
 		String pickedAuthFilter = AUTHFILTER;
 		
-		
 		try {
-			if(customAuthFilterClassName != null) {
-				LOGGER.info("Trying to set a custom authentication filter for restAPI plugin with classname: " + customAuthFilterClassName);
+			if(customAuthFilterClassName != null && "custom".equals(restAuthType)) {
 				Class.forName(customAuthFilterClassName, false, JerseyWrapper.class.getClassLoader());
 				pickedAuthFilter = customAuthFilterClassName;
+				loadingStatusMessage = null;
 			}
 		} catch (ClassNotFoundException e) {
-			LOGGER.info("No custom auth filter found for restAPI plugin! Still using the default one");
+			loadingStatusMessage = "No custom auth filter found for restAPI plugin!";
         }
 		
+		JERSEY_LOGGER.setLevel(Level.SEVERE);
 		config = new HashMap<String, Object>();
 		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
@@ -138,4 +145,14 @@ public class JerseyWrapper extends ServletContainer {
 		// Release the excluded URL
 		AuthCheckFilter.removeExclude(SERVLET_URL);
 	}
+	
+	/*
+	 * Returns the loading status message.
+	 *
+	 * @return the loading status message.
+	 */
+	public static String getLoadingStatusMessage() {
+		return loadingStatusMessage;
+	}
+	
 }

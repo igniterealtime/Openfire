@@ -19,7 +19,6 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,8 +68,6 @@ public class CacheFactory {
 	private static Map<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
 	private static List<String> localOnly = Collections.synchronizedList(new ArrayList<String>());
     
-    private static String localCacheFactoryClass;
-    private static String clusteredCacheFactoryClass;
     private static CacheFactoryStrategy cacheFactoryStrategy = new DefaultLocalCacheStrategy();
     private static CacheFactoryStrategy localCacheFactoryStrategy;
     private static CacheFactoryStrategy clusteredCacheFactoryStrategy;
@@ -91,10 +88,6 @@ public class CacheFactory {
     private static final Map<String, Long> cacheProps = new HashMap<String, Long>();
 
     static {
-        localCacheFactoryClass = JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
-                "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
-        clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
-                "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
 
         cacheNames.put("Favicon Hits", "faviconHits");
         cacheNames.put("Favicon Misses", "faviconMisses");
@@ -375,7 +368,7 @@ public class CacheFactory {
         cache = (T) localCacheFactoryStrategy.createCache(name);
         localOnly.add(name);
 
-        log.info("Created local-only cache [" + localCacheFactoryClass + "] for " + name);
+        log.info("Created local-only cache [" + getLocalCacheFactoryClass() + "] for " + name);
         
         return wrapCache(cache, name);
     }
@@ -442,18 +435,7 @@ public class CacheFactory {
      * this JVM to join a cluster.
      */
     public static boolean isClusteringAvailable() {
-    	if (clusteredCacheFactoryStrategy == null) {
-	        try {
-	        	clusteredCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(
-	        			clusteredCacheFactoryClass, true,
-	        			getClusteredCacheStrategyClassLoader()).newInstance();
-	        } catch (NoClassDefFoundError e) {
-	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
-	        } catch (Exception e) {
-	        	log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
-	        }
-    	}
-    	return (clusteredCacheFactoryStrategy != null);
+    	return getClusterSupportPluginNames().size() != 0;
     }
 
     /**
@@ -546,7 +528,7 @@ public class CacheFactory {
     	// use try/catch here for backward compatibility with older plugin(s)
     	try { return cacheFactoryStrategy.getClusterTime(); }
     	catch (AbstractMethodError ame) {
-    		log.warn("Cluster time not available; check for update to hazelcast/clustering plugin");
+    		log.warn("Cluster time not available; check for update to cluster support plugin");
     		return localCacheFactoryStrategy.getClusterTime();
     	}
     }
@@ -615,6 +597,7 @@ public class CacheFactory {
     }
 
     public static synchronized void initialize() throws InitializationException {
+        String localCacheFactoryClass = getLocalCacheFactoryClass();
         try {
         	localCacheFactoryStrategy = (CacheFactoryStrategy) Class.forName(localCacheFactoryClass).newInstance();
             cacheFactoryStrategy = localCacheFactoryStrategy;
@@ -623,38 +606,84 @@ public class CacheFactory {
         	 throw new InitializationException(e);
         }
     }
-
-    private static ClassLoader getClusteredCacheStrategyClassLoader() {
-        PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        Plugin plugin = pluginManager.getPlugin("hazelcast");
-        if (plugin == null) {
-            plugin = pluginManager.getPlugin("clustering");
-            if (plugin == null) {
-                plugin = pluginManager.getPlugin("enterprise");
-            }
-        }
-        PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
-        if (pluginLoader != null) {
-        	if (log.isDebugEnabled()) {
-        		StringBuffer pluginLoaderDetails = new StringBuffer("Clustering plugin class loader: ");
-        		pluginLoaderDetails.append(pluginLoader.getClass().getName());
-        		for (URL url : pluginLoader.getURLs()) {
-        			pluginLoaderDetails.append("\n\t").append(url.toExternalForm());
-        		}
-        		log.debug(pluginLoaderDetails.toString());
-        	}
-            return pluginLoader;
-        }
-        else {
-            log.warn("CacheFactory - Unable to find a Plugin that provides clustering support.");
-            return Thread.currentThread().getContextClassLoader();
-        }
+    
+    /**
+     * Returns the cluster support plugin names
+     * 
+     * @return cluster support plugin names
+     */
+    public static List<String> getClusterSupportPluginNames(){
+    	String clusteredCacheFactoryClass = getClusteredCacheFactoryClass();
+    	// list all plugin and check the clusteredCacheFactoryClass implement class
+    	List<String> result = new ArrayList<String>();
+    	PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+    	Collection<Plugin> plugins = pluginManager.getPlugins();
+    	for (Plugin plugin : plugins) {
+    		// get the classloader from plugin
+    		PluginClassLoader pluginClassloader = pluginManager.getPluginClassloader(plugin);
+    		try {
+				pluginClassloader.loadClass(clusteredCacheFactoryClass).newInstance();
+				result.add(pluginManager.getName(plugin));
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+    	return result;
+    }
+    
+    private static boolean createClusteredCacheFactoryStrategy() {
+    	String clusteredCacheFactoryClass = getClusteredCacheFactoryClass();
+    	try {
+    		PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
+    		String clusterPluginName = JiveGlobals.getProperty("cluster.plugin.name");
+    		Collection<Plugin> plugins = pluginManager.getPlugins();
+    		Plugin plugin = null;
+    		for (Plugin temp : plugins) {
+    			if(clusterPluginName.equals(pluginManager.getName(temp))) {
+    				plugin = temp;
+    				break;
+    			}
+			}
+    		
+    		if (plugin == null) {
+    			return false;
+    		}
+    		
+    		PluginClassLoader pluginClassloader = pluginManager.getPluginClassloader(plugin);
+    		
+    		clusteredCacheFactoryStrategy = (CacheFactoryStrategy) pluginClassloader
+    				.loadClass(clusteredCacheFactoryClass).newInstance();
+			
+			
+			System.out.println("Use " + pluginManager.getName(plugin) + " to start clustering");
+			log.info("Use " + pluginManager.getName(plugin) + " to start clustering");
+			return true;
+		} catch (Exception e) {
+			  log.warn("Clustered cache factory strategy " + clusteredCacheFactoryClass + " not found");
+		} 
+    	return false;
+    }
+    
+    private static String getClusteredCacheFactoryClass() {
+    	return JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME, 
+                "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
+    }
+    
+    private static String getLocalCacheFactoryClass() {
+    	return JiveGlobals.getProperty(LOCAL_CACHE_PROPERTY_NAME,
+                "org.jivesoftware.util.cache.DefaultLocalCacheStrategy");
     }
 
     public static void startClustering() {
-    	if (isClusteringAvailable()) {
-    		clusteringStarting = clusteredCacheFactoryStrategy.startCluster();
+    	if (!isClusteringAvailable()) {
+    		return ;
     	}
+    	// create clusteredCacheFactoryStrategy
+    	boolean result = createClusteredCacheFactoryStrategy();
+    	if(result) {
+    		clusteredCacheFactoryStrategy.startCluster();
+    	}
+    	
         if (clusteringStarting) {
             if (statsThread == null) {
                 // Start a timing thread with 1 second of accuracy.

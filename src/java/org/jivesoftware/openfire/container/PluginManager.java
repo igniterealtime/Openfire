@@ -1001,7 +1001,7 @@ public class PluginManager {
                         if (firstRun) {
                             int count = 0;
                             // Attempt to delete the folder for up to 5 seconds.
-                            while (!deleteDir(dir) && count < 5) {
+                            while (!deleteDir(dir) && count++ < 5) {
                                 Thread.sleep(1000);
                             }
                         }

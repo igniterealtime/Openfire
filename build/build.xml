@@ -1191,6 +1191,8 @@
 
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins" depends="anttasks">
+        <antcall target="clean-plugins"/>
+
         <tstamp>
             <format property="buildJavaDate" pattern="MMM dd, yyyy"/>
         </tstamp>

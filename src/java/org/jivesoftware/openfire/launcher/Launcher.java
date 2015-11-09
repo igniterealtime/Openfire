@@ -37,6 +37,8 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedOutputStream;
@@ -69,6 +71,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
 /**
  * Graphical launcher for Openfire.
  *
@@ -279,18 +282,7 @@ public class Launcher {
                     System.exit(0);
                 }
                 else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
-                    // Hide/Unhide the window if the user clicked in the system tray icon or
-                    // selected the menu option
-                    if (frame.isVisible()) {
-                        frame.setVisible(false);
-                        frame.setState(Frame.ICONIFIED);
-                        showMenuItem.setLabel("Show");
-                    }
-                    else {
-                        frame.setVisible(true);
-                        frame.setState(Frame.NORMAL);
-                        showMenuItem.setLabel("Hide");
-                    }
+                    toggleVisibility(showMenuItem);
                 }
             }
         };
@@ -312,7 +304,35 @@ public class Launcher {
         trayIcon = new TrayIcon(offIcon.getImage(), appName, menu);
         trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(actionListener);
+        trayIcon.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Left click
+                if (e.getButton() == 1) {
+                    toggleVisibility(showMenuItem);
+                }
+            }
 
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
         if (tray != null) {
             tray.add(trayIcon);
         }
@@ -389,6 +409,19 @@ public class Launcher {
      */
     public static void main(String[] args) throws AWTException {
         new Launcher();
+    }
+
+    private void toggleVisibility(MenuItem showMenuItem) {
+        // Hide/Unhide the window if the user clicked in the system tray icon or
+        // selected the menu option
+        if (frame.isVisible()) {
+            frame.setVisible(false);
+            showMenuItem.setLabel("Show");
+        } else {
+            frame.setVisible(true);
+            frame.setState(Frame.NORMAL);
+            showMenuItem.setLabel("Hide");
+        }
     }
 
     private synchronized void startApplication() {

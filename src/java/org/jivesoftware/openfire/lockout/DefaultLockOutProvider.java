@@ -59,6 +59,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider retrieves disabled status from ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#getDisabledStatus(String)
      */
+    @Override
     public LockOutFlag getDisabledStatus(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -98,6 +99,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider deletes existing flag, if it exists, and adds new described flag in ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#setDisabledStatus(LockOutFlag)
      */
+    @Override
     public void setDisabledStatus(LockOutFlag flag) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -143,6 +145,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider deletes existing flag from ofUserFlag table.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#unsetDisabledStatus(String)
      */
+    @Override
     public void unsetDisabledStatus(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -164,6 +167,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider allows editing of disabled status.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isReadOnly()
      */
+    @Override
     public boolean isReadOnly() {
         return false;
     }
@@ -172,6 +176,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider allows delayed start to disabled status.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isDelayedStartSupported()
      */
+    @Override
     public boolean isDelayedStartSupported() {
         return true;
     }
@@ -180,6 +185,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider allows timeout of disabled status.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isTimeoutSupported()
      */
+    @Override
     public boolean isTimeoutSupported() {
         return true;
     }
@@ -188,6 +194,7 @@ public class DefaultLockOutProvider implements LockOutProvider {
      * Default provider should be cached.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#shouldNotBeCached()
      */
+    @Override
     public boolean shouldNotBeCached() {
         return false;
     }

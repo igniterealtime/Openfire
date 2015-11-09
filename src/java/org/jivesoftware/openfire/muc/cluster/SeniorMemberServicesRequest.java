@@ -48,10 +48,12 @@ public class SeniorMemberServicesRequest implements ClusterTask {
     public SeniorMemberServicesRequest() {
     }
 
+    @Override
     public Object getResult() {
         return services;
     }
 
+    @Override
     public void run() {
         services = new ArrayList<ServiceInfo>();
         // Get all services and include them in the reply
@@ -60,10 +62,12 @@ public class SeniorMemberServicesRequest implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

@@ -128,6 +128,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return DriverManager.getConnection(connectionString);
     }
 
+    @Override
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
 
@@ -199,6 +200,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return members;
     }
 
+    @Override
     public int getGroupCount() {
         int count = 0;
         Connection con = null;
@@ -221,6 +223,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return count;
     }
 
+    @Override
     public Collection<String> getGroupNames() {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
@@ -243,6 +246,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(int start, int num) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;
@@ -268,6 +272,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(JID user) {
         List<String> groupNames = new ArrayList<String>();
         Connection con = null;

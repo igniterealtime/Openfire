@@ -383,6 +383,7 @@ public class WebManager extends WebBean {
     public Cache[] getCaches() {
         Cache[] caches =CacheFactory.getAllCaches();
         Arrays.sort(caches, new Comparator<Cache>() {
+            @Override
             public int compare(Cache cache1, Cache cache2) {
                 return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
             }

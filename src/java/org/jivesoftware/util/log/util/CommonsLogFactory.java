@@ -37,76 +37,94 @@ public class CommonsLogFactory extends LogFactory {
     public CommonsLogFactory() {
         log = new org.apache.commons.logging.Log() {
 
+            @Override
             public boolean isDebugEnabled() {
                 return Log.isDebugEnabled();
             }
 
+            @Override
             public boolean isErrorEnabled() {
                 return Log.isErrorEnabled();
             }
 
+            @Override
             public boolean isFatalEnabled() {
                 return Log.isErrorEnabled();
             }
 
+            @Override
             public boolean isInfoEnabled() {
                 return Log.isInfoEnabled();
             }
 
+            @Override
             public boolean isTraceEnabled() {
                 return Log.isDebugEnabled();
             }
 
+            @Override
             public boolean isWarnEnabled() {
                 return Log.isWarnEnabled();
             }
 
+            @Override
             public void trace(Object object) {
                 // Ignore.
             }
 
+            @Override
             public void trace(Object object, Throwable throwable) {
                 // Ignore.
             }
 
+            @Override
             public void debug(Object object) {
                 Log.debug(object.toString());
             }
 
+            @Override
             public void debug(Object object, Throwable throwable) {
                 Log.debug(object.toString(), throwable);
             }
 
+            @Override
             public void info(Object object) {
                 // Send info log messages to debug because they are generally not useful.
                 Log.debug(object.toString());
             }
 
+            @Override
             public void info(Object object, Throwable throwable) {
                 // Send info log messages to debug because they are generally not useful.
                 Log.debug(object.toString(), throwable);
             }
 
+            @Override
             public void warn(Object object) {
                 Log.warn(object.toString());
             }
 
+            @Override
             public void warn(Object object, Throwable throwable) {
                 Log.warn(object.toString(), throwable);
             }
 
+            @Override
             public void error(Object object) {
                 Log.error(object.toString());
             }
 
+            @Override
             public void error(Object object, Throwable throwable) {
                 Log.error(object.toString(), throwable);
             }
 
+            @Override
             public void fatal(Object object) {
                 Log.error(object.toString());
             }
 
+            @Override
             public void fatal(Object object, Throwable throwable) {
                 Log.error(object.toString(), throwable);
             }

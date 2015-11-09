@@ -56,12 +56,15 @@ public class HttpSessionManager {
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
+        @Override
         public void connectionOpened(HttpSession session, HttpConnection connection) {
         }
 
+        @Override
         public void connectionClosed(HttpSession session, HttpConnection connection) {
         }
 
+        @Override
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());
         }
@@ -98,6 +101,7 @@ public class HttpSessionManager {
 			new LinkedBlockingQueue<Runnable>(), // unbounded task queue
 	        new ThreadFactory() { // custom thread factory for BOSH workers
 	            final AtomicInteger counter = new AtomicInteger(1);
+	            @Override
 	            public Thread newThread(Runnable runnable) {
 	                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
 	                                    "httpbind-worker-" + counter.getAndIncrement());

@@ -35,6 +35,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 * @param key The target, presumably a JID
 	 * @return True if the target is in the key list, or in any groups in the key list
 	 */
+	@Override
 	public boolean includesKey(Object key) {
 		boolean found = false;
 		if (containsKey(key)) {
@@ -59,6 +60,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 * @param value The target, presumably a JID
 	 * @return True if the target is in the value set, or in any groups in the value set
 	 */
+	@Override
 	public boolean includesValue(Object value) {
 		boolean found = false;
 		if (containsValue(value)) {

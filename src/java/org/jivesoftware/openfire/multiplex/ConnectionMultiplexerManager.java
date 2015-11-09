@@ -318,22 +318,27 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         }
     }
 
+    @Override
     public void anonymousSessionCreated(Session session) {
         // Do nothing.
     }
 
+    @Override
     public void anonymousSessionDestroyed(Session session) {
         removeSession(session);
     }
 
+    @Override
     public void sessionCreated(Session session) {
         // Do nothing.
     }
 
+    @Override
     public void sessionDestroyed(Session session) {
         removeSession(session);
     }
 
+    @Override
     public void resourceBound(Session session) {
     	// Do nothing.
     }
@@ -362,6 +367,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
             this.id = id;
         }
 
+        @Override
         public String getID() {
             return id;
         }

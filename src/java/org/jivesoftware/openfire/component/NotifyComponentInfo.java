@@ -46,20 +46,24 @@ public class NotifyComponentInfo implements ClusterTask {
         this.iq = iq;
     }
 
+    @Override
     public Object getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         final InternalComponentManager manager = InternalComponentManager.getInstance();
         manager.addComponentInfo(iq);
         manager.notifyComponentInfo(iq);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) iq.getElement());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         iq = new IQ(packetElement, true);

@@ -48,10 +48,12 @@ public class SSLJiveTrustManager implements X509TrustManager {
 
 	private static final Logger Log = LoggerFactory.getLogger(SSLJiveTrustManager.class);
 
+    @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType) {
 
     }
 
+    @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType) {
     }
 
@@ -75,6 +77,7 @@ public class SSLJiveTrustManager implements X509TrustManager {
         return trusted;
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         return new X509Certificate[0];
     }

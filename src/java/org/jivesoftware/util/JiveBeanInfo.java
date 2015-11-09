@@ -84,6 +84,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
 
     // BeanInfo Interface
 
+    @Override
     public BeanDescriptor getBeanDescriptor() {
         BeanDescriptor descriptor = new BeanDescriptor(getBeanClass());
         try {
@@ -113,6 +114,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
         return descriptor;
     }
 
+    @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         Class beanClass = getBeanClass();
         String[] properties = getPropertyNames();
@@ -138,26 +140,32 @@ public abstract class JiveBeanInfo implements BeanInfo {
         }
     }
 
+    @Override
     public int getDefaultPropertyIndex() {
         return -1;
     }
 
+    @Override
     public EventSetDescriptor[] getEventSetDescriptors() {
         return null;
     }
 
+    @Override
     public int getDefaultEventIndex() {
         return -1;
     }
 
+    @Override
     public MethodDescriptor[] getMethodDescriptors() {
         return null;
     }
 
+    @Override
     public BeanInfo[] getAdditionalBeanInfo() {
         return null;
     }
 
+    @Override
     public java.awt.Image getIcon(int iconKind) {
         return null;
     }

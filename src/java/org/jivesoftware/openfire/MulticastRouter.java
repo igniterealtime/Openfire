@@ -286,6 +286,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         }
     }
 
+    @Override
     public void receivedAnswer(IQ packet) {
         // Look for the root node being discovered
         String domain = packet.getFrom().toString();
@@ -392,10 +393,12 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         }
     }
 
+    @Override
     public void answerTimeout(String packetId) {
         Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
     }

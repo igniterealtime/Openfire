@@ -727,6 +727,7 @@ public class Roster implements Cacheable, Externalizable {
         }
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of the content of each field, if that content is likely to be eligable for
@@ -1113,12 +1114,14 @@ public class Roster implements Cacheable, Externalizable {
         return XMPPServer.getInstance().createJID(getUsername(), null, true);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeExternalizableMap(out, rosterItems);
         ExternalizableUtil.getInstance().writeStringsMap(out, implicitFrom);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();

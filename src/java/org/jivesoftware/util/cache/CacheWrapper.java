@@ -45,86 +45,107 @@ public class CacheWrapper<K, V> implements Cache<K, V> {
         this.cache = cache;
     }
 
+    @Override
     public String getName() {
         return cache.getName();
     }
 
+    @Override
     public void setName(String name) {
         cache.setName(name);
     }
 
+    @Override
     public long getMaxCacheSize() {
         return cache.getMaxCacheSize();
     }
 
+    @Override
     public void setMaxCacheSize(int maxSize) {
         cache.setMaxCacheSize(maxSize);
     }
 
+    @Override
     public long getMaxLifetime() {
         return cache.getMaxLifetime();
     }
 
+    @Override
     public void setMaxLifetime(long maxLifetime) {
         cache.setMaxLifetime(maxLifetime);
     }
 
+    @Override
     public int getCacheSize() {
         return cache.getCacheSize();
     }
 
+    @Override
     public long getCacheHits() {
         return cache.getCacheHits();
     }
 
+    @Override
     public long getCacheMisses() {
         return cache.getCacheMisses();
     }
 
+    @Override
     public int size() {
         return cache.size();
     }
 
+    @Override
     public void clear() {
         cache.clear();
     }
 
+    @Override
     public boolean isEmpty() {
         return cache.isEmpty();
     }
 
+    @Override
     public boolean containsKey(Object key) {
         return cache.containsKey(key);
     }
 
+    @Override
     public boolean containsValue(Object value) {
         return cache.containsValue(value);
     }
 
+    @Override
     public Collection<V> values() {
         return cache.values();
     }
 
+    @Override
     public void putAll(Map<? extends K, ? extends V> t) {
         cache.putAll(t);
     }
 
+    @Override
     public Set<Map.Entry<K, V>> entrySet() {
         return cache.entrySet();
     }
 
+    @Override
     public Set<K> keySet() {
         return cache.keySet();
     }
 
+    @Override
     public V get(Object key) {
         return cache.get(key);
     }
 
+    @Override
     public V remove(Object key) {
         return cache.remove(key);
     }
 
+    @Override
     public V put(K key, V value) {
         return cache.put(key, value);
     }

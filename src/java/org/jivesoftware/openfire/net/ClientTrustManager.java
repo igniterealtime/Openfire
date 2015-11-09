@@ -174,6 +174,7 @@ public class ClientTrustManager implements X509TrustManager {
         }
     }
 
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         Log.debug("ClientTrustManager: checkClientTrusted(x509Certificates,"+string+") called");
@@ -346,6 +347,7 @@ public class ClientTrustManager implements X509TrustManager {
      * @param string the key exchange algorithm used.
      * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
 
@@ -353,6 +355,7 @@ public class ClientTrustManager implements X509TrustManager {
 
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.accept-selfsigned", false)) {
             // Answer an empty list since we accept any issuer

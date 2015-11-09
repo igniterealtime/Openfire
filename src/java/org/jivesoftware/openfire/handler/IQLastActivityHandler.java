@@ -115,6 +115,7 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:last").iterator();
     }

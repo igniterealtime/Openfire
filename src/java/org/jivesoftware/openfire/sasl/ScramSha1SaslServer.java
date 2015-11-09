@@ -73,6 +73,7 @@ public class ScramSha1SaslServer implements SaslServer {
      * ("SCRAM-SHA-1").
      * @return A non-null string representing the IANA-registered mechanism name.
      */
+    @Override
     public String getMechanismName() {
         return "SCRAM-SHA-1";
     }
@@ -221,6 +222,7 @@ public class ScramSha1SaslServer implements SaslServer {
       * authentication has completed successfully or should be continued.
       * @return true if the authentication exchange has completed; false otherwise.
       */
+    @Override
     public boolean isComplete() {
         return state == State.COMPLETE;
     }
@@ -232,6 +234,7 @@ public class ScramSha1SaslServer implements SaslServer {
      * @return The authorization ID of the client.
      * @exception IllegalStateException if this authentication session has not completed
      */
+    @Override
     public String getAuthorizationID() {
         if (isComplete()) {
             return username;
@@ -245,6 +248,7 @@ public class ScramSha1SaslServer implements SaslServer {
      * 
      * @throws SaslException if attempted to use this method.
      */
+    @Override
     public byte[] unwrap(byte[] incoming, int offset, int len)
         throws SaslException {
     	if (isComplete()) {
@@ -259,6 +263,7 @@ public class ScramSha1SaslServer implements SaslServer {
      *
      * @throws SaslException if attempted to use this method.
      */
+    @Override
     public byte[] wrap(byte[] outgoing, int offset, int len)
         throws SaslException {
     	if (isComplete()) {
@@ -279,6 +284,7 @@ public class ScramSha1SaslServer implements SaslServer {
      * not negotiated or is not applicable to this mechanism.
      * @exception IllegalStateException if this authentication exchange has not completed
      */
+    @Override
     public Object getNegotiatedProperty(String propName) {
     	if (isComplete()) {
             if (propName.equals(Sasl.QOP)) {
@@ -298,6 +304,7 @@ public class ScramSha1SaslServer implements SaslServer {
       * @throws SaslException If a problem was encountered while disposing
       * the resources.
       */
+    @Override
     public void dispose() throws SaslException {
         username = null;
         state = State.INITIAL;

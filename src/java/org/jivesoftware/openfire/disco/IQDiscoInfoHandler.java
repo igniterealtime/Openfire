@@ -344,20 +344,24 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         ClusterManager.addListener(this);
     }
 
+    @Override
     public void joinedCluster() {
         restoreCacheContent();
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             restoreCacheContent();
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         if (ClusterManager.isSeniorClusterMember()) {
             NodeID leftNode = NodeID.getInstance(nodeID);
@@ -384,6 +388,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         }
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
@@ -417,6 +422,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         return new DiscoInfoProvider() {
             final ArrayList<Element> identities = new ArrayList<Element>();
 
+            @Override
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
@@ -455,6 +461,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
             }
 
+            @Override
             public Iterator<String> getFeatures(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
@@ -470,6 +477,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
             }
 
+            @Override
             public boolean hasInfo(String name, String node, JID senderJID) {
                 if (node != null) {
                     if (serverNodeProviders.get(node) != null) {
@@ -490,6 +498,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
             }
 
+            @Override
             public DataForm getExtendedInfo(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node

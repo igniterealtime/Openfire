@@ -85,6 +85,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		groupCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 	}
 
+	@Override
 	public Group getGroup(String name) throws GroupNotFoundException {
 		try {
 			Cache<String, org.jivesoftware.openfire.crowd.jaxb.Group> groupCache = CacheFactory.createLocalCache(GROUP_CACHE_NAME);
@@ -130,6 +131,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		return Collections.emptyList();
 	}
 	
+	@Override
 	public Collection<String> getGroupNames(JID user) {
 		Cache<JID, Collection<String>> userMembershipCache = CacheFactory.createCache(USER_MEMBERSHIP_CACHE_NAME);
 		Collection<String> groups = userMembershipCache.get(user);
@@ -149,6 +151,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		return Collections.emptyList();
 	}
 
+	@Override
 	public int getGroupCount() {
 		lock.readLock().lock();
 		try {
@@ -158,6 +161,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> getGroupNames() {
 		lock.readLock().lock();
 		try {
@@ -167,6 +171,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> getGroupNames(int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
@@ -182,6 +187,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> search(String query) {
 		lock.readLock().lock();
 		try {
@@ -211,6 +217,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> search(String query, int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
@@ -232,10 +239,12 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	/**
 	 * Modifying group not implemented - read-only for now
 	 */
+	@Override
 	public boolean isReadOnly() {
 		return true;
 	}
 
+	@Override
 	public boolean isSearchSupported() {
 		return true;
 	}
@@ -257,6 +266,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 
 
 	static class GroupSynch implements Runnable {
+		@Override
 		public void run() {
 			LOG.info("running synch with crowd...");
 			CrowdManager manager = null;

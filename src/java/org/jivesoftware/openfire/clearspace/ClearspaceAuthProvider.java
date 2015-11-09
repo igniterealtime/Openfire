@@ -48,6 +48,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      *
      * @return true
      */
+    @Override
     public boolean isPlainSupported() {
         return true;
     }
@@ -57,6 +58,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      *
      * @return false
      */
+    @Override
     public boolean isDigestSupported() {
         return false;
     }
@@ -69,6 +71,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      * @param password the password.
      * @throws UnauthorizedException if the username of password are incorrect.
      */
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException,
             ConnectionException, InternalUnauthenticatedException {
         try {
@@ -101,6 +104,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      * @throws UnauthorizedException         never throws it
      * @throws UnsupportedOperationException always throws it
      */
+    @Override
     public void authenticate(String username, String token, String digest) throws UnauthorizedException {
         throw new UnsupportedOperationException("Digest not supported");
     }
@@ -110,6 +114,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      *
      * @throws UnsupportedOperationException always throws it
      */
+    @Override
     public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Password retrieval not supported");
     }
@@ -119,6 +124,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      *
      * @throws UnsupportedOperationException always throws it
      */
+    @Override
     public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Change Password not supported");
     }
@@ -128,6 +134,7 @@ public class ClearspaceAuthProvider implements AuthProvider {
      *
      * @throws UnsupportedOperationException always throws it
      */
+    @Override
     public boolean supportsPasswordRetrieval() {
         return false;
     }

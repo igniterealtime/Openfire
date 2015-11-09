@@ -415,19 +415,23 @@ public class IQPrivacyHandler extends IQHandler
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:privacy").iterator();
     }
 
+    @Override
     public void userCreated(User user, Map params) {
         //Do nothing
     }
 
+    @Override
     public void userDeleting(User user, Map params) {
         // Delete privacy lists owned by the user being deleted
         manager.deletePrivacyLists(user.getUsername());
     }
 
+    @Override
     public void userModified(User user, Map params) {
         //Do nothing
     }

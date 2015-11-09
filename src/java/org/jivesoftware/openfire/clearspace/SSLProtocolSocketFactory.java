@@ -90,6 +90,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
     /**
      * @see SecureProtocolSocketFactory#createSocket(java.lang.String,int,java.net.InetAddress,int)
      */
+    @Override
     public Socket createSocket(
             String host,
             int port,
@@ -124,6 +125,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
      * @throws UnknownHostException if the IP address of the host cannot be
      *                              determined
      */
+    @Override
     public Socket createSocket(
             final String host,
             final int port,
@@ -152,6 +154,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
     /**
      * @see org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory#createSocket(java.lang.String,int)
      */
+    @Override
     public Socket createSocket(String host, int port)
             throws IOException, UnknownHostException {
         return getSSLContext(host).getSocketFactory().createSocket(
@@ -163,6 +166,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
     /**
      * @see org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory#createSocket(java.net.Socket,java.lang.String,int,boolean)
      */
+    @Override
     public Socket createSocket(
             Socket socket,
             String host,

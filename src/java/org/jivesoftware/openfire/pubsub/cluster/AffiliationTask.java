@@ -39,6 +39,7 @@ public class AffiliationTask extends NodeTask
 		return affiliation;
 	}
 	
+	@Override
 	public void run() {
 		log.debug("[TASK] New affiliation : {}", toString());
 

@@ -37,6 +37,7 @@ public class BasicStreamIDFactory implements StreamIDFactory {
      */
     Random random = new Random();
 
+    @Override
     public StreamID createStreamID() {
         return new BasicStreamID(Integer.toHexString(random.nextInt()));
     }
@@ -52,6 +53,7 @@ public class BasicStreamIDFactory implements StreamIDFactory {
             this.id = id;
         }
 
+        @Override
         public String getID() {
             return id;
         }

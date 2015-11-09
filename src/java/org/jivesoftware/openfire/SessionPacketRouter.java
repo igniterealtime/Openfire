@@ -87,6 +87,7 @@ public class SessionPacketRouter implements PacketRouter {
         }
     }
 
+    @Override
     public void route(Packet packet) {
         // Security: Don't allow users to send packets on behalf of other users
         packet.setFrom(session.getAddress());
@@ -101,18 +102,21 @@ public class SessionPacketRouter implements PacketRouter {
         }
     }
 
+    @Override
     public void route(IQ packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
+    @Override
     public void route(Message packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
+    @Override
     public void route(Presence packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);

@@ -45,19 +45,23 @@ public class RoomRemovedEvent implements ClusterTask {
         this.room = room;
     }
 
+    @Override
     public Object getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         MultiUserChatService mucService = room.getMUCService();
         mucService.chatRoomRemoved(room);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         room.writeExternal(out);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         room = new LocalMUCRoom();
         room.readExternal(in);

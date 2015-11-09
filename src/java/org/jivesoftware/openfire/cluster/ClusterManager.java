@@ -54,9 +54,13 @@ public class ClusterManager {
     static {
         // Listen for clustering property changes (e.g. enabled/disabled)
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
+			@Override
 			public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void xmlPropertySet(String property, Map<String, Object> params) {
 		        if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
 		            if (Boolean.parseBoolean((String) params.get("value"))) {

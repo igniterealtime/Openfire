@@ -93,7 +93,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public User createUser(String username, String password, String name, String email) throws UserAlreadyExistsException {
+    @Override
+	public User createUser(String username, String password, String name, String email) throws UserAlreadyExistsException {
 
         User returnvalue = null;
 
@@ -115,7 +116,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public void deleteUser(String username) {
+    @Override
+	public void deleteUser(String username) {
 
     	boolean isDeleted = false;
 
@@ -134,7 +136,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
+    @Override
+	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 
     	List<User> userList = new ArrayList<User>();
     	boolean isUnsupported = false;
@@ -164,7 +167,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
+    @Override
+	public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
 
     	List<User> userList = new ArrayList<User>();
     	boolean isUnsupported = false;
@@ -207,7 +211,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public Set<String> getSearchFields() throws UnsupportedOperationException {
+    @Override
+	public Set<String> getSearchFields() throws UnsupportedOperationException {
 
     	Set<String> returnvalue = new HashSet<String>();
 
@@ -223,7 +228,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public int getUserCount() {
+    @Override
+	public int getUserCount() {
         int count = 0;
         for (UserProvider provider : userproviders) {
             count += provider.getUserCount();
@@ -231,7 +237,8 @@ public class HybridUserProvider implements UserProvider {
         return count;
     }
 
-    public Collection<String> getUsernames() {
+    @Override
+	public Collection<String> getUsernames() {
 
         List<String> returnvalue = new ArrayList<String>();
 
@@ -242,7 +249,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public Collection<User> getUsers() {
+    @Override
+	public Collection<User> getUsers() {
         List<User> returnvalue = new ArrayList<User>();
 
         for (UserProvider provider : userproviders){
@@ -252,7 +260,8 @@ public class HybridUserProvider implements UserProvider {
         return returnvalue;
     }
 
-    public Collection<User> getUsers(int startIndex, int numResults) {
+    @Override
+	public Collection<User> getUsers(int startIndex, int numResults) {
 
     	List<User> userList = new ArrayList<User>();
     	int totalUserCount = 0;
@@ -272,19 +281,23 @@ public class HybridUserProvider implements UserProvider {
         return userList;
     }
 
-    public boolean isReadOnly() {
+    @Override
+	public boolean isReadOnly() {
         return false;
     }
 
-    public boolean isNameRequired() {
+    @Override
+	public boolean isNameRequired() {
         return false;
     }
 
-    public boolean isEmailRequired() {
+    @Override
+	public boolean isEmailRequired() {
         return false;
     }
 
-    public User loadUser(String username) throws UserNotFoundException {
+    @Override
+	public User loadUser(String username) throws UserNotFoundException {
 
     	for (UserProvider provider : userproviders) {
     		try {
@@ -300,7 +313,8 @@ public class HybridUserProvider implements UserProvider {
         throw new UserNotFoundException();
     }
 
-    public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
+    @Override
+	public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
 
     	boolean isUnsupported = false;
 
@@ -327,7 +341,8 @@ public class HybridUserProvider implements UserProvider {
     	}
     }
 
-    public void setEmail(String username, String email) throws UserNotFoundException {
+    @Override
+	public void setEmail(String username, String email) throws UserNotFoundException {
 
     	boolean isUnsupported = false;
 
@@ -355,7 +370,8 @@ public class HybridUserProvider implements UserProvider {
     }
 
 
-    public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
+    @Override
+	public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
 
     	boolean isUnsupported = false;
 
@@ -382,7 +398,8 @@ public class HybridUserProvider implements UserProvider {
     	}
     }
 
-    public void setName(String username, String name) throws UserNotFoundException {
+    @Override
+	public void setName(String username, String name) throws UserNotFoundException {
 
     	boolean isUnsupported = false;
 

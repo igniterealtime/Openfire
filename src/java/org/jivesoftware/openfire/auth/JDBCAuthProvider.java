@@ -130,6 +130,7 @@ public class JDBCAuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
@@ -175,6 +176,7 @@ public class JDBCAuthProvider implements AuthProvider {
         createUser(username);
     }
 
+    @Override
     public void authenticate(String username, String token, String digest)
             throws UnauthorizedException
     {
@@ -213,16 +215,19 @@ public class JDBCAuthProvider implements AuthProvider {
         createUser(username);
     }
 
+    @Override
     public boolean isPlainSupported() {
         // If the auth SQL is defined, plain text authentication is supported.
         return (passwordSQL != null);
     }
 
+    @Override
     public boolean isDigestSupported() {
         // The auth SQL must be defined and the password type is supported.
         return (passwordSQL != null && passwordType == PasswordType.plain);
     }
 
+    @Override
     public String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException
     {
@@ -244,6 +249,7 @@ public class JDBCAuthProvider implements AuthProvider {
         return getPasswordValue(username);
     }
 
+    @Override
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
@@ -254,6 +260,7 @@ public class JDBCAuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
         return (passwordSQL != null && passwordType == PasswordType.plain);
     }

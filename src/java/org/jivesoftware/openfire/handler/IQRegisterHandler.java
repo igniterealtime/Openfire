@@ -469,6 +469,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:register").iterator();
     }

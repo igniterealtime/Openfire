@@ -44,18 +44,22 @@ public class ServiceRemovedEvent implements ClusterTask {
         this.subdomain = subdomain;
     }
 
+    @Override
     public Object getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(subdomain);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

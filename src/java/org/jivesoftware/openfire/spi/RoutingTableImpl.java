@@ -117,6 +117,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         localRoutingTable = new LocalRoutingTable();
     }
 
+    @Override
     public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
         String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
@@ -130,6 +131,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    @Override
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         String address = route.getDomain();
         localRoutingTable.addRoute(address, destination);
@@ -147,6 +149,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    @Override
     public boolean addClientRoute(JID route, LocalClientSession destination) {
         boolean added;
         boolean available = destination.getPresence().isAvailable();
@@ -208,6 +211,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return added;
     }
 
+    @Override
     public void broadcastPacket(Message packet, boolean onlyLocal) {
         // Send the message to client sessions connected to this JVM
         for(ClientSession session : localRoutingTable.getClientRoutes()) {
@@ -231,6 +235,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */
+    @Override
     public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
         boolean routed = false;
         try {
@@ -571,6 +576,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Sort sessions by show value (e.g. away, xa)
                 Collections.sort(highestPrioritySessions, new Comparator<ClientSession>() {
 
+                    @Override
                     public int compare(ClientSession o1, ClientSession o2) {
                         int thisVal = getShowValue(o1);
                         int anotherVal = getShowValue(o2);
@@ -614,6 +620,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
                 // Get session with most recent activity (and highest show value)
                 Collections.sort(targets, new Comparator<ClientSession>() {
+                    @Override
                     public int compare(ClientSession o1, ClientSession o2) {
                         return o2.getLastActiveDate().compareTo(o1.getLastActiveDate());
                     }
@@ -683,6 +690,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return answer;
     }
 
+    @Override
     public ClientSession getClientRoute(JID jid) {
         // Check if this session is hosted by this cluster node
         ClientSession session = (ClientSession) localRoutingTable.getRoute(jid.toString());
@@ -703,6 +711,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return session;
     }
 
+    @Override
     public Collection<ClientSession> getClientsRoutes(boolean onlyLocal) {
         // Add sessions hosted by this cluster node
         Collection<ClientSession> sessions = new ArrayList<ClientSession>(localRoutingTable.getClientRoutes());
@@ -729,6 +738,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return sessions;
     }
 
+    @Override
     public OutgoingServerSession getServerRoute(JID jid) {
         // Check if this session is hosted by this cluster node
         OutgoingServerSession session = (OutgoingServerSession) localRoutingTable.getRoute(jid.getDomain());
@@ -746,38 +756,47 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return session;
     }
 
+    @Override
     public Collection<String> getServerHostnames() {
         return serversCache.keySet();
     }
 
+    @Override
     public int getServerSessionsCount() {
         return localRoutingTable.getServerRoutes().size();
     }
 
+    @Override
     public Collection<String> getComponentsDomains() {
         return componentsCache.keySet();
     }
 
+    @Override
     public boolean hasClientRoute(JID jid) {
         return usersCache.containsKey(jid.toString()) || isAnonymousRoute(jid);
     }
 
+    @Override
     public boolean isAnonymousRoute(JID jid) {
         return anonymousUsersCache.containsKey(jid.toString());
     }
 
+    @Override
     public boolean isLocalRoute(JID jid) {
         return localRoutingTable.isLocalRoute(jid);
     }
 
+    @Override
     public boolean hasServerRoute(JID jid) {
         return serversCache.containsKey(jid.getDomain());
     }
 
+    @Override
     public boolean hasComponentRoute(JID jid) {
         return componentsCache.containsKey(jid.getDomain());
     }
 
+    @Override
     public List<JID> getRoutes(JID route, JID requester) {
         List<JID> jids = new ArrayList<JID>();
         if (serverName.equals(route.getDomain())) {
@@ -831,6 +850,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return jids;
     }
 
+    @Override
     public boolean removeClientRoute(JID route) {
         boolean anonymous = false;
         String address = route.toString();
@@ -882,6 +902,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return clientRoute != null;
     }
 
+    @Override
     public boolean removeServerRoute(JID route) {
         String address = route.getDomain();
         boolean removed = false;
@@ -897,6 +918,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return removed;
     }
 
+    @Override
     public boolean removeComponentRoute(JID route) {
         String address = route.getDomain();
         boolean removed = false;
@@ -920,10 +942,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return removed;
     }
 
+    @Override
     public void setRemotePacketRouter(RemotePacketRouter remotePacketRouter) {
         this.remotePacketRouter = remotePacketRouter;
     }
 
+    @Override
     public RemotePacketRouter getRemotePacketRouter() {
         return remotePacketRouter;
     }
@@ -953,6 +977,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         localRoutingTable.stop();
     }
 
+    @Override
     public void joinedCluster() {
         restoreCacheContent();
 
@@ -970,10 +995,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
@@ -981,6 +1008,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
     	
     	// When a peer server leaves the cluster, any remote routes that were
@@ -1047,6 +1075,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }

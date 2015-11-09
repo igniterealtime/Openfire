@@ -90,6 +90,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
         return info;
     }
 
+	@Override
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:version").iterator();
     }

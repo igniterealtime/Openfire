@@ -694,6 +694,7 @@ public final class HttpBindManager {
     /** Listens for changes to Jive properties that affect the HTTP server manager. */
     private class HttpServerPropertyListener implements PropertyEventListener {
 
+        @Override
         public void propertySet(String property, Map<String, Object> params) {
             if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
                 doEnableHttpBind(Boolean.valueOf(params.get("value").toString()));
@@ -725,6 +726,7 @@ public final class HttpBindManager {
             }
         }
 
+        @Override
         public void propertyDeleted(String property, Map<String, Object> params) {
             if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
                 doEnableHttpBind(HTTP_BIND_ENABLED_DEFAULT);
@@ -740,15 +742,18 @@ public final class HttpBindManager {
             }
         }
 
+        @Override
         public void xmlPropertySet(String property, Map<String, Object> params) {
         }
 
+        @Override
         public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         }
     }
 
     private class CertificateListener implements CertificateEventListener {
 
+        @Override
         public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
             // If new certificate is RSA then (re)start the HTTPS service
             if ("RSA".equals(cert.getPublicKey().getAlgorithm())) {
@@ -756,10 +761,12 @@ public final class HttpBindManager {
             }
         }
 
+        @Override
         public void certificateDeleted(KeyStore keyStore, String alias) {
             restartServer();
         }
 
+        @Override
         public void certificateSigned(KeyStore keyStore, String alias,
                                       List<X509Certificate> certificates) {
             // If new certificate is RSA then (re)start the HTTPS service

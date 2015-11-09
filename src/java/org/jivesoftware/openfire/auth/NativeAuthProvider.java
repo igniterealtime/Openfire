@@ -105,24 +105,29 @@ public class NativeAuthProvider implements AuthProvider {
 
         // Configure Shaj to log output to the Openfire logger.
         com.cenqua.shaj.log.Log.Factory.setInstance(new com.cenqua.shaj.log.Log() {
+            @Override
             public boolean isDebug() {
                 return Log.isDebugEnabled();
             }
 
+            @Override
             public void error(String string) {
                 Log.error(string);
             }
 
+            @Override
             public void error(String string, Throwable throwable) {
                 Log.error(string, throwable);
             }
 
+            @Override
             public void debug(String string) {
                 Log.debug("NativeAuthProvider: "+string);
             }
         });
     }
 
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
@@ -177,30 +182,36 @@ public class NativeAuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public void authenticate(String username, String token, String digest)
             throws UnauthorizedException
     {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isPlainSupported() {
         return true;
     }
 
+    @Override
     public boolean isDigestSupported() {
         return false;
     }
 
+    @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {
         throw new UnsupportedOperationException();    
     }
 
+    @Override
     public void setPassword(String username, String password) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
         return false;
     }

@@ -1046,6 +1046,7 @@ public class JiveGlobals {
                 	securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
                     setupPropertyEncryption();
                     TaskEngine.getInstance().schedule(new TimerTask() {
+                    	@Override
                     	public void run() {
                             // Migrate all secure XML properties into the database automatically
                             for (String propertyName : securityProperties.getAllPropertyNames()) {

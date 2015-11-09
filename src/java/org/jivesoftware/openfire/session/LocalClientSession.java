@@ -481,6 +481,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return the Privacy list that overrides the default privacy list.
      */
+    @Override
     public PrivacyList getActiveList() {
         if (activeList != null) {
             try {
@@ -498,6 +499,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param activeList the Privacy list that overrides the default privacy list.
      */
+    @Override
     public void setActiveList(PrivacyList activeList) {
         this.activeList = activeList != null ? activeList.getName() : null;
         if (ClusterManager.isClusteringStarted()) {
@@ -513,6 +515,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return the default Privacy list used for the session's user.
      */
+    @Override
     public PrivacyList getDefaultList() {
         if (defaultList != null) {
             try {
@@ -530,6 +533,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param defaultList the default Privacy list used for the session's user.
      */
+    @Override
     public void setDefaultList(PrivacyList defaultList) {
         // Do nothing if nothing has changed
         if ((this.defaultList == null && defaultList == null) ||
@@ -566,6 +570,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @throws org.jivesoftware.openfire.user.UserNotFoundException if a user is not associated with a session
      *      (the session has not authenticated yet)
      */
+    @Override
     public String getUsername() throws UserNotFoundException {
         if (authToken == null) {
             throw new UserNotFoundException();
@@ -631,6 +636,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         return authToken;
     }
 
+    @Override
     public boolean isAnonymousUser() {
         return authToken == null || authToken.isAnonymous();
     }
@@ -645,6 +651,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return True if the session has already been initializsed
      */
+    @Override
     public boolean isInitialized() {
         return initialized;
     }
@@ -655,6 +662,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param isInit True if the session has been initialized
      * @see #isInitialized
      */
+    @Override
     public void setInitialized(boolean isInit) {
         initialized = isInit;
     }
@@ -679,6 +687,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *         becomes online.
      * @see <a href="http://www.xmpp.org/extensions/xep-0160.html">XEP-0160: Best Practices for Handling Offline Messages</a>
      */
+    @Override
     public boolean canFloodOfflineMessages() {
         // XEP-0160: When the recipient next sends non-negative available presence to the server, the server delivers the message to the resource that has sent that presence.
         if(offlineFloodStopped || presence.getPriority() < 0) {
@@ -703,6 +712,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return true if the user requested to not receive offline messages when sending
      *         an available presence.
      */
+    @Override
     public boolean isOfflineFloodStopped() {
         return offlineFloodStopped;
     }
@@ -731,6 +741,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return The presence of this session or null if not authenticated
      */
+    @Override
     public Presence getPresence() {
         return presence;
     }
@@ -740,6 +751,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param presence The presence for the session
      */
+    @Override
     public void setPresence(Presence presence) {
         Presence oldPresence = this.presence;
         this.presence = presence;
@@ -821,6 +833,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     /**
      * Increments the conflict by one.
      */
+    @Override
     public int incrementConflictCount() {
         conflictCount++;
         return conflictCount;

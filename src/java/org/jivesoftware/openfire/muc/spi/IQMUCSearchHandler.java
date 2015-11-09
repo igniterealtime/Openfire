@@ -359,6 +359,7 @@ public class IQMUCSearchHandler
 	{
 		Collections.sort(mucs, new Comparator<MUCRoom>()
 		{
+			@Override
 			public int compare(MUCRoom o1, MUCRoom o2)
 			{
 				return o2.getOccupantsCount() - o1.getOccupantsCount();

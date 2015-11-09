@@ -58,6 +58,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
      * @throws SaslException If cannot create a SaslServer because of an error.
      */
 
+    @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         if (mechanism.equals(myMechs[PLAIN]) && checkPolicy(props)) {
             if (cbh == null) {
@@ -103,6 +104,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
      * @return A non-null array containing a IANA-registered SASL mechanism names.
      */
 
+    @Override
     public String[] getMechanismNames(Map<String, ?> props) {
     	if (checkPolicy(props)) {
     		return myMechs;

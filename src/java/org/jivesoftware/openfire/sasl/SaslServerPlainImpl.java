@@ -68,6 +68,7 @@ public class SaslServerPlainImpl implements SaslServer {
      * ("PLAIN").
      * @return A non-null string representing the IANA-registered mechanism name.
      */
+    @Override
     public String getMechanismName() {
         return "PLAIN";
     }
@@ -95,6 +96,7 @@ public class SaslServerPlainImpl implements SaslServer {
      * @exception SaslException If an error occurred while processing
      * the response or generating a challenge.
      */
+    @Override
     public byte[] evaluateResponse(byte[] response)
         throws SaslException {
         if (completed) {
@@ -158,6 +160,7 @@ public class SaslServerPlainImpl implements SaslServer {
       * authentication has completed successfully or should be continued.
       * @return true if the authentication exchange has completed; false otherwise.
       */
+    @Override
     public boolean isComplete() {
         return completed;
     }
@@ -169,6 +172,7 @@ public class SaslServerPlainImpl implements SaslServer {
      * @return The authorization ID of the client.
      * @exception IllegalStateException if this authentication session has not completed
      */
+    @Override
     public String getAuthorizationID() {
         if(completed) {
             return username;
@@ -183,6 +187,7 @@ public class SaslServerPlainImpl implements SaslServer {
      * 
      * @throws SaslException if attempted to use this method.
      */
+    @Override
     public byte[] unwrap(byte[] incoming, int offset, int len)
         throws SaslException {
         if(completed) {
@@ -197,6 +202,7 @@ public class SaslServerPlainImpl implements SaslServer {
      *
      * @throws SaslException if attempted to use this method.
      */
+    @Override
     public byte[] wrap(byte[] outgoing, int offset, int len)
         throws SaslException {
         if(completed) {
@@ -218,6 +224,7 @@ public class SaslServerPlainImpl implements SaslServer {
      * @exception IllegalStateException if this authentication exchange has not completed
      */
 
+    @Override
     public Object getNegotiatedProperty(String propName) {
         if (completed) {
             if (propName.equals(Sasl.QOP)) {
@@ -237,6 +244,7 @@ public class SaslServerPlainImpl implements SaslServer {
       * @throws SaslException If a problem was encountered while disposing
       * the resources.
       */
+    @Override
     public void dispose() throws SaslException {
         password = null;
         username = null;

@@ -273,6 +273,7 @@ public class PubSubPersistenceManager {
     	try {
         	if (MAX_ITEMS_FLUSH > 0) {
         		TaskEngine.getInstance().schedule(new TimerTask() {
+        			@Override
         			public void run() { flushPendingItems(false); } // this member only
         		}, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
         	}
@@ -283,6 +284,7 @@ public class PubSubPersistenceManager {
     			purgeTimerDelay = purgeTimerDelay*2;
     		}
     		TaskEngine.getInstance().schedule(new TimerTask() {
+    			@Override
     			public void run() { purgeItems(); }
     		}, Math.abs(prng.nextLong())%purgeTimerDelay, purgeTimerDelay);
     		
@@ -1178,6 +1180,7 @@ public class PubSubPersistenceManager {
         // skip the flush step if this is a retry attempt
 		if (firstPass && itemsPending.size() > MAX_ITEMS_FLUSH) {
 			TaskEngine.getInstance().submit(new Runnable() {
+				@Override
 				public void run() { flushPendingItems(false); }
 			});
 		}

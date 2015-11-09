@@ -51,6 +51,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *
      * @return A non-null string representing the mechanism name.
      */
+    @Override
     public String getMechanismName() {
         return "CLEARSPACE";
     }
@@ -78,6 +79,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *          If an error occurred while processing
      *          the response or generating a challenge.
      */
+    @Override
     public byte[] evaluateResponse(byte[] response) throws SaslException {
         ClearspaceManager csManager = ClearspaceManager.getInstance();
         String responseStr = new String(response);
@@ -128,6 +130,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *
      * @return true if the authentication exchange has completed; false otherwise.
      */
+    @Override
     public boolean isComplete() {
         return completed;
     }
@@ -140,6 +143,7 @@ public class ClearspaceSaslServer implements SaslServer {
      * @return The authorization ID of the client.
      * @throws IllegalStateException if this authentication session has not completed
      */
+    @Override
     public String getAuthorizationID() {
         if (completed) {
             return jid;
@@ -174,6 +178,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *                               not completed, or if the negotiated quality of protection
      *                               has neither integrity nor privacy
      */
+    @Override
     public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException {
         return new byte[0];
     }
@@ -202,6 +207,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *                               not completed, or if the negotiated quality of protection has
      *                               neither integrity nor privacy.
      */
+    @Override
     public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
         return new byte[0];
     }
@@ -218,6 +224,7 @@ public class ClearspaceSaslServer implements SaslServer {
      * @throws IllegalStateException if this authentication exchange has not completed
      */
 
+    @Override
     public Object getNegotiatedProperty(String propName) {
         return null;
     }
@@ -231,6 +238,7 @@ public class ClearspaceSaslServer implements SaslServer {
      *          If a problem was encountered while disposing
      *          the resources.
      */
+   @Override
    public void dispose() throws SaslException {
         completed = false;
     }

@@ -223,6 +223,7 @@ public class Launcher {
         stopMenuItem.setEnabled(false);
 
         ActionListener actionListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if ("Start".equals(e.getActionCommand())) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -540,6 +541,7 @@ public class Launcher {
                 }
                 final Thread waiting = Thread.currentThread();
             	Thread waiter = new Thread() {
+            		@Override
             		public void run() {
                         try {
                         	// wait for the openfire server to stop

@@ -100,6 +100,7 @@ public class ProxyConnectionManager {
         }
         reset();
         socketProcess = executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     serverSocket = new ServerSocket(port, -1, bindInterface);
@@ -123,6 +124,7 @@ public class ProxyConnectionManager {
                         }
                     }
                     executor.submit(new Runnable() {
+                        @Override
                         public void run() {
                             try {
                                 processConnection(socket);
@@ -301,6 +303,7 @@ public class ProxyConnectionManager {
         transfer.setTarget(target.toString());
         transfer.setSessionID(sid);
         transfer.setTransferFuture(executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     transferManager.fireFileTransferStart( transfer.getSessionID(), true );
@@ -375,10 +378,12 @@ public class ProxyConnectionManager {
             super("filetransferproxy.transfered", Statistic.Type.rate);
         }
 
+        @Override
         public double sample() {
             return (ProxyOutputStream.amountTransferred.getAndSet(0) / 1000d);
         }
 
+        @Override
         public boolean isPartialSample() {
             return true;
         }

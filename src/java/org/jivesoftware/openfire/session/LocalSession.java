@@ -128,6 +128,7 @@ public abstract class LocalSession implements Session {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress() {
         return address;
     }
@@ -158,6 +159,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The status code for this session
      */
+    @Override
     public int getStatus() {
         return status;
     }
@@ -179,6 +181,7 @@ public abstract class LocalSession implements Session {
      *
      * @return This session's assigned stream ID
      */
+    @Override
     public StreamID getStreamID() {
         return streamID;
     }
@@ -188,6 +191,7 @@ public abstract class LocalSession implements Session {
      *
      * @return the server name.
      */
+    @Override
     public String getServerName() {
         return serverName;
     }
@@ -197,6 +201,7 @@ public abstract class LocalSession implements Session {
      *
      * @return the session's creation date.
      */
+    @Override
     public Date getCreationDate() {
         return new Date(startDate);
     }
@@ -206,6 +211,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The last time the session received activity.
      */
+    @Override
     public Date getLastActiveDate() {
         return new Date(lastActiveDate);
     }
@@ -232,6 +238,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The number of packets sent from the client to the server.
      */
+    @Override
     public long getNumClientPackets() {
         return clientPacketCount;
     }
@@ -241,6 +248,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The number of packets sent from the server to the client.
      */
+    @Override
     public long getNumServerPackets() {
         return serverPacketCount;
     }
@@ -295,6 +303,7 @@ public abstract class LocalSession implements Session {
     	return streamManager;
     }
 
+    @Override
     public void process(Packet packet) {
         // Check that the requested packet can be processed
         if (canProcess(packet)) {
@@ -347,6 +356,7 @@ public abstract class LocalSession implements Session {
 
     abstract void deliver(Packet packet) throws UnauthorizedException;
 
+    @Override
     public void deliverRawText(String text) {
         conn.deliverRawText(text);
     }
@@ -359,30 +369,37 @@ public abstract class LocalSession implements Session {
      */
     public abstract String getAvailableStreamFeatures();
 
+    @Override
     public void close() {
         conn.close();
     }
 
+    @Override
     public boolean validate() {
         return conn.validate();
     }
 
+    @Override
     public boolean isSecure() {
         return conn.isSecure();
     }
 
+    @Override
     public Certificate[] getPeerCertificates() {
         return conn.getPeerCertificates();
     }
 
+    @Override
     public boolean isClosed() {
         return conn.isClosed();
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         return conn.getHostAddress();
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         return conn.getHostName();
     }
@@ -416,6 +433,7 @@ public abstract class LocalSession implements Session {
      * Returns a String representing the Cipher Suite Name, or "NONE".
      * @return String
      */
+    @Override
     public String getCipherSuiteName() {
         SocketConnection s = (SocketConnection)getConnection();
         if (s != null) {

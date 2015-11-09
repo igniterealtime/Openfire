@@ -59,6 +59,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * The ClearspaceLockOutProvider will retrieve lockout information from Clearspace's user properties.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#getDisabledStatus(String)
      */
+    @Override
     public LockOutFlag getDisabledStatus(String username) {
         try {
             // Retrieve the disabled status, translate it into a LockOutFlag, and return it.
@@ -75,6 +76,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * The ClearspaceLockOutProvider will set lockouts in Clearspace itself.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#setDisabledStatus(org.jivesoftware.openfire.lockout.LockOutFlag)
      */
+    @Override
     public void setDisabledStatus(LockOutFlag flag) {
         setEnabledStatus(flag.getUsername(), false);
     }
@@ -83,6 +85,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * The ClearspaceLockOutProvider will set lockouts in Clearspace itself.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#unsetDisabledStatus(String)
      */
+    @Override
     public void unsetDisabledStatus(String username) {
         setEnabledStatus(username, true);
     }
@@ -91,6 +94,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * The ClearspaceLockOutProvider will set lockouts in Clearspace itself.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isReadOnly()
      */
+    @Override
     public boolean isReadOnly() {
         return false;
     }
@@ -99,6 +103,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * Clearspace only supports a strict "are you disabled or not".
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isDelayedStartSupported()
      */
+    @Override
     public boolean isDelayedStartSupported() {
         return false;
     }
@@ -107,6 +112,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * Clearspace only supports a strict "are you disabled or not".
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#isTimeoutSupported()
      */
+    @Override
     public boolean isTimeoutSupported() {
         return false;
     }
@@ -115,6 +121,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
      * Clearspace needs to always be queried for disabled status.
      * @see org.jivesoftware.openfire.lockout.LockOutProvider#shouldNotBeCached()
      */
+    @Override
     public boolean shouldNotBeCached() {
         return true;
     }

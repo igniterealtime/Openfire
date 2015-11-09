@@ -1232,6 +1232,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
          *
          * @param handback The session that just closed
          */
+        @Override
         public void onConnectionClose(Object handback) {
             try {
                 LocalClientSession session = (LocalClientSession) handback;
@@ -1285,6 +1286,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
          *
          * @param handback The session that just closed
          */
+        @Override
         public void onConnectionClose(Object handback) {
             LocalComponentSession session = (LocalComponentSession)handback;
             try {
@@ -1317,6 +1319,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
          *
          * @param handback The session that just closed
          */
+        @Override
         public void onConnectionClose(Object handback) {
             IncomingServerSession session = (IncomingServerSession)handback;
             // Remove all the hostnames that were registered for this server session
@@ -1332,6 +1335,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
          *
          * @param handback The session that just closed
          */
+        @Override
         public void onConnectionClose(Object handback) {
             OutgoingServerSession session = (OutgoingServerSession)handback;
             // Remove all the hostnames that were registered for this server session
@@ -1348,6 +1352,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
          *
          * @param handback The session that just closed
          */
+        @Override
         public void onConnectionClose(Object handback) {
             ConnectionMultiplexerSession session = (ConnectionMultiplexerSession)handback;
             // Remove all the hostnames that were registered for this server session
@@ -1557,6 +1562,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         return sessionInfoCache;
     }
 
+    @Override
     public void joinedCluster() {
         restoreCacheContent();
         // Track information about local sessions and share it with other cluster nodes
@@ -1565,10 +1571,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             // Add local sessions to caches
@@ -1576,10 +1584,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }

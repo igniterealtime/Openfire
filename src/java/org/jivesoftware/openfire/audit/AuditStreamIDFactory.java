@@ -38,6 +38,7 @@ public class AuditStreamIDFactory implements StreamIDFactory {
     public AuditStreamIDFactory() {
     }
 
+    @Override
     public StreamID createStreamID() {
         return factory.createStreamID();
     }

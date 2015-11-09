@@ -98,20 +98,24 @@ public class UserManager implements IQResultListener {
 
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.user.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -119,16 +123,19 @@ public class UserManager implements IQResultListener {
         PropertyEventDispatcher.addListener(propListener);
 
         UserEventListener userListener = new UserEventListener() {
+            @Override
             public void userCreated(User user, Map<String, Object> params) {
                 // Since the user could be created by the provider, add it possible again
                 userCache.put(user.getUsername(), user);
             }
 
+            @Override
             public void userDeleting(User user, Map<String, Object> params) {
                 // Since the user could be deleted by the provider, remove it possible again
                 userCache.remove(user.getUsername());
             }
 
+            @Override
             public void userModified(User user, Map<String, Object> params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the user
@@ -436,6 +443,7 @@ public class UserManager implements IQResultListener {
         }
     }
 
+    @Override
     public void receivedAnswer(IQ packet) {
         JID from = packet.getFrom();
         // Assume that the user is not a registered user
@@ -463,6 +471,7 @@ public class UserManager implements IQResultListener {
         }
     }
 
+    @Override
     public void answerTimeout(String packetId) {
         Log.warn("An answer to a previously sent IQ stanza was never received. Packet id: " + packetId);
     }

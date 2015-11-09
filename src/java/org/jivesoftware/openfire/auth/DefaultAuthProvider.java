@@ -68,6 +68,7 @@ public class DefaultAuthProvider implements AuthProvider {
 
     }
 
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
@@ -95,6 +96,7 @@ public class DefaultAuthProvider implements AuthProvider {
         // Got this far, so the user must be authorized.
     }
 
+    @Override
     public void authenticate(String username, String token, String digest) throws UnauthorizedException {
         if (username == null || token == null || digest == null) {
             throw new UnauthorizedException();
@@ -124,15 +126,18 @@ public class DefaultAuthProvider implements AuthProvider {
         // Got this far, so the user must be authorized.
     }
 
+    @Override
     public boolean isPlainSupported() {
         return true;
     }
 
+    @Override
     public boolean isDigestSupported() {
         boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
         return !scramOnly;
     }
 
+    @Override
     public String getPassword(String username) throws UserNotFoundException {
         if (!supportsPasswordRetrieval()) {
             // Reject the operation since the provider is read-only
@@ -253,6 +258,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public void setPassword(String username, String password) throws UserNotFoundException {
         // Determine if the password should be stored as plain text or encrypted.
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
@@ -346,6 +352,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
         boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
         return !scramOnly;

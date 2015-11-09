@@ -946,6 +946,7 @@ public class PluginManager {
          */
         private boolean firstRun = true;
 
+        @Override
         public void run() {
             // If the task is already running, return.
             synchronized (this) {
@@ -970,6 +971,7 @@ public class PluginManager {
                 }
 
                 File[] jars = pluginDirectory.listFiles(new FileFilter() {
+                    @Override
                     public boolean accept(File pathname) {
                         String fileName = pathname.getName().toLowerCase();
                         return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
@@ -1014,6 +1016,7 @@ public class PluginManager {
                 }
 
                 File[] dirs = pluginDirectory.listFiles(new FileFilter() {
+                    @Override
                     public boolean accept(File pathname) {
                         return pathname.isDirectory();
                     }
@@ -1022,6 +1025,7 @@ public class PluginManager {
                 // Sort the list of directories so that the "admin" plugin is always
                 // first in the list.
                 Arrays.sort(dirs, new Comparator<File>() {
+                    @Override
                     public int compare(File file1, File file2) {
                         if (file1.getName().equals("admin")) {
                             return -1;
@@ -1148,6 +1152,7 @@ public class PluginManager {
             // first.
             List<String> children = new ArrayList<String>(Arrays.asList(childDirs));
             Collections.sort(children, new Comparator<String>() {
+                @Override
                 public int compare(String o1, String o2) {
                     if (o1.equals("lib")) {
                         return -1;

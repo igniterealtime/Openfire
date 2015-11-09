@@ -73,10 +73,12 @@ public class UpdateOccupantRequest extends MUCRoomTask {
         return affiliation != null;
     }
 
+    @Override
     public Object getResult() {
         return answer;
     }
 
+    @Override
     public void run() {
         try {
             Presence presence = getRoom().updateOccupant(this);

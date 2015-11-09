@@ -151,10 +151,12 @@ public class AuditorImpl implements Auditor {
         }
     }
 
+    @Override
     public int getQueuedPacketsNumber() {
         return logQueue.size();
     }
 
+    @Override
     public void audit(Packet packet, Session session) {
         if (auditManager.isEnabled()) {
             if (packet instanceof Message) {
@@ -182,6 +184,7 @@ public class AuditorImpl implements Auditor {
         }
     }
 
+    @Override
     public void stop() {
         // Stop queuing packets since we are being stopped
         closed = true;
@@ -224,6 +227,7 @@ public class AuditorImpl implements Auditor {
     private void ensureMaxTotalSize() {
         // Get list of existing audit files
         FilenameFilter filter = new FilenameFilter() {
+            @Override
             public boolean accept(File dir, String name) {
                 return name.startsWith("jive.audit-") && name.endsWith(".log");
             }
@@ -238,6 +242,7 @@ public class AuditorImpl implements Auditor {
             // Sort files by name (chronological order)
             List<File> sortedFiles = new ArrayList<File>(Arrays.asList(files));
             Collections.sort(sortedFiles, new Comparator<File>() {
+                @Override
                 public int compare(File o1, File o2) {
                     return o1.getName().compareTo(o2.getName());
                 }
@@ -274,6 +279,7 @@ public class AuditorImpl implements Auditor {
 
         // Get list of audit files to delete
         FilenameFilter filter = new FilenameFilter() {
+            @Override
             public boolean accept(File dir, String name) {
                 return name.startsWith("jive.audit-") && name.endsWith(".log") &&
                         name.compareTo(oldestFile) < 0;
@@ -320,7 +326,8 @@ public class AuditorImpl implements Auditor {
    	}
    	// Get list of existing audit files
    	FilenameFilter filter = new FilenameFilter() {
-   		public boolean accept(File dir, String name) {
+  		@Override
+  		public boolean accept(File dir, String name) {
    			return name.startsWith(filePrefix) && name.endsWith(".log");
    		}
    	};

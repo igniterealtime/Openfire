@@ -125,18 +125,21 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     	return this.hashAttribute;
     }
     
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ExternalizableUtil.getInstance().readStrings(in, identities);
         ExternalizableUtil.getInstance().readStrings(in, features);
         verAttribute = ExternalizableUtil.getInstance().readSafeUTF(in);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeStrings(out, identities);
         ExternalizableUtil.getInstance().writeStrings(out, features);
         ExternalizableUtil.getInstance().writeSafeUTF(out, verAttribute);
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = CacheSizes.sizeOfCollection(identities);
         size += CacheSizes.sizeOfCollection(features);

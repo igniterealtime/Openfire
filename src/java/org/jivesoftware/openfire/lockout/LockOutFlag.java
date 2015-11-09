@@ -108,6 +108,7 @@ public class LockOutFlag implements Cacheable, Externalizable {
         this.endTime = endTime;
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -120,12 +121,14 @@ public class LockOutFlag implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeLong(out, startTime != null ? startTime.getTime() : -1);
         ExternalizableUtil.getInstance().writeLong(out, endTime != null ? endTime.getTime() : -1);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         long st = ExternalizableUtil.getInstance().readLong(in);

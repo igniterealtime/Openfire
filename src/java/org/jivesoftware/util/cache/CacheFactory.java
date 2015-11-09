@@ -664,24 +664,31 @@ public class CacheFactory {
                     @Override
 					public void run() {
                         XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                            @Override
                             public void serverStarted() {}
 
+                            @Override
                             public void serverStopping() {
                                 destroyed = true;
                             }
                         });
                         ClusterManager.addListener(new ClusterEventListener() {
+                            @Override
                             public void joinedCluster() {}
 
+                            @Override
                             public void joinedCluster(byte[] nodeID) {}
 
+                            @Override
                             public void leftCluster() {
                                 destroyed = true;
                                 ClusterManager.removeListener(this);
                             }
 
+                            @Override
                             public void leftCluster(byte[] nodeID) {}
 
+                            @Override
                             public void markedAsSeniorClusterMember() {}
                         });
 

@@ -57,16 +57,7 @@ public class Echo implements Runnable {
                     for (int i = 0; i < 3; i++)
                         socket.send(packet);
             }
-        }
-        catch (UnknownHostException uhe) {
-            if (enabled) {
-            }
-        }
-        catch (SocketException se) {
-            if (enabled) {
-            }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             if (enabled) {
             }
         }

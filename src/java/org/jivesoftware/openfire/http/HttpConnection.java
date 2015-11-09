@@ -74,9 +74,7 @@ public class HttpConnection {
         try {
             deliverBody(null, true);
         }
-        catch (HttpConnectionClosedException e) {
-            Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
-        } catch (IOException e) {
+        catch (HttpConnectionClosedException | IOException e) {
             Log.warn("Unexpected exception occurred while trying to close an HttpException.", e);
         }
     }

@@ -751,11 +751,7 @@ public class XMPPServer {
         if (openfireHome == null) {
             try {
                 openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
-            }
-            catch (FileNotFoundException fe) {
-                // Ignore.
-            }
-            catch (IOException ie) {
+            } catch (IOException ie) {
                 // Ignore.
             }
         }

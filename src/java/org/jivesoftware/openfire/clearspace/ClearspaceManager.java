@@ -768,8 +768,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             rootE.addElement("newSecret").setText(newSecret);
 
             executeRequest(POST, path, groupDoc.asXML());
-        } catch (UnauthorizedException ue) {
-            Log.error("Error updating the password of Clearspace", ue);
         } catch (Exception e) {
             Log.error("Error updating the password of Clearspace", e);
         }
@@ -808,8 +806,6 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             rootE.addElement("tcpPort").setText(xmppPort);
 
             executeRequest(POST, path, groupDoc.asXML());
-        } catch (UnauthorizedException ue) {
-            Log.error("Error updating the client settings of Clearspace", ue);
         } catch (Exception e) {
             Log.error("Error updating the client settings of Clearspace", e);
         }

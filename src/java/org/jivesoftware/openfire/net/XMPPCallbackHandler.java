@@ -88,11 +88,8 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
                     //Log.debug("XMPPCallbackHandler: PasswordCallback");
                 }
-                catch (UserNotFoundException e) {
+                catch (UserNotFoundException | UnsupportedOperationException e) {
                     throw new IOException(e.toString());
-                }
-                catch (UnsupportedOperationException uoe) {
-                    throw new IOException(uoe.toString());
                 }
 
             }

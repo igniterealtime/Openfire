@@ -208,14 +208,7 @@ public class HttpSessionManager {
         try {
             connection.deliverBody(createSessionCreationResponse(session), true);
         }
-        catch (HttpConnectionClosedException e) {
-            Log.error("Error creating session.", e);
-            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
-        }
-        catch (DocumentException e) {
-            Log.error("Error creating session.", e);
-            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
-        } catch (IOException e) {
+        catch (HttpConnectionClosedException | DocumentException | IOException e) {
             Log.error("Error creating session.", e);
             throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
         }

@@ -66,11 +66,7 @@ public class SSLJiveTrustManager implements X509TrustManager {
         try {
             x509Certificates[0].checkValidity();
         }
-        catch (CertificateExpiredException e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            trusted = false;
-        }
-        catch (CertificateNotYetValidException e) {
+        catch (CertificateExpiredException | CertificateNotYetValidException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             trusted = false;
         }

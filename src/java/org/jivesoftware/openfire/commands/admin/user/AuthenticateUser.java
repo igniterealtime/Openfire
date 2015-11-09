@@ -92,17 +92,7 @@ public class AuthenticateUser extends AdHocCommand {
         try {
         	AuthFactory.authenticate(user.getUsername(), password);
         }
-        catch (UnauthorizedException e) {
-            // Auth failed
-            note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
-            return;
-        } catch (ConnectionException e) {
-            // Auth failed
-            note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
-            return;
-        } catch (InternalUnauthenticatedException e) {
+        catch (UnauthorizedException | ConnectionException | InternalUnauthenticatedException e) {
             // Auth failed
             note.addAttribute("type", "error");
             note.setText("Authentication failed.");

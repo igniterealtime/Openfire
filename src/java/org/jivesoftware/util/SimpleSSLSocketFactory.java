@@ -61,10 +61,7 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
                             new java.security.SecureRandom());
             factory = sslcontent.getSocketFactory();
         }
-        catch (NoSuchAlgorithmException e) {
-            Log.error(e.getMessage(), e);
-        }
-        catch (KeyManagementException e) {
+        catch (NoSuchAlgorithmException | KeyManagementException e) {
             Log.error(e.getMessage(), e);
         }
     }

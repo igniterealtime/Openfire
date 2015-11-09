@@ -54,7 +54,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	private static final ScheduledExecutorService crowdGroupSync = Executors.newSingleThreadScheduledExecutor();
 	private static final CrowdManager manager = CrowdManager.getInstance();
 
-	private static List<String> groups = new ArrayList<String>();
+	private static List<String> groups = new ArrayList<>();
 	
 	private final XMPPServer server = XMPPServer.getInstance();
 	
@@ -114,8 +114,8 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		
 		try {
 			List<String> users = manager.getGroupMembers(groupName);
-			Collection<JID> results = new ArrayList<JID>();
-			
+			Collection<JID> results = new ArrayList<>();
+
 			for (String username : users) {
 				results.add(server.createJID(username, null));
 			}
@@ -175,7 +175,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	public Collection<String> getGroupNames(int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
-			Collection<String> results = new ArrayList<String>(numResults);
+			Collection<String> results = new ArrayList<>(numResults);
 			
 			for (int i = 0, j = startIndex; i < numResults && j < groups.size(); ++i, ++j) {
 				results.add(groups.get(j));
@@ -191,7 +191,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	public Collection<String> search(String query) {
 		lock.readLock().lock();
 		try {
-			ArrayList<String> results = new ArrayList<String>();
+			ArrayList<String> results = new ArrayList<>();
 			
 			if (query != null && query.trim().length() > 0) {
 				
@@ -223,7 +223,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		try {
 			ArrayList<String> foundGroups = (ArrayList<String>) search(query);
 			
-			Collection<String> results = new ArrayList<String>();
+			Collection<String> results = new ArrayList<>();
 			
 			for (int i = 0, j = startIndex; i < numResults && j < foundGroups.size(); ++i, ++j) {
 				results.add(foundGroups.get(j));

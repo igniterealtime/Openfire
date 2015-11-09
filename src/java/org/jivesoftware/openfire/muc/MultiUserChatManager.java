@@ -89,7 +89,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private static final String outgoingStatKey = "muc_outgoing";
     private static final String trafficStatGroup = "muc_traffic";
 
-    private ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<String,MultiUserChatService>();
+    private ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<>();
 
     /**
      * Creates a new MultiUserChatManager instance.
@@ -354,7 +354,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @return A list of MultiUserChatServices configured for this server.
      */
     public List<MultiUserChatService> getMultiUserChatServices() {
-        List<MultiUserChatService> services = new ArrayList<MultiUserChatService>(mucServices.values());
+        List<MultiUserChatService> services = new ArrayList<>(mucServices.values());
         Collections.sort(services, new ServiceComparator());
         return services;
     }

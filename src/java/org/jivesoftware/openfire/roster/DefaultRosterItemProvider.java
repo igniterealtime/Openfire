@@ -187,7 +187,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 	 */
 	@Override
 	public Iterator<String> getUsernames(String jid) {
-        List<String> answer = new ArrayList<String>();
+        List<String> answer = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -241,8 +241,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 	 */
 	@Override
 	public Iterator<RosterItem> getItems(String username) {
-        LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
-        Map<Long, RosterItem> itemsByID = new HashMap<Long, RosterItem>();
+        LinkedList<RosterItem> itemList = new LinkedList<>();
+        Map<Long, RosterItem> itemsByID = new HashMap<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

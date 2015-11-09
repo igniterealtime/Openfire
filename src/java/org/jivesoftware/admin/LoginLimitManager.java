@@ -68,8 +68,8 @@ public class LoginLimitManager {
      */
     private LoginLimitManager() {
         // Set up initial maps
-        attemptsPerIP = new ConcurrentHashMap<String,Long>();
-        attemptsPerUsername = new ConcurrentHashMap<String,Long>();
+        attemptsPerIP = new ConcurrentHashMap<>();
+        attemptsPerUsername = new ConcurrentHashMap<>();
 
         // Max number of attempts per ip address that can be performed in given time frame (10 attempts default)
         maxAttemptsPerIP = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerIP", 10);

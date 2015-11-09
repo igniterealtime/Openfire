@@ -59,7 +59,7 @@ public class AdminConsole {
     private static Element generatedModel;
 
     static {
-        overrideModels = new LinkedHashMap<String,Element>();
+        overrideModels = new LinkedHashMap<>();
         load();
         
         // Detect when a new auth provider class is set to ClearspaceAuthProvider

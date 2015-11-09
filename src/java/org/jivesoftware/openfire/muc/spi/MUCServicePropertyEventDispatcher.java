@@ -46,7 +46,7 @@ public class MUCServicePropertyEventDispatcher {
 	private static final Logger Log = LoggerFactory.getLogger(MUCServicePropertyEventDispatcher.class);
 
     private static Set<MUCServicePropertyEventListener> listeners =
-            new CopyOnWriteArraySet<MUCServicePropertyEventListener>();
+            new CopyOnWriteArraySet<>();
 
     private MUCServicePropertyEventDispatcher() {
         // Not instantiable.

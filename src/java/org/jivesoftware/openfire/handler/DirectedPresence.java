@@ -60,7 +60,7 @@ public class DirectedPresence implements Externalizable {
      * List of JIDs with the TO value of the directed presences.
      * E.g.: paul@js.com or room1@conference.js.com
      */
-    private Set<String> receivers = new HashSet<String>();
+    private Set<String> receivers = new HashSet<>();
 
     public DirectedPresence() {
     }

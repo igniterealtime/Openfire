@@ -99,7 +99,7 @@ class XMLLightweightParser {
     // Object conteining the head tag
     protected StringBuilder head = new StringBuilder(5);
     // List with all finished messages found.
-    protected List<String> msgs = new ArrayList<String>();
+    protected List<String> msgs = new ArrayList<>();
     private int depth = 0;
 
     protected boolean insideChildrenTag = false;

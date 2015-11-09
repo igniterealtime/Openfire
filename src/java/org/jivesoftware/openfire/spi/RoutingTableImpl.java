@@ -140,7 +140,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             lock.lock();
             Set<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
-                nodes = new HashSet<NodeID>();
+                nodes = new HashSet<>();
             }
             nodes.add(server.getNodeID());
             componentsCache.put(address, nodes);
@@ -194,7 +194,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     if (jids == null) {
                         // Optimization - use different class depending on current setup
                         if (ClusterManager.isClusteringStarted()) {
-                            jids = new HashSet<String>();
+                            jids = new HashSet<>();
                         }
                         else {
                             jids = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
@@ -531,7 +531,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @return true if at least one target session was found
      */
     private boolean routeToBareJID(JID recipientJID, Message packet, boolean isPrivate) {
-        List<ClientSession> sessions = new ArrayList<ClientSession>();
+        List<ClientSession> sessions = new ArrayList<>();
         // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
         for (JID address : getRoutes(recipientJID, packet.getFrom())) {
             ClientSession session = getClientRoute(address);
@@ -607,7 +607,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 });
 
                 // Get same sessions with same max show value
-                List<ClientSession> targets = new ArrayList<ClientSession>();
+                List<ClientSession> targets = new ArrayList<>();
                 Presence.Show showFilter = highestPrioritySessions.get(0).getPresence().getShow();
                 for (ClientSession session : highestPrioritySessions) {
                     if (session.getPresence().getShow() == showFilter) {
@@ -681,7 +681,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             return Collections.emptyList();
         }
         // Get sessions with priority >= min
-        List<ClientSession> answer = new ArrayList<ClientSession>(sessions.size());
+        List<ClientSession> answer = new ArrayList<>(sessions.size());
         for (ClientSession session : sessions) {
             if (session.getPresence().getPriority() >= min) {
                 answer.add(session);
@@ -798,7 +798,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public List<JID> getRoutes(JID route, JID requester) {
-        List<JID> jids = new ArrayList<JID>();
+        List<JID> jids = new ArrayList<>();
         if (serverName.equals(route.getDomain())) {
             // Address belongs to local user
             if (route.getResource() != null) {
@@ -1019,7 +1019,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock clientLock = CacheFactory.getLock(nodeID, usersCache);
         try {
         	clientLock.lock();
-	    	List<String> remoteClientRoutes = new ArrayList<String>();
+	    	List<String> remoteClientRoutes = new ArrayList<>();
 	    	for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
 	    		if (entry.getValue().getNodeID().equals(nodeID)) {
 	    			remoteClientRoutes.add(entry.getKey());
@@ -1042,7 +1042,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock serverLock = CacheFactory.getLock(nodeID, serversCache);
         try {
         	serverLock.lock();
-	    	List<String> remoteServerDomains = new ArrayList<String>();
+	    	List<String> remoteServerDomains = new ArrayList<>();
 	    	for (Map.Entry<String, byte[]> entry : serversCache.entrySet()) {
 	    		if (entry.getValue().equals(nodeID)) {
 	    			remoteServerDomains.add(entry.getKey());
@@ -1060,7 +1060,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock componentLock = CacheFactory.getLock(nodeID, componentsCache);
         try {
         	componentLock.lock();
-	    	List<String> remoteComponents = new ArrayList<String>();
+	    	List<String> remoteComponents = new ArrayList<>();
 	    	for (Map.Entry<String, Set<NodeID>> entry : componentsCache.entrySet()) {
 	    		if (entry.getValue().remove(nodeID) && entry.getValue().size() == 0) {
 	    			remoteComponents.add(entry.getKey());

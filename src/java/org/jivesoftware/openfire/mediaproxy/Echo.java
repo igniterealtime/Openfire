@@ -28,7 +28,7 @@ public class Echo implements Runnable {
 
     DatagramSocket socket = null;
     byte password[] = null;
-    List<DatagramListener> listeners = new ArrayList<DatagramListener>();
+    List<DatagramListener> listeners = new ArrayList<>();
     boolean enabled = true;
 
     public Echo(int port) throws UnknownHostException, SocketException {

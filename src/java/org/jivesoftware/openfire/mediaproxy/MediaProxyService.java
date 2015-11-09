@@ -321,7 +321,7 @@ public class MediaProxyService extends BasicModule
     @Override
     public Iterator<DiscoServerItem> getItems()
 	{
-		List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+		List<DiscoServerItem> items = new ArrayList<>();
 		if (!isEnabled())
 		{
 			return items.iterator();
@@ -335,7 +335,7 @@ public class MediaProxyService extends BasicModule
 
     @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        List<Element> identities = new ArrayList<Element>();
+        List<Element> identities = new ArrayList<>();
         // Answer the identity of the proxy
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "proxy");

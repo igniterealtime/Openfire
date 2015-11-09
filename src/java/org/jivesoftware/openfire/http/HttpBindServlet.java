@@ -70,7 +70,7 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<XMPPPacketReader>();
+    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
 
     public HttpBindServlet() {
     }

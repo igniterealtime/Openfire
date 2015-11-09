@@ -247,7 +247,7 @@ public class DefaultUserProvider implements UserProvider {
     }
 
     private Collection<String> getUsernames(int startIndex, int numResults) {
-        List<String> usernames = new ArrayList<String>(500);
+        List<String> usernames = new ArrayList<>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -383,7 +383,7 @@ public class DefaultUserProvider implements UserProvider {
 
     @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
     @Override
@@ -413,7 +413,7 @@ public class DefaultUserProvider implements UserProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> usernames = new ArrayList<String>(50);
+        List<String> usernames = new ArrayList<>(50);
         Connection con = null;
         PreparedStatement pstmt = null;
         int queries=0;

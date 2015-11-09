@@ -122,7 +122,7 @@ public class GetListGroups extends AdHocCommand {
         for (Group group : GroupManager.getInstance().getGroups(nStart, maxItems)) {
             boolean isSharedGroup = RosterManager.isSharedGroup(group);
             Map<String, String> properties = group.getProperties();
-            Map<String,Object> fields = new HashMap<String,Object>();
+            Map<String,Object> fields = new HashMap<>();
             fields.put("name", group.getName());
             fields.put("desc", group.getDescription());
             fields.put("count", group.getMembers().size() + group.getAdmins().size());

@@ -85,7 +85,7 @@ public class XMLProperties {
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map<String, String> propertyCache = new HashMap<String, String>();
+    private Map<String, String> propertyCache = new HashMap<>();
 
     /**
      * Creates a new empty XMLPropertiesTest object.
@@ -240,7 +240,7 @@ public class XMLProperties {
      * @return all child property values for the given node name.
      */
     public List<String> getProperties(String name, boolean asList) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML hierarchy,
         // stopping one short.
@@ -346,7 +346,7 @@ public class XMLProperties {
         }
         // We found matching property, return values of the children.
         Iterator<Element> iter = element.elementIterator(propName[propName.length - 1]);
-        ArrayList<String> props = new ArrayList<String>();
+        ArrayList<String> props = new ArrayList<>();
         Element prop;
         String value;
         while (iter.hasNext()) {
@@ -458,7 +458,7 @@ public class XMLProperties {
         }
         String childName = propName[propName.length - 1];
         // We found matching property, clear all children.
-        List<Element> toRemove = new ArrayList<Element>();
+        List<Element> toRemove = new ArrayList<>();
         Iterator<Element> iter = element.elementIterator(childName);
         while (iter.hasNext()) {
             toRemove.add(iter.next());
@@ -493,7 +493,7 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", values);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -541,7 +541,7 @@ public class XMLProperties {
      * @return Names for all properties in the file
      */
     public List<String> getAllPropertyNames() {
-    	List<String> result = new ArrayList<String>();
+    	List<String> result = new ArrayList<>();
     	for (String propertyName : getChildPropertyNamesFor(document.getRootElement(), "")) {
     		if (getProperty(propertyName) != null) {
     			result.add(propertyName);
@@ -551,7 +551,7 @@ public class XMLProperties {
     }
     
     private List<String> getChildPropertyNamesFor(Element parent, String parentName) {
-    	List<String> result = new ArrayList<String>();
+    	List<String> result = new ArrayList<>();
     	for (Element child : (Collection<Element>) parent.elements()) {
     		String childName = new StringBuilder(parentName)
 							.append(parentName.isEmpty() ? "" : ".")
@@ -654,7 +654,7 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -789,7 +789,7 @@ public class XMLProperties {
      * @return an array representation of the given Jive property.
      */
     private String[] parsePropertyName(String name) {
-        List<String> propName = new ArrayList<String>(5);
+        List<String> propName = new ArrayList<>(5);
         // Use a StringTokenizer to tokenize the property name.
         StringTokenizer tokenizer = new StringTokenizer(name, ".");
         while (tokenizer.hasMoreTokens()) {

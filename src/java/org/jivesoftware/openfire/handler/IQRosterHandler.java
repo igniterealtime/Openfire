@@ -245,7 +245,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @return An error if the specification is violated or null if everything is fine.
      */
     private static PacketError checkGroups(Iterable<String> groups) {
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         for (String group : groups) {
             if (!set.add(group)) {
                 // Duplicate group found.

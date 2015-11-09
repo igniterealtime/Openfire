@@ -104,7 +104,7 @@ public class HttpSession extends LocalClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
+    private Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
@@ -118,7 +118,7 @@ public class HttpSession extends LocalClientSession {
     private int minorVersion = -1;
     private X509Certificate[] sslCertificates;
 
-    private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
+    private final Queue<Collection<Element>> packetsToSend = new LinkedList<>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
     private SessionPacketRouter router;
 
@@ -146,7 +146,7 @@ public class HttpSession extends LocalClientSession {
      * @return the stream features which are available for this session.
      */
     public Collection<Element> getAvailableStreamFeaturesElements() {
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
 
         if (getAuthToken() == null) {
 	        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
@@ -1175,7 +1175,7 @@ public class HttpSession extends LocalClientSession {
 
         public Deliverable(Collection<Packet> elements) {
             this.text = null;
-            this.packets = new ArrayList<String>();
+            this.packets = new ArrayList<>();
             for (Packet packet : elements) {
                 // Append packet namespace according XEP-0206 if needed
             	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
@@ -1208,7 +1208,7 @@ public class HttpSession extends LocalClientSession {
                 // No packets here (should be just raw XML like <stream> so return nothing
                 return null;
             }
-            List<Packet> answer = new ArrayList<Packet>();
+            List<Packet> answer = new ArrayList<>();
             for (String packetXML : packets) {
                 try {
                     Packet packet = null;
@@ -1252,7 +1252,7 @@ public class HttpSession extends LocalClientSession {
         }
 
         public Collection<Packet> getPackets() {
-            List<Packet> packets = new ArrayList<Packet>();
+            List<Packet> packets = new ArrayList<>();
             synchronized (deliverables) {
 	            for (Deliverable deliverable : deliverables) {
 	                if (deliverable.packets != null) {

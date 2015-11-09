@@ -51,14 +51,14 @@ public class CrowdUserProvider implements UserProvider {
 	private static final String SEARCH_FIELD_USERNAME = "Username";
 	private static final String SEARCH_FIELD_NAME = "Name";
 	private static final String SEARCH_FIELD_EMAIL = "Email";
-	private static final Set<String> SEARCH_FIELDS = new TreeSet<String>(Arrays.asList(
+	private static final Set<String> SEARCH_FIELDS = new TreeSet<>(Arrays.asList(
 			new String[]{SEARCH_FIELD_USERNAME, SEARCH_FIELD_NAME, SEARCH_FIELD_EMAIL}));
 	
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	private final ScheduledExecutorService crowdUserSync = Executors.newSingleThreadScheduledExecutor();
 	
-	private Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersCache = new TreeMap<String, org.jivesoftware.openfire.crowd.jaxb.User>();
-	private List<org.jivesoftware.openfire.crowd.jaxb.User> users = new ArrayList<org.jivesoftware.openfire.crowd.jaxb.User>();
+	private Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersCache = new TreeMap<>();
+	private List<org.jivesoftware.openfire.crowd.jaxb.User> users = new ArrayList<>();
 	
 	public CrowdUserProvider() {
 		String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_USERS_CACHE_TTL_SECS);
@@ -111,7 +111,7 @@ public class CrowdUserProvider implements UserProvider {
 	public Collection<User> getUsers() {
 		lock.readLock().lock();
 		try {
-			Collection<User> results = new ArrayList<User>();
+			Collection<User> results = new ArrayList<>();
 			for (org.jivesoftware.openfire.crowd.jaxb.User user : usersCache.values()) {
 				results.add(user.getOpenfireUser());
 			}
@@ -135,7 +135,7 @@ public class CrowdUserProvider implements UserProvider {
 	public Collection<User> getUsers(int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
-			Collection<User> results = new ArrayList<User>(numResults);
+			Collection<User> results = new ArrayList<>(numResults);
 			
 			for (int i = 0, j = startIndex; i < numResults && j < users.size(); ++i, ++j) {
 				results.add(users.get(j).getOpenfireUser());
@@ -156,7 +156,7 @@ public class CrowdUserProvider implements UserProvider {
 	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 		lock.readLock().lock();
 		try {
-			ArrayList<User> results = new ArrayList<User>();
+			ArrayList<User> results = new ArrayList<>();
 			
 			if (query != null && query.trim().length() > 0) {
 				
@@ -207,7 +207,7 @@ public class CrowdUserProvider implements UserProvider {
 		try {
 			ArrayList<User> foundUsers = (ArrayList<User>) findUsers(fields, query);
 			
-			Collection<User> results = new ArrayList<User>(foundUsers.size());
+			Collection<User> results = new ArrayList<>(foundUsers.size());
 			
 			for (int i = 0, j = startIndex; i < numResults && j < foundUsers.size(); ++i, ++j) {
 				results.add(foundUsers.get(j));
@@ -306,7 +306,7 @@ public class CrowdUserProvider implements UserProvider {
 
 			if (allUsers != null && allUsers.size() > 0) {
 				
-				Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersMap = new TreeMap<String, org.jivesoftware.openfire.crowd.jaxb.User>();
+				Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersMap = new TreeMap<>();
 				for (org.jivesoftware.openfire.crowd.jaxb.User user : allUsers) {
 					usersMap.put(user.name, user);
 				}

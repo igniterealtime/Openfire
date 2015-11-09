@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class RoomInfo implements Externalizable {
     private LocalMUCRoom room;
-    private List<OccupantAddedEvent> occupants = new ArrayList<OccupantAddedEvent>();
+    private List<OccupantAddedEvent> occupants = new ArrayList<>();
 
 
     /**

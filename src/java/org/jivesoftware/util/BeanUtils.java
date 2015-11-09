@@ -158,7 +158,7 @@ public class BeanUtils {
      * @return a Map of all properties as String name/value pairs.
      */
     public static Map<String, String> getProperties(Object bean) {
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass());
             // Loop through all properties of the bean.

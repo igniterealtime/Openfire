@@ -77,7 +77,7 @@ public class ClearspaceGroupProvider extends AbstractGroupProvider {
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
 		// TODO: is there a better way to get the shared Clearspace groups for a given user?
-		Collection<String> result = new ArrayList<String>();
+		Collection<String> result = new ArrayList<>();
 		Iterator<Group> sharedGroups = new GroupCollection(getGroupNames()).iterator();
 		while (sharedGroups.hasNext()) {
 			Group group = sharedGroups.next();
@@ -160,8 +160,8 @@ public class ClearspaceGroupProvider extends AbstractGroupProvider {
         }
 
         // Get the members and administrators
-        Collection<JID> members = new ArrayList<JID>();
-        Collection<JID> administrators = new ArrayList<JID>();
+        Collection<JID> members = new ArrayList<>();
+        Collection<JID> administrators = new ArrayList<>();
         try {
             XMPPServer server = XMPPServer.getInstance();
 
@@ -187,7 +187,7 @@ public class ClearspaceGroupProvider extends AbstractGroupProvider {
             // this won't happen, the group exists.
         }
 
-        Map<String, String> properties = new HashMap<String, String>();
+        Map<String, String> properties = new HashMap<>();
 
         // Type 0 is OPEN
         if (type == 0) {

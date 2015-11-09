@@ -52,7 +52,7 @@ public class OutgoingServerSocketReader {
     /**
      * Queue that holds the elements read by the XMPPPacketReader.
      */
-    private BlockingQueue<Element> elements = new LinkedBlockingQueue<Element>(10000);
+    private BlockingQueue<Element> elements = new LinkedBlockingQueue<>(10000);
 
     public OutgoingServerSocketReader(XMPPPacketReader reader) {
         this.reader = reader;

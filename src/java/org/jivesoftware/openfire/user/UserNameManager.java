@@ -47,7 +47,7 @@ public class UserNameManager {
      * Map that keeps the UserNameProvider to use for each specific domain.
      */
     private static Map<String, UserNameProvider> providersByDomain =
-            new ConcurrentHashMap<String, UserNameProvider>();
+            new ConcurrentHashMap<>();
 
     private UserNameManager() {
     }

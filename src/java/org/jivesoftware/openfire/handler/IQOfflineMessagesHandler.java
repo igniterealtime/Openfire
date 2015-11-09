@@ -186,7 +186,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         for (OfflineMessage offlineMessage : messageStore.getMessages(senderJID.getNode(), false)) {
             answer.add(new DiscoItem(senderJID.asBareJID(), offlineMessage.getFrom().toString(),
                     XMPPDateTimeFormat.format(offlineMessage.getCreationDate()), null));

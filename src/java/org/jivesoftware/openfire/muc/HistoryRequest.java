@@ -155,7 +155,7 @@ public class HistoryRequest {
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
             Element delayInformation;
-            LinkedList<Message> historyToSend = new LinkedList<Message>();
+            LinkedList<Message> historyToSend = new LinkedList<>();
             ListIterator<Message> iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
                 Message message = iterator.previous();

@@ -50,7 +50,7 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
     private static int quota = 100*1024; // Default to 100 K.
     private static Type type = Type.store_and_bounce;
 
-    private static List<OfflineMessageListener> listeners = new CopyOnWriteArrayList<OfflineMessageListener>();
+    private static List<OfflineMessageListener> listeners = new CopyOnWriteArrayList<>();
 
     private OfflineMessageStore messageStore;
     private JID serverAddress;

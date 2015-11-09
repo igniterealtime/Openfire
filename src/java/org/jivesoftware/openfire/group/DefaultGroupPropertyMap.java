@@ -377,7 +377,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 */
 		@Override
 		public Entry<K,V> next() {
-			current = new EntryWrapper<E>(delegate.next());
+			current = new EntryWrapper<>(delegate.next());
 			return current;
 		}
 
@@ -477,7 +477,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyAdded");
         GroupEventDispatcher.dispatchEvent(group,
@@ -508,7 +508,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyModified");
         event.put("originalValue", originalValue);
@@ -537,7 +537,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", key);
         GroupEventDispatcher.dispatchEvent(group,
@@ -562,7 +562,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", "*");
         GroupEventDispatcher.dispatchEvent(group,

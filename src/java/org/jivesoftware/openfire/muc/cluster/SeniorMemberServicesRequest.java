@@ -55,7 +55,7 @@ public class SeniorMemberServicesRequest implements ClusterTask {
 
     @Override
     public void run() {
-        services = new ArrayList<ServiceInfo>();
+        services = new ArrayList<>();
         // Get all services and include them in the reply
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
             services.add(new ServiceInfo(mucService));

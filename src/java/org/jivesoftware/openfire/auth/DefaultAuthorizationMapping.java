@@ -42,7 +42,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
     private Vector<String> approvedRealms;
 
     public DefaultAuthorizationMapping() {
-        approvedRealms = new Vector<String>();
+        approvedRealms = new Vector<>();
         
         String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {

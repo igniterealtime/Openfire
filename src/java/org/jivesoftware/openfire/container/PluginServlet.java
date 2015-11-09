@@ -79,7 +79,7 @@ public class PluginServlet extends HttpServlet {
     private static ServletConfig servletConfig;
 
     static {
-        servlets = new ConcurrentHashMap<String, GenericServlet>();
+        servlets = new ConcurrentHashMap<>();
     }
 	
 	public static final String PLUGINS_WEBROOT = "/plugins/";
@@ -154,7 +154,7 @@ public class PluginServlet extends HttpServlet {
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
             List classes = doc.selectNodes("//servlet");
-            Map<String, Class> classMap = new HashMap<String, Class>();
+            Map<String, Class> classMap = new HashMap<>();
             for (int i = 0; i < classes.size(); i++) {
                 Element servletElement = (Element)classes.get(i);
                 String name = servletElement.element("servlet-name").getTextTrim();

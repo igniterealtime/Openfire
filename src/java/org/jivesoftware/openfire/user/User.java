@@ -190,7 +190,7 @@ public class User implements Cacheable, Externalizable, Result {
             AuthFactory.setPassword(username, password);
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
@@ -259,7 +259,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.name = name;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -315,7 +315,7 @@ public class User implements Cacheable, Externalizable, Result {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -359,7 +359,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.creationDate = creationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "creationDateModified");
             params.put("originalValue", originalCreationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -385,7 +385,7 @@ public class User implements Cacheable, Externalizable, Result {
             this.modificationDate = modificationDate;
 
             // Fire event.
-            Map<String,Object> params = new HashMap<String,Object>();
+            Map<String,Object> params = new HashMap<>();
             params.put("type", "nameModified");
             params.put("originalValue", originalModificationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -406,7 +406,7 @@ public class User implements Cacheable, Externalizable, Result {
     public Map<String,String> getProperties() {
         synchronized (this) {
             if (properties == null) {
-                properties = new ConcurrentHashMap<String, String>();
+                properties = new ConcurrentHashMap<>();
                 loadProperties();
             }
         }
@@ -479,6 +479,7 @@ public class User implements Cacheable, Externalizable, Result {
             Map<String,Object> eventParams = new HashMap<>();
             String answer;
             String keyString = key;
+
             synchronized (getName() + keyString.intern()) {
                 if (properties.containsKey(keyString)) {
                     String originalValue = properties.get(keyString);

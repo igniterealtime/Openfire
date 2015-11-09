@@ -107,7 +107,7 @@ public class ClientTrustManager implements X509TrustManager {
 
         //Note: A reference of the Collection is used in the CertStore, so we can add CRL's 
         // after creating the CertStore.
-        crls = new ArrayList<X509CRL>();
+        crls = new ArrayList<>();
         CollectionCertStoreParameters params = new CollectionCertStoreParameters(crls);
         
         try {
@@ -180,7 +180,7 @@ public class ClientTrustManager implements X509TrustManager {
         Log.debug("ClientTrustManager: checkClientTrusted(x509Certificates,"+string+") called");
 
         loadCRL();
-        ArrayList<X509Certificate> certs = new ArrayList<X509Certificate>();
+        ArrayList<X509Certificate> certs = new ArrayList<>();
         for(int i = 0; i < x509Certificates.length ; i++) {
             certs.add(x509Certificates[i]);
         }

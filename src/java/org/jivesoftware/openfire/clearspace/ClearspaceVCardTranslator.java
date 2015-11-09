@@ -55,10 +55,10 @@ class ClearspaceVCardTranslator {
         PHONE("Phone Number", true); //multiple with primary
 
         // Used to get a field from its ID
-        private static Map<Long, ClearspaceField> idMap = new HashMap<Long, ClearspaceField>();
+        private static Map<Long, ClearspaceField> idMap = new HashMap<>();
 
         // Used to get a field from its name
-        private static Map<String, ClearspaceField> nameMap = new HashMap<String, ClearspaceField>();
+        private static Map<String, ClearspaceField> nameMap = new HashMap<>();
 
         static {
             nameMap.put(TITLE.getName(), TITLE);
@@ -590,7 +590,7 @@ class ClearspaceVCardTranslator {
      */
     private Map<VCardField, String> collectVCardValues(Element vCardElement) {
 
-        Map<VCardField, String> vCardValues = new HashMap<VCardField, String>();
+        Map<VCardField, String> vCardValues = new HashMap<>();
 
         // Add the Title
         vCardValues.put(VCardField.TITLE, vCardElement.elementText("TITLE"));

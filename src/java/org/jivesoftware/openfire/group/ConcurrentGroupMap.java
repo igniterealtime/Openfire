@@ -83,7 +83,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 */
 	@Override
 	public synchronized Set<Group> getGroupsFromKeys() {
-		Set<Group> result = new HashSet<Group>();
+		Set<Group> result = new HashSet<>();
 		for(String groupName : getKnownGroupNamesFromKeys()) {
 			result.add(Group.resolveFrom(groupName));
 		}
@@ -97,7 +97,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 	 */
 	@Override
 	public synchronized Set<Group> getGroupsFromValues() {
-		Set<Group> result = new HashSet<Group>();
+		Set<Group> result = new HashSet<>();
 		for(String groupName : getKnownGroupNamesFromValues()) {
 			result.add(Group.resolveFrom(groupName));
 		}
@@ -117,7 +117,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 			synchronized(this) {
 				result = knownGroupNamesFromKeys;
 				if (result == null) {
-					result = new HashSet<String>();
+					result = new HashSet<>();
 					// add all the groups into the group set
 					Iterator<K> iterator = keySet().iterator();
 					while (iterator.hasNext()) {
@@ -147,7 +147,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 			synchronized(this) {
 				result = knownGroupNamesFromValues;
 				if (result == null) {
-					result = new HashSet<String>();
+					result = new HashSet<>();
 					// add all the groups into the group set
 					Iterator<V> iterator = values().iterator();
 					while (iterator.hasNext()) {

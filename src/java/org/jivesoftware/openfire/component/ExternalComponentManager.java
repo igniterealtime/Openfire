@@ -67,7 +67,7 @@ public class ExternalComponentManager {
      * List of listeners that will be notified when vCards are created, updated or deleted.
      */
     private static List<ExternalComponentManagerListener> listeners =
-            new CopyOnWriteArrayList<ExternalComponentManagerListener>();
+            new CopyOnWriteArrayList<>();
 
     public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Alert listeners about this event
@@ -351,7 +351,7 @@ public class ExternalComponentManager {
     private static Collection<ExternalComponentConfiguration> getConfigurations(
             Permission permission) {
         Collection<ExternalComponentConfiguration> answer =
-                new ArrayList<ExternalComponentConfiguration>();
+                new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

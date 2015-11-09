@@ -83,7 +83,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Nodes managed by this manager, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    private Map<String, Node> nodes = new ConcurrentHashMap<>();
     
     /**
      * Keep a registry of the presence's show value of users that subscribed to a node of
@@ -93,7 +93,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * is full JID of connected resource and value is show value of the last received presence.
      */
     private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<String, Map<String, String>>();
+            new ConcurrentHashMap<>();
     
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
@@ -118,13 +118,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
      * create nodes.
      */
-    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<String>();
+    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
 
     /**
      * Bare jids of users that are system administrators of the PubSub service. A sysadmin
      * has the same permissions as a node owner.
      */
-    private Collection<String> sysadmins = new CopyOnWriteArrayList<String>();
+    private Collection<String> sysadmins = new CopyOnWriteArrayList<>();
 
     /**
      * The packet router for the server.
@@ -464,7 +464,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine
         engine.start(this);
-        ArrayList<String> params = new ArrayList<String>();
+        ArrayList<String> params = new ArrayList<>();
         params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
@@ -529,7 +529,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (!isServiceEnabled()) {
             return null;
         }
-        ArrayList<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+        ArrayList<DiscoServerItem> items = new ArrayList<>();
 		final DiscoServerItem item = new DiscoServerItem(new JID(
 			getServiceDomain()), "Publish-Subscribe service", null, null, this,
 			this);
@@ -539,7 +539,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
+        ArrayList<Element> identities = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the identity of the PubSub service
             Element identity = DocumentHelper.createElement("identity");
@@ -565,7 +565,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        ArrayList<String> features = new ArrayList<String>();
+        ArrayList<String> features = new ArrayList<>();
         if (name == null && node == null) {
             // Answer the features of the PubSub service
             features.add("http://jabber.org/protocol/pubsub");
@@ -676,7 +676,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (!isServiceEnabled()) {
             return null;
         }
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         String serviceDomain = getServiceDomain();
         if (name == null && node == null) {
             // Answer all first level nodes

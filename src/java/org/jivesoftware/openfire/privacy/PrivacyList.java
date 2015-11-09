@@ -92,7 +92,7 @@ public class PrivacyList implements Cacheable, Externalizable {
     private JID userJID;
     private String name;
     private boolean isDefault;
-    private List<PrivacyItem> items = new ArrayList<PrivacyItem>();
+    private List<PrivacyItem> items = new ArrayList<>();
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -215,7 +215,7 @@ public class PrivacyList implements Cacheable, Externalizable {
      */
     private void updateList(Element listElement, boolean notify) {
         // Reset the list of items of this list
-        items = new ArrayList<PrivacyItem>();
+        items = new ArrayList<>();
 
         List<Element> itemsElements = listElement.elements("item");
         for (Element itemElement : itemsElements) {

@@ -48,7 +48,7 @@ public abstract class ResultSet<E extends Result> extends AbstractCollection<E> 
 	/**
 	 * A list of field names that are valid in jabber:iq:search
 	 */
-	private final static Collection<String> validRequestFields = new ArrayList<String>();
+	private final static Collection<String> validRequestFields = new ArrayList<>();
 	static {
 		validRequestFields.add("max"); // required
 		validRequestFields.add("before");

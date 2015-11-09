@@ -60,7 +60,7 @@ public class MUCServiceProperties implements Map<String, String> {
     public MUCServiceProperties(String subdomain) {
         this.subdomain = subdomain;
         if (properties == null) {
-            properties = new ConcurrentHashMap<String, String>();
+            properties = new ConcurrentHashMap<>();
         }
         else {
             properties.clear();
@@ -138,7 +138,7 @@ public class MUCServiceProperties implements Map<String, String> {
      * @return all child property names for the given parent.
      */
     public Collection<String> getChildrenNames(String parentKey) {
-        Collection<String> results = new HashSet<String>();
+        Collection<String> results = new HashSet<>();
         for (String key : properties.keySet()) {
             if (key.startsWith(parentKey + ".")) {
                 if (key.equals(parentKey)) {
@@ -233,7 +233,7 @@ public class MUCServiceProperties implements Map<String, String> {
         }
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_set, params);
 
@@ -247,7 +247,7 @@ public class MUCServiceProperties implements Map<String, String> {
         properties.put(key, value);
 
         // Generate event.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("value", value);
         MUCServicePropertyEventDispatcher.dispatchEvent(subdomain, key, MUCServicePropertyEventDispatcher.EventType.property_set, params);
     }

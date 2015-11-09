@@ -59,7 +59,7 @@ public class DefaultVCardProvider implements VCardProvider {
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
 
     public DefaultVCardProvider() {

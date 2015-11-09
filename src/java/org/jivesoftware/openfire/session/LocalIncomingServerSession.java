@@ -79,7 +79,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
      */
-    private Set<String> validatedDomains = new HashSet<String>();
+    private Set<String> validatedDomains = new HashSet<>();
 
     /**
      * Domains or subdomain of this server that was used by the remote server

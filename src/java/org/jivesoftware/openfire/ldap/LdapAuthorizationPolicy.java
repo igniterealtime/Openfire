@@ -84,7 +84,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
         // Un-escape Node
         username = JID.unescapeNode(username);
 
-        Collection<String> authorized = new ArrayList<String>();
+        Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);

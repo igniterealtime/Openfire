@@ -269,7 +269,7 @@ public class IQAdminHandler {
             boolean hasAffiliation;
 
             // Keep a registry of the updated presences
-            List<Presence> presences = new ArrayList<Presence>(itemsList.size());
+            List<Presence> presences = new ArrayList<>(itemsList.size());
 
             // Collect the new affiliations or roles for the specified jids
             for (Object anItem : itemsList) {
@@ -278,7 +278,7 @@ public class IQAdminHandler {
                     affiliation = item.attributeValue("affiliation");
                     hasAffiliation = affiliation != null;
                     target = (hasAffiliation ? affiliation : item.attributeValue("role"));
-                    List<JID> jids = new ArrayList<JID>();
+                    List<JID> jids = new ArrayList<>();
                     // jid could be of the form "full JID" or "bare JID" depending if we are
                     // going to change a role or an affiliation
                     nick = item.attributeValue("nick");
@@ -318,7 +318,7 @@ public class IQAdminHandler {
                             // send an invitation if the room is members-only and skipping invites
                             // are not disabled system-wide xmpp.muc.skipInvite
                             if (!skipInvite && !hadAffiliation && room.isMembersOnly()) {
-                            	List<JID> invitees = new ArrayList<JID>();
+                            	List<JID> invitees = new ArrayList<>();
                             	if (GroupJID.isGroup(jid)) {
                             		try {
                                 		Group group = GroupManager.getInstance().getGroup(jid);

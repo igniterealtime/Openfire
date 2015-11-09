@@ -36,7 +36,7 @@ public class QueuedTasksManager {
 
     private static QueuedTasksManager instance = new QueuedTasksManager();
 
-    private Queue<MUCRoomTask> taskQueue = new ConcurrentLinkedQueue<MUCRoomTask>();
+    private Queue<MUCRoomTask> taskQueue = new ConcurrentLinkedQueue<>();
 
     public static QueuedTasksManager getInstance() {
         return instance;

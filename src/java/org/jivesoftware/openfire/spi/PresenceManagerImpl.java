@@ -130,7 +130,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         if (username == null) {
             return null;
         }
-        List<Presence> presences = new ArrayList<Presence>();
+        List<Presence> presences = new ArrayList<>();
 
         for (ClientSession session : sessionManager.getSessions(username)) {
             presences.add(session.getPresence());
@@ -347,7 +347,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         try {
             if (server.isLocal(probee)) {
                 // Local probers should receive presences of probee in all connected resources
-                Collection<JID> proberFullJIDs = new ArrayList<JID>();
+                Collection<JID> proberFullJIDs = new ArrayList<>();
                 if (prober.getResource() == null && server.isLocal(prober)) {
                     for (ClientSession session : sessionManager.getSessions(prober.getNode())) {
                         proberFullJIDs.add(session.getAddress());
@@ -471,7 +471,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
                 // Ensure that unavailable presence is sent to all receipient's resources
-                Collection<JID> recipientFullJIDs = new ArrayList<JID>();
+                Collection<JID> recipientFullJIDs = new ArrayList<>();
                 if (server.isLocal(recipientJID)) {
                     for (ClientSession targetSession : sessionManager
                             .getSessions(recipientJID.getNode())) {

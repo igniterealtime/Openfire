@@ -93,7 +93,7 @@ public abstract class LocalSession implements Session {
 	 * Session temporary data. All data stored in this <code>Map</code> disapear when session
 	 * finishes.
 	 */
-	private final Map<String, Object> sessionData = new HashMap<String, Object>();
+	private final Map<String, Object> sessionData = new HashMap<>();
 
     /**
      * XEP-0198 Stream Manager

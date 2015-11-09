@@ -45,12 +45,12 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     /**
      * Identities included in these entity capabilities.
      */
-    private Set<String> identities = new HashSet<String>();
+    private Set<String> identities = new HashSet<>();
 
     /**
      * Features included in these entity capabilities.
      */
-    private Set<String> features = new HashSet<String>();
+    private Set<String> features = new HashSet<>();
 
     /**
      * Hash string that corresponds to the entity capabilities. To be

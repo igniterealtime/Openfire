@@ -80,7 +80,7 @@ public class LocalMUCUser implements MUCUser {
     private JID realjid;
 
     /** Table: key roomName.toLowerCase(); value LocalMUCRole. */
-    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<String, LocalMUCRole>();
+    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<>();
 
     /** Deliver packets to users. */
     private PacketRouter router;
@@ -311,7 +311,7 @@ public class LocalMUCUser implements MUCUser {
                                     // message invitation. These extensions will be sent to the
                                     // invitees.
                                     @SuppressWarnings("unchecked")
-                                    List<Element> extensions = new ArrayList<Element>(packet
+                                    List<Element> extensions = new ArrayList<>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
                                     

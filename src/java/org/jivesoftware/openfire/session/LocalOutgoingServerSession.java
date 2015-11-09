@@ -100,8 +100,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      */
     private static Pattern pattern = Pattern.compile("[a-zA-Z]");
 
-    private Collection<String> authenticatedDomains = new HashSet<String>();
-    private final Collection<String> hostnames = new HashSet<String>();
+    private Collection<String> authenticatedDomains = new HashSet<>();
+    private final Collection<String> hostnames = new HashSet<>();
     private OutgoingServerSocketReader socketReader;
 
     /**

@@ -71,7 +71,7 @@ public class StreamManager {
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
      */
-    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<UnackedPacket>();
+    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     public StreamManager(Connection connection) {
     	this.connection = connection;

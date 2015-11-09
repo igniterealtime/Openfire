@@ -36,7 +36,7 @@ public class PrivacyListManager {
 
     private PrivacyListProvider provider = new PrivacyListProvider();
 
-    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<PrivacyListEventListener>();
+    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {

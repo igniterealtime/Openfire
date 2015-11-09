@@ -115,7 +115,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
     public ClearspaceMUCTranscriptManager(TaskEngine taskEngine) {
         this.taskEngine = taskEngine;
-        roomEvents = new ArrayList<ClearspaceMUCTranscriptEvent>();
+        roomEvents = new ArrayList<>();
 
         String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         csMucDomain = ClearspaceManager.MUC_SUBDOMAIN + "." + xmppDomain;
@@ -135,7 +135,7 @@ public class ClearspaceMUCTranscriptManager implements MUCEventListener {
 
                 // Store JIDs of rooms that had presence changes, to track occupant counts
                 // TODO: Refactor out into a different class
-                Set<String> presenceRoomJids = new HashSet<String>();
+                Set<String> presenceRoomJids = new HashSet<>();
 
                 // Create the transcript-update packet
                 IQ packet = new IQ();

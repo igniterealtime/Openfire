@@ -119,12 +119,12 @@ public class XMPPServer {
     /**
      * All modules loaded by this server
      */
-    private Map<String, Module> modules = new LinkedHashMap<String, Module>();
+    private Map<String, Module> modules = new LinkedHashMap<>();
 
     /**
      * Listeners that will be notified when the server has started or is about to be stopped.
      */
-    private List<XMPPServerListener> listeners = new CopyOnWriteArrayList<XMPPServerListener>();
+    private List<XMPPServerListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * Location of the home directory. All configuration files should be
@@ -1073,7 +1073,7 @@ public class XMPPServer {
      * @return a list with all the modules registered with the server that inherit from IQHandler.
      */
     public List<IQHandler> getIQHandlers() {
-        List<IQHandler> answer = new ArrayList<IQHandler>();
+        List<IQHandler> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof IQHandler) {
                 answer.add((IQHandler) module);
@@ -1220,7 +1220,7 @@ public class XMPPServer {
      * @return a list with all the modules that provide "discoverable" features.
      */
     public List<ServerFeaturesProvider> getServerFeaturesProviders() {
-        List<ServerFeaturesProvider> answer = new ArrayList<ServerFeaturesProvider>();
+        List<ServerFeaturesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof ServerFeaturesProvider) {
                 answer.add((ServerFeaturesProvider) module);
@@ -1235,7 +1235,7 @@ public class XMPPServer {
      * @return a list with all the modules that provide "discoverable" identities.
      */
     public List<ServerIdentitiesProvider> getServerIdentitiesProviders() {
-        List<ServerIdentitiesProvider> answer = new ArrayList<ServerIdentitiesProvider>();
+        List<ServerIdentitiesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof ServerIdentitiesProvider) {
                 answer.add((ServerIdentitiesProvider) module);
@@ -1252,7 +1252,7 @@ public class XMPPServer {
      *         the server.
      */
     public List<ServerItemsProvider> getServerItemsProviders() {
-        List<ServerItemsProvider> answer = new ArrayList<ServerItemsProvider>();
+        List<ServerItemsProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof ServerItemsProvider) {
                 answer.add((ServerItemsProvider) module);
@@ -1267,7 +1267,7 @@ public class XMPPServer {
      * @return a list with all the modules that provide "discoverable" user identities.
      */
     public List<UserIdentitiesProvider> getUserIdentitiesProviders() {
-        List<UserIdentitiesProvider> answer = new ArrayList<UserIdentitiesProvider>();
+        List<UserIdentitiesProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof UserIdentitiesProvider) {
                 answer.add((UserIdentitiesProvider) module);
@@ -1284,7 +1284,7 @@ public class XMPPServer {
      *         users.
      */
     public List<UserItemsProvider> getUserItemsProviders() {
-        List<UserItemsProvider> answer = new ArrayList<UserItemsProvider>();
+        List<UserItemsProvider> answer = new ArrayList<>();
         for (Module module : modules.values()) {
             if (module instanceof UserItemsProvider) {
                 answer.add((UserItemsProvider) module);

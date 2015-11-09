@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class PluginFilter implements Filter {
 
-    private static List<SimpleFilter> pluginFilters = new CopyOnWriteArrayList<SimpleFilter>();
+    private static List<SimpleFilter> pluginFilters = new CopyOnWriteArrayList<>();
 
     /**
      * Adds a filter to the list of filters that will be run on every request.

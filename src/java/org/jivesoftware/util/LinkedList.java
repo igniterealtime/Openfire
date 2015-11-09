@@ -41,7 +41,7 @@ public class LinkedList<E> {
      * Creates a new linked list.
      */
     public LinkedList() {
-    	head = new LinkedListNode<E>();
+    	head = new LinkedListNode<>();
     }
 
     /**
@@ -87,7 +87,7 @@ public class LinkedList<E> {
      * @return the node created to wrap the object.
      */
     public LinkedListNode<E> addFirst(E object) {
-        return new LinkedListNode<E>(object, head.next, head);
+        return new LinkedListNode<>(object, head.next, head);
     }
 
     /**
@@ -107,7 +107,7 @@ public class LinkedList<E> {
      * @return the node created to wrap the object.
      */
     public LinkedListNode<E> addLast(E object) {
-        return new LinkedListNode<E>(object, head, head.previous);
+        return new LinkedListNode<>(object, head, head.previous);
     }
 
     /**

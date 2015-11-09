@@ -43,7 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PresenceEventDispatcher {
 
     private static List<PresenceEventListener> listeners =
-            new CopyOnWriteArrayList<PresenceEventListener>();
+            new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events.

@@ -237,7 +237,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @return all sessions originated from connection managers.
      */
     public List<ConnectionMultiplexerSession> getConnectionMultiplexerSessions() {
-        List<ConnectionMultiplexerSession> sessions = new ArrayList<ConnectionMultiplexerSession>();
+        List<ConnectionMultiplexerSession> sessions = new ArrayList<>();
         // Add sessions of CMs connected to this JVM
         sessions.addAll(localSessionManager.getConnnectionManagerSessions().values());
         // Add sessions of CMs connected to other cluster nodes
@@ -262,7 +262,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      *         whose domain matches the specified domain.
      */
     public List<ConnectionMultiplexerSession> getConnectionMultiplexerSessions(String domain) {
-        List<ConnectionMultiplexerSession> sessions = new ArrayList<ConnectionMultiplexerSession>();
+        List<ConnectionMultiplexerSession> sessions = new ArrayList<>();
         // Add sessions of CMs connected to this JVM
         for (String address : localSessionManager.getConnnectionManagerSessions().keySet()) {
             JID jid = new JID(address);
@@ -454,7 +454,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             lock.lock();
             List<String> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs == null) {
-                streamIDs = new ArrayList<String>();
+                streamIDs = new ArrayList<>();
             }
             streamIDs.add(streamID);
             hostnameSessionsCache.put(hostname, streamIDs);
@@ -468,7 +468,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
-                validatedDomains = new HashSet<String>();
+                validatedDomains = new HashSet<>();
             }
             boolean added = validatedDomains.add(hostname);
             if (added) {
@@ -516,7 +516,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
-                validatedDomains = new HashSet<String>();
+                validatedDomains = new HashSet<>();
             }
             validatedDomains.remove(hostname);
             if (!validatedDomains.isEmpty()) {
@@ -787,7 +787,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
 
     public Collection<ClientSession> getSessions(SessionResultFilter filter) {
-        List<ClientSession> results = new ArrayList<ClientSession>();
+        List<ClientSession> results = new ArrayList<>();
         if (filter != null) {
             // Grab all the matching sessions
             results.addAll(getSessions());
@@ -795,7 +795,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             // Now we have a copy of the references so we can spend some time
             // doing the rest of the filtering without locking out session access
             // so let's iterate and filter each session one by one
-            List<ClientSession> filteredResults = new ArrayList<ClientSession>();
+            List<ClientSession> filteredResults = new ArrayList<>();
             for (ClientSession session : results) {
                 // Now filter on creation date if needed
                 filteredResults.add(session);
@@ -811,7 +811,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
             // Now generate the final list. I believe it's faster to to build up a new
             // list than it is to remove items from head and tail of the sorted tree
-            List<ClientSession> finalResults = new ArrayList<ClientSession>();
+            List<ClientSession> finalResults = new ArrayList<>();
             int startIndex = filter.getStartIndex();
             Iterator<ClientSession> sortedIter = filteredResults.iterator();
             for (int i = 0; sortedIter.hasNext() && finalResults.size() < maxResults; i++) {
@@ -860,7 +860,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         }
         else {
             // Collect the sessions associated to the found stream IDs
-            List<IncomingServerSession> sessions = new ArrayList<IncomingServerSession>();
+            List<IncomingServerSession> sessions = new ArrayList<>();
             for (String streamID : streamIDs) {
                 // Search in local hosted sessions
                 IncomingServerSession session = localSessionManager.getIncomingServerSession(streamID);
@@ -893,7 +893,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     }
 
     public Collection<ClientSession> getSessions(String username) {
-        List<ClientSession> sessionList = new ArrayList<ClientSession>();
+        List<ClientSession> sessionList = new ArrayList<>();
         if (username != null && serverName != null) {
             List<JID> addresses = routingTable.getRoutes(new JID(username, serverName, null, true), null);
             for (JID address : addresses) {
@@ -986,7 +986,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @return a collection with the established sessions from external components.
      */
     public Collection<ComponentSession> getComponentSessions() {
-        List<ComponentSession> sessions = new ArrayList<ComponentSession>();
+        List<ComponentSession> sessions = new ArrayList<>();
         // Add sessions of external components connected to this JVM
         sessions.addAll(localSessionManager.getComponentsSessions());
         // Add sessions of external components connected to other cluster nodes
@@ -1616,7 +1616,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                     lock.lock();
                     List<String> streamIDs = hostnameSessionsCache.get(hostname);
                     if (streamIDs == null) {
-                        streamIDs = new ArrayList<String>();
+                        streamIDs = new ArrayList<>();
                     }
                     streamIDs.add(streamID);
                     hostnameSessionsCache.put(hostname, streamIDs);
@@ -1630,7 +1630,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                     lock.lock();
                     Set<String> validatedDomains = validatedDomainsCache.get(streamID);
                     if (validatedDomains == null) {
-                        validatedDomains = new HashSet<String>();
+                        validatedDomains = new HashSet<>();
                     }
                     boolean added = validatedDomains.add(hostname);
                     if (added) {

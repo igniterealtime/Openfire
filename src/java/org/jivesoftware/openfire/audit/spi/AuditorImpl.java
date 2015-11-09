@@ -101,7 +101,7 @@ public class AuditorImpl implements Auditor {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<AuditPacket>();
+    private BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<>();
 
     /**
      * Allow only a limited number of files for each day, max. three digits (000-999)
@@ -240,7 +240,7 @@ public class AuditorImpl implements Auditor {
         // Check if total size has been exceeded
         if (totalLength > maxTotalSize) {
             // Sort files by name (chronological order)
-            List<File> sortedFiles = new ArrayList<File>(Arrays.asList(files));
+            List<File> sortedFiles = new ArrayList<>(Arrays.asList(files));
             Collections.sort(sortedFiles, new Comparator<File>() {
                 @Override
                 public int compare(File o1, File o2) {
@@ -378,7 +378,7 @@ public class AuditorImpl implements Auditor {
     }
 
     private void saveQueuedPackets() {
-        List<AuditPacket> packets = new ArrayList<AuditPacket>(logQueue.size());
+        List<AuditPacket> packets = new ArrayList<>(logQueue.size());
         logQueue.drainTo(packets);
         for (AuditPacket auditPacket : packets) {
             try {

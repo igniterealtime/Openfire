@@ -154,7 +154,7 @@ public class ClearspaceMUCEventDelegate extends MUCEventDelegate {
 
     @Override
 	public Map<String, String> getRoomConfig(String roomName) {
-        Map<String, String> roomConfig = new HashMap<String, String>();
+        Map<String, String> roomConfig = new HashMap<>();
 
         IQ iq = new IQ(IQ.Type.get);
         iq.setFrom(csMucDomain);

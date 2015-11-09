@@ -125,10 +125,10 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         // Our primary data structure is a HashMap. The default capacity of 11
         // is too small in almost all cases, so we set it bigger.
-        map = new HashMap<K, CacheObject<V>>(103);
+        map = new HashMap<>(103);
 
-        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
-        ageList = new org.jivesoftware.util.LinkedList<K>();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<>();
+        ageList = new org.jivesoftware.util.LinkedList<>();
     }
 
     @Override
@@ -151,7 +151,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return value;
         }
         cacheSize += objectSize;
-        DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<V>(value, objectSize);
+        DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<>(value, objectSize);
         map.put(key, cacheObject);
         // Make an entry into the cache order list.
         LinkedListNode<K> lastAccessedNode = lastAccessedList.addFirst(key);
@@ -228,9 +228,9 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // Now, reset all containers.
         map.clear();
         lastAccessedList.clear();
-        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<>();
         ageList.clear();
-        ageList = new org.jivesoftware.util.LinkedList<K>();
+        ageList = new org.jivesoftware.util.LinkedList<>();
 
         cacheSize = 0;
         cacheHits = 0;
@@ -270,7 +270,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         private Collection<DefaultCache.CacheObject<V>> cachedObjects;
 
         private CacheObjectCollection(Collection<DefaultCache.CacheObject<V>> cachedObjects) {
-            this.cachedObjects = new ArrayList<CacheObject<V>>(cachedObjects);
+            this.cachedObjects = new ArrayList<>(cachedObjects);
         }
 
         @Override
@@ -444,7 +444,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // TODO Make this work right
 
         synchronized (this) {
-            final Map<K, V> result = new HashMap<K, V>();
+            final Map<K, V> result = new HashMap<>();
             for (final Entry<K, DefaultCache.CacheObject<V>> entry : map.entrySet()) {
                 result.put(entry.getKey(), entry.getValue().object);
             }
@@ -458,7 +458,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // maximum defined age.
         deleteExpiredEntries();
         synchronized (this) {
-            return new HashSet<K>(map.keySet());
+            return new HashSet<>(map.keySet());
         }
     }
 

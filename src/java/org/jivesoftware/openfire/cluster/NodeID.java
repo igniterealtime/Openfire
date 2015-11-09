@@ -41,7 +41,7 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class NodeID implements Externalizable {
-    private static List<NodeID> instances = new ArrayList<NodeID>();
+    private static List<NodeID> instances = new ArrayList<>();
 
     private byte[] nodeID;
 

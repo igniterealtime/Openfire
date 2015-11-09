@@ -109,7 +109,7 @@ public class GetServerStats extends AdHocCommand {
 
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<String>(sessions.size());
+        Set<String> users = new HashSet<>(sessions.size());
         int availableSessions = 0;
         for (ClientSession session : sessions) {
             if (session.getPresence().isAvailable()) {

@@ -50,7 +50,7 @@ public abstract class VirtualConnection implements Connection {
     protected LocalSession session;
 
     final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<ConnectionCloseListener, Object>();
+            new HashMap<>();
 
     private boolean closed = false;
 

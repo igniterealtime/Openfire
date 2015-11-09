@@ -323,7 +323,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             try {
                 userManager.getUser(username).setPassword(password);
                 response = IQ.createResultIQ(packet);
-                List<String> params = new ArrayList<String>();
+                List<String> params = new ArrayList<>();
                 params.add(username);
                 params.add(session.toString());
                 Log.info(LocaleUtils.getLocalizedString("admin.password.update", params));

@@ -41,7 +41,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
 
 	private static final Logger Log = LoggerFactory.getLogger(MediaProxySession.class);
 
-    private List<SessionListener> sessionListeners = new ArrayList<SessionListener>();
+    private List<SessionListener> sessionListeners = new ArrayList<>();
 
     private String id;
     private String pass;

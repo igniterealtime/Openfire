@@ -50,7 +50,7 @@ public class HybridUserProvider implements UserProvider {
 		JiveGlobals.migrateProperty("hybridUserProvider.secondaryProvider.className");
 		JiveGlobals.migrateProperty("hybridUserProvider.tertiaryProvider.className");
 
-        userproviders = new ArrayList<UserProvider>();
+        userproviders = new ArrayList<>();
 
 		// Load primary, secondary, and tertiary user providers.
         String primaryClass = JiveGlobals.getProperty("hybridUserProvider.primaryProvider.className");
@@ -139,7 +139,7 @@ public class HybridUserProvider implements UserProvider {
     @Override
 	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 
-    	List<User> userList = new ArrayList<User>();
+    	List<User> userList = new ArrayList<>();
     	boolean isUnsupported = false;
 
     	for (UserProvider provider : userproviders) {
@@ -170,7 +170,7 @@ public class HybridUserProvider implements UserProvider {
     @Override
 	public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
 
-    	List<User> userList = new ArrayList<User>();
+    	List<User> userList = new ArrayList<>();
     	boolean isUnsupported = false;
     	int totalMatchedUserCount = 0;
 
@@ -193,7 +193,7 @@ public class HybridUserProvider implements UserProvider {
         		int providerStartIndex = Math.max(0, startIndex - totalMatchedUserCount);
         		int providerResultMax = numResults - userList.size();
         		List<User> providerList = providerResults instanceof List<?> ? 
-        				(List<User>) providerResults : new ArrayList<User>(providerResults);
+        				(List<User>) providerResults : new ArrayList<>(providerResults);
         		userList.addAll(providerList.subList(providerStartIndex, providerResultMax));
     			if (userList.size() >= numResults) {
     				break;
@@ -214,7 +214,7 @@ public class HybridUserProvider implements UserProvider {
     @Override
 	public Set<String> getSearchFields() throws UnsupportedOperationException {
 
-    	Set<String> returnvalue = new HashSet<String>();
+    	Set<String> returnvalue = new HashSet<>();
 
         for (UserProvider provider : userproviders) {
         	returnvalue.addAll(provider.getSearchFields());
@@ -240,7 +240,7 @@ public class HybridUserProvider implements UserProvider {
     @Override
 	public Collection<String> getUsernames() {
 
-        List<String> returnvalue = new ArrayList<String>();
+        List<String> returnvalue = new ArrayList<>();
 
         for (UserProvider provider : userproviders){
         	returnvalue.addAll(provider.getUsernames());
@@ -251,7 +251,7 @@ public class HybridUserProvider implements UserProvider {
 
     @Override
 	public Collection<User> getUsers() {
-        List<User> returnvalue = new ArrayList<User>();
+        List<User> returnvalue = new ArrayList<>();
 
         for (UserProvider provider : userproviders){
         	returnvalue.addAll(provider.getUsers());
@@ -263,7 +263,7 @@ public class HybridUserProvider implements UserProvider {
     @Override
 	public Collection<User> getUsers(int startIndex, int numResults) {
 
-    	List<User> userList = new ArrayList<User>();
+    	List<User> userList = new ArrayList<>();
     	int totalUserCount = 0;
 
     	for (UserProvider provider : userproviders) {

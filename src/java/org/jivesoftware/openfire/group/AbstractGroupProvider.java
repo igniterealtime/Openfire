@@ -156,7 +156,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public Collection<String> getSharedGroupNames() {
-        Collection<String> groupNames = new HashSet<String>();
+        Collection<String> groupNames = new HashSet<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -179,7 +179,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
-    	Set<String> answer = new HashSet<String>();
+    	Set<String> answer = new HashSet<>();
     	Collection<String> userGroups = getGroupNames(user);
     	answer.addAll(userGroups);
     	for (String userGroup : userGroups) {
@@ -191,7 +191,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
 	@Override
 	public Collection<String> getVisibleGroupNames(String userGroup) {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -215,7 +215,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     
 	@Override
 	public Collection<String> search(String key, String value) {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -240,7 +240,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
 	@Override
 	public Collection<String> getPublicSharedGroupNames() {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -278,7 +278,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     	// custom map implementation persists group property changes
     	// whenever one of the standard mutator methods are called
     	String name = group.getName();
-    	PersistableMap<String,String> result = new DefaultGroupPropertyMap<String,String>(group);
+    	PersistableMap<String,String> result = new DefaultGroupPropertyMap<>(group);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

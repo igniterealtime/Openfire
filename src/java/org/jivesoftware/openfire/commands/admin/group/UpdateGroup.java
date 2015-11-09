@@ -127,7 +127,7 @@ public class UpdateGroup extends AdHocCommand {
             }
             String groupList = group.getProperties().get("sharedRoster.groupList");
             if (groupList != null) {
-                Collection<String> groups = new ArrayList<String>();
+                Collection<String> groups = new ArrayList<>();
                 StringTokenizer tokenizer = new StringTokenizer(groupList,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken().trim();

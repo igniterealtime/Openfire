@@ -92,8 +92,8 @@ public class Group implements Cacheable, Externalizable {
         this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
-        this.members = new HashSet<JID>(members);
-        this.administrators = new HashSet<JID>(administrators);
+        this.members = new HashSet<>(members);
+        this.administrators = new HashSet<>(administrators);
     }
 
     /**
@@ -114,8 +114,8 @@ public class Group implements Cacheable, Externalizable {
         this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
-        this.members = new HashSet<JID>(members);
-        this.administrators = new HashSet<JID>(administrators);
+        this.members = new HashSet<>(members);
+        this.administrators = new HashSet<>(administrators);
 
         this.properties = provider.loadProperties(this);
         
@@ -180,7 +180,7 @@ public class Group implements Cacheable, Externalizable {
             this.jid = null; // rebuilt when needed
 
             // Fire event.
-            Map<String, Object> params = new HashMap<String, Object>();
+            Map<String, Object> params = new HashMap<>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             params.put("originalJID", originalJID);
@@ -221,7 +221,7 @@ public class Group implements Cacheable, Externalizable {
             provider.setDescription(name, description);
             this.description = description;
             // Fire event.
-            Map<String, Object> params = new HashMap<String, Object>();
+            Map<String, Object> params = new HashMap<>();
             params.put("type", "descriptionModified");
             params.put("originalValue", originalDescription);
             GroupEventDispatcher.dispatchEvent(this,
@@ -260,7 +260,7 @@ public class Group implements Cacheable, Externalizable {
      * @return a read-only Collection of the group administrators + members.
      */
     public Collection<JID> getAll() {
-    	Set<JID> everybody = new HashSet<JID>(administrators);
+    	Set<JID> everybody = new HashSet<>(administrators);
     	everybody.addAll(members);
         return Collections.unmodifiableSet(everybody);
     }
@@ -400,13 +400,13 @@ public class Group implements Cacheable, Externalizable {
                     provider.deleteMember(name, user);
                     // Fire event.
                     if (adminCollection) {
-                        Map<String, String> params = new HashMap<String, String>();
+                        Map<String, String> params = new HashMap<>();
                         params.put("admin", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.admin_removed, params);
                     }
                     else {
-                        Map<String, String> params = new HashMap<String, String>();
+                        Map<String, String> params = new HashMap<>();
                         params.put("member", user.toString());
                         GroupEventDispatcher.dispatchEvent(Group.this,
                                 GroupEventDispatcher.EventType.member_removed, params);
@@ -445,7 +445,7 @@ public class Group implements Cacheable, Externalizable {
                 }
 
                 // Fire event.
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 if (adminCollection) {
                     params.put("admin", user.toString());
                     if (alreadyGroupUser) {
@@ -506,8 +506,8 @@ public class Group implements Cacheable, Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             description = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        members= new HashSet<JID>();
-        administrators = new HashSet<JID>();
+        members= new HashSet<>();
+        administrators = new HashSet<>();
         ExternalizableUtil.getInstance().readSerializableCollection(in, members, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
     }

@@ -40,8 +40,8 @@ public class PluginCacheRegistry {
 
     private static final PluginCacheRegistry instance = new PluginCacheRegistry();
 
-    private Map<String, CacheInfo> extraCacheMappings = new HashMap<String, CacheInfo>();
-    private Map<String, List<CacheInfo>> pluginCaches = new HashMap<String, List<CacheInfo>>();
+    private Map<String, CacheInfo> extraCacheMappings = new HashMap<>();
+    private Map<String, List<CacheInfo>> pluginCaches = new HashMap<>();
 
     public static PluginCacheRegistry getInstance() {
         return instance;
@@ -61,7 +61,7 @@ public class PluginCacheRegistry {
         List<CacheInfo> caches = pluginCaches.get(pluginName);
 
         if (caches == null) {
-            caches = new ArrayList<CacheInfo>();
+            caches = new ArrayList<>();
             pluginCaches.put(pluginName, caches);
         }
 

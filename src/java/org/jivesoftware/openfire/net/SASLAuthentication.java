@@ -89,7 +89,7 @@ public class SASLAuthentication {
 
     private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
 
-    private static Map<String, ElementType> typeMap = new TreeMap<String, ElementType>();
+    private static Map<String, ElementType> typeMap = new TreeMap<>();
 
     private static Set<String> mechanisms = null;
 
@@ -261,7 +261,7 @@ public class SASLAuthentication {
                         // The selected SASL mechanism requires the server to send a challenge
                         // to the client
                         try {
-                            Map<String, String> props = new TreeMap<String, String>();
+                            Map<String, String> props = new TreeMap<>();
                             props.put(Sasl.QOP, "auth");
                             if (mechanism.equals("GSSAPI")) {
                                 props.put(Sasl.SERVER_AUTH, "TRUE");
@@ -564,7 +564,7 @@ public class SASLAuthentication {
             // This may be null, we will deal with that later
             String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), StandardCharsets.UTF_8);
             String principal = "";
-            ArrayList<String> principals = new ArrayList<String>();
+            ArrayList<String> principals = new ArrayList<>();
             Connection connection = session.getConnection();
             if (connection.getPeerCertificates().length < 1) {
                 Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no certificates found.");
@@ -785,7 +785,7 @@ public class SASLAuthentication {
      * @return the list of supported SASL mechanisms by the server.
      */
     public static Set<String> getSupportedMechanisms() {
-        Set<String> answer = new HashSet<String>(mechanisms);
+        Set<String> answer = new HashSet<>(mechanisms);
         // Clean up not-available mechanisms
         for (Iterator<String> it=answer.iterator(); it.hasNext();) {
             String mech = it.next();
@@ -824,7 +824,7 @@ public class SASLAuthentication {
         JiveGlobals.migrateProperty("sasl.gssapi.config");
         JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
 
-        mechanisms = new HashSet<String>();
+        mechanisms = new HashSet<>();
         String available = JiveGlobals.getProperty("sasl.mechs");
         if (available == null) {
             mechanisms.add("ANONYMOUS");

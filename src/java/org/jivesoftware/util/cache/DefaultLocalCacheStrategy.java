@@ -43,7 +43,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     /**
      * Keep track of the locks that are currently being used.
      */
-    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<Object, LockAndCount>();
+    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<>();
 
     public DefaultLocalCacheStrategy() {
     }

@@ -125,7 +125,7 @@ public final class HttpBindManager {
 
     public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = 32768;
 
-    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<String, Boolean>();
+    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<>();
 
     private static HttpBindManager instance = new HttpBindManager();
 

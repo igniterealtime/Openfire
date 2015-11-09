@@ -33,7 +33,7 @@ public class SessionEventDispatcher {
 	private static final Logger Log = LoggerFactory.getLogger(SessionEventDispatcher.class);
 
     private static List<SessionEventListener> listeners =
-            new CopyOnWriteArrayList<SessionEventListener>();
+            new CopyOnWriteArrayList<>();
 
     private SessionEventDispatcher() {
         // Not instantiable.

@@ -68,13 +68,13 @@ class LocalSessionManager {
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map
      * will hold client sessions.
      */
-    private Map<String, LocalClientSession> preAuthenticatedSessions = new ConcurrentHashMap<String, LocalClientSession>();
+    private Map<String, LocalClientSession> preAuthenticatedSessions = new ConcurrentHashMap<>();
 
     /**
      * The sessions contained in this List are component sessions. For each connected component
      * this Map will keep the component's session.
      */
-    private List<LocalComponentSession> componentsSessions = new CopyOnWriteArrayList<LocalComponentSession>();
+    private List<LocalComponentSession> componentsSessions = new CopyOnWriteArrayList<>();
 
     /**
      * Map of connection multiplexer sessions grouped by connection managers. Each connection
@@ -84,7 +84,7 @@ class LocalSessionManager {
      * will become unavailable.
      */
     private Map<String, LocalConnectionMultiplexerSession> connnectionManagerSessions =
-            new ConcurrentHashMap<String, LocalConnectionMultiplexerSession>();
+            new ConcurrentHashMap<>();
 
     /**
      * The sessions contained in this Map are server sessions originated by a remote server. These
@@ -94,7 +94,7 @@ class LocalSessionManager {
      * Key: streamID, Value: the IncomingServerSession associated to the streamID.
      */
     private final Map<String, LocalIncomingServerSession> incomingServerSessions =
-            new ConcurrentHashMap<String, LocalIncomingServerSession>();
+            new ConcurrentHashMap<>();
 
 
     public Map<String, LocalClientSession> getPreAuthenticatedSessions() {
@@ -134,7 +134,7 @@ class LocalSessionManager {
     public void stop() {
         try {
             // Send the close stream header to all connected connections
-            Set<LocalSession> sessions = new HashSet<LocalSession>();
+            Set<LocalSession> sessions = new HashSet<>();
             sessions.addAll(preAuthenticatedSessions.values());
             sessions.addAll(componentsSessions);
             for (LocalIncomingServerSession incomingSession : incomingServerSessions.values()) {

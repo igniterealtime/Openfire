@@ -145,7 +145,7 @@ public class IQMUCSearchHandler
 		int numaxusers = -1;
 		boolean includePasswordProtectedRooms = true;
 
-		final Set<String> names = new HashSet<String>();
+		final Set<String> names = new HashSet<>();
 		for (final FormField field : df.getFields()) 
 		{
 			if (field.getVariable().equals("name"))
@@ -213,7 +213,7 @@ public class IQMUCSearchHandler
 		}
 
 		// search for chatrooms matching the request params.
-		final List<MUCRoom> mucs = new ArrayList<MUCRoom>();
+		final List<MUCRoom> mucs = new ArrayList<>();
 		for (MUCRoom room : mucService.getChatRooms())
 		{
 			boolean find = false;
@@ -270,7 +270,7 @@ public class IQMUCSearchHandler
 			}
 		}
 
-		final ResultSet<MUCRoom> searchResults = new ResultSetImpl<MUCRoom>(
+		final ResultSet<MUCRoom> searchResults = new ResultSetImpl<>(
 			sortByUserAmount(mucs));
 
 		// See if the requesting entity would like to apply 'result set
@@ -305,7 +305,7 @@ public class IQMUCSearchHandler
 		else
 		{
 			// if no rsm, all found rooms are part of the result.
-			mucrsm = new ArrayList<MUCRoom>(searchResults);
+			mucrsm = new ArrayList<>(searchResults);
 		}
 
 		final Element res = DocumentHelper.createElement(QName.get("query",
@@ -315,7 +315,7 @@ public class IQMUCSearchHandler
 		boolean atLeastoneResult = false;
 		for (MUCRoom room : mucrsm)
 		{
-			final Map<String, Object> fields = new HashMap<String, Object>();
+			final Map<String, Object> fields = new HashMap<>();
 			fields.put("name", room.getNaturalLanguageName());
 			fields.put("subject", room.getSubject());
 			fields.put("num_users", room.getOccupantsCount());

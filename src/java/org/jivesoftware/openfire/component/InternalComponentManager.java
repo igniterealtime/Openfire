@@ -68,13 +68,13 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
 	private static final Logger Log = LoggerFactory.getLogger(InternalComponentManager.class);
 
-    final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<String, RoutableComponents>();
-    private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
-    private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
+    final private Map<String, RoutableComponents> routables = new ConcurrentHashMap<>();
+    private Map<String, IQ> componentInfo = new ConcurrentHashMap<>();
+    private Map<JID, JID> presenceMap = new ConcurrentHashMap<>();
     /**
      * Holds the list of listeners that will be notified of component events.
      */
-    private List<ComponentEventListener> listeners = new CopyOnWriteArrayList<ComponentEventListener>();
+    private List<ComponentEventListener> listeners = new CopyOnWriteArrayList<>();
 
     private static InternalComponentManager instance;
     /**
@@ -212,7 +212,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     	if (routables == null || (components = routables.get(subdomain)) == null) {
     		return;
     	}
-        List<Component> componentsToRemove = new ArrayList<Component>(components.getComponents());
+        List<Component> componentsToRemove = new ArrayList<>(components.getComponents());
         for (Component component : componentsToRemove) {
             removeComponent(subdomain, component);
         }
@@ -291,7 +291,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
 
     @Override
     public IQ query(Component component, IQ packet, long timeout) throws ComponentException {
-        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<>(8);
         XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
             @Override
             public void receivedAnswer(IQ packet) {
@@ -549,7 +549,7 @@ public class InternalComponentManager extends BasicModule implements ComponentMa
     private static class RoutableComponents implements RoutableChannelHandler {
 
         private JID jid;
-        final private List<Component> components = new ArrayList<Component>();
+        final private List<Component> components = new ArrayList<>();
 
         public RoutableComponents(JID jid, Component component) {
             this.jid = jid;

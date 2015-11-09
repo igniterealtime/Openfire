@@ -84,7 +84,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * Nodes managed by this service, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    private Map<String, Node> nodes = new ConcurrentHashMap<>();
 
     /**
      * The packet router for the server.
@@ -115,7 +115,7 @@ public class PEPService implements PubSubService, Cacheable {
      * the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<String, Map<String, String>>();
+    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<>();
 
     /**
      * Manager that keeps the list of ad-hoc commands and processing command
@@ -345,7 +345,7 @@ public class PEPService implements PubSubService, Cacheable {
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
-        Set<JID> recipientFullJIDs = new HashSet<JID>();
+        Set<JID> recipientFullJIDs = new HashSet<>();
         if (XMPPServer.getInstance().isLocal(recipientJID)) {
             if (recipientJID.getResource() == null) {
                 for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {

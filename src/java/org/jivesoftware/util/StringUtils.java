@@ -330,7 +330,7 @@ public class StringUtils {
      * Used by the hash method.
      */
     private static Map<String, MessageDigest> digests =
-            new ConcurrentHashMap<String, MessageDigest>();
+            new ConcurrentHashMap<>();
 
     /**
      * Hashes a String using the Md5 algorithm and returns the result as a
@@ -621,7 +621,7 @@ public class StringUtils {
             return new String[0];
         }
 
-        List<String> wordList = new ArrayList<String>();
+        List<String> wordList = new ArrayList<>();
         BreakIterator boundary = BreakIterator.getWordInstance();
         boundary.setText(text);
         int start = 0;
@@ -1099,7 +1099,7 @@ public class StringUtils {
         if (string == null || string.trim().length() == 0) {
             return Collections.emptyList();
         }
-        Collection<String> collection = new ArrayList<String>();
+        Collection<String> collection = new ArrayList<>();
         StringTokenizer tokens = new StringTokenizer(string, ",");
         while (tokens.hasMoreTokens()) {
             collection.add(tokens.nextToken().trim());

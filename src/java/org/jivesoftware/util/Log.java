@@ -330,7 +330,7 @@ public class Log {
     }
 
     private static String getMarkMessage(String username) {
-        final List<String> args = new ArrayList<String>();
+        final List<String> args = new ArrayList<>();
         args.add(username);
         args.add(JiveGlobals.formatDateTime(new java.util.Date()));
         return LocaleUtils.getLocalizedString("log.marker_inserted_by", args);

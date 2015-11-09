@@ -80,10 +80,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         UserItemsProvider {
 
     public static final String NAMESPACE_DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
-    private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
-    private Map<String, Element> localServerItems = new HashMap<String, Element>();
+    private Map<String,DiscoItemsProvider> entities = new HashMap<>();
+    private Map<String, Element> localServerItems = new HashMap<>();
     private Cache<String, ClusteredServerItem> serverItems;
-    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoItemsProvider>();
+    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 
@@ -153,11 +153,11 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 					
 					// Calculate which results to include.
 					final List<DiscoItem> rsmResults;
-					final List<DiscoItem> allItems = new ArrayList<DiscoItem>();
+					final List<DiscoItem> allItems = new ArrayList<>();
 					while (itemsItr.hasNext()) {
 						allItems.add(itemsItr.next());
 					}
-					final ResultSet<DiscoItem> rs = new ResultSetImpl<DiscoItem>(
+					final ResultSet<DiscoItem> rs = new ResultSetImpl<>(
 							allItems);
 					try {
 						rsmResults = rs.applyRSMDirectives(rsmElement);
@@ -501,7 +501,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     return null;
                 }
                 if (name == null) {
-                    List<DiscoItem> answer = new ArrayList<DiscoItem>();
+                    List<DiscoItem> answer = new ArrayList<>();
                     for (ClusteredServerItem item : serverItems.values()) {
                         answer.add(new DiscoItem(item.element));
                     }
@@ -515,7 +515,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                         // If we didn't find any UserItemsProviders, then answer a not found error
                         return null;
                     }
-                    List<DiscoItem> answer = new ArrayList<DiscoItem>();
+                    List<DiscoItem> answer = new ArrayList<>();
                     for (UserItemsProvider itemsProvider : itemsProviders) {
                         // Check if we have items associated with the requested name
                         Iterator<Element> itemsItr = itemsProvider.getUserItems(name, senderJID);
@@ -540,7 +540,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private static class ClusteredServerItem implements Externalizable {
         private Element element;
-        private Set<NodeID> nodes = new HashSet<NodeID>();
+        private Set<NodeID> nodes = new HashSet<>();
 
         public ClusteredServerItem() {
         }
@@ -560,7 +560,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     @Override
     public Iterator<Element> getUserItems(String name, JID senderJID) {
-        List<Element> answer = new ArrayList<Element>();
+        List<Element> answer = new ArrayList<>();
         try {
             User user = UserManager.getInstance().getUser(name);
             RosterItem item = user.getRoster().getRosterItem(senderJID);

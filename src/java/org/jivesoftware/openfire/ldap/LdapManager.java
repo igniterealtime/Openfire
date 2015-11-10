@@ -495,6 +495,7 @@ public class LdapManager {
 
         // SSL
         if (sslEnabled) {
+            env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
@@ -533,7 +534,15 @@ public class LdapManager {
         } else {
             env.put("com.sun.jndi.ldap.connect.pool", "false");
         }
+        if (connTimeout > 0) {
+            env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+        } else {
+            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+        }
 
+        if (readTimeout > 0) {
+            env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
+        }
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
         }
@@ -565,7 +574,7 @@ public class LdapManager {
                get details of the negotiated TLS session: cipher suite,
                peer certificate, etc. */
             try {
-                SSLSession session = tls.negotiate();
+                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
@@ -629,6 +638,7 @@ public class LdapManager {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
+                env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -644,14 +654,14 @@ public class LdapManager {
                 }
             }
 
-            // Set only on non SSL since SSL connections break with a timeout.
-            if (!sslEnabled) {
-                if (connTimeout > 0) {
+
+
+            if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
                     env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                 }
-            }
+
             if (readTimeout > 0) {
                 env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
@@ -684,7 +694,7 @@ public class LdapManager {
                    get details of the negotiated TLS session: cipher suite,
                    peer certificate, etc. */
                 try {
-                    SSLSession session = tls.negotiate();
+                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
@@ -733,6 +743,7 @@ public class LdapManager {
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
+                        env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 
@@ -743,11 +754,9 @@ public class LdapManager {
                         env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
-                    // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a timemout.
-                    if (!sslEnabled) {
+
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
-                    }
+
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }
@@ -776,7 +785,7 @@ public class LdapManager {
                            get details of the negotiated TLS session: cipher suite,
                            peer certificate, etc. */
                         try {
-                            SSLSession session = tls.negotiate();
+                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);

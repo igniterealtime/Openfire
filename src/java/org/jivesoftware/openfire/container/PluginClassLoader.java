@@ -36,9 +36,13 @@ import java.security.AccessControlException;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -58,6 +62,7 @@ import org.slf4j.LoggerFactory;
  * </ul>
  *
  * @author Derek DeMoro
+ * @author wmz7year
  */
 public class PluginClassLoader extends URLClassLoader {
 	private static final Logger Log = LoggerFactory.getLogger(PluginClassLoader.class);
@@ -496,6 +501,46 @@ public class PluginClassLoader extends URLClassLoader {
 	}
 
 	/**
+	 * Return an enumeration of <code>URLs</code> representing all of the
+	 * resources with the given name. If no resources with this name are found,
+	 * return an empty enumeration.
+	 *
+	 * @param name
+	 *            Name of the resources to be found
+	 *
+	 * @exception IOException
+	 *                if an input/output error occurs
+	 */
+	public Enumeration<URL> getResources(String name) throws IOException {
+		if (Log.isDebugEnabled())
+			Log.debug("    findResources(" + name + ")");
+
+		LinkedHashSet<URL> result = new LinkedHashSet<>();
+
+		String path = nameToPath(name);
+
+		// find local Classloader
+		Iterator<Entry<String, ResourceEntry>> iterator = resourceEntries.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<String, ResourceEntry> resource = iterator.next();
+			String loadedResourceName = resource.getKey();
+			if (loadedResourceName.endsWith(path)) {
+				// path to name
+				loadedResourceName = pathToName(loadedResourceName);
+				result.add(findResource(loadedResourceName));
+			}
+		}
+
+		// find from parent Classloader
+		Enumeration<URL> parentResources = super.getResources(name);
+		while (parentResources.hasMoreElements()) {
+			result.add(parentResources.nextElement());
+		}
+
+		return Collections.enumeration(result);
+	}
+
+	/**
 	 * Adds a directory to the class loader.
 	 *
 	 * @param directory
@@ -614,7 +659,7 @@ public class PluginClassLoader extends URLClassLoader {
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
 				for (File temp : files) {
-					if(temp.isDirectory()){
+					if (temp.isDirectory()) {
 						parent = String.format("%s%s/", parent, temp.getName());
 					}
 					addResource(temp.toURI().toURL(), parent);
@@ -667,6 +712,7 @@ public class PluginClassLoader extends URLClassLoader {
 				entry.lastModified = jarEntry.getTime();
 				entry.binaryContent = readBytes(jarFile.getInputStream(jarEntry));
 				entry.codeBase = codebase;
+				entry.source = new URL(codebase + jarEntry.getName());
 				if (Log.isDebugEnabled())
 					Log.debug("add resource path:/" + jarEntry.getName());
 				resourceEntries.put("/" + jarEntry.getName(), entry);
@@ -707,6 +753,16 @@ public class PluginClassLoader extends URLClassLoader {
 		path.append('/');
 		path.append(name);
 		return path.toString();
+	}
+
+	private String pathToName(String path) {
+		if (path.length() <= 1) {
+			throw new IllegalStateException(path);
+		}
+		if (!path.startsWith("/")) {
+			return path;
+		}
+		return path.substring(1, path.length());
 	}
 
 	/**

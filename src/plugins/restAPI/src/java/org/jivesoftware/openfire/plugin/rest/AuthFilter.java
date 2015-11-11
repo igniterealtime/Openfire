@@ -77,7 +77,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		}
 
 		// HTTP Basic Auth or Shared Secret key
-		if (plugin.isHttpBasicAuth()) {
+		if ("basic".equals(plugin.getHttpAuth())) {
 			String[] usernameAndPassword = BasicAuth.decode(auth);
 
 			// If username or password fail

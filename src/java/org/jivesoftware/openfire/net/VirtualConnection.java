@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.net;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
@@ -52,7 +53,7 @@ public abstract class VirtualConnection implements Connection {
     final private Map<ConnectionCloseListener, Object> listeners =
             new HashMap<>();
 
-    private boolean closed = false;
+   private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     @Override
     public String getLanguage() {
@@ -95,10 +96,7 @@ public abstract class VirtualConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-        if (session == null) {
-            return closed;
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+    	return state.get() == State.CLOSED;
     }
 
     @Override
@@ -194,30 +192,20 @@ public abstract class VirtualConnection implements Connection {
      */
     @Override
     public void close() {
-        close( false );
-    }
-
-    @Override
-    public void close(boolean peerIsKnownToBeDisconnected) {
-        boolean wasClosed = false;
-        synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    if (session != null) {
-                        session.setStatus(Session.STATUS_CLOSED);
-                    }
-                    closeVirtualConnection();
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
-                closed = true;
-                wasClosed = true;
+    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+    		
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
             }
-        }
-        if (wasClosed) {
+            
+            try {
+                closeVirtualConnection();
+            } catch (Exception e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
+            }
+            
             notifyCloseListeners();
+            
         }
     }
 

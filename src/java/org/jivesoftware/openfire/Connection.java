@@ -20,20 +20,21 @@
 
 package org.jivesoftware.openfire;
 
+import java.io.Closeable;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.Packet;
-
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
 
 /**
  * Represents a connection on the server.
  *
  * @author Iain Shigeoka
  */
-public interface Connection {
-
+public interface Connection extends Closeable {
+	
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -144,28 +145,12 @@ public interface Connection {
      *      <li>Call notifyEvent all listeners that the channel is shutting down.
      *      <li>Close the socket.
      * </ul>
-     *
-     * An invocation of this method is equal to invoking {@link #close(boolean)} with a parameter
-     * that is false.
+     * Note this method overrides the base interface to suppress exceptions. However,
+     * it otherwise fulfills the requirements of the {@link Closeable#close()} contract
+     * (idempotent, try-with-resources, etc.)
      */
+    @Override
     public void close();
-
-    /**
-     * Close this session including associated socket connection. The order of
-     * events for closing the session is:
-     * <ul>
-     *      <li>Set closing flag to prevent redundant shutdowns.
-     *      <li>Call notifyEvent all listeners that the channel is shutting down.
-     *      <li>Close the socket.
-     * </ul>
-     *
-     * This method takes into account the connection state of the peer. Specifically,
-     * when the peer is known to be in a disconnected state, no data will be sent
-     * (otherwise, this method can trigger the delivery of an end-of-stream signal).
-     *
-     * @param peerIsKnownToBeDisconnected should be set to true when the peer is known to no longer be available.
-     */
-    public void close( boolean peerIsKnownToBeDisconnected );
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors
@@ -455,4 +440,10 @@ public interface Connection {
          */
         needed
     }
+
+    /**
+     * Used to specify operational status for the corresponding connection
+     */
+    enum State { OPEN, CLOSED }
+
 }

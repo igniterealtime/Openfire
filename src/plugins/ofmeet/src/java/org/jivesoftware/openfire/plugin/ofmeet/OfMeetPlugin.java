@@ -44,6 +44,8 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.group.*;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +78,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	public File pluginDirectory;
     private TaskEngine taskEngine = TaskEngine.getInstance();
     private UserManager userManager = XMPPServer.getInstance().getUserManager();
+    private ComponentManager componentManager;
 
     public static OfMeetPlugin self;
 
@@ -94,8 +97,9 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 		return jitsiPlugin;
 	}
 
-    public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
-
+    public void initializePlugin(final PluginManager manager, final File pluginDirectory)
+    {
+        componentManager = ComponentManagerFactory.getComponentManager();
 		ContextHandlerCollection contexts = HttpBindManager.getInstance().getContexts();
 
 		this.manager = manager;
@@ -103,17 +107,25 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 		self = this;
 
 		try {
-			Log.info("OfMeet Plugin - Initialize jitsi videobridge ");
+			try {
+				Log.info("OfMeet Plugin - Initialize jitsi videobridge ");
 
-			jitsiPlugin = new PluginImpl();
-			jitsiPlugin.initializePlugin(manager, pluginDirectory);
+				jitsiPlugin = new PluginImpl();
+				jitsiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+			}
+			catch (Exception e1) {
+				Log.error("Could NOT Initialize jitsi videobridge", e1);
+			}
 
-			Log.info("OfMeet Plugin - Initialize SIP gateway ");
+			try {
+				Log.info("OfMeet Plugin - Initialize SIP gateway ");
 
-			jigasiPlugin = new JigasiPlugin();
-			jigasiPlugin.initializePlugin(manager, pluginDirectory);
-
-			Log.info("OfMeet Plugin - Initialize jitsi conference focus");
+				jigasiPlugin = new JigasiPlugin();
+				jigasiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+			}
+			catch (Exception e1) {
+				Log.error("Could NOT Initialize jitsi videobridge", e1);
+			}
 
 			String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 			String userName = "focus";
@@ -149,8 +161,10 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			{
 				@Override public void run()
 				{
+					Log.info("OfMeet Plugin - Initialize jitsi conference focus");
+
      				jicofoPlugin = new JicofoPlugin();
-					jicofoPlugin.initializePlugin(manager, pluginDirectory);
+					jicofoPlugin.initializePlugin(componentManager, manager, pluginDirectory);
 				}
 			}, 5000);
 
@@ -182,6 +196,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			context.addServlet(new ServletHolder(new XMPPServlet()),"/server");
 
 			WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath(), "/ofmeet");
+			context2.setClassLoader(this.getClass().getClassLoader());
 			context2.setWelcomeFiles(new String[]{"index.html"});
 
 			String securityEnabled = JiveGlobals.getProperty("ofmeet.security.enabled", "true");
@@ -193,7 +208,7 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 			}
 
 		} catch (Exception e) {
-			Log.error("Could NOT start open fire meetings");
+			Log.error("Could NOT start open fire meetings", e);
 		}
     }
 
@@ -272,9 +287,9 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	public void leftCluster()
 	{
 		Log.info("OfMeet Plugin - leftCluster");
-		jitsiPlugin.initializePlugin(manager, pluginDirectory);
-		jigasiPlugin.initializePlugin(manager, pluginDirectory);
-		jicofoPlugin.initializePlugin(manager, pluginDirectory);
+		jitsiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+		jigasiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+		jicofoPlugin.initializePlugin(componentManager, manager, pluginDirectory);
 	}
 
 	@Override
@@ -289,9 +304,9 @@ public class OfMeetPlugin implements Plugin, ClusterEventListener  {
 	{
 		Log.info("OfMeet Plugin - markedAsSeniorClusterMember");
 
-		jitsiPlugin.initializePlugin(manager, pluginDirectory);
-		jigasiPlugin.initializePlugin(manager, pluginDirectory);
-		jicofoPlugin.initializePlugin(manager, pluginDirectory);
+		jitsiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+		jigasiPlugin.initializePlugin(componentManager, manager, pluginDirectory);
+		jicofoPlugin.initializePlugin(componentManager, manager, pluginDirectory);
 	}
 
 	public void processMeetingPlanner()

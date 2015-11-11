@@ -1,7 +1,9 @@
 <%@ page
 	import="java.util.*,
-                 org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.*,org.jivesoftware.openfire.plugin.rest.RESTServicePlugin"
+                org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.util.*,org.jivesoftware.openfire.plugin.rest.RESTServicePlugin,
+				org.jivesoftware.openfire.container.Plugin,
+                org.jivesoftware.openfire.container.PluginManager"
 	errorPage="error.jsp"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
@@ -26,23 +28,39 @@
 	
 	String loadingStatus = null;
 	
+	final PluginManager pluginManager = admin.getXMPPServer().getPluginManager();
+	
 	RESTServicePlugin plugin = (RESTServicePlugin) XMPPServer.getInstance().getPluginManager()
 			.getPlugin("restapi");
 
 	// Handle a save
 	Map errors = new HashMap();
 	if (save) {
-		loadingStatus = plugin.getLoadingStatusMessage();
+		if("custom".equals(httpAuth)) {
+			loadingStatus = plugin.loadAuthenticationFilter(customAuthFilterClassName);
+		}
 		if (loadingStatus != null) {
             errors.put("loadingStatus", loadingStatus);
 		}
 		
 		if (errors.size() == 0) {
+			
+			boolean is2Reload = "custom".equals(httpAuth) || "custom".equals(plugin.getHttpAuth());
 			plugin.setEnabled(enabled);
 			plugin.setSecret(secret);
 			plugin.setHttpAuth(httpAuth);
 			plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
 			plugin.setCustomAuthFiIterClassName(customAuthFilterClassName);
+			
+			if(is2Reload) {
+				String pluginName  = pluginManager.getName(plugin);
+				String pluginDir = pluginManager.getPluginDirectory(plugin).getName();
+				pluginManager.unloadPlugin(pluginDir);
+            
+				// Log the event
+				admin.logEvent("reloaded plugin "+ pluginName, null);
+				response.sendRedirect("/plugin-admin.jsp?reloadsuccess=true");
+            }
 			response.sendRedirect("rest-api.jsp?success=true");
 			return;
 		}
@@ -147,12 +165,13 @@
 					<input type="radio" name="authtype" value="custom"
 						id="customFilterAuth" <%=("custom".equals(httpAuth) ? "checked" : "")%>>
 					<label for="secretKeyAuth">Custom authentication filter classname - REST API
-						authentication delegates to a custom filter implemented in some other plugin.</label>
-					<br>
+						authentication delegates to a custom filter implemented in some other plugin.
+					</label>
+					<div style="margin-left: 20px; margin-top: 5px;"><strong>Note: changing back and forth from custom authentication filter forces the REST API plugin reloading</strong></div>
 					<label style="padding-left: 25px" for="text_secret">Filter 
 						classname:</label>
-					<input type="text" name="customAuthFilterClassName" value="<%=customAuthFilterClassName%>"
-						id="custom_auth_filter_class_name">
+					<input type="text" name="customAuthFilterClassName" value="<%= customAuthFilterClassName %>"
+						id="custom_auth_filter_class_name" style="width:70%;padding:4px;">
 					<br>
 					<br>
 

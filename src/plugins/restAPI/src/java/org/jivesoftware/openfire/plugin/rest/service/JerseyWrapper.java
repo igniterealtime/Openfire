@@ -68,29 +68,13 @@ public class JerseyWrapper extends ServletContainer {
 	private static String loadingStatusMessage = null;
 	
 	static {
-		
-		// Check if custom AuthFilter is available
-		String customAuthFilterClassName = JiveGlobals.getProperty(CUSTOM_AUTH_PROPERTY_NAME);
-		String restAuthType = JiveGlobals.getProperty(REST_AUTH_TYPE);
-		String pickedAuthFilter = AUTHFILTER;
-		
-		try {
-			if(customAuthFilterClassName != null && "custom".equals(restAuthType)) {
-				Class.forName(customAuthFilterClassName, false, JerseyWrapper.class.getClassLoader());
-				pickedAuthFilter = customAuthFilterClassName;
-				loadingStatusMessage = null;
-			}
-		} catch (ClassNotFoundException e) {
-			loadingStatusMessage = "No custom auth filter found for restAPI plugin!";
-        }
-		
 		JERSEY_LOGGER.setLevel(Level.SEVERE);
 		config = new HashMap<String, Object>();
 		config.put(RESOURCE_CONFIG_CLASS_KEY, RESOURCE_CONFIG_CLASS);
 		prc = new PackagesResourceConfig(SCAN_PACKAGE_DEFAULT);
 		prc.setPropertiesAndFeatures(config);		
-		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);
 		prc.getProperties().put(CONTAINER_RESPONSE_FILTERS, CORSFILTER);
+		loadAuthenticationFilter();
 
 		prc.getClasses().add(RestAPIService.class);
 		
@@ -115,6 +99,43 @@ public class JerseyWrapper extends ServletContainer {
 		prc.getClasses().add(RESTExceptionMapper.class);
 	}
 
+	public static String tryLoadingAuthenticationFilter(String customAuthFilterClassName) {
+		
+		try {
+			if(customAuthFilterClassName != null) {
+				Class.forName(customAuthFilterClassName, false, JerseyWrapper.class.getClassLoader());
+				loadingStatusMessage = null;
+			}
+		} catch (ClassNotFoundException e) {
+			loadingStatusMessage = "No custom auth filter found for restAPI plugin with name " + customAuthFilterClassName;
+        }
+		
+		if(customAuthFilterClassName == null || customAuthFilterClassName.isEmpty())
+			loadingStatusMessage = "Classname field can't be empty!";
+		return loadingStatusMessage;
+	}
+	
+	public static String loadAuthenticationFilter() {
+			
+		// Check if custom AuthFilter is available
+		String customAuthFilterClassName = JiveGlobals.getProperty(CUSTOM_AUTH_PROPERTY_NAME);
+		String restAuthType = JiveGlobals.getProperty(REST_AUTH_TYPE);
+		String pickedAuthFilter = AUTHFILTER;
+		
+		try {
+			if(customAuthFilterClassName != null && "custom".equals(restAuthType)) {
+				Class.forName(customAuthFilterClassName, false, JerseyWrapper.class.getClassLoader());
+				pickedAuthFilter = customAuthFilterClassName;
+				loadingStatusMessage = null;
+			}
+		} catch (ClassNotFoundException e) {
+			loadingStatusMessage = "No custom auth filter found for restAPI plugin! " + customAuthFilterClassName + " " + restAuthType;
+        }
+		
+		prc.getProperties().put(CONTAINER_REQUEST_FILTERS, pickedAuthFilter);	
+		return loadingStatusMessage;
+	}
+	
 	/**
 	 * Instantiates a new jersey wrapper.
 	 */
@@ -129,6 +150,7 @@ public class JerseyWrapper extends ServletContainer {
 	 */
 	@Override
 	public void init(ServletConfig servletConfig) throws ServletException {
+		loadAuthenticationFilter();
 		super.init(servletConfig);
 		// Exclude this servlet from requering the user to login
 		AuthCheckFilter.addExclude(SERVLET_URL);

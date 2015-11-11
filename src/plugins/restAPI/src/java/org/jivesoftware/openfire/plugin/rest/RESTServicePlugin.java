@@ -203,6 +203,13 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 	}
 	
 	/**
+	 * Reloads the Jersey wrapper.
+	 */
+	public String loadAuthenticationFilter(String customAuthFilterClassName) {
+		return JerseyWrapper.tryLoadingAuthenticationFilter(customAuthFilterClassName);
+	}
+	
+	/**
 	 * Returns the secret key that only valid requests should know.
 	 *
 	 * @return the secret key.

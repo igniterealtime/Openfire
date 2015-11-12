@@ -343,9 +343,11 @@ public class SASLAuthentication {
                         if (ss != null) {
                             boolean ssComplete = ss.isComplete();
                             String response = doc.getTextTrim();
-                            if (!BASE64_ENCODED.matcher(response).matches()) {
-                                authenticationFailed(session, Failure.INCORRECT_ENCODING);
-                                return Status.failed;
+                            if (response.length() > 0){
+                                if (!BASE64_ENCODED.matcher(response).matches()) {
+                                    authenticationFailed(session, Failure.INCORRECT_ENCODING);
+                                    return Status.failed;
+                                }
                             }
                             try {
                                 if (ssComplete) {

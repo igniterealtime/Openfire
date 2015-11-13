@@ -1,6 +1,6 @@
 package com.reucon.openfire.plugin.archive.util;
 
-import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -16,7 +16,7 @@ public class XmppDateUtil {
 	private static final DateFormat dateFormatWithoutMillis;
 
 	static {
-		dateFormat = new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
+		dateFormat = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DATETIME_FORMAT);
 		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		dateFormatWithoutMillis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		dateFormatWithoutMillis.setTimeZone(TimeZone.getTimeZone("UTC"));

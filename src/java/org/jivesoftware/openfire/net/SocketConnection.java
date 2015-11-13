@@ -468,55 +468,40 @@ public class SocketConnection implements Connection {
 
     @Override
     public void close() {
-        close( false );
-    }
-
-    @Override
-    public void close( boolean peerIsKnownToBeDisconnected ) {
-        boolean wasClosed = false;
+    	
         synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    if (session != null) {
-                        session.setStatus(Session.STATUS_CLOSED);
-                    }
-
-                    if ( !peerIsKnownToBeDisconnected ) {
-                        boolean allowedToWrite = false;
-                        try {
-                            requestWriting();
-                            allowedToWrite = true;
-                            // Register that we started sending data on the connection
-                            writeStarted();
-                            writer.write("</stream:stream>");
-                            if (flashClient) {
-                                writer.write('\0');
-                            }
-                            writer.flush();
-                        }
-                        catch (IOException e) {
-                            // Do nothing
-                        }
-                        finally {
-                            // Register that we finished sending data on the connection
-                            writeFinished();
-                            if (allowedToWrite) {
-                                releaseWriting();
-                            }
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
-                closeConnection();
-                wasClosed = true;
+        	if (isClosed()) {
+        		return;
+        	}
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
             }
         }
-        if (wasClosed) {
-            notifyCloseListeners();
+        
+        boolean allowedToWrite = false;
+        try {
+            requestWriting();
+            allowedToWrite = true;
+            // Register that we started sending data on the connection
+            writeStarted();
+            writer.write("</stream:stream>");
+            if (flashClient) {
+                writer.write('\0');
+            }
+            writer.flush();
         }
+        catch (Exception e) {
+            Log.error("Failed to deliver stream close tag: " + e.getMessage());
+        }
+        
+        // Register that we finished sending data on the connection
+        writeFinished();
+        if (allowedToWrite) {
+            releaseWriting();
+        }
+            
+        closeConnection();
+        notifyCloseListeners();
     }
 
     @Override

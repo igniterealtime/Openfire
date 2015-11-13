@@ -194,31 +194,25 @@ public abstract class VirtualConnection implements Connection {
      */
     @Override
     public void close() {
-        close( false );
-    }
-
-    @Override
-    public void close(boolean peerIsKnownToBeDisconnected) {
-        boolean wasClosed = false;
+    	
         synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    if (session != null) {
-                        session.setStatus(Session.STATUS_CLOSED);
-                    }
-                    closeVirtualConnection();
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
-                closed = true;
-                wasClosed = true;
+        	if (isClosed()) {
+        		return;
+        	}
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
             }
         }
-        if (wasClosed) {
-            notifyCloseListeners();
+        
+        try {
+            closeVirtualConnection();
+        } catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error.close")
+                    + "\n" + this.toString(), e);
         }
+        
+        closed = true;
+        notifyCloseListeners();
     }
 
     @Override

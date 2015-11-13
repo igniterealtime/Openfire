@@ -228,60 +228,33 @@ public class NIOConnection implements Connection {
 
     @Override
     public void close() {
-        close( false );
-    }
-
-    @Override
-    public void close( boolean peerIsKnownToBeDisconnected )
-    {
-        boolean notifyClose = false;
-        synchronized ( this ) {
-            try
-            {
-                if ( state == State.CLOSED )
-                {
-                    return;
-                }
-
-                // This prevents any action after the first invocation of close() on this connection.
-                if ( state != State.CLOSING )
-                {
-                    state = State.CLOSING;
-                    if ( !peerIsKnownToBeDisconnected )
-                    {
-                        try
-                        {
-                            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
-                        }
-                        catch ( Exception e )
-                        {
-                            // Ignore
-                        }
-                    }
-                }
-
-                // deliverRawText might already have forced the state from Closing to Closed. In that case, there's no need
-                // to invoke the CloseListeners again.
-                if ( state == State.CLOSING )
-                {
-                    notifyClose = true;
-                }
-            }
-            finally
-            {
-                // Ensure that the state of this connection, its session and the MINA context are eventually closed.
-                state = State.CLOSED;
-                if ( session != null )
-                {
-                    session.setStatus( Session.STATUS_CLOSED );
-                }
-                ioSession.close( true );
-            }
+    	synchronized ( this ) {
+        	// prevent recursion while closing
+        	if ( state == State.CLOSED || state == State.CLOSING) {
+        		return;
+        	}
+            state = State.CLOSING;
         }
-        if (notifyClose)
-        {
-            notifyCloseListeners(); // clean up session, etc.
+
+        try {
+            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+        } catch ( Exception e ) {
+            Log.error("Failed to deliver stream close tag: " + e.getMessage());
         }
+        
+        // Ensure that the state of this connection, its session and the MINA context are eventually closed.
+        if ( session != null ) {
+            session.setStatus( Session.STATUS_CLOSED );
+        }
+        
+        try {
+        	ioSession.close( true );
+        } catch (Exception e) {
+            Log.error("Exception while closing MINA session", e);
+        }
+        
+        state = State.CLOSED;
+        notifyCloseListeners(); // clean up session, etc.
     }
 
     @Override

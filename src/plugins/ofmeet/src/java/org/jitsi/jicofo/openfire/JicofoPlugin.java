@@ -38,9 +38,10 @@ public class JicofoPlugin
    	private File pluginDirectory;
 
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory)
+    public void initializePlugin(ComponentManager componentManager, PluginManager manager, File pluginDirectory)
     {
 		boolean added = false;
+		this.componentManager = componentManager;
 
         try
         {
@@ -67,7 +68,6 @@ public class JicofoPlugin
 				System.setProperty(FocusManager.FOCUS_USER_NAME_PNAME, (new JID(focusUserJid)).getNode());
 				System.setProperty(FocusManager.FOCUS_USER_PASSWORD_PNAME, focusUserPassword);
 
-				ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
 				String subdomain = "ofmeet-focus";
 				FocusComponent component = new FocusComponent(false);
 				componentManager.addComponent(subdomain, component);

@@ -21,6 +21,8 @@ import org.jivesoftware.util.*;
 import org.slf4j.*;
 import org.slf4j.Logger;
 import org.xmpp.component.*;
+import org.xmpp.component.ComponentManager;
+import org.xmpp.component.ComponentManagerFactory;
 
 /**
  * Implements <tt>org.jivesoftware.openfire.container.Plugin</tt> to integrate
@@ -30,8 +32,7 @@ import org.xmpp.component.*;
  * @author Damian Minkov
  */
 public class PluginImpl
-    implements Plugin,
-               PropertyEventListener
+    implements PropertyEventListener
 {
     /**
      * The logger.
@@ -138,8 +139,10 @@ public class PluginImpl
      * located
      * @see Plugin#initializePlugin(PluginManager, File)
      */
-    public void initializePlugin(PluginManager manager, File pluginDirectory)
+    public void initializePlugin(ComponentManager componentManager, PluginManager manager, File pluginDirectory)
     {
+		this.componentManager = componentManager;
+
 		Log.info("PluginImpl initializePlugin "+ pluginDirectory);
 
 		String enableRecording = JiveGlobals.getProperty("org.jitsi.videobridge.ofmeet.media.record", "false");
@@ -183,9 +186,6 @@ public class PluginImpl
                 minVal);
 
         checkNatives(pluginDirectory);
-
-        ComponentManager componentManager
-            = ComponentManagerFactory.getComponentManager();
         String subdomain = "ofmeet-jitsi-videobridge"; //ComponentImpl.SUBDOMAIN;
         PluginImpl.component = new ComponentImpl();
         boolean added = false;

@@ -20,8 +20,6 @@ import org.jitsi.jicofo.xmpp.ConferenceIqProvider;
 import org.jitsi.jicofo.xmpp.IQUtils;
 import org.jitsi.util.*;
 
-import org.jitsi.videobridge.osgi.ServiceUtils2;
-
 import org.jivesoftware.smack.packet.*;
 
 import org.osgi.framework.*;

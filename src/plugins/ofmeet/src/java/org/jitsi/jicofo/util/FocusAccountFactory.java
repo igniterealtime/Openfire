@@ -63,7 +63,7 @@ public class FocusAccountFactory
         properties.put("ENCRYPTION_PROTOCOL_STATUS.DTLS-SRTP", "true");
 
         properties.put(ProtocolProviderFactory.IS_USE_ICE, "true");
-        properties.put(ProtocolProviderFactory.IS_USE_GOOGLE_ICE, "true");
+        //properties.put(ProtocolProviderFactory.IS_USE_GOOGLE_ICE, "true");
         properties.put(ProtocolProviderFactory.IS_ACCOUNT_DISABLED, "false");
         properties.put(ProtocolProviderFactory.IS_PREFERRED_PROTOCOL, "false");
         properties.put(ProtocolProviderFactory.IS_SERVER_OVERRIDDEN, "false");

@@ -112,7 +112,7 @@ public class CallControlComponent extends AbstractComponent
 		properties.setProperty("gov.nist.javax.sip.SERVER_LOG", logDir + "sip_server.log");
 		properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logDir + "sip_debug.log");
 
-		if (JiveGlobals.getBooleanProperty("org.jitsi.videobridge.ofmeet.sip.enabled", true))
+		if (JiveGlobals.getBooleanProperty("org.jitsi.videobridge.ofmeet.sip.enabled", false))
 		{
 			Log.info("CallControlComponent - enabling SIP gateway ");
 

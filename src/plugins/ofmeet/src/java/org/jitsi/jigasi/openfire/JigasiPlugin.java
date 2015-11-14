@@ -37,13 +37,13 @@ public class JigasiPlugin
    	private File pluginDirectory;
 
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory)
+    public void initializePlugin(ComponentManager componentManager, PluginManager manager, File pluginDirectory)
     {
 		Log.info("JigasiPlugin - initializePlugin");
 
 		this.pluginDirectory = pluginDirectory;
+		this.componentManager = componentManager;
 
-        ComponentManager componentManager = ComponentManagerFactory.getComponentManager();
         String subdomain = "ofmeet-call-control";
         CallControlComponent component = new CallControlComponent(pluginDirectory);
         boolean added = false;

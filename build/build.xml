@@ -257,7 +257,7 @@
             </not>
         </condition>
         <fail if="ant.not.ok" message="Must use Ant 1.7.1 or higher to build Openfire"/>
-        <fail if="java.not.ok" message="Must use JDK 1.7 or higher to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.7 or higher to build Openfire. Currently set to: ${ant.java.version}"/>
 
         <tstamp/>
         <tstamp>

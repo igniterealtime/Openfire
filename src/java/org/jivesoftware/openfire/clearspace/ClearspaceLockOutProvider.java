@@ -21,6 +21,7 @@ package org.jivesoftware.openfire.clearspace;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
 
+import java.net.URLEncoder;
 import java.util.List;
 
 import org.dom4j.Document;
@@ -229,7 +230,7 @@ public class ClearspaceLockOutProvider implements LockOutProvider {
             // Un-escape username.
             username = JID.unescapeNode(username);
             // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
+            username = URLEncoder.encode(username, "UTF-8");
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response

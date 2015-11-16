@@ -22,6 +22,7 @@ import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GE
 import static org.jivesoftware.openfire.clearspace.WSUtils.getReturn;
 import static org.jivesoftware.openfire.clearspace.WSUtils.parseStringArray;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -220,7 +221,7 @@ public class ClearspaceGroupProvider extends AbstractGroupProvider {
     private Element getGroupByName(String name) throws GroupNotFoundException {
         try {
             // Encode potentially non-ASCII characters
-            name = URLUTF8Encoder.encode(name);
+            name = URLEncoder.encode(name, "UTF-8");
             String path = URL_PREFIX + "socialGroupsByName/" + name;
 
             return ClearspaceManager.getInstance().executeRequest(GET, path);

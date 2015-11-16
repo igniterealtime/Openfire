@@ -20,6 +20,7 @@ package org.jivesoftware.openfire.clearspace;
 
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
 
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class ClearspaceSecurityAuditProvider implements SecurityAuditProvider {
             // Un-escape username.
             username = JID.unescapeNode(username);
             // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
+            username = URLEncoder.encode(username, "UTF-8");
             userE.addText(username);
             Element descE = rootE.addElement("description");
             if (summary != null) {

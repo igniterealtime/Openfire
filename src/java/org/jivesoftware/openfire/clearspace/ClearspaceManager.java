@@ -32,6 +32,7 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
@@ -398,7 +399,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
             // Un-escape username.
             username = JID.unescapeNode(username);
             // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
+            username = URLEncoder.encode(username, "UTF-8");
             String path = ClearspaceAuthProvider.URL_PREFIX + "authenticate/" + username + "/" + password;
             executeRequest(GET, path);
             return true;
@@ -1080,10 +1081,12 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
 
         // Un-escape username.
         String unescapedUsername = JID.unescapeNode(username);
-        // Encode potentially non-ASCII characters
-        unescapedUsername = URLUTF8Encoder.encode(unescapedUsername);
+
         // Gets the user's ID from Clearspace
         try {
+            // Encode potentially non-ASCII characters
+            unescapedUsername = URLEncoder.encode(unescapedUsername, "UTF-8");
+
             String path = ClearspaceUserProvider.USER_URL_PREFIX + "users/" + unescapedUsername;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 
@@ -1168,7 +1171,7 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
         }
         try {
             // Encode potentially non-ASCII characters
-            groupname = URLUTF8Encoder.encode(groupname);
+            groupname = URLEncoder.encode(groupname, "UTF-8");
             String path = ClearspaceGroupProvider.URL_PREFIX + "groups/" + groupname;
             Element element = executeRequest(org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GET, path);
 

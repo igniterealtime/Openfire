@@ -282,7 +282,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
         logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
                 File.separator + "logs");
-        processIgnoreString(JiveGlobals.getProperty("xmpp.audit.ignore", ""));
+		processIgnoreString(JiveGlobals.getProperty("xmpp.audit.ignore", ""));
 
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
@@ -293,18 +293,18 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         if (enabled) {
             InterceptorManager.getInstance().addInterceptor(interceptor);
         }
-        PropertyEventDispatcher.addListener(this);
+		PropertyEventDispatcher.addListener(this);
     }
 
-    private void processIgnoreString(String ignoreString){
-    	ignoreList.clear();
-        // Decode the ignore list
-        StringTokenizer tokenizer = new StringTokenizer(ignoreString, ",");
-        while (tokenizer.hasMoreTokens()) {
-            String username = tokenizer.nextToken().trim();
-            ignoreList.add(username);
-        }
-    }
+	private void processIgnoreString(String ignoreString) {
+		ignoreList.clear();
+		// Decode the ignore list
+		StringTokenizer tokenizer = new StringTokenizer(ignoreString, ",");
+		while (tokenizer.hasMoreTokens()) {
+			String username = tokenizer.nextToken().trim();
+			ignoreList.add(username);
+		}
+	}
     
     @Override
 	public void stop() {
@@ -313,74 +313,59 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         }
     }
 
-    private class AuditorInterceptor implements PacketInterceptor {
-
-        @Override
-        public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
-            if (!processed) {
-                // Ignore packets sent or received by users that are present in the ignore list
-                JID from = packet.getFrom();
-                JID to = packet.getTo();
-                if ((from == null || !ignoreList.contains(from.getNode())) &&
-                        (to == null || !ignoreList.contains(to.getNode()))) {
-                    auditor.audit(packet, session);
-                }
-            }
-        }
-    }
-
 	@Override
 	public void propertySet(String property, Map<String, Object> params) {
 		String value = (String) params.get("value");
-		switch(property){
-			case "xmpp.audit.active":
-				enabled = Boolean.parseBoolean(value);
-		        if (enabled) {
-		            InterceptorManager.getInstance().addInterceptor(interceptor);
-		        }
-		        else {
-		            InterceptorManager.getInstance().removeInterceptor(interceptor);
-		        }
-				break;
-			case "xmpp.audit.message":
-				auditMessage = Boolean.parseBoolean(value);
-				break;
-			case "xmpp.audit.presence":
-				auditPresence = Boolean.parseBoolean(value);
-				break;
-			case "xmpp.audit.iq":
-				auditIQ = Boolean.parseBoolean(value);
-				break;
-			case "xmpp.audit.xpath":
-				auditXPath = Boolean.parseBoolean(value);
-				break;
-			case "xmpp.audit.totalsize":
-		        maxTotalSize = parseIntegerOrDefault(value, MAX_TOTAL_SIZE);
-		        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
-		        break;
-			case "xmpp.audit.filesize":
-		        maxFileSize = parseIntegerOrDefault(value, MAX_FILE_SIZE);
-		        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
-		        break;
-			case "xmpp.audit.days":
-		        maxDays = parseIntegerOrDefault(value, MAX_DAYS);
-		        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
-		        break;
-			case "xmpp.audit.logtimeout":
-		        logTimeout = parseIntegerOrDefault(value, DEFAULT_LOG_TIMEOUT);
-		        auditor.setLogTimeout(logTimeout);
-		        break;
-			case "xmpp.audit.logdir":
-				File d = null;
-				if(value == null || "".equals(value.trim())){
-					d = new File(value);
-				}
-		        logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d.isDirectory()) ? JiveGlobals.getHomeDirectory() + File.separator + "logs" : value;
-		        auditor.setLogDir(logDir);
-		        break;
-			case "xmpp.audit.ignore":
-				processIgnoreString(value);
-				break;
+		switch (property) {
+		case "xmpp.audit.active":
+			enabled = Boolean.parseBoolean(value);
+			if (enabled) {
+				InterceptorManager.getInstance().addInterceptor(interceptor);
+			} else {
+				InterceptorManager.getInstance().removeInterceptor(interceptor);
+			}
+			break;
+		case "xmpp.audit.message":
+			auditMessage = Boolean.parseBoolean(value);
+			break;
+		case "xmpp.audit.presence":
+			auditPresence = Boolean.parseBoolean(value);
+			break;
+		case "xmpp.audit.iq":
+			auditIQ = Boolean.parseBoolean(value);
+			break;
+		case "xmpp.audit.xpath":
+			auditXPath = Boolean.parseBoolean(value);
+			break;
+		case "xmpp.audit.totalsize":
+			maxTotalSize = parseIntegerOrDefault(value, MAX_TOTAL_SIZE);
+			auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+			break;
+		case "xmpp.audit.filesize":
+			maxFileSize = parseIntegerOrDefault(value, MAX_FILE_SIZE);
+			auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+			break;
+		case "xmpp.audit.days":
+			maxDays = parseIntegerOrDefault(value, MAX_DAYS);
+			auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+			break;
+		case "xmpp.audit.logtimeout":
+			logTimeout = parseIntegerOrDefault(value, DEFAULT_LOG_TIMEOUT);
+			auditor.setLogTimeout(logTimeout);
+			break;
+		case "xmpp.audit.logdir":
+			File d = null;
+			if (value == null || "".equals(value.trim())) {
+				d = new File(value);
+			}
+			logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d
+					.isDirectory()) ? JiveGlobals.getHomeDirectory()
+					+ File.separator + "logs" : value;
+			auditor.setLogDir(logDir);
+			break;
+		case "xmpp.audit.ignore":
+			processIgnoreString(value);
+			break;
 		}
 	}
 
@@ -404,5 +389,21 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
 
 	@Override
 	public void xmlPropertyDeleted(String property, Map<String, Object> params) {
-	}
+	}    
+    
+    private class AuditorInterceptor implements PacketInterceptor {
+
+        @Override
+        public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
+            if (!processed) {
+                // Ignore packets sent or received by users that are present in the ignore list
+                JID from = packet.getFrom();
+                JID to = packet.getTo();
+                if ((from == null || !ignoreList.contains(from.getNode())) &&
+                        (to == null || !ignoreList.contains(to.getNode()))) {
+                    auditor.audit(packet, session);
+                }
+            }
+        }
+    }
 }

@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
@@ -88,6 +89,7 @@ public class SocketConnection implements Connection {
 
     private Writer writer;
     private AtomicBoolean writing = new AtomicBoolean(false);
+    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
@@ -307,10 +309,7 @@ public class SocketConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-        if (session == null) {
-            return socket.isClosed();
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+    	return state.get() == State.CLOSED;
     }
 
     @Override
@@ -468,40 +467,50 @@ public class SocketConnection implements Connection {
 
     @Override
     public void close() {
-    	
-        synchronized (this) {
-        	if (isClosed()) {
-        		return;
-        	}
+    	close(false);
+    }
+
+    /**
+     * Normal connection close will attempt to write the stream end tag. Otherwise this method
+     * forces the connection closed immediately. This method will be called from {@link SocketSendingTracker} 
+     * when sending data over the socket has taken a long time and we need to close the socket, discard
+     * the connection and its session.
+     */
+    private void close(boolean force) {   	
+    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+    		
             if (session != null) {
                 session.setStatus(Session.STATUS_CLOSED);
             }
-        }
-        
-        boolean allowedToWrite = false;
-        try {
-            requestWriting();
-            allowedToWrite = true;
-            // Register that we started sending data on the connection
-            writeStarted();
-            writer.write("</stream:stream>");
-            if (flashClient) {
-                writer.write('\0');
+
+            if (!force) {
+	            boolean allowedToWrite = false;
+	            try {
+	                requestWriting();
+	                allowedToWrite = true;
+	                // Register that we started sending data on the connection
+	                writeStarted();
+	                writer.write("</stream:stream>");
+	                if (flashClient) {
+	                    writer.write('\0');
+	                }
+	                writer.flush();
+	            }
+	            catch (Exception e) {
+	                Log.error("Failed to deliver stream close tag: " + e.getMessage());
+	            }
+	            
+	            // Register that we finished sending data on the connection
+	            writeFinished();
+	            if (allowedToWrite) {
+	                releaseWriting();
+	            }
             }
-            writer.flush();
-        }
-        catch (Exception e) {
-            Log.error("Failed to deliver stream close tag: " + e.getMessage());
-        }
-        
-        // Register that we finished sending data on the connection
-        writeFinished();
-        if (allowedToWrite) {
-            releaseWriting();
-        }
+                
+            closeConnection();
+            notifyCloseListeners();
             
-        closeConnection();
-        notifyCloseListeners();
+    	}
     }
 
     @Override
@@ -537,7 +546,7 @@ public class SocketConnection implements Connection {
                 Log.debug("Closing connection: " + this + " that started sending data at: " +
                         new Date(writeTimestamp));
             }
-            forceClose();
+            close(true); // force
             return true;
         }
         else {
@@ -550,7 +559,7 @@ public class SocketConnection implements Connection {
                 if (Log.isDebugEnabled()) {
                     Log.debug("Closing connection that has been idle: " + this);
                 }
-                forceClose();
+                close(true); // force
                 return true;
             }
         }
@@ -560,24 +569,6 @@ public class SocketConnection implements Connection {
     private void release() {
         writeStarted = -1;
         instances.remove(this);
-    }
-
-    /**
-     * Forces the connection to be closed immediately no matter if closing the socket takes
-     * a long time. This method should only be called from {@link SocketSendingTracker} when
-     * sending data over the socket has taken a long time and we need to close the socket, discard
-     * the connection and its session.
-     */
-    private void forceClose() {
-        if (session != null) {
-            // Set that the session is closed. This will prevent threads from trying to
-            // deliver packets to this session thus preventing future locks.
-            session.setStatus(Session.STATUS_CLOSED);
-        }
-        closeConnection();
-        // Notify the close listeners so that the SessionManager can send unavailable
-        // presences if required.
-        notifyCloseListeners();
     }
 
     private void closeConnection() {

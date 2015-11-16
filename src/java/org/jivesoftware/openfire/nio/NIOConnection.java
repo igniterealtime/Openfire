@@ -33,6 +33,7 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.SSLContext;
@@ -53,7 +54,9 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
 import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.ClientTrustManager;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -74,8 +77,6 @@ import org.xmpp.packet.Packet;
 public class NIOConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
-
-    public enum State { RUNNING, CLOSING, CLOSED }
 
     private LocalSession session;
     private IoSession ioSession;
@@ -111,7 +112,7 @@ public class NIOConnection implements Connection {
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
-    private volatile State state;
+    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
     
     /**
      * Lock used to ensure the integrity of the underlying IoSession (refer to
@@ -127,7 +128,6 @@ public class NIOConnection implements Connection {
     public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
-        state = State.RUNNING;
     }
 
     @Override
@@ -228,60 +228,29 @@ public class NIOConnection implements Connection {
 
     @Override
     public void close() {
-        close( false );
-    }
+    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
 
-    @Override
-    public void close( boolean peerIsKnownToBeDisconnected )
-    {
-        boolean notifyClose = false;
-        synchronized ( this ) {
-            try
-            {
-                if ( state == State.CLOSED )
-                {
-                    return;
-                }
+            // Ensure that the state of this connection, its session and the MINA context are eventually closed.
 
-                // This prevents any action after the first invocation of close() on this connection.
-                if ( state != State.CLOSING )
-                {
-                    state = State.CLOSING;
-                    if ( !peerIsKnownToBeDisconnected )
-                    {
-                        try
-                        {
-                            deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
-                        }
-                        catch ( Exception e )
-                        {
-                            // Ignore
-                        }
-                    }
-                }
-
-                // deliverRawText might already have forced the state from Closing to Closed. In that case, there's no need
-                // to invoke the CloseListeners again.
-                if ( state == State.CLOSING )
-                {
-                    notifyClose = true;
-                }
+    		if ( session != null ) {
+                session.setStatus( Session.STATUS_CLOSED );
             }
-            finally
-            {
-                // Ensure that the state of this connection, its session and the MINA context are eventually closed.
-                state = State.CLOSED;
-                if ( session != null )
-                {
-                    session.setStatus( Session.STATUS_CLOSED );
-                }
-                ioSession.close( true );
+
+            try {
+                deliverRawText( flashClient ? "</flash:stream>" : "</stream:stream>" );
+            } catch ( Exception e ) {
+                Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
-        }
-        if (notifyClose)
-        {
+            
+            try {
+            	ioSession.close( true );
+            } catch (Exception e) {
+                Log.error("Exception while closing MINA session", e);
+            }
+        
             notifyCloseListeners(); // clean up session, etc.
-        }
+
+    	}
     }
 
     @Override
@@ -312,7 +281,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public boolean isClosed() {
-        return state == State.CLOSED;
+    	return state.get() == State.CLOSED;
     }
 
     @Override
@@ -322,7 +291,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
-        if (state != State.RUNNING) {
+        if (isClosed()) {
         	backupDeliverer.deliver(packet);
         }
         else {
@@ -368,7 +337,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public void deliverRawText(String text) {
-        if (state != State.CLOSED) {
+        if (!isClosed()) {
             boolean errorDelivering = false;
             IoBuffer buffer = IoBuffer.allocate(text.length());
             buffer.setAutoExpand(true);

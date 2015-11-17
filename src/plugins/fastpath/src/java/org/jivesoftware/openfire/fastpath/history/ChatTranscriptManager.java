@@ -42,8 +42,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.EmailService;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.xmpp.workgroup.DbProperties;
 import org.jivesoftware.xmpp.workgroup.Workgroup;
 import org.jivesoftware.xmpp.workgroup.WorkgroupManager;
@@ -175,7 +175,7 @@ public class ChatTranscriptManager {
         }
 
         // Define time zone used in the transcript.
-        SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
+        SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT);
         UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         final SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
@@ -378,7 +378,7 @@ public class ChatTranscriptManager {
         if (transcript == null || "".equals(transcript)) {
             return "";
         }
-        final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
+        final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(XMPPDateTimeFormat.XMPP_DELAY_DATETIME_FORMAT);
         UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         final SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");

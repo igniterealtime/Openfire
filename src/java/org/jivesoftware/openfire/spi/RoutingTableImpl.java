@@ -1044,7 +1044,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         	serverLock.lock();
 	    	List<String> remoteServerDomains = new ArrayList<>();
 	    	for (Map.Entry<String, byte[]> entry : serversCache.entrySet()) {
-	    		if (entry.getValue().equals(nodeID)) {
+	    		if (Arrays.equals(entry.getValue(), nodeID)) {
 	    			remoteServerDomains.add(entry.getKey());
 	    		}
 	    	}

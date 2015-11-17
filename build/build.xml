@@ -83,6 +83,7 @@
 
     <property name="test.dest.dir" value="${work.dir}/test"/>
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes"/>
+    <property name="test.resources.dest.dir" value="${test.dest.dir}/resources"/>
     <property name="test.results.dest.dir" value="${test.dest.dir}/results"/>
 
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
@@ -662,6 +663,7 @@
                 <path refid="test.dependencies"/>
                 <pathelement path="${test.dest.dir}"/>
                 <pathelement path="${test.classes.dest.dir}"/>
+                <pathelement path="${test.resources.dest.dir}"/>
             </classpath>
 
             <formatter type="xml"/>

@@ -52,6 +52,8 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.ClientTrustManager;
 import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.SSLJiveKeyManagerFactory;
+import org.jivesoftware.openfire.net.SSLJiveTrustManagerFactory;
 import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;

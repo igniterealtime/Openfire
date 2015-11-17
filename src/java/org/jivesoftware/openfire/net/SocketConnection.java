@@ -497,7 +497,7 @@ public class SocketConnection implements Connection {
 	                writer.flush();
 	            }
 	            catch (Exception e) {
-	                Log.error("Failed to deliver stream close tag: " + e.getMessage());
+	                Log.debug("Failed to deliver stream close tag: " + e.getMessage());
 	            }
 	            
 	            // Register that we finished sending data on the connection

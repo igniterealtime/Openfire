@@ -1,5 +1,25 @@
 package org.jivesoftware.openfire.keystore;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.Provider;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
@@ -8,17 +28,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import sun.security.provider.X509Factory;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.*;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509Certificate;
-import java.util.*;
 
 /**
  * Unit tests that verify the functionality of {@link TrustStoreConfig}.
@@ -28,6 +37,8 @@ import java.util.*;
 public class TrustStoreConfigTest
 {
     private static final Provider PROVIDER = new BouncyCastleProvider();
+    private static final Object BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+    private static final Object END_CERT = "-----END CERTIFICATE-----";
 
     static
     {
@@ -94,9 +105,9 @@ public class TrustStoreConfigTest
 
     private static String toPEM( X509Certificate certificate ) throws Exception {
         final StringBuilder sb = new StringBuilder();
-        sb.append( X509Factory.BEGIN_CERT ).append( '\n' );
+        sb.append( BEGIN_CERT ).append( '\n' );
         sb.append( Base64.encodeBytes( certificate.getEncoded() ) ).append( '\n' );
-        sb.append( X509Factory.END_CERT).append( '\n' );
+        sb.append( END_CERT).append( '\n' );
         return sb.toString();
     }
 

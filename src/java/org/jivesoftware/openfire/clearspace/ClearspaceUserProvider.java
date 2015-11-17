@@ -23,6 +23,7 @@ import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.GE
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.POST;
 import static org.jivesoftware.openfire.clearspace.ClearspaceManager.HttpType.PUT;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -116,7 +117,7 @@ public class ClearspaceUserProvider implements UserProvider {
             // Un-escape username.
             username = JID.unescapeNode(username);
             // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
+            username = URLEncoder.encode(username, "UTF-8");
             usernameE.addText(username);
 
             // adds the name if it is not empty
@@ -455,7 +456,7 @@ public class ClearspaceUserProvider implements UserProvider {
                 // Escape the username so that it can be used as a JID.
                 username = JID.escapeNode(username);
                 // Encode potentially non-ASCII characters
-                username = URLUTF8Encoder.encode(username);
+                username = URLEncoder.encode(username, "UTF-8");
                 usernames.add(username);
             }
         } catch (Exception e) {
@@ -505,7 +506,7 @@ public class ClearspaceUserProvider implements UserProvider {
                 // Escape the username so that it can be used as a JID.
                 username = JID.escapeNode(username);
                 // Encode potentially non-ASCII characters
-                username = URLUTF8Encoder.encode(username);
+                username = URLEncoder.encode(username, "UTF-8");
                 usernames.add(username);
             }
 
@@ -646,7 +647,7 @@ public class ClearspaceUserProvider implements UserProvider {
             // Un-escape username.
             username = JID.unescapeNode(username);
             // Encode potentially non-ASCII characters
-            username = URLUTF8Encoder.encode(username);
+            username = URLEncoder.encode(username, "UTF-8");
             // Requests the user
             String path = USER_URL_PREFIX + "users/" + username;
             // return the response

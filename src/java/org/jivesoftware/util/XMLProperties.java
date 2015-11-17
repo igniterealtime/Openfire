@@ -21,21 +21,19 @@
 package org.jivesoftware.util;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +76,7 @@ public class XMLProperties {
 	private static final Logger Log = LoggerFactory.getLogger(XMLProperties.class);
 	private static final String ENCRYPTED_ATTRIBUTE = "encrypted";
 
-    private File file;
+    private Path file;
     private Document document;
 
     /**
@@ -104,7 +102,7 @@ public class XMLProperties {
      * @throws IOException if an error occurs loading the properties.
      */
     public XMLProperties(String fileName) throws IOException {
-        this(new File(fileName));
+        this(Paths.get(fileName));
     }
 
     /**
@@ -125,37 +123,48 @@ public class XMLProperties {
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.
      */
+    @Deprecated
     public XMLProperties(File file) throws IOException {
+        this(file.toPath());
+    }
+
+    /**
+     * Creates a new XMLPropertiesTest object.
+     *
+     * @param file the file that properties should be read from and written to.
+     * @throws IOException if an error occurs loading the properties.
+     */
+    public XMLProperties(Path file) throws IOException {
         this.file = file;
-        if (!file.exists()) {
+        if (Files.notExists(file)) {
             // Attempt to recover from this error case by seeing if the
             // tmp file exists. It's possible that the rename of the
             // tmp file failed the last time Jive was running,
             // but that it exists now.
-            File tempFile;
-            tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-            if (tempFile.exists()) {
-                Log.error("WARNING: " + file.getName() + " was not found, but temp file from " +
+            Path tempFile;
+            tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
+            if (Files.exists(tempFile)) {
+                Log.error("WARNING: " + file.getFileName() + " was not found, but temp file from " +
                         "previous write operation was. Attempting automatic recovery." +
                         " Please check file for data consistency.");
-                tempFile.renameTo(file);
+                Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
             }
             // There isn't a possible way to recover from the file not
             // being there, so throw an error.
             else {
-                throw new FileNotFoundException("XML properties file does not exist: "
-                        + file.getName());
+                throw new NoSuchFileException("XML properties file does not exist: "
+                        + file.getFileName());
             }
         }
         // Check read and write privs.
-        if (!file.canRead()) {
-            throw new IOException("XML properties file must be readable: " + file.getName());
+        if (!Files.isReadable(file)) {
+            throw new IOException("XML properties file must be readable: " + file.getFileName());
         }
-        if (!file.canWrite()) {
-            throw new IOException("XML properties file must be writable: " + file.getName());
+        if (!Files.isWritable(file)) {
+            throw new IOException("XML properties file must be writable: " + file.getFileName());
         }
 
-        try (FileReader reader = new FileReader(file)) {
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
              buildDoc(reader);
         }
     }
@@ -745,8 +754,8 @@ public class XMLProperties {
     	}
         boolean error = false;
         // Write data out to a temporary file first.
-        File tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
+        Path tempFile = file.getParent().resolve(file.getFileName() + ".tmp");
+        try (Writer writer = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
@@ -760,13 +769,15 @@ public class XMLProperties {
         // No errors occurred, so delete the main file.
         if (!error) {
             // Delete the old file so we can replace it.
-            if (!file.delete()) {
-                Log.error("Error deleting property file: " + file.getAbsolutePath());
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                Log.error("Error deleting property file: " + file);
                 return;
             }
             // Copy new contents to the file.
             try {
-                copy(tempFile, file);
+                Files.copy(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
@@ -775,7 +786,11 @@ public class XMLProperties {
             }
             // If no errors, delete the temp file.
             if (!error) {
-                tempFile.delete();
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    Log.error("Error deleting temp file: " + tempFile);
+                }
             }
         }
     }
@@ -802,42 +817,6 @@ public class XMLProperties {
         for (String propertyName : propertyMap.keySet()) {
             String propertyValue = propertyMap.get(propertyName);
             setProperty(propertyName, propertyValue);
-        }
-    }
-
-    /**
-     * Copies the inFile to the outFile.
-     *
-     * @param inFile  The file to copy from
-     * @param outFile The file to copy to
-     * @throws IOException If there was a problem making the copy
-     */
-    private static void copy(File inFile, File outFile) throws IOException {
-        try (FileInputStream fin = new FileInputStream(inFile)) {
-            try (FileOutputStream fout = new FileOutputStream(outFile)) {
-                copy(fin, fout);
-            }
-        }
-    }
-
-    /**
-     * Copies data from an input stream to an output stream
-     *
-     * @param in the stream to copy data from.
-     * @param out the stream to copy data to.
-     * @throws IOException if there's trouble during the copy.
-     */
-    private static void copy(InputStream in, OutputStream out) throws IOException {
-        // Do not allow other threads to intrude on streams during copy.
-        synchronized (in) {
-            synchronized (out) {
-                byte[] buffer = new byte[256];
-                while (true) {
-                    int bytesRead = in.read(buffer);
-                    if (bytesRead == -1) break;
-                    out.write(buffer, 0, bytesRead);
-                }
-            }
         }
     }
 }

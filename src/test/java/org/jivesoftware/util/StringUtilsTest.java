@@ -28,6 +28,16 @@ public class StringUtilsTest {
 
     }
 
+    @Test
+    public void testStringReplace() {
+        assertEquals(StringUtils.replace("Hello Foo Foo", "Foo", "World"), "Hello World World");
+        assertEquals(StringUtils.replace("Hello Foo foo", "Foo", "World"), "Hello World foo");
+        assertEquals(StringUtils.replaceIgnoreCase("Hello Foo foo", "Foo", "World"), "Hello World World");
+        int[] count = new int[1];
+        assertEquals(StringUtils.replaceIgnoreCase("Hello Foo foo", "Foo", "World", count), "Hello World World");
+        assertEquals(count[0], 2);
+    }
+
 	private void assertValidDomainName(String domain) {
 		assertValidDomainName(domain, domain);
     }

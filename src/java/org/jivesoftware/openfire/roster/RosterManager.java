@@ -608,7 +608,18 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
 
     @Override
     public void userModified(User user, Map<String,Object> params) {
-        //Do nothing
+        if ("nameModified".equals(params.get("type"))) {
+
+            for (Group group : getSharedGroups(user.getUsername())) {
+                ArrayList<JID> groupUsers = new ArrayList<>();
+                groupUsers.addAll(group.getAdmins());
+                groupUsers.addAll(group.getMembers());
+
+                for (JID groupUser : groupUsers) {
+                    rosterCache.remove(groupUser.getNode());
+                }
+            }
+        }
     }
 
     /**

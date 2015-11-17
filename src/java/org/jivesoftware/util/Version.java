@@ -19,39 +19,43 @@
 
 package org.jivesoftware.util;
 
-import java.util.StringTokenizer;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Holds version information for Openfire.
  *
  * @author Iain Shigeoka
  */
-public class Version implements Comparable<Version> {
+public final class Version implements Comparable<Version> {
+
+    private static final Pattern PATTERN = Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)(?:\\s+(\\w+))?(?:\\s+(\\d+))?");
 
     /**
      * The major number (ie 1.x.x).
      */
-    private int major;
+    private final int major;
 
     /**
      * The minor version number (ie x.1.x).
      */
-    private int minor;
+    private final int minor;
 
     /**
      * The micro version number (ie x.x.1).
      */
-    private int micro;
+    private final int micro;
 
     /**
      * A status release number or -1 to indicate none.
      */
-    private int statusVersion;
+    private final int statusVersion;
 
     /**
      * The release state of the product (Release, Release Candidate).
      */
-    private ReleaseStatus status;
+    private final ReleaseStatus status;
 
     /**
      * Cached version string information
@@ -70,7 +74,7 @@ public class Version implements Comparable<Version> {
         this.major = major;
         this.minor = minor;
         this.micro = micro;
-        this.status = status;
+        this.status = status == null ? ReleaseStatus.Release : status;
         this.statusVersion = statusVersion;
     }
     
@@ -79,23 +83,47 @@ public class Version implements Comparable<Version> {
      * 
      * @param source the version string
      */
-    public Version(String source) {
-    	// initialize the defaults
-    	major = minor = micro = 0;
-    	status = ReleaseStatus.Release;
-    	statusVersion = -1;
-    	
-    	if (source != null) {
-        	StringTokenizer parser = new StringTokenizer(source, ".");
-    		try {
-    			major = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
-    			minor = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
-    			micro = parser.hasMoreTokens() ? Integer.parseInt(parser.nextToken()) : 0;
-    		}
-    		catch (NumberFormatException nfe) {
-    			// ignore bad version
-    		}
-    	}  	
+    public Version(CharSequence source) {
+        if (source != null) {
+            Matcher matcher = PATTERN.matcher(source);
+            if (matcher.matches()) {
+                major = Integer.parseInt(matcher.group(1));
+                minor = Integer.parseInt(matcher.group(2));
+                micro = Integer.parseInt(matcher.group(3));
+                String status = matcher.group(4);
+                if (status != null) {
+                    switch (status.toLowerCase()) {
+                        case "rc":
+                            this.status = ReleaseStatus.Release_Candidate;
+                            break;
+                        case "beta":
+                            this.status = ReleaseStatus.Beta;
+                            break;
+                        case "alpha":
+                            this.status = ReleaseStatus.Alpha;
+                            break;
+                        default:
+                            this.status = ReleaseStatus.Release;
+                    }
+                } else {
+                    this.status = ReleaseStatus.Release;
+                }
+                String statusVersion = matcher.group(5);
+                if (statusVersion != null) {
+                    this.statusVersion = Integer.parseInt(statusVersion);
+                } else {
+                    this.statusVersion = -1;
+                }
+            } else {
+                this.major = this.minor = this.micro = 0;
+                this.statusVersion = -1;
+                this.status = ReleaseStatus.Release;
+            }
+        } else {
+            this.major = this.minor = this.micro = 0;
+            this.statusVersion = -1;
+            this.status = ReleaseStatus.Release;
+        }
     }
 
     /**
@@ -106,24 +134,15 @@ public class Version implements Comparable<Version> {
      */
     public String getVersionString() {
     	if (versionString == null) {
-            if (status != null) {
-                if (status == ReleaseStatus.Release) {
-                    versionString = major + "." + minor + "." + micro;
-                }
-                else {
-                    if (statusVersion >= 0) {
-                        versionString = major + "." + minor + "." + micro + " " + status.toString() +
-                                " " + statusVersion;
-                    }
-                    else {
-                        versionString = major + "." + minor + "." + micro + " " + status.toString();
-                    }
+            StringBuilder sb = new StringBuilder();
+            sb.append(major).append('.').append(minor).append('.').append(micro);
+            if (status != ReleaseStatus.Release) {
+                sb.append(' ').append(status);
+                if (statusVersion >= 0) {
+                    sb.append(' ').append(statusVersion);
                 }
             }
-            else {
-                versionString = major + "." + minor + "." + micro;
-            }
-    		
+            versionString = sb.toString();
     	}
         return versionString;
     }
@@ -184,7 +203,7 @@ public class Version implements Comparable<Version> {
 
         private String status;
 
-        private ReleaseStatus(String status) {
+        ReleaseStatus(String status) {
             this.status = status;
         }
 
@@ -203,15 +222,51 @@ public class Version implements Comparable<Version> {
     	return this.compareTo(otherVersion) > 0;
     }
 
-	@Override
-	public int compareTo(Version that) {
-		if (that == null) {
-			return 1;
-		}
-		
-		long thisVersion = (this.getMicro()*10) + (this.getMinor()*1000) + (this.getMajor()*100000);
-		long thatVersion = (that.getMicro()*10) + (that.getMinor()*1000) + (that.getMajor()*100000);
-		
-		return thisVersion == thatVersion ? 0 : thisVersion > thatVersion ? 1 : -1;
-	}
+    @Override
+    public int compareTo(Version that) {
+        if (that == null) {
+            return 1;
+        }
+        int result = Integer.compare(getMajor(), that.getMajor());
+        if (result == 0) {
+            result = Integer.compare(getMinor(), that.getMinor());
+            if (result == 0) {
+                result = Integer.compare(getMicro(), that.getMicro());
+                if (result == 0) {
+                    result = that.getStatus().compareTo(getStatus());
+                    if (result == 0) {
+                        result = Integer.compare(getStatusVersion(), that.getStatusVersion());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Version)) {
+            return false;
+        }
+        Version other = (Version) o;
+
+        return Objects.equals(major, other.major)
+                && Objects.equals(minor, other.minor)
+                && Objects.equals(micro, other.micro)
+                && Objects.equals(statusVersion, other.statusVersion)
+                && Objects.equals(status, other.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(major, minor, micro, statusVersion, status);
+    }
+
+    @Override
+    public String toString() {
+        return getVersionString();
+    }
 }

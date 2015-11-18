@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class MUCServicePropertyClusterEventTask implements ClusterTask {
+public class MUCServicePropertyClusterEventTask implements ClusterTask<Void> {
     private Type event;
     private String service;
     private String key;
@@ -58,7 +58,7 @@ public class MUCServicePropertyClusterEventTask implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  */
-public class SendConversationEventsTask implements ClusterTask {
+public class SendConversationEventsTask implements ClusterTask<Void> {
 	
 	private static final Logger Log = LoggerFactory.getLogger(SendConversationEventsTask.class);
 			
@@ -56,7 +56,7 @@ public class SendConversationEventsTask implements ClusterTask {
         this.events = events;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

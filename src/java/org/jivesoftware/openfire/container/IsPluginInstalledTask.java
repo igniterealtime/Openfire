@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class IsPluginInstalledTask implements ClusterTask {
+public class IsPluginInstalledTask implements ClusterTask<Boolean> {
     private String pluginName;
     private boolean installed;
 
@@ -48,7 +48,7 @@ public class IsPluginInstalledTask implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Boolean getResult() {
         return installed;
     }
 

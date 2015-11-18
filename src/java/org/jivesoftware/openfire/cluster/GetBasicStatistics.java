@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @author Gaston Dombiak
  */
-public class GetBasicStatistics implements ClusterTask {
+public class GetBasicStatistics implements ClusterTask<Map<String, Object>> {
     public static final String NODE = "node";
     public static final String CLIENT = "client";
     public static final String INCOMING = "incoming";
@@ -48,7 +48,7 @@ public class GetBasicStatistics implements ClusterTask {
     private Map<String, Object> values;
 
     @Override
-    public Object getResult() {
+    public Map<String, Object> getResult() {
         return values;
     }
 

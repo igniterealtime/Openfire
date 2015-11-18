@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Daniel Henninger
  */
-public class ServiceUpdatedEvent implements ClusterTask {
+public class ServiceUpdatedEvent implements ClusterTask<Void> {
 	
 	private static final Logger Log = LoggerFactory.getLogger(ServiceUpdatedEvent.class);
 
@@ -54,7 +54,7 @@ public class ServiceUpdatedEvent implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

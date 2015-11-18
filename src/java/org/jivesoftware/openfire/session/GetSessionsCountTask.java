@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetSessionsCountTask implements ClusterTask {
+public class GetSessionsCountTask implements ClusterTask<Integer> {
     private Boolean authenticated;
     private Integer count;
 
@@ -45,7 +45,7 @@ public class GetSessionsCountTask implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Integer getResult() {
         return count;
     }
 

@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class NotifyComponentUnregistered implements ClusterTask {
+public class NotifyComponentUnregistered implements ClusterTask<Void> {
     private JID componentJID;
 
     public NotifyComponentUnregistered() {
@@ -45,7 +45,7 @@ public class NotifyComponentUnregistered implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

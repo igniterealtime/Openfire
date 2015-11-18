@@ -38,13 +38,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  */
-public class GetStatistics implements ClusterTask {
+public class GetStatistics implements ClusterTask<Map<String, Double>> {
 	
 	private static final Logger Log = LoggerFactory.getLogger(GetStatistics.class);
 	
     private Map<String, Double> samples;
 
-    public Object getResult() {
+    public Map<String, Double> getResult() {
         return samples;
     }
 

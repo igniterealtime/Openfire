@@ -40,14 +40,14 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-public class GetNewMemberRoomsRequest implements ClusterTask {
+public class GetNewMemberRoomsRequest implements ClusterTask<List<RoomInfo>> {
     private List<RoomInfo> rooms;
 
     public GetNewMemberRoomsRequest() {
     }
 
     @Override
-    public Object getResult() {
+    public List<RoomInfo> getResult() {
         return rooms;
     }
 

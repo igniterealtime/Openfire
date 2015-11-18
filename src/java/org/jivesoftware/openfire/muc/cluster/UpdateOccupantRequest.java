@@ -39,7 +39,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdateOccupantRequest extends MUCRoomTask {
+public class UpdateOccupantRequest extends MUCRoomTask<Element> {
     private Element answer;
     private String nickname;
     private int role;
@@ -74,7 +74,7 @@ public class UpdateOccupantRequest extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Element getResult() {
         return answer;
     }
 

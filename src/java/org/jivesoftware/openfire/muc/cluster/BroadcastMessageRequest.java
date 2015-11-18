@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class BroadcastMessageRequest extends MUCRoomTask {
+public class BroadcastMessageRequest extends MUCRoomTask<Void> {
     private int occupants;
     private Message message;
 
@@ -59,7 +59,7 @@ public class BroadcastMessageRequest extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

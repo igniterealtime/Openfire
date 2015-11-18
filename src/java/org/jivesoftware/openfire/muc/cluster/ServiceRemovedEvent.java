@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class ServiceRemovedEvent implements ClusterTask {
+public class ServiceRemovedEvent implements ClusterTask<Void> {
     private String subdomain;
 
     public ServiceRemovedEvent() {
@@ -45,7 +45,7 @@ public class ServiceRemovedEvent implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

@@ -470,17 +470,17 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
-    private static class CallableTask<Object> implements Callable<Object>, Serializable {
-    	private ClusterTask task;
+    private static class CallableTask<V> implements Callable<V>, Serializable {
+    	private ClusterTask<V> task;
     	
-    	public CallableTask(ClusterTask task) {
+    	public CallableTask(ClusterTask<V> task) {
     		this.task = task;
     	}
 
-        public Object call() {
+        public V call() {
             task.run();
             logger.debug("CallableTask[" + task.getClass().getName() + "] result: " + task.getResult());
-            return (Object) task.getResult();
+            return task.getResult();
         }
     }
     

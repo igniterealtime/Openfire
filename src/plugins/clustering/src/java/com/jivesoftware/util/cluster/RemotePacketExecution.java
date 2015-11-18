@@ -36,7 +36,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class RemotePacketExecution implements ClusterTask {
+public class RemotePacketExecution implements ClusterTask<Void> {
 
     private JID receipient;
     private Packet packet;
@@ -49,7 +49,7 @@ public class RemotePacketExecution implements ClusterTask {
         this.packet = packet;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         // Not used since we are using #execute and not #query when using InvocationService
         return null;
     }

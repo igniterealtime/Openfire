@@ -22,12 +22,12 @@ package org.jivesoftware.util.cache;
 import java.io.Externalizable;
 
 /**
- * An interface to mix in Serializable and Runnable, which are both required for
- * sending invocable tasks across a cluster.
+ * An interface to mix in {@link Externalizable} and {@link Runnable}, which are both required for
+ * sending invokable tasks across a cluster.
  */
-public interface ClusterTask extends Runnable, Externalizable {
+public interface ClusterTask<V> extends Runnable, Externalizable {
 
-    public Object getResult();
+    V getResult();
 
 }
 

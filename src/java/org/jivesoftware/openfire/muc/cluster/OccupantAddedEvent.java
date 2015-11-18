@@ -39,7 +39,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class OccupantAddedEvent extends MUCRoomTask {
+public class OccupantAddedEvent extends MUCRoomTask<Void> {
     private Presence presence;
     private int role;
     private int affiliation;
@@ -119,7 +119,7 @@ public class OccupantAddedEvent extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

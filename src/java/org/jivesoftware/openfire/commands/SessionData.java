@@ -59,7 +59,7 @@ public class SessionData {
      */
     private int stage;
 
-    protected SessionData(String sessionid, JID owner) {
+    public SessionData(String sessionid, JID owner) {
         this.id = sessionid;
         this.creationStamp = System.currentTimeMillis();
         this.stage = -1;

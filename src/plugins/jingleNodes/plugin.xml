@@ -7,7 +7,7 @@
     <author>Jingle Nodes (Rodrigo Martins)</author>
     <version>0.2.0</version>
     <date>10/12/2015</date>
-    <minServerVersion>3.11.0</minServerVersion>
+    <minServerVersion>3.11.0 alpha</minServerVersion>
 
     <adminconsole>
         <tab id="tab-server">

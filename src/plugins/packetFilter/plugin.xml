@@ -9,7 +9,7 @@
     <author>Nate Putnam</author>
     <version>3.3.0</version>
     <date>10/12/2015</date>
-    <minServerVersion>3.11.0</minServerVersion>
+    <minServerVersion>3.11.0 alpha</minServerVersion>
     <databaseKey>packetfilter</databaseKey>
     <databaseVersion>2</databaseVersion>
 

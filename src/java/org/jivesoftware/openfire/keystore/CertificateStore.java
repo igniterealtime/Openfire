@@ -1,8 +1,7 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,8 @@ import java.util.*;
  *
  * A subclass of this class exists for each of the two distinct types of key store.
  * <ul>
- *     <li>one that is used to provide credentials, an <em>identity store</em>, in {@link IdentityStoreConfig}</li>
- *     <li>one that is used to verify credentials, a <em>trust store</em>, in {@link TrustStoreConfig}</li>
+ *     <li>one that is used to provide credentials, an <em>identity store</em>, in {@link IdentityStore}</li>
+ *     <li>one that is used to verify credentials, a <em>trust store</em>, in {@link TrustStore}</li>
  * </ul>
  *
  * Note that in Java terminology, an identity store is commonly referred to as a 'key store', while the same name is
@@ -34,9 +33,9 @@ import java.util.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public abstract class CertificateStoreConfig
+public abstract class CertificateStore
 {
-    private static final Logger Log = LoggerFactory.getLogger( CertificateStoreConfig.class );
+    private static final Logger Log = LoggerFactory.getLogger( CertificateStore.class );
 
     protected static final Provider PROVIDER = new BouncyCastleProvider();
 
@@ -47,39 +46,41 @@ public abstract class CertificateStoreConfig
     }
 
     protected final KeyStore store;
-    protected final char[] password;
-    protected final String canonicalPath;
+    protected final CertificateStoreConfiguration configuration;
 
-    public CertificateStoreConfig( String path, String password, String type, boolean createIfAbsent ) throws CertificateStoreConfigException
+    public CertificateStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
+        if (configuration == null)
+        {
+            throw new IllegalArgumentException( "Argument 'configuration' cannot be null." );
+        }
+
+        this.configuration = configuration;
         try
         {
-            this.canonicalPath = Purpose.canonicalize( path );
-            final File file = new File( canonicalPath );
+            final File file = configuration.getFile();
 
             if ( createIfAbsent && !file.exists() )
             {
-                try ( final FileOutputStream os = new FileOutputStream( canonicalPath ) )
+                try ( final FileOutputStream os = new FileOutputStream( file.getPath() ) )
                 {
-                    store = KeyStore.getInstance( type );
-                    store.load( null, password.toCharArray() );
-                    store.store( os, password.toCharArray() );
-                    this.password = password.toCharArray();
+                    store = KeyStore.getInstance( configuration.getType() );
+                    store.load( null, configuration.getPassword() );
+                    store.store( os, configuration.getPassword() );
                 }
             }
             else
             {
-                try ( final FileInputStream is = new FileInputStream( canonicalPath ) )
+                try ( final FileInputStream is = new FileInputStream( file ) )
                 {
-                    store = KeyStore.getInstance( type );
-                    store.load( is, password.toCharArray() );
-                    this.password = password.toCharArray();
+                    store = KeyStore.getInstance( configuration.getType() );
+                    store.load( is, configuration.getPassword() );
                 }
             }
         }
         catch ( IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException ex )
         {
-            throw new CertificateStoreConfigException( "Unable to load store of type '" + type + "' from location '" + path + "'", ex );
+            throw new CertificateStoreConfigException( "Unable to load store of type '" + configuration.getType() + "' from file '" + configuration.getFile() + "'", ex );
         }
     }
 
@@ -89,13 +90,13 @@ public abstract class CertificateStoreConfig
      */
     public void reload() throws CertificateStoreConfigException
     {
-        try ( final FileInputStream is = new FileInputStream( canonicalPath ) )
+        try ( final FileInputStream is = new FileInputStream( configuration.getFile() ) )
         {
-            store.load( is, password );
+            store.load( is, configuration.getPassword() );
         }
         catch ( IOException | NoSuchAlgorithmException | CertificateException ex )
         {
-            throw new CertificateStoreConfigException( "Unable to reload store in location '" + canonicalPath + "'", ex );
+            throw new CertificateStoreConfigException( "Unable to reload store in '" + configuration.getFile() + "'", ex );
         }
     }
 
@@ -105,13 +106,13 @@ public abstract class CertificateStoreConfig
      */
     public void persist() throws CertificateStoreConfigException
     {
-        try ( final FileOutputStream os = new FileOutputStream( canonicalPath ) )
+        try ( final FileOutputStream os = new FileOutputStream( configuration.getFile() ) )
         {
-            store.store( os, password );
+            store.store( os, configuration.getPassword() );
         }
         catch ( NoSuchAlgorithmException | KeyStoreException | CertificateException | IOException ex )
         {
-            throw new CertificateStoreConfigException( "Unable to save changes to store in location '" + canonicalPath + "'", ex );
+            throw new CertificateStoreConfigException( "Unable to save changes to store in '" + configuration.getFile() + "'", ex );
         }
     }
 
@@ -177,31 +178,13 @@ public abstract class CertificateStoreConfig
         // TODO: Notify listeners that a new certificate has been removed.
     }
 
-    public String getType()
-    {
-        return store.getType();
-    }
-
     public KeyStore getStore()
     {
         return store;
     }
 
-    public String getPassword()
+    public CertificateStoreConfiguration getConfiguration()
     {
-        return String.valueOf( password );
-    }
-
-    public String getCanonicalPath()
-    {
-        return canonicalPath;
-    }
-
-    public String getPath()
-    {
-        final Path path = Paths.get( canonicalPath );
-        final Path home = Paths.get( JiveGlobals.getHomeDirectory() );
-        final Path corrected = path.startsWith( home ) ? home.relativize( path ) : path;
-        return corrected.toString();
+        return configuration;
     }
 }

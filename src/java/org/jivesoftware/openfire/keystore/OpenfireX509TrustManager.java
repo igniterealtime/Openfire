@@ -16,7 +16,7 @@ import java.util.*;
  */
 // TODO re-enable optional OCSP checking.
 // TODO re-enable CRL checking.
-public class OpenfireX509ExtendedTrustManager implements X509TrustManager
+public class OpenfireX509TrustManager implements X509TrustManager
 {
     private static final Provider PROVIDER = new BouncyCastleProvider();
 
@@ -43,7 +43,7 @@ public class OpenfireX509ExtendedTrustManager implements X509TrustManager
      */
     protected final Set<X509Certificate> trustedIssuers;
 
-    public OpenfireX509ExtendedTrustManager( KeyStore trustStore, boolean acceptSelfSigned, boolean checkValidity ) throws NoSuchAlgorithmException, KeyStoreException
+    public OpenfireX509TrustManager( KeyStore trustStore, boolean acceptSelfSigned, boolean checkValidity ) throws NoSuchAlgorithmException, KeyStoreException
     {
         this.acceptSelfSigned = acceptSelfSigned;
         this.checkValidity = checkValidity;

@@ -45,6 +45,7 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -1118,6 +1119,7 @@ public class HttpSession extends LocalClientSession {
     public static class HttpVirtualConnection extends VirtualConnection {
 
         private InetAddress address;
+        private ConnectionConfiguration configuration;
 
         public HttpVirtualConnection(InetAddress address) {
             this.address = address;
@@ -1156,6 +1158,11 @@ public class HttpSession extends LocalClientSession {
         @Override
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
+        }
+
+        @Override
+        public ConnectionConfiguration getConfiguration() {
+            return session.getConnection().getConfiguration();
         }
 
         @Override

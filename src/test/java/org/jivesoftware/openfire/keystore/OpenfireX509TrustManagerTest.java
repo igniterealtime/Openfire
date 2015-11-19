@@ -14,16 +14,16 @@ import java.security.cert.*;
 import java.util.*;
 
 /**
- * Unit tests that verify the functionality of {@link OpenfireX509ExtendedTrustManager}.
+ * Unit tests that verify the functionality of {@link OpenfireX509TrustManager}.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class OpenfireX509ExtendedTrustManagerTest
+public class OpenfireX509TrustManagerTest
 {
     /**
      * An instance that is freshly recreated before each test.
      */
-    private OpenfireX509ExtendedTrustManager systemUnderTest;
+    private OpenfireX509TrustManager systemUnderTest;
 
     /**
      * The keystore that contains the certificates used by the system under test (refreshed before every test invocation).
@@ -63,7 +63,7 @@ public class OpenfireX509ExtendedTrustManagerTest
         }
 
         // Create the Trust Manager that is subject of these tests.
-        systemUnderTest = null; // TODO FIXME // new OpenfireX509ExtendedTrustManager( trustStore );
+        systemUnderTest = null; // TODO FIXME // new OpenfireX509TrustManager( trustStore );
     }
 
     /**
@@ -91,7 +91,7 @@ public class OpenfireX509ExtendedTrustManagerTest
     }
 
     /**
-     * This test verifies that {@link OpenfireX509ExtendedTrustManager#getAcceptedIssuers()} does not return expired
+     * This test verifies that {@link OpenfireX509TrustManager#getAcceptedIssuers()} does not return expired
      * certificates.
      */
     @Test

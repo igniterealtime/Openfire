@@ -47,11 +47,11 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -141,19 +141,20 @@ public class AdminConsolePlugin implements Plugin {
         // Create a connector for https traffic if it's enabled.
         sslEnabled = false;
         try {
-            final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.WEBADMIN );
-            if (adminSecurePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() )
+            final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.WEBADMIN );
+            if (adminSecurePort > 0 && !identityStore.getAllCertificates().isEmpty() )
             {
-                if ( !identityStoreConfig.containsDomainCertificate( "RSA" )) {
+                if ( !identityStore.containsDomainCertificate( "RSA" )) {
                     Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
                 }
 
-                final SslContextFactory sslContextFactory = SSLConfig.getSslContextFactory( Purpose.WEBADMIN );
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.WEBADMIN, true );
+                final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
 
                 final ServerConnector httpsConnector;
                 if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", ""))) {
 					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
-
 				} else {
 					HttpConfiguration httpsConfig = new HttpConfiguration();
 					httpsConfig.setSendServerVersion( false );

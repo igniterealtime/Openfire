@@ -155,10 +155,10 @@ public class CertificateUtils
             final Principal subject = certificate.getSubjectDN();
 
             if ( byIssuer.put( issuer, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values." );
+                throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values. Offending value: " + issuer );
             }
             if ( bySubject.put( subject, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical subjectDN values." );
+                throw new CertificateException( "The provided input should not contain multiple certificates with identical subjectDN values. Offending value: " + subject );
             }
         }
 

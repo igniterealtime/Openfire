@@ -50,6 +50,8 @@ import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +66,7 @@ import org.xmpp.packet.Packet;
 public class NIOConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
+    private ConnectionConfiguration configuration;
 
     public enum State { RUNNING, CLOSING, CLOSED }
 
@@ -87,7 +90,6 @@ public class NIOConnection implements Connection {
     private int minorVersion = 0;
     private String language = null;
 
-    // TODO Uso el #checkHealth????
     /**
      * TLS policy currently in use for this connection.
      */
@@ -119,9 +121,10 @@ public class NIOConnection implements Connection {
      */
     private final ReentrantLock ioSessionLock = new ReentrantLock(true);
 
-    public NIOConnection(IoSession session, PacketDeliverer packetDeliverer) {
+    public NIOConnection( IoSession session, PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
+        this.configuration = configuration;
         state = State.RUNNING;
     }
 
@@ -366,20 +369,19 @@ public class NIOConnection implements Connection {
     @Deprecated
 	@Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
-        final boolean isPeerClient = ( remoteServer == null );
-        startTLS( clientMode, isPeerClient, authentication );
+        startTLS( clientMode );
     }
 
-    public void startTLS(boolean clientMode, boolean isPeerClient, ClientAuth authentication) throws Exception {
+    public void startTLS(boolean clientMode) throws Exception {
 
         final SslFilter filter;
-        if ( clientMode ) {
-            filter = SSLConfig.getClientModeSslFilter( Purpose.SOCKET_S2S );
+        if ( clientMode )
+        {
+            filter = configuration.createClientModeSslFilter();
         }
         else
         {
-            final Purpose purpose = isPeerClient ? Purpose.SOCKET_C2S : Purpose.SOCKET_S2S;
-            filter = SSLConfig.getServerModeSslFilter( purpose, authentication );
+            filter = configuration.createServerModeSslFilter();
         }
 
         ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
@@ -408,6 +410,11 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        return configuration;
+    }
+
     public boolean isFlashClient() {
         return flashClient;
     }

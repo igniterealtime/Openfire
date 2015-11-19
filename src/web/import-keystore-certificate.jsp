@@ -1,11 +1,11 @@
 <%@ page errorPage="error.jsp" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -18,20 +18,20 @@
     final String privateKey       = ParamUtils.getParameter(request, "private-key");
     final String passPhrase       = ParamUtils.getParameter(request, "passPhrase");
     final String certificate      = ParamUtils.getParameter(request, "certificate");
-    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
+    final String storePurposeText = ParamUtils.getParameter(request, "storeConnectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    Purpose storePurpose;
+    ConnectionType storeConnectionType;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
+        storeConnectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storePurpose", ex.getMessage() );
-        storePurpose = null;
+        errors.put( "storeConnectionType", ex.getMessage() );
+        storeConnectionType = null;
     }
 
-    pageContext.setAttribute( "storePurpose", storePurpose );
+    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
 
     if (save) {
         if (privateKey == null || "".equals(privateKey)) {
@@ -42,24 +42,24 @@
         }
         if (errors.isEmpty()) {
             try {
-                final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( storePurpose );
+                final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( storeConnectionType );
 
                 // Create an alias for the signed certificate
                 String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 int index = 1;
                 String alias = domain + "_" + index;
-                while ( identityStoreConfig.getStore().containsAlias( alias )) {
+                while ( identityStore.getStore().containsAlias( alias )) {
                     index = index + 1;
                     alias = domain + "_" + index;
                 }
 
                 // Import certificate
-                identityStoreConfig.installCertificate( alias, privateKey, passPhrase, certificate );
+                identityStore.installCertificate( alias, privateKey, passPhrase, certificate );
 
                 // Log the event
                 webManager.logEvent("imported SSL certificate in identity store "+ storePurposeText, "alias = "+alias);
 
-                response.sendRedirect("security-keystore.jsp?storePurpose="+storePurposeText);
+                response.sendRedirect("security-keystore.jsp?storeConnectionType="+storePurposeText);
                 return;
             }
             catch (Exception e) {
@@ -72,8 +72,8 @@
 
 <html>
   <head>
-      <title><fmt:message key="ssl.import.certificate.keystore.${storePurpose}.title"/></title>
-      <meta name="pageID" content="security-keystore-${storePurpose}"/>
+      <title><fmt:message key="ssl.import.certificate.keystore.${storeConnectionType}.title"/></title>
+      <meta name="pageID" content="security-keystore-${storeConnectionType}"/>
   </head>
   <body>
 
@@ -115,7 +115,7 @@
 
   <!-- BEGIN 'Import Private Key and Certificate' -->
   <form action="import-keystore-certificate.jsp" method="post" name="f">
-      <input type="hidden" name="storePurpose" value="${storePurpose}"/>
+      <input type="hidden" name="storeConnectionType" value="${storeConnectionType}"/>
       <div class="jive-contentBoxHeader">
           <fmt:message key="ssl.import.certificate.keystore.boxtitle" />
       </div>

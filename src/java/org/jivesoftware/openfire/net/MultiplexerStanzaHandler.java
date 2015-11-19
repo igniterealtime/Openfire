@@ -46,6 +46,11 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
      */
     private MultiplexerPacketHandler packetHandler;
 
+    public MultiplexerStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public MultiplexerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, serverName, connection);
     }
@@ -151,6 +156,6 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
 
     @Override
 	void startTLS() throws Exception {
-        connection.startTLS(false, false, Connection.ClientAuth.disabled);
+        connection.startTLS(false);
     }
 }

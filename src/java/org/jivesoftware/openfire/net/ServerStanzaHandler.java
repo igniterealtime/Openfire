@@ -55,8 +55,13 @@ public class ServerStanzaHandler extends StanzaHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
 
+    public ServerStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public ServerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        super(router, serverName, connection);
+        super(router, connection);
     }
 
     @Override
@@ -110,7 +115,8 @@ public class ServerStanzaHandler extends StanzaHandler {
         boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
                 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-        connection.startTLS(false, false, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+        //needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted
+        connection.startTLS(false);
     }
     @Override
 	protected void processIQ(IQ packet) throws UnauthorizedException {

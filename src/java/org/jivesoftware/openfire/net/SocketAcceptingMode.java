@@ -30,7 +30,9 @@ import java.net.ServerSocket;
  * Abstract class for {@link BlockingAcceptingMode}.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 abstract class SocketAcceptingMode {
 
     /**

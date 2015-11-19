@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.net.ClientStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,18 +45,18 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(ClientConnectionHandler.class);
 
-    public ClientConnectionHandler(String serverName) {
-        super(serverName);
+    public ClientConnectionHandler(ConnectionConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
 	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, new OfflinePacketDeliverer());
+        return new NIOConnection(session, new OfflinePacketDeliverer(), configuration );
     }
 
     @Override
 	StanzaHandler createStanzaHandler(NIOConnection connection) {
-        return new ClientStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
+        return new ClientStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
@@ -97,7 +98,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
 				final IQ pingRequest = new IQ(Type.get);
 				pingRequest.setChildElement("ping",
 						IQPingHandler.NAMESPACE);
-				pingRequest.setFrom(serverName);
+				pingRequest.setFrom( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
 				pingRequest.setTo(entity); 
 				
 	            // Get the connection for this session

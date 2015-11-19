@@ -61,12 +61,12 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -251,16 +251,17 @@ public final class HttpBindManager {
     private void createSSLConnector(int securePort, int bindThreads) {
         httpsConnector = null;
         try {
-            final IdentityStoreConfig identityStoreConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.BOSH_C2S );
-            final KeyStore keyStore = identityStoreConfig.getStore();
+            final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.BOSH_C2S );
 
-            if (securePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() ) {
-                if ( !identityStoreConfig.containsDomainCertificate( "RSA" ) ) {
+            if (securePort > 0 && identityStore.getStore().aliases().hasMoreElements() ) {
+                if ( !identityStore.containsDomainCertificate( "RSA" ) ) {
                     Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
                             "the hosted domain");
                 }
 
-                final SslContextFactory sslContextFactory = SSLConfig.getSslContextFactory( Purpose.BOSH_C2S );
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.BOSH_C2S, true );
+                final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
 
  				final HttpConfiguration httpsConfig = new HttpConfiguration();
 				httpsConfig.setSecureScheme("https");

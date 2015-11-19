@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 
 import javax.net.ssl.SSLEngine;
@@ -88,7 +89,7 @@ public class TLSStreamHandler {
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
-     * @deprecated Use the other constructor. There's no functional change.
+     * @deprecated Use the other constructor.
      */
     @Deprecated
     public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
@@ -96,9 +97,8 @@ public class TLSStreamHandler {
     {
         this(
             socket,
-            clientMode,
-            remoteServer==null,
-            needClientAuth?Connection.ClientAuth.needed: Connection.ClientAuth.wanted
+            connection.getConfiguration(),
+            clientMode
         );
     }
 
@@ -110,12 +110,10 @@ public class TLSStreamHandler {
      *
      * @param socket the plain socket connection to secure
      * @param clientMode boolean indicating if this entity is a client or a server.
-     * @param isPeerClient indicates if the remote party is a client (or server).
-     * @param clientAuth indicates if client should authenticate during the TLS negotiation.
      * @throws java.io.IOException
      */
-    public TLSStreamHandler(Socket socket, boolean clientMode, boolean isPeerClient, Connection.ClientAuth clientAuth) throws IOException {
-        wrapper = new TLSWrapper(clientMode, clientAuth, isPeerClient);
+    public TLSStreamHandler(Socket socket, ConnectionConfiguration configuration, boolean clientMode) throws IOException {
+        wrapper = new TLSWrapper(configuration, clientMode);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);
@@ -148,7 +146,7 @@ public class TLSStreamHandler {
             initialHSStatus = HandshakeStatus.NEED_WRAP;
             tlsEngine.beginHandshake();
         }
-        else if (clientAuth == Connection.ClientAuth.needed) {
+        else if (configuration.getClientAuth() == Connection.ClientAuth.needed) {
             // Only REQUIRE client authentication if we are fully verifying certificates
             if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                     JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&

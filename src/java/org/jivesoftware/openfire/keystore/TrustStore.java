@@ -1,19 +1,13 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jivesoftware.openfire.net.ClientTrustManager;
-import org.jivesoftware.openfire.net.ServerTrustManager;
 import org.jivesoftware.util.CertificateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
-import java.security.Security;
 import java.security.cert.*;
 import java.util.*;
 
@@ -26,65 +20,13 @@ import java.util.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class TrustStoreConfig extends CertificateStoreConfig
+public class TrustStore extends CertificateStore
 {
-    private static final Logger Log = LoggerFactory.getLogger( TrustStoreConfig.class );
+    private static final Logger Log = LoggerFactory.getLogger( TrustStore.class );
 
-    private transient TrustManager[] trustManagers;
-
-    private boolean acceptSelfSigned;
-    private boolean checkValidity;
-
-    public TrustStoreConfig( String path, String password, String type, boolean createIfAbsent, boolean acceptSelfSigned, boolean checkValidity ) throws CertificateStoreConfigException
+    public TrustStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
-        super( path, password, type, createIfAbsent );
-        this.acceptSelfSigned = acceptSelfSigned;
-        this.checkValidity = checkValidity;
-    }
-
-    public synchronized TrustManager[] getTrustManagers() throws KeyStoreException, NoSuchAlgorithmException
-    {
-        if ( trustManagers == null ) {
-            trustManagers = new TrustManager[] { new OpenfireX509ExtendedTrustManager( this.getStore(), acceptSelfSigned, checkValidity ) };
-        }
-        return trustManagers;
-    }
-
-    public synchronized void reconfigure( boolean acceptSelfSigned, boolean checkValidity ) throws CertificateStoreConfigException
-    {
-        boolean needsReload = false;
-        if ( this.acceptSelfSigned != acceptSelfSigned )
-        {
-            this.acceptSelfSigned = acceptSelfSigned;
-            needsReload = true;
-        }
-
-        if ( this.checkValidity != checkValidity )
-        {
-            this.checkValidity = checkValidity;
-            needsReload = true;
-        }
-
-        if ( needsReload ) {
-            reload();
-        }
-    }
-
-    public boolean isAcceptSelfSigned()
-    {
-        return acceptSelfSigned;
-    }
-
-    public boolean isCheckValidity()
-    {
-        return checkValidity;
-    }
-
-    @Override
-    public synchronized void reload() throws CertificateStoreConfigException
-    {
-        super.reload();
-        trustManagers = null;
+        super( configuration, createIfAbsent );
     }
 
     /**

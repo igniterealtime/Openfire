@@ -114,6 +114,19 @@ if [ ! -x "$JAVACMD" ] ; then
   	exit 1
 fi
 
+for arguments in "$@"
+do
+case $arguments in
+    -debug)
+    JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    ;;
+    *)
+	# unknown option
+    ;;
+esac
+done
+
+
 if [ -z "$LOCALCLASSPATH" ] ; then
 	LOCALCLASSPATH=$OPENFIRE_LIB/startup.jar
 else

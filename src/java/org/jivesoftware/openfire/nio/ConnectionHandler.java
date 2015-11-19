@@ -24,9 +24,11 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -49,7 +51,6 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     protected static final String HANDLER = "HANDLER";
     protected static final String CONNECTION = "CONNECTION";
 
-    protected String serverName;
     private static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
             {
                @Override
@@ -75,8 +76,13 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    protected ConnectionHandler(String serverName) {
-        this.serverName = serverName;
+    /**
+     * The configuration for new connections.
+     */
+    protected final ConnectionConfiguration configuration;
+
+    protected ConnectionHandler( ConnectionConfiguration configuration ) {
+        this.configuration = configuration;
     }
 
     @Override

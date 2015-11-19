@@ -1,27 +1,7 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.bouncycastle.jce.X509Principal;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
-import org.jivesoftware.util.Base64;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import sun.security.provider.X509Factory;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.*;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509Certificate;
-import java.util.*;
-
 /**
- * Unit tests that verify the functionality of {@link TrustStoreConfig}.
+ * Unit tests that verify the functionality of {@link TrustStore}.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -30,7 +10,7 @@ public class TrustStoreConfigTest
 //    /**
 //     * An instance that is freshly recreated before each test.
 //     */
-//    private TrustStoreConfig trustStoreConfig;
+//    private TrustStore trustStoreConfig;
 //
 //    @Before
 //    public void createFixture() throws Exception
@@ -57,7 +37,7 @@ public class TrustStoreConfigTest
 //        }
 //
 //        // Use the new keystore file to create a fresh trust store, which will be used as a fixture by the tests.
-//        trustStoreConfig = new TrustStoreConfig( location, password, keyStore.getType(), false );
+//        trustStoreConfig = new TrustStore( location, password, keyStore.getType(), false );
 //    }
 //
 //    @After
@@ -74,7 +54,7 @@ public class TrustStoreConfigTest
 //    /**
 //     * The store in the fixture contains two certificates - one that is valid, and one that is invalid.
 //     *
-//     * This test verifies that {@link TrustStoreConfig#getAllCertificates()} returns both.
+//     * This test verifies that {@link TrustStore#getAllCertificates()} returns both.
 //     */
 //    @Test
 //    public void testGetAll() throws Exception
@@ -91,7 +71,7 @@ public class TrustStoreConfigTest
 //    /**
 //     * The store in the fixture contains two certificates - one that is valid, and one that is invalid.
 //     *
-//     * This test verifies that {@link TrustStoreConfig#getAllValidTrustAnchors()} returns only the valid one.
+//     * This test verifies that {@link TrustStore#getAllValidTrustAnchors()} returns only the valid one.
 //     */
 //    @Test
 //    public void testGetValid() throws Exception
@@ -142,7 +122,7 @@ public class TrustStoreConfigTest
 //
 //    /**
 //     * This test verifies that when a certificate is installed in the store using
-//     * {@link TrustStoreConfig#installCertificate(String, String)} a certificate chain of which the anchor is that same
+//     * {@link TrustStore#installCertificate(String, String)} a certificate chain of which the anchor is that same
 //     * certificate is successfully verified.
 //     */
 //    @Test

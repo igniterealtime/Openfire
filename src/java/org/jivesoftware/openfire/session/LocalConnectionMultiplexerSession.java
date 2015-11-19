@@ -29,6 +29,9 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,13 +264,17 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      * </ul
      */
     private void sendClientOptions() {
+
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false );
+
         IQ options = new IQ(IQ.Type.set);
         Element child = options.setChildElement("configuration",
                 "http://jabber.org/protocol/connectionmanager");
         // Add info about TLS
-        if (LocalClientSession.getTLSPolicy() != Connection.TLSPolicy.disabled) {
+        if (configuration.getTlsPolicy() != Connection.TLSPolicy.disabled) {
             Element tls = child.addElement("starttls", "urn:ietf:params:xml:ns:xmpp-tls");
-            if (LocalClientSession.getTLSPolicy() == Connection.TLSPolicy.required) {
+            if (configuration.getTlsPolicy() == Connection.TLSPolicy.required) {
                 tls.addElement("required");
             }
 

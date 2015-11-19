@@ -27,6 +27,7 @@
     if (session == null || session.getAttribute("xmppSettings") == null || session.getAttribute("xmlSettings") == null) {
         // Session appears to have timed out, send back to first page.
         response.sendRedirect("index.jsp");
+        return;
     }
     
     // First, update with XMPPSettings

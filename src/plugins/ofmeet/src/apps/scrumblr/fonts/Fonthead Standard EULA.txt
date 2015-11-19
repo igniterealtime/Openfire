@@ -6,7 +6,7 @@ Fonthead Design End User License Agreement
 By downloading and/or installing Fonthead Design fonts (&quot;software&quot;) you agree to the following user license terms: 
 
 
-1)  Grant of License: The purchase of this software grants to you (&quot;user&quot;) as licensee, the non-exclusive right to use and display the software at a single home or business location on a maximum of 5 CPUs. You also may give a copy of this software to any service bureau which you hire to output your film, paper or color proofs, provided that they do not use the font software for any purpose other than outputing your work. They may keep the font software on file for use with future jobs on your behalf.
+1)  Grant of License: The purchase of this software grants to you (&quot;user&quot;) as licensee, the non-exclusive right to use and display the software at a single home or business location on a maximum of 5 CPUs. You also may give a copy of this software to any service bureau which you hire to output your film, paper or color proofs, provided that they do not use the font software for any connectionType other than outputing your work. They may keep the font software on file for use with future jobs on your behalf.
 
 2) Backup: One copy of the software may be made for backup.
 

@@ -82,7 +82,7 @@ abstract class SocketReadingMode {
         // Client requested to secure the connection using TLS. Negotiate TLS.
         try {
             // This code is only used for s2s
-            socketReader.connection.startTLS(false, false, Connection.ClientAuth.disabled);
+            socketReader.connection.startTLS(false);
         }
         catch (IOException e) {
             Log.error("Error while negotiating TLS: " + socketReader.connection, e);

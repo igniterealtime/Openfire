@@ -31,7 +31,8 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,31 +60,29 @@ public class TLSWrapper {
     private int appBuffSize;
 
     /**
-     * @deprecated Use the other constructor. There's no functional change.
+     * @deprecated Use the other constructor.
      */
     @Deprecated
     public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
     {
         this(
-            clientMode,
-            needClientAuth?Connection.ClientAuth.needed:Connection.ClientAuth.wanted,
-            remoteServer == null
+            connection.getConfiguration(),
+            clientMode
         );
     }
 
-    public TLSWrapper(boolean clientMode, Connection.ClientAuth clientAuth, boolean isPeerClient) {
+    public TLSWrapper(ConnectionConfiguration configuration, boolean clientMode ) {
 
         try
         {
             final SSLEngine sslEngine;
             if ( clientMode )
             {
-                sslEngine = SSLConfig.getClientModeSSLEngine( Purpose.SOCKET_S2S );
+                sslEngine = configuration.createClientModeSSLEngine();
             }
             else
             {
-                final Purpose purpose = isPeerClient ? Purpose.SOCKET_C2S : Purpose.SOCKET_S2S;
-                sslEngine = SSLConfig.getServerModeSSLEngine( purpose, clientAuth );
+                sslEngine = configuration.createServerModeSSLEngine();
             }
 
             final SSLSession sslSession = sslEngine.getSession();
@@ -91,7 +90,7 @@ public class TLSWrapper {
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
         }
-        catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException ex )
+        catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException | UnrecoverableKeyException ex )
         {
             Log.error("TLSHandler startup problem. SSLContext initialisation failed.", ex );
         }

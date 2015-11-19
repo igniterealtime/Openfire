@@ -83,7 +83,7 @@
         verifyRoot = ParamUtils.getBooleanParameter(request, "verifyRoot", verifyRoot);
         selfSigned = ParamUtils.getBooleanParameter(request, "selfSigned", selfSigned);
         verifyIdentity = ParamUtils.getBooleanParameter(request, "verifyIdentity", verifyIdentity);
-        verifyValidity = ParamUtils.getBooleanParameter(request, "verifyValidity", verifyValidity);
+        verifyValidity = ParamUtils.getBooleanParameter(request, "verifyCertificateValidity", verifyValidity);
 
         Map<String, String> settings = new HashMap<String, String>();
         // If there are no errors check if there is a need to run a force test

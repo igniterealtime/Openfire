@@ -1,15 +1,14 @@
 <%@ page errorPage="error.jsp"%>
 
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStore"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
-<%@ page import="java.security.KeyStore" %>
+<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -21,21 +20,21 @@
 <%  webManager.init(request, response, session, application, out );
 
     final String alias            = ParamUtils.getParameter( request, "alias" );
-    final String storePurposeText = ParamUtils.getParameter( request, "storePurpose" );
+    final String storePurposeText = ParamUtils.getParameter( request, "storeConnectionType" );
     final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    Purpose storePurpose;
+    ConnectionType storeConnectionType;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
+        storeConnectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storePurpose", ex.getMessage() );
-        storePurpose = null;
+        errors.put( "storeConnectionType", ex.getMessage() );
+        storeConnectionType = null;
     }
 
-    pageContext.setAttribute( "storePurpose", storePurpose );
+    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
 
     if (alias == null) {
         errors.put("alias", "The alias has not been specified.");
@@ -44,15 +43,15 @@
     {
         try
         {
-            final KeyStore store;
+            final CertificateStore store;
             if (isTrustStore) {
-                store = SSLConfig.getTrustStore( storePurpose );
+                store = CertificateStoreManager.getTrustStore( storeConnectionType );
             } else {
-                store = SSLConfig.getIdentityStore( storePurpose );
+                store = CertificateStoreManager.getIdentityStore( storeConnectionType );
             }
 
             // Get the certificate
-            final X509Certificate certificate = (X509Certificate) store.getCertificate( alias );
+            final X509Certificate certificate = (X509Certificate) store.getStore().getCertificate( alias );
 
             if ( certificate == null ) {
                 errors.put( "alias", "alias" );
@@ -70,9 +69,9 @@
     // Handle a "go back" click:
     if ( request.getParameter( "back" ) != null ) {
         if ( isTrustStore ) {
-            response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurpose );
+            response.sendRedirect( "security-truststore.jsp?storeConnectionType=" + storeConnectionType );
         } else {
-            response.sendRedirect( "security-keystore.jsp?storePurpose=" + storePurpose );
+            response.sendRedirect( "security-keystore.jsp?storeConnectionType=" + storeConnectionType );
         }
         return;
     }
@@ -448,7 +447,7 @@
     <br/>
 
     <form action="security-certificate-details.jsp">
-        <input type="hidden" name="storePurpose" value="${storePurpose}"/>
+        <input type="hidden" name="storeConnectionType" value="${storeConnectionType}"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

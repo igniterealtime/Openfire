@@ -27,6 +27,9 @@
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -50,76 +53,119 @@
     String server_tls = ParamUtils.getParameter(request, "server_tls");
     boolean selfSigned = ParamUtils.getBooleanParameter(request, "selfSigned");
 
-    if (update) {
-        if ("req".equals(clientSecurityRequired)) {
+	final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+	final ConnectionListener clientListener    = connectionManager.getListener( ConnectionType.SOCKET_C2S, false );
+	final ConnectionListener clientListenerSsl = connectionManager.getListener( ConnectionType.SOCKET_C2S, true );
+	final ConnectionListener serverListener    = connectionManager.getListener( ConnectionType.SOCKET_S2S, false );
+	final ConnectionListener serverListenerSsl = connectionManager.getListener( ConnectionType.SOCKET_S2S, true );
+
+    if (update)
+	{
+		// Client-to-server settings
+        if ("req".equals(clientSecurityRequired))
+		{
             // User selected that security is required
 
             // Enable 5222 port and make TLS required
-            XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            LocalClientSession.setTLSPolicy(Connection.TLSPolicy.required);
+			clientListener.setTLSPolicy( Connection.TLSPolicy.required );
+			clientListener.enable( true );
+
             // Enable 5223 port (old SSL port)
-            XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
-        } else if ("notreq".equals(clientSecurityRequired)) {
+			clientListenerSsl.enable( true );
+        }
+		else if ("notreq".equals(clientSecurityRequired))
+		{
             // User selected that security is NOT required
 
             // Enable 5222 port and make TLS optional
-            XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            LocalClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
+			clientListener.setTLSPolicy( Connection.TLSPolicy.optional );
+			clientListener.enable( true );
+
             // Enable 5223 port (old SSL port)
-            XMPPServer.getInstance().getConnectionManager().enableClientSSLListener(true);
-        } else if ("custom".equals(clientSecurityRequired)) {
+            clientListenerSsl.enable( true );
+        }
+		else if ("custom".equals(clientSecurityRequired))
+		{
             // User selected custom client authentication
 
-            // Enable or disable 5223 port (old SSL port)
-            XMPPServer.getInstance().getConnectionManager().enableClientSSLListener("available".equals(ssl));
-
             // Enable port 5222 and configure TLS policy
-            XMPPServer.getInstance().getConnectionManager().enableClientListener(true);
-            if ("notavailable".equals(tls)) {
-                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.disabled);
+			final Connection.TLSPolicy newPolicy;
+            if ("disabled".equals(tls)) {
+                newPolicy = Connection.TLSPolicy.disabled;
             } else if ("optional".equals(tls)) {
-                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.optional);
+				newPolicy = Connection.TLSPolicy.optional;
             } else {
-                LocalClientSession.setTLSPolicy(Connection.TLSPolicy.required);
+				newPolicy = Connection.TLSPolicy.required;
             }
-        }
+			clientListener.setTLSPolicy( newPolicy );
+			clientListener.enable( true );
 
-        if ("req".equals(serverSecurityRequired)) {
+			// Enable or disable 5223 port (old SSL port)
+			clientListenerSsl.enable( "available".equals( ssl ) );
+		}
+
+		// Server to Server settings
+		if ("req".equals(serverSecurityRequired))
+		{
             // User selected that security for s2s is required
 
             // Enable TLS and disable server dialback
-            XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-        } else if ("notreq".equals(serverSecurityRequired)) {
+			serverListener.setTLSPolicy( Connection.TLSPolicy.required );
+			JiveGlobals.setProperty( ConnectionSettings.Server.TLS_ENABLED, "true" );
+			JiveGlobals.setProperty( ConnectionSettings.Server.DIALBACK_ENABLED, "false" );
+			serverListener.enable( true );
+
+			// Enable legacy SSL port
+			serverListenerSsl.enable( true );
+        }
+		else if ("notreq".equals(serverSecurityRequired))
+		{
             // User selected that security for s2s is NOT required
 
             // Enable TLS and enable server dialback
-            XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
+			serverListener.setTLSPolicy( Connection.TLSPolicy.optional );
             JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "true");
             JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-        } else if ("custom".equals(serverSecurityRequired)) {
+
+			serverListener.enable( true );
+
+			// Enable legacy SSL port
+			serverListenerSsl.enable( true );
+		}
+		else if ("custom".equals(serverSecurityRequired))
+		{
             // User selected custom server authentication
 
-            boolean dialbackEnabled = "available".equals(dialback);
-            boolean tlsEnabled = "optional".equals(server_tls);
+            final boolean dialbackEnabled = "available".equals(dialback);
+            final boolean tlsEnabled = "optional".equals(server_tls) || "required".equals(server_tls);
 
-            if (dialbackEnabled || tlsEnabled) {
-                XMPPServer.getInstance().getConnectionManager().enableServerListener(true);
-
-                // Enable or disable server dialback
-                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, dialbackEnabled ? "true" : "false");
-
+            if (dialbackEnabled || tlsEnabled)
+			{
                 // Enable or disable TLS for s2s connections
-                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, tlsEnabled ? "true" : "false");
-            } else {
-                XMPPServer.getInstance().getConnectionManager().enableServerListener(false);
-                // Disable server dialback
-                JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
+				final Connection.TLSPolicy newPolicy;
+				if ("disabled".equals(server_tls)) {
+					newPolicy = Connection.TLSPolicy.disabled;
+				} else if ("optional".equals(tls)) {
+					newPolicy = Connection.TLSPolicy.optional;
+				} else {
+					newPolicy = Connection.TLSPolicy.required;
+				}
+				serverListener.setTLSPolicy( newPolicy );
+				JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, tlsEnabled ? "true" : "false");
 
-                // Disable TLS for s2s connections
-                JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ENABLED, "false");
+				// Enable or disable server dialback
+				JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, dialbackEnabled ? "true" : "false");
+
+				serverListener.enable( true );
+
+				// Enable legacy SSL port
+				serverListenerSsl.enable( true );
             }
+			else
+			{
+				serverListener.enable( false );
+				serverListenerSsl.enable( false );
+			}
         }
         ServerDialback.setEnabledForSelfSigned(selfSigned);
 
@@ -131,52 +177,57 @@
         webManager.logEvent("updated SSL configuration",
                 ConnectionSettings.Server.DIALBACK_ENABLED + " = " + JiveGlobals.getProperty(ConnectionSettings.Server.DIALBACK_ENABLED) + "\n" +
                 ConnectionSettings.Server.TLS_ENABLED      + " = " + JiveGlobals.getProperty(ConnectionSettings.Server.TLS_ENABLED) + "\n" +
+			    ConnectionSettings.Server.TLS_POLICY       + " = " + JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY) + "\n" +
                 "xmpp.client.cert.policy = "                       + JiveGlobals.getProperty("xmpp.client.cert.policy") + "\n" +
                 "httpbind.client.cert.policy = "                   + JiveGlobals.getProperty("httpbind.client.cert.policy")
 		);
     }
 
-    // Set page vars
-    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-    if (connectionManager.isClientListenerEnabled() && connectionManager.isClientSSLListenerEnabled()) {
-        if (Connection.TLSPolicy.required.equals(LocalClientSession.getTLSPolicy())) {
-            clientSecurityRequired = "req";
-            ssl = "available";
-            tls = "required";
-        } else if (Connection.TLSPolicy.optional.equals(LocalClientSession.getTLSPolicy())) {
-            clientSecurityRequired = "notreq";
-            ssl = "available";
-            tls = "optional";
-        } else {
-            clientSecurityRequired = "custom";
-            ssl = "available";
-            tls = "notavailable";
-        }
-    } else {
+    // Set page vars (client-to-client)
+    if ( clientListener.isEnabled() && clientListenerSsl.isEnabled() )
+	{
+		switch ( clientListener.getTLSPolicy() )
+		{
+			case required:
+				clientSecurityRequired = "req";
+				ssl = "available";
+				tls = "required";
+				break;
+			case optional:
+				clientSecurityRequired = "notreq";
+				ssl = "available";
+				tls = "optional";
+				break;
+			default:
+				clientSecurityRequired = "custom";
+				ssl = "available";
+				tls = "disabled";
+				break;
+		}
+    }
+	else
+	{
         clientSecurityRequired = "custom";
-        ssl = connectionManager.isClientSSLListenerEnabled() ? "available" : "notavailable";
-        tls = Connection.TLSPolicy.disabled.equals(LocalClientSession.getTLSPolicy()) ? "notavailable" :
-                LocalClientSession.getTLSPolicy().toString();
+        ssl = clientListenerSsl.isEnabled() ? "available" : "disabled";
+        tls = clientListener.getTLSPolicy().toString();
     }
 
-    boolean tlsEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
-    boolean dialbackEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
-    if (tlsEnabled) {
-        if (dialbackEnabled) {
-            serverSecurityRequired = "notreq";
-            dialback = "available";
-            server_tls = "optional";
-        } else {
-            serverSecurityRequired = "req";
-            dialback = "notavailable";
-            server_tls = "optional";
-        }
-    } else {
+	// Set page vars (client-to-server)
+
+    final Connection.TLSPolicy tlsEnabled = serverListener.getTLSPolicy();
+    final boolean dialbackEnabled = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.DIALBACK_ENABLED, true);
+    if (tlsEnabled.equals( Connection.TLSPolicy.required ) && !dialbackEnabled ) {
+		serverSecurityRequired = "req";
+	} else if ( tlsEnabled.equals( Connection.TLSPolicy.optional ) && dialbackEnabled ) {
+		serverSecurityRequired = "notreq";
+	} else {
         serverSecurityRequired = "custom";
-        dialback = dialbackEnabled ? "available" : "notavailable";
-        server_tls = "notavailable";
     }
-    selfSigned = ServerDialback.isEnabledForSelfSigned();
+
+	server_tls = tlsEnabled.name();
+	dialback = dialbackEnabled ? "available" : "disabled";
+
+	selfSigned = ServerDialback.isEnabledForSelfSigned();
 
     clientMutualAuthenticationSocket = JiveGlobals.getProperty( "xmpp.client.cert.policy",     "disabled" );
     clientMutualAuthenticationBOSH   = JiveGlobals.getProperty( "httpbind.client.cert.policy", "disabled" );
@@ -291,7 +342,7 @@
 								<fmt:message key="ssl.settings.client.customSSL" />
 							</td>
 							<td width="99%">
-								<input type="radio" name="ssl" value="notavailable" id="rb04" <%= ("notavailable".equals(ssl) ? "checked" : "") %>
+								<input type="radio" name="ssl" value="disabled" id="rb04" <%= ("disabled".equals(ssl) ? "checked" : "") %>
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb04"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
 								<input type="radio" name="ssl" value="available" id="rb05" <%= ("available".equals(ssl) ? "checked" : "") %>
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb05"><fmt:message key="ssl.settings.available" /></label>
@@ -302,7 +353,7 @@
 								<fmt:message key="ssl.settings.client.customTLS" />
 							</td>
 							<td width="99%">
-								<input type="radio" name="tls" value="notavailable" id="rb06" <%= ("notavailable".equals(tls) ? "checked" : "") %>
+								<input type="radio" name="tls" value="disabled" id="rb06" <%= ("disabled".equals(tls) ? "checked" : "") %>
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb06"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
 								<input type="radio" name="tls" value="optional" id="rb07" <%= ("optional".equals(tls) ? "checked" : "") %>
 									   onclick="this.form.clientSecurityRequired[2].checked=true;">&nbsp;<label for="rb07"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
@@ -398,7 +449,7 @@
 								<fmt:message key="ssl.settings.server.dialback" />
 							</td>
 							<td width="99%">
-								<input type="radio" name="dialback" value="notavailable" id="rb12" <%= ("notavailable".equals(dialback) ? "checked" : "") %>
+								<input type="radio" name="dialback" value="disabled" id="rb12" <%= ("disabled".equals(dialback) ? "checked" : "") %>
 									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb12"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
 								<input type="radio" name="dialback" value="available" id="rb13" <%= ("available".equals(dialback) ? "checked" : "") %>
 									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb13"><fmt:message key="ssl.settings.available" /></label>
@@ -409,10 +460,12 @@
 								<fmt:message key="ssl.settings.server.customTLS" />
 							</td>
 							<td width="99%">
-								<input type="radio" name="server_tls" value="notavailable" id="rb14" <%= ("notavailable".equals(server_tls) ? "checked" : "") %>
+								<input type="radio" name="server_tls" value="disabled" id="rb14" <%= ("disabled".equals(server_tls) ? "checked" : "") %>
 									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb14"><fmt:message key="ssl.settings.notavailable" /></label>&nbsp;&nbsp;
 								<input type="radio" name="server_tls" value="optional" id="rb15" <%= ("optional".equals(server_tls) ? "checked" : "") %>
 									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb15"><fmt:message key="ssl.settings.optional" /></label>&nbsp;&nbsp;
+								<input type="radio" name="server_tls" value="required" id="rb22" <%= ("required".equals(server_tls) ? "checked" : "") %>
+									   onclick="this.form.serverSecurityRequired[2].checked=true;">&nbsp;<label for="rb22"><fmt:message key="ssl.settings.required" /></label>&nbsp;&nbsp;
 							</td>
 						</tr>
 						</table>

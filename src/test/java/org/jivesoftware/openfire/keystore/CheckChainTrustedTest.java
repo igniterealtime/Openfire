@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Unit tests that verify the functionality of {@link OpenfireX509ExtendedTrustManager#checkChainTrusted(CertSelector, X509Certificate...)}.
+ * Unit tests that verify the functionality of {@link OpenfireX509TrustManager#checkChainTrusted(CertSelector, X509Certificate...)}.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -27,14 +27,14 @@ public class CheckChainTrustedTest
      * iterable returned here (its values are passed to the constructor of this class). This allows us to execute the
      * same set of tests against a different configuration of the system under test.
      */
-    @Parameterized.Parameters(name = "acceptSelfSigned={0},checkValidity={1}" )
+    @Parameterized.Parameters(name = "acceptSelfSignedCertificates={0},checkValidity={1}" )
     public static Iterable<Object[]> constructorArguments()
     {
         final List<Object[]> constructorArguments = new ArrayList<>();
-        constructorArguments.add( new Object[] { false, true } );  // acceptSelfSigned = false, check validity = true
-        constructorArguments.add( new Object[] { false, false } ); // acceptSelfSigned = false, check validity = false
-        constructorArguments.add( new Object[] { true, true } );   // acceptSelfSigned = true, check validity = true
-        constructorArguments.add( new Object[] { true, false } );  // acceptSelfSigned = true, check validity = false
+        constructorArguments.add( new Object[] { false, true } );  // acceptSelfSignedCertificates = false, check validity = true
+        constructorArguments.add( new Object[] { false, false } ); // acceptSelfSignedCertificates = false, check validity = false
+        constructorArguments.add( new Object[] { true, true } );   // acceptSelfSignedCertificates = true, check validity = true
+        constructorArguments.add( new Object[] { true, false } );  // acceptSelfSignedCertificates = true, check validity = false
         return constructorArguments;
     }
 
@@ -79,7 +79,7 @@ public class CheckChainTrustedTest
     /**
      * The system under test (refreshed before every test invocation).
      */
-    private OpenfireX509ExtendedTrustManager trustManager;
+    private OpenfireX509TrustManager trustManager;
 
     public CheckChainTrustedTest( boolean acceptSelfSigned, boolean checkValidity )
     {
@@ -106,7 +106,7 @@ public class CheckChainTrustedTest
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.
-        trustManager = new OpenfireX509ExtendedTrustManager( trustStore, acceptSelfSigned, checkValidity );
+        trustManager = new OpenfireX509TrustManager( trustStore, acceptSelfSigned, checkValidity );
     }
 
     /**

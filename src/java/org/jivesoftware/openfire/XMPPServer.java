@@ -38,17 +38,17 @@ import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
@@ -375,8 +375,8 @@ public class XMPPServer {
 
             // Update certificates (if required)
             try {
-                // Check if keystore already has certificates for current domain
-                final IdentityStoreConfig storeConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.SOCKET_C2S );
+                // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
+                final IdentityStore storeConfig = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
                 storeConfig.ensureDomainCertificates( "DSA", "RSA" );
             } catch (Exception e) {
                 logger.error("Error generating self-signed certificates", e);
@@ -474,11 +474,10 @@ public class XMPPServer {
 
     @SuppressWarnings("unchecked")
 	private void loadModules() {
-
-    		File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
-            logger.info("Loading modules from " + modulesXml.getAbsolutePath());
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
+		File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
+        logger.info("Loading modules from " + modulesXml.getAbsolutePath());
+        SAXReader xmlReader = new SAXReader();
+        xmlReader.setEncoding("UTF-8");
     	try (FileReader in = new FileReader(modulesXml)) {
             Document document = xmlReader.read(in);
             Element root = document.getRootElement();

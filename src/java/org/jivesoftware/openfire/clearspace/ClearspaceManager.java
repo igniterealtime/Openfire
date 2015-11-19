@@ -69,6 +69,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -86,6 +87,8 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.CertificateEventListener;
@@ -778,12 +781,13 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private void updateClearspaceClientSettings() {
         String xmppBoshSslPort = "0";
         String xmppBoshPort = "0";
-        String xmppPort = String.valueOf(XMPPServer.getInstance().getConnectionManager().getClientListenerPort());
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        String xmppPort = String.valueOf( connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false ).getPort() );
         if (JiveGlobals.getBooleanProperty(HttpBindManager.HTTP_BIND_ENABLED, HttpBindManager.HTTP_BIND_ENABLED_DEFAULT)) {
             int boshSslPort = HttpBindManager.getInstance().getHttpBindSecurePort();
             int boshPort = HttpBindManager.getInstance().getHttpBindUnsecurePort();
             try {
-                if (HttpBindManager.getInstance().isHttpsBindActive() && LocalClientSession.getTLSPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled) {
+                if (HttpBindManager.getInstance().isHttpsBindActive() && connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false ).getTlsPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled) {
                     xmppBoshSslPort = String.valueOf(boshSslPort);
                 }
             }

@@ -40,8 +40,6 @@ import java.security.cert.X509Certificate;
 
 import java.util.Comparator;
 
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.session.ConnectionSettings;
 
 /**
  * SSLSocketFactory that accepts any certificate chain and also accepts expired

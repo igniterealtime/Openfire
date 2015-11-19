@@ -49,7 +49,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
-import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -58,6 +58,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
@@ -87,7 +88,6 @@ public class SASLAuthentication {
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
-
 
     private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
 
@@ -195,8 +195,8 @@ public class SASLAuthentication {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
                 LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                final KeyStore keyStore   = SSLConfig.getIdentityStore( Purpose.SOCKET_S2S );
-                final KeyStore trustStore = SSLConfig.getTrustStore( Purpose.SOCKET_S2S );
+                final KeyStore keyStore   = svr.getConnection().getConfiguration().getIdentityStore().getStore();
+                final KeyStore trustStore = svr.getConnection().getConfiguration().getTrustStore().getStore();
                 final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
 
                 boolean haveTrustedCertificate = trusted != null;
@@ -574,8 +574,9 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            final KeyStore keyStore   = SSLConfig.getIdentityStore( Purpose.SOCKET_C2S );
-            final KeyStore trustStore = SSLConfig.getTrustStore( Purpose.SOCKET_C2S );
+            final KeyStore keyStore   = connection.getConfiguration().getIdentityStore().getStore();
+            final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
+
             final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
 
             if (trusted == null) {
@@ -655,9 +656,9 @@ public class SASLAuthentication {
     }
 
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
-        final Purpose purpose = isS2S ? Purpose.SOCKET_S2S : Purpose.SOCKET_C2S;
-        final KeyStore keyStore   = SSLConfig.getIdentityStore( purpose );
-        final KeyStore trustStore = SSLConfig.getTrustStore( purpose );
+        final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
+        final KeyStore keyStore   = CertificateStoreManager.getIdentityStore( connectionType ).getStore();
+        final KeyStore trustStore = CertificateStoreManager.getTrustStore( connectionType ).getStore();
         final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
         if (trusted != null) {
             return verifyCertificate(trusted, hostname);

@@ -78,10 +78,6 @@ public abstract class StanzaHandler {
      * Session associated with the socket reader.
      */
     protected LocalSession session;
-    /**
-     * Server name for which we are attending clients.
-     */
-    protected String serverName;
 
     /**
      * Router used to route incoming packets to the correct channels.
@@ -92,11 +88,15 @@ public abstract class StanzaHandler {
      * Creates a dedicated reader for a socket.
      *
      * @param router     the router for sending packets that were read.
-     * @param serverName the name of the server this socket is working for.
      * @param connection the connection being read.
      */
+    public StanzaHandler(PacketRouter router, Connection connection) {
+        this.router = router;
+        this.connection = connection;
+    }
+
+    @Deprecated
     public StanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        this.serverName = serverName;
         this.router = router;
         this.connection = connection;
     }
@@ -576,7 +576,7 @@ public abstract class StanzaHandler {
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
         sb.append("\" from=\"");
-        sb.append(serverName);
+        sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
         sb.append("\" xml:lang=\"");
@@ -616,6 +616,8 @@ public abstract class StanzaHandler {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
+
+        final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
         // Check that the TO attribute of the stream header matches the server name or a valid
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
@@ -676,7 +678,7 @@ public abstract class StanzaHandler {
             // have a TO attribute
             return false;
         }
-        if (serverName.equals(host)) {
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
             // requested host matched the server name
             return false;
         }

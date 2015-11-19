@@ -1,4 +1,5 @@
 <%--
+<%--
   -	$Revision$
   -	$Date$
   -
@@ -23,29 +24,31 @@
 %>
 <%@ page import="com.sun.syndication.fetcher.impl.FeedFetcherCache"%>
 <%@ page import="com.sun.syndication.fetcher.impl.HashMapFeedInfoCache"%>
-<%@ page import="org.apache.mina.transport.socket.nio.NioSocketAcceptor"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
-<%@ page import="org.jivesoftware.openfire.*" %>
+<%@ page import="org.jivesoftware.openfire.Connection"%>
+<%@ page import="org.jivesoftware.openfire.FlashCrossDomainHandler" %>
+<%@ page import="org.jivesoftware.openfire.JMXManager" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
-<%@ page import="org.jivesoftware.openfire.session.LocalClientSession" %>
-<%@ page import="org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="org.jivesoftware.util.*" %>
-<%@ page import="java.net.InetSocketAddress" %>
-<%@ page import="java.net.SocketAddress" %>
+<%@ page import="org.jivesoftware.util.HttpClientWithTimeoutFeedFetcher" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.net.URL" %>
 <%@ page import="java.text.DecimalFormat" %>
+<%@ page import="java.util.Arrays" %>
 <%@ page import="java.util.List" %>
-<%@ page import="org.slf4j.LoggerFactory" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfig" %>
-<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -75,13 +78,9 @@
 <% // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
 
-    String interfaceName = JiveGlobals.getXMLProperty("network.interface");
     ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-    NioSocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
-    NioSocketAcceptor sslSocketAcceptor = connectionManager.getSSLSocketAcceptor();
-    NioSocketAcceptor multiplexerSocketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
-    ServerPort serverPort = null;
-    ServerPort componentPort = null;
+
+    // Network interface (if any) is configured for all ports on the server
     AdminConsolePlugin adminConsolePlugin =
             (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin");
 
@@ -89,15 +88,6 @@
     HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
     FlashCrossDomainHandler flashCrossDomainHandler = XMPPServer.getInstance().getFlashCrossDomainHandler();
-
-    // Search for s2s and external component ports info
-    for (ServerPort port : XMPPServer.getInstance().getServerInfo().getServerPorts()) {
-        if (port.getType() == ServerPort.Type.server) {
-            serverPort = port;
-        } else if (port.getType() == ServerPort.Type.component) {
-            componentPort = port;
-        }
-    }
 
     boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
 %>
@@ -253,9 +243,9 @@
                     <fmt:message key="index.server_name" />
                 </td>
                 <td class="c2">
-                    <% final IdentityStoreConfig storeConfig = SSLConfig.getInstance().getIdentityStoreConfig( Purpose.SOCKET_C2S ); %>
+                    <% final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S ); %>
                     <% try { %>
-                    <% if (!storeConfig.containsDomainCertificate( "RSA" )) {%>
+                    <% if (!identityStore.containsDomainCertificate( "RSA" )) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>
@@ -393,8 +383,8 @@
 
                         lastRSSFetch = nowTime;
                     }
-                    catch (Exception ioe) {
-                    	LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed: " + ioe);
+                    catch (Throwable throwable) {
+                    	LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
                     }
                 }
 
@@ -439,7 +429,7 @@
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
-        <th width="80"><fmt:message key="ports.interface" /></th>
+        <th width="100"><fmt:message key="ports.interface" /></th>
         <th width="1"><fmt:message key="ports.port" /></th>
         <th width="1">&nbsp;</th>
         <th width="130"><fmt:message key="ports.type" /></th>
@@ -447,103 +437,95 @@
     </tr>
 </thead>
 <tbody>
-    <% if (socketAcceptor != null) {
-        for (SocketAddress socketAddress : socketAcceptor.getLocalAddresses()) {
-            InetSocketAddress address = (InetSocketAddress) socketAddress;
-    %>
-    <tr>
-        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
-        <td><%= address.getPort() %></td>
-        <% try { %>
 
-        <% if (!storeConfig.containsDomainCertificate( "RSA" ) || LocalClientSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
-            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
-        <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-        <% } %>
-        <% } catch (Exception e) { %>
-            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
-        <% } %>
-        <td><fmt:message key="ports.client_to_server" /></td>
-        <td><fmt:message key="ports.client_to_server.desc">
-            <fmt:param value="<a href='ssl-settings.jsp'>" />
-            <fmt:param value="</a>" />
-            </fmt:message>
-        </td>
-    </tr>
-    <% } } %>
-    <% if (sslSocketAcceptor != null) {
-        for (SocketAddress socketAddress : sslSocketAcceptor.getLocalAddresses()) {
-            InetSocketAddress address = (InetSocketAddress) socketAddress;
-    %>
+<%
+    for ( ConnectionListener connectionListener : connectionManager.getListeners() )
+    {
+        if ( !connectionListener.isEnabled() )
+        {
+            continue;
+        }
+
+        final String interfaceName;
+        if (connectionListener.getBindAddress() == null || connectionListener.getBindAddress().isAnyLocalAddress() ) {
+            interfaceName = LocaleUtils.getLocalizedString("ports.all_ports");
+        } else {
+            interfaceName = connectionListener.getBindAddress().getHostName();
+        }
+%>
+
     <tr>
-        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
-        <td><%= address.getPort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-        <td><fmt:message key="ports.client_to_server" /></td>
-        <td><fmt:message key="ports.client_to_server.desc_old_ssl">
-            <fmt:param value="<a href='ssl-settings.jsp'>" />
-            <fmt:param value="</a>" />
-            </fmt:message>
-        </td>
-    </tr>
-    <% } } %>
-    <%
-        if (serverPort != null) {
-    %>
-    <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : serverPort.getIPAddress() %></td>
-        <td><%= serverPort.getPort() %></td>
-        <% if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-        <% } else { %>
-            <td><img src="images/blank.gif" width="1" height="1" alt=""/></td>
-        <% } %>
-        <td><fmt:message key="ports.server_to_server" /></td>
-        <td><fmt:message key="ports.server_to_server.desc">
-            <fmt:param value="<a href='server2server-settings.jsp'>" />
-            <fmt:param value="</a>" />
-            </fmt:message>
+        <td><%= interfaceName %></td>
+        <td><%= connectionListener.getPort() %></td>
+        <td>
+            <% if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.disabled ) ) { %>
+            <img src="images/blank.gif" width="1" height="1" alt=""/>
+            <% } else { %>
+            <img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/>
+            <% } %>
         </td>
         <td>
-</td>
-    </tr>
-    <% } %>
-    <% if (multiplexerSocketAcceptor != null) {
-        for (SocketAddress socketAddress : multiplexerSocketAcceptor.getLocalAddresses()) {
-            InetSocketAddress address = (InetSocketAddress) socketAddress;
-    %>
-    <tr>
-        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
-        <td><%= address.getPort() %></td>
-        <% if (LocalConnectionMultiplexerSession.getTLSPolicy() == org.jivesoftware.openfire.Connection.TLSPolicy.disabled) { %>
-            <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <% } else { %>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-        <% } %>
-        <td><fmt:message key="ports.connection_manager" /></td>
-        <td><fmt:message key="ports.connection_manager.desc">
-            <fmt:param value="<a href='connection-managers-settings.jsp'>" />
-            <fmt:param value="</a>" />
-            </fmt:message>
+            <%
+                final String typeName;
+                switch ( connectionListener.getType() ) {
+                    case SOCKET_C2S:
+                        typeName = LocaleUtils.getLocalizedString("ports.client_to_server");
+                        break;
+                    case SOCKET_S2S:
+                        typeName = LocaleUtils.getLocalizedString("ports.server_to_server");
+                        break;
+                    case COMPONENT:
+                        typeName = LocaleUtils.getLocalizedString("ports.external_components");
+                        break;
+                    case CONNECTION_MANAGER:
+                        typeName = LocaleUtils.getLocalizedString("ports.connection_manager");
+                        break;
+                    default:
+                        typeName = "(unspecified)";
+                        break;
+                }
+            %>
+            <%=typeName%>
+        </td>
+        <td>
+            <%
+                final String description;
+                switch ( connectionListener.getType() ) {
+                    case SOCKET_C2S:
+                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) )
+                        {
+                            description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc_old_ssl", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
+                        } else {
+                            description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
+                        }
+                        break;
+                    case SOCKET_S2S:
+                        description = LocaleUtils.getLocalizedString( "ports.server_to_server.desc", Arrays.asList( "<a href='server2server-settings.jsp'>", "</a>" ) );
+                        break;
+                    case COMPONENT:
+                        description = LocaleUtils.getLocalizedString( "ports.external_components.desc", Arrays.asList( "<a href='external-components-settings.jsp'>", "</a>" ) );
+                        break;
+                    case CONNECTION_MANAGER:
+                        description = LocaleUtils.getLocalizedString( "ports.connection_manager.desc", Arrays.asList( "<a href='connection-managers-settings.jsp'>", "</a>" ) );
+                        break;
+                    default:
+                        description = "";
+                        break;
+                }
+            %>
+            <%=description%>
         </td>
     </tr>
-    <% } } %>
-    <%
-        if (componentPort != null) {
-    %>
-    <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : componentPort.getIPAddress() %></td>
-        <td><%= componentPort.getPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <td><fmt:message key="ports.external_components" /></td>
-        <td><fmt:message key="ports.external_components.desc">
-            <fmt:param value="<a href='external-components-settings.jsp'>" />
-            <fmt:param value="</a>" />
-            </fmt:message>
-        </td>
-    </tr>
-    <% } %>
+<%
+    }
+
+    final String interfaceName;
+    if (connectionManager.getListenAddress() == null || connectionManager.getListenAddress().isAnyLocalAddress() ) {
+        interfaceName = LocaleUtils.getLocalizedString("ports.all_ports");
+    } else {
+        interfaceName = connectionManager.getListenAddress().getHostName();
+    }
+%>
     <tr>
         <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
         <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
@@ -566,7 +548,7 @@
         if (fileTransferProxy.isProxyEnabled()) {
     %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= interfaceName %></td>
         <td><%= fileTransferProxy.getProxyPort() %></td>
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.file_proxy" /></td>
@@ -580,7 +562,7 @@
             if (httpBindManager.getHttpBindUnsecurePort() > 0) {
         %>
         <tr>
-            <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+            <td><%= interfaceName %></td>
             <td><%= httpBindManager.getHttpBindUnsecurePort() %></td>
             <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
             <td><fmt:message key="ports.http_bind" /></td>
@@ -591,7 +573,7 @@
             if (httpBindManager.isHttpsBindActive()) {
         %>
         <tr>
-            <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+            <td><%= interfaceName %></td>
             <td><%= httpBindManager.getHttpBindSecurePort() %></td>
             <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
             <td><fmt:message key="ports.http_bind" /></td>
@@ -603,7 +585,7 @@
         if (mediaProxyService.isEnabled()) {
     %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= interfaceName %></td>
         <td><%= mediaProxyService.getMinPort() %> - <%= mediaProxyService.getMaxPort() %></td>
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.media_proxy" /></td>
@@ -611,7 +593,7 @@
     </tr>
     <% } %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= interfaceName %></td>
         <td><%= flashCrossDomainHandler.getPort() %></td>
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.flash_cross_domain" /></td>
@@ -621,7 +603,7 @@
         if (JMXManager.isEnabled()) {
     %>
     <tr>
-        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= interfaceName %></td>
         <td><%= JMXManager.getPort() %></td>
         <td><% if (JMXManager.isSecure()) {
             %><img src="images/user.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.jmx_console.alt" />" title="<fmt:message key="ports.jmx_console.alt" />"/><%

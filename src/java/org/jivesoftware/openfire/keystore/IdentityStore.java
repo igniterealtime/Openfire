@@ -1,6 +1,5 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.util.CertificateManager;
@@ -37,31 +36,30 @@ import java.util.List;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class IdentityStoreConfig extends CertificateStoreConfig
+public class IdentityStore extends CertificateStore
 {
-    private static final Logger Log = LoggerFactory.getLogger( IdentityStoreConfig.class );
+    private static final Logger Log = LoggerFactory.getLogger( IdentityStore.class );
 
-    protected final KeyManagerFactory keyFactory;
+//    protected final KeyManagerFactory keyFactory;
 
-    public IdentityStoreConfig( String path, String password, String type, boolean createIfAbsent ) throws CertificateStoreConfigException
+    public IdentityStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
-        super( path, password, type, createIfAbsent );
-
-        try
-        {
-            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
-            keyFactory.init( store, password.toCharArray() );
-        }
-        catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )
-        {
-            throw new CertificateStoreConfigException( "Unable to load store of type '" + type + "' from location '" + path + "'", ex );
-        }
+        super( configuration, createIfAbsent );
+//        try
+//        {
+//            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+//            keyFactory.init( store, configuration.getPassword() );
+//        }
+//        catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )
+//        {
+//            throw new CertificateStoreConfigException( "Unable to load store of type '" + configuration.getType() + "' from location '" + configuration.getFile() + "'", ex );
+//        }
     }
 
-    public KeyManager[] getKeyManagers()
-    {
-        return keyFactory.getKeyManagers();
-    }
+//    public KeyManager[] getKeyManagers()
+//    {
+//        return keyFactory.getKeyManagers();
+//    }
 
     /**
      * Creates a Certificate Signing Request based on the private key and certificate identified by the provided alias.
@@ -97,7 +95,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
                 throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"': there is no corresponding certificate in the store, or it is not an X509 certificate." );
             }
 
-            final Key key = store.getKey( alias, password );
+            final Key key = store.getKey( alias, configuration.getPassword() );
             if ( key == null || (!(key instanceof PrivateKey) ) )
             {
                 throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"': there is no corresponding key in the store, or it is not a private key." );
@@ -165,14 +163,14 @@ public class IdentityStoreConfig extends CertificateStoreConfig
             }
 
             // All appears to be in order. Update the existing entry in the store.
-            store.setKeyEntry( alias, store.getKey( alias, password ), password, ordered.toArray( new X509Certificate[ ordered.size() ] ) );
+            store.setKeyEntry( alias, store.getKey( alias, configuration.getPassword() ), configuration.getPassword(), ordered.toArray( new X509Certificate[ ordered.size() ] ) );
         }
         catch ( RuntimeException | IOException | CertificateException | UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e )
         {
             reload(); // reset state of the store.
             throw new CertificateStoreConfigException( "Unable to install a singing reply into an identity store.", e );
         }
-        // TODO notifiy listneers.
+        // TODO notifiy listeners.
     }
 
     protected boolean corresponds( String alias, List<X509Certificate> certificates ) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException
@@ -181,7 +179,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
             return false;
         }
 
-        final Key key = store.getKey( alias, password );
+        final Key key = store.getKey( alias, configuration.getPassword() );
         if ( key == null ) {
             return false;
         }
@@ -266,7 +264,7 @@ public class IdentityStoreConfig extends CertificateStoreConfig
             final PrivateKey privateKey = CertificateManager.parsePrivateKey( pemPrivateKey, passPhrase );
 
             // All appears to be in order. Install in the store.
-            store.setKeyEntry( alias, privateKey, password, ordered.toArray( new X509Certificate[ ordered.size() ] ) );
+            store.setKeyEntry( alias, privateKey, configuration.getPassword(), ordered.toArray( new X509Certificate[ ordered.size() ] ) );
 
             persist();
         }
@@ -298,8 +296,10 @@ public class IdentityStoreConfig extends CertificateStoreConfig
     {
         for ( String algorithm : algorithms )
         {
+            Log.debug( "Verifying that a domain certificate ({} algorithm) is available in this store.", algorithm);
             if ( !containsDomainCertificate( algorithm ) )
             {
+                Log.debug( "Store does not contain a domain certificate ({} algorithm). A self-signed certificate will be generated.", algorithm);
                 addSelfSignedDomainCertificate( algorithm );
             }
         }
@@ -371,19 +371,19 @@ public class IdentityStoreConfig extends CertificateStoreConfig
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final String distinctName = "cn=" + name;
-        final String domain = "*." + name;
         final int validityInDays = 60;
 
+        Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys
         try
         {
             final KeyPair keyPair = generateKeyPair( algorithm.toUpperCase(), keySize );
 
             // Create X509 certificate with keys and specified domain
-            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, distinctName, distinctName, domain, signAlgorithm );
+            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, distinctName, distinctName, name, signAlgorithm );
 
             // Store new certificate and private key in the key store
-            store.setKeyEntry( alias, keyPair.getPrivate(), password, new X509Certificate[]{cert} );
+            store.setKeyEntry( alias, keyPair.getPrivate(), configuration.getPassword(), new X509Certificate[]{cert} );
 
             // Persist the changes in the store to disk.
             persist();

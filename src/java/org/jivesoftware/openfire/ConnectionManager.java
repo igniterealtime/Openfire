@@ -48,14 +48,26 @@ public interface ConnectionManager {
      * The default XMPP port for external components.
      */
     final int DEFAULT_COMPONENT_PORT = 5275;
+
+    /**
+     * The XMPP port for external components using SSL traffic.
+     */
+    final int DEFAULT_COMPONENT_SSL_PORT = 5276;
+
     /**
      * The default XMPP port for server2server communication.
      */
     final int DEFAULT_SERVER_PORT = 5269;
+
     /**
      * The default XMPP port for connection multiplex.
      */
     final int DEFAULT_MULTIPLEX_PORT = 5262;
+
+    /**
+     * The default XMPP port for connection multiplex.
+     */
+    final int DEFAULT_MULTIPLEX_SSL_PORT = 5263;
 
     /**
      * Returns an array of the ports managed by this connection manager.
@@ -76,7 +88,9 @@ public interface ConnectionManager {
      * @param useBlockingMode true means that the server will use a thread per connection.
      * @return the created socket reader.
      * @throws java.io.IOException when there is an error creating the socket reader.
+     * @deprecated This is part of the legacy blocking IO implementation. It should no longer be used in favor of NIO.
      */
+    @Deprecated
     public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
             boolean useBlockingMode) throws IOException;
 

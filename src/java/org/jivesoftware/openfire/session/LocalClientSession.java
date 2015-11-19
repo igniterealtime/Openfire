@@ -34,9 +34,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.keystore.Purpose;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
@@ -256,12 +254,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
             try {
-                hasCertificates = SSLConfig.getIdentityStore( Purpose.SOCKET_C2S ).size() > 0;
+                hasCertificates = connection.getConfiguration().getIdentityStore().getAllCertificates().size() > 0;
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
-            Connection.TLSPolicy tlsPolicy = getTLSPolicy();
+            Connection.TLSPolicy tlsPolicy = connection.getConfiguration().getTlsPolicy();
             if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
                 Log.error("Client session rejected. TLS is required but no certificates " +
                         "were created.");
@@ -412,46 +410,13 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    /**
-     * Returns whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
-     *
-     * @return whether TLS is mandatory, optional or is disabled.
-     */
-    public static SocketConnection.TLSPolicy getTLSPolicy() {
-        // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_POLICY, Connection.TLSPolicy.optional.toString());
-        SocketConnection.TLSPolicy tlsPolicy;
-        try {
-            tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
-        } catch (IllegalArgumentException e) {
-            Log.error("Error parsing xmpp.client.tls.policy: " + policyName, e);
-            tlsPolicy = Connection.TLSPolicy.optional;
-        }
-        return tlsPolicy;
-    }
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
-     *
-     * @param policy whether TLS is mandatory, optional or is disabled.
-     */
-    public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
-        JiveGlobals.setProperty(ConnectionSettings.Client.TLS_POLICY, policy.toString());
-    }
 
     /**
      * Returns whether compression is optional or is disabled for clients.
      *
      * @return whether compression is optional or is disabled.
      */
+    // TODO Move this to ConnectionConfiguration.
     public static SocketConnection.CompressionPolicy getCompressionPolicy() {
         // Set the Compression policy stored as a system property
         String policyName = JiveGlobals
@@ -471,6 +436,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param policy whether compression is optional or is disabled.
      */
+    // TODO Move this to ConnectionConfiguration.
     public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
         JiveGlobals.setProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, policy.toString());
     }

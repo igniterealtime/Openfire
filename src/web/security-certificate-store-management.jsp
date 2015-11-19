@@ -1,10 +1,7 @@
 <%@ page errorPage="error.jsp"%>
-
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
+>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -94,17 +91,17 @@
                 <tr>
                     <td><label for="loc-key-socket">Identity Store:</label></td>
                     <td><input id="loc-key-socket" name="loc-key-socket" type="text" size="40" value="${locKeySocket}"/></td>
-                    <td><a href="security-keystore.jsp?storePurpose=SOCKETBASED_IDENTITYSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-keystore.jsp?storeConnectionType=SOCKETBASED_IDENTITYSTORE">Manage Store Contents</a></td>
                 </tr>
                 <tr>
                     <td><label for="loc-trust-socket-s2s">Server Trust Store:</label></td>
                     <td><input id="loc-trust-socket-s2s" name="loc-trust-socket-s2s" type="text" size="40" value="${locTrustSocketS2S}"/></td>
-                    <td><a href="security-truststore.jsp?storePurpose=SOCKETBASED_S2S_TRUSTSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-truststore.jsp?storeConnectionType=SOCKETBASED_S2S_TRUSTSTORE">Manage Store Contents</a></td>
                 </tr>
                 <tr>
                     <td><label for="loc-trust-socket-c2s">Client Trust Store:</label></td>
                     <td><input id="loc-trust-socket-c2s" name="loc-trust-socket-c2s" type="text" size="40" value="${locTrustSocketC2S}"/></td>
-                    <td><a href="security-truststore.jsp?storePurpose=SOCKETBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-truststore.jsp?storeConnectionType=SOCKETBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
                 </tr>
             </tbody>
         </table>
@@ -129,12 +126,12 @@
                 <tr>
                     <td><label for="loc-key-bosh">Identity Store:</label></td>
                     <td><input id="loc-key-bosh" name="loc-key-bosh" type="text" size="40" value="${locKeyBosh}"/></td>
-                    <td><a href="security-keystore.jsp?storePurpose=BOSHBASED_IDENTITYSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-keystore.jsp?storeConnectionType=BOSHBASED_IDENTITYSTORE">Manage Store Contents</a></td>
                 </tr>
                 <tr>
                     <td><label for="loc-trust-bosh-c2s">Client Trust Store:</label></td>
                     <td><input id="loc-trust-bosh-c2s" name="loc-trust-bosh-c2s" type="text" size="40" value="${locTrustBoshC2S}"/></td>
-                    <td><a href="security-truststore.jsp?storePurpose=BOSHBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-truststore.jsp?storeConnectionType=BOSHBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
                 </tr>
             </tbody>
         </table>
@@ -155,12 +152,12 @@
                 <tr>
                     <td><label for="loc-key-webadmin">Identity Store:</label></td>
                     <td><input id="loc-key-webadmin" name="loc-key-webadmin" type="text" size="40" value="${locKeyWebadmin}"/></td>
-                    <td><a href="security-keystore.jsp?storePurpose=WEBADMIN_IDENTITYSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-keystore.jsp?storeConnectionType=WEBADMIN_IDENTITYSTORE">Manage Store Contents</a></td>
                 </tr>
                 <tr>
                     <td><label for="loc-trust-webadmin">Trust Store:</label></td>
                     <td><input id="loc-trust-webadmin" name="loc-trust-webadmin" type="text" size="40" value="${locTrustWebadmin}"/></td>
-                    <td><a href="security-keystore.jsp?storePurpose=WEBADMIN_TRUSTSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-keystore.jsp?storeConnectionType=WEBADMIN_TRUSTSTORE">Manage Store Contents</a></td>
                 </tr>
             </tbody>
         </table>
@@ -180,12 +177,12 @@
                 <tr>
                     <td><label for="loc-key-administrative">Identity Store:</label></td>
                     <td><input id="loc-key-administrative" name="loc-key-administrative" type="text" size="40" value="${locKeyAdministrative}"/></td>
-                    <td><a href="security-keystore.jsp?storePurpose=ADMINISTRATIVE_IDENTITYSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-keystore.jsp?storeConnectionType=ADMINISTRATIVE_IDENTITYSTORE">Manage Store Contents</a></td>
                 </tr>
                 <tr>
                     <td><label for="loc-trust-administrative">Trust Store:</label></td>
                     <td><input id="loc-trust-administrative" name="loc-trust-administrative" type="text" size="40" value="${locTrustAdministrative}"/></td>
-                    <td><a href="security-truststore.jsp?storePurpose=ADMINISTRATIVE_TRUSTSTORE">Manage Store Contents</a></td>
+                    <td><a href="security-truststore.jsp?storeConnectionType=ADMINISTRATIVE_TRUSTSTORE">Manage Store Contents</a></td>
                 </tr>
             </tbody>
         </table>

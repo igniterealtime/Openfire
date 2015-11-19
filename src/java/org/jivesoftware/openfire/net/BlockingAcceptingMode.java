@@ -35,7 +35,9 @@ import org.slf4j.LoggerFactory;
  * Accepts new socket connections and uses a thread for each new connection.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 class BlockingAcceptingMode extends SocketAcceptingMode {
 
 	private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);

@@ -61,7 +61,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
+import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
 import org.jivesoftware.openfire.keystore.CertificateUtils;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
@@ -145,10 +145,10 @@ public class CertificateManager {
     }
 
     /**
-     * @Deprecated Use {@link CertificateStoreConfig#delete(String)} instead.
+     * @Deprecated Use {@link CertificateStore#delete(String)} instead.
      */
     @Deprecated
-    public static void deleteCertificate(CertificateStoreConfig storeConfig, String alias) throws GeneralSecurityException, IOException, CertificateStoreConfigException
+    public static void deleteCertificate(CertificateStore storeConfig, String alias) throws GeneralSecurityException, IOException, CertificateStoreConfigException
     {
         final KeyStore store = storeConfig.getStore();
         if (!store.containsAlias( alias ) )
@@ -342,7 +342,7 @@ public class CertificateManager {
      * @return true if an RSA certificate was found in the specified keystore for the specified domain.
      * @throws KeyStoreException
      */
-    public static boolean isRSACertificate(CertificateStoreConfig storeConfig, String domain) throws KeyStoreException {
+    public static boolean isRSACertificate(CertificateStore storeConfig, String domain) throws KeyStoreException {
         return isCertificate(storeConfig, domain, "RSA");
     }
 
@@ -354,7 +354,7 @@ public class CertificateManager {
      * @return true if an DSA certificate was found in the specified keystore for the specified domain.
      * @throws KeyStoreException
      */
-    public static boolean isDSACertificate(CertificateStoreConfig storeConfig, String domain) throws KeyStoreException {
+    public static boolean isDSACertificate(CertificateStore storeConfig, String domain) throws KeyStoreException {
         return isCertificate( storeConfig, domain, "DSA" );
     }
 
@@ -380,7 +380,7 @@ public class CertificateManager {
      * @return true if a certificate with the specified configuration was found in the key store.
      * @throws KeyStoreException
      */
-    private static boolean isCertificate(CertificateStoreConfig storeConfig, String domain, String algorithm) throws KeyStoreException {
+    private static boolean isCertificate(CertificateStore storeConfig, String domain, String algorithm) throws KeyStoreException {
     	for (Enumeration<String> aliases = storeConfig.getStore().aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) storeConfig.getStore().getCertificate(aliases.nextElement());
 

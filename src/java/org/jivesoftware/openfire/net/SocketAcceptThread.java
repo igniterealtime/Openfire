@@ -35,7 +35,9 @@ import java.net.InetAddress;
  * changes to the system property.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 public class SocketAcceptThread extends Thread {
 
     /**

@@ -56,6 +56,15 @@
 		</filter>
 	</appender>
 
+	<appender name="all-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/all.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %m%n" />
+		</layout>
+	</appender>
+
 	<!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
 	<logger name="org.eclipse.jetty">
 		<level value="warn" />
@@ -63,6 +72,7 @@
 	
    	<root>
 		<level value="info" />
+		<appender-ref ref="all-out" />
 		<appender-ref ref="debug-out" />
 		<appender-ref ref="info-out" />
 		<appender-ref ref="warn-out" />

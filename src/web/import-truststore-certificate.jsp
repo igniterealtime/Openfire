@@ -1,10 +1,10 @@
 <%@ page errorPage="error.jsp"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.TrustStoreConfig" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -16,24 +16,24 @@
 <%  final boolean save             = ParamUtils.getParameter(request, "save") != null;
     final String alias             = ParamUtils.getParameter(request, "alias");
     final String certificate       = ParamUtils.getParameter(request, "certificate");
-    final String storePurposeText  = ParamUtils.getParameter(request, "storePurpose");
+    final String storePurposeText  = ParamUtils.getParameter(request, "storeConnectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    Purpose storePurpose;
+    ConnectionType storeConnectionType;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
+        storeConnectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storePurpose", ex.getMessage() );
-        storePurpose = null;
+        errors.put( "storeConnectionType", ex.getMessage() );
+        storeConnectionType = null;
     }
 
-    pageContext.setAttribute( "storePurpose", storePurpose );
+    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
 
     if (save && errors.isEmpty())
     {
-        final TrustStoreConfig trustStoreConfig = SSLConfig.getInstance().getTrustStoreConfig( storePurpose );
+        final TrustStore trustStoreConfig = CertificateStoreManager.getTrustStore( storeConnectionType );
 
         if (alias == null || "".equals(alias))
         {
@@ -59,7 +59,7 @@
                 // Log the event
                 webManager.logEvent("imported SSL certificate in trust store "+ storePurposeText, "alias = "+alias);
 
-                response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurposeText + "&importsuccess=true" );
+                response.sendRedirect( "security-truststore.jsp?storeConnectionType=" + storePurposeText + "&importsuccess=true" );
                 return;
             }
             catch (Throwable e)
@@ -74,9 +74,9 @@
 <html>
 <head>
     <title>
-        <fmt:message key="ssl.import.certificate.keystore.${storePurpose}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
+        <fmt:message key="ssl.import.certificate.keystore.${storeConnectionType}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
     </title>
-    <meta name="pageID" content="security-truststore-${storePurpose}-${param.type}"/>
+    <meta name="pageID" content="security-truststore-${storeConnectionType}-${param.type}"/>
 </head>
 <body>
 
@@ -124,7 +124,7 @@
 
     <!-- BEGIN 'Import Certificate' -->
     <form action="import-truststore-certificate.jsp?type=${param.type}" method="post" name="f">
-        <input type="hidden" name="connectivityType" value="${storePurpose}"/>
+        <input type="hidden" name="connectivityType" value="${storeConnectionType}"/>
         <div class="jive-contentBoxHeader">
             <fmt:message key="ssl.import.certificate.keystore.boxtitle"/>
         </div>

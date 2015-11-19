@@ -1,15 +1,8 @@
-<%@ page import="org.jivesoftware.util.CertificateManager" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="java.security.cert.X509Certificate" %>
-<%@ page import="java.util.Enumeration" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
-<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
-
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -25,20 +18,20 @@
     final String city               = ParamUtils.getParameter(request, "city");
     final String state              = ParamUtils.getParameter(request, "state");
     final String countryCode        = ParamUtils.getParameter(request, "country");
-    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
+    final String storePurposeText = ParamUtils.getParameter(request, "storeConnectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    Purpose storePurpose;
+    ConnectionType storeConnectionType;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
+        storeConnectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storePurpose", ex.getMessage() );
-        storePurpose = null;
+        errors.put( "storeConnectionType", ex.getMessage() );
+        storeConnectionType = null;
     }
 
-    pageContext.setAttribute( "storePurpose", storePurpose );
+    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
 
 //    if (save) {
 //
@@ -63,7 +56,7 @@
 //        }
 //        if (errors.size() == 0) {
 //            try {
-//                final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
+//                final IdentityStore identityStoreConfig = (IdentityStore) SSLConfig.getInstance().getStoreConfig( storeConnectionType );
 //
 //                identityStoreConfig.ensureSelfSignedDomainCertificates( name, organizationalUnit, organization, city, state, countryCode, "rsa", "dsa" );
 //                // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN

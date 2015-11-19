@@ -480,6 +480,9 @@
                     case CONNECTION_MANAGER:
                         typeName = LocaleUtils.getLocalizedString("ports.connection_manager");
                         break;
+                    case WEBADMIN:
+                        typeName = LocaleUtils.getLocalizedString("ports.admin_console");
+                        break;
                     default:
                         typeName = "(unspecified)";
                         break;
@@ -492,8 +495,7 @@
                 final String description;
                 switch ( connectionListener.getType() ) {
                     case SOCKET_C2S:
-                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) )
-                        {
+                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
                             description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc_old_ssl", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
                         } else {
                             description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
@@ -507,6 +509,13 @@
                         break;
                     case CONNECTION_MANAGER:
                         description = LocaleUtils.getLocalizedString( "ports.connection_manager.desc", Arrays.asList( "<a href='connection-managers-settings.jsp'>", "</a>" ) );
+                        break;
+                    case WEBADMIN:
+                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
+                            description = LocaleUtils.getLocalizedString( "ports.admin_console.desc_secured" );
+                        } else {
+                            description = LocaleUtils.getLocalizedString( "ports.admin_console.desc_unsecured" );
+                        }
                         break;
                     default:
                         description = "";
@@ -526,24 +535,6 @@
         interfaceName = connectionManager.getListenAddress().getHostName();
     }
 %>
-    <tr>
-        <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
-        <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <td><fmt:message key="ports.admin_console" /></td>
-        <td><fmt:message key="ports.admin_console.desc_unsecured" /></td>
-    </tr>
-    <%
-        if (adminConsolePlugin.getAdminSecurePort() > 0) {
-    %>
-    <tr>
-        <td><%= adminConsolePlugin.getBindInterface() == null ? LocaleUtils.getLocalizedString("ports.all_ports") : adminConsolePlugin.getBindInterface() %></td>
-        <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
-        <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-        <td><fmt:message key="ports.admin_console" /></td>
-        <td><fmt:message key="ports.admin_console.desc_secured" /></td>
-    </tr>
-    <% } %>
     <%
         if (fileTransferProxy.isProxyEnabled()) {
     %>

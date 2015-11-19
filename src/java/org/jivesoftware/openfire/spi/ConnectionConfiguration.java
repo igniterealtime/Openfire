@@ -4,13 +4,13 @@ import org.apache.mina.filter.ssl.SslFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.keystore.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.net.InetAddress;
 import java.security.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Configuration for a socket connection.
@@ -21,6 +21,7 @@ import java.util.Set;
  */
 public class ConnectionConfiguration
 {
+    private final Logger Log;
     private final ConnectionType type;
     private final int maxThreadPoolSize;
     private final int maxBufferSize;
@@ -209,6 +210,7 @@ public class ConnectionConfiguration
             return sslContextFactory;
         }
 
+        Log.info( "Creating new SslContextFactory instance" );
         try
         {
             sslContextFactory = new SslContextFactory();
@@ -219,10 +221,18 @@ public class ConnectionConfiguration
             sslContextFactory.setKeyStore( identityStore.getStore() );
             sslContextFactory.setKeyStorePassword( new String( identityStoreConfiguration.getPassword() ) );
 
-            // Configure protocol and cipher suite support.
-            sslContextFactory.setIncludeProtocols( getEncryptionProtocolsEnabled().toArray( new String[ getEncryptionProtocolsEnabled().size() ] ) );
+            // Configure protocol support
+            if ( getEncryptionProtocolsEnabled() != null && !getEncryptionProtocolsEnabled().isEmpty() )
+            {
+                sslContextFactory.setIncludeProtocols( getEncryptionProtocolsEnabled().toArray( new String[ getEncryptionProtocolsEnabled().size() ] ) );
+            }
             sslContextFactory.setExcludeProtocols( getEncryptionProtocolsDisabled().toArray( new String[ getEncryptionProtocolsDisabled().size() ] ) );
-            sslContextFactory.setIncludeCipherSuites( getCipherSuitesEnabled().toArray( new String[ getCipherSuitesEnabled().size() ] ) );
+
+            // Configure cipher suite support.
+            if ( getCipherSuitesEnabled() != null && !getCipherSuitesEnabled().isEmpty() )
+            {
+                sslContextFactory.setIncludeCipherSuites( getCipherSuitesEnabled().toArray( new String[ getCipherSuitesEnabled().size() ] ) );
+            }
             sslContextFactory.setExcludeCipherSuites( getCipherSuitesDisabled().toArray( new String[ getCipherSuitesDisabled().size() ] ) );
 
             //Set policy for checking client certificates
@@ -347,14 +357,25 @@ public class ConnectionConfiguration
         this.trustStoreConfiguration = trustStoreConfiguration;
         this.acceptSelfSignedCertificates = acceptSelfSignedCertificates;
         this.verifyCertificateValidity = verifyCertificateValidity;
-        this.encryptionProtocolsEnabled = Collections.unmodifiableSet( encryptionProtocolsEnabled );
+
+        // Remove all disabled protocols from the enabled ones.
+        final Set<String> protocolsEnabled = new HashSet<>();
+        protocolsEnabled.addAll( encryptionProtocolsEnabled );
+        protocolsEnabled.removeAll( encryptionProtocolsDisabled );
+        this.encryptionProtocolsEnabled = Collections.unmodifiableSet( protocolsEnabled );
         this.encryptionProtocolsDisabled = Collections.unmodifiableSet( encryptionProtocolsDisabled );
-        this.cipherSuitesEnabled = Collections.unmodifiableSet( cipherSuitesEnabled );
+
+        // Remove all disabled suites from the enabled ones.
+        final Set<String> suitesEnabled = new HashSet<>();
+        suitesEnabled.addAll( cipherSuitesEnabled );
+        suitesEnabled.removeAll( cipherSuitesDisabled );
+        this.cipherSuitesEnabled = Collections.unmodifiableSet( suitesEnabled );
         this.cipherSuitesDisabled = Collections.unmodifiableSet( cipherSuitesDisabled );
 
         this.identityStore = CertificateStoreManager.getIdentityStore( type );
         this.trustStore = CertificateStoreManager.getTrustStore( type );
 
+        this.Log = LoggerFactory.getLogger( this.getClass().getName() + "["+port+"-"+type+"]" );
     }
 
     public Connection.TLSPolicy getTlsPolicy()

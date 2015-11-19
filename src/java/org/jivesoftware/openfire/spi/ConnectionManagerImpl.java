@@ -63,6 +63,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private final ConnectionListener componentSslListener;
     private final ConnectionListener connectionManagerListener; // Also known as 'multiplexer'
     private final ConnectionListener connectionManagerSslListener; // Also known as 'multiplexer'
+    private final ConnectionListener webAdminListener;
+    private final ConnectionListener webAdminSslListener;
 
     /**
      * Instantiates a new connection manager.
@@ -177,6 +179,34 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
                 CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
         );
+        // Admin console (the Openfire web-admin) // TODO these use the XML properties instead of normal properties!
+        webAdminListener = new ConnectionListener(
+            ConnectionType.WEBADMIN,
+            "adminConsole.port",
+            9090,
+            null,
+            "adminConsole.serverThreads",
+            null,
+            Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use webAdminSslListener instead.
+            null,
+            bindAddress,
+            CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+            CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+        );
+
+        webAdminSslListener = new ConnectionListener(
+                ConnectionType.WEBADMIN,
+                "adminConsole.securePort",
+                9091,
+                null,
+                "adminConsole.serverThreads",
+                null,
+                Connection.TLSPolicy.legacyMode.name(),
+                null,
+                bindAddress,
+                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+        );
     }
 
     /**
@@ -283,6 +313,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         listeners.add( componentSslListener );
         listeners.add( connectionManagerListener );
         listeners.add( connectionManagerSslListener );
+        listeners.add( webAdminListener );
+        listeners.add( webAdminSslListener );
         return listeners;
     }
 
@@ -326,6 +358,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     return connectionManagerListener;
                 }
 
+            case WEBADMIN:
+                if (startInSslMode) {
+                    return webAdminSslListener;
+                } else {
+                    return webAdminListener;
+                }
             default:
                 throw new IllegalStateException( "Unknown connection type: "+ type );
         }

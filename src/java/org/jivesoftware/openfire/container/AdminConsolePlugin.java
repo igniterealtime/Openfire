@@ -142,43 +142,54 @@ public class AdminConsolePlugin implements Plugin {
         sslEnabled = false;
         try {
             final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.WEBADMIN );
-            if (adminSecurePort > 0 && !identityStore.getAllCertificates().isEmpty() )
+            if (adminSecurePort > 0 )
             {
-                if ( !identityStore.containsDomainCertificate( "RSA" )) {
-                    Log.warn("Admin console: Using RSA certificates but they are not valid for the hosted domain");
+                if ( identityStore.getAllCertificates().isEmpty() )
+                {
+                    Log.warn( "Admin console: Identity store does not have any certificates. HTTPS will be unavailable." );
                 }
+                else
+                {
+                    if ( !identityStore.containsDomainCertificate( "RSA" ) )
+                    {
+                        Log.warn( "Admin console: Using RSA certificates but they are not valid for the hosted domain" );
+                    }
 
-                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-                final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.WEBADMIN, true );
-                final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
+                    final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
+                    final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.WEBADMIN, true );
+                    final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
 
-                final ServerConnector httpsConnector;
-                if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", ""))) {
-					httpsConnector = new HTTPSPDYServerConnector(adminServer, sslContextFactory);
-				} else {
-					HttpConfiguration httpsConfig = new HttpConfiguration();
-					httpsConfig.setSendServerVersion( false );
-					httpsConfig.setSecureScheme("https");
-					httpsConfig.setSecurePort(adminSecurePort);
-					httpsConfig.addCustomizer(new SecureRequestCustomizer());
+                    final ServerConnector httpsConnector;
+                    if ( "npn".equals( JiveGlobals.getXMLProperty( "spdy.protocol", "" ) ) )
+                    {
+                        httpsConnector = new HTTPSPDYServerConnector( adminServer, sslContextFactory );
+                    }
+                    else
+                    {
+                        final HttpConfiguration httpsConfig = new HttpConfiguration();
+                        httpsConfig.setSendServerVersion( false );
+                        httpsConfig.setSecureScheme( "https" );
+                        httpsConfig.setSecurePort( adminSecurePort );
+                        httpsConfig.addCustomizer( new SecureRequestCustomizer() );
 
-					HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory(httpsConfig);
-					SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString());
+                        final HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
+                        final SslConnectionFactory sslConnectionFactory = new SslConnectionFactory( sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString() );
 
-                	httpsConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, 
-                			sslConnectionFactory, httpConnectionFactory);
-				}
+                        httpsConnector = new ServerConnector( adminServer, null, null, null, -1, serverThreads,
+                                sslConnectionFactory, httpConnectionFactory );
+                    }
+                    final String bindInterface = getBindInterface();
+                    httpsConnector.setHost(bindInterface);
+                    httpsConnector.setPort(adminSecurePort);
+                    adminServer.addConnector(httpsConnector);
 
-                String bindInterface = getBindInterface();
-                httpsConnector.setHost(bindInterface);
-                httpsConnector.setPort(adminSecurePort);
-                adminServer.addConnector(httpsConnector);
-
-                sslEnabled = true;
+                    sslEnabled = true;
+                }
             }
         }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+        catch ( Exception e )
+        {
+            Log.error( "An exception occured while trying to make available the admin console via HTTPS.", e );
         }
 
         // Make sure that at least one connector was registered.

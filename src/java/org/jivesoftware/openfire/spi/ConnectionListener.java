@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.spi;
 
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
@@ -40,10 +41,37 @@ public class ConnectionListener
 
     // Name of properties used to configure the acceptor.
     private final String tcpPortPropertyName;
+
+    /**
+     * Name of property that toggles availability. 'null' indicates that the listener should always be enabled (and
+     * cannot be turned on/off).
+     */
     private final String isEnabledPropertyName;
+
+    /**
+     * Name of property that configures the maximum threads that can currently be processing IO related to this
+     * listener. 'null' indicates that a default number should be used.
+     */
     private final String maxPoolSizePropertyName; // Max threads
+
+    /**
+     * Name of property that configures the maximum amount (in bytes) of IO data can be cached, pending processing.
+     * 'null' indicates that the cache size is unbounded. Unbounded caches should be used for high-volume and/or trusted
+     * connections only (if at all).
+     */
     private final String maxReadBufferPropertyName; // Max buffer size
+
+    /**
+     * Name of property that configures the TLS policy that's applicable to this listener. Instead of a property name,
+     * the name of a {@link org.jivesoftware.openfire.Connection.TLSPolicy} can be used to indicate that this listener
+     * is 'hard-coded' in this state (configuration changes will cause exceptions to be thrown).
+     */
     private final String tlsPolicyPropertyName;
+
+    /**
+     * Name of property that configures the policy regarding mutual authentication that's applicable to this listener.
+     * 'null' indicates that this policy cannot be configured and 'disabled' should be used as a default.
+     */
     private final String clientAuthPolicyPropertyName;
 
     // The entity that performs the acceptance of new (socket) connections.
@@ -64,6 +92,12 @@ public class ConnectionListener
 
     /**
      * Instantiates a new connection listener.
+     *
+     * @param isEnabledPropertyName Property name (of a boolean) that toggles availability. Null to indicate that this listener is 'always on'
+     * @param maxPoolSizePropertyName Property name (of an int) that defines maximum IO processing threads. Null causes an unconfigurable default amount to be used.
+     * @param maxReadBufferPropertyName Property name (of an int) that defines maximum amount (in bytes) of IO data can be cached, pending processing. Null to indicate boundless caches.
+     * @param tlsPolicyPropertyName Property name (of a string) that defines the applicable TLS Policy. Or, the value {@link org.jivesoftware.openfire.Connection.TLSPolicy} to indicate unconfigurable TLS Policy. Cannot be null.
+     * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurabel value of 'wanted' to be used.
      */
     public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration )
     {
@@ -92,6 +126,11 @@ public class ConnectionListener
      */
     public boolean isEnabled()
     {
+        // Not providing a property name indicates that availability cannot be toggled. The listener is 'always on'.
+        if (isEnabledPropertyName == null )
+        {
+            return true;
+        }
         // TODO if this is an SSL connection, legacy code required the existence of at least one certificate in the identity store in addition to the property value (although no such requirement is enforced for a TLS connection that might or might not be elevated to encrypted).
         return JiveGlobals.getBooleanProperty( isEnabledPropertyName, true );
     }
@@ -102,6 +141,12 @@ public class ConnectionListener
      */
     public synchronized void enable( boolean enable )
     {
+        // Not providing a property name indicates that availability cannot be toggled. The listener is 'always on'.
+        if ( isEnabledPropertyName == null && !enable )
+        {
+            throw new IllegalArgumentException( "This listener cannot be disabled!" );
+        }
+
         final boolean isRunning = connectionAcceptor != null;
         if ( enable == isRunning )
         {
@@ -137,6 +182,19 @@ public class ConnectionListener
      */
     public synchronized void start()
     {
+        // TODO Start all connection types here, by supplying more connection acceptors other than a MINA-based one.
+        switch ( getType() )
+        {
+            case SOCKET_S2S:
+            case BOSH_C2S:
+            case ADMIN:
+            case WEBADMIN:
+                Log.debug( "Not starting a (NIO-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
+                return;
+
+            default:
+        }
+
         if ( !isEnabled() )
         {
             Log.debug( "Not starting: disabled by configuration." );
@@ -171,7 +229,16 @@ public class ConnectionListener
      */
     public ConnectionConfiguration generateConnectionConfiguration()
     {
-        final int maxThreadPoolSize = JiveGlobals.getIntProperty( maxPoolSizePropertyName, 16 );
+        final int defaultMaxPoolSize = 16;
+        final int maxThreadPoolSize;
+        if ( maxPoolSizePropertyName == null )
+        {
+            maxThreadPoolSize = defaultMaxPoolSize;
+        }
+        else
+        {
+            maxThreadPoolSize = JiveGlobals.getIntProperty( maxPoolSizePropertyName, defaultMaxPoolSize );
+        }
 
         final int maxBufferSize;
         if ( maxReadBufferPropertyName != null )
@@ -180,19 +247,19 @@ public class ConnectionListener
         }
         else
         {
-            maxBufferSize = -1; // No upper bound. Should be used for high-volume & trusted connections only (if at all).
+            maxBufferSize = -1; // No upper bound.
         }
 
         Connection.ClientAuth clientAuth;
         if ( clientAuthPolicyPropertyName == null )
         {
-            clientAuth = Connection.ClientAuth.wanted;
+            clientAuth = Connection.ClientAuth.disabled;
         }
         else
         {
             try
             {
-                final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, Connection.ClientAuth.wanted.name() );
+                final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, Connection.ClientAuth.disabled.name() );
                 clientAuth = Connection.ClientAuth.valueOf( value );
             }
             catch ( IllegalArgumentException e )
@@ -358,6 +425,21 @@ public class ConnectionListener
     }
 
     /**
+     * Returns the applicable TLS policy, but only when it is hardcoded (and inconfigurable).
+     * @return a policy or null.
+     */
+    private Connection.TLSPolicy getHardcodedTLSPolicy()
+    {
+        try
+        {
+            return Connection.TLSPolicy.valueOf( tlsPolicyPropertyName );
+        } catch ( IllegalArgumentException ex ) {
+            // Not hardcoded!
+            return null;
+        }
+    }
+
+    /**
      * Returns whether TLS is mandatory, optional, disabled or mandatory immediately for new connections. When TLS is
      * mandatory connections are required to be encrypted or otherwise will be closed.
      *
@@ -368,23 +450,27 @@ public class ConnectionListener
      */
     public Connection.TLSPolicy getTLSPolicy()
     {
-        if ( tlsPolicyPropertyName.equals( Connection.TLSPolicy.legacyMode.name() ) )
-        {
-            return Connection.TLSPolicy.legacyMode;
-        }
 
-        final String policyName = JiveGlobals.getProperty( tlsPolicyPropertyName, Connection.TLSPolicy.optional.toString() );
-        Connection.TLSPolicy tlsPolicy;
-        try
+        final Connection.TLSPolicy hardcoded = getHardcodedTLSPolicy();
+        if ( hardcoded != null )
         {
-            tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
+            return hardcoded;
         }
-        catch ( IllegalArgumentException e )
+        else
         {
-            Log.error( "Error parsing property value of '{}' into a valid TLS_POLICY. Offending value: '{}'.", policyName, tlsPolicyPropertyName, e );
-            tlsPolicy = Connection.TLSPolicy.optional;
+            final String policyName = JiveGlobals.getProperty( tlsPolicyPropertyName, Connection.TLSPolicy.optional.toString() );
+            Connection.TLSPolicy tlsPolicy;
+            try
+            {
+                tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
+            }
+            catch ( IllegalArgumentException e )
+            {
+                Log.error( "Error parsing property value of '{}' into a valid TLS_POLICY. Offending value: '{}'.", policyName, tlsPolicyPropertyName, e );
+                tlsPolicy = Connection.TLSPolicy.optional;
+            }
+            return tlsPolicy;
         }
-        return tlsPolicy;
     }
 
     /**
@@ -412,6 +498,12 @@ public class ConnectionListener
         {
             Log.debug( "Ignoring TLS Policy change request (to '{}'): listener already in this state.", policy );
             return;
+        }
+
+        final Connection.TLSPolicy hardcoded = getHardcodedTLSPolicy();
+        if ( hardcoded != null )
+        {
+            throw new IllegalArgumentException( "The TLS Policy for this listener is hardcoded (to '"+hardcoded+"'). It cannot be changed." );
         }
 
         if ( Connection.TLSPolicy.legacyMode.equals( policy ) )

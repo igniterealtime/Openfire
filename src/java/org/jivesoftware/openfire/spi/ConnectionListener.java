@@ -187,7 +187,6 @@ public class ConnectionListener
         {
             case SOCKET_S2S:
             case BOSH_C2S:
-            case ADMIN:
             case WEBADMIN:
                 Log.debug( "Not starting a (NIO-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
                 return;

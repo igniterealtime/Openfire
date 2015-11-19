@@ -39,24 +39,19 @@ public enum ConnectionType
     BOSH_C2S( "xmpp.bosh.ssl.client.", SOCKET_C2S ),
 
     /**
-     * Generic administrative services (eg: user providers).
-     */
-    ADMIN( "admin.ssl.", SOCKET_S2S ),
-
-    /**
      * Openfire web-admin console.
      */
-    WEBADMIN( "admin.web.ssl.", ADMIN ),
+    WEBADMIN( "admin.web.ssl.", SOCKET_S2S ),
 
     /**
      * Openfire External Component connectivity.
      */
-    COMPONENT( "xmpp.component.", ADMIN ),
+    COMPONENT( "xmpp.component.", SOCKET_S2S ),
 
     /**
      * Openfire Connection Manager (multiplexer) connectivity.
      */
-    CONNECTION_MANAGER( "xmpp.multiplex.", ADMIN );
+    CONNECTION_MANAGER( "xmpp.multiplex.", SOCKET_S2S );
 
     String prefix;
     ConnectionType fallback;

@@ -70,7 +70,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
                             new ClearspaceX509TrustManager(
                                     host,
                                     manager.getProperties(),
-                                    CertificateStoreManager.getTrustStore( ConnectionType.ADMIN ).getStore() )
+                                    CertificateStoreManager.getTrustStore( ConnectionType.SOCKET_S2S ).getStore() )
                     },
                     null);
             return context;

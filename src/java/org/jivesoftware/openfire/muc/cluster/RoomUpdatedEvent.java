@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class RoomUpdatedEvent extends MUCRoomTask {
+public class RoomUpdatedEvent extends MUCRoomTask<Void> {
     private LocalMUCRoom room;
 
     public RoomUpdatedEvent() {
@@ -45,7 +45,7 @@ public class RoomUpdatedEvent extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

@@ -33,7 +33,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public class AddMember extends MUCRoomTask {
+public class AddMember extends MUCRoomTask<Void> {
     private JID bareJID;
     private String nickname;
 
@@ -62,7 +62,7 @@ public class AddMember extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

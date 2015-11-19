@@ -556,7 +556,7 @@ public class CacheFactory {
      *
      * @param task the task to be invoked on all other cluster members.
      */
-    public static void doClusterTask(final ClusterTask task) {
+    public static void doClusterTask(final ClusterTask<?> task) {
         cacheFactoryStrategy.doClusterTask(task);
     }
 
@@ -568,7 +568,7 @@ public class CacheFactory {
      * @param nodeID the byte array that identifies the target cluster member.
      * @throws IllegalStateException if requested node was not found or not running in a cluster. 
      */
-    public static void doClusterTask(final ClusterTask task, byte[] nodeID) {
+    public static void doClusterTask(final ClusterTask<?> task, byte[] nodeID) {
         cacheFactoryStrategy.doClusterTask(task, nodeID);
     }
 
@@ -582,7 +582,7 @@ public class CacheFactory {
      * @param includeLocalMember true to run the task on the local member, false otherwise
      * @return collection with the result of the execution.
      */
-    public static Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
+    public static Collection<Object> doSynchronousClusterTask(ClusterTask<?> task, boolean includeLocalMember) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, includeLocalMember);
     }
 
@@ -595,7 +595,7 @@ public class CacheFactory {
      * @return result of remote operation or null if operation failed or operation returned null.
      * @throws IllegalStateException if requested node was not found or not running in a cluster.
      */
-    public static Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
+    public static Object doSynchronousClusterTask(ClusterTask<?> task, byte[] nodeID) {
         return cacheFactoryStrategy.doSynchronousClusterTask(task, nodeID);
     }
     

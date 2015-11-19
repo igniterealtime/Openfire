@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Gaston Dombiak
  */
-public abstract class RemoteSessionTask implements ClusterTask {
+public abstract class RemoteSessionTask implements ClusterTask<Object> {
     protected Object result;
     protected Operation operation;
 

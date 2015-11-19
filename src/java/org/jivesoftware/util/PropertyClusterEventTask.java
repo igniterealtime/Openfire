@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class PropertyClusterEventTask implements ClusterTask {
+public class PropertyClusterEventTask implements ClusterTask<Void> {
     private Type event;
     private String key;
     private String value;
@@ -54,7 +54,7 @@ public class PropertyClusterEventTask implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

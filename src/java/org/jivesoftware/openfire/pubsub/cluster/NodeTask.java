@@ -12,7 +12,7 @@ import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
-public abstract class NodeTask implements ClusterTask
+public abstract class NodeTask implements ClusterTask<Void>
 {
 
 	protected String nodeId;
@@ -53,7 +53,7 @@ public abstract class NodeTask implements ClusterTask
 	}
 
 	@Override
-	public Object getResult()
+	public Void getResult()
 	{
 		return null;
 	}

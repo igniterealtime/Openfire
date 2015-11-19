@@ -35,7 +35,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class RoomRemovedEvent implements ClusterTask {
+public class RoomRemovedEvent implements ClusterTask<Void> {
     private LocalMUCRoom room;
 
     public RoomRemovedEvent() {
@@ -46,7 +46,7 @@ public class RoomRemovedEvent implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

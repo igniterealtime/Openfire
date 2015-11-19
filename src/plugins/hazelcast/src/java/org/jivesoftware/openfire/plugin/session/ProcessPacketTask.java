@@ -38,7 +38,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class ProcessPacketTask implements ClusterTask {
+public class ProcessPacketTask implements ClusterTask<Void> {
     private SessionType sessionType;
     private JID address;
     private String streamID;
@@ -74,7 +74,7 @@ public class ProcessPacketTask implements ClusterTask {
         this.packet = packet;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

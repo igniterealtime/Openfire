@@ -36,7 +36,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class NotifyComponentInfo implements ClusterTask {
+public class NotifyComponentInfo implements ClusterTask<Void> {
     private IQ iq;
 
     public NotifyComponentInfo() {
@@ -47,7 +47,7 @@ public class NotifyComponentInfo implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

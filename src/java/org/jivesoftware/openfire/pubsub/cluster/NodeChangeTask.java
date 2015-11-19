@@ -16,7 +16,7 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
  * @author Robin Collier
  * 
  */
-public abstract class NodeChangeTask implements ClusterTask
+public abstract class NodeChangeTask implements ClusterTask<Void>
 {
 	private String nodeId;
 	transient private Node node;

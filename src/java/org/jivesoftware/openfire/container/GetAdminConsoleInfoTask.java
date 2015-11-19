@@ -41,7 +41,7 @@ import java.util.Enumeration;
  *
  * @author Gaston Dombiak
  */
-public class GetAdminConsoleInfoTask implements ClusterTask {
+public class GetAdminConsoleInfoTask implements ClusterTask<GetAdminConsoleInfoTask> {
     private String bindInterface;
     private int adminPort;
     private int adminSecurePort;
@@ -49,7 +49,7 @@ public class GetAdminConsoleInfoTask implements ClusterTask {
 
 
     @Override
-    public Object getResult() {
+    public GetAdminConsoleInfoTask getResult() {
         return this;
     }
 

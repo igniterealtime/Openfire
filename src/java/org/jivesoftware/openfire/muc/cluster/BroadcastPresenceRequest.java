@@ -38,7 +38,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class BroadcastPresenceRequest extends MUCRoomTask {
+public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
     private Presence presence;
 
     private boolean isJoinPresence;
@@ -61,7 +61,7 @@ public class BroadcastPresenceRequest extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

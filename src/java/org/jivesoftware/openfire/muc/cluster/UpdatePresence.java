@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdatePresence extends MUCRoomTask {
+public class UpdatePresence extends MUCRoomTask<Void> {
     private Presence presence;
     private String nickname;
 
@@ -59,7 +59,7 @@ public class UpdatePresence extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

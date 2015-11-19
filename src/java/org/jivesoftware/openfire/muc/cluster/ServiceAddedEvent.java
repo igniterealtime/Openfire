@@ -40,7 +40,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class ServiceAddedEvent implements ClusterTask {
+public class ServiceAddedEvent implements ClusterTask<Void> {
     private String subdomain;
     private String description;
     private Boolean isHidden;
@@ -55,7 +55,7 @@ public class ServiceAddedEvent implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

@@ -35,7 +35,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class OccupantLeftEvent extends MUCRoomTask {
+public class OccupantLeftEvent extends MUCRoomTask<Void> {
     private MUCRole role;
     private String nickname;
 
@@ -60,7 +60,7 @@ public class OccupantLeftEvent extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

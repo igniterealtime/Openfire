@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdateHistoryStrategy implements ClusterTask {
+public class UpdateHistoryStrategy implements ClusterTask<Void> {
     private String serviceName;
     private int type;
     private int maxNumber;
@@ -52,7 +52,7 @@ public class UpdateHistoryStrategy implements ClusterTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

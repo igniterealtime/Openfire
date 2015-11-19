@@ -34,7 +34,7 @@ import org.xmpp.packet.JID;
  *
  * @author Tom Evans
  */
-public class AddAffiliation extends MUCRoomTask {
+public class AddAffiliation extends MUCRoomTask<Void> {
     private JID bareJID;
     private MUCRole.Affiliation affiliation;
 
@@ -63,7 +63,7 @@ public class AddAffiliation extends MUCRoomTask {
     }
 
     @Override
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

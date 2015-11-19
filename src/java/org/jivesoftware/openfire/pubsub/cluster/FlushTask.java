@@ -8,7 +8,7 @@ import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
 import org.jivesoftware.util.cache.ClusterTask;
 
 
-public class FlushTask implements ClusterTask
+public class FlushTask implements ClusterTask<Void>
 {
 	public FlushTask()
 	{
@@ -21,7 +21,7 @@ public class FlushTask implements ClusterTask
 	}
 
 	@Override
-	public Object getResult()
+	public Void getResult()
 	{
 		return null;
 	}

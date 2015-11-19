@@ -42,14 +42,14 @@ import java.util.List;
  *
  * @author Daniel Henninger
  */
-public class SeniorMemberServicesRequest implements ClusterTask {
+public class SeniorMemberServicesRequest implements ClusterTask<List<ServiceInfo>> {
     private List<ServiceInfo> services;
 
     public SeniorMemberServicesRequest() {
     }
 
     @Override
-    public Object getResult() {
+    public List<ServiceInfo> getResult() {
         return services;
     }
 

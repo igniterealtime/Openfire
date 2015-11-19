@@ -36,7 +36,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class DeliverRawTextTask implements ClusterTask {
+public class DeliverRawTextTask implements ClusterTask<Void> {
     private SessionType sessionType;
     private JID address;
     private String streamID;
@@ -72,7 +72,7 @@ public class DeliverRawTextTask implements ClusterTask {
         this.text = text;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

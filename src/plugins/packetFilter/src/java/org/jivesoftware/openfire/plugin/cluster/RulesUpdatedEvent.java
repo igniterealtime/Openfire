@@ -9,7 +9,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 
-public class RulesUpdatedEvent implements ClusterTask {
+public class RulesUpdatedEvent implements ClusterTask<Void> {
 
 
 
@@ -17,7 +17,7 @@ public class RulesUpdatedEvent implements ClusterTask {
 
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

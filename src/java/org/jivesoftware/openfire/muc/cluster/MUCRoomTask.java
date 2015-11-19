@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  */
-public abstract class MUCRoomTask implements ClusterTask {
+public abstract class MUCRoomTask<V> implements ClusterTask<V> {
 	
 	private static final Logger Log = LoggerFactory.getLogger(MUCRoomTask.class);
 

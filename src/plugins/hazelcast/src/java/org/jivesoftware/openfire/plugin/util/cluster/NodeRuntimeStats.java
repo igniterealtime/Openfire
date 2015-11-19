@@ -74,8 +74,8 @@ public class NodeRuntimeStats {
     /**
      * Encapsulates statistics and information about a cluster node.
      */
-    public static class NodeInfoTask implements ClusterTask {
-    	private Object result = null;
+    public static class NodeInfoTask implements ClusterTask<NodeInfo> {
+    	private NodeInfo result = null;
     	
 		public void run() {
             // Get runtime stats - mem and time:
@@ -93,10 +93,10 @@ public class NodeRuntimeStats {
 		}
 		
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-			result = ExternalizableUtil.getInstance().readSerializable(in);
+			result = (NodeInfo) ExternalizableUtil.getInstance().readSerializable(in);
 		}
 
-		public Object getResult() { return result; }
+		public NodeInfo getResult() { return result; }
     	
     }
 

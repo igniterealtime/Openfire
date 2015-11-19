@@ -34,11 +34,11 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetNumberConnectedUsers implements ClusterTask{
+public class GetNumberConnectedUsers implements ClusterTask<Integer> {
     private Integer count;
 
     @Override
-    public Object getResult() {
+    public Integer getResult() {
         return count;
     }
 

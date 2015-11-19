@@ -233,7 +233,7 @@ public final class Version implements Comparable<Version> {
             if (result == 0) {
                 result = Integer.compare(getMicro(), that.getMicro());
                 if (result == 0) {
-                    result = that.getStatus().compareTo(getStatus());
+                    result = getStatus().compareTo(that.getStatus());
                     if (result == 0) {
                         result = Integer.compare(getStatusVersion(), that.getStatusVersion());
                     }

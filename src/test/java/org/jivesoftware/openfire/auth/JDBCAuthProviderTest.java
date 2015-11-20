@@ -1,9 +1,9 @@
 package org.jivesoftware.openfire.auth;
 
 import java.util.HashMap;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.mindrot.jbcrypt.BCrypt;
 
 public class JDBCAuthProviderTest {
 
@@ -32,7 +32,7 @@ public class JDBCAuthProviderTest {
         assertTrue(SHA256_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha256)));
         assertTrue(SHA512_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha512)));
         assertFalse(BCRYPTED_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.bcrypt)));
-        assertTrue(BCrypt.checkpw(PASSWORD, BCRYPTED_PASSWORD));
+        assertTrue(OpenBSDBCrypt.checkPassword(BCRYPTED_PASSWORD, PASSWORD.toCharArray()));
     }
 
     @Test

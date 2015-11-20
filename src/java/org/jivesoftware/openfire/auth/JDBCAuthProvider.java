@@ -19,6 +19,7 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -41,7 +43,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
-import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +117,7 @@ import org.slf4j.LoggerFactory;
 public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
+    private static final int DEFAULT_BCRYPT_COST = 10; // Current (2015) value provided by Mindrot's BCrypt.GENSALT_DEFAULT_LOG2_ROUNDS value
 
     private String connectionString;
 
@@ -235,7 +237,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             for (int i = 0; i < lastIndex; i++) {
                 plainText = hashPassword(plainText, passwordTypes.get(i));
             }
-            return BCrypt.checkpw(plainText, hashed);
+            return OpenBSDBCrypt.checkPassword(hashed, plainText.toCharArray());
         }
 
         return hashPassword(plainText).equals(hashed);
@@ -260,10 +262,10 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             case sha512:
                 return StringUtils.hash(password, "SHA-512");
             case bcrypt:
-                String salt = bcryptCost > 0
-                        ? BCrypt.gensalt(bcryptCost)
-                        : BCrypt.gensalt();
-                return BCrypt.hashpw(password, salt);
+                byte[] salt = new byte[16];
+                new SecureRandom().nextBytes(salt);
+                int cost = (bcryptCost < 4 || bcryptCost > 31) ? DEFAULT_BCRYPT_COST : bcryptCost;
+                return OpenBSDBCrypt.generate(password.toCharArray(), salt, cost);
             case plain:
             default:
                 return password;

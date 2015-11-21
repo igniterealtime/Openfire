@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.plugin.session;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
+import java.util.Locale;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -209,6 +210,11 @@ public abstract class RemoteSession implements Session {
 		} else {
 			CacheFactory.doClusterTask(task, nodeID);
 	    }
+    }
+
+    @Override
+    public final Locale getLanguage() {
+        return Locale.getDefault();
     }
 
     /**

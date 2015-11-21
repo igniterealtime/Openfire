@@ -56,12 +56,6 @@ public abstract class VirtualConnection implements Connection {
    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     @Override
-    public String getLanguage() {
-        // Information not available. Return any value. This is not actually used.
-        return null;
-    }
-
-    @Override
     public int getMajorXMPPVersion() {
         // Information not available. Return any value. This is not actually used.
         return 0;
@@ -130,11 +124,6 @@ public abstract class VirtualConnection implements Connection {
 
     @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
-        //Ignore
-    }
-
-    @Override
-    public void setLanaguage(String language) {
         //Ignore
     }
 

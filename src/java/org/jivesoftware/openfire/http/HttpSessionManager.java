@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -41,6 +42,8 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.XMLConstants;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
@@ -168,7 +171,7 @@ public class HttpSessionManager {
         // TODO Check if IP address is allowed to connect to the server
 
         // Default language is English ("en").
-        String language = rootNode.attributeValue("xml:lang");
+        String language = rootNode.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI));
         if (language == null || "".equals(language)) {
             language = "en";
         }

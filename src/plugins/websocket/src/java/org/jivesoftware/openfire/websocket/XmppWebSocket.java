@@ -23,6 +23,7 @@ import java.util.TimerTask;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -47,6 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
+
+import javax.xml.XMLConstants;
 
 /**
  * This class handles all WebSocket events for the corresponding connection with a remote peer.
@@ -212,7 +215,7 @@ public class XmppWebSocket {
 	            saslStatus = SASLAuthentication.handle(xmppSession, stanza);
 	        } else if (STREAM_HEADER.equals(tag)) {
 	        	// restart the stream
-	            openStream(stanza.attributeValue("lang", "en"), stanza.attributeValue("from"));
+	            openStream(stanza.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI), "en"), stanza.attributeValue("from"));
 	            configureStream();
 	        } else if (Status.authenticated.equals(saslStatus)) {
 	    		if (router == null) {
@@ -245,7 +248,7 @@ public class XmppWebSocket {
         
         String host = stanza.attributeValue("to");
         StreamError streamError = null;
-		Locale language = Locale.forLanguageTag(stanza.attributeValue("lang", "en"));
+		Locale language = Locale.forLanguageTag(stanza.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI), "en"));
         if (STREAM_FOOTER.equals(stanza.getName())) {
         	// an error occurred while setting up the session
 			closeStream(null);
@@ -318,8 +321,8 @@ public class XmppWebSocket {
 		sb.append("from='").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("' ");
 		sb.append("id='").append(xmppSession.getStreamID().toString()).append("' ");
 		sb.append("xmlns='").append(FRAMING_NAMESPACE).append("' ");
-		sb.append("lang='").append(lang).append("' ");
-		sb.append("version='1.0' />");
+		sb.append("xml:lang='").append(lang).append("' ");
+		sb.append("version='1.0'/>");
         deliver(sb.toString());
 	}
 
@@ -333,8 +336,8 @@ public class XmppWebSocket {
 	        
 	        StringBuilder sb = new StringBuilder(250);
 	        sb.append("<close ");
-	        sb.append("xmlns='").append(FRAMING_NAMESPACE).append("' ");
-	        sb.append(" />");
+	        sb.append("xmlns='").append(FRAMING_NAMESPACE).append("'");
+	        sb.append("/>");
 	        deliver(sb.toString());
 	        closeWebSocket();
 		}

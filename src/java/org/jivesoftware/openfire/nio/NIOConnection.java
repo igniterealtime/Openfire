@@ -46,7 +46,6 @@ import org.apache.mina.core.filterchain.IoFilterChain;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.compression.CompressionFilter;
 import org.apache.mina.filter.ssl.SslFilter;
-import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -61,7 +60,6 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
@@ -104,7 +102,7 @@ public class NIOConnection implements Connection {
      * Compression policy currently in use for this connection.
      */
     private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
-    private static ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
+    private static final ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
@@ -303,10 +301,7 @@ public class NIOConnection implements Connection {
             	if (!ioSession.isConnected()) {
             		throw new IOException("Connection reset/closed by peer");
             	}
-                XMLWriter xmlSerializer =
-                        new XMLWriter(new ByteBufferWriter(buffer, encoder.get()), new OutputFormat());
-                xmlSerializer.write(packet.getElement());
-                xmlSerializer.flush();
+                buffer.putString(packet.getElement().asXML(), encoder.get());
                 if (flashClient) {
                     buffer.put((byte) '\0');
                 }

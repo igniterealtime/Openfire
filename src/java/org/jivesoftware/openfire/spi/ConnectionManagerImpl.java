@@ -58,6 +58,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     private final ConnectionListener clientListener;
     private final ConnectionListener clientSslListener;
+    private final ConnectionListener boshListener;
+    private final ConnectionListener boshSslListener;
     private final ConnectionListener serverListener;
     private final ConnectionListener componentListener;
     private final ConnectionListener componentSslListener;
@@ -109,6 +111,33 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 bindAddress,
                 CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
                 CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
+        );
+        // BOSH / HTTP-bind
+        boshListener = new ConnectionListener(
+                ConnectionType.BOSH_C2S,
+                HttpBindManager.HTTP_BIND_PORT,
+                HttpBindManager.HTTP_BIND_PORT_DEFAULT,
+                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS,
+                null,
+                Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use boshSslListener instead.
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
+        );
+        boshSslListener = new ConnectionListener(
+                ConnectionType.BOSH_C2S,
+                HttpBindManager.HTTP_BIND_SECURE_PORT,
+                HttpBindManager.HTTP_BIND_SECURE_PORT_DEFAULT,
+                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS,
+                null,
+                Connection.TLSPolicy.legacyMode.name(),
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
         );
         // server-to-server (federation)
         serverListener = new ConnectionListener(
@@ -179,6 +208,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
                 CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
         );
+
         // Admin console (the Openfire web-admin) // TODO these use the XML properties instead of normal properties!
         webAdminListener = new ConnectionListener(
             ConnectionType.WEBADMIN,
@@ -207,6 +237,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
                 CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
         );
+
     }
 
     /**
@@ -308,6 +339,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         final Set<ConnectionListener> listeners = new LinkedHashSet<>();
         listeners.add( clientListener );
         listeners.add( clientSslListener );
+        listeners.add( boshListener );
+        listeners.add( boshSslListener );
         listeners.add( serverListener );
         listeners.add( componentListener );
         listeners.add( componentSslListener );
@@ -341,6 +374,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                     return clientListener;
                 }
 
+            case BOSH_C2S:
+                if (startInSslMode) {
+                    return boshSslListener;
+                } else {
+                    return boshListener;
+                }
             case SOCKET_S2S:
                 return serverListener; // there's no legacy-mode server listener.
 
@@ -384,6 +423,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 result.add( clientListener );
                 result.add( clientSslListener );
                 break;
+            case BOSH_C2S:
+                result.add( boshListener );
+                result.add( boshSslListener );
 
             case SOCKET_S2S:
                 result.add( serverListener ); // there's no legacy-mode server listener.
@@ -398,6 +440,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 result.add( connectionManagerListener );
                 result.add( connectionManagerSslListener );
                 break;
+            case WEBADMIN:
+                result.add( webAdminListener );
+                result.add( webAdminSslListener );
 
             default:
                 throw new IllegalStateException( "Unknown connection type: "+ type );

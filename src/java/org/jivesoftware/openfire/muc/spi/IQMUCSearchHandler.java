@@ -390,32 +390,4 @@ public class IQMUCSearchHandler
 		}
 		return room.isPublicRoom();
 	}
-
-	/**
-	 * Returns the first value from the FormField, or 'null' if no value has
-	 * been set.
-	 * 
-	 * @param formField
-	 *            The field from which to return the first value.
-	 * @return String based value, or 'null' if the FormField has no values.
-	 * @deprecated replaced by {@link FormField#getFirstValue()}
-	 */
-	@Deprecated
-	public static String getFirstValue(FormField formField)
-	{
-		if (formField == null)
-		{
-			throw new IllegalArgumentException(
-				"The argument 'formField' cannot be null.");
-		}
-
-		List<String> it = formField.getValues();
-
-		if (it.isEmpty())
-		{
-			return null;
-		}
-
-		return it.get(0);
-	}
 }

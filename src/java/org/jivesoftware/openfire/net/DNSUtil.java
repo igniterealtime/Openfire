@@ -67,30 +67,6 @@ public class DNSUtil {
     }
 
     /**
-     * Returns the host name and port that the specified XMPP server can be
-     * reached at for server-to-server communication. A DNS lookup for a SRV
-     * record in the form "_xmpp-server._tcp.example.com" is attempted, according
-     * to section 14.4 of RFC 3920. If that lookup fails, a lookup in the older form
-     * of "_jabber._tcp.example.com" is attempted since servers that implement an
-     * older version of the protocol may be listed using that notation. If that
-     * lookup fails as well, it's assumed that the XMPP server lives at the
-     * host resolved by a DNS lookup at the specified domain on the specified default port.<p>
-     *
-     * As an example, a lookup for "example.com" may return "im.example.com:5269".
-     *
-     * @param domain the domain.
-     * @param defaultPort default port to return if the DNS look up fails.
-     * @return a HostAddress, which encompasses the hostname and port that the XMPP
-     *      server can be reached at for the specified domain.
-     * @deprecated replaced with support for multiple srv records, see 
-     *      {@link #resolveXMPPDomain(String, int)}
-     */
-    @Deprecated
-    public static HostAddress resolveXMPPServerDomain(String domain, int defaultPort) {
-        return resolveXMPPDomain(domain, defaultPort).get(0);
-    }
-
-    /**
      * Returns a sorted list of host names and ports that the specified XMPP domain
      * can be reached at for server-to-server communication. A DNS lookup for a SRV
      * record in the form "_xmpp-server._tcp.example.com" is attempted, according

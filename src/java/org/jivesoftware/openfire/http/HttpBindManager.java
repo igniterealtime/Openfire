@@ -23,10 +23,7 @@ package org.jivesoftware.openfire.http;
 import java.io.File;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;

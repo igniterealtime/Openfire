@@ -194,7 +194,7 @@ public class SocketConnection implements Connection {
             // Start handshake
             tlsStreamHandler.start();
             // Use new wrapped writers
-            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), CHARSET));
+            writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
     }

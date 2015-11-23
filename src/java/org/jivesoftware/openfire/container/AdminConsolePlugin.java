@@ -337,12 +337,19 @@ public class AdminConsolePlugin implements Plugin {
         if (Boolean.getBoolean("developmentMode")) {
             System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
             context = new WebAppContext(contexts, pluginDir.getParentFile().getParentFile().getParentFile().getParent() +
-                     File.separator + "src" + File.separator + "web", "/");
+                    File.separator + "src" + File.separator + "web", "/");
         }
         else {
             context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp",
                     "/");
         }
+
+        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
+        final List<ContainerInitializer> initializers = new ArrayList<>();
+        initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+        context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+
         context.setWelcomeFiles(new String[]{"index.jsp"});
     }
 

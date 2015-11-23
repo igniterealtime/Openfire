@@ -31,7 +31,9 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.*;
@@ -67,8 +69,6 @@ public class NIOConnection implements Connection {
 
 	private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
     private ConnectionConfiguration configuration;
-
-    public enum State { RUNNING, CLOSING, CLOSED }
 
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.
@@ -108,7 +108,7 @@ public class NIOConnection implements Connection {
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
-    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+    private AtomicReference<State> state = new AtomicReference<>(State.OPEN);
     
     /**
      * Lock used to ensure the integrity of the underlying IoSession (refer to
@@ -125,7 +125,6 @@ public class NIOConnection implements Connection {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
-        state = State.RUNNING;
     }
 
     @Override

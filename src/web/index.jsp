@@ -483,6 +483,9 @@
                     case WEBADMIN:
                         typeName = LocaleUtils.getLocalizedString("ports.admin_console");
                         break;
+                    case BOSH_C2S:
+                        typeName = LocaleUtils.getLocalizedString("ports.http_bind");
+                        break;
                     default:
                         typeName = "(unspecified)";
                         break;
@@ -517,6 +520,13 @@
                             description = LocaleUtils.getLocalizedString( "ports.admin_console.desc_unsecured" );
                         }
                         break;
+                    case BOSH_C2S:
+                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
+                            description = LocaleUtils.getLocalizedString( "ports.http_bind.desc_secured" );
+                        } else {
+                            description = LocaleUtils.getLocalizedString( "ports.http_bind.desc_unsecured" );
+                        }
+                        break;
                     default:
                         description = "";
                         break;
@@ -545,32 +555,6 @@
         <td><fmt:message key="ports.file_proxy" /></td>
         <td><fmt:message key="ports.file_proxy.desc" /></td>
     </tr>
-    <% } %>
-    <%
-        if (httpBindManager.isHttpBindEnabled()) {
-    %>
-        <%
-            if (httpBindManager.getHttpBindUnsecurePort() > 0) {
-        %>
-        <tr>
-            <td><%= interfaceName %></td>
-            <td><%= httpBindManager.getHttpBindUnsecurePort() %></td>
-            <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-            <td><fmt:message key="ports.http_bind" /></td>
-            <td><fmt:message key="ports.http_bind.desc_unsecured" /></td>
-        </tr>
-        <% } %>
-        <%
-            if (httpBindManager.isHttpsBindActive()) {
-        %>
-        <tr>
-            <td><%= interfaceName %></td>
-            <td><%= httpBindManager.getHttpBindSecurePort() %></td>
-            <td><img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/></td>
-            <td><fmt:message key="ports.http_bind" /></td>
-            <td><fmt:message key="ports.http_bind.desc_secured" /></td>
-        </tr>
-        <% } %>
     <% } %>
     <%
         if (mediaProxyService.isEnabled()) {

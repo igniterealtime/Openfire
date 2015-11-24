@@ -8,6 +8,16 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.group.ConcurrentGroupList;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
@@ -15,16 +25,10 @@ import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.group.ConcurrentGroupList;
-import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
 import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -93,7 +97,8 @@ public class MUCRoomController {
 				.getChatRoom(roomName);
 
 		if (chatRoom == null) {
-			throw new ServiceException("Could not find the chat room", roomName, ExceptionType.ROOM_NOT_FOUND, Response.Status.NOT_FOUND);
+			throw new ServiceException("Could not find the chat room", roomName, ExceptionType.ROOM_NOT_FOUND,
+					Response.Status.NOT_FOUND);
 		}
 
 		MUCRoomEntity mucRoomEntity = convertToMUCRoomEntity(chatRoom, expand);
@@ -117,7 +122,8 @@ public class MUCRoomController {
 		if (chatRoom != null) {
 			chatRoom.destroyRoom(null, null);
 		} else {
-			throw new ServiceException("Could not remove the channel", roomName, ExceptionType.ROOM_NOT_FOUND, Response.Status.NOT_FOUND);
+			throw new ServiceException("Could not remove the channel", roomName, ExceptionType.ROOM_NOT_FOUND,
+					Response.Status.NOT_FOUND);
 		}
 	}
 
@@ -172,11 +178,14 @@ public class MUCRoomController {
 			}
 			createRoom(mucRoomEntity, serviceName);
 		} catch (NotAllowedException e) {
-			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ConflictException e) {
-			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED, Response.Status.CONFLICT, e);
+			throw new ServiceException("Could not update the channel", roomName, ExceptionType.NOT_ALLOWED,
+					Response.Status.CONFLICT, e);
 		} catch (AlreadyExistsException e) {
 			throw new ServiceException("Could not update the channel", mucRoomEntity.getRoomName(),
 					ExceptionType.ALREADY_EXISTS, Response.Status.CONFLICT, e);
@@ -196,7 +205,7 @@ public class MUCRoomController {
 	 *             the forbidden exception
 	 * @throws ConflictException
 	 *             the conflict exception
-	 * @throws AlreadyExistsException 
+	 * @throws AlreadyExistsException
 	 */
 	private void createRoom(MUCRoomEntity mucRoomEntity, String serviceName) throws NotAllowedException,
 			ForbiddenException, ConflictException, AlreadyExistsException {
@@ -211,12 +220,13 @@ public class MUCRoomController {
 			mucRoomEntity.setOwners(owners);
 		}
 
-		//	Check if chat service is available, if not create a new one
+		// Check if chat service is available, if not create a new one
 		boolean serviceRegistered = XMPPServer.getInstance().getMultiUserChatManager().isServiceRegistered(serviceName);
-		if(!serviceRegistered) {
-			XMPPServer.getInstance().getMultiUserChatManager().createMultiUserChatService(serviceName, serviceName, false);
+		if (!serviceRegistered) {
+			XMPPServer.getInstance().getMultiUserChatManager().createMultiUserChatService(serviceName, serviceName,
+					false);
 		}
-		
+
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(mucRoomEntity.getRoomName().toLowerCase(), owner);
 
@@ -238,6 +248,11 @@ public class MUCRoomController {
 		room.setMaxUsers(mucRoomEntity.getMaxUsers());
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
+
+		// Fire RoomUpdateEvent if cluster is started
+		if (ClusterManager.isClusteringStarted()) {
+			CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
+		}
 
 		// Set broadcast presence roles
 		if (mucRoomEntity.getBroadcastPresenceRoles() != null) {
@@ -261,8 +276,8 @@ public class MUCRoomController {
 		} else {
 			room.setModificationDate(new Date());
 		}
-		
-		// Unlock the room, because the default configuration lock the room.  		
+
+		// Unlock the room, because the default configuration lock the room.
 		room.unlock(room.getRole());
 
 		// Save the room to the DB if the room should be persistant
@@ -333,16 +348,16 @@ public class MUCRoomController {
 		ConcurrentGroupList<JID> outcasts = new ConcurrentGroupList<JID>(room.getOutcasts());
 
 		if (expand) {
-			for(Group ownerGroup : owners.getGroups()) {
+			for (Group ownerGroup : owners.getGroups()) {
 				owners.addAllAbsent(ownerGroup.getAll());
 			}
-			for(Group adminGroup : admins.getGroups()) {
+			for (Group adminGroup : admins.getGroups()) {
 				admins.addAllAbsent(adminGroup.getAll());
 			}
-			for(Group memberGroup : members.getGroups()) {
+			for (Group memberGroup : members.getGroups()) {
 				members.addAllAbsent(memberGroup.getAll());
 			}
-			for(Group outcastGroup : outcasts.getGroups()) {
+			for (Group outcastGroup : outcasts.getGroups()) {
 				outcasts.addAllAbsent(outcastGroup.getAll());
 			}
 		}
@@ -424,7 +439,7 @@ public class MUCRoomController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds the admin.
 	 *
@@ -443,9 +458,11 @@ public class MUCRoomController {
 		try {
 			room.addAdmin(UserUtils.checkAndGetJID(jid), room.getRole());
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not add admin", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add admin", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN,
+					e);
 		} catch (ConflictException e) {
-			throw new ServiceException("Could not add admin", jid, ExceptionType.NOT_ALLOWED, Response.Status.CONFLICT, e);
+			throw new ServiceException("Could not add admin", jid, ExceptionType.NOT_ALLOWED, Response.Status.CONFLICT,
+					e);
 		}
 	}
 
@@ -467,7 +484,8 @@ public class MUCRoomController {
 		try {
 			room.addOwner(UserUtils.checkAndGetJID(jid), room.getRole());
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not add owner", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add owner", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN,
+					e);
 		}
 	}
 
@@ -489,9 +507,11 @@ public class MUCRoomController {
 		try {
 			room.addMember(UserUtils.checkAndGetJID(jid), null, room.getRole());
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not add member", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add member", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ConflictException e) {
-			throw new ServiceException("Could not add member", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add member", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		}
 	}
 
@@ -513,11 +533,14 @@ public class MUCRoomController {
 		try {
 			room.addOutcast(UserUtils.checkAndGetJID(jid), null, room.getRole());
 		} catch (NotAllowedException e) {
-			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ConflictException e) {
-			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED, Response.Status.CONFLICT, e);
+			throw new ServiceException("Could not add outcast", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.CONFLICT, e);
 		}
 	}
 
@@ -539,9 +562,11 @@ public class MUCRoomController {
 		try {
 			room.addNone(UserUtils.checkAndGetJID(jid), room.getRole());
 		} catch (ForbiddenException e) {
-			throw new ServiceException("Could not delete affiliation", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
+			throw new ServiceException("Could not delete affiliation", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.FORBIDDEN, e);
 		} catch (ConflictException e) {
-			throw new ServiceException("Could not delete affiliation", jid, ExceptionType.NOT_ALLOWED, Response.Status.CONFLICT, e);
+			throw new ServiceException("Could not delete affiliation", jid, ExceptionType.NOT_ALLOWED,
+					Response.Status.CONFLICT, e);
 		}
 	}
 }

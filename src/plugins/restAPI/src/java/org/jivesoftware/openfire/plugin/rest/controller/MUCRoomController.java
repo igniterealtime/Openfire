@@ -8,6 +8,7 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
@@ -20,11 +21,14 @@ import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
 import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -238,6 +242,11 @@ public class MUCRoomController {
 		room.setMaxUsers(mucRoomEntity.getMaxUsers());
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
+		
+		// Fire RoomUpdateEvent if cluster is started
+		if (ClusterManager.isClusteringStarted()) {
+		  CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
+		}
 
 		// Set broadcast presence roles
 		if (mucRoomEntity.getBroadcastPresenceRoles() != null) {

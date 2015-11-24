@@ -215,10 +215,9 @@ public interface Session extends RoutableChannelHandler {
     public String getCipherSuiteName();
 
     /**
-     * Returns the language code that should be used for this connection
-     * (e.g. "en").
+     * Returns the locale that is used for this session (e.g. {@link Locale#ENGLISH}).
      *
-     * @return the language code for the connection.
+     * @return The language for the session.
      */
     Locale getLanguage();
 }

@@ -119,26 +119,6 @@
         </attribute>
 	</tag>
     <tag>
-        <name>contentBox</name>
-        <tag-class>org.jivesoftware.admin.ContentBoxTag</tag-class>
-        <body-content>JSP</body-content>
-        <attribute>
-            <name>title</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
-        <name>infobox</name>
-        <tag-class>org.jivesoftware.admin.InfoboxTag</tag-class>
-        <body-content>JSP</body-content>
-        <attribute>
-            <name>type</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
         <name>ASN1DER</name>
         <tag-class>org.jivesoftware.admin.ASN1DERTag</tag-class>
         <body-content>JSP</body-content>
@@ -148,6 +128,18 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag-file>
+        <name>contentBox</name>
+        <path>/WEB-INF/tags/admin/contentBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infobox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infoBox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
     <function>
         <name>replaceAll</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>

@@ -723,8 +723,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         message.setFrom(getAddress());
         for (JID jid : jids) {
             message.setTo(jid);
-            message.setID(
-                    node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+            message.setID(StringUtils.randomString(8));
             router.route(message);
         }
     }
@@ -738,8 +737,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void sendNotification(Node node, Message message, JID jid) {
         message.setFrom(getAddress());
         message.setTo(jid);
-        message.setID(
-                node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+        message.setID(StringUtils.randomString(8));
         router.route(message);
     }
 

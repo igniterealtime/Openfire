@@ -73,9 +73,9 @@ import org.slf4j.LoggerFactory;
  * situations where legacy (ex/md5) password hashes were stored and then "upgraded" to a stronger hash algorithm.
  * Hashes are executed left to right.</p>
  * <p>Example Setting: "md5,sha1"<br>  
- * Usage: password -><br>
- * (md5)&nbsp;286755fad04869ca523320acce0dc6a4&nbsp;-><br>
- * (sha1)&nbsp;0524b1fc84d315b08db890413e65260040b08caa&nbsp;-></p>
+ * Usage: password -&gt;<br>
+ * (md5)&nbsp;286755fad04869ca523320acce0dc6a4&nbsp;-&gt;<br>
+ * (sha1)&nbsp;0524b1fc84d315b08db890413e65260040b08caa&nbsp;-&gt;</p>
  * 
  * <p>Bcrypt is supported as a passwordType; however, when chaining password types it MUST be the last type given. (bcrypt hashes are different 
  * every time they are generated)</p>

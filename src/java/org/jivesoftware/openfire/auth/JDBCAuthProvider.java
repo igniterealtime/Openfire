@@ -64,21 +64,10 @@ import org.slf4j.LoggerFactory;
  * <li><tt>jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret</tt></li>
  * <li><tt>jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?</tt></li>
  * <li><tt>jdbcAuthProvider.passwordType = plain</tt></li>
- * <li><tt>jdbcAuthProvider.acceptPreHashedPassword = false</tt></li>
  * <li><tt>jdbcAuthProvider.allowUpdate = true</tt></li>
  * <li><tt>jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?</tt></li>
  * <li><tt>jdbcAuthProvider.bcrypt.cost = 12</tt></li>
  * </ul>
- *
- * <p>External systems integrating with Openfire may only have access to a hashed password.  In this scenario, setting 
- * jdbcAuthProvider.acceptPreHashedPassword = true will allow this AuthProvider to directly compare the input to 
- * the hash stored in the database.  This configuration is the rough equivalent to allowing the scenario where EITHER 
- * of the following authentication situations are allowed at the same time:<br>
- * jdbcAuthProvider.passwordSQL = SELECT MD5(password) FROM user_account WHERE username=?<br>
- * jdbcAuthProvider.passwordType = plain<br>
- * -OR-<br>
- * jdbcAuthProvider.passwordSQL = SELECT password FROM user_account WHERE username=?<br>
- * jdbcAuthProvider.passwordType = md5<br></p>
  * 
  * <p>jdbcAuthProvider.passwordType can accept a comma separated string of password types.  This can be useful in 
  * situations where legacy (ex/md5) password hashes were stored and then "upgraded" to a stronger hash algorithm.
@@ -127,7 +116,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
     private boolean allowUpdate;
     private boolean useConnectionProvider;
     private int bcryptCost;
-    private boolean acceptPreHashedPassword;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -145,7 +133,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         JiveGlobals.migrateProperty("jdbcAuthProvider.acceptPreHashedPassword");
         
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAuthProvider.useConnectionProvider");
-        acceptPreHashedPassword = JiveGlobals.getBooleanProperty("jdbcAuthProvider.acceptPreHashedPassword");
         
         if (!useConnectionProvider) {
             // Load the JDBC driver and connection string.
@@ -221,8 +208,7 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             throw new UnauthorizedException();
         }
         
-        if ((acceptPreHashedPassword && userPassword.equals(password))
-                || comparePasswords(password, userPassword)) {
+        if (comparePasswords(password, userPassword)) {
             // Got this far, so the user must be authorized.
             createUser(username);
         } else {
@@ -526,10 +512,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
     public void propertySet(String property, Map<String, Object> params) {
         String value = (String) params.get("value");
         switch (property) {
-            case "jdbcAuthProvider.acceptPreHashedPassword":
-                acceptPreHashedPassword = Boolean.parseBoolean(value);
-                Log.debug("jdbcAuthProvider.acceptPreHashedPassword configured to: {}", acceptPreHashedPassword);
-                break;
             case "jdbcAuthProvider.passwordSQL":
                 passwordSQL = value;
                 Log.debug("jdbcAuthProvider.passwordSQL configured to: {}", passwordSQL);

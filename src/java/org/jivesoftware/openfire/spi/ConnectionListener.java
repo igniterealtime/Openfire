@@ -2,12 +2,9 @@ package org.jivesoftware.openfire.spi;
 
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
-import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -156,14 +153,7 @@ public class ConnectionListener
         }
 
         JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
-        if ( isRunning )
-        {
-            start();
-        }
-        else
-        {
-            stop();
-        }
+        restart();
     }
 
     /**
@@ -249,31 +239,13 @@ public class ConnectionListener
             maxBufferSize = -1; // No upper bound.
         }
 
-        Connection.ClientAuth clientAuth;
-        if ( clientAuthPolicyPropertyName == null )
-        {
-            clientAuth = Connection.ClientAuth.disabled;
-        }
-        else
-        {
-            try
-            {
-                final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, Connection.ClientAuth.disabled.name() );
-                clientAuth = Connection.ClientAuth.valueOf( value );
-            }
-            catch ( IllegalArgumentException e )
-            {
-                Log.warn( "Invalid client auth value. A default will be used.", e );
-                clientAuth = Connection.ClientAuth.wanted;
-            }
-        }
-
         // Take the current state of this instance, and create a new configuration.
         return new ConnectionConfiguration(
                 getType(),
+                isEnabled(),
                 maxThreadPoolSize,
                 maxBufferSize,
-                clientAuth,
+                getClientAuth(),
                 getBindAddress(),
                 getPort(),
                 getTLSPolicy(),
@@ -420,6 +392,42 @@ public class ConnectionListener
         {
             JiveGlobals.setProperty( tcpPortPropertyName, String.valueOf( port ) );
         }
+        restart();
+    }
+
+    public Connection.ClientAuth getClientAuth()
+    {
+        Connection.ClientAuth clientAuth;
+        if ( clientAuthPolicyPropertyName == null )
+        {
+            clientAuth = Connection.ClientAuth.disabled;
+        }
+        else
+        {
+            final String value = JiveGlobals.getProperty( clientAuthPolicyPropertyName, Connection.ClientAuth.disabled.name() );
+            try
+            {
+                clientAuth = Connection.ClientAuth.valueOf( value );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                Log.error( "Error parsing property value of '{}' into a valid ClientAUth. Offending value: '{}'.", value, clientAuthPolicyPropertyName, e );
+                clientAuth = Connection.ClientAuth.disabled;
+            }
+        }
+        return clientAuth;
+    }
+
+    public void setClientAuth( Connection.ClientAuth clientAuth )
+    {
+        final Connection.ClientAuth oldValue = getClientAuth();
+        if ( oldValue.equals( clientAuth ) )
+        {
+            Log.debug( "Ignoring client auth configuration change request (to '{}'): listener already in this state.", clientAuth );
+            return;
+        }
+        Log.debug( "Changing client auth configuration from '{}' to '{}'.", oldValue, clientAuth );
+        JiveGlobals.setProperty( tlsPolicyPropertyName, clientAuth.toString() );
         restart();
     }
 

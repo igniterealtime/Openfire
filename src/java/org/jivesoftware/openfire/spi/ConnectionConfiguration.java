@@ -22,6 +22,7 @@ import java.util.*;
 public class ConnectionConfiguration
 {
     private final Logger Log;
+    private final boolean enabled;
     private final ConnectionType type;
     private final int maxThreadPoolSize;
     private final int maxBufferSize;
@@ -329,6 +330,7 @@ public class ConnectionConfiguration
 
     /**
      * @param type
+     * @param enabled
      * @param maxThreadPoolSize The maximum number of threads that are to be used to processing network activity. Must be equal to or larger than one.
      * @param maxBufferSize The maximum amount of bytes of the read buffer that I/O processor allocates per each read, or a non-positive value to configure no maximum.
      * @param clientAuth specification if peers should be authenticated ('mutual authentication') (cannot be null).
@@ -337,7 +339,7 @@ public class ConnectionConfiguration
      * @param tlsPolicy The TLS policy that is applied to connections (cannot be null).
      */
     // TODO input validation
-    public ConnectionConfiguration( ConnectionType type, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocolsEnabled, Set<String> encryptionProtocolsDisabled, Set<String> cipherSuitesEnabled, Set<String> cipherSuitesDisabled )
+    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocolsEnabled, Set<String> encryptionProtocolsDisabled, Set<String> cipherSuitesEnabled, Set<String> cipherSuitesDisabled )
     {
         if ( maxThreadPoolSize <= 0 ) {
             throw new IllegalArgumentException( "Argument 'maxThreadPoolSize' must be equal to or greater than one." );
@@ -346,6 +348,7 @@ public class ConnectionConfiguration
             throw new IllegalArgumentException( "Argument 'clientAuth' cannot be null." );
         }
 
+        this.enabled = enabled;
         this.tlsPolicy = tlsPolicy;
         this.type = type;
         this.maxThreadPoolSize = maxThreadPoolSize;
@@ -520,5 +523,10 @@ public class ConnectionConfiguration
     public TrustStore getTrustStore()
     {
         return trustStore;
+    }
+
+    public boolean isEnabled()
+    {
+        return enabled;
     }
 }

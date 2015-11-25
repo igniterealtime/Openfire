@@ -5,9 +5,9 @@
     <name>REST API</name>
     <description>Allows administration over a RESTful API.</description>
     <author>Roman Soldatow</author>
-    <version>1.2.0</version>
-    <date>10/12/2015</date>
-    <minServerVersion>3.11.0 alpha</minServerVersion>
+    <version>1.2.1</version>
+    <date>11/24/2015</date>
+    <minServerVersion>3.10.0</minServerVersion>
     <adminconsole>
         <tab id="tab-server">
             <sidebar id="sidebar-server-settings">

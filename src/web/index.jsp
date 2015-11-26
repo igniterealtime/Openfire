@@ -446,6 +446,8 @@
             continue;
         }
 
+        pageContext.setAttribute( "connectionListener", connectionListener );
+
         final String interfaceName;
         if (connectionListener.getBindAddress() == null || connectionListener.getBindAddress().isAnyLocalAddress() ) {
             interfaceName = LocaleUtils.getLocalizedString("ports.all_ports");
@@ -494,45 +496,69 @@
             <%=typeName%>
         </td>
         <td>
-            <%
-                final String description;
-                switch ( connectionListener.getType() ) {
-                    case SOCKET_C2S:
-                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
-                            description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc_old_ssl", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
-                        } else {
-                            description = LocaleUtils.getLocalizedString( "ports.client_to_server.desc", Arrays.asList( "<a href='ssl-settings.jsp'>", "</a>" ) );
-                        }
-                        break;
-                    case SOCKET_S2S:
-                        description = LocaleUtils.getLocalizedString( "ports.server_to_server.desc", Arrays.asList( "<a href='server2server-settings.jsp'>", "</a>" ) );
-                        break;
-                    case COMPONENT:
-                        description = LocaleUtils.getLocalizedString( "ports.external_components.desc", Arrays.asList( "<a href='external-components-settings.jsp'>", "</a>" ) );
-                        break;
-                    case CONNECTION_MANAGER:
-                        description = LocaleUtils.getLocalizedString( "ports.connection_manager.desc", Arrays.asList( "<a href='connection-managers-settings.jsp'>", "</a>" ) );
-                        break;
-                    case WEBADMIN:
-                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
-                            description = LocaleUtils.getLocalizedString( "ports.admin_console.desc_secured" );
-                        } else {
-                            description = LocaleUtils.getLocalizedString( "ports.admin_console.desc_unsecured" );
-                        }
-                        break;
-                    case BOSH_C2S:
-                        if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ) {
-                            description = LocaleUtils.getLocalizedString( "ports.http_bind.desc_secured" );
-                        } else {
-                            description = LocaleUtils.getLocalizedString( "ports.http_bind.desc_unsecured" );
-                        }
-                        break;
-                    default:
-                        description = "";
-                        break;
-                }
-            %>
-            <%=description%>
+            <c:choose>
+                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                    <fmt:message key="ports.client_to_server.desc"/>
+                    <fmt:message key="ports.plaintext.desc">
+                        <fmt:param><a href='connection-settings-socket-c2s.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                    <fmt:message key="ports.client_to_server.desc_old_ssl"/>
+                    <fmt:message key="ports.legacymode.desc">
+                        <fmt:param><a href='connection-settings-socket-c2s.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'SOCKET_S2S'}">
+                    <fmt:message key="ports.server_to_server.desc"/>
+                    <fmt:message key="ports.legacymode.desc">
+                        <fmt:param><a href='connection-settings-socket-s2s.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                    <fmt:message key="ports.external_components.desc"/>
+                    <fmt:message key="ports.plaintext.desc">
+                        <fmt:param><a href='external-components-settings.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                    <fmt:message key="ports.external_components.desc_old_ssl"/>
+                    <fmt:message key="ports.legacymode.desc">
+                        <fmt:param><a href='external-components-settings.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                    <fmt:message key="ports.connection_manager.desc"/>
+                    <fmt:message key="ports.plaintext.desc">
+                        <fmt:param><a href='connection-managers-settings.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                    <fmt:message key="ports.connection_manager.desc_old_ssl"/>
+                    <fmt:message key="ports.legacymode.desc">
+                        <fmt:param><a href='connection-managers-settings.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                    <fmt:message key="ports.admin_console.desc_unsecured"/>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                    <fmt:message key="ports.admin_console.desc_secured"/>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                    <fmt:message key="ports.http_bind.desc_unsecured"/>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                    <fmt:message key="ports.http_bind.desc_secured"/>
+                </c:when>
+            </c:choose>
         </td>
     </tr>
 <%

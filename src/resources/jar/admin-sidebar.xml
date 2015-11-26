@@ -69,12 +69,12 @@
 
             <!-- Client connections settings-->
             <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
-                  url="client-connections-settings.jsp"
+                  url="connection-settings-socket-c2s.jsp"
                   description="${sidebar.client-connections-settings.descr}"/>
                   
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
-                  url="server2server-settings.jsp"
+                  url="connection-settings-socket-s2s.jsp"
                   description="${sidebar.server2server-settings.descr}"/>
 
             <!-- External components -->
@@ -121,11 +121,6 @@
             <item id="server-data-settings" name="${sidebar.server-data-settings}"
                   url="private-data-settings.jsp"
                   description="${sidebar.server-data-settings.descr}"/>
-
-            <!-- SSL Settings -->
-            <item id="server-ssl" name="${sidebar.server-ssl}"
-                  url="ssl-settings.jsp"
-                  description="${sidebar.server-ssl.descr}"/>
 
             <!-- Compression Settings -->
             <item id="server-compression" name="${sidebar.server-compression}"

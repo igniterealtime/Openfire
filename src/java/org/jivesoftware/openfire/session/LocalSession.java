@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.net.ssl.SSLSession;
@@ -100,14 +101,17 @@ public abstract class LocalSession implements Session {
      */
     protected final StreamManager streamManager;
 
+    private final Locale language;
+
     /**
      * Creates a session with an underlying connection and permission protection.
      *
      * @param serverName domain of the XMPP server where the new session belongs.
      * @param connection The connection we are proxying.
      * @param streamID unique identifier for this session.
+     * @param language The language to use for this session.
      */
-    public LocalSession(String serverName, Connection connection, StreamID streamID) {
+    public LocalSession(String serverName, Connection connection, StreamID streamID, Locale language) {
         if (connection == null) {
             throw new IllegalArgumentException("connection must not be null");
         }
@@ -118,6 +122,7 @@ public abstract class LocalSession implements Session {
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
         this.streamManager = new StreamManager(conn);
+        this.language = language;
     }
 
     /**
@@ -470,4 +475,8 @@ public abstract class LocalSession implements Session {
     	streamManager.setEnabled(true);
 	}
 
+    @Override
+    public final Locale getLanguage() {
+        return language;
+    }
 }

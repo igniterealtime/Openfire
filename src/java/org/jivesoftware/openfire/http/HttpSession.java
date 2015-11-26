@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -131,8 +132,8 @@ public class HttpSession extends LocalClientSession {
     };
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
-                       StreamID streamID, long rid, HttpConnection connection) {
-        super(serverName, new HttpVirtualConnection(address), streamID);
+                       StreamID streamID, long rid, HttpConnection connection, Locale language) {
+        super(serverName, new HttpVirtualConnection(address), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
@@ -247,24 +248,6 @@ public class HttpSession extends LocalClientSession {
      */
     public int getHold() {
         return hold;
-    }
-
-    /**
-     * Sets the language this session is using.
-     *
-     * @param language the language this session is using.
-     */
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    /**
-     * Returns the language this session is using.
-     *
-     * @return the language this session is using.
-     */
-    public String getLanguage() {
-        return language;
     }
 
     /**

@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.websocket;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Locale;
 import java.util.TimerTask;
 
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -244,7 +245,7 @@ public class XmppWebSocket {
         
         String host = stanza.attributeValue("to");
         StreamError streamError = null;
-
+		Locale language = Locale.forLanguageTag(stanza.attributeValue("lang", "en"));
         if (STREAM_FOOTER.equals(stanza.getName())) {
         	// an error occurred while setting up the session
 			closeStream(null);
@@ -261,12 +262,12 @@ public class XmppWebSocket {
             streamError = new StreamError(StreamError.Condition.host_unknown);
             Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host);
         } else {
-        	xmppSession = SessionManager.getInstance().createClientSession(wsConnection);
+        	xmppSession = SessionManager.getInstance().createClientSession(wsConnection, language);
         	xmppSession.setSessionData("ws", Boolean.TRUE);
         }
 
         if (streamError == null) {
-            openStream(stanza.attributeValue("lang", "en"), stanza.attributeValue("from"));
+            openStream(language.toLanguageTag(), stanza.attributeValue("from"));
             configureStream();
         } else {
             closeStream(streamError);

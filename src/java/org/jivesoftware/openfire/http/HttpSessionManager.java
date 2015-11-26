@@ -21,6 +21,7 @@ package org.jivesoftware.openfire.http;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -181,7 +182,7 @@ public class HttpSessionManager {
         	version = "1.5";
         }
 
-        HttpSession session = createSession(connection.getRequestId(), address, connection);
+        HttpSession session = createSession(connection.getRequestId(), address, connection, Locale.forLanguageTag(language));
         session.setWait(Math.min(wait, getMaxWait()));
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -196,9 +197,6 @@ public class HttpSessionManager {
         	session.setDefaultInactivityTimeout(getInactivityTimeout());
         }
     	session.resetInactivityTimeout();
-        
-        // Store language and version information in the connection.
-        session.setLanguage(language);
         
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
@@ -296,11 +294,11 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
-    private HttpSession createSession(long rid, InetAddress address, HttpConnection connection) throws UnauthorizedException {
+    private HttpSession createSession(long rid, InetAddress address, HttpConnection connection, Locale language) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, connection);
+        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, connection, language);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(sessionListener);

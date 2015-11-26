@@ -28,6 +28,7 @@ import org.xmpp.packet.Packet;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -212,4 +213,11 @@ public interface Session extends RoutableChannelHandler {
      * @return cipher suite name.
      */
     public String getCipherSuiteName();
+
+    /**
+     * Returns the locale that is used for this session (e.g. {@link Locale#ENGLISH}).
+     *
+     * @return The language for the session.
+     */
+    Locale getLanguage();
 }

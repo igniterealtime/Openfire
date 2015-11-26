@@ -67,18 +67,6 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
     }
 
     @Override
-    @Deprecated
-    public String getName() {
-        return getXMPPDomain();
-    }
-
-    @Override
-    @Deprecated
-    public void setName(String serverName) {
-        setXMPPDomain(serverName);
-    }
-
-    @Override
     public String getHostname()
 	{
 		return hostname;

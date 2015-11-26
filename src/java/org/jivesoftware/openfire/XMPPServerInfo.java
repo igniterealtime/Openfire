@@ -39,33 +39,14 @@ public interface XMPPServerInfo {
      *
      * @return the version of the server.
      */
-    public Version getVersion();
-
-    /**
-     * Obtain the server name (IP address or hostname).
-     *
-     * @return the server's name as an IP address or host name.
-     * @deprecated replaced by {@link #getXMPPDomain()}
-     */
-    @Deprecated
-    public String getName();
-
-    /**
-     * Set the server name (IP address or hostname). The server
-     * must be restarted for this change to take effect.
-     *
-     * @param serverName the server's name as an IP address or host name.
-     * @deprecated replaced by {@link #setXMPPDomain(String)}
-     */
-    @Deprecated
-    public void setName(String serverName);
+    Version getVersion();
 
     /**
      * Obtain the host name (IP address or hostname) of this server node.
      *
      * @return the server's host name as an IP address or host name.
      */
-    public String getHostname();
+    String getHostname();
 
     /**
      * Obtain the server XMPP domain name. Note that, if unconfigured, the
@@ -73,7 +54,7 @@ public interface XMPPServerInfo {
      *
      * @return the name of the XMPP domain that this server is part of.
      */
-    public String getXMPPDomain();
+    String getXMPPDomain();
 
     /**
      * Set the server XMPP domain name. The server must be
@@ -82,19 +63,19 @@ public interface XMPPServerInfo {
      * @param domainName
      *             the XMPP domain that this server is part of.
      */
-    public void setXMPPDomain(String domainName);
+    void setXMPPDomain(String domainName);
 
     /**
      * Obtain the date when the server was last started.
      *
      * @return the date the server was started or null if server has not been started.
      */
-    public Date getLastStarted();
+    Date getLastStarted();
 
     /**
      * Obtain the server ports active on this server.
      *
      * @return an iterator over the server ports for this server.
      */
-    public Collection<ServerPort> getServerPorts();
+    Collection<ServerPort> getServerPorts();
 }

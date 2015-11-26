@@ -62,7 +62,6 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -140,33 +139,6 @@ public class CertificateManager {
         if (clientCertMapping.isEmpty()) {
         	Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
         	clientCertMapping.add(new CNCertificateIdentityMapping());
-        }
-    }
-
-    /**
-     * @Deprecated Use {@link CertificateStoreConfig#delete(String)} instead.
-     */
-    @Deprecated
-    public static void deleteCertificate(CertificateStoreConfig storeConfig, String alias) throws GeneralSecurityException, IOException, CertificateStoreConfigException
-    {
-        final KeyStore store = storeConfig.getStore();
-        if (!store.containsAlias( alias ) )
-        {
-            Log.info( "Unable to delete certificate for alias '"+alias+"' from store, as the store does not contain a certificate for that alias." );
-            return;
-        }
-
-        storeConfig.getStore().deleteEntry( alias );
-        storeConfig.persist();
-
-        // Notify listeners that a new certificate has been removed.
-        for (CertificateEventListener listener : listeners) {
-            try {
-                listener.certificateDeleted(store, alias);
-            }
-            catch (Exception e) {
-                Log.warn( "An exception occurred while notifying CertificateEventListener " + listener, e );
-            }
         }
     }
 

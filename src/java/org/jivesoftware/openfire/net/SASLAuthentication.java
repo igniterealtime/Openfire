@@ -644,14 +644,6 @@ public class SASLAuthentication {
         return false;
     }
 
-    /**
-     * @deprecated Use {@link #verifyCertificates(Certificate[], String, boolean)} instead.
-     */
-    @Deprecated
-    public static boolean verifyCertificates(Certificate[] chain, String hostname) {
-        return verifyCertificates( chain, hostname, true );
-    }
-
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
         final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
         final KeyStore trustStore = SSLConfig.getStore( isS2S ? Purpose.SOCKETBASED_S2S_TRUSTSTORE : Purpose.SOCKETBASED_C2S_TRUSTSTORE );

@@ -147,7 +147,7 @@
 </head>
 <body>
 
-<c:if test="${param.success}">
+<c:if test="${param.success and empty errors}">
     <admin:infoBox type="success"><fmt:message key="client.connections.settings.confirm.updated" /></admin:infoBox>
 </c:if>
 
@@ -257,7 +257,7 @@
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+                <td><input type="checkbox" name="tlegacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
             </tr>
         </table>
 

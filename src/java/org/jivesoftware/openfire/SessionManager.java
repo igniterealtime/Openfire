@@ -1278,11 +1278,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 	                    	    if (unacked.packet instanceof Message) {
 	                    	        Message m = (Message)unacked.packet;
         	                        Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-        	                        Element delayInformationOld = m.addChildElement("x", "jabber:x:delay");
                                         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-                                        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(unacked.timestamp));
                                         delayInformation.addAttribute("from", serverAddress.toBareJID());
-                                        delayInformationOld.addAttribute("from", serverAddress.toBareJID());
 	                    	    }
     	                            router.route(unacked.packet);
 	                    	}

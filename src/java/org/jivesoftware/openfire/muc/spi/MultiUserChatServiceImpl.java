@@ -1458,7 +1458,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final FormField fieldDate = dataForm.addField();
                 fieldDate.setVariable("x-muc#roominfo_creationdate");
                 fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
-                fieldDate.addValue(XMPPDateTimeFormat.formatOld(room.getCreationDate()));
+                fieldDate.addValue(XMPPDateTimeFormat.format(room.getCreationDate()));
 
                 return dataForm;
             }

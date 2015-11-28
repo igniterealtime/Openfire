@@ -34,6 +34,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
@@ -153,7 +154,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 	                            Connection.TLSPolicy.required;
 	            boolean hasCertificates = false;
 	            try {
-	                hasCertificates = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
+	                hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
 	            }
 	            catch (Exception e) {
 	                Log.error(e.getMessage(), e);
@@ -374,7 +375,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         	usingSelfSigned = true;
         } else {
         	try {
-                final KeyStore keyStore = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_S2S ).getStore();
+                final KeyStore keyStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore();
 				usingSelfSigned = CertificateManager.isSelfSignedCertificate(keyStore, (X509Certificate) chain[0]);
 			} catch (KeyStoreException ex) {
 				Log.warn("Exception occurred while trying to determine whether local certificate is self-signed. Proceeding as if it is.", ex);

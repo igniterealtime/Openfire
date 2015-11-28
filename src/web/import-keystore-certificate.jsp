@@ -1,6 +1,5 @@
 <%@ page errorPage="error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -42,7 +41,7 @@
         }
         if (errors.isEmpty()) {
             try {
-                final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( storeConnectionType );
+                final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( storeConnectionType );
 
                 // Create an alias for the signed certificate
                 String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();

@@ -248,7 +248,7 @@ public final class HttpBindManager {
     private void createSSLConnector(int securePort, int bindThreads) {
         httpsConnector = null;
         try {
-            final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.BOSH_C2S );
+            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
 
             if (securePort > 0 && identityStore.getStore().aliases().hasMoreElements() ) {
                 if ( !identityStore.containsDomainCertificate( "RSA" ) ) {

@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 // TODO Code duplication should be reduced.
 // TODO Allow changing the store type.
-public class CertificateStoreManager
+public class CertificateStoreManager extends BasicModule
 {
     private final static Logger Log = LoggerFactory.getLogger( CertificateStoreManager.class );
 
@@ -28,17 +29,16 @@ public class CertificateStoreManager
     private final ConcurrentMap<CertificateStoreConfiguration, IdentityStore>  identityStores      = new ConcurrentHashMap<>();
     private final ConcurrentMap<CertificateStoreConfiguration, TrustStore>     trustStores         = new ConcurrentHashMap<>();
 
-    private static CertificateStoreManager INSTANCE;
-
-    static synchronized CertificateStoreManager getInstance( ) {
-        if (INSTANCE == null) {
-            INSTANCE = new CertificateStoreManager();
-        }
-        return INSTANCE;
+    public CertificateStoreManager( )
+    {
+        super( "Certificate Store Manager" );
     }
 
-    private CertificateStoreManager( )
+    @Override
+    public synchronized void initialize( XMPPServer server )
     {
+        super.initialize( server );
+
         for ( ConnectionType type : ConnectionType.values() )
         {
             try
@@ -73,21 +73,29 @@ public class CertificateStoreManager
         }
     }
 
-    public static IdentityStore getIdentityStore( ConnectionType type )
+    @Override
+    public synchronized void destroy()
     {
-        final CertificateStoreManager manager = getInstance();
-        final CertificateStoreConfiguration configuration = manager.typeToIdentityStore.get( type );
-        return manager.identityStores.get( configuration );
+        typeToIdentityStore.clear();
+        typeToTrustStore.clear();
+        identityStores.clear();
+        trustStores.clear();
+        super.destroy();
     }
 
-    public static TrustStore getTrustStore( ConnectionType type )
+    public IdentityStore getIdentityStore( ConnectionType type )
     {
-        final CertificateStoreManager manager = getInstance();
-        final CertificateStoreConfiguration configuration = manager.typeToTrustStore.get( type );
-        return manager.trustStores.get( configuration );
+        final CertificateStoreConfiguration configuration = typeToIdentityStore.get( type );
+        return identityStores.get( configuration );
     }
 
-    public static void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public TrustStore getTrustStore( ConnectionType type )
+    {
+        final CertificateStoreConfiguration configuration = typeToTrustStore.get( type );
+        return trustStores.get( configuration );
+    }
+
+    public void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -98,27 +106,25 @@ public class CertificateStoreManager
             throw new IllegalArgumentException( "Argument 'configuration' cannot be null." );
         }
 
-        final CertificateStoreManager manager = getInstance();
-
-        final CertificateStoreConfiguration oldConfig = manager.typeToIdentityStore.get( type ); // can be null if persisted properties are invalid
+        final CertificateStoreConfiguration oldConfig = typeToIdentityStore.get( type ); // can be null if persisted properties are invalid
 
         if ( oldConfig == null || !oldConfig.equals( configuration ) )
         {
             // If the new store is not already being used by any other type, it'll need to be registered.
-            if ( !manager.identityStores.containsKey( configuration ) )
+            if ( !identityStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
                 final IdentityStore store = new IdentityStore( configuration, true );
-                manager.identityStores.put( configuration, store );
+                identityStores.put( configuration, store );
             }
 
-            manager.typeToIdentityStore.put( type, configuration );
+            typeToIdentityStore.put( type, configuration );
 
 
             // If the old store is not used by any other type, it can be shut down.
-            if ( oldConfig != null && !manager.typeToIdentityStore.containsValue( oldConfig ) )
+            if ( oldConfig != null && !typeToIdentityStore.containsValue( oldConfig ) )
             {
-                manager.identityStores.remove( oldConfig );
+                identityStores.remove( oldConfig );
             }
 
             // Update all connection listeners that were using the old configuration.
@@ -137,7 +143,7 @@ public class CertificateStoreManager
         JiveGlobals.setProperty( type.getPrefix() + "keypass", new String( configuration.getPassword() ) );
     }
 
-    public static void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -148,27 +154,25 @@ public class CertificateStoreManager
             throw new IllegalArgumentException( "Argument 'configuration' cannot be null." );
         }
 
-        final CertificateStoreManager manager = getInstance();
-
-        final CertificateStoreConfiguration oldConfig = manager.typeToTrustStore.get( type ); // can be null if persisted properties are invalid
+        final CertificateStoreConfiguration oldConfig = typeToTrustStore.get( type ); // can be null if persisted properties are invalid
 
         if ( oldConfig == null || !oldConfig.equals( configuration ) )
         {
             // If the new store is not already being used by any other type, it'll need to be registered.
-            if ( !manager.trustStores.containsKey( configuration ) )
+            if ( !trustStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
                 final TrustStore store = new TrustStore( configuration, true );
-                manager.trustStores.put( configuration, store );
+                trustStores.put( configuration, store );
             }
 
-            manager.typeToTrustStore.put( type, configuration );
+            typeToTrustStore.put( type, configuration );
 
 
             // If the old store is not used by any other type, it can be shut down.
-            if ( oldConfig != null && !manager.typeToTrustStore.containsValue( oldConfig ) )
+            if ( oldConfig != null && !typeToTrustStore.containsValue( oldConfig ) )
             {
-                manager.trustStores.remove( oldConfig );
+                trustStores.remove( oldConfig );
             }
 
             // Update all connection listeners that were using the old configuration.
@@ -188,7 +192,7 @@ public class CertificateStoreManager
         JiveGlobals.setProperty( type.getPrefix() + "trustpass", new String( configuration.getPassword() )  );
     }
 
-    public static CertificateStoreConfiguration getIdentityStoreConfiguration( ConnectionType type ) throws IOException
+    public CertificateStoreConfiguration getIdentityStoreConfiguration( ConnectionType type ) throws IOException
     {
         // Getting individual properties might use fallbacks. It is assumed (but not asserted) that each property value
         // is obtained from the same connectionType (which is either the argument to this method, or one of its
@@ -201,7 +205,7 @@ public class CertificateStoreManager
         return new CertificateStoreConfiguration( keyStoreType, file, password.toCharArray() );
     }
 
-    public static CertificateStoreConfiguration getTrustStoreConfiguration( ConnectionType type ) throws IOException
+    public CertificateStoreConfiguration getTrustStoreConfiguration( ConnectionType type ) throws IOException
     {
         // Getting individual properties might use fallbacks. It is assumed (but not asserted) that each property value
         // is obtained from the same connectionType (which is either the argument to this method, or one of its

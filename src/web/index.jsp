@@ -32,7 +32,6 @@
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
@@ -243,7 +242,7 @@
                     <fmt:message key="index.server_name" />
                 </td>
                 <td class="c2">
-                    <% final IdentityStore identityStore = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S ); %>
+                    <% final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S ); %>
                     <% try { %>
                     <% if (!identityStore.containsDomainCertificate( "RSA" )) {%>
                     <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;

@@ -1,48 +1,46 @@
 <%@ page errorPage="error.jsp"%>
->
-<%@ page import="java.util.HashMap" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.Map" %>
-
+<%@ page import="java.util.HashMap" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
-<%  webManager.init( request, response, session, application, out );
+<jsp:useBean id="now" class="java.util.Date"/>
+<%  webManager.init(request, response, session, application, out );
 
-    // Read parameters
-    final boolean save                       = request.getParameter("save") != null;
-    // TODO actually save something!
-
-    // Pre-update property values
     final Map<String, String> errors = new HashMap<>();
-
     pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "connectionTypes", ConnectionType.values() );
+    pageContext.setAttribute( "certificateStoreManager", XMPPServer.getInstance().getCertificateStoreManager());
 %>
-
 <html>
 <head>
     <title>Certificate Stores</title>
     <meta name="pageID" content="security-certificate-store-management"/>
 </head>
-<>
 
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
-        <c:if test="${not empty err.value}">
-            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
-        </c:if>
-        (<c:out value="${err.key}"/>)
+        <c:choose>
+            <!--Use the template below for specific error messages. -->
+            <c:when test="${err.key eq 'template'}">
+                An unexpected error occurred.
+            </c:when>
+            <c:otherwise>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+                (<c:out value="${err.key}"/>)
+            </c:otherwise>
+        </c:choose>
     </admin:infobox>
 </c:forEach>
-
-<c:if test="${param.success}">
-    <admin:infobox type="success">Settings Updated Successfully</admin:infobox>
-</c:if>
-<c:if test="${param.noChange}">
-    <admin:infobox type="info">The provided settings were no different than before. Nothing changed.</admin:infobox>
-</c:if>
 
 <p>
     Certificates are used (through TLS and SSL protocols) to establish secure connections between servers and clients.
@@ -66,46 +64,37 @@
 <p>
     This section of the admin panel is dedicated to management of the various key and trust stores that act as
     repositories for sets of security certificates. By default, a small set of stores is re-used for various purposes,
-    but Openfire allows you to configure a distinct set of stores for each type. To do so, please change the store
-    locations below.
+    but Openfire allows you to configure a distinct set of stores for each connection type.
 </p>
 
-<form action="security-certificate-store-management.jsp" method="post">
+<c:forEach items="${connectionTypes}" var="connectionType">
 
-    <div class="jive-contentBoxHeader">
-        Regular XMPP connection Stores
-    </div>
-    <div class="jive-contentBox">
+    <c:set var="trustStore" value="${certificateStoreManager.
+    <admin:contentBox title="XMPP Client Connection Stores">
         <p>
-            These stores are used for regular, TCP-based XMPP communication. Three stores are provided: one identity store
-            and two trust stores. One of the trust stores applies to server-to-server federation. The other trust store
-            applies to the optional client-based mutual authentication feature in Openfire.
-        </p>
-        <p>
-            Openfire ships with an empty client trust store, as in typical environments, certificate-based authentication of
-            clients is not required.
+            These stores are used for regular, TCP-based client-to-server XMPP communication. Two stores are provided:
+            one identity store and a trust store. Openfire ships with an empty client trust store, as in typical
+            environments, certificate-based authentication of clients is not required.
         </p>
 
         <table cellpadding="0" cellspacing="0" border="0">
             <tbody>
-                <tr>
-                    <td><label for="loc-key-socket">Identity Store:</label></td>
-                    <td><input id="loc-key-socket" name="loc-key-socket" type="text" size="40" value="${locKeySocket}"/></td>
-                    <td><a href="security-keystore.jsp?storeConnectionType=SOCKETBASED_IDENTITYSTORE">Manage Store Contents</a></td>
-                </tr>
-                <tr>
-                    <td><label for="loc-trust-socket-s2s">Server Trust Store:</label></td>
-                    <td><input id="loc-trust-socket-s2s" name="loc-trust-socket-s2s" type="text" size="40" value="${locTrustSocketS2S}"/></td>
-                    <td><a href="security-truststore.jsp?storeConnectionType=SOCKETBASED_S2S_TRUSTSTORE">Manage Store Contents</a></td>
-                </tr>
-                <tr>
-                    <td><label for="loc-trust-socket-c2s">Client Trust Store:</label></td>
-                    <td><input id="loc-trust-socket-c2s" name="loc-trust-socket-c2s" type="text" size="40" value="${locTrustSocketC2S}"/></td>
-                    <td><a href="security-truststore.jsp?storeConnectionType=SOCKETBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
-                </tr>
+            <tr>
+                <td><label for="loc-key-socket">Identity Store:</label></td>
+                <td><input id="loc-key-socket" name="loc-key-socket" type="text" size="40" value="${locKeySocket}"/></td>
+                <td><a href="security-keystore.jsp?connectionType=${connectionType}">Manage Store Contents</a></td>
+            </tr>
+            <tr>
+                <td><label for="loc-trust-socket-c2s">Trust Store:</label></td>
+                <td><input id="loc-trust-socket-c2s" name="loc-trust-socket-c2s" type="text" size="40" value="${locTrustSocketC2S}"/></td>
+                <td><a href="security-truststore.jsp?storeConnectionType=${connectionType}">Manage Store Contents</a></td>
+            </tr>
             </tbody>
         </table>
-    </div>
+
+    </admin:contentBox>
+
+</c:forEach>
 
     <div class="jive-contentBoxHeader">
         BOSH (HTTP Binding) connection Stores
@@ -188,8 +177,8 @@
         </table>
     </div>
 
-    <!-- TODO enable me <input type="submit" name="save" value="<fmt:message key="global.save_settings" />"> -->
 </form>
+-->
 
 </body>
 </html>

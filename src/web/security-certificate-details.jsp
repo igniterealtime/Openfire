@@ -9,6 +9,7 @@
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -43,11 +44,12 @@
     {
         try
         {
+            final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
             final CertificateStore store;
             if (isTrustStore) {
-                store = CertificateStoreManager.getTrustStore( storeConnectionType );
+                store = certificateStoreManager.getTrustStore( storeConnectionType );
             } else {
-                store = CertificateStoreManager.getIdentityStore( storeConnectionType );
+                store = certificateStoreManager.getIdentityStore( storeConnectionType );
             }
 
             // Get the certificate

@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.spi;
 import org.apache.mina.filter.ssl.SslFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -375,8 +376,9 @@ public class ConnectionConfiguration
         this.cipherSuitesEnabled = Collections.unmodifiableSet( suitesEnabled );
         this.cipherSuitesDisabled = Collections.unmodifiableSet( cipherSuitesDisabled );
 
-        this.identityStore = CertificateStoreManager.getIdentityStore( type );
-        this.trustStore = CertificateStoreManager.getTrustStore( type );
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+        this.identityStore = certificateStoreManager.getIdentityStore( type );
+        this.trustStore = certificateStoreManager.getTrustStore( type );
 
         this.Log = LoggerFactory.getLogger( this.getClass().getName() + "["+port+"-"+type+"]" );
     }

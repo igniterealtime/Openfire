@@ -35,6 +35,7 @@ import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.HttpClientError;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ public class SSLProtocolSocketFactory implements SecureProtocolSocketFactory {
                             new ClearspaceX509TrustManager(
                                     host,
                                     manager.getProperties(),
-                                    CertificateStoreManager.getTrustStore( ConnectionType.SOCKET_S2S ).getStore() )
+                                    XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( ConnectionType.SOCKET_S2S ).getStore() )
                     },
                     null);
             return context;

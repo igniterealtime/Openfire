@@ -2,7 +2,6 @@
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -15,26 +14,27 @@
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="now" class="java.util.Date"/>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <% webManager.init(request, response, session, application, out); %>
 
 <% // Get parameters:
-    final boolean generate        = ParamUtils.getBooleanParameter(request, "generate");
-    final boolean delete          = ParamUtils.getBooleanParameter(request, "delete");
-    final boolean importReply     = ParamUtils.getBooleanParameter(request, "importReply");
-    final String alias            = ParamUtils.getParameter( request, "alias" );
-    final String storePurposeText = ParamUtils.getParameter( request, "storeConnectionType" );
+    final boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
+    final boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
+    final boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
+    final String alias              = ParamUtils.getParameter( request, "alias" );
+    final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
 
-    ConnectionType storeConnectionType = null;
+    ConnectionType connectionType = null;
     IdentityStore identityStore = null;
     try
     {
-        storeConnectionType = ConnectionType.valueOf( storePurposeText );
-        identityStore = CertificateStoreManager.getIdentityStore( storeConnectionType );
+        connectionType = ConnectionType.valueOf( connectionTypeText );
+        identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( connectionType );
         if ( identityStore == null )
         {
             errors.put( "identityStore", "Unable to get an instance." );
@@ -42,15 +42,15 @@
     }
     catch (RuntimeException ex)
     {
-        errors.put( "storeConnectionType", ex.getMessage() );
+        errors.put( "connectionType", ex.getMessage() );
     }
 
     if ( errors.isEmpty() )
     {
-        pageContext.setAttribute( "storeConnectionType", storeConnectionType );
+        pageContext.setAttribute( "connectionType", connectionType );
         pageContext.setAttribute( "identityStore", identityStore );
 
-        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( storeConnectionType );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
         pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
 
         final Map<String, X509Certificate> certificates = identityStore.getAllCertificates();
@@ -72,8 +72,8 @@
                     identityStore.delete( alias );
 
                     // Log the event
-                    webManager.logEvent( "deleted SSL cert from " + storePurposeText + " with alias " + alias, null );
-                    response.sendRedirect( "security-keystore.jsp?storeConnectionType=" + storePurposeText + "&deletesuccess=true" );
+                    webManager.logEvent( "deleted SSL cert from " + connectionType + " with alias " + alias, null );
+                    response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
                 catch ( Exception e )
@@ -141,13 +141,13 @@
 <html>
     <head>
         <title><fmt:message key="ssl.certificates.keystore.title"/></title>
-        <meta name="pageID" content="security-keystore"/>
+        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
     </head>
     <body>
         <c:if test="${restartNeeded}">
             <admin:infobox type="warning">
                 <fmt:message key="ssl.certificates.keystore.restart_server">
-                    <fmt:param value="<a href='server-restart.jsp?page=security-keystore.jsp&storeConnectionType=${storeConnectionType}'>"/>
+                    <fmt:param value="<a href='server-restart.jsp?page=security-keystore.jsp&connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                 </fmt:message>
             </admin:infobox>
@@ -175,9 +175,9 @@
         <c:if test="${not validDSACert or not validRSACert}">
             <admin:infobox type="warning">
                 <fmt:message key="ssl.certificates.keystore.no_installed">
-                    <fmt:param value="<a href='security-keystore.jsp?generate=true&storeConnectionType=${storeConnectionType}'>"/>
+                    <fmt:param value="<a href='security-keystore.jsp?generate=true&connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
-                    <fmt:param value="<a href='import-keystore-certificate.jsp?storeConnectionType=${storeConnectionType}'>"/>
+                    <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                 </fmt:message>
             </admin:infobox>
@@ -200,7 +200,7 @@
 
         <p>
             <fmt:message key="ssl.certificates.keystore.info">
-                <fmt:param value="<a href='import-keystore-certificate.jsp?storeConnectionType=${storeConnectionType}'>"/>
+                <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                 <fmt:param value="</a>"/>
             </fmt:message>
         </p>
@@ -274,7 +274,7 @@
                             %>
                             <tr valign="top">
                                 <td>
-                                    <a href="security-certificate-details.jsp?storeConnectionType=${storeConnectionType}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
+                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
                                             <c:out value="${stat.first ? '' : ','} ${currentItem}"/>
                                         </c:forEach>
@@ -326,7 +326,7 @@
                                     <c:out value="${certificate.publicKey.algorithm}"/>
                                 </td>
                                 <td width="1" align="center">
-                                    <a href="security-keystore.jsp?alias=${alias}&storeConnectionType=${storeConnectionType}&delete=true"
+                                    <a href="security-keystore.jsp?alias=${alias}&connectionType=${connectionType}&delete=true"
                                        title="<fmt:message key="global.click_delete"/>"
                                        onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

@@ -28,7 +28,8 @@
   <module interface="org.jivesoftware.openfire.OfflineMessageStrategy" implementation="org.jivesoftware.openfire.OfflineMessageStrategy" />
   <module interface="org.jivesoftware.openfire.OfflineMessageStore" implementation="org.jivesoftware.openfire.OfflineMessageStore" />
   <module interface="org.jivesoftware.openfire.vcard.VCardManager" implementation="org.jivesoftware.openfire.vcard.VCardManager" />
-  
+  <module interface="org.jivesoftware.openfire.keystore.CertificateStoreManager"" implementation="org.jivesoftware.openfire.keystore.CertificateStoreManager" />
+
   <!--  Standard Modules -->  
   <module interface="org.jivesoftware.openfire.handler.IQBindHandler" implementation="org.jivesoftware.openfire.handler.IQBindHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler" implementation="org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler" />

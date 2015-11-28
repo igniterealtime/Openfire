@@ -373,13 +373,22 @@ public class XMPPServer {
             // Set default SASL SCRAM-SHA-1 iteration count
             JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
-            // Update certificates (if required)
+            // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
+            CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
             try {
-                // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
-                final IdentityStore storeConfig = CertificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
-                storeConfig.ensureDomainCertificates( "DSA", "RSA" );
+                certificateStoreManager = new CertificateStoreManager();
+                certificateStoreManager.initialize( this );
+                certificateStoreManager.start();
+                final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
+                identityStore.ensureDomainCertificates( "DSA", "RSA" );
             } catch (Exception e) {
                 logger.error("Error generating self-signed certificates", e);
+            } finally {
+                if (certificateStoreManager != null)
+                {
+                    certificateStoreManager.stop();
+                    certificateStoreManager.destroy();
+                }
             }
 
             // Initialize list of admins now (before we restart Jetty)
@@ -1408,6 +1417,16 @@ public class XMPPServer {
         return (InternalComponentManager) modules.get(InternalComponentManager.class.getName());
     }
 
+    /**
+     * Returns the <code>CertificateStoreManager</code> registered with this server. The
+     * <code>CertificateStoreManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>CertificateStoreManager</code> registered with this server.
+     */
+    public CertificateStoreManager getCertificateStoreManager() {
+        return (CertificateStoreManager) modules.get( CertificateStoreManager.class.getName() );
+    }
     /**
      * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
      * in a cluster a <tt>null</tt> value is returned.

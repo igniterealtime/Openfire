@@ -656,9 +656,10 @@ public class SASLAuthentication {
     }
 
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
-        final KeyStore keyStore   = CertificateStoreManager.getIdentityStore( connectionType ).getStore();
-        final KeyStore trustStore = CertificateStoreManager.getTrustStore( connectionType ).getStore();
+        final KeyStore keyStore   = certificateStoreManager.getIdentityStore( connectionType ).getStore();
+        final KeyStore trustStore = certificateStoreManager.getTrustStore( connectionType ).getStore();
         final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
         if (trusted != null) {
             return verifyCertificate(trusted, hostname);

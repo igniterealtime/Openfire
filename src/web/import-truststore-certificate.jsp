@@ -1,10 +1,10 @@
 <%@ page errorPage="error.jsp"%>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -33,7 +33,7 @@
 
     if (save && errors.isEmpty())
     {
-        final TrustStore trustStoreConfig = CertificateStoreManager.getTrustStore( storeConnectionType );
+        final TrustStore trustStoreConfig = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( storeConnectionType );
 
         if (alias == null || "".equals(alias))
         {

@@ -85,6 +85,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             Log.warn( "Unable to resolve bind address: ", e );
         }
 
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+        
         // client-to-server
         clientListener = new ConnectionListener(
                 ConnectionType.SOCKET_C2S,
@@ -96,8 +98,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Client.TLS_POLICY,
                 ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
         );
         clientSslListener = new ConnectionListener(
                 ConnectionType.SOCKET_C2S,
@@ -109,8 +111,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode
                 ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
         );
         // BOSH / HTTP-bind
         boshListener = new ConnectionListener(
@@ -123,8 +125,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use boshSslListener instead.
                 HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
         );
         boshSslListener = new ConnectionListener(
                 ConnectionType.BOSH_C2S,
@@ -136,8 +138,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.legacyMode.name(),
                 HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
         );
         // server-to-server (federation)
         serverListener = new ConnectionListener(
@@ -150,8 +152,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Server.TLS_POLICY,
                 ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S )
         );
         // external components (XEP 0114)
         componentListener = new ConnectionListener(
@@ -164,8 +166,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Component.TLS_POLICY,
                 ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
         );
         componentSslListener = new ConnectionListener(
                 ConnectionType.COMPONENT,
@@ -177,8 +179,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode
                 ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
         );
 
         // Multiplexers (our propertietary connection manager implementation)
@@ -192,8 +194,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Multiplex.TLS_POLICY,
                 ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
         );
         connectionManagerSslListener = new ConnectionListener(
                 ConnectionType.CONNECTION_MANAGER,
@@ -205,23 +207,23 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.legacyMode.name(), // force legacy mode
                 ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
         );
 
         // Admin console (the Openfire web-admin) // TODO these use the XML properties instead of normal properties!
         webAdminListener = new ConnectionListener(
-            ConnectionType.WEBADMIN,
-            "adminConsole.port",
-            9090,
-            null,
-            "adminConsole.serverThreads",
-            null,
-            Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use webAdminSslListener instead.
-            null,
-            bindAddress,
-            CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
-            CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+                ConnectionType.WEBADMIN,
+                "adminConsole.port",
+                9090,
+                null,
+                "adminConsole.serverThreads",
+                null,
+                Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use webAdminSslListener instead.
+                null,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
         );
 
         webAdminSslListener = new ConnectionListener(
@@ -234,8 +236,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 Connection.TLSPolicy.legacyMode.name(),
                 null,
                 bindAddress,
-                CertificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
-                CertificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
         );
 
     }

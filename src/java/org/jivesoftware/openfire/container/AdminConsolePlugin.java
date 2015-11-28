@@ -156,7 +156,7 @@ public class AdminConsolePlugin implements Plugin {
                     }
 
                     final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
-                    final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.WEBADMIN, true );
+                    final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.WEBADMIN, true ).generateConnectionConfiguration();
                     final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
                     final ServerConnector httpsConnector;

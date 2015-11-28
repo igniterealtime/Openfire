@@ -122,7 +122,7 @@ public class ClientSessionConnection extends VirtualConnection {
         // Here, a client-to-server configuration is mocked. It is likely not used, as actual connection handling takes
         // place at the connection manager.
         final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        return connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false );
+        return connectionManager.getListener( ConnectionType.SOCKET_C2S, true ).generateConnectionConfiguration();
     }
 
     public byte[] getAddress() throws UnknownHostException {

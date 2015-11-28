@@ -266,7 +266,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     private void sendClientOptions() {
 
         final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false );
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
 
         IQ options = new IQ(IQ.Type.set);
         Element child = options.setChildElement("configuration",

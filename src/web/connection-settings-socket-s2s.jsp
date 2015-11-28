@@ -21,8 +21,8 @@
     final ConnectionType connectionType = ConnectionType.SOCKET_S2S;
     final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
 
-//    final ConnectionConfiguration plaintextConfiguration  = manager.getConfiguration( connectionType, false );
-    final ConnectionConfiguration legacymodeConfiguration = manager.getConfiguration( connectionType, true  );
+//    final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
+    final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
 
     final boolean update = request.getParameter( "update" ) != null;
     final boolean closeSettings = request.getParameter( "closeSettings" ) != null;

@@ -454,22 +454,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     /**
-     * Returns connection configuration that under the current settings is applicable.
-     *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
-     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
-     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
-     * is implemented, the parameter value is ignored.
-     *
-     * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
-     * @return The applicable connection configuration (never null).
-     */
-    public ConnectionConfiguration getConfiguration( ConnectionType type, boolean startInSslMode ) {
-        return getListener( type, startInSslMode ).generateConnectionConfiguration();
-    }
-
-    /**
      * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
      * indeed active)
      *

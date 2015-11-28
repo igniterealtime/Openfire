@@ -237,7 +237,7 @@ public class SocketConnection implements Connection {
         // removed (it is marked as deprecated - at the time of writing, it is only used for S2S). The ugly hack: assume
         // S2S:
         final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        return connectionManager.getConfiguration( ConnectionType.SOCKET_S2S, false );
+        return connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
     }
 
     public boolean validate() {

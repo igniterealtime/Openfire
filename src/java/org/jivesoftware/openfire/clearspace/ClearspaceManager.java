@@ -87,6 +87,7 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -781,13 +782,14 @@ public class ClearspaceManager extends BasicModule implements ExternalComponentM
     private void updateClearspaceClientSettings() {
         String xmppBoshSslPort = "0";
         String xmppBoshPort = "0";
-        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        String xmppPort = String.valueOf( connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false ).getPort() );
+        final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
+        String xmppPort = String.valueOf( configuration.getPort() );
         if (JiveGlobals.getBooleanProperty(HttpBindManager.HTTP_BIND_ENABLED, HttpBindManager.HTTP_BIND_ENABLED_DEFAULT)) {
             int boshSslPort = HttpBindManager.getInstance().getHttpBindSecurePort();
             int boshPort = HttpBindManager.getInstance().getHttpBindUnsecurePort();
             try {
-                if (HttpBindManager.getInstance().isHttpsBindActive() && connectionManager.getConfiguration( ConnectionType.SOCKET_C2S, false ).getTlsPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled) {
+                if (HttpBindManager.getInstance().isHttpsBindActive() && configuration.getTlsPolicy() != org.jivesoftware.openfire.Connection.TLSPolicy.disabled) {
                     xmppBoshSslPort = String.valueOf(boshSslPort);
                 }
             }

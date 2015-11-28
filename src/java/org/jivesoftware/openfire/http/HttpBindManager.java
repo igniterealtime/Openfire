@@ -258,7 +258,7 @@ public final class HttpBindManager {
                 }
 
                 final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-                final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.BOSH_C2S, true );
+                final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
                 final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
  				final HttpConfiguration httpsConfig = new HttpConfiguration();

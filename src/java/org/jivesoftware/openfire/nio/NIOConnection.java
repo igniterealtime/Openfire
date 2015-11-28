@@ -54,6 +54,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -373,14 +374,15 @@ public class NIOConnection implements Connection {
 
     public void startTLS(boolean clientMode) throws Exception {
 
+        final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
         final SslFilter filter;
         if ( clientMode )
         {
-            filter = configuration.createClientModeSslFilter();
+            filter = factory.createClientModeSslFilter();
         }
         else
         {
-            filter = configuration.createServerModeSslFilter();
+            filter = factory.createServerModeSslFilter();
         }
 
         ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);

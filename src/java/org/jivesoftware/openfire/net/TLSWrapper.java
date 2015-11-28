@@ -33,6 +33,7 @@ import javax.net.ssl.SSLEngineResult.Status;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,14 +76,15 @@ public class TLSWrapper {
 
         try
         {
+            final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
             final SSLEngine sslEngine;
             if ( clientMode )
             {
-                sslEngine = configuration.createClientModeSSLEngine();
+                sslEngine = factory.createClientModeSSLEngine();
             }
             else
             {
-                sslEngine = configuration.createServerModeSSLEngine();
+                sslEngine = factory .createServerModeSSLEngine();
             }
 
             final SSLSession sslSession = sslEngine.getSession();

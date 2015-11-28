@@ -64,6 +64,7 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -258,7 +259,7 @@ public final class HttpBindManager {
 
                 final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
                 final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.BOSH_C2S, true );
-                final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
+                final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
  				final HttpConfiguration httpsConfig = new HttpConfiguration();
 				httpsConfig.setSecureScheme("https");

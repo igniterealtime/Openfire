@@ -47,11 +47,11 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -157,7 +157,7 @@ public class AdminConsolePlugin implements Plugin {
 
                     final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
                     final ConnectionConfiguration configuration = connectionManager.getConfiguration( ConnectionType.WEBADMIN, true );
-                    final SslContextFactory sslContextFactory = configuration.getSslContextFactory();
+                    final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
                     final ServerConnector httpsConnector;
                     if ( "npn".equals( JiveGlobals.getXMLProperty( "spdy.protocol", "" ) ) )

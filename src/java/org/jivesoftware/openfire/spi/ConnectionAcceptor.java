@@ -48,6 +48,8 @@ class ConnectionAcceptor
     // Configuration
     private final ConnectionConfiguration configuration;
 
+    private final EncryptionArtifactFactory encryptionArtifactFactory;
+
     private NioSocketAcceptor socketAcceptor;
 
     /**
@@ -61,6 +63,7 @@ class ConnectionAcceptor
         }
 
         this.configuration = configuration;
+        this.encryptionArtifactFactory = new EncryptionArtifactFactory( configuration );
 
         this.name = configuration.getType().toString().toLowerCase() + ( configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode ? "_ssl" : "" );
         Log = LoggerFactory.getLogger( ConnectionAcceptor.class.getName() + "[" + name + "]" );
@@ -132,7 +135,7 @@ class ConnectionAcceptor
             // Ports can be configured to start connections in SSL (as opposed to upgrade a non-encrypted socket to an encrypted one, typically using StartTLS)
             if ( configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode )
             {
-                final SslFilter sslFilter = configuration.createServerModeSslFilter();
+                final SslFilter sslFilter = encryptionArtifactFactory.createServerModeSslFilter();
                 filterChain.addAfter( ConnectionManagerImpl.EXECUTOR_FILTER_NAME, ConnectionManagerImpl.TLS_FILTER_NAME, sslFilter );
             }
 

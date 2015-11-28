@@ -76,14 +76,7 @@ public class ConnectionListener
 
     ConnectionListener getConnectionListener( ConnectionType type ) {
         ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-        try
-        {
-            return connectionManager.getListener( type, getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) );
-        } catch ( RuntimeException ex ) {
-            // TODO This entire catch-block is a hack, and should be removed. Listeners for all types should be available (but pending implementation of some, this hack was added).
-            Log.warn( "A connection listener for '{}' is not available. Using fallback: '{}'.", type, type.getFallback() );
-            return getConnectionListener( type.getFallback() );
-        }
+        return connectionManager.getListener( type, getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) );
     }
 
     /**

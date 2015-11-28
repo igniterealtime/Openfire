@@ -21,21 +21,21 @@
 <%  webManager.init(request, response, session, application, out );
 
     final String alias            = ParamUtils.getParameter( request, "alias" );
-    final String storePurposeText = ParamUtils.getParameter( request, "storeConnectionType" );
+    final String storePurposeText = ParamUtils.getParameter( request, "connectionType" );
     final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    ConnectionType storeConnectionType;
+    ConnectionType connectionType;
     try
     {
-        storeConnectionType = ConnectionType.valueOf( storePurposeText );
+        connectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storeConnectionType", ex.getMessage() );
-        storeConnectionType = null;
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
 
-    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
+    pageContext.setAttribute( "connectionType", connectionType );
 
     if (alias == null) {
         errors.put("alias", "The alias has not been specified.");
@@ -47,9 +47,9 @@
             final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
             final CertificateStore store;
             if (isTrustStore) {
-                store = certificateStoreManager.getTrustStore( storeConnectionType );
+                store = certificateStoreManager.getTrustStore( connectionType );
             } else {
-                store = certificateStoreManager.getIdentityStore( storeConnectionType );
+                store = certificateStoreManager.getIdentityStore( connectionType );
             }
 
             // Get the certificate
@@ -71,9 +71,9 @@
     // Handle a "go back" click:
     if ( request.getParameter( "back" ) != null ) {
         if ( isTrustStore ) {
-            response.sendRedirect( "security-truststore.jsp?storeConnectionType=" + storeConnectionType );
+            response.sendRedirect( "security-truststore.jsp?connectionType=" + connectionType );
         } else {
-            response.sendRedirect( "security-keystore.jsp?storeConnectionType=" + storeConnectionType );
+            response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType );
         }
         return;
     }
@@ -84,12 +84,13 @@
 <html>
 <head>
     <title><fmt:message key="ssl.certificate.details.title"/></title>
+    <meta name="pageID" content="security-certificate-store-management"/>
     <c:choose>
         <c:when test="${isTrustStore}">
-            <meta name="pageID" content="security-truststore"/>
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
         </c:when>
         <c:otherwise>
-            <meta name="pageID" content="security-keystore"/>
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
         </c:otherwise>
     </c:choose>
 </head>
@@ -449,7 +450,8 @@
     <br/>
 
     <form action="security-certificate-details.jsp">
-        <input type="hidden" name="storeConnectionType" value="${storeConnectionType}"/>
+        <input type="hidden" name="connectionType" value="${connectionType}"/>
+        <input type="hidden" name="isTrustStore" value="${param.isTrustStore}"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

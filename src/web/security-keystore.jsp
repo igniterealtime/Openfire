@@ -141,6 +141,7 @@
 <html>
     <head>
         <title><fmt:message key="ssl.certificates.keystore.title"/></title>
+        <meta name="pageID" content="security-certificate-store-management"/>
         <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
     </head>
     <body>
@@ -274,7 +275,7 @@
                             %>
                             <tr valign="top">
                                 <td>
-                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
+                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=false" title="<fmt:message key='session.row.cliked'/>">
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
                                             <c:out value="${stat.first ? '' : ','} ${currentItem}"/>
                                         </c:forEach>

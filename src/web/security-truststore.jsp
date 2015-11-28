@@ -45,7 +45,7 @@
         pageContext.setAttribute( "connectionType", connectionType );
         pageContext.setAttribute( "trustStore", trustStore );
 
-        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( storeConnectionType );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
         pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
 
         final Map<String, X509Certificate> certificates = trustStore.getAllCertificates();
@@ -82,7 +82,8 @@
 <html>
     <head>
         <title><fmt:message key="certificate-management.connectionType.${connectionType}.title"/></title>
-        <meta name="pageID" content="security-truststore"/>
+        <meta name="pageID" content="security-certificate-store-management"/>
+        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
         <style>
             .info-header {
                 background-color: #eee;
@@ -139,39 +140,41 @@
             </p>
 
             <table border="0" width="100%">
-                <td valign="top" width="60%">
-                    <table cellpadding="2" cellspacing="2" border="0" class="info-table">
-                        <thead>
-                        <tr><th colspan="2" class="info-header">Store Configuration</th></tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td class="c1">File location:</td>
-                            <td class="c2"><c:out value="${trustStore.configuration.file}"/></td>
-                        </tr>
-                        <tr>
-                            <td class="c1">Type:</td>
-                            <td class="c2"><c:out value="${trustStore.configuration.type}"/></td>
-                        </tr>
-                        <tr>
-                            <td class="c1">Password:</td>
-                            <td class="c2"><c:out value="${trustStore.configuration.password}"/></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </td>
-                <td valign="top" width="40%">
-                    <c:if test="${not empty sameStoreConnectionTypes}">
-                        <admin:infobox type="info">
-                            This store is re-used for these additional purposes. Any changes to this store will also affect that functionality!
-                            <ul style="margin-top: 1em;">
-                                <c:forEach var="sameStorePurpose" items="${sameStoreConnectionTypes}">
-                                    <li><fmt:message key="certificate-management.connectionType.${sameStorePurpose}.title"/></li>
-                                </c:forEach>
-                            </ul>
-                        </admin:infobox>
-                    </c:if>
-                </td>
+                <tr>
+                    <td valign="top" width="60%">
+                        <table cellpadding="2" cellspacing="2" border="0" class="info-table">
+                            <thead>
+                            <tr><th colspan="2" class="info-header">Store Configuration</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="c1">File location:</td>
+                                <td class="c2"><c:out value="${trustStore.configuration.file}"/></td>
+                            </tr>
+                            <tr>
+                                <td class="c1">Type:</td>
+                                <td class="c2"><c:out value="${trustStore.configuration.type}"/></td>
+                            </tr>
+                            <tr>
+                                <td class="c1">Password:</td>
+                                <td class="c2"><c:out value="${trustStore.configuration.password}"/></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td valign="top" width="40%">
+                        <c:if test="${not empty sameStoreConnectionTypes}">
+                            <admin:infobox type="info">
+                                This store is re-used for these additional purposes. Any changes to this store will also affect that functionality!
+                                <ul style="margin-top: 1em;">
+                                    <c:forEach var="sameStorePurpose" items="${sameStoreConnectionTypes}">
+                                        <li><fmt:message key="certificate-management.connectionType.${sameStorePurpose}.title"/></li>
+                                    </c:forEach>
+                                </ul>
+                            </admin:infobox>
+                        </c:if>
+                    </td>
+                </tr>
             </table>
 
 
@@ -230,7 +233,7 @@
 
                                 <tr valign="top">
                                     <td>
-                                        <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
+                                        <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=true" title="<fmt:message key='session.row.cliked'/>">
                                             <c:choose>
                                                 <c:when test="${empty fn:trim(organization)}">
                                                     <c:out value="${commonname}"/>

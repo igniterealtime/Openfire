@@ -18,20 +18,20 @@
     final String city               = ParamUtils.getParameter(request, "city");
     final String state              = ParamUtils.getParameter(request, "state");
     final String countryCode        = ParamUtils.getParameter(request, "country");
-    final String storePurposeText = ParamUtils.getParameter(request, "storeConnectionType");
+    final String storePurposeText = ParamUtils.getParameter(request, "connectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    ConnectionType storeConnectionType;
+    ConnectionType connectionType;
     try
     {
-        storeConnectionType = ConnectionType.valueOf( storePurposeText );
+        connectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storeConnectionType", ex.getMessage() );
-        storeConnectionType = null;
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
 
-    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
+    pageContext.setAttribute( "connectionType", connectionType );
 
 //    if (save) {
 //
@@ -56,7 +56,7 @@
 //        }
 //        if (errors.size() == 0) {
 //            try {
-//                final IdentityStore identityStoreConfig = (IdentityStore) SSLConfig.getInstance().getStoreConfig( storeConnectionType );
+//                final IdentityStore identityStoreConfig = (IdentityStore) SSLConfig.getInstance().getStoreConfig( connectionType );
 //
 //                identityStoreConfig.ensureSelfSignedDomainCertificates( name, organizationalUnit, organization, city, state, countryCode, "rsa", "dsa" );
 //                // Regenerate self-sign certs whose subjectDN matches the issuerDN and set the new issuerDN

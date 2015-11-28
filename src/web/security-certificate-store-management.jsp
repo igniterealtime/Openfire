@@ -17,18 +17,18 @@
     final Map<String, String> errors = new HashMap<>();
     pageContext.setAttribute( "errors", errors );
     pageContext.setAttribute( "connectionTypes", ConnectionType.values() );
-    pageContext.setAttribute( "certificateStoreManager", XMPPServer.getInstance().getCertificateStoreManager());
+    pageContext.setAttribute( "certificateStoreManager", XMPPServer.getInstance().getCertificateStoreManager() );
 %>
 <html>
 <head>
     <title>Certificate Stores</title>
     <meta name="pageID" content="security-certificate-store-management"/>
 </head>
+<body>
 
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
-            <!--Use the template below for specific error messages. -->
             <c:when test="${err.key eq 'template'}">
                 An unexpected error occurred.
             </c:when>
@@ -69,25 +69,63 @@
 
 <c:forEach items="${connectionTypes}" var="connectionType">
 
-    <c:set var="trustStore" value="${certificateStoreManager.
-    <admin:contentBox title="XMPP Client Connection Stores">
+    <c:set var="title">
+        <c:choose>
+            <c:when test="${connectionType eq 'SOCKET_C2S'}">XMPP Client Stores</c:when>
+            <c:when test="${connectionType eq 'SOCKET_S2S'}">Server Federation Stores</c:when>
+            <c:when test="${connectionType eq 'BOSH_C2S'}">BOSH (HTTP Binding) Stores</c:when>
+            <c:when test="${connectionType eq 'WEBADMIN'}">Admin Console Stores</c:when>
+            <c:when test="${connectionType eq 'COMPONENT'}">External Component Stores</c:when>
+            <c:when test="${connectionType eq 'CONNECTION_MANAGER'}">Connection Manager Stores</c:when>
+        </c:choose>
+    </c:set>
+
+    <c:set var="description">
+        <c:choose>
+            <c:when test="${connectionType eq 'SOCKET_C2S'}">
+                These stores are used for regular, TCP-based client-to-server XMPP communication. Two stores are provided:
+                one identity store and a trust store. Openfire ships with an empty trust store, as in typical
+                environments, certificate-based authentication of clients is not required.
+            </c:when>
+            <c:when test="${connectionType eq 'SOCKET_S2S'}">
+                These stores are used for erver-to-server XMPP communication, which establishes server federation.
+                Two stores are provided: one identity store and a trust store. Openfire ships with a trust store filled
+                with certificates of generally accepted certificate authorities.
+            </c:when>
+            <c:when test="${connectionType eq 'BOSH_C2S'}">
+                These stores are used for BOSH-based XMPP communication. Two stores are provided: an identity store
+                and a client trust store.
+            </c:when>
+            <c:when test="${connectionType eq 'WEBADMIN'}">
+                These stores are used for the web-based admin console (you're looking at it right now!). Again, two stores are
+                provided an identity store and a trust store (used for optional authentication of browsers that use the admin
+                panel).
+            </c:when>
+            <c:when test="${connectionType eq 'COMPONENT'}">
+                These stores are used to establish connections with external components.
+            </c:when>
+            <c:when test="${connectionType eq 'CONNECTION_MANAGER'}">
+                These stores are used to establish connections with Openfire Connection Managers.
+            </c:when>
+        </c:choose>
+    </c:set>
+
+    <admin:contentBox title="${title}">
         <p>
-            These stores are used for regular, TCP-based client-to-server XMPP communication. Two stores are provided:
-            one identity store and a trust store. Openfire ships with an empty client trust store, as in typical
-            environments, certificate-based authentication of clients is not required.
+            <c:out value="${description}"/>
         </p>
 
         <table cellpadding="0" cellspacing="0" border="0">
             <tbody>
             <tr>
                 <td><label for="loc-key-socket">Identity Store:</label></td>
-                <td><input id="loc-key-socket" name="loc-key-socket" type="text" size="40" value="${locKeySocket}"/></td>
+                <td><input id="loc-key-socket" name="loc-key-socket" type="text" size="80" readonly value="${certificateStoreManager.getIdentityStore(connectionType).configuration.file}"/></td>
                 <td><a href="security-keystore.jsp?connectionType=${connectionType}">Manage Store Contents</a></td>
             </tr>
             <tr>
                 <td><label for="loc-trust-socket-c2s">Trust Store:</label></td>
-                <td><input id="loc-trust-socket-c2s" name="loc-trust-socket-c2s" type="text" size="40" value="${locTrustSocketC2S}"/></td>
-                <td><a href="security-truststore.jsp?storeConnectionType=${connectionType}">Manage Store Contents</a></td>
+                <td><input id="loc-trust-socket-c2s" name="loc-trust-socket-c2s" type="text" size="80" readonly value="${certificateStoreManager.getTrustStore(connectionType).configuration.file}"/></td>
+                <td><a href="security-truststore.jsp?connectionType=${connectionType}">Manage Store Contents</a></td>
             </tr>
             </tbody>
         </table>
@@ -95,90 +133,6 @@
     </admin:contentBox>
 
 </c:forEach>
-
-    <div class="jive-contentBoxHeader">
-        BOSH (HTTP Binding) connection Stores
-    </div>
-    <div class="jive-contentBox">
-        <p>
-            These stores are used for BOSH-based XMPP communication. Two stores are provided: an identity store
-            and a client trust store (a server trust store is not provided, as BOSH-based server federation is
-            unsupported by Openfire).
-        </p>
-        <p>
-            Openfire ships with an empty client trust store, as in typical environments, certificate-based authentication of
-            clients is not required.
-        </p>
-
-        <table cellpadding="0" cellspacing="0" border="0">
-            <tbody>
-                <tr>
-                    <td><label for="loc-key-bosh">Identity Store:</label></td>
-                    <td><input id="loc-key-bosh" name="loc-key-bosh" type="text" size="40" value="${locKeyBosh}"/></td>
-                    <td><a href="security-keystore.jsp?storeConnectionType=BOSHBASED_IDENTITYSTORE">Manage Store Contents</a></td>
-                </tr>
-                <tr>
-                    <td><label for="loc-trust-bosh-c2s">Client Trust Store:</label></td>
-                    <td><input id="loc-trust-bosh-c2s" name="loc-trust-bosh-c2s" type="text" size="40" value="${locTrustBoshC2S}"/></td>
-                    <td><a href="security-truststore.jsp?storeConnectionType=BOSHBASED_C2S_TRUSTSTORE">Manage Store Contents</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="jive-contentBoxHeader">
-        Admin Panel Stores
-    </div>
-    <div class="jive-contentBox">
-        <p>
-            These stores are used for the web-based admin panel (you're looking at it right now!). Again, two stores are
-            provided an identity store and a trust store (used for optional authentication of browsers that use the admin
-            panel).
-        </p>
-
-        <table cellpadding="0" cellspacing="0" border="0">
-            <tbody>
-                <tr>
-                    <td><label for="loc-key-webadmin">Identity Store:</label></td>
-                    <td><input id="loc-key-webadmin" name="loc-key-webadmin" type="text" size="40" value="${locKeyWebadmin}"/></td>
-                    <td><a href="security-keystore.jsp?storeConnectionType=WEBADMIN_IDENTITYSTORE">Manage Store Contents</a></td>
-                </tr>
-                <tr>
-                    <td><label for="loc-trust-webadmin">Trust Store:</label></td>
-                    <td><input id="loc-trust-webadmin" name="loc-trust-webadmin" type="text" size="40" value="${locTrustWebadmin}"/></td>
-                    <td><a href="security-keystore.jsp?storeConnectionType=WEBADMIN_TRUSTSTORE">Manage Store Contents</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="jive-contentBoxHeader">
-        Administrative Stores
-    </div>
-    <div class="jive-contentBox">
-        <p>
-            These stores are used in communication with external servers that serves administrative purposes (such as user
-            providers or databases).
-        </p>
-
-        <table cellpadding="0" cellspacing="0" border="0">
-            <tbody>
-                <tr>
-                    <td><label for="loc-key-administrative">Identity Store:</label></td>
-                    <td><input id="loc-key-administrative" name="loc-key-administrative" type="text" size="40" value="${locKeyAdministrative}"/></td>
-                    <td><a href="security-keystore.jsp?storeConnectionType=ADMINISTRATIVE_IDENTITYSTORE">Manage Store Contents</a></td>
-                </tr>
-                <tr>
-                    <td><label for="loc-trust-administrative">Trust Store:</label></td>
-                    <td><input id="loc-trust-administrative" name="loc-trust-administrative" type="text" size="40" value="${locTrustAdministrative}"/></td>
-                    <td><a href="security-truststore.jsp?storeConnectionType=ADMINISTRATIVE_TRUSTSTORE">Manage Store Contents</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-</form>
--->
 
 </body>
 </html>

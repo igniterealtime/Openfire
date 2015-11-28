@@ -9,6 +9,7 @@
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%  webManager.init(request, response, session, application, out ); %>
@@ -16,24 +17,24 @@
 <%  final boolean save             = ParamUtils.getParameter(request, "save") != null;
     final String alias             = ParamUtils.getParameter(request, "alias");
     final String certificate       = ParamUtils.getParameter(request, "certificate");
-    final String storePurposeText  = ParamUtils.getParameter(request, "storeConnectionType");
+    final String storePurposeText  = ParamUtils.getParameter(request, "connectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    ConnectionType storeConnectionType;
+    ConnectionType connectionType;
     try
     {
-        storeConnectionType = ConnectionType.valueOf( storePurposeText );
+        connectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storeConnectionType", ex.getMessage() );
-        storeConnectionType = null;
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
 
-    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
+    pageContext.setAttribute( "connectionType", connectionType );
 
     if (save && errors.isEmpty())
     {
-        final TrustStore trustStoreConfig = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( storeConnectionType );
+        final TrustStore trustStoreConfig = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( connectionType );
 
         if (alias == null || "".equals(alias))
         {
@@ -59,7 +60,7 @@
                 // Log the event
                 webManager.logEvent("imported SSL certificate in trust store "+ storePurposeText, "alias = "+alias);
 
-                response.sendRedirect( "security-truststore.jsp?storeConnectionType=" + storePurposeText + "&importsuccess=true" );
+                response.sendRedirect( "security-truststore.jsp?connectionType=" + storePurposeText + "&importsuccess=true" );
                 return;
             }
             catch (Throwable e)
@@ -74,9 +75,10 @@
 <html>
 <head>
     <title>
-        <fmt:message key="ssl.import.certificate.keystore.${storeConnectionType}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
+        <fmt:message key="ssl.import.certificate.keystore.${connectionType}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
     </title>
-    <meta name="pageID" content="security-truststore-${storeConnectionType}-${param.type}"/>
+    <meta name="pageID" content="security-certificate-store-management"/>
+    <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
 </head>
 <body>
 
@@ -124,7 +126,7 @@
 
     <!-- BEGIN 'Import Certificate' -->
     <form action="import-truststore-certificate.jsp?type=${param.type}" method="post" name="f">
-        <input type="hidden" name="connectivityType" value="${storeConnectionType}"/>
+        <input type="hidden" name="connectivityType" value="${connectionType}"/>
         <div class="jive-contentBoxHeader">
             <fmt:message key="ssl.import.certificate.keystore.boxtitle"/>
         </div>

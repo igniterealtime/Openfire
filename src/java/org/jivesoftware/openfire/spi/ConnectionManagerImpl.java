@@ -86,7 +86,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
 
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
-        
+
         // client-to-server
         clientListener = new ConnectionListener(
                 ConnectionType.SOCKET_C2S,

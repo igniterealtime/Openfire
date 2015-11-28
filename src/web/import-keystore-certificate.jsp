@@ -9,6 +9,7 @@
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"  %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -17,20 +18,20 @@
     final String privateKey       = ParamUtils.getParameter(request, "private-key");
     final String passPhrase       = ParamUtils.getParameter(request, "passPhrase");
     final String certificate      = ParamUtils.getParameter(request, "certificate");
-    final String storePurposeText = ParamUtils.getParameter(request, "storeConnectionType");
+    final String storePurposeText = ParamUtils.getParameter(request, "connectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    ConnectionType storeConnectionType;
+    ConnectionType connectionType;
     try
     {
-        storeConnectionType = ConnectionType.valueOf( storePurposeText );
+        connectionType = ConnectionType.valueOf( storePurposeText );
     } catch (RuntimeException ex) {
-        errors.put( "storeConnectionType", ex.getMessage() );
-        storeConnectionType = null;
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
 
-    pageContext.setAttribute( "storeConnectionType", storeConnectionType );
+    pageContext.setAttribute( "connectionType", connectionType );
 
     if (save) {
         if (privateKey == null || "".equals(privateKey)) {
@@ -41,7 +42,7 @@
         }
         if (errors.isEmpty()) {
             try {
-                final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( storeConnectionType );
+                final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( connectionType );
 
                 // Create an alias for the signed certificate
                 String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
@@ -58,7 +59,7 @@
                 // Log the event
                 webManager.logEvent("imported SSL certificate in identity store "+ storePurposeText, "alias = "+alias);
 
-                response.sendRedirect("security-keystore.jsp?storeConnectionType="+storePurposeText);
+                response.sendRedirect("security-keystore.jsp?connectionType="+storePurposeText);
                 return;
             }
             catch (Exception e) {
@@ -71,8 +72,9 @@
 
 <html>
   <head>
-      <title><fmt:message key="ssl.import.certificate.keystore.${storeConnectionType}.title"/></title>
-      <meta name="pageID" content="security-keystore-${storeConnectionType}"/>
+      <title><fmt:message key="ssl.import.certificate.keystore.${connectionType}.title"/></title>
+      <meta name="pageID" content="security-certificate-store-management"/>
+      <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
   </head>
   <body>
 
@@ -114,7 +116,7 @@
 
   <!-- BEGIN 'Import Private Key and Certificate' -->
   <form action="import-keystore-certificate.jsp" method="post" name="f">
-      <input type="hidden" name="storeConnectionType" value="${storeConnectionType}"/>
+      <input type="hidden" name="connectionType" value="${connectionType}"/>
       <div class="jive-contentBoxHeader">
           <fmt:message key="ssl.import.certificate.keystore.boxtitle" />
       </div>

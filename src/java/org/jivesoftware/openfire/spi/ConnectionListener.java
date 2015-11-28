@@ -19,8 +19,7 @@ import java.util.Set;
  * As a server, Openfire accepts connection requests from other network entities. The exact functionality is subject to
  * configuration details (eg: TCP port on which connections are accepted, TLS policy that is applied, etc). An instance
  * of this class is used to manage this configuration for one type of connection (on one TCP port), and is responsible
- * for managing the lifecycle of the entity that implements the acceptance of new socket connections (as implemented by
- * {@link ConnectionAcceptor}.
+ * for managing the lifecycle of the entity that implements the acceptance of new connections.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -178,7 +177,7 @@ public class ConnectionListener
             case SOCKET_S2S:
             case BOSH_C2S:
             case WEBADMIN:
-                Log.debug( "Not starting a (NIO-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
+                Log.debug( "Not starting a (MINA-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
                 return;
 
             default:
@@ -206,7 +205,7 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        connectionAcceptor = new ConnectionAcceptor( generateConnectionConfiguration() );
+        connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
         connectionAcceptor.start();
         Log.info( "Started." );
     }
@@ -313,19 +312,19 @@ public class ConnectionListener
     }
 
     /**
-     * Returns the acceptor that is managed by the instance.
+     * Returns the MINA-specific socket acceptor that is managed by the instance.
      *
-     * @return A socket acceptor, or null when this listener is disabled.
+     * @return A socket acceptor, or null when this listener is disabled or not based on a MINA implementation.
      */
     // TODO see if we can avoid exposing MINA internals.
     public NioSocketAcceptor getSocketAcceptor()
     {
-        if ( connectionAcceptor == null )
+        if ( connectionAcceptor == null || !(connectionAcceptor instanceof MINAConnectionAcceptor) )
         {
             return null;
         }
 
-        return connectionAcceptor.getSocketAcceptor();
+        return ((MINAConnectionAcceptor)connectionAcceptor).getSocketAcceptor();
     }
 
     /**

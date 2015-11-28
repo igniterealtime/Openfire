@@ -1,319 +1,58 @@
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
-import org.apache.mina.core.service.IoService;
-import org.apache.mina.core.service.IoServiceListener;
-import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.filter.ssl.SslFilter;
-import org.apache.mina.integration.jmx.IoServiceMBean;
-import org.apache.mina.integration.jmx.IoSessionMBean;
-import org.apache.mina.transport.socket.SocketSessionConfig;
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.JMXManager;
-import org.jivesoftware.openfire.net.StalledSessionsFilter;
-import org.jivesoftware.openfire.nio.*;
-import org.jivesoftware.util.JiveGlobals;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * This class is responsible for accepting new (socket) connections.
+ * ConnectionAcceptors are responsible for accepting new (typically socket) connections from peers.
  *
- * The configuration (but not the state) of an instance of this class is immutable. When configuration changes are
+ * The configuration (but not the state) of an instance is intended to be immutable. When configuration changes are
  * needed, an instance needs to be replaced by a new instance.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-class ConnectionAcceptor
+public abstract class ConnectionAcceptor
 {
-    private final Logger Log;
-    private final String name;
-    private final ConnectionHandler connectionHandler;
-
-    // Configuration
-    private final ConnectionConfiguration configuration;
-
-    private final EncryptionArtifactFactory encryptionArtifactFactory;
-
-    private NioSocketAcceptor socketAcceptor;
+    protected final ConnectionConfiguration configuration;
 
     /**
-     * Instantiates, but not starts, a new instance.
+     * Constructs a new instance which will accept new connections based on the provided configuration.
      *
+     * The provided configuration is expected to be immutable. ConnectionAcceptor instances are not expected to handle
+     * changes in configuration. When such changes are to be applied, an instance is expected to be replaced.
+     *
+     * Newly instantiated ConnectionAcceptors will not accept any connections before {@link #start()} is invoked.
+     *
+     * @param configuration The configuration for connections to be accepted (cannot be null).
      */
     public ConnectionAcceptor( ConnectionConfiguration configuration )
     {
-        if (configuration == null) {
-            throw new IllegalArgumentException( "Argument 'configuation' cannot be null" );
+        if (configuration == null)
+        {
+            throw new IllegalArgumentException( "Argument 'configuration' cannot be null" );
         }
-
         this.configuration = configuration;
-        this.encryptionArtifactFactory = new EncryptionArtifactFactory( configuration );
-
-        this.name = configuration.getType().toString().toLowerCase() + ( configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode ? "_ssl" : "" );
-        Log = LoggerFactory.getLogger( ConnectionAcceptor.class.getName() + "[" + name + "]" );
-
-        // FIXME implement missing switch branches.
-        switch ( configuration.getType() )
-        {
-             case SOCKET_S2S:
-                connectionHandler = new ServerConnectionHandler( configuration );
-                break;
-            case SOCKET_C2S:
-                connectionHandler = new ClientConnectionHandler( configuration );
-                break;
-            // case BOSH_C2S:
-            //     break;
-            // case ADMIN:
-            //     break;
-            // case WEBADMIN:
-            //     break;
-            case COMPONENT:
-                connectionHandler = new ComponentConnectionHandler( configuration );
-                break;
-            case CONNECTION_MANAGER:
-                connectionHandler = new MultiplexerConnectionHandler( configuration );
-                break;
-            default:
-                throw new IllegalStateException( "Cannot determine 'connection handler' for connection type : " + configuration.getType() );
-        }
     }
 
     /**
-     * Starts this connection by binding the socket acceptor. When the acceptor is already started, a warning will be
-     * logged and the method invocation is otherwise ignored.
+     * Makes the instance start accepting connections.
+     *
+     * An invocation of this method on an instance that is already started should have no effect (to the extend that the
+     * instance should continue to accept connections without interruption or configuration changes).
      */
-    public synchronized void start()
-    {
-        if ( socketAcceptor != null )
-        {
-            Log.warn( "Unable to start acceptor (it is already started!)" );
-            return;
-        }
-
-        try
-        {
-            // Configure the thread pool that is to be used.
-            final int initialSize = ( configuration.getMaxThreadPoolSize() / 4 ) + 1;
-            final ExecutorFilter executorFilter = new ExecutorFilter( initialSize, configuration.getMaxThreadPoolSize(), 60, TimeUnit.SECONDS );
-            final ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor) executorFilter.getExecutor();
-            final ThreadFactory threadFactory = new DelegatingThreadFactory( name + "-thread-", eventExecutor.getThreadFactory() );
-            eventExecutor.setThreadFactory( threadFactory );
-
-            // Construct a new socket acceptor, and configure it.
-            socketAcceptor = buildSocketAcceptor();
-
-            if ( JMXManager.isEnabled() )
-            {
-                configureJMX( socketAcceptor, name );
-            }
-
-            final DefaultIoFilterChainBuilder filterChain = socketAcceptor.getFilterChain();
-            filterChain.addFirst( ConnectionManagerImpl.EXECUTOR_FILTER_NAME, executorFilter );
-
-            // Add the XMPP codec filter
-            filterChain.addAfter( ConnectionManagerImpl.EXECUTOR_FILTER_NAME, ConnectionManagerImpl.XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter( new XMPPCodecFactory() ) );
-
-            // Kill sessions whose outgoing queues keep growing and fail to send traffic
-            filterChain.addAfter( ConnectionManagerImpl.XMPP_CODEC_FILTER_NAME, ConnectionManagerImpl.CAPACITY_FILTER_NAME, new StalledSessionsFilter() );
-
-            // Ports can be configured to start connections in SSL (as opposed to upgrade a non-encrypted socket to an encrypted one, typically using StartTLS)
-            if ( configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode )
-            {
-                final SslFilter sslFilter = encryptionArtifactFactory.createServerModeSslFilter();
-                filterChain.addAfter( ConnectionManagerImpl.EXECUTOR_FILTER_NAME, ConnectionManagerImpl.TLS_FILTER_NAME, sslFilter );
-            }
-
-            // Throttle sessions who send data too fast
-            if ( configuration.getMaxBufferSize() > 0 )
-            {
-                socketAcceptor.getSessionConfig().setMaxReadBufferSize( configuration.getMaxBufferSize() );
-                Log.debug( "Throttling read buffer for connections to max={} bytes", configuration.getMaxBufferSize() );
-            }
-
-            // Start accepting connections
-            socketAcceptor.setHandler( connectionHandler );
-            socketAcceptor.bind( new InetSocketAddress( configuration.getBindAddress(), configuration.getPort() ) );
-        }
-        catch ( Exception e )
-        {
-            System.err.println( "Error starting " + configuration.getPort() + ": " + e.getMessage() );
-            Log.error( "Error starting: " + configuration.getPort(), e );
-        }
-    }
+    abstract void start();
 
     /**
-     * Stops this connection by unbinding the socket acceptor. Does nothing when the instance is not started.
+     * Halts connection acceptation and gracefully releases resources.
+     *
+     * An invocation of this method on an instance that was not accepting connections should have no effect.
+     *
+     * Instances of this class do not support configuration changes (see class documentation). As a result, there is no
+     * requirement that an instance that is stopped after it was running can successfully be restarted.
      */
-    public synchronized void stop()
-    {
-        if ( socketAcceptor != null )
-        {
-            socketAcceptor.unbind();
-            socketAcceptor = null;
-        }
-    }
+    abstract void stop();
 
     /**
      * Determines if this instance is currently in a state where it is actively serving connections.
      *
      * @return false when this instance is started and is currently being used to serve connections (otherwise true)
      */
-    public boolean isIdle()
-    {
-        return this.socketAcceptor != null && this.socketAcceptor.getManagedSessionCount() == 0;
-    }
-
-    public synchronized int getPort()
-    {
-        return configuration.getPort();
-    }
-
-    // TODO see if we can avoid exposing MINA internals.
-    public synchronized NioSocketAcceptor getSocketAcceptor()
-    {
-        return socketAcceptor;
-    }
-
-    private static NioSocketAcceptor buildSocketAcceptor()
-    {
-        // Create SocketAcceptor with correct number of processors
-        final int processorCount = JiveGlobals.getIntProperty( "xmpp.processor.count", Runtime.getRuntime().availableProcessors() );
-
-        final NioSocketAcceptor socketAcceptor = new NioSocketAcceptor( processorCount );
-
-        // Set that it will be possible to bind a socket if there is a connection in the timeout state.
-        socketAcceptor.setReuseAddress( true );
-
-        // Set the listen backlog (queue) length. Default is 50.
-        socketAcceptor.setBacklog( JiveGlobals.getIntProperty( "xmpp.socket.backlog", 50 ) );
-
-        // Set default (low level) settings for new socket connections
-        final SocketSessionConfig socketSessionConfig = socketAcceptor.getSessionConfig();
-
-        //socketSessionConfig.setKeepAlive();
-        final int receiveBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.receive", -1 );
-        if ( receiveBuffer > 0 )
-        {
-            socketSessionConfig.setReceiveBufferSize( receiveBuffer );
-        }
-
-        final int sendBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.send", -1 );
-        if ( sendBuffer > 0 )
-        {
-            socketSessionConfig.setSendBufferSize( sendBuffer );
-        }
-
-        final int linger = JiveGlobals.getIntProperty( "xmpp.socket.linger", -1 );
-        if ( linger > 0 )
-        {
-            socketSessionConfig.setSoLinger( linger );
-        }
-
-        socketSessionConfig.setTcpNoDelay( JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", socketSessionConfig.isTcpNoDelay() ) );
-
-        return socketAcceptor;
-    }
-
-    private void configureJMX( NioSocketAcceptor acceptor, String suffix )
-    {
-        final String prefix = IoServiceMBean.class.getPackage().getName();
-
-        // monitor the IoService
-        try
-        {
-            final IoServiceMBean mbean = new IoServiceMBean( acceptor );
-            final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-            final ObjectName name = new ObjectName( prefix + ":type=SocketAcceptor,name=" + suffix );
-            mbs.registerMBean( mbean, name );
-            // mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
-        }
-        catch ( JMException ex )
-        {
-            Log.warn( "Failed to register MINA acceptor mbean (JMX): " + ex );
-        }
-
-        // optionally register IoSession mbeans (one per session)
-        if ( JiveGlobals.getBooleanProperty( "xmpp.socket.jmx.sessions", false ) )
-        {
-            acceptor.addListener( new IoServiceListener()
-            {
-                private ObjectName getObjectNameForSession( IoSession session ) throws MalformedObjectNameException
-                {
-                    return new ObjectName( prefix + ":type=IoSession,name=" + session.getRemoteAddress().toString().replace( ':', '/' ) );
-                }
-
-                public void sessionCreated( IoSession session )
-                {
-                    try
-                    {
-                        ManagementFactory.getPlatformMBeanServer().registerMBean(
-                                new IoSessionMBean( session ),
-                                getObjectNameForSession( session )
-                        );
-                    }
-                    catch ( JMException ex )
-                    {
-                        Log.warn( "Failed to register MINA session mbean (JMX): " + ex );
-                    }
-                }
-
-                public void sessionDestroyed( IoSession session )
-                {
-                    try
-                    {
-                        ManagementFactory.getPlatformMBeanServer().unregisterMBean(
-                                getObjectNameForSession( session )
-                        );
-                    }
-                    catch ( JMException ex )
-                    {
-                        Log.warn( "Failed to unregister MINA session mbean (JMX): " + ex );
-                    }
-                }
-
-                public void serviceActivated( IoService service ) throws Exception {}
-
-                public void serviceDeactivated( IoService service ) throws Exception {}
-
-                public void serviceIdle( IoService service, IdleStatus idleStatus ) throws Exception {}
-            } );
-        }
-    }
-
-    // TODO this is a utility class that can be pulled out. There are several similar implementations throughout the codebase.
-    private static class DelegatingThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadId;
-        private final ThreadFactory originalThreadFactory;
-        private String threadNamePrefix;
-
-        public DelegatingThreadFactory(String threadNamePrefix, ThreadFactory originalThreadFactory) {
-            this.originalThreadFactory = originalThreadFactory;
-            threadId = new AtomicInteger(0);
-            this.threadNamePrefix = threadNamePrefix;
-        }
-
-        public Thread newThread(Runnable runnable)
-        {
-            Thread t = originalThreadFactory.newThread(runnable);
-            t.setName(threadNamePrefix + threadId.incrementAndGet());
-            t.setDaemon(true);
-            return t;
-        }
-    }
+    abstract boolean isIdle();
 }

@@ -132,13 +132,6 @@ public final class HttpBindManager {
 
     private static HttpBindManager instance = new HttpBindManager();
 
-    // Compression "optional" by default; use "disabled" to disable compression (restart required)
-    // When enabled, http response will be compressed if the http request includes an
-    // "Accept" header with a value of "gzip" and/or "deflate"
-    private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
-    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString())
-            .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
-
     private Server httpBindServer;
 
     private int bindPort;
@@ -573,7 +566,9 @@ public final class HttpBindManager {
 
     // NOTE: enabled by default
     private boolean isHttpCompressionEnabled() {
-		return isCompressionEnabled;
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+        return configuration.getCompressionPolicy() == null || configuration.getCompressionPolicy().equals( Connection.CompressionPolicy.optional );
 	}
 
 	private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)

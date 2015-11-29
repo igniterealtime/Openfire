@@ -99,7 +99,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS
         );
         clientSslListener = new ConnectionListener(
                 ConnectionType.SOCKET_C2S,
@@ -112,7 +113,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS
         );
         // BOSH / HTTP-bind
         boshListener = new ConnectionListener(
@@ -126,7 +128,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS // Existing code re-used the generic client compression property. Should we have a BOSH-specific one?
         );
         boshSslListener = new ConnectionListener(
                 ConnectionType.BOSH_C2S,
@@ -139,7 +142,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS // Existing code re-used the generic client compression property. Should we have a BOSH-specific one?
         );
         // server-to-server (federation)
         serverListener = new ConnectionListener(
@@ -153,7 +157,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S ),
+                ConnectionSettings.Server.COMPRESSION_SETTINGS
         );
         // external components (XEP 0114)
         componentListener = new ConnectionListener(
@@ -167,7 +172,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT ),
+                ConnectionSettings.Component.COMPRESSION_SETTINGS
         );
         componentSslListener = new ConnectionListener(
                 ConnectionType.COMPONENT,
@@ -180,7 +186,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT ),
+                ConnectionSettings.Component.COMPRESSION_SETTINGS
         );
 
         // Multiplexers (our propertietary connection manager implementation)
@@ -195,7 +202,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                ConnectionSettings.Multiplex.COMPRESSION_SETTINGS
         );
         connectionManagerSslListener = new ConnectionListener(
                 ConnectionType.CONNECTION_MANAGER,
@@ -208,7 +216,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                ConnectionSettings.Multiplex.COMPRESSION_SETTINGS
         );
 
         // Admin console (the Openfire web-admin) // TODO these use the XML properties instead of normal properties!
@@ -223,7 +232,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 null,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
+                null // Should we have compression on the admin console?
         );
 
         webAdminSslListener = new ConnectionListener(
@@ -237,7 +247,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 null,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
-                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN )
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
+                null // Should we have compression on the admin console?
         );
 
     }

@@ -65,6 +65,12 @@ public class ConnectionListener
     private final String tlsPolicyPropertyName;
 
     /**
+     * Name of property that configures the policy regarding compression (eg: ZLIB) that's applicable to this listener.
+     * 'null' causes an implementation default to be used.
+     */
+    private final String compressionPolicyPropertyName;
+
+    /**
      * Name of property that configures the policy regarding mutual authentication that's applicable to this listener.
      * 'null' indicates that this policy cannot be configured and 'disabled' should be used as a default.
      */
@@ -88,7 +94,7 @@ public class ConnectionListener
      * @param tlsPolicyPropertyName Property name (of a string) that defines the applicable TLS Policy. Or, the value {@link org.jivesoftware.openfire.Connection.TLSPolicy} to indicate unconfigurable TLS Policy. Cannot be null.
      * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurabel value of 'wanted' to be used.
      */
-    public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration )
+    public ConnectionListener( ConnectionType type, String tcpPortPropertyName, int defaultPort, String isEnabledPropertyName, String maxPoolSizePropertyName, String maxReadBufferPropertyName, String tlsPolicyPropertyName, String clientAuthPolicyPropertyName, InetAddress bindAddress, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, String compressionPolicyPropertyName )
     {
         this.type = type;
         this.tcpPortPropertyName = tcpPortPropertyName;
@@ -101,6 +107,7 @@ public class ConnectionListener
         this.bindAddress = bindAddress;
         this.identityStoreConfiguration = identityStoreConfiguration;
         this.trustStoreConfiguration = trustStoreConfiguration;
+        this.compressionPolicyPropertyName = compressionPolicyPropertyName;
 
         // A listener cannot be changed into or from legacy mode. That fact is safe to use in the name of the logger..
         final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ? "-legacyMode" : "" );
@@ -248,7 +255,8 @@ public class ConnectionListener
                 getEncryptionProtocolsEnabled(),
                 getEncryptionProtocolsDisabled(),
                 getCipherSuitesEnabled(),
-                getCipherSuitesDisabled()
+                getCipherSuitesDisabled(),
+                getCompressionPolicy()
         );
     }
 
@@ -519,6 +527,76 @@ public class ConnectionListener
 
         Log.debug( "Changing TLS Policy from '{}' to '{}'.", oldPolicy, policy );
         JiveGlobals.setProperty( tlsPolicyPropertyName, policy.toString() );
+        restart();
+    }
+
+    /**
+     * Returns whether compression is optional or disabled for new connections.
+     *
+     * @return A compression policy (never null)
+     */
+    public Connection.CompressionPolicy getCompressionPolicy()
+    {
+        // Depending on the connection type, define a good default value.
+        final Connection.CompressionPolicy defaultPolicy;
+        switch ( getType() )
+        {
+            // More likely to have good bandwidth. Compression on high-volume data gobbles CPU.
+            case COMPONENT:
+            case CONNECTION_MANAGER:
+            case SOCKET_S2S:
+                defaultPolicy = Connection.CompressionPolicy.disabled;
+                break;
+
+            // At least *offer* compression functionality.
+            case SOCKET_C2S:
+            case BOSH_C2S:
+            case WEBADMIN:
+            default:
+                defaultPolicy = Connection.CompressionPolicy.optional;
+                break;
+        }
+
+        if ( compressionPolicyPropertyName == null )
+        {
+            return defaultPolicy;
+        }
+        else
+        {
+            final String policyName = JiveGlobals.getProperty( compressionPolicyPropertyName, defaultPolicy.toString() );
+            try
+            {
+                return Connection.CompressionPolicy.valueOf( policyName );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                Log.error( "Error parsing property value of '{}' into a valid Compression Policy. Offending value: '{}'.", tlsPolicyPropertyName, policyName, e );
+                return defaultPolicy;
+            }
+        }
+    }
+
+    /**
+     * Sets whether compression is optional or disabled for new connections. This configuration change is persisted.
+     *
+     * If the listener is currently enabled, this configuration change will be applied immediately (which will cause a
+     * restart of the underlying connection acceptor).
+     *
+     * An invocation of this method has no effect if the new policy value is equal to the existing value.
+     *
+     * @param policy a compression policy (not null).
+     */
+    public void setCompressionPolicy( Connection.CompressionPolicy policy )
+    {
+        final Connection.CompressionPolicy oldPolicy = getCompressionPolicy();
+        if ( oldPolicy.equals( policy ) )
+        {
+            Log.debug( "Ignoring Compression Policy change request (to '{}'): listener already in this state.", policy );
+            return;
+        }
+
+        Log.debug( "Changing Compression Policy from '{}' to '{}'.", oldPolicy, policy );
+        JiveGlobals.setProperty( compressionPolicyPropertyName, policy.toString() );
         restart();
     }
 

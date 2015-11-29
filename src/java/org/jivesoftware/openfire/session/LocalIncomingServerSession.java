@@ -168,11 +168,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             }
 
             // Indicate the compression policy to use for this connection
-            String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS,
-                    Connection.CompressionPolicy.disabled.toString());
-            Connection.CompressionPolicy compressionPolicy =
-                    Connection.CompressionPolicy.valueOf(policyName);
-            connection.setCompressionPolicy(compressionPolicy);
+            connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
 
             StringBuilder sb = new StringBuilder();
             

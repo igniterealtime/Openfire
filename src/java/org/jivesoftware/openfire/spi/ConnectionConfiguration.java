@@ -38,6 +38,7 @@ public class ConnectionConfiguration
     private final Set<String> encryptionProtocolsDisabled;
     private final Set<String> cipherSuitesEnabled;
     private final Set<String> cipherSuitesDisabled;
+    private final Connection.CompressionPolicy compressionPolicy;
 
     // derived
     private final IdentityStore identityStore;
@@ -54,7 +55,7 @@ public class ConnectionConfiguration
      * @param tlsPolicy The TLS policy that is applied to connections (cannot be null).
      */
     // TODO input validation
-    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocolsEnabled, Set<String> encryptionProtocolsDisabled, Set<String> cipherSuitesEnabled, Set<String> cipherSuitesDisabled )
+    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocolsEnabled, Set<String> encryptionProtocolsDisabled, Set<String> cipherSuitesEnabled, Set<String> cipherSuitesDisabled, Connection.CompressionPolicy compressionPolicy )
     {
         if ( maxThreadPoolSize <= 0 ) {
             throw new IllegalArgumentException( "Argument 'maxThreadPoolSize' must be equal to or greater than one." );
@@ -90,6 +91,8 @@ public class ConnectionConfiguration
         this.cipherSuitesEnabled = Collections.unmodifiableSet( suitesEnabled );
         this.cipherSuitesDisabled = Collections.unmodifiableSet( cipherSuitesDisabled );
 
+        this.compressionPolicy = compressionPolicy;
+
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         this.identityStore = certificateStoreManager.getIdentityStore( type );
         this.trustStore = certificateStoreManager.getTrustStore( type );
@@ -98,6 +101,11 @@ public class ConnectionConfiguration
     public Connection.TLSPolicy getTlsPolicy()
     {
         return tlsPolicy;
+    }
+
+    public Connection.CompressionPolicy getCompressionPolicy()
+    {
+        return compressionPolicy;
     }
 
     public ConnectionType getType()

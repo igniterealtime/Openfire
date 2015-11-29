@@ -413,8 +413,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             features = reader.parseDocument().getRootElement();
             if (features != null) {
                 // Check if we can use stream compression
-                String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString());
-                Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+                final Connection.CompressionPolicy compressionPolicy = connection.getConfiguration().getCompressionPolicy();
                 if (Connection.CompressionPolicy.optional == compressionPolicy) {
                     // Verify if the remote server supports stream compression
                     Element compression = features.element("compression");

@@ -38,6 +38,7 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -250,16 +251,18 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         connection.setLanaguage(language);
         connection.setXMPPVersion(majorVersion, minorVersion);
 
+        final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();
+        
         // Indicate the TLS policy to use for this connection
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
             try {
-                hasCertificates = connection.getConfiguration().getIdentityStore().getAllCertificates().size() > 0;
+                hasCertificates = connectionConfiguration.getIdentityStore().getAllCertificates().size() > 0;
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
-            Connection.TLSPolicy tlsPolicy = connection.getConfiguration().getTlsPolicy();
+            Connection.TLSPolicy tlsPolicy = connectionConfiguration.getTlsPolicy();
             if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
                 Log.error("Client session rejected. TLS is required but no certificates " +
                         "were created.");
@@ -273,7 +276,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy(getCompressionPolicy());
+        connection.setCompressionPolicy( connectionConfiguration.getCompressionPolicy() );
 
         // Create a ClientSession for this user.
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection);
@@ -408,27 +411,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
             JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, buf.toString());
         }
-    }
-
-
-    /**
-     * Returns whether compression is optional or is disabled for clients.
-     *
-     * @return whether compression is optional or is disabled.
-     */
-    // TODO Move this to ConnectionConfiguration.
-    public static SocketConnection.CompressionPolicy getCompressionPolicy() {
-        // Set the Compression policy stored as a system property
-        String policyName = JiveGlobals
-                .getProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString());
-        SocketConnection.CompressionPolicy compressionPolicy;
-        try {
-            compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
-        } catch (IllegalArgumentException e) {
-            Log.error("Error parsing xmpp.client.compression.policy: " + policyName, e);
-            compressionPolicy = Connection.CompressionPolicy.optional;
-        }
-        return compressionPolicy;
     }
 
     /**

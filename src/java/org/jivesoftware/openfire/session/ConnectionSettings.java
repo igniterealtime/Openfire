@@ -83,5 +83,6 @@ public final class ConnectionSettings {
         public static final String MAX_THREADS_SSL = "xmpp.component.ssl.processing.threads";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.component.cert.policy";
         public static final String TLS_POLICY = "xmpp.component.tls.policy";
+        public static final String COMPRESSION_SETTINGS = "xmpp.component.compression.policy";
     }
 }

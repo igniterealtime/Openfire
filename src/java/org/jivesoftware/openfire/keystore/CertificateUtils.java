@@ -154,9 +154,26 @@ public class CertificateUtils
             final Principal issuer = certificate.getIssuerDN();
             final Principal subject = certificate.getSubjectDN();
 
-            if ( byIssuer.put( issuer, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values. Offending value: " + issuer );
+            // By issuer
+            if ( issuer.equals( subject ))
+            {
+                // self-signed: use null key.
+                final X509Certificate sameIssuer = byIssuer.put( null, certificate );
+                if ( sameIssuer != null )
+                {
+                    throw new CertificateException( "The provided input should not contain multiple root CA certificates. Issuer of first detected Root CA certificate: " + issuer + " Issuer of second detected Root CA certificate: : " + sameIssuer );
+                }
             }
+            else
+            {
+                // regular issuer
+                if ( byIssuer.put( issuer, certificate ) != null )
+                {
+                    throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values. Offending value: " + issuer );
+                }
+            }
+
+            // By subject
             if ( bySubject.put( subject, certificate ) != null ) {
                 throw new CertificateException( "The provided input should not contain multiple certificates with identical subjectDN values. Offending value: " + subject );
             }
@@ -178,16 +195,16 @@ public class CertificateUtils
         }
 
         if (first == null) {
-            throw new CertificateException( "The provided input should contain a certificates that has a subjectDN value that's not equal to the issuerDN value of any other certificate." );
+            throw new CertificateException( "The provided input should contain a certificate that has a subjectDN value that's not equal to the issuerDN value of any other certificate." );
         }
 
         orderedResult.add( first );
 
         // With the first certificate in hand, every following certificate should have a subject that's equal to the previous issuer value.
-        X509Certificate next = bySubject.get( first.getIssuerDN() );
+        X509Certificate next = bySubject.remove( first.getIssuerDN() );
         while (next != null) {
             orderedResult.add( next );
-            next = bySubject.get( next.getIssuerDN() );
+            next = bySubject.remove( next.getIssuerDN() );
         }
 
         // final check

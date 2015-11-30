@@ -14,8 +14,8 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <% // Get parameters:
-    final boolean save            = ParamUtils.getParameter( request, "save" ) != null;
-    final String privateKey       = ParamUtils.getParameter(request, "private-key");
+    final boolean save            = ParamUtils.getParameter(request, "save") != null;
+    final String privateKey       = ParamUtils.getParameter(request, "privateKey");
     final String passPhrase       = ParamUtils.getParameter(request, "passPhrase");
     final String certificate      = ParamUtils.getParameter(request, "certificate");
     final String storePurposeText = ParamUtils.getParameter(request, "connectionType");
@@ -31,35 +31,24 @@
         connectionType = null;
     }
 
-    pageContext.setAttribute( "connectionType", connectionType );
-
     if (save) {
-        if (privateKey == null || "".equals(privateKey)) {
+        if (privateKey == null || privateKey.trim().isEmpty() ) {
             errors.put("privateKey", "privateKey");
         }
-        if (certificate == null || "".equals(certificate)) {
+        if (certificate == null || certificate.trim().isEmpty() ) {
             errors.put("certificate", "certificate");
         }
         if (errors.isEmpty()) {
             try {
                 final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( connectionType );
 
-                // Create an alias for the signed certificate
-                String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                int index = 1;
-                String alias = domain + "_" + index;
-                while ( identityStore.getStore().containsAlias( alias )) {
-                    index = index + 1;
-                    alias = domain + "_" + index;
-                }
-
                 // Import certificate
-                identityStore.installCertificate( alias, privateKey, passPhrase, certificate );
+                final String alias = identityStore.installCertificate( certificate, privateKey, passPhrase);
 
                 // Log the event
-                webManager.logEvent("imported SSL certificate in identity store "+ storePurposeText, "alias = "+alias);
+                webManager.logEvent("imported SSL certificate in identity store "+ connectionType, "alias = "+alias);
 
-                response.sendRedirect("security-keystore.jsp?connectionType="+storePurposeText);
+                response.sendRedirect("security-keystore.jsp?connectionType="+connectionType+"&addupdatesuccess=true");
                 return;
             }
             catch (Exception e) {
@@ -68,91 +57,98 @@
             }
         }
     }
+
+    pageContext.setAttribute( "connectionType", connectionType );
+    pageContext.setAttribute( "errors", errors );
 %>
 
 <html>
-  <head>
-      <title><fmt:message key="ssl.import.certificate.keystore.${connectionType}.title"/></title>
+<head>
+      <title><fmt:message key="ssl.import.certificate.keystore.boxtitle"/></title>
       <meta name="pageID" content="security-certificate-store-management"/>
       <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
-  </head>
-  <body>
+</head>
+<body>
 
-  <% pageContext.setAttribute("errors", errors); %>
-  <c:forEach var="err" items="${errors}">
-      <admin:infobox type="error">
-          <c:choose>
-              <c:when test="${err.key eq 'privateKey'}">
-                  <fmt:message key="ssl.import.certificate.keystore.error.private-key"/>
-              </c:when>
+<c:forEach var="err" items="${errors}">
+    <admin:infobox type="error">
+        <c:choose>
+            <c:when test="${err.key eq 'privateKey'}">
+                <fmt:message key="ssl.import.certificate.keystore.error.private-key"/>
+            </c:when>
 
-              <c:when test="${err.key eq 'certificate'}">
-                  <fmt:message key="ssl.import.certificate.keystore.error.certificate"/>
-              </c:when>
+            <c:when test="${err.key eq 'certificate'}">
+                <fmt:message key="ssl.import.certificate.keystore.error.certificate"/>
+            </c:when>
 
-              <c:when test="${err.key eq 'import'}">
-                  <fmt:message key="ssl.import.certificate.keystore.error.import"/>
-                  <c:if test="${not empty err.value}">
-                      <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
-                  </c:if>
-              </c:when>
+            <c:when test="${err.key eq 'import'}">
+                <fmt:message key="ssl.import.certificate.keystore.error.import"/>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+            </c:when>
 
-              <c:otherwise>
-                  <c:if test="${not empty err.value}">
-                      <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
-                  </c:if>
-                  (<c:out value="${err.key}"/>)
-              </c:otherwise>
-          </c:choose>
-      </admin:infobox>
-  </c:forEach>
+            <c:otherwise>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+                (<c:out value="${err.key}"/>)
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:forEach>
 
-  <p>
-  <fmt:message key="ssl.import.certificate.keystore.info">
-      <fmt:param value="<a href='http://java.sun.com/javase/downloads/index.jsp'>" />
-      <fmt:param value="</a>" />
-  </fmt:message>
-  </p>
+<p>
+    <fmt:message key="ssl.import.certificate.keystore.info">
+        <fmt:param value="<a href='http://java.sun.com/javase/downloads/index.jsp'>" />
+        <fmt:param value="</a>" />
+    </fmt:message>
+</p>
 
-  <!-- BEGIN 'Import Private Key and Certificate' -->
-  <form action="import-keystore-certificate.jsp" method="post" name="f">
-      <input type="hidden" name="connectionType" value="${connectionType}"/>
-      <div class="jive-contentBoxHeader">
-          <fmt:message key="ssl.import.certificate.keystore.boxtitle" />
-      </div>
-      <div class="jive-contentBox">
-          <table cellpadding="3" cellspacing="0" border="0">
-          <tbody>
-              <tr valign="top">
-                  <td width="1%" nowrap class="c1">
-                      <fmt:message key="ssl.import.certificate.keystore.pass-phrase" />
-                  </td>
-                  <td width="99%">
-                      <input type="text" size="30" maxlength="100" name="passPhrase">
-                  </td>
-              </tr>
-              <tr valign="top">
-                  <td width="1%" nowrap class="c1">
-                      <fmt:message key="ssl.import.certificate.keystore.private-key" />
-                  </td>
-                  <td width="99%">
-                      <textarea name="private-key" cols="60" rows="5" wrap="virtual"></textarea>
-                  </td>
-              </tr>
-              <tr valign="top">
-                  <td width="1%" nowrap class="c1">
-                      <fmt:message key="ssl.import.certificate.keystore.certificate" />
-                  </td>
-                  <td width="99%">
-                      <textarea name="certificate" cols="60" rows="5" wrap="virtual"></textarea>
-                  </td>
-              </tr>
-          </tbody>
-          </table>
-      </div>
-      <input type="submit" name="save" value="<fmt:message key="global.save" />">
-  </form>
-  <!-- END 'Import Private Key and Certificate' -->
+<!-- BEGIN 'Import Private Key and Certificate' -->
+<form action="import-keystore-certificate.jsp?connectionType=${connectionType}" method="post">
 
-  </body>
+    <c:set var="title">Private Key</c:set>
+    <admin:contentBox title="${title}">
+        <p>Please provide the PEM representation of the private key that should be used to identify Openfire.</p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr valign="top">
+                <td width="1%" nowrap class="c1">
+                    <label for="passPhrase"><fmt:message key="ssl.import.certificate.keystore.pass-phrase" /></label>
+                </td>
+                <td width="99%">
+                    <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="${not empty param.passPhrase ? param.passPhrase : ''}">
+                </td>
+            </tr>
+            <tr valign="top">
+                <td width="1%" nowrap class="c1">
+                    <label for="privateKey"><fmt:message key="ssl.import.certificate.keystore.private-key" /></label>
+                </td>
+                <td width="99%">
+                    <textarea name="privateKey" id="privateKey" cols="80" rows="15" wrap="virtual"><c:if test="${not empty param.privateKey}"><c:out value="${param.privateKey}"/></c:if></textarea>
+                </td>
+            </tr>
+        </table>
+    </admin:contentBox>
+
+    <c:set var="title">Certificate</c:set>
+    <admin:contentBox title="${title}">
+        <p>Please provide the PEM representation of the certificate chain that represents the identity of Openfire. Note that the certificate chain must be based on the private key provided above.</p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr valign="top">
+                <td width="1%" nowrap class="c1">
+                    <label for="certificate"><fmt:message key="ssl.import.certificate.keystore.certificate" /></label>
+                </td>
+                <td width="99%">
+                    <textarea name="certificate" id="certificate" cols="80" rows="15" wrap="virtual"><c:if test="${not empty param.certificate}"><c:out value="${param.certificate}"/></c:if></textarea>
+                </td>
+            </tr>
+        </table>
+    </admin:contentBox>
+
+    <input type="submit" name="save" value="<fmt:message key="global.save" />">
+</form>
+<!-- END 'Import Private Key and Certificate' -->
+
+</body>
 </html>

@@ -211,7 +211,45 @@ public class IdentityStore extends CertificateStore
     /**
      * Imports a certificate and the private key that was used to generate the certificate.
      *
+     * This method will import the certificate and key in the store using a unique alias. This alias is returned.
+     *
      * This method will fail when the provided certificate does not match the domain of this XMPP service.
+     *
+     * @param pemCertificates a PEM representation of the certificate or certificate chain (cannot be null or empty).
+     * @param pemPrivateKey   a PEM representation of the private key (cannot be null or empty).
+     * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
+     * @return The alias that was used (never null).
+     */
+    public String installCertificate( String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
+    {
+        // Generate a unique alias.
+        final String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        int index = 1;
+        String alias = domain + "_" + index;
+        try
+        {
+            while ( store.containsAlias( alias ) )
+            {
+                index = index + 1;
+                alias = domain + "_" + index;
+            }
+        }
+        catch ( KeyStoreException e )
+        {
+            throw new CertificateStoreConfigException( "Unable to install a certificate into an identity store.", e );
+        }
+
+        // Perform the installation using the generated alias.
+        installCertificate( alias, pemCertificates, pemPrivateKey, passPhrase );
+
+        return alias;
+    }
+
+    /**
+     * Imports a certificate and the private key that was used to generate the certificate.
+     *
+     * This method will fail when the provided certificate does not match the domain of this XMPP service, or when the
+     * provided alias refers to an existing entry.
      *
      * @param alias           the name (key) under which the certificate is to be stored in the store (cannot be null or empty).
      * @param pemCertificates a PEM representation of the certificate or certificate chain (cannot be null or empty).

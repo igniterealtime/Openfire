@@ -279,6 +279,7 @@
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
                                             <c:out value="${stat.first ? '' : ','} ${currentItem}"/>
                                         </c:forEach>
+                                        (<c:out value="${alias}"/>)
                                     </a>
                                 </td>
                                 <td>

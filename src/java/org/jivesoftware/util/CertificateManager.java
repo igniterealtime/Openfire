@@ -49,6 +49,7 @@ import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.X509Extensions;
@@ -59,7 +60,12 @@ import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
@@ -659,6 +665,9 @@ public class CertificateManager {
         if ( pemRepresentation == null || pemRepresentation.trim().isEmpty() ) {
             throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null or an empty String.");
         }
+        if ( passPhrase == null ) {
+            passPhrase = "";
+        }
         try ( Reader reader = new StringReader( pemRepresentation.trim() ))
         {
             final Object object = new PEMParser( reader ).readObject();
@@ -671,6 +680,25 @@ public class CertificateManager {
                 // Encrypted key - we will use provided password
                 final PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build( passPhrase.toCharArray() );
                 kp = converter.getKeyPair( ( (PEMEncryptedKeyPair) object ).decryptKeyPair( decProv ) );
+            }
+            else if ( object instanceof PKCS8EncryptedPrivateKeyInfo )
+            {
+                // Encrypted key - we will use provided password
+                try
+                {
+                    final PKCS8EncryptedPrivateKeyInfo encryptedInfo = (PKCS8EncryptedPrivateKeyInfo) object;
+                    final InputDecryptorProvider provider = new JceOpenSSLPKCS8DecryptorProviderBuilder().build( passPhrase.toCharArray() );
+                    final PrivateKeyInfo privateKeyInfo = encryptedInfo.decryptPrivateKeyInfo( provider );
+                    return converter.getPrivateKey( privateKeyInfo );
+                }
+                catch ( PKCSException | OperatorCreationException e )
+                {
+                    throw new IOException( "Unable to decrypt private key.", e );
+                }
+            }
+            else if ( object instanceof PrivateKeyInfo )
+            {
+                return converter.getPrivateKey( (PrivateKeyInfo) object );
             }
             else
             {

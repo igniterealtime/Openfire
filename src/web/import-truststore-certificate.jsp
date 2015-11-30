@@ -74,11 +74,11 @@
 
 <html>
 <head>
-    <title>
-        <fmt:message key="ssl.import.certificate.keystore.${connectionType}.title"/> - <fmt:message key="ssl.certificates.truststore.${param.type}-title"/>
-    </title>
+<head>
+    <title><fmt:message key="ssl.import.certificate.truststore.boxtitle"/></title>
     <meta name="pageID" content="security-certificate-store-management"/>
-    <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
+    <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
+</head>
 </head>
 <body>
 
@@ -86,24 +86,24 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
-            <c:when test="${err.key eq 'type'}">
-                <fmt:message key="ssl.import.certificate.keystore.error.type"/>
+            <c:when test="${err.key eq 'connectionType'}">
+                <fmt:message key="ssl.import.certificate.truststore.error.connection-type"/>
             </c:when>
 
             <c:when test="${err.key eq 'missingalias'}">
-                <fmt:message key="ssl.import.certificate.keystore.error.alias-missing"/>
+                <fmt:message key="ssl.import.certificate.truststore.error.alias-missing"/>
             </c:when>
 
             <c:when test="${err.key eq 'existingalias'}">
-                <fmt:message key="ssl.import.certificate.keystore.error.alias-exists"/>
+                <fmt:message key="ssl.import.certificate.truststore.error.alias-exists"/>
             </c:when>
 
             <c:when test="${err.key eq 'certificate'}">
-                <fmt:message key="ssl.import.certificate.keystore.error.certificate"/>
+                <fmt:message key="ssl.import.certificate.truststore.error.certificate"/>
             </c:when>
 
             <c:when test="${err.key eq 'import'}">
-                <fmt:message key="ssl.import.certificate.keystore.error.import"/>
+                <fmt:message key="ssl.import.certificate.truststore.error.import"/>
                 <c:if test="${not empty err.value}">
                     <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
                 </c:if>
@@ -119,39 +119,35 @@
     </admin:infobox>
 </c:forEach>
 
-<c:if test="${not empty param.type}">
+<c:if test="${not empty connectionType}">
     <p>
-        <fmt:message key="ssl.import.certificate.keystore.${param.type}-intro"/>
+        <fmt:message key="ssl.import.certificate.truststore.intro"/>
     </p>
 
     <!-- BEGIN 'Import Certificate' -->
-    <form action="import-truststore-certificate.jsp?type=${param.type}" method="post" name="f">
-        <input type="hidden" name="connectivityType" value="${connectionType}"/>
-        <div class="jive-contentBoxHeader">
-            <fmt:message key="ssl.import.certificate.keystore.boxtitle"/>
-        </div>
-        <div class="jive-contentBox">
+    <form action="import-truststore-certificate.jsp?connectionType=${connectionType}" method="post">
+        <c:set var="title"><fmt:message key="ssl.import.certificate.truststore.boxtitle"/></c:set>
+        <admin:contentBox title="${title}">
             <table cellpadding="3" cellspacing="0" border="0">
-                <tbody>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <label for="alias"><fmt:message key="ssl.signing-request.alias"/></label>
-                        </td>
-                        <td width="99%">
-                            <input type="text" size="30" maxlength="100" name="alias" id="alias" value="${param.alias}">
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <label for="certificate"><fmt:message key="ssl.import.certificate.keystore.certificate"/></label>
-                        </td>
-                        <td width="99%">
-                            <textarea name="certificate" id="certificate" cols="80" rows="20" wrap="virtual">${param.certificate}</textarea>
-                        </td>
-                    </tr>
-                </tbody>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <label for="alias"><fmt:message key="ssl.signing-request.alias"/></label>
+                    </td>
+                    <td width="99%">
+                        <input type="text" size="30" maxlength="100" name="alias" id="alias" value="${param.alias}">
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap class="c1">
+                        <label for="certificate"><fmt:message key="ssl.import.certificate.keystore.certificate"/></label>
+                    </td>
+                    <td width="99%">
+                        <textarea name="certificate" id="certificate" cols="80" rows="20" wrap="virtual"><c:if test="${not empty param.certificate}"><c:out value="${param.certificate}"/></c:if></textarea>
+                    </td>
+                </tr>
             </table>
-        </div>
+        </admin:contentBox>
+
         <input type="submit" name="save" value="<fmt:message key="global.save"/>">
     </form>
     <!-- END 'Import Certificate' -->

@@ -359,7 +359,7 @@ public class CertificateManager {
      * @return true if a certificate with the specified configuration was found in the key store.
      * @throws KeyStoreException
      */
-    private static boolean isCertificate(CertificateStoreConfig storeConfig, String domain, String algorithm) throws KeyStoreException {
+    private static boolean isCertificate(CertificateStore storeConfig, String domain, String algorithm) throws KeyStoreException {
     	for (Enumeration<String> aliases = storeConfig.getStore().aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) storeConfig.getStore().getCertificate(aliases.nextElement());
 

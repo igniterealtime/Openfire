@@ -195,8 +195,8 @@ public class SASLAuthentication {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
                 LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-                final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+                final KeyStore keyStore   = svr.getConnection().getConfiguration().getIdentityStore().getStore();
+                final KeyStore trustStore = svr.getConnection().getConfiguration().getTrustStore().getStore();
                 final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
 
                 boolean haveTrustedCertificate = trusted != null;
@@ -574,8 +574,9 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+            final KeyStore keyStore   = connection.getConfiguration().getIdentityStore().getStore();
+            final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
+
             final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
 
             if (trusted == null) {

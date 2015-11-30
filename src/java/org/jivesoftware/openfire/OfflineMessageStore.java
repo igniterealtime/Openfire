@@ -222,10 +222,6 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                     delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                     delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
-                    // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
-                    delay = message.addChildElement("x", "jabber:x:delay");
-                    delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                    delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
                 }
                 messages.add(message);
             }
@@ -290,10 +286,6 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 Element delay = message.addChildElement("delay", "urn:xmpp:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
                 delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
-                // Add a legacy delayed delivery (XEP-0091) element to the message. XEP is obsolete and support should be dropped in future.
-                delay = message.addChildElement("x", "jabber:x:delay");
-                delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-                delay.addAttribute("stamp", XMPPDateTimeFormat.formatOld(creationDate));
             }
         }
         catch (Exception e) {

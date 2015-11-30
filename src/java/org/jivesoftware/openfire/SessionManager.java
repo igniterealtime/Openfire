@@ -30,6 +30,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -331,10 +332,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * stream ID.
      *
      * @param conn the connection to create the session from.
+     * @param language The language to use for the new session.
      * @return a newly created session.
      */
-    public LocalClientSession createClientSession(Connection conn) {
-        return createClientSession(conn, nextStreamID());
+    public LocalClientSession createClientSession(Connection conn, Locale language) {
+        return createClientSession(conn, nextStreamID(), language);
     }
 
     /**
@@ -345,10 +347,22 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @return a newly created session.
      */
     public LocalClientSession createClientSession(Connection conn, StreamID id) {
+        return createClientSession( conn, id, null);
+    }
+
+    /**
+     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     *
+     * @param conn the connection to create the session from.
+     * @param id the streamID to use for the new session.
+     * @param language The language to use for the new session.
+     * @return a newly created session.
+     */
+    public LocalClientSession createClientSession(Connection conn, StreamID id, Locale language) {
         if (serverName == null) {
             throw new IllegalStateException("Server not initialized");
         }
-        LocalClientSession session = new LocalClientSession(serverName, conn, id);
+        LocalClientSession session = new LocalClientSession(serverName, conn, id, language);
         conn.init(session);
         // Register to receive close notification on this session so we can
         // remove  and also send an unavailable presence if it wasn't
@@ -362,13 +376,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         return session;
     }
 
-    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id, HttpConnection connection)
+    /**
+     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     *
+     * @param conn the connection to create the session from.
+     * @param id the streamID to use for the new session.
+     * @return a newly created session.
+     */
+    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id, HttpConnection connection, Locale language)
             throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
         PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid, connection);
+        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid, connection, language);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);
@@ -1257,11 +1278,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 	                    	    if (unacked.packet instanceof Message) {
 	                    	        Message m = (Message)unacked.packet;
         	                        Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-        	                        Element delayInformationOld = m.addChildElement("x", "jabber:x:delay");
                                         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-                                        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(unacked.timestamp));
                                         delayInformation.addAttribute("from", serverAddress.toBareJID());
-                                        delayInformationOld.addAttribute("from", serverAddress.toBareJID());
 	                    	    }
     	                            router.route(unacked.packet);
 	                    	}

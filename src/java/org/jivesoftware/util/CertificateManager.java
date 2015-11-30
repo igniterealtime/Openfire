@@ -151,33 +151,6 @@ public class CertificateManager {
     }
 
     /**
-     * @Deprecated Use {@link CertificateStore#delete(String)} instead.
-     */
-    @Deprecated
-    public static void deleteCertificate(CertificateStore storeConfig, String alias) throws GeneralSecurityException, IOException, CertificateStoreConfigException
-    {
-        final KeyStore store = storeConfig.getStore();
-        if (!store.containsAlias( alias ) )
-        {
-            Log.info( "Unable to delete certificate for alias '"+alias+"' from store, as the store does not contain a certificate for that alias." );
-            return;
-        }
-
-        storeConfig.getStore().deleteEntry( alias );
-        storeConfig.persist();
-
-        // Notify listeners that a new certificate has been removed.
-        for (CertificateEventListener listener : listeners) {
-            try {
-                listener.certificateDeleted(store, alias);
-            }
-            catch (Exception e) {
-                Log.warn( "An exception occurred while notifying CertificateEventListener " + listener, e );
-            }
-        }
-    }
-
-    /**
      * Decide whether or not to trust the given supplied certificate chain, returning the
      * End Entity Certificate in this case where it can, and null otherwise.
      * A self-signed certificate will, for example, return null.
@@ -386,7 +359,7 @@ public class CertificateManager {
      * @return true if a certificate with the specified configuration was found in the key store.
      * @throws KeyStoreException
      */
-    private static boolean isCertificate(CertificateStore storeConfig, String domain, String algorithm) throws KeyStoreException {
+    private static boolean isCertificate(CertificateStoreConfig storeConfig, String domain, String algorithm) throws KeyStoreException {
     	for (Enumeration<String> aliases = storeConfig.getStore().aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) storeConfig.getStore().getCertificate(aliases.nextElement());
 

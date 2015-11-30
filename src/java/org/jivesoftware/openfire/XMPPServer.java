@@ -316,7 +316,7 @@ public class XMPPServer {
             host = "127.0.0.1";        	
         }
 
-        version = new Version(3, 11, 0, Version.ReleaseStatus.Alpha, -1);
+        version = new Version(4, 0, 0, Version.ReleaseStatus.Alpha, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -483,7 +483,8 @@ public class XMPPServer {
 
     @SuppressWarnings("unchecked")
 	private void loadModules() {
-		File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
+
+        File modulesXml = new File(JiveGlobals.getHomeDirectory(), "conf/modules.xml");
         logger.info("Loading modules from " + modulesXml.getAbsolutePath());
         SAXReader xmlReader = new SAXReader();
         xmlReader.setEncoding("UTF-8");

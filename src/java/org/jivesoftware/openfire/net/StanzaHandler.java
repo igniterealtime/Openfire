@@ -580,7 +580,7 @@ public abstract class StanzaHandler {
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
         sb.append("\" xml:lang=\"");
-        sb.append(connection.getLanguage());
+        sb.append(session.getLanguage());
         sb.append("\" version=\"");
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");

@@ -420,21 +420,6 @@ public class SocketConnection implements Connection {
     }
 
     @Override
-    public String getLanguage() {
-        return language;
-    }
-
-    /**
-     * Sets the language code that should be used for this connection (e.g. "en").
-     *
-     * @param language the language code.
-     */
-    @Override
-    public void setLanaguage(String language) {
-        this.language = language;
-    }
-
-    @Override
     public boolean isFlashClient() {
         return flashClient;
     }

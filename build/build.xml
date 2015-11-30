@@ -23,8 +23,8 @@
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
-    <property name="version.major" value="3"/>
-    <property name="version.minor" value="11"/>
+    <property name="version.major" value="4"/>
+    <property name="version.minor" value="0"/>
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
 

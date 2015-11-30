@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -210,7 +211,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         // Default language is English ("en").
-        String language = "en";
+        Locale language = Locale.forLanguageTag("en");
         // Default to a version of "0.0". Clients written before the XMPP 1.0 spec may
         // not report a version in which case "0.0" should be assumed (per rfc3920
         // section 4.4.1).
@@ -218,7 +219,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         int minorVersion = 0;
         for (int i = 0; i < xpp.getAttributeCount(); i++) {
             if ("lang".equals(xpp.getAttributeName(i))) {
-                language = xpp.getAttributeValue(i);
+                language = Locale.forLanguageTag(xpp.getAttributeValue(i));
             }
             if ("version".equals(xpp.getAttributeName(i))) {
                 try {
@@ -247,12 +248,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
         }
 
-        // Store language and version information in the connection.
-        connection.setLanaguage(language);
         connection.setXMPPVersion(majorVersion, minorVersion);
-
         final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();
-        
+
         // Indicate the TLS policy to use for this connection
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
@@ -279,7 +277,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         connection.setCompressionPolicy( connectionConfiguration.getCompressionPolicy() );
 
         // Create a ClientSession for this user.
-        LocalClientSession session = SessionManager.getInstance().createClientSession(connection);
+        LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
 
         // Build the start packet response
         StringBuilder sb = new StringBuilder(200);
@@ -414,16 +412,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
-     * Sets whether compression is optional or is disabled for clients.
-     *
-     * @param policy whether compression is optional or is disabled.
-     */
-    // TODO Move this to ConnectionConfiguration.
-    public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
-        JiveGlobals.setProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, policy.toString());
-    }
-
-    /**
      * Returns the Privacy list that overrides the default privacy list. This list affects
      * only this session and only for the duration of the session.
      *
@@ -503,8 +491,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param connection The connection we are proxying.
      * @param streamID unique identifier of this session.
      */
-    public LocalClientSession(String serverName, Connection connection, StreamID streamID) {
-        super(serverName, connection, streamID);
+    public LocalClientSession(String serverName, Connection connection, StreamID streamID, Locale language) {
+        super(serverName, connection, streamID, language);
         // Set an unavailable initial presence
         presence = new Presence();
         presence.setType(Presence.Type.unavailable);

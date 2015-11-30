@@ -38,7 +38,6 @@
   <module interface="org.jivesoftware.openfire.handler.IQPrivateHandler" implementation="org.jivesoftware.openfire.handler.IQPrivateHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQRegisterHandler" implementation="org.jivesoftware.openfire.handler.IQRegisterHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQRosterHandler" implementation="org.jivesoftware.openfire.handler.IQRosterHandler" />
-  <module interface="org.jivesoftware.openfire.handler.IQTimeHandler" implementation="org.jivesoftware.openfire.handler.IQTimeHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQEntityTimeHandler" implementation="org.jivesoftware.openfire.handler.IQEntityTimeHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQvCardHandler" implementation="org.jivesoftware.openfire.handler.IQvCardHandler" />
   <module interface="org.jivesoftware.openfire.handler.IQVersionHandler" implementation="org.jivesoftware.openfire.handler.IQVersionHandler" />

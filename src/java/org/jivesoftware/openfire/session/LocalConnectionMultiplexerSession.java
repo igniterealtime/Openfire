@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.util.Collection;
+import java.util.Locale;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
@@ -185,7 +186,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     public LocalConnectionMultiplexerSession(String serverName, Connection connection, StreamID streamID) {
-        super(serverName, connection, streamID);
+        super(serverName, connection, streamID, Locale.getDefault());
     }
 
     @Override

@@ -37,7 +37,6 @@ import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
-import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PendingSubscriptionsCommand;
@@ -331,7 +330,7 @@ public class PEPService implements PubSubService, Cacheable {
         message.setFrom(getAddress());
         for (JID jid : jids) {
             message.setTo(jid);
-            message.setID(node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+            message.setID(StringUtils.randomString(8));
             router.route(message);
         }
     }
@@ -340,7 +339,7 @@ public class PEPService implements PubSubService, Cacheable {
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setTo(recipientJID);
         message.setFrom(getAddress());
-        message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
+        message.setID(StringUtils.randomString(8));
 
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and

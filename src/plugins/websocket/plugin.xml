@@ -8,8 +8,8 @@
     <name>Openfire WebSocket</name>
     <description>Provides WebSocket support for Openfire.</description>
     <author>Tom Evans</author>
-    <version>1.0.0</version>
-    <date>07/28/2015</date>
+    <version>1.1.0</version>
+    <date>11/24/2015</date>
     <url>https://tools.ietf.org/html/rfc7395</url>
-    <minServerVersion>3.10.0</minServerVersion>
+    <minServerVersion>3.11.0</minServerVersion>
 </plugin>

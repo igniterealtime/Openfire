@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.jivesoftware.openfire.Connection;
@@ -188,7 +189,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     }
 
     public LocalComponentSession(String serverName, Connection conn, StreamID id) {
-        super(serverName, conn, id);
+        super(serverName, conn, id, Locale.getDefault());
     }
 
     @Override

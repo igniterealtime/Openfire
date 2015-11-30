@@ -270,21 +270,6 @@ public interface Connection extends Closeable {
     public void setXMPPVersion(int majorVersion, int minorVersion);
 
     /**
-     * Returns the language code that should be used for this connection
-     * (e.g. "en").
-     *
-     * @return the language code for the connection.
-     */
-    public String getLanguage();
-
-    /**
-     * Sets the language code that should be used for this connection (e.g. "en").
-     *
-     * @param language the language code.
-     */
-    public void setLanaguage(String language);
-
-    /**
      * Returns true if the connection is using compression.
      *
      * @return true if the connection is using compression.

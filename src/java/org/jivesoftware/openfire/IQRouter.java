@@ -433,6 +433,12 @@ public class IQRouter extends BasicModule {
             Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket.toXML());
             return;
         }
+        if (originalPacket.getFrom() == null) {
+        	if (Log.isDebugEnabled()) {
+        		Log.debug("Original IQ has no sender for reply; dropped: " + originalPacket.toXML());
+        	}
+            return;
+        }
         IQ reply = IQ.createResultIQ(originalPacket);
         reply.setChildElement(originalPacket.getChildElement().createCopy());
         reply.setError(condition);

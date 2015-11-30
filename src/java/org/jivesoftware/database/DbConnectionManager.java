@@ -460,25 +460,6 @@ public class DbConnectionManager {
     }
 
     /**
-     * Creates a scroll insensitive Statement if the JDBC driver supports it, or a normal
-     * Statement otherwise.
-     *
-     * @param con the database connection.
-     * @return a Statement
-     * @throws SQLException if an error occurs.
-     */
-    @Deprecated
-    public static Statement createScrollableStatement(Connection con) throws SQLException {
-        if (isScrollResultsSupported()) {
-            return con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    ResultSet.CONCUR_READ_ONLY);
-        }
-        else {
-            return con.createStatement();
-        }
-    }
-
-    /**
      * Creates a scroll insensitive PreparedStatement if the JDBC driver supports it, or a normal
      * PreparedStatement otherwise.
      *

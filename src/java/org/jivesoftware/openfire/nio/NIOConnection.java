@@ -442,16 +442,6 @@ public class NIOConnection implements Connection {
     }
 
     @Override
-    public String getLanguage() {
-        return language;
-    }
-
-    @Override
-    public void setLanaguage(String language) {
-        this.language = language;
-    }
-
-    @Override
     public boolean isCompressed() {
         return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
     }

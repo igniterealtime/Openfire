@@ -32,7 +32,6 @@ import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,17 +76,16 @@ public class TLSWrapper {
         try
         {
             final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
-            final SSLEngine sslEngine;
             if ( clientMode )
             {
-                sslEngine = factory.createClientModeSSLEngine();
+                tlsEngine = factory.createClientModeSSLEngine();
             }
             else
             {
-                sslEngine = factory .createServerModeSSLEngine();
+                tlsEngine = factory .createServerModeSSLEngine();
             }
 
-            final SSLSession sslSession = sslEngine.getSession();
+            final SSLSession sslSession = tlsEngine.getSession();
 
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
@@ -187,27 +185,22 @@ public class TLSWrapper {
      * @return the current TLSStatus
      */
     public TLSStatus getStatus() {
-        TLSStatus status = null;
         if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.BUFFER_UNDERFLOW) {
-            status = TLSStatus.UNDERFLOW;
+            return TLSStatus.UNDERFLOW;
         } else {
             if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.CLOSED) {
-                status = TLSStatus.CLOSED;
+                return TLSStatus.CLOSED;
             } else {
                 switch (tlsEngine.getHandshakeStatus()) {
                 case NEED_WRAP:
-                    status = TLSStatus.NEED_WRITE;
-                    break;
+                    return TLSStatus.NEED_WRITE;
                 case NEED_UNWRAP:
-                    status = TLSStatus.NEED_READ;
-                    break;
+                    return TLSStatus.NEED_READ;
                 default:
-                    status = TLSStatus.OK;
-                    break;
+                    return TLSStatus.OK;
                 }
             }
         }
-        return status;
     }
 
     private ByteBuffer resizeApplicationBuffer(ByteBuffer app) {

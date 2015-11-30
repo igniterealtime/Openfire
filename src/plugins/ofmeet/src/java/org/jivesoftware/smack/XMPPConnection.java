@@ -20,6 +20,8 @@
 
 package org.jivesoftware.smack;
 
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -789,7 +791,17 @@ public class XMPPConnection extends Connection
 			}
 		}
 
-		public Certificate[] getPeerCertificates() {
+        @Override
+        public org.jivesoftware.openfire.spi.ConnectionConfiguration getConfiguration()
+        {
+            // TODO Here we run into an issue with the ConnectionConfiguration introduced in Openfire 4:
+            //      it is not extensible in the sense that unforeseen connection types can be added.
+            //      For now, null is returned, as this object is likely to be unused (its lifecycle is
+            //      not managed by a ConnectionListener instance).
+            return null;
+        }
+
+        public Certificate[] getPeerCertificates() {
 			return null;
 		}
 

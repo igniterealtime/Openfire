@@ -19,9 +19,13 @@ import java.net.InetSocketAddress;
 
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
@@ -106,7 +110,17 @@ public class WebSocketConnection extends VirtualConnection
         return backupDeliverer;
     }
 
-	@Override
+    @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // TODO Here we run into an issue with the ConnectionConfiguration introduced in Openfire 4:
+        //      it is not extensible in the sense that unforeseen connection types can be added.
+        //      For now, null is returned, as this object is likely to be unused (its lifecycle is
+        //      not managed by a ConnectionListener instance).
+        return null;
+    }
+
+    @Override
 	public boolean isCompressed() {
 		return XmppWebSocket.isCompressionEnabled();
 	}

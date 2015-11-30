@@ -334,15 +334,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         catch (SSLHandshakeException e) {
             Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
                     "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
-                    "):" + e.toString());
-            // Close the connection
-            if (connection != null) {
-                connection.close();
-            }
-        }
-        catch (XmlPullParserException e) {
-            Log.warn("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
+                    "):", e);
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -350,7 +342,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (Exception e) {
             Log.error("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
             // Close the connection
             if (connection != null) {
                 connection.close();

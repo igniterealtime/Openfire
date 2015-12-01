@@ -895,19 +895,4 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
         return result;
     }
-
-    // Old, pre NIO / MINA code. Should not be used as NIO offers better performance
-    @Deprecated
-    public SocketReader createSocketReader(Socket sock, boolean isSecure, ServerPort serverPort, boolean useBlockingMode) throws IOException {
-        if (serverPort.isServerPort()) {
-            final XMPPServer server = XMPPServer.getInstance();
-            final String serverName = server.getServerInfo().getXMPPDomain();
-            final PacketRouter router = server.getPacketRouter();
-            final RoutingTable routingTable = server.getRoutingTable();
-            final PacketDeliverer deliverer = server.getPacketDeliverer();
-            final SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ServerSocketReader(router, routingTable, serverName, sock, conn, useBlockingMode);
-        }
-        return null;
-    }
 }

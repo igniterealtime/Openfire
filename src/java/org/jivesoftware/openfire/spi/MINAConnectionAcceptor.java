@@ -139,6 +139,14 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
         {
             System.err.println( "Error starting " + configuration.getPort() + ": " + e.getMessage() );
             Log.error( "Error starting: " + configuration.getPort(), e );
+            // Reset for future use.
+            if (socketAcceptor != null) {
+                try {
+                    socketAcceptor.unbind();
+                } finally {
+                    socketAcceptor = null;
+                }
+            }
         }
     }
 

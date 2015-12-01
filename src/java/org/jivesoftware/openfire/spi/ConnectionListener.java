@@ -174,7 +174,6 @@ public class ConnectionListener
         // TODO Start all connection types here, by supplying more connection acceptors other than a MINA-based one.
         switch ( getType() )
         {
-            case SOCKET_S2S:
             case BOSH_C2S:
             case WEBADMIN:
                 Log.debug( "Not starting a (MINA-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
@@ -205,7 +204,15 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
+        if ( getType() == ConnectionType.SOCKET_S2S )
+        {
+            connectionAcceptor = new LegacyConnectionAcceptor( generateConnectionConfiguration() );
+        }
+        else
+        {
+            connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
+        }
+
         connectionAcceptor.start();
         Log.info( "Started." );
     }

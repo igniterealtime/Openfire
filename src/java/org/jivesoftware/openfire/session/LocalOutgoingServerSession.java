@@ -64,7 +64,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
-import org.xmpp.packet.PacketExtension;
 import org.xmpp.packet.Presence;
 
 import com.jcraft.jzlib.JZlib;
@@ -121,18 +120,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @param hostname the hostname of the remote server.
      * @return True if the domain was authenticated by the remote server.
      */
-    public static boolean authenticateDomain(final String domain, final String hostname) {
-        Log.debug( "[domain {} hostname {}]: Start authentication.", domain, hostname );
+    public static OutgoingServerSession authenticateDomain(String domain, String hostname) {
         if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
             // Do nothing if the target hostname is empty, null or contains whitespaces
-            Log.debug( "[domain {} hostname {}]: Authentication failed - null or whitespace in hostname.", domain, hostname );
-            return false;
+            return null;
         }
         try {
             // Check if the remote hostname is in the blacklist
             if (!RemoteServerManager.canAccess(hostname)) {
-                Log.debug( "[domain {} hostname {}]: Authentication failed - hostname in blacklist.", domain, hostname );
-                return false;
+                return null;
             }
 
             OutgoingServerSession session;
@@ -142,14 +138,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             SessionManager sessionManager = SessionManager.getInstance();
             if (sessionManager == null) {
                 // Server is shutting down while we are trying to create a new s2s connection
-                Log.debug( "[domain {} hostname {}]: Authentication failed - no session manager available. Server might be shutting down.", domain, hostname );
-                return false;
+                return null;
             }
-            Log.debug( "[domain {} hostname {}]: Locating pre-exisiting outgoing session...", domain, hostname );
             session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
                 // Try locating if the remote server has previously authenticated with this server
-                Log.debug( "[domain {} hostname {}]: Outgoing session found. Locating related incoming session...", domain, hostname );
                 for (IncomingServerSession incomingSession : sessionManager.getIncomingServerSessions(hostname)) {
                     for (String otherHostname : incomingSession.getValidatedDomains()) {
                         session = sessionManager.getOutgoingServerSession(otherHostname);
@@ -157,7 +150,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             if (session.isUsingServerDialback()) {
                                 // A session to the same remote server but with different hostname
                                 // was found. Use this session.
-                                Log.debug( "[domain {} hostname {}]: Incoming session found. Reuse this connection.", domain, hostname );
                                 break;
                             } else {
                                 session = null;
@@ -167,7 +159,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
             }
             if (session == null) {
-                Log.debug( "[domain {} hostname {}]: No re-usable existing connecting. Create new session.", domain, hostname );
                 int port = RemoteServerManager.getPortForServer(hostname);
                 session = createOutgoingSession(domain, hostname, port);
                 if (session != null) {
@@ -177,26 +168,25 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     session.addHostname(hostname);
                     // Notify the SessionManager that a new session has been created
                     sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
-                    return true;
+                    return session;
                 } else {
                     Log.warn("Fail to connect to {} for {}", hostname, domain);
-                    return false;
+                    return null;
                 }
             }
             // A session already exists. The session was established using server dialback so
             // it is possible to do piggybacking to authenticate more domains
             if (session.getAuthenticatedDomains().contains(domain) && session.getHostnames().contains(hostname)) {
-                Log.debug( "[domain {} hostname {}]: Do nothing since the domain has already been authenticated.", domain, hostname );
-                return true;
+                // Do nothing since the domain has already been authenticated
+                return session;
             }
             // A session already exists so authenticate the domain using that session
-            Log.debug( "[domain {} hostname {}]: An session already exists, so authenticate the domain using that session.", domain, hostname );
-            return session.authenticateSubdomain(domain, hostname);
+            if (session.authenticateSubdomain(domain, hostname)) return session;
         }
         catch (Exception e) {
             Log.error("Error authenticating domain with remote server: " + hostname, e);
         }
-        return false;
+        return null;
     }
 
     /**
@@ -604,7 +594,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 if (!getAuthenticatedDomains().contains(senderDomain) &&
                         !authenticateSubdomain(senderDomain, packet.getTo().getDomain())) {
                     // Return error since sender domain was not validated by remote server
-                    returnErrorToSender(packet);
+                    LocalSession.returnErrorToSender(packet);
                     return false;
                 }
             }
@@ -636,59 +626,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             return true;
         }
         return false;
-    }
-
-    private void returnErrorToSender(Packet packet) {
-        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        if (packet.getError() != null) {
-            Log.debug("Possible double bounce: " + packet.toXML());
-        }
-        try {
-            if (packet instanceof IQ) {
-            	if (((IQ) packet).isResponse()) {
-            		Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
-            		return;
-            	}
-                IQ reply = new IQ();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setChildElement(((IQ) packet).getChildElement().createCopy());
-                reply.setType(IQ.Type.error);
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
-            }
-            else if (packet instanceof Presence) {
-                if (((Presence)packet).getType() == Presence.Type.error) {
-                    Log.debug("Double-bounce of presence: " + packet.toXML());
-                    return;
-                }
-                Presence reply = new Presence();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setType(Presence.Type.error);
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
-            }
-            else if (packet instanceof Message) {
-                if (((Message)packet).getType() == Message.Type.error){
-                    Log.debug("Double-bounce of message: " + packet.toXML());
-                    return;
-                }
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setType(Message.Type.error);
-                reply.setThread(((Message)packet).getThread());
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
-            }
-        }
-        catch (Exception e) {
-            Log.error("Error returning error to sender. Original packet: " + packet, e);
-        }
     }
 
     @Override

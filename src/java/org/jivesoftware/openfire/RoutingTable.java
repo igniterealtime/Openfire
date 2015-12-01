@@ -94,7 +94,7 @@ public interface RoutingTable {
      * @param route the address associated to the route.
      * @param destination the outgoing server session.
      */
-    void addServerRoute(JID route, LocalOutgoingServerSession destination);
+    void addServerRoute(JID route, RoutableChannelHandler destination);
 
     /**
      * Adds a route to the routing table for the specified internal or external component. <p>

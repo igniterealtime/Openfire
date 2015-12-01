@@ -875,7 +875,7 @@ public abstract class Node {
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection"));
         }
 
-        if (!parent.isRootCollectionNode()) {
+        if (parent != null && !parent.isRootCollectionNode()) {
         	formField.addValue(parent.getNodeID());
         }
 

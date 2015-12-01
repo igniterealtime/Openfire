@@ -143,17 +143,25 @@ public class JmxWebPlugin implements Plugin  {
 	public void destroyPlugin() {
 		Log.info( "["+ NAME + "] destroy " + NAME + " plugin resources");
 
-        database.stop();
-        JmxHelper.unregister(OBJECTNAME_DATABASEPOOL);
+        if (database != null) {
+            database.stop();
+            JmxHelper.unregister(OBJECTNAME_DATABASEPOOL);
+        }
 
-        client.stop();
-        JmxHelper.unregister(OBJECTNAME_CORE_CLIENT_THREADPOOL);
+        if (client != null) {
+            client.stop();
+            JmxHelper.unregister(OBJECTNAME_CORE_CLIENT_THREADPOOL);
+        }
 
-        packetCounter.stop();
-        JmxHelper.unregister(OBJECTNAME_PACKET_COUNTER);
+        if (packetCounter != null) {
+            packetCounter.stop();
+            JmxHelper.unregister(OBJECTNAME_PACKET_COUNTER);
+        }
 
-        openfire.stop();
-        JmxHelper.unregister(OBJECTNAME_OPENFIRE);
+        if (openfire != null) {
+            openfire.stop();
+            JmxHelper.unregister(OBJECTNAME_OPENFIRE);
+        }
 
         Log.info("["+ NAME + "]  plugin fully destroyed.");
 	}

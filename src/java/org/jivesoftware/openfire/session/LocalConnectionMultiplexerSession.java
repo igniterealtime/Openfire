@@ -30,6 +30,9 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,21 +62,6 @@ import org.xmpp.packet.StreamError;
 public class LocalConnectionMultiplexerSession extends LocalSession implements ConnectionMultiplexerSession {
 
 	private static final Logger Log = LoggerFactory.getLogger(LocalConnectionMultiplexerSession.class);
-
-    private static Connection.TLSPolicy tlsPolicy;
-    private static Connection.CompressionPolicy compressionPolicy;
-
-    static {
-        // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.TLS_POLICY,
-                Connection.TLSPolicy.disabled.toString());
-        tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
-
-        // Set the Compression policy stored as a system property
-        policyName = JiveGlobals.getProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS,
-                Connection.CompressionPolicy.disabled.toString());
-        compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
-    }
 
     public static LocalConnectionMultiplexerSession createSession(String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
@@ -132,10 +120,10 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         }
 
         // Indicate the TLS policy to use for this connection
-        connection.setTlsPolicy(tlsPolicy);
+        connection.setTlsPolicy( connection.getConfiguration().getTlsPolicy() );
 
         // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy(compressionPolicy);
+        connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
 
         // Set the connection manager domain to use delivering a packet fails
         ((MultiplexerPacketDeliverer) connection.getPacketDeliverer())
@@ -171,9 +159,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
             sb = new StringBuilder(490);
             sb.append("<stream:features>");
-            if (tlsPolicy != Connection.TLSPolicy.disabled) {
+            if (connection.getTlsPolicy() != Connection.TLSPolicy.disabled) {
                 sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-                if (tlsPolicy == Connection.TLSPolicy.required) {
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                     sb.append("<required/>");
                 }
                 sb.append("</starttls>");
@@ -262,13 +250,17 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      * </ul
      */
     private void sendClientOptions() {
+
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
+
         IQ options = new IQ(IQ.Type.set);
         Element child = options.setChildElement("configuration",
                 "http://jabber.org/protocol/connectionmanager");
         // Add info about TLS
-        if (LocalClientSession.getTLSPolicy() != Connection.TLSPolicy.disabled) {
+        if (configuration.getTlsPolicy() != Connection.TLSPolicy.disabled) {
             Element tls = child.addElement("starttls", "urn:ietf:params:xml:ns:xmpp-tls");
-            if (LocalClientSession.getTLSPolicy() == Connection.TLSPolicy.required) {
+            if (configuration.getTlsPolicy() == Connection.TLSPolicy.required) {
                 tls.addElement("required");
             }
 
@@ -282,7 +274,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             }
         }
         // Add info about Stream Compression
-        if (LocalClientSession.getCompressionPolicy() == Connection.CompressionPolicy.optional) {
+        if (configuration.getCompressionPolicy() == Connection.CompressionPolicy.optional) {
             Element comp = child.addElement("compression", "http://jabber.org/features/compress");
             comp.addElement("method").setText("zlib");
         }
@@ -307,51 +299,4 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             conn.deliver(packet);
         }
     }
-
-    /**
-     * Returns whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
-     *
-     * @return whether TLS is mandatory, optional or is disabled.
-     */
-    public static SocketConnection.TLSPolicy getTLSPolicy() {
-        return tlsPolicy;
-    }
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
-     *
-     * @param policy whether TLS is mandatory, optional or is disabled.
-     */
-    public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
-        tlsPolicy = policy;
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.TLS_POLICY, tlsPolicy.toString());
-    }
-
-    /**
-     * Returns whether compression is optional or is disabled for clients.
-     *
-     * @return whether compression is optional or is disabled.
-     */
-    public static SocketConnection.CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    /**
-     * Sets whether compression is optional or is disabled for clients.
-     *
-     * @param policy whether compression is optional or is disabled.
-     */
-    public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
-        compressionPolicy = policy;
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.COMPRESSION_SETTINGS, compressionPolicy.toString());
-    }
-
 }

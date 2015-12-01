@@ -75,10 +75,6 @@ public class ClientTrustManager implements X509TrustManager {
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-    /**
-     * Holds the domain of the remote server we are trying to connect
-     */
-    private String server;
 
     /**
      * Holds the CRL's to validate certs

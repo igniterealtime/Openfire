@@ -155,6 +155,7 @@
     <tr>
         <th>&nbsp;</th>
         <th nowrap><fmt:message key="component.session.label.domain" /></th>
+        <th>&nbsp;</th>
         <th nowrap><fmt:message key="component.session.label.name" /></th>
         <th nowrap><fmt:message key="component.session.label.category" /></th>
         <th nowrap><fmt:message key="component.session.label.type" /></th>
@@ -187,13 +188,24 @@
         <td width="43%" nowrap>
             <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
         </td>
-        <td align="center" width="15%" nowrap>
+        <td width="1%">
+            <%  if (componentSession.isSecure()) {
+                if (componentSession.getPeerCertificates() != null && componentSession.getPeerCertificates().length > 0) { %>
+            <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+            <%      } else { %>
+            <img src="images/lock.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+            <%      }
+            } else { %>
+            <img src="images/blank.gif" width="1" height="1" alt="">
+            <%     } %>
+        </td>
+        <td width="15%" nowrap>
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="10%" nowrap>
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="10%" nowrap>
             <table border="0">
             <tr valign="center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
@@ -235,10 +247,10 @@
             boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
-        <td align="center" width="10%" nowrap>
+        <td width="9%" nowrap>
             <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="9%" nowrap>
             <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
         </td>
 

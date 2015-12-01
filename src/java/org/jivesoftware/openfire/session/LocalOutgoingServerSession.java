@@ -333,15 +333,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         catch (SSLHandshakeException e) {
             Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
                     "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
-                    "):" + e.toString());
-            // Close the connection
-            if (connection != null) {
-                connection.close();
-            }
-        }
-        catch (XmlPullParserException e) {
-            Log.warn("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
+                    "):", e);
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -349,7 +341,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (Exception e) {
             Log.error("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + "): " + e.toString());
+                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -378,10 +370,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         if (proceed != null && proceed.getName().equals("proceed")) {
             log.debug("Negotiating TLS...");
             try {
-                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
-                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
-                        		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
-                connection.startTLS(true, hostname, needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted);
+//                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
+//                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
+//                        		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+                connection.startTLS(true);
             } catch(Exception e) {
                 log.debug("Got an exception whilst negotiating TLS: " + e.getMessage());
                 throw e;
@@ -412,8 +404,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             features = reader.parseDocument().getRootElement();
             if (features != null) {
                 // Check if we can use stream compression
-                String policyName = JiveGlobals.getProperty(ConnectionSettings.Server.COMPRESSION_SETTINGS, Connection.CompressionPolicy.disabled.toString());
-                Connection.CompressionPolicy compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
+                final Connection.CompressionPolicy compressionPolicy = connection.getConfiguration().getCompressionPolicy();
                 if (Connection.CompressionPolicy.optional == compressionPolicy) {
                     // Verify if the remote server supports stream compression
                     Element compression = features.element("compression");

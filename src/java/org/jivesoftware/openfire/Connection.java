@@ -26,6 +26,7 @@ import java.security.cert.Certificate;
 
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
 
 /**
@@ -339,8 +340,25 @@ public interface Connection extends Closeable {
      *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
      * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
+     * @deprecated Use {@link #startTLS(boolean)} instead.
      */
+    @Deprecated
     void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
+
+    /**
+     * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
+     * connection the server requesting the TLS negotiation will be the client and the other server
+     * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
+     * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
+     * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.<p>
+     *
+     * In the case of client-2-server the XMPP server must pass <code>false</code> in the
+     * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation.
+     *
+     * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
+     * @throws Exception if an error occured while securing the connection.
+     */
+    void startTLS(boolean clientMode) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter
@@ -356,6 +374,15 @@ public interface Connection extends Closeable {
      * TLS. However, it is possible to use compression without TLS.
      */
     void startCompression();
+
+    /**
+     * Returns a representation of the desired state for this connection. Note that this is different from the current
+     * state of the connection. For example, TLS can be required by configuration, but while the connection has yet to
+     * be fully initialized, the current state might not be TLS-encrypted.
+     *
+     * @return The desired configuration for the connection (never null).
+     */
+    ConnectionConfiguration getConfiguration();
 
     /**
      * Enumeration of possible compression policies required to interact with the server.
@@ -395,7 +422,14 @@ public interface Connection extends Closeable {
          * TLS is not available. Entities that request a TLS negotiation will get a stream
          * error and their connections will be closed.
          */
-        disabled
+        disabled,
+
+        /**
+         * A policy that requires connections to be encrypted immediately (as opposed to the
+         * 'required' policy, that allows for an initially unencrypted connection to become
+         * encrypted through StartTLS.
+         */
+        legacyMode
     }
 
     /**

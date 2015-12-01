@@ -38,17 +38,17 @@ import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
@@ -373,13 +373,22 @@ public class XMPPServer {
             // Set default SASL SCRAM-SHA-1 iteration count
             JiveGlobals.setProperty("sasl.scram-sha-1.iteration-count", Integer.toString(ScramUtils.DEFAULT_ITERATION_COUNT));
 
-            // Update certificates (if required)
+            // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
+            CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
             try {
-                // Check if keystore already has certificates for current domain
-                final IdentityStoreConfig storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-                storeConfig.ensureDomainCertificates( "DSA", "RSA" );
+                certificateStoreManager = new CertificateStoreManager();
+                certificateStoreManager.initialize( this );
+                certificateStoreManager.start();
+                final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );
+                identityStore.ensureDomainCertificates( "DSA", "RSA" );
             } catch (Exception e) {
                 logger.error("Error generating self-signed certificates", e);
+            } finally {
+                if (certificateStoreManager != null)
+                {
+                    certificateStoreManager.stop();
+                    certificateStoreManager.destroy();
+                }
             }
 
             // Initialize list of admins now (before we restart Jetty)
@@ -1207,7 +1216,7 @@ public class XMPPServer {
      * @return the <code>AuditManager</code> registered with this server.
      */
     public AuditManager getAuditManager() {
-        return (AuditManager) modules.get(AuditManager.class.getName());
+        return (AuditManager) modules.get(AuditManagerImpl.class.getName());
     }
 
     /**
@@ -1409,6 +1418,16 @@ public class XMPPServer {
         return (InternalComponentManager) modules.get(InternalComponentManager.class.getName());
     }
 
+    /**
+     * Returns the <code>CertificateStoreManager</code> registered with this server. The
+     * <code>CertificateStoreManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>CertificateStoreManager</code> registered with this server.
+     */
+    public CertificateStoreManager getCertificateStoreManager() {
+        return (CertificateStoreManager) modules.get( CertificateStoreManager.class.getName() );
+    }
     /**
      * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
      * in a cluster a <tt>null</tt> value is returned.

@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -48,7 +49,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
-import org.jivesoftware.openfire.keystore.Purpose;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -57,6 +58,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
@@ -193,8 +195,8 @@ public class SASLAuthentication {
             // Server connections don't follow the same rules as clients
             if (session.isSecure()) {
                 LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-                final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_S2S_TRUSTSTORE );
+                final KeyStore keyStore   = svr.getConnection().getConfiguration().getIdentityStore().getStore();
+                final KeyStore trustStore = svr.getConnection().getConfiguration().getTrustStore().getStore();
                 final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
 
                 boolean haveTrustedCertificate = trusted != null;
@@ -572,8 +574,9 @@ public class SASLAuthentication {
                 return Status.failed; 
             }
 
-            final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final KeyStore trustStore = SSLConfig.getStore( Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+            final KeyStore keyStore   = connection.getConfiguration().getIdentityStore().getStore();
+            final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
+
             final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
 
             if (trusted == null) {
@@ -645,8 +648,10 @@ public class SASLAuthentication {
     }
 
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
-        final KeyStore keyStore   = SSLConfig.getStore( Purpose.SOCKETBASED_IDENTITYSTORE );
-        final KeyStore trustStore = SSLConfig.getStore( isS2S ? Purpose.SOCKETBASED_S2S_TRUSTSTORE : Purpose.SOCKETBASED_C2S_TRUSTSTORE );
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+        final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
+        final KeyStore keyStore   = certificateStoreManager.getIdentityStore( connectionType ).getStore();
+        final KeyStore trustStore = certificateStoreManager.getTrustStore( connectionType ).getStore();
         final X509Certificate trusted = CertificateManager.getEndEntityCertificate( chain, keyStore, trustStore );
         if (trusted != null) {
             return verifyCertificate(trusted, hostname);

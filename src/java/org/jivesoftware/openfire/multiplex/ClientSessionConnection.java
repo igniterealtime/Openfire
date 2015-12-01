@@ -24,6 +24,9 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
@@ -114,6 +117,14 @@ public class ClientSessionConnection extends VirtualConnection {
     }
 
     @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // Here, a client-to-server configuration is mocked. It is likely not used, as actual connection handling takes
+        // place at the connection manager.
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        return connectionManager.getListener( ConnectionType.SOCKET_C2S, true ).generateConnectionConfiguration();
+    }
+
     public byte[] getAddress() throws UnknownHostException {
         if (hostAddress != null) {
             return InetAddress.getByName(hostAddress).getAddress();

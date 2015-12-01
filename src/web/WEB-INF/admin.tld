@@ -7,10 +7,10 @@
     <tlib-version>1.2</tlib-version>
     <short-name>Tag Library for Openfire</short-name>
     <description>Tab Library for Openfire Admin Console</description>
+    <short-name>admin</short-name>
     <uri>admin</uri>
-
-    <tag>
-        <name>tabs</name>
+	<tag>
+		<name>tabs</name>
         <tag-class>org.jivesoftware.admin.TabsTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -65,7 +65,7 @@
         </attribute>
     </tag>
     <tag>
-        <name>sidebar</name>
+		<name>sidebar</name>
         <tag-class>org.jivesoftware.admin.SidebarTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -93,9 +93,9 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
-    </tag>
-    <tag>
-        <name>subsidebar</name>
+	</tag>
+	<tag>
+		<name>subsidebar</name>
         <tag-class>org.jivesoftware.admin.SubSidebarTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
@@ -118,17 +118,7 @@
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
-    </tag>
-    <tag>
-        <name>infobox</name>
-        <tag-class>org.jivesoftware.admin.InfoboxTag</tag-class>
-        <body-content>JSP</body-content>
-        <attribute>
-            <name>type</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
+	</tag>
     <tag>
         <name>ASN1DER</name>
         <tag-class>org.jivesoftware.admin.ASN1DERTag</tag-class>
@@ -139,6 +129,18 @@
             <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag-file>
+        <name>contentBox</name>
+        <path>/WEB-INF/tags/admin/contentBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infobox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infoBox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
     <function>
         <name>replaceAll</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>

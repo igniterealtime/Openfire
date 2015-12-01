@@ -1,73 +1,63 @@
 <%@ page errorPage="error.jsp" %>
 
-<%@ page import="org.jivesoftware.util.CertificateManager" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
-<%@ page import="java.io.ByteArrayInputStream" %>
-<%@ page import="java.security.PrivateKey" %>
-<%@ page import="java.security.cert.X509Certificate" %>
-<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.IdentityStoreConfig" %>
-<%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="now" class="java.util.Date"/>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <% webManager.init(request, response, session, application, out); %>
 
 <% // Get parameters:
-    final boolean generate        = ParamUtils.getBooleanParameter(request, "generate");
-    final boolean delete          = ParamUtils.getBooleanParameter(request, "delete");
-    final boolean importReply     = ParamUtils.getBooleanParameter(request, "importReply");
-    final String alias            = ParamUtils.getParameter( request, "alias" );
-    final String storePurposeText = ParamUtils.getParameter( request, "storePurpose" );
+    final boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
+    final boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
+    final boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
+    final String alias              = ParamUtils.getParameter( request, "alias" );
+    final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
 
-    Purpose storePurpose = null;
-    IdentityStoreConfig storeConfig = null;
+    ConnectionType connectionType = null;
+    IdentityStore identityStore = null;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
-
-        if ( !storePurpose.isIdentityStore() )
+        connectionType = ConnectionType.valueOf( connectionTypeText );
+        identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( connectionType );
+        if ( identityStore == null )
         {
-            errors.put( "storePurpose", "should be an identity store (not a trust store)");
-        }
-        else
-        {
-            storeConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
-            if ( storeConfig == null )
-            {
-                errors.put( "storeConfig", "Unable to get an instance." );
-            }
+            errors.put( "identityStore", "Unable to get an instance." );
         }
     }
     catch (RuntimeException ex)
     {
-        errors.put( "storePurpose", ex.getMessage() );
+        errors.put( "connectionType", ex.getMessage() );
     }
 
     if ( errors.isEmpty() )
     {
-        pageContext.setAttribute( "storePurpose", storePurpose );
-        pageContext.setAttribute( "storeConfig", storeConfig );
+        pageContext.setAttribute( "connectionType", connectionType );
+        pageContext.setAttribute( "identityStore", identityStore );
 
-        final Set<Purpose> sameStorePurposes = SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
-        pageContext.setAttribute( "sameStorePurposes", sameStorePurposes );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
+        pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
 
-        final Map<String, X509Certificate> certificates = storeConfig.getAllCertificates();
+        final Map<String, X509Certificate> certificates = identityStore.getAllCertificates();
         pageContext.setAttribute( "certificates", certificates );
 
-        pageContext.setAttribute( "validRSACert", storeConfig.containsDomainCertificate( "RSA" ) );
-        pageContext.setAttribute( "validDSACert", storeConfig.containsDomainCertificate( "DSA" ) );
+        pageContext.setAttribute( "validRSACert", identityStore.containsDomainCertificate( "RSA" ) );
+        pageContext.setAttribute( "validDSACert", identityStore.containsDomainCertificate( "DSA" ) );
 
         if ( delete )
         {
@@ -79,11 +69,11 @@
             {
                 try
                 {
-                    storeConfig.delete( alias );
+                    identityStore.delete( alias );
 
                     // Log the event
-                    webManager.logEvent( "deleted SSL cert from " + storePurposeText + " with alias " + alias, null );
-                    response.sendRedirect( "security-keystore.jsp?storePurpose=" + storePurposeText + "&deletesuccess=true" );
+                    webManager.logEvent( "deleted SSL cert from " + connectionType + " with alias " + alias, null );
+                    response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
                 catch ( Exception e )
@@ -151,13 +141,14 @@
 <html>
     <head>
         <title><fmt:message key="ssl.certificates.keystore.title"/></title>
-        <meta name="pageID" content="security-keystore"/>
+        <meta name="pageID" content="security-certificate-store-management"/>
+        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
     </head>
     <body>
         <c:if test="${restartNeeded}">
             <admin:infobox type="warning">
                 <fmt:message key="ssl.certificates.keystore.restart_server">
-                    <fmt:param value="<a href='server-restart.jsp?page=security-keystore.jsp&storePurpose=${storePurpose}'>"/>
+                    <fmt:param value="<a href='server-restart.jsp?page=security-keystore.jsp&connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                 </fmt:message>
             </admin:infobox>
@@ -185,9 +176,9 @@
         <c:if test="${not validDSACert or not validRSACert}">
             <admin:infobox type="warning">
                 <fmt:message key="ssl.certificates.keystore.no_installed">
-                    <fmt:param value="<a href='security-keystore.jsp?generate=true&storePurpose=${storePurpose}'>"/>
+                    <fmt:param value="<a href='security-keystore.jsp?generate=true&connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
-                    <fmt:param value="<a href='import-keystore-certificate.jsp?storePurpose=${storePurpose}'>"/>
+                    <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                 </fmt:message>
             </admin:infobox>
@@ -210,7 +201,7 @@
 
         <p>
             <fmt:message key="ssl.certificates.keystore.info">
-                <fmt:param value="<a href='import-keystore-certificate.jsp?storePurpose=${storePurpose}'>"/>
+                <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                 <fmt:param value="</a>"/>
             </fmt:message>
         </p>
@@ -238,13 +229,13 @@
             </thead>
             <tbody>
                 <c:choose>
-                    <c:when test="${empty storeConfig.allCertificates}">
+                    <c:when test="${empty certificates}">
                         <tr valign="top">
                             <td colspan="5"><em>(<fmt:message key="global.none"/>)</em></td>
                         </tr>
                     </c:when>
                     <c:otherwise>
-                        <c:forEach var="certificateEntry" items="${storeConfig.allCertificates}">
+                        <c:forEach var="certificateEntry" items="${certificates}">
                             <c:set var="certificate" value="${certificateEntry.value}"/>
                             <c:set var="alias" value="${certificateEntry.key}"/>
                             <c:set var="identities" value="${admin:serverIdentities(certificateEntry.value)}"/>
@@ -284,10 +275,11 @@
                             %>
                             <tr valign="top">
                                 <td>
-                                    <a href="security-certificate-details.jsp?storePurpose=${storePurpose}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
+                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=false" title="<fmt:message key='session.row.cliked'/>">
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
                                             <c:out value="${stat.first ? '' : ','} ${currentItem}"/>
                                         </c:forEach>
+                                        (<c:out value="${alias}"/>)
                                     </a>
                                 </td>
                                 <td>
@@ -336,7 +328,7 @@
                                     <c:out value="${certificate.publicKey.algorithm}"/>
                                 </td>
                                 <td width="1" align="center">
-                                    <a href="security-keystore.jsp?alias=${alias}&storePurpose=${storePurpose}&delete=true"
+                                    <a href="security-keystore.jsp?alias=${alias}&connectionType=${connectionType}&delete=true"
                                        title="<fmt:message key="global.click_delete"/>"
                                        onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

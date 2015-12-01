@@ -49,6 +49,7 @@ import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.X509Extensions;
@@ -59,9 +60,16 @@ import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
+import org.jivesoftware.openfire.keystore.CertificateStore;
+import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
+import org.jivesoftware.openfire.keystore.CertificateUtils;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -313,7 +321,7 @@ public class CertificateManager {
      * @return true if an RSA certificate was found in the specified keystore for the specified domain.
      * @throws KeyStoreException
      */
-    public static boolean isRSACertificate(CertificateStoreConfig storeConfig, String domain) throws KeyStoreException {
+    public static boolean isRSACertificate(CertificateStore storeConfig, String domain) throws KeyStoreException {
         return isCertificate(storeConfig, domain, "RSA");
     }
 
@@ -325,7 +333,7 @@ public class CertificateManager {
      * @return true if an DSA certificate was found in the specified keystore for the specified domain.
      * @throws KeyStoreException
      */
-    public static boolean isDSACertificate(CertificateStoreConfig storeConfig, String domain) throws KeyStoreException {
+    public static boolean isDSACertificate(CertificateStore storeConfig, String domain) throws KeyStoreException {
         return isCertificate( storeConfig, domain, "DSA" );
     }
 
@@ -351,7 +359,7 @@ public class CertificateManager {
      * @return true if a certificate with the specified configuration was found in the key store.
      * @throws KeyStoreException
      */
-    private static boolean isCertificate(CertificateStoreConfig storeConfig, String domain, String algorithm) throws KeyStoreException {
+    private static boolean isCertificate(CertificateStore storeConfig, String domain, String algorithm) throws KeyStoreException {
     	for (Enumeration<String> aliases = storeConfig.getStore().aliases(); aliases.hasMoreElements();) {
             X509Certificate certificate = (X509Certificate) storeConfig.getStore().getCertificate(aliases.nextElement());
 
@@ -630,6 +638,9 @@ public class CertificateManager {
         if ( pemRepresentation == null || pemRepresentation.trim().isEmpty() ) {
             throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null or an empty String.");
         }
+        if ( passPhrase == null ) {
+            passPhrase = "";
+        }
         try ( Reader reader = new StringReader( pemRepresentation.trim() ))
         {
             final Object object = new PEMParser( reader ).readObject();
@@ -642,6 +653,25 @@ public class CertificateManager {
                 // Encrypted key - we will use provided password
                 final PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build( passPhrase.toCharArray() );
                 kp = converter.getKeyPair( ( (PEMEncryptedKeyPair) object ).decryptKeyPair( decProv ) );
+            }
+            else if ( object instanceof PKCS8EncryptedPrivateKeyInfo )
+            {
+                // Encrypted key - we will use provided password
+                try
+                {
+                    final PKCS8EncryptedPrivateKeyInfo encryptedInfo = (PKCS8EncryptedPrivateKeyInfo) object;
+                    final InputDecryptorProvider provider = new JceOpenSSLPKCS8DecryptorProviderBuilder().build( passPhrase.toCharArray() );
+                    final PrivateKeyInfo privateKeyInfo = encryptedInfo.decryptPrivateKeyInfo( provider );
+                    return converter.getPrivateKey( privateKeyInfo );
+                }
+                catch ( PKCSException | OperatorCreationException e )
+                {
+                    throw new IOException( "Unable to decrypt private key.", e );
+                }
+            }
+            else if ( object instanceof PrivateKeyInfo )
+            {
+                return converter.getPrivateKey( (PrivateKeyInfo) object );
             }
             else
             {
@@ -823,69 +853,12 @@ public class CertificateManager {
      *
      * @param certificates an unordered collection of certificates (cannot be null).
      * @return An ordered list of certificates (possibly empty, but never null).
+     * @deprecated Moved to CertificateUtils
      */
+    @Deprecated
     public static List<X509Certificate> order( Collection<X509Certificate> certificates ) throws CertificateException
     {
-        final LinkedList<X509Certificate> orderedResult = new LinkedList<>();
-
-        if ( certificates.isEmpty() ) {
-            return orderedResult;
-        }
-
-        if (certificates.size() == 1) {
-            orderedResult.addAll( certificates );
-            return orderedResult;
-        }
-
-        final Map<Principal, X509Certificate> byIssuer = new HashMap<>();
-        final Map<Principal, X509Certificate> bySubject = new HashMap<>();
-
-        for ( final X509Certificate certificate : certificates ) {
-            final Principal issuer = certificate.getIssuerDN();
-            final Principal subject = certificate.getSubjectDN();
-
-            if ( byIssuer.put( issuer, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical issuerDN values." );
-            }
-            if ( bySubject.put( subject, certificate ) != null ) {
-                throw new CertificateException( "The provided input should not contain multiple certificates with identical subjectDN values." );
-            }
-        }
-
-        // The first certificate will have a 'subject' value that's not an 'issuer' of any other chain.
-        X509Certificate first = null;
-        for ( Map.Entry<Principal, X509Certificate> entry : bySubject.entrySet() ) {
-            final Principal subject = entry.getKey();
-            final X509Certificate certificate = entry.getValue();
-
-            if ( ! byIssuer.containsKey( subject ) ) {
-                if (first == null) {
-                    first = certificate;
-                } else {
-                    throw new CertificateException( "The provided input should not contain more than one certificates that has a subjectDN value that's not equal to the issuerDN value of another certificate." );
-                }
-            }
-        }
-
-        if (first == null) {
-            throw new CertificateException( "The provided input should contain a certificates that has a subjectDN value that's not equal to the issuerDN value of any other certificate." );
-        }
-
-        orderedResult.add( first );
-
-        // With the first certificate in hand, every following certificate should have a subject that's equal to the previous issuer value.
-        X509Certificate next = bySubject.get( first.getIssuerDN() );
-        while (next != null) {
-            orderedResult.add( next );
-            next = bySubject.get( next.getIssuerDN() );
-        }
-
-        // final check
-        if (orderedResult.size() != certificates.size()) {
-            throw new CertificateException( "Unable to recreate a certificate chain from the provided input." );
-        }
-
-        return orderedResult;
+        return CertificateUtils.order( certificates );
     }
 
     /**

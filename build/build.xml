@@ -142,9 +142,6 @@
     <taskdef name="propertymerge" classname="org.jugbb.ant.propertymerge.PropertyMergeTask">
         <classpath refid="ant.dependencies" />
     </taskdef>
-    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
-        <classpath refid="ant.dependencies" />
-    </typedef>
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -914,7 +911,6 @@
         <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}">
                 <include name="**/*.java" />
-                <srcinc />
             </fileset>
             <filterset>
                 <filter token="DATE" value="${builddate}"/>
@@ -1320,11 +1316,7 @@
 
                 <!-- copy the source we want to compile -->
                 <copy todir="@{pluginlib}/source">
-                    <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" >
-                        <not>
-                            <srcinc />
-                        </not>
-                    </fileset>
+                    <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" />
                     <filterset>
                         <filter token="DATE" value="${buildJavaDate}"/>
                     </filterset>
@@ -1357,7 +1349,6 @@
                     </fileset>
                 </jar>
 
-                <!-- Clean-up our source files for the "srcinc" files -->
                 <delete dir="@{pluginlib}/classes" />
                 <delete dir="@{pluginlib}/source" />
 

@@ -48,14 +48,26 @@ public interface ConnectionManager {
      * The default XMPP port for external components.
      */
     final int DEFAULT_COMPONENT_PORT = 5275;
+
+    /**
+     * The XMPP port for external components using SSL traffic.
+     */
+    final int DEFAULT_COMPONENT_SSL_PORT = 5276;
+
     /**
      * The default XMPP port for server2server communication.
      */
     final int DEFAULT_SERVER_PORT = 5269;
+
     /**
      * The default XMPP port for connection multiplex.
      */
     final int DEFAULT_MULTIPLEX_PORT = 5262;
+
+    /**
+     * The default XMPP port for connection multiplex.
+     */
+    final int DEFAULT_MULTIPLEX_SSL_PORT = 5263;
 
     /**
      * Returns an array of the ports managed by this connection manager.
@@ -64,21 +76,6 @@ public interface ConnectionManager {
      *      (can be an empty but never null).
      */
     public Collection<ServerPort> getPorts();
-
-    /**
-     * Creates a new socket reader for the new accepted socket to be managed
-     * by the connection manager.
-     *
-     * @param socket the new accepted socket by this manager.
-     * @param isSecure true if the connection is secure.
-     * @param serverPort holds information about the port on which the server is listening for
-     *        connections.
-     * @param useBlockingMode true means that the server will use a thread per connection.
-     * @return the created socket reader.
-     * @throws java.io.IOException when there is an error creating the socket reader.
-     */
-    public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
-            boolean useBlockingMode) throws IOException;
 
     /**
      * Sets if the port listener for unsecured clients will be available or not. When disabled

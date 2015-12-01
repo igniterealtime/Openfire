@@ -1,12 +1,13 @@
 <%@ page errorPage="error.jsp"%>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
+<%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="java.security.cert.X509Certificate"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="org.jivesoftware.openfire.keystore.Purpose" %>
-<%@ page import="org.jivesoftware.openfire.keystore.TrustStoreConfig" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="java.util.Set" %>
+<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -19,41 +20,36 @@
     final boolean delete          = ParamUtils.getBooleanParameter( request, "delete" );
     final String alias            = ParamUtils.getParameter( request, "alias" );
 
-    final String storePurposeText = ParamUtils.getParameter(request, "storePurpose");
+    final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
     final Map<String, String> errors = new HashMap<>();
 
-    Purpose storePurpose = null;
-    TrustStoreConfig storeConfig = null;
+    ConnectionType connectionType = null;
+    TrustStore trustStore = null;
     try
     {
-        storePurpose = Purpose.valueOf( storePurposeText );
-
-        if ( !storePurpose.isTrustStore() )
+        connectionType = ConnectionType.valueOf( connectionTypeText );
+        trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( connectionType );
+        if ( trustStore == null )
         {
-            errors.put( "storePurpose", "should be a trust store (not an identity store)");
-        }
-        else
-        {
-            storeConfig = (TrustStoreConfig) SSLConfig.getInstance().getStoreConfig( storePurpose );
-            if ( storeConfig == null )
-            {
-                errors.put( "storeConfig", "Unable to get an instance." );
-            }
+            errors.put( "trustStore", "Unable to get an instance." );
         }
     }
-    catch (RuntimeException ex)
+    catch ( RuntimeException ex )
     {
-        errors.put( "storePurpose", ex.getMessage() );
+        errors.put( "connectionType", ex.getMessage() );
     }
 
     if ( errors.isEmpty() )
     {
-        pageContext.setAttribute( "storePurpose", storePurpose );
-        pageContext.setAttribute( "storeConfig", storeConfig );
+        pageContext.setAttribute( "connectionType", connectionType );
+        pageContext.setAttribute( "trustStore", trustStore );
 
-        final Set<Purpose> sameStorePurposes = SSLConfig.getInstance().getOtherPurposesForSameStore( storePurpose );
-        pageContext.setAttribute( "sameStorePurposes", sameStorePurposes );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
+        pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
+
+        final Map<String, X509Certificate> certificates = trustStore.getAllCertificates();
+        pageContext.setAttribute( "certificates", certificates );
 
         if ( delete )
         {
@@ -65,11 +61,11 @@
             {
                 try
                 {
-                    storeConfig.delete( alias );
+                    trustStore.delete( alias );
 
                     // Log the event
-                    webManager.logEvent( "deleted SSL cert from " + storePurposeText + " with alias " + alias, null );
-                    response.sendRedirect( "security-truststore.jsp?storePurpose=" + storePurposeText + "&deletesuccess=true" );
+                    webManager.logEvent( "deleted SSL cert from " + connectionType + " with alias " + alias, null );
+                    response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
                 catch ( Exception e )
@@ -85,29 +81,9 @@
 
 <html>
     <head>
-        <title><fmt:message key="certificate-management.purpose.${storePurpose}.title"/></title>
-        <meta name="pageID" content="security-truststore"/>
-        <style>
-            .info-header {
-                background-color: #eee;
-                font-size: 10pt;
-            }
-            .info-table {
-                margin-right: 12px;
-            }
-            .info-table .c1 {
-                text-align: right;
-                vertical-align: top;
-                color: #666;
-                font-weight: bold;
-                font-size: 9pt;
-                white-space: nowrap;
-            }
-            .info-table .c2 {
-                font-size: 9pt;
-                width: 90%;
-            }
-        </style>
+        <title><fmt:message key="ssl.certificates.truststore.title"/></title>
+        <meta name="pageID" content="security-certificate-store-management"/>
+        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
     </head>
     <body>
         <c:forEach var="err" items="${errors}">
@@ -137,51 +113,14 @@
             <admin:infobox type="success"><fmt:message key="ssl.certificates.added_updated"/></admin:infobox>
         </c:if>
 
-        <c:if test="${storePurpose != null}">
+        <c:if test="${connectionType != null}">
             <p>
-                <fmt:message key="certificate-management.purpose.${storePurpose}.description"/>
+                <fmt:message key="ssl.certificates.truststore.info"/>
             </p>
-
-            <table border="0" width="100%">
-                <td valign="top" width="60%">
-                    <table cellpadding="2" cellspacing="2" border="0" class="info-table">
-                        <thead>
-                        <tr><th colspan="2" class="info-header">Store Configuration</th></tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td class="c1">File location:</td>
-                            <td class="c2"><c:out value="${storeConfig.path}"/></td>
-                        </tr>
-                        <tr>
-                            <td class="c1">Type:</td>
-                            <td class="c2"><c:out value="${storeConfig.type}"/></td>
-                        </tr>
-                        <tr>
-                            <td class="c1">Password:</td>
-                            <td class="c2"><c:out value="${storeConfig.password}"/></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </td>
-                <td valign="top" width="40%">
-                    <c:if test="${not empty sameStorePurposes}">
-                        <admin:infobox type="info">
-                            This store is re-used for these additional purposes. Any changes to this store will also affect that functionality!
-                            <ul style="margin-top: 1em;">
-                                <c:forEach var="sameStorePurpose" items="${sameStorePurposes}">
-                                    <li><fmt:message key="certificate-management.purpose.${sameStorePurpose}.title"/></li>
-                                </c:forEach>
-                            </ul>
-                        </admin:infobox>
-                    </c:if>
-                </td>
-            </table>
-
 
             <p>
                 <fmt:message key="ssl.certificates.truststore.link-to-import">
-                    <fmt:param value="<a href='import-truststore-certificate.jsp?storePurpose=${storePurpose}'>"/>
+                    <fmt:param value="<a href='import-truststore-certificate.jsp?connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                 </fmt:message>
             </p>
@@ -206,13 +145,13 @@
 
                 <tbody>
                     <c:choose>
-                        <c:when test="${empty storeConfig.allCertificates}">
+                        <c:when test="${empty certificates}">
                             <tr valign="top">
                                 <td colspan="5"><em>(<fmt:message key="global.none"/>)</em></td>
                             </tr>
                         </c:when>
                         <c:otherwise>
-                            <c:forEach var="certificateEntry" items="${storeConfig.allCertificates}">
+                            <c:forEach var="certificateEntry" items="${certificates}">
                                 <c:set var="certificate" value="${certificateEntry.value}"/>
                                 <c:set var="alias" value="${certificateEntry.key}"/>
 
@@ -234,7 +173,7 @@
 
                                 <tr valign="top">
                                     <td>
-                                        <a href="security-certificate-details.jsp?storePurpose=${storePurpose}&alias=${alias}" title="<fmt:message key='session.row.cliked'/>">
+                                        <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=true" title="<fmt:message key='session.row.cliked'/>">
                                             <c:choose>
                                                 <c:when test="${empty fn:trim(organization)}">
                                                     <c:out value="${commonname}"/>
@@ -268,7 +207,7 @@
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
                                     <td width="1" align="center">
-                                        <a href="security-truststore.jsp?storePurpose=${storePurpose}&alias=${alias}&delete=true"
+                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true"
                                            title="<fmt:message key="global.click_delete"/>"
                                            onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                                 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

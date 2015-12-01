@@ -58,11 +58,13 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfig;
-import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -129,13 +131,6 @@ public final class HttpBindManager {
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<>();
 
     private static HttpBindManager instance = new HttpBindManager();
-
-    // Compression "optional" by default; use "disabled" to disable compression (restart required)
-    // When enabled, http response will be compressed if the http request includes an
-    // "Accept" header with a value of "gzip" and/or "deflate"
-    private static boolean isCompressionEnabled = !(JiveGlobals.getProperty(
-    		ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString())
-            .equalsIgnoreCase(Connection.CompressionPolicy.disabled.toString()));
 
     private Server httpBindServer;
 
@@ -247,47 +242,25 @@ public final class HttpBindManager {
     private void createSSLConnector(int securePort, int bindThreads) {
         httpsConnector = null;
         try {
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_IDENTITYSTORE );
-            final KeyStore keyStore = identityStoreConfig.getStore();
+            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
 
-            if (securePort > 0 && identityStoreConfig.getStore().aliases().hasMoreElements() ) {
-                if ( !identityStoreConfig.containsDomainCertificate( "RSA" ) ) {
+            if (securePort > 0 && identityStore.getStore().aliases().hasMoreElements() ) {
+                if ( !identityStore.containsDomainCertificate( "RSA" ) ) {
                     Log.warn("HTTP binding: Using RSA certificates but they are not valid for " +
                             "the hosted domain");
                 }
 
-                final CertificateStoreConfig trustStoreConfig = SSLConfig.getInstance().getStoreConfig( Purpose.BOSHBASED_C2S_TRUSTSTORE );
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+                final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
-                final SslContextFactory sslContextFactory = new SslContextFactory();
-                sslContextFactory.setTrustStorePath( trustStoreConfig.getCanonicalPath() );
-                sslContextFactory.setTrustStorePassword( trustStoreConfig.getPassword() );
-                sslContextFactory.setTrustStoreType( trustStoreConfig.getType() );
-                sslContextFactory.setKeyStorePath( identityStoreConfig.getCanonicalPath() );
-                sslContextFactory.setKeyStorePassword( identityStoreConfig.getPassword() );
-                sslContextFactory.setKeyStoreType( identityStoreConfig.getType() );
-
-                sslContextFactory.addExcludeProtocols( "SSLv3" );
-
-                // Set policy for checking client certificates
-                String certPol = JiveGlobals.getProperty(HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY, "disabled");
-                if(certPol.equals("needed")) {
-                	sslContextFactory.setNeedClientAuth(true);
-                	sslContextFactory.setWantClientAuth(true);
-                } else if(certPol.equals("wanted")) {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(true);
-                } else {
-                	sslContextFactory.setNeedClientAuth(false);
-                	sslContextFactory.setWantClientAuth(false);
-                }
-
- 				HttpConfiguration httpsConfig = new HttpConfiguration();
+ 				final HttpConfiguration httpsConfig = new HttpConfiguration();
 				httpsConfig.setSecureScheme("https");
 				httpsConfig.setSecurePort(securePort);
  				configureProxiedConnector(httpsConfig);
  				httpsConfig.addCustomizer(new SecureRequestCustomizer());
 
- 				ServerConnector sslConnector = null;
+ 				final ServerConnector sslConnector;
 
 				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
 				{
@@ -570,13 +543,11 @@ public final class HttpBindManager {
     private void createBoshHandler(ContextHandlerCollection contexts, String boshPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, boshPath, ServletContextHandler.SESSIONS);
-
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-
         context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
         if (isHttpCompressionEnabled()) {
 	        Filter gzipFilter = new AsyncGzipFilter() {
@@ -595,19 +566,19 @@ public final class HttpBindManager {
 
     // NOTE: enabled by default
     private boolean isHttpCompressionEnabled() {
-		return isCompressionEnabled;
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
+        return configuration.getCompressionPolicy() == null || configuration.getCompressionPolicy().equals( Connection.CompressionPolicy.optional );
 	}
 
 	private void createCrossDomainHandler(ContextHandlerCollection contexts, String crossPath)
     {
         ServletContextHandler context = new ServletContextHandler(contexts, crossPath, ServletContextHandler.SESSIONS);
-
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-
         context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");
     }
 

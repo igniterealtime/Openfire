@@ -23,20 +23,16 @@ package org.jivesoftware.openfire.net;
 import java.nio.ByteBuffer;
 import java.security.*;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.keystore.IdentityStoreConfig;
-import org.jivesoftware.openfire.keystore.Purpose;
-import org.jivesoftware.openfire.keystore.TrustStoreConfig;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,58 +59,38 @@ public class TLSWrapper {
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer) {
-        final boolean isClientToServer = (remoteServer == null);
+    /**
+     * @deprecated Use the other constructor.
+     */
+    @Deprecated
+    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
+    {
+        this(
+            connection.getConfiguration(),
+            clientMode
+        );
+    }
 
-        // Create/initialize the SSLContext with key material
-        try {
-            // First initialize the key and trust material.
-            final SSLConfig sslConfig = SSLConfig.getInstance();
-            final Purpose purpose = (isClientToServer ? Purpose.SOCKETBASED_C2S_TRUSTSTORE : Purpose.SOCKETBASED_S2S_TRUSTSTORE );
-            final TrustStoreConfig trustStoreConfig = (TrustStoreConfig) sslConfig.getStoreConfig( purpose );
+    public TLSWrapper(ConnectionConfiguration configuration, boolean clientMode ) {
 
-            // TrustManager's decide whether to allow connections.
-            final TrustManager[] tm;
-
-            if (clientMode || needClientAuth)
+        try
+        {
+            final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
+            if ( clientMode )
             {
-                final KeyStore ksTrust = trustStoreConfig.getStore();
-                if (isClientToServer)
-                {
-                    // Check if we can trust certificates presented by the client
-                    tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
-                }
-                else
-                {
-                    // Check if we can trust certificates presented by the server
-                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, connection)};
-                }
+                tlsEngine = factory.createClientModeSSLEngine();
             }
             else
             {
-                tm = trustStoreConfig.getTrustManagers();
+                tlsEngine = factory .createServerModeSSLEngine();
             }
 
-            final IdentityStoreConfig identityStoreConfig = (IdentityStoreConfig) sslConfig.getStoreConfig( Purpose.SOCKETBASED_IDENTITYSTORE );
-            final String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-            final SSLContext tlsContext = SSLContext.getInstance(algorithm);
-            tlsContext.init( identityStoreConfig.getKeyManagers(), tm, null);
-
-            /*
-                * Configure the tlsEngine to act as a server in the SSL/TLS handshake. We're a server,
-                * so no need to use host/port variant.
-                *
-                * The first call for a server is a NEED_UNWRAP.
-                */
-            tlsEngine = tlsContext.createSSLEngine();
-            tlsEngine.setUseClientMode(clientMode);
-            SSLSession sslSession = tlsEngine.getSession();
+            final SSLSession sslSession = tlsEngine.getSession();
 
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
-
         }
-        catch ( NoSuchAlgorithmException | KeyManagementException ex )
+        catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException | UnrecoverableKeyException ex )
         {
             Log.error("TLSHandler startup problem. SSLContext initialisation failed.", ex );
         }
@@ -209,27 +185,22 @@ public class TLSWrapper {
      * @return the current TLSStatus
      */
     public TLSStatus getStatus() {
-        TLSStatus status = null;
         if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.BUFFER_UNDERFLOW) {
-            status = TLSStatus.UNDERFLOW;
+            return TLSStatus.UNDERFLOW;
         } else {
             if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.CLOSED) {
-                status = TLSStatus.CLOSED;
+                return TLSStatus.CLOSED;
             } else {
                 switch (tlsEngine.getHandshakeStatus()) {
                 case NEED_WRAP:
-                    status = TLSStatus.NEED_WRITE;
-                    break;
+                    return TLSStatus.NEED_WRITE;
                 case NEED_UNWRAP:
-                    status = TLSStatus.NEED_READ;
-                    break;
+                    return TLSStatus.NEED_READ;
                 default:
-                    status = TLSStatus.OK;
-                    break;
+                    return TLSStatus.OK;
                 }
             }
         }
-        return status;
     }
 
     private ByteBuffer resizeApplicationBuffer(ByteBuffer app) {

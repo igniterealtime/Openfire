@@ -39,14 +39,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionCloseListener;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -62,6 +62,7 @@ import com.jcraft.jzlib.ZOutputStream;
  * client and server.
  *
  * @author Iain Shigeoka
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance. Currently only in use for s2s.
  */
 public class SocketConnection implements Connection {
 
@@ -166,13 +167,26 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    @Override
-    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws IOException {
+    @Deprecated
+    public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
+        startTLS( clientMode );
+    }
+
+    public void startTLS(boolean clientMode) throws IOException {
         if (!secure) {
             secure = true;
+
             // Prepare for TLS
-            tlsStreamHandler = new TLSStreamHandler(this, socket, clientMode, remoteServer,
-                    session instanceof IncomingServerSession);
+            final ClientAuth clientAuth;
+            if (session instanceof IncomingServerSession)
+            {
+                clientAuth = ClientAuth.needed;
+            }
+            else
+            {
+                clientAuth = ClientAuth.wanted;
+            }
+            tlsStreamHandler = new TLSStreamHandler(socket, getConfiguration(), clientMode);
             if (!clientMode) {
                 // Indicate the client that the server is ready to negotiate TLS
                 deliverRawText("<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
@@ -217,6 +231,15 @@ public class SocketConnection implements Connection {
     }
 
     @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // This is an ugly hack to get backwards compatibility with the pre-MINA era. As this implementation is being
+        // removed (it is marked as deprecated - at the time of writing, it is only used for S2S). The ugly hack: assume
+        // S2S:
+        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        return connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
+    }
+
     public boolean validate() {
         if (isClosed()) {
             return false;
@@ -428,8 +451,8 @@ public class SocketConnection implements Connection {
             try {
                 return tlsStreamHandler.getSSLSession().getPeerCertificates();
             } catch (SSLPeerUnverifiedException e ) {
-                Log.warn("Error retrieving client certificates of: " + tlsStreamHandler.getSSLSession(), e);
-                //pretend tlsStreamHandler is null
+                // Perfectly valid when client-auth is 'want', a problem when it is 'need'.
+                Log.debug( "Peer certificates have not been verified - there are no certificates to return for: {}", tlsStreamHandler.getSSLSession().getPeerHost(), e );
             }
         }
         return new Certificate[0];
@@ -452,7 +475,7 @@ public class SocketConnection implements Connection {
 
     @Override
     public void close() {
-    	close(false);
+        close( false );
     }
 
     /**

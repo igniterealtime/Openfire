@@ -37,7 +37,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
+
 import java.util.Comparator;
+
 
 /**
  * SSLSocketFactory that accepts any certificate chain and also accepts expired
@@ -54,12 +56,11 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory implements Comparat
     public SimpleSSLSocketFactory() {
 
         try {
-            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-            SSLContext sslcontent = SSLContext.getInstance(algorithm);
-            sslcontent.init(null, // KeyManager not required
+            final SSLContext sslContext = SSLContext.getDefault();
+            sslContext.init(null, // KeyManager not required
                             new TrustManager[] { new DummyTrustManager() },
                             new java.security.SecureRandom());
-            factory = sslcontent.getSocketFactory();
+            factory = sslContext.getSocketFactory();
         }
         catch (NoSuchAlgorithmException | KeyManagementException e) {
             Log.error(e.getMessage(), e);

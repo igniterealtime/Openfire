@@ -46,6 +46,11 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
      */
     private MultiplexerPacketHandler packetHandler;
 
+    public MultiplexerStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public MultiplexerStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, serverName, connection);
     }
@@ -151,7 +156,6 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
 
     @Override
 	void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
-        connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+        connection.startTLS(false);
     }
 }

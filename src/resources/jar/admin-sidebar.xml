@@ -69,12 +69,12 @@
 
             <!-- Client connections settings-->
             <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
-                  url="client-connections-settings.jsp"
+                  url="connection-settings-socket-c2s.jsp"
                   description="${sidebar.client-connections-settings.descr}"/>
                   
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
-                  url="server2server-settings.jsp"
+                  url="connection-settings-socket-s2s.jsp"
                   description="${sidebar.server2server-settings.descr}"/>
 
             <!-- External components -->
@@ -122,11 +122,6 @@
                   url="private-data-settings.jsp"
                   description="${sidebar.server-data-settings.descr}"/>
 
-            <!-- SSL Settings -->
-            <item id="server-ssl" name="${sidebar.server-ssl}"
-                  url="ssl-settings.jsp"
-                  description="${sidebar.server-ssl.descr}"/>
-
             <!-- Compression Settings -->
             <item id="server-compression" name="${sidebar.server-compression}"
                   url="compression-settings.jsp"
@@ -146,28 +141,99 @@
                   url="security-certificate-store-management.jsp"
                   description="Manage Openfire Certificate stores">
 
-            <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->
+                <sidebar id="sidebar-certificate-store-socket-c2s" name="${sidebar.client-connections-settings}">
+
+                    <item id="sidebar-certificate-store-socket_c2s-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=SOCKET_C2S"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-socket_c2s-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=SOCKET_C2S"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-socket-s2s" name="${sidebar.server2server-settings}">
+
+                    <item id="sidebar-certificate-store-socket_s2s-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=SOCKET_S2S"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-socket_s2s-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=SOCKET_S2S"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-bosh-c2s" name="${sidebar.http-bind}">
+
+                    <item id="sidebar-certificate-store-bosh_c2s-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=BOSH_C2S"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-bosh_c2s-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=BOSH_C2S"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-component" name="${sidebar.external-components-settings}">
+
+                    <item id="sidebar-certificate-store-component-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=COMPONENT"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-component-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=COMPONENT"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-connection-manager" name="${sidebar.connection-managers-settings}">
+
+                    <item id="sidebar-certificate-store-connection_manager-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=CONNECTION_MANAGER"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-connection_manager-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=CONNECTION_MANAGER"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-webadmin" name="${admin.console}">
+
+                    <item id="sidebar-certificate-store-webadmin-identity-store" name="Identity Store"
+                          url="security-keystore.jsp?connectionType=WEBADMIN"
+                          description="Contains key and certificate that serve as identification of Openfire."/>
+
+                    <item id="sidebar-certificate-store-webadmin-trust-store" name="Trust Store"
+                          url="security-truststore.jsp?connectionType=WEBADMIN"
+                          description="Contains certificates that are used to verify the identity of peers."/>
+
+                </sidebar>
+                <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->
             <!--<item id="sidebar-certificates-keys" name="${sidebar.sidebar-certificates-keys}"-->
                     <!--url="security-keystore.jsp">-->
 
-                <sidebar id="sidebar-certificates-keys-submenu" name="${sidebar.sidebar-certificates-keys-submenu}">
+                <!--<sidebar id="sidebar-certificates-keys-submenu" name="${sidebar.sidebar-certificates-keys-submenu}">-->
 
-                    <!-- Socket Server Certificates -->
-                    <item id="security-keystore-socket" name="${sidebar.security-keystore-socket}"
-                          url="security-keystore.jsp?connectivityType=socket"
-                          description="${sidebar.security-keystore-socket.descr}"/>
+                    <!--&lt;!&ndash; Socket Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-socket" name="${sidebar.security-keystore-socket}"-->
+                          <!--url="security-keystore.jsp?connectivityType=socket"-->
+                          <!--description="${sidebar.security-keystore-socket.descr}"/>-->
 
-                    <!-- BOSH Server Certificates -->
-                    <item id="security-keystore-bosh" name="${sidebar.security-keystore-bosh}"
-                          url="security-keystore.jsp?connectivityType=bosh"
-                          description="${sidebar.security-keystore-bosh.descr}"/>
+                    <!--&lt;!&ndash; BOSH Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-bosh" name="${sidebar.security-keystore-bosh}"-->
+                          <!--url="security-keystore.jsp?connectivityType=bosh"-->
+                          <!--description="${sidebar.security-keystore-bosh.descr}"/>-->
 
-                    <!-- Administrative Server Certificates -->
-                    <item id="security-keystore-administrative" name="${sidebar.security-keystore-administrative}"
-                          url="security-keystore.jsp?connectivityType=administrative"
-                          description="${sidebar.security-keystore-administrative.descr}"/>
+                    <!--&lt;!&ndash; Administrative Server Certificates &ndash;&gt;-->
+                    <!--<item id="security-keystore-administrative" name="${sidebar.security-keystore-administrative}"-->
+                          <!--url="security-keystore.jsp?connectivityType=administrative"-->
+                          <!--description="${sidebar.security-keystore-administrative.descr}"/>-->
 
-                </sidebar>
+                <!--</sidebar>-->
 
             </item>
 

@@ -35,15 +35,16 @@ import org.slf4j.LoggerFactory;
  * Accepts new socket connections and uses a thread for each new connection.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 class BlockingAcceptingMode extends SocketAcceptingMode {
 
 	private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
 
-    protected BlockingAcceptingMode(ConnectionManager connManager, ServerPort serverPort,
-            InetAddress bindInterface) throws IOException {
-        super(connManager, serverPort);
-        serverSocket = new ServerSocket(serverPort.getPort(), -1, bindInterface);
+    protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface) throws IOException {
+        super();
+        serverSocket = new ServerSocket(tcpPort, -1, bindInterface);
     }
 
     /**
@@ -57,8 +58,8 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
                 Socket sock = serverSocket.accept();
                 if (sock != null) {
                     Log.debug("Connect " + sock.toString());
-                    SocketReader reader =
-                            connManager.createSocketReader(sock, false, serverPort, true);
+
+                    SocketReader reader = createServerSocketReader(  sock, false, true );
                     Thread thread = new Thread(reader, reader.getName());
                     thread.setDaemon(true);
                     thread.setPriority(Thread.NORM_PRIORITY);

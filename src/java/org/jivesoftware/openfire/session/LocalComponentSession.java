@@ -50,6 +50,7 @@ import org.xmpp.packet.StreamError;
  *
  * @author Gaston Dombiak
  */
+// TODO implement TLS and observe org.jivesoftware.openfire.session.ConnectionSettings.Component.TLS_POLICY
 public class LocalComponentSession extends LocalSession implements ComponentSession {
 
 	private static final Logger Log = LoggerFactory.getLogger(LocalComponentSession.class);

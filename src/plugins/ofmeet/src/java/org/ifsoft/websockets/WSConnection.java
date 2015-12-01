@@ -1,5 +1,6 @@
 package org.ifsoft.websockets;
 
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,16 @@ public class WSConnection extends VirtualConnection
     public void deliverRawText(String text)
     {
     	this.socket.deliver(text);
+    }
+
+    @Override
+    public ConnectionConfiguration getConfiguration()
+    {
+        // TODO Here we run into an issue with the ConnectionConfiguration introduced in Openfire 4:
+        //      it is not extensible in the sense that unforeseen connection types can be added.
+        //      For now, null is returned, as this object is likely to be unused (its lifecycle is
+        //      not managed by a ConnectionListener instance).
+        return null;
     }
 
     public Certificate[] getPeerCertificates() {

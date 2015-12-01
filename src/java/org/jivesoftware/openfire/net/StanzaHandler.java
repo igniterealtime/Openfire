@@ -266,7 +266,7 @@ public abstract class StanzaHandler {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence show for -" + packet.toXML(), e);
+                Log.debug("Invalid presence show for -" + packet.toXML(), e);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);

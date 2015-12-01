@@ -451,8 +451,8 @@ public class SocketConnection implements Connection {
             try {
                 return tlsStreamHandler.getSSLSession().getPeerCertificates();
             } catch (SSLPeerUnverifiedException e ) {
-                Log.warn("Error retrieving client certificates of: " + tlsStreamHandler.getSSLSession(), e);
-                //pretend tlsStreamHandler is null
+                // Perfectly valid when client-auth is 'want', a problem when it is 'need'.
+                Log.debug( "Peer certificates have not been verified - there are no certificates to return for: {}", tlsStreamHandler.getSSLSession().getPeerHost(), e );
             }
         }
         return new Certificate[0];

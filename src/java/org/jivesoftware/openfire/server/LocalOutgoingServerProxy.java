@@ -131,7 +131,7 @@ public class LocalOutgoingServerProxy implements RoutableChannelHandler {
         log.debug("Spun up new session to {}", domain.toString());
         int sent = 0;
         this.session = session;
-        while (!this.packets.isEmpty()) {
+        while (this.packets != null && !this.packets.isEmpty()) {
             Packet packet = this.packets.remove();
             this.session.process(packet);
             sent = sent + 1;
@@ -143,7 +143,7 @@ public class LocalOutgoingServerProxy implements RoutableChannelHandler {
     protected synchronized void sessionFailed() {
         isTrying = false;
         log.debug("Failed to spin up new session to {}", domain.toString());
-        while (!this.packets.isEmpty()) {
+        while (this.packets != null && !this.packets.isEmpty()) {
             Packet packet = this.packets.remove();
             LocalSession.returnErrorToSender(packet);
         }

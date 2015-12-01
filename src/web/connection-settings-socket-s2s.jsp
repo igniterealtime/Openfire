@@ -61,13 +61,13 @@
 //        final int plaintextListenerMaxThreads = ParamUtils.getIntParameter( request, "plaintext-maxThreads", plaintextConfiguration.getMaxThreadPoolSize() );
 
         // legacymode
-        final boolean legacymodeEnabled = ParamUtils.getBooleanParameter( request, "legacymode-enabled", legacymodeConfiguration.isEnabled() );
+        final boolean legacymodeEnabled = ParamUtils.getBooleanParameter( request, "legacymode-enabled" );
         final int legacymodeTcpPort = ParamUtils.getIntParameter( request, "legacymode-tcpPort", legacymodeConfiguration.getPort() );
         final int legacymodeReadBuffer = ParamUtils.getIntParameter( request, "legacymode-readBuffer", legacymodeConfiguration.getMaxBufferSize() );
         final String legacymodeMutualAuthenticationText = ParamUtils.getParameter( request, "legacymode-mutualauthentication", true );
         final Connection.ClientAuth legacymodeMutualAuthentication;
-        final boolean legacymodeAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "legacymode-accept-self-signed-certificates", legacymodeConfiguration.isAcceptSelfSignedCertificates() );
-        final boolean legacymodeVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "legacymode-verify-certificate-validity", legacymodeConfiguration.isVerifyCertificateValidity() );
+        final boolean legacymodeAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "legacymode-accept-self-signed-certificates" );
+        final boolean legacymodeVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "legacymode-verify-certificate-validity" );
 
         if ( legacymodeMutualAuthenticationText == null || legacymodeMutualAuthenticationText.isEmpty() )
         {

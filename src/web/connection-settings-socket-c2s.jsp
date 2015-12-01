@@ -29,7 +29,7 @@
     if ( update && errors.isEmpty() )
     {
         // plaintext
-        final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
+        final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled", plaintextConfiguration.isEnabled() );
         final int plaintextTcpPort          = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
         final int plaintextReadBuffer       = ParamUtils.getIntParameter( request, "plaintext-readBuffer", plaintextConfiguration.getMaxBufferSize() );
         final String plaintextTlsPolicyText = ParamUtils.getParameter( request, "plaintext-tlspolicy", true );
@@ -47,9 +47,11 @@
             plaintextMutualAuthentication = Connection.ClientAuth.valueOf( plaintextMutualAuthenticationText );
         }
         final int plaintextListenerMaxThreads = ParamUtils.getIntParameter( request, "plaintext-maxThreads", plaintextConfiguration.getMaxThreadPoolSize() );
+        final boolean plaintextAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "plaintext-accept-self-signed-certificates", plaintextConfiguration.isAcceptSelfSignedCertificates() );
+        final boolean plaintextVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "plaintext-verify-certificate-validity", plaintextConfiguration.isVerifyCertificateValidity() );
 
         // legacymode
-        final boolean legacymodeEnabled      = ParamUtils.getBooleanParameter( request, "legacymode-enabled" );
+        final boolean legacymodeEnabled      = ParamUtils.getBooleanParameter( request, "legacymode-enabled", legacymodeConfiguration.isEnabled() );
         final int legacymodeTcpPort          = ParamUtils.getIntParameter( request, "legacymode-tcpPort", legacymodeConfiguration.getPort() );
         final int legacymodeReadBuffer       = ParamUtils.getIntParameter( request, "legacymode-readBuffer", legacymodeConfiguration.getMaxBufferSize() );
         final String legacymodeMutualAuthenticationText = ParamUtils.getParameter( request, "legacymode-mutualauthentication", true );
@@ -60,6 +62,8 @@
             legacymodeMutualAuthentication = Connection.ClientAuth.valueOf( legacymodeMutualAuthenticationText );
         }
         final int legacymodeListenerMaxThreads = ParamUtils.getIntParameter( request, "legacymode-maxThreads", legacymodeConfiguration.getMaxThreadPoolSize() );
+        final boolean legacymodeAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "legacymode-accept-self-signed-certificates", legacymodeConfiguration.isAcceptSelfSignedCertificates() );
+        final boolean legacymodeVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "legacymode-verify-certificate-validity", legacymodeConfiguration.isVerifyCertificateValidity() );
 
         // Apply
         final ConnectionListener plaintextListener  = manager.getListener( connectionType, false );
@@ -71,12 +75,16 @@
         plaintextListener.setTLSPolicy( plaintextTlsPolicy );
         plaintextListener.setClientAuth( plaintextMutualAuthentication );
         // TODO: plaintextListener.setMaxThreadPoolSize( plaintextListenerMaxThreads);
+        plaintextListener.setAcceptSelfSignedCertificates( plaintextAcceptSelfSignedCertificates );
+        plaintextListener.setVerifyCertificateValidity( plaintextVerifyCertificateValidity );
 
         legacymodeListener.enable( legacymodeEnabled );
         legacymodeListener.setPort( legacymodeTcpPort );
         // TODO: legacymodeListener.setMaxBufferSize( legacymodeReadBuffer );
         legacymodeListener.setClientAuth( legacymodeMutualAuthentication );
         // TODO:  legacymodeListener.setMaxThreadPoolSize( legacymodeListenerMaxThreads);
+        legacymodeListener.setAcceptSelfSignedCertificates( legacymodeAcceptSelfSignedCertificates );
+        legacymodeListener.setVerifyCertificateValidity( legacymodeVerifyCertificateValidity );
 
         // Log the event
         webManager.logEvent( "Updated connection settings for " + connectionType, "Applied configuration to plain-text as well as legacy-mode connection listeners." );
@@ -239,6 +247,23 @@
 
             <br/>
 
+            <h4>Certificate chain checking</h4>
+            <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
+            <table cellpadding="3" cellspacing="0" border="0">
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="plaintext-accept-self-signed-certificates" id="plaintext-accept-self-signed-certificates" ${plaintextConfiguration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="plaintext-accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
+                    </td>
+                </tr>
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="plaintext-verify-certificate-validity" id="plaintext-verify-certificate-validity" ${plaintextConfiguration.verifyCertificateValidity ? 'checked' : ''}/><label for="plaintext-verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
+                    </td>
+                </tr>
+            </table>
+
+            <br/>
+
             <h4>Miscellaneous settings</h4>
             <table cellpadding="3" cellspacing="0" border="0">
                 <tr valign="middle">
@@ -257,7 +282,7 @@
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td><input type="checkbox" name="tlegacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+                <td><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
             </tr>
         </table>
 
@@ -298,6 +323,23 @@
                     <td>
                         <input type="radio" name="legacymode-mutualauthentication" value="needed" id="legacymode-mutualauthentication-needed" ${legacymodeConfiguration.clientAuth.name() eq 'required' ? 'checked' : ''}/>
                         <label for="legacymode-mutualauthentication-needed"><b>Needed</b> - A connection cannot be established if the peer does not present a valid certificate.</label>
+                    </td>
+                </tr>
+            </table>
+
+            <br/>
+
+            <h4>Certificate chain checking</h4>
+            <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
+            <table cellpadding="3" cellspacing="0" border="0">
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="legacymode-accept-self-signed-certificates" id="legacymode-accept-self-signed-certificates" ${legacymodeConfiguration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="legacymode-accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
+                    </td>
+                </tr>
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="legacymode-verify-certificate-validity" id="legacymode-verify-certificate-validity" ${legacymodeConfiguration.verifyCertificateValidity ? 'checked' : ''}/><label for="legacymode-verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
                     </td>
                 </tr>
             </table>

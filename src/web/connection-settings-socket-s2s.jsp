@@ -61,11 +61,14 @@
 //        final int plaintextListenerMaxThreads = ParamUtils.getIntParameter( request, "plaintext-maxThreads", plaintextConfiguration.getMaxThreadPoolSize() );
 
         // legacymode
-        final boolean legacymodeEnabled = ParamUtils.getBooleanParameter( request, "legacymode-enabled" );
+        final boolean legacymodeEnabled = ParamUtils.getBooleanParameter( request, "legacymode-enabled", legacymodeConfiguration.isEnabled() );
         final int legacymodeTcpPort = ParamUtils.getIntParameter( request, "legacymode-tcpPort", legacymodeConfiguration.getPort() );
         final int legacymodeReadBuffer = ParamUtils.getIntParameter( request, "legacymode-readBuffer", legacymodeConfiguration.getMaxBufferSize() );
         final String legacymodeMutualAuthenticationText = ParamUtils.getParameter( request, "legacymode-mutualauthentication", true );
         final Connection.ClientAuth legacymodeMutualAuthentication;
+        final boolean legacymodeAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "legacymode-accept-self-signed-certificates", legacymodeConfiguration.isAcceptSelfSignedCertificates() );
+        final boolean legacymodeVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "legacymode-verify-certificate-validity", legacymodeConfiguration.isVerifyCertificateValidity() );
+
         if ( legacymodeMutualAuthenticationText == null || legacymodeMutualAuthenticationText.isEmpty() )
         {
             legacymodeMutualAuthentication = legacymodeConfiguration.getClientAuth();
@@ -92,6 +95,8 @@
         // TODO: legacymodeListener.setMaxBufferSize( legacymodeReadBuffer );
         legacymodeListener.setClientAuth( legacymodeMutualAuthentication );
         // TODO:  legacymodeListener.setMaxThreadPoolSize( legacymodeListenerMaxThreads);
+        legacymodeListener.setAcceptSelfSignedCertificates( legacymodeAcceptSelfSignedCertificates );
+        legacymodeListener.setVerifyCertificateValidity( legacymodeVerifyCertificateValidity );
 
         // Log the event
         webManager.logEvent( "Updated connection settings for " + connectionType, "Applied configuration to legacy-mode connection listener." );
@@ -321,7 +326,7 @@
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td><input type="checkbox" name="tlegacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+                <td><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
             </tr>
         </table>
 
@@ -338,6 +343,23 @@
                 <tr valign="middle">
                     <td width="1%" nowrap><label for="legacymode-readBuffer">Read buffer</label></td>
                     <td width="99%"><input type="text" name="legacymode-readBuffer" id="legacymode-readBuffer" value="${legacymodeConfiguration.maxBufferSize}" readonly/> (in bytes)</td>
+                </tr>
+            </table>
+
+            <br/>
+
+            <h4>Certificate chain checking</h4>
+            <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
+            <table cellpadding="3" cellspacing="0" border="0">
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="legacymode-accept-self-signed-certificates" id="legacymode-accept-self-signed-certificates" ${legacymodeConfiguration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="legacymode-accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
+                    </td>
+                </tr>
+                <tr valign="middle">
+                    <td>
+                        <input type="checkbox" name="legacymode-verify-certificate-validity" id="legacymode-verify-certificate-validity" ${legacymodeConfiguration.verifyCertificateValidity ? 'checked' : ''}/><label for="legacymode-verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
+                    </td>
                 </tr>
             </table>
 

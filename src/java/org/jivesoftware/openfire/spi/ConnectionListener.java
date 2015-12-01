@@ -151,7 +151,7 @@ public class ConnectionListener
             return;
         }
 
-        JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
+            JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
         restart();
     }
 
@@ -856,7 +856,6 @@ public class ConnectionListener
      *
      * @return true when self-signed certificates are accepted, otherwise false.
      */
-    // TODO add setter!
     public boolean acceptSelfSignedCertificates()
     {
         // TODO these are new properties! Deprecate (migrate?) all existing 'accept-selfsigned properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS )
@@ -874,12 +873,33 @@ public class ConnectionListener
     }
 
     /**
+     * Configuresif self-signed peer certificates can be used to establish an encrypted connection.
+     *
+     * @param accept true when self-signed certificates are accepted, otherwise false.
+     */
+    public void setAcceptSelfSignedCertificates( boolean accept )
+    {
+        final boolean oldValue = verifyCertificateValidity();
+
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "certificate.accept-selfsigned", Boolean.toString( accept ) );
+
+        if ( oldValue == accept )
+        {
+            Log.debug( "Ignoring self-signed certificate acceptance policy change request (to '{}'): listener already in this state.", accept );
+            return;
+        }
+
+        Log.debug( "Changing self-signed certificate acceptance policy from '{}' to '{}'.", oldValue, accept );
+        restart();
+    }
+
+    /**
      * A boolean that indicates if the current validity of certificates (based on their 'notBefore' and 'notAfter'
      * property values) is used when they are used to establish an encrypted connection..
      *
      * @return true when certificates are required to be valid to establish a secured connection, otherwise false.
      */
-    // TODO add setter!
     public boolean verifyCertificateValidity()
     {
         // TODO these are new properties! Deprecate (migrate?) all existing 'verify / verify-validity properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY )
@@ -894,6 +914,29 @@ public class ConnectionListener
         {
             return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).acceptSelfSignedCertificates() );
         }
+    }
+
+    /**
+     * Configures if the current validity of certificates (based on their 'notBefore' and 'notAfter' property values) is
+     * used when they are used to establish an encrypted connection..
+     *
+     * @param verify true when certificates are required to be valid to establish a secured connection, otherwise false.
+     */
+    public void setVerifyCertificateValidity( boolean verify )
+    {
+        final boolean oldValue = verifyCertificateValidity();
+
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "certificate.verify.validity", Boolean.toString( verify ) );
+
+        if ( oldValue == verify )
+        {
+            Log.debug( "Ignoring certificate validity verification configuration change request (to '{}'): listener already in this state.", verify );
+            return;
+        }
+
+        Log.debug( "Changing certificate validity verification configuration from '{}' to '{}'.", oldValue, verify );
+        restart();
     }
 
     /**

@@ -122,13 +122,16 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @return True if the domain was authenticated by the remote server.
      */
     public static boolean authenticateDomain(final String domain, final String hostname) {
+        Log.debug( "[domain {} hostname {}]: Start authentication.", domain, hostname );
         if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
             // Do nothing if the target hostname is empty, null or contains whitespaces
+            Log.debug( "[domain {} hostname {}]: Authentication failed - null or whitespace in hostname.", domain, hostname );
             return false;
         }
         try {
             // Check if the remote hostname is in the blacklist
             if (!RemoteServerManager.canAccess(hostname)) {
+                Log.debug( "[domain {} hostname {}]: Authentication failed - hostname in blacklist.", domain, hostname );
                 return false;
             }
 
@@ -139,11 +142,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             SessionManager sessionManager = SessionManager.getInstance();
             if (sessionManager == null) {
                 // Server is shutting down while we are trying to create a new s2s connection
+                Log.debug( "[domain {} hostname {}]: Authentication failed - no session manager available. Server might be shutting down.", domain, hostname );
                 return false;
             }
+            Log.debug( "[domain {} hostname {}]: Locating pre-exisiting outgoing session...", domain, hostname );
             session = sessionManager.getOutgoingServerSession(hostname);
             if (session == null) {
                 // Try locating if the remote server has previously authenticated with this server
+                Log.debug( "[domain {} hostname {}]: Outgoing session found. Locating related incoming session...", domain, hostname );
                 for (IncomingServerSession incomingSession : sessionManager.getIncomingServerSessions(hostname)) {
                     for (String otherHostname : incomingSession.getValidatedDomains()) {
                         session = sessionManager.getOutgoingServerSession(otherHostname);
@@ -151,6 +157,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             if (session.isUsingServerDialback()) {
                                 // A session to the same remote server but with different hostname
                                 // was found. Use this session.
+                                Log.debug( "[domain {} hostname {}]: Incoming session found. Reuse this connection.", domain, hostname );
                                 break;
                             } else {
                                 session = null;
@@ -160,6 +167,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
             }
             if (session == null) {
+                Log.debug( "[domain {} hostname {}]: No re-usable existing connecting. Create new session.", domain, hostname );
                 int port = RemoteServerManager.getPortForServer(hostname);
                 session = createOutgoingSession(domain, hostname, port);
                 if (session != null) {
@@ -178,10 +186,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // A session already exists. The session was established using server dialback so
             // it is possible to do piggybacking to authenticate more domains
             if (session.getAuthenticatedDomains().contains(domain) && session.getHostnames().contains(hostname)) {
-                // Do nothing since the domain has already been authenticated
+                Log.debug( "[domain {} hostname {}]: Do nothing since the domain has already been authenticated.", domain, hostname );
                 return true;
             }
             // A session already exists so authenticate the domain using that session
+            Log.debug( "[domain {} hostname {}]: An session already exists, so authenticate the domain using that session.", domain, hostname );
             return session.authenticateSubdomain(domain, hostname);
         }
         catch (Exception e) {

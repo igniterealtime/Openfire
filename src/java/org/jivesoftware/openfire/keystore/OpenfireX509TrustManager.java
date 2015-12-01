@@ -168,6 +168,8 @@ public class OpenfireX509TrustManager implements X509TrustManager
             throw new IllegalArgumentException( "Argument 'chain' cannot be null or an empty array.");
         }
 
+        Log.debug( "Attempting to verify a chain of {} certificates.", chain.length );
+
         // The set of trusted issuers (for this invocation), based on the issuers from the truststore.
         final Set<X509Certificate> trustedIssuers = new HashSet<>();
         trustedIssuers.addAll( this.trustedIssuers );
@@ -177,10 +179,17 @@ public class OpenfireX509TrustManager implements X509TrustManager
         // as expiration checking.
         if ( acceptSelfSigned && chain.length == 1 )
         {
+            Log.debug( "Attempting to accept the self-signed certificate of this chain of length one, as instructed by configuration." );
+
             final X509Certificate cert = chain[0];
             if ( cert.getSubjectDN().equals( cert.getIssuerDN() ) )
             {
+                Log.debug( "Chain of one appears to be self-signed. Adding it to the set of trusted issuers." );
                 trustedIssuers.add( cert );
+            }
+            else
+            {
+                Log.debug( "Chain of one is not self-signed. Not adding it to the set of trusted issuers." );
             }
         }
 
@@ -208,6 +217,8 @@ public class OpenfireX509TrustManager implements X509TrustManager
         // Validity checks are enabled by default in the CertPathBuilder implementation.
         if ( !checkValidity )
         {
+            Log.debug( "Attempting to ignore any validity (expiry) issues, as instructed by configuration." );
+
             // There is no way to configure the pathBuilder to ignore date validity. When validity checks are to be
             // ignored, try to find a point in time where all certificates in the chain are valid.
             final Date validPointInTime = CertificateUtils.findValidPointInTime( chain );
@@ -232,7 +243,6 @@ public class OpenfireX509TrustManager implements X509TrustManager
         parameters.setRevocationEnabled( false );
 
         Log.debug( "Validating chain with {} certificates, using {} trust anchors.", chain.length, trustAnchors.size() );
-
 
         // Try to use BouncyCastle - if that doesn't work, pick one.
         CertPathBuilder pathBuilder;

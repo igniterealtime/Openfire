@@ -2,6 +2,8 @@ package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.security.*;
@@ -18,6 +20,8 @@ import java.util.*;
 // TODO re-enable CRL checking.
 public class OpenfireX509TrustManager implements X509TrustManager
 {
+    private static final Logger Log = LoggerFactory.getLogger( OpenfireX509TrustManager.class );
+
     private static final Provider PROVIDER = new BouncyCastleProvider();
 
     static
@@ -66,6 +70,8 @@ public class OpenfireX509TrustManager implements X509TrustManager
         }
 
         trustedIssuers = Collections.unmodifiableSet( trusted );
+
+        Log.debug( "Constructed trust manager. Number of trusted issuers: {}, accepts self-signed: {}, checks validity: {}", trustedIssuers.size(), acceptSelfSigned, checkValidity );
     }
 
     @Override
@@ -222,10 +228,55 @@ public class OpenfireX509TrustManager implements X509TrustManager
         // entire chain should now be in the store.
         parameters.addCertStore( certificates );
 
-        // Finally, construct (and implicitly validate) the certificate path.
-        final CertPathBuilder pathBuilder = CertPathBuilder.getInstance( "PKIX" );
-        final CertPathBuilderResult result = pathBuilder.build( parameters );
+        // When true, validation will fail if no CRLs are provided!
+        parameters.setRevocationEnabled( false );
 
-        return result.getCertPath();
+        Log.debug( "Validating chain with {} certificates, using {} trust anchors.", chain.length, trustAnchors.size() );
+
+
+        // Try to use BouncyCastle - if that doesn't work, pick one.
+        CertPathBuilder pathBuilder;
+        try
+        {
+            pathBuilder = CertPathBuilder.getInstance( "PKIX", "BC" );
+        }
+        catch ( NoSuchProviderException e )
+        {
+            Log.warn( "Unable to use the BC provider! Trying to use a fallback provider.", e );
+            pathBuilder = CertPathBuilder.getInstance( "PKIX" );
+        }
+
+        try
+        {
+            // Finally, construct (and implicitly validate) the certificate path.
+            final CertPathBuilderResult result = pathBuilder.build( parameters );
+            return result.getCertPath();
+        }
+        catch ( CertPathBuilderException ex )
+        {
+            // This exception generally isn't very helpful. This block attempts to print more debug information.
+            try
+            {
+                Log.debug( "** Chain to be validated:" );
+                Log.debug( "   length: " + chain.length );
+                for (int i=0; i<chain.length; i++) {
+                    Log.debug( " Certificate[{}] (valid from {} to {}):", i, chain[ i ].getNotBefore(), chain[ i ].getNotAfter() );
+                    Log.debug( "   subjectDN: " + chain[ i ].getSubjectDN() );
+                    Log.debug( "   issuerDN: " + chain[ i ].getIssuerDN() );
+
+                    for ( X509Certificate acceptedIssuer : acceptedIssuers) {
+                        if ( acceptedIssuer.getIssuerDN().equals( chain[i].getIssuerDN() ) ) {
+                            Log.debug( "Found accepted issuer with same DN: " + acceptedIssuer.getIssuerDN() );
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                // rethrow the original exception.
+                throw ex;
+            }
+        }
+
     }
 }

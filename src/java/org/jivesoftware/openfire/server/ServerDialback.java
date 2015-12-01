@@ -751,7 +751,7 @@ public class ServerDialback {
                         Log.debug("ServerDialback: db:verify answer was: " + doc.asXML());
                     }
                 }
-                catch (DocumentException e) {
+                catch (DocumentException | RuntimeException e) {
                     Log.error("An error occured connecting to the Authoritative Server", e);
                     // Thrown an error so <remote-connection-failed/> stream error condition is
                     // sent to the Originating Server

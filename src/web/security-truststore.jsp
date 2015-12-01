@@ -83,7 +83,7 @@
     <head>
         <title><fmt:message key="ssl.certificates.truststore.title"/></title>
         <meta name="pageID" content="security-certificate-store-management"/>
-        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
+        <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
     </head>
     <body>
         <c:forEach var="err" items="${errors}">

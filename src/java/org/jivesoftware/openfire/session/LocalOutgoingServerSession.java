@@ -592,7 +592,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         String senderDomain = packet.getFrom().getDomain();
         boolean processed = true;
         if (!getAuthenticatedDomains().contains(senderDomain)) {
-            synchronized (senderDomain.intern()) {
+            synchronized (("Auth::" + senderDomain).intern()) {
                 if (!getAuthenticatedDomains().contains(senderDomain) &&
                         !authenticateSubdomain(senderDomain, packet.getTo().getDomain())) {
                     // Return error since sender domain was not validated by remote server

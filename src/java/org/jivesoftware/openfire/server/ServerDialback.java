@@ -665,6 +665,12 @@ public class ServerDialback {
             stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             stream.append(" xmlns=\"jabber:server\"");
             stream.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.append(" to=\"");
+            stream.append(hostname);
+            stream.append("\"");
+            stream.append(" from=\"");
+            stream.append(recipient);
+            stream.append("\"");
             stream.append(" version=\"1.0\">");
             writer.write(stream.toString());
             writer.flush();

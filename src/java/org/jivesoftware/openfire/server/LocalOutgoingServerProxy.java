@@ -120,9 +120,6 @@ public class LocalOutgoingServerProxy implements RoutableChannelHandler {
             } else {
                 sessionFailed();
             }
-        } else {
-            // Session creation in progress.
-            packets.add(packet);
         }
     }
     

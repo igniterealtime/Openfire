@@ -54,6 +54,7 @@ import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ClientSessionInfo;
 import org.jivesoftware.openfire.session.ComponentSession;
@@ -1484,6 +1485,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     @Override
 	public void stop() {
         Log.debug("SessionManager: Stopping server");
+        // Stop threads that are sending packets to remote servers
+        OutgoingSessionPromise.getInstance().shutdown();
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
             sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
         }

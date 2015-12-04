@@ -32,7 +32,7 @@ import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
-import org.jivesoftware.openfire.server.LocalOutgoingServerProxy;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -118,21 +118,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public void addServerRoute(JID route, RoutableChannelHandler destination) {
+    public void addServerRoute(JID route, LocalOutgoingServerSession destination) {
         String address = route.getDomain();
-        try {
-            ServerSession s = (ServerSession)destination;
-            ServerSession old = this.getServerRoute(route);
-            if (s == old) {
-                return; // Already done.
-            }
-            if (old == null) {
-                return; // This will get added later.
-            }
-            destination = new LocalOutgoingServerProxy(route, s); 
-        } catch(Exception e) {
-            // Just ignore this.
-        }
         localRoutingTable.addRoute(address, destination);
         Lock lock = CacheFactory.getLock(address, serversCache);
         try {
@@ -488,31 +475,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		    }
 		}
 		else {
-		    boolean retry = false;
-		    // If we're here, it means we have no functional route. Sort it out.
-		    final String domain = jid.getDomain();
-		    synchronized (domain.intern()) { // Only create one route at a time.
-		        // Retry routing, in case someone else beat us to it before we got the lock.
-		        if (serversCache.get(jid.getDomain()) == null) {
-		            RoutableChannelHandler route = localRoutingTable.getRoute(jid.getDomain());
-		            if (route == null) {
-		                LocalOutgoingServerProxy proxy = new LocalOutgoingServerProxy(jid.getDomain());
-	                        try {
-	                            proxy.process(packet); // Put ours in first.
-	                            addServerRoute(new JID(jid.getDomain()), proxy); // At this point it may receive additional packets.
-	                        } catch (UnauthorizedException e) {
-	                            Log.error("Unable to route packet through new route: {}", packet.toXML(), e);
-	                        }
-		            }
-		            routed = true;
-		        } else {
-		            retry = true;
-		        }
-		    }
-		    if (retry) {
-		        // Curses! Need to recurse.
-		        routed = routeToRemoteDomain(jid, packet, routed);
-		    }
+		    // Return a promise of a remote session. This object will queue packets pending
+		    // to be sent to remote servers
+		    OutgoingSessionPromise.getInstance().process(packet);
+		    routed = true;
 		}
 		return routed;
 	}
@@ -775,7 +741,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public OutgoingServerSession getServerRoute(JID jid) {
         // Check if this session is hosted by this cluster node
-        RoutableChannelHandler session = localRoutingTable.getRoute(jid.getDomain());
+        OutgoingServerSession session = (OutgoingServerSession) localRoutingTable.getRoute(jid.getDomain());
         if (session == null) {
             // The session is not in this JVM so assume remote
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -786,12 +752,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     session = locator.getOutgoingServerSession(nodeID, jid);
                 }
             }
-        } else {
-            // Local ones are proxies.
-            LocalOutgoingServerProxy proxy = (LocalOutgoingServerProxy) session;
-            session = proxy.getSession();
         }
-        return (OutgoingServerSession)session;
+        return session;
     }
 
     @Override
@@ -1057,7 +1019,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock clientLock = CacheFactory.getLock(nodeID, usersCache);
         try {
         	clientLock.lock();
-	    	List<String> remoteClientRoutes = new ArrayList<String>();
+	    	List<String> remoteClientRoutes = new ArrayList<>();
 	    	for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
 	    		if (entry.getValue().getNodeID().equals(nodeID)) {
 	    			remoteClientRoutes.add(entry.getKey());

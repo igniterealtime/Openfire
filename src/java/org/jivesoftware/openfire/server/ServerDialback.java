@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -43,16 +44,14 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.net.DNSUtil;
-import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.ServerTrafficCounter;
-import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
@@ -638,6 +637,146 @@ public class ServerDialback {
         return host_unknown;
     }
 
+    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String hostname, Writer writer, XMPPPacketReader reader, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+        VerifyResult result = VerifyResult.error;
+        TLSStreamHandler tlsStreamHandler;
+        // Send the Authoritative Server a stream header
+        StringBuilder stream = new StringBuilder();
+        stream.append("<stream:stream");
+        stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+        stream.append(" xmlns=\"jabber:server\"");
+        stream.append(" xmlns:db=\"jabber:server:dialback\"");
+        stream.append(" to=\"");
+        stream.append(hostname);
+        stream.append("\"");
+        stream.append(" from=\"");
+        stream.append(recipient);
+        stream.append("\"");
+        stream.append(" version=\"1.0\">");
+        writer.write(stream.toString());
+        writer.flush();
+
+        // Get the answer from the Authoritative Server
+        XmlPullParser xpp = reader.getXPPParser();
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        if ((xpp.getAttributeValue("", "version") != null) &&
+                (xpp.getAttributeValue("", "version").equals("1.0"))) {
+            Document doc;
+            try {
+                doc = reader.parseDocument();
+            } catch (DocumentException e) {
+                Log.warn("XML Error!", e);
+                return VerifyResult.error;
+            }
+            Element features = doc.getRootElement();
+            Element starttls = features.element("starttls");
+            if (starttls != null) {
+                writer.write("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
+                writer.flush();
+                try {
+                    doc = reader.parseDocument();
+                } catch (DocumentException e) {
+                    Log.warn("XML Error!", e);
+                    return VerifyResult.error;
+                }
+                if (!doc.getRootElement().getName().equals("proceed")) {
+                    Log.warn("Got {} instead of proceed for starttls", doc.getRootElement().getName());
+                    Log.debug("Like this: {}", doc.asXML());
+                    return VerifyResult.error;
+                }
+                // Ugly hacks, apparently, copied from SocketConnection.
+                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                tlsStreamHandler = new TLSStreamHandler(socket, connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration(), true);
+                // Start handshake
+                tlsStreamHandler.start();
+                // Use new wrapped writers
+                writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
+                reader.getXPPParser().setInput(new InputStreamReader(tlsStreamHandler.getInputStream(),
+                        StandardCharsets.UTF_8));
+                /// Recurses!
+                return sendVerifyKey(key, streamID, recipient, hostname, writer, reader, socket);
+            }
+        }
+        if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+            Log.debug("ServerDialback: RS - Asking AS to verify dialback key for id" + streamID);
+            // Request for verification of the key
+            StringBuilder sb = new StringBuilder();
+            sb.append("<db:verify");
+            sb.append(" from=\"").append(recipient).append("\"");
+            sb.append(" to=\"").append(hostname).append("\"");
+            sb.append(" id=\"").append(streamID).append("\">");
+            sb.append(key);
+            sb.append("</db:verify>");
+            writer.write(sb.toString());
+            writer.flush();
+
+            try {
+                Element doc = reader.parseDocument().getRootElement();
+                if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
+                    if (!streamID.equals(doc.attributeValue("id"))) {
+                        // Include the invalid-id stream error condition in the response
+                        writer.write(new StreamError(StreamError.Condition.invalid_id).toXML());
+                        writer.flush();
+                        // Thrown an error so <remote-connection-failed/> stream error
+                        // condition is sent to the Originating Server
+                        throw new RemoteConnectionFailedException("Invalid ID");
+                    }
+                    else if (isHostUnknown(doc.attributeValue("to"))) {
+                        // Include the host-unknown stream error condition in the response
+                        writer.write(
+                                new StreamError(StreamError.Condition.host_unknown).toXML());
+                        writer.flush();
+                        // Thrown an error so <remote-connection-failed/> stream error
+                        // condition is sent to the Originating Server
+                        throw new RemoteConnectionFailedException("Host unknown");
+                    }
+                    else if (!hostname.equals(doc.attributeValue("from"))) {
+                        // Include the invalid-from stream error condition in the response
+                        writer.write(
+                                new StreamError(StreamError.Condition.invalid_from).toXML());
+                        writer.flush();
+                        // Thrown an error so <remote-connection-failed/> stream error
+                        // condition is sent to the Originating Server
+                        throw new RemoteConnectionFailedException("Invalid From");
+                    }
+                    else if ("valid".equals(doc.attributeValue("type"))){
+                        Log.debug("ServerDialback: RS - Key was VERIFIED by the Authoritative Server for: {}", hostname);
+                        result = VerifyResult.valid;
+                    }
+                    else if ("invalid".equals(doc.attributeValue("type"))){
+                        Log.debug("ServerDialback: RS - Key was NOT VERIFIED by the Authoritative Server for: {}", hostname);
+                        result = VerifyResult.invalid;
+                    }
+                    else {
+                        Log.debug("ServerDialback: RS - Key was ERRORED by the Authoritative Server for: {}", hostname);
+                        result = VerifyResult.error;
+                    }
+                }
+                else {
+                    Log.debug("ServerDialback: db:verify answer was: " + doc.asXML());
+                }
+            }
+            catch (DocumentException | RuntimeException e) {
+                Log.error("An error occured connecting to the Authoritative Server", e);
+                // Thrown an error so <remote-connection-failed/> stream error condition is
+                // sent to the Originating Server
+                throw new RemoteConnectionFailedException("Error connecting to the Authoritative Server");
+            }
+
+        }
+        else {
+            // Include the invalid-namespace stream error condition in the response
+            writer.write(new StreamError(StreamError.Condition.invalid_namespace).toXML());
+            writer.flush();
+            // Thrown an error so <remote-connection-failed/> stream error condition is
+            // sent to the Originating Server
+            throw new RemoteConnectionFailedException("Invalid namespace");
+        }
+        return result;
+    }
+
     /**
      * Verifies the key with the Authoritative Server.
      */
@@ -659,114 +798,7 @@ public class ServerDialback {
             writer =
                     new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(),
                             CHARSET));
-            // Send the Authoritative Server a stream header
-            StringBuilder stream = new StringBuilder();
-            stream.append("<stream:stream");
-            stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            stream.append(" xmlns=\"jabber:server\"");
-            stream.append(" xmlns:db=\"jabber:server:dialback\"");
-            stream.append(" version=\"1.0\">");
-            writer.write(stream.toString());
-            writer.flush();
-
-            // Get the answer from the Authoritative Server
-            XmlPullParser xpp = reader.getXPPParser();
-            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
-                eventType = xpp.next();
-            }
-            if ((xpp.getAttributeValue("", "version") != null) &&
-                (xpp.getAttributeValue("", "version").equals("1.0"))) {
-                Document doc;
-                try {
-                    doc = reader.parseDocument();
-                } catch (DocumentException e) {
-                    // TODO Auto-generated catch block
-                    Log.warn("XML Error!", e);
-                    return VerifyResult.error;
-                }
-                Element features = doc.getRootElement();
-                Element starttls = features.element("starttls");
-                if (starttls != null) {
-                    if (starttls.element("required") != null) {
-                        Log.error("TLS required for db:verify but cannot yet do this.");
-                    }
-                }
-            }
-            if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
-                Log.debug("ServerDialback: RS - Asking AS to verify dialback key for id" + streamID);
-                // Request for verification of the key
-                StringBuilder sb = new StringBuilder();
-                sb.append("<db:verify");
-                sb.append(" from=\"").append(recipient).append("\"");
-                sb.append(" to=\"").append(hostname).append("\"");
-                sb.append(" id=\"").append(streamID).append("\">");
-                sb.append(key);
-                sb.append("</db:verify>");
-                writer.write(sb.toString());
-                writer.flush();
-
-                try {
-                    Element doc = reader.parseDocument().getRootElement();
-                    if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
-                        if (!streamID.equals(doc.attributeValue("id"))) {
-                            // Include the invalid-id stream error condition in the response
-                            writer.write(new StreamError(StreamError.Condition.invalid_id).toXML());
-                            writer.flush();
-                            // Thrown an error so <remote-connection-failed/> stream error
-                            // condition is sent to the Originating Server
-                            throw new RemoteConnectionFailedException("Invalid ID");
-                        }
-                        else if (isHostUnknown(doc.attributeValue("to"))) {
-                            // Include the host-unknown stream error condition in the response
-                            writer.write(
-                                    new StreamError(StreamError.Condition.host_unknown).toXML());
-                            writer.flush();
-                            // Thrown an error so <remote-connection-failed/> stream error
-                            // condition is sent to the Originating Server
-                            throw new RemoteConnectionFailedException("Host unknown");
-                        }
-                        else if (!hostname.equals(doc.attributeValue("from"))) {
-                            // Include the invalid-from stream error condition in the response
-                            writer.write(
-                                    new StreamError(StreamError.Condition.invalid_from).toXML());
-                            writer.flush();
-                            // Thrown an error so <remote-connection-failed/> stream error
-                            // condition is sent to the Originating Server
-                            throw new RemoteConnectionFailedException("Invalid From");
-                        }
-                        else if ("valid".equals(doc.attributeValue("type"))){
-                            Log.debug("ServerDialback: RS - Key was VERIFIED by the Authoritative Server for: {}", hostname);
-                            result = VerifyResult.valid;
-                        }
-                        else if ("invalid".equals(doc.attributeValue("type"))){
-                            Log.debug("ServerDialback: RS - Key was NOT VERIFIED by the Authoritative Server for: {}", hostname);
-                            result = VerifyResult.invalid;
-                        }
-                        else {
-                            Log.debug("ServerDialback: RS - Key was ERRORED by the Authoritative Server for: {}", hostname);
-                            result = VerifyResult.error;
-                        }
-                    }
-                    else {
-                        Log.debug("ServerDialback: db:verify answer was: " + doc.asXML());
-                    }
-                }
-                catch (DocumentException | RuntimeException e) {
-                    Log.error("An error occured connecting to the Authoritative Server", e);
-                    // Thrown an error so <remote-connection-failed/> stream error condition is
-                    // sent to the Originating Server
-                    throw new RemoteConnectionFailedException("Error connecting to the Authoritative Server");
-                }
-
-            }
-            else {
-                // Include the invalid-namespace stream error condition in the response
-                writer.write(new StreamError(StreamError.Condition.invalid_namespace).toXML());
-                writer.flush();
-                // Thrown an error so <remote-connection-failed/> stream error condition is
-                // sent to the Originating Server
-                throw new RemoteConnectionFailedException("Invalid namespace");
-            }
+            result = sendVerifyKey(key, streamID, recipient, hostname, writer, reader, socket);
         }
         finally {
             try {

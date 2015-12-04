@@ -172,7 +172,7 @@ public class TLSStreamHandler {
         return writer.getOutputStream();
     }
 
-    void start() throws IOException {
+    public void start() throws IOException {
         while (!initialHSComplete) {
             initialHSComplete = doHandshake(null);
         }

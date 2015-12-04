@@ -294,12 +294,13 @@ public class HttpBindServlet extends HttpServlet {
         }
 
         final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
+        // BOSH communication should not use Chunked encoding.
+        // This is prevented by explicitly setting the Content-Length header.
+        response.setContentLength(byteContent.length);
+
         if (async) {
             response.getOutputStream().setWriteListener(new WriteListenerImpl(context, byteContent));
         } else {
-            // BOSH communication should not use Chunked encoding.
-            // This is prevented by explicitly setting the Content-Length header.
-            context.getResponse().setContentLength(byteContent.length);
             context.getResponse().getOutputStream().write(byteContent);
             context.getResponse().getOutputStream().flush();
             context.complete();
@@ -433,11 +434,12 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    static class WriteListenerImpl implements WriteListener {
+    private static class WriteListenerImpl implements WriteListener {
 
         private final AsyncContext context;
         private final byte[] data;
         private final String remoteAddress;
+        private volatile boolean written;
 
         public WriteListenerImpl(AsyncContext context, byte[] data) {
             this.context = context;
@@ -447,14 +449,22 @@ public class HttpBindServlet extends HttpServlet {
 
         @Override
         public void onWritePossible() throws IOException {
+            // This method may be invoked multiple times and by different threads, e.g. when writing large byte arrays.
             Log.trace("Data can be written to [" + remoteAddress + "]");
-
-            // BOSH communication should not use Chunked encoding.
-            // This is prevented by explicitly setting the Content-Length header.
-            context.getResponse().setContentLength(data.length);
-
-            context.getResponse().getOutputStream().write(data);
-            context.complete();
+            ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
+            while (servletOutputStream.isReady()) {
+                // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
+                // Otherwise WritePendingException is thrown.
+                if (!written) {
+                    written = true;
+                    servletOutputStream.write(data);
+                    // After this write isReady() may return false, indicating the write is not finished.
+                    // In this case onWritePossible() is invoked again as soon as the isReady() == true again,
+                    // in which case we would only complete the request.
+                } else {
+                    context.complete();
+                }
+            }
         }
 
         @Override

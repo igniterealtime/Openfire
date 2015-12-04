@@ -40,6 +40,8 @@ import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements the SCRAM-SHA-1 server-side mechanism.
@@ -47,7 +49,9 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
  * @author Richard Midwinter
  */
 public class ScramSha1SaslServer implements SaslServer {
-	
+
+    private final Logger Log = LoggerFactory.getLogger( ScramSha1SaslServer.class );
+
 	private static final Pattern
 			CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
 			CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
@@ -328,6 +332,7 @@ public class ScramSha1SaslServer implements SaslServer {
             }
             return salt;
         } catch (UserNotFoundException | UnsupportedOperationException | ConnectionException | InternalUnauthenticatedException e) {
+            Log.debug( "Exception caught while getting salt. Generating random salt.", e );
             byte[] salt = new byte[32];
             random.nextBytes(salt);
             return salt;

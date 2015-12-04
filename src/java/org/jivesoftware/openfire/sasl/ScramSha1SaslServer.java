@@ -332,7 +332,7 @@ public class ScramSha1SaslServer implements SaslServer {
             return salt;
         } catch (UserNotFoundException | UnsupportedOperationException | ConnectionException | InternalUnauthenticatedException e) {
             Log.warn("Exception in SCRAM.getSalt():", e);
-            byte[] salt = new byte[32];
+            byte[] salt = new byte[24];
             random.nextBytes(salt);
             return salt;
         }

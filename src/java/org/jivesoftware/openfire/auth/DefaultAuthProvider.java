@@ -277,7 +277,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         
         // Store the salt and salted password so SCRAM-SHA-1 SASL auth can be used later.
-        byte[] saltShaker = new byte[32];
+        byte[] saltShaker = new byte[24];
         random.nextBytes(saltShaker);
         String salt = DatatypeConverter.printBase64Binary(saltShaker);
 

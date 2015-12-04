@@ -19,11 +19,20 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -31,6 +40,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +66,22 @@ import org.slf4j.LoggerFactory;
  * <li><tt>jdbcAuthProvider.passwordType = plain</tt></li>
  * <li><tt>jdbcAuthProvider.allowUpdate = true</tt></li>
  * <li><tt>jdbcAuthProvider.setPasswordSQL = UPDATE user_account SET password=? WHERE username=?</tt></li>
+ * <li><tt>jdbcAuthProvider.bcrypt.cost = 12</tt></li>
+ * </ul>
+ * 
+ * <p>jdbcAuthProvider.passwordType can accept a comma separated string of password types.  This can be useful in 
+ * situations where legacy (ex/md5) password hashes were stored and then "upgraded" to a stronger hash algorithm.
+ * Hashes are executed left to right.</p>
+ * <p>Example Setting: "md5,sha1"<br>  
+ * Usage: password -&gt;<br>
+ * (md5)&nbsp;286755fad04869ca523320acce0dc6a4&nbsp;-&gt;<br>
+ * (sha1)&nbsp;0524b1fc84d315b08db890413e65260040b08caa&nbsp;-&gt;</p>
+ * 
+ * <p>Bcrypt is supported as a passwordType; however, when chaining password types it MUST be the last type given. (bcrypt hashes are different 
+ * every time they are generated)</p>
+ * <p>Optional bcrypt configuration:</p>
+ * <ul>
+ * <li><b>jdbcAuthProvider.bcrypt.cost</b>: The BCrypt cost.  Default: BCrypt.GENSALT_DEFAULT_LOG2_ROUNDS  (currently: 10)</li>
  * </ul>
  *
  * In order to use the configured JDBC connection provider do not use a JDBC
@@ -71,21 +98,24 @@ import org.slf4j.LoggerFactory;
  *      <li>{@link PasswordType#sha1 sha1}
  *      <li>{@link PasswordType#sha256 sha256}
  *      <li>{@link PasswordType#sha512 sha512}
+ *      <li>{@link PasswordType#bcrypt bcrypt}
  *  </ul>
  *
  * @author David Snopek
  */
-public class JDBCAuthProvider implements AuthProvider {
+public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
 
-	private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
+    private static final int DEFAULT_BCRYPT_COST = 10; // Current (2015) value provided by Mindrot's BCrypt.GENSALT_DEFAULT_LOG2_ROUNDS value
 
     private String connectionString;
 
     private String passwordSQL;
     private String setPasswordSQL;
-    private PasswordType passwordType;
+    private List<PasswordType> passwordTypes;
     private boolean allowUpdate;
     private boolean useConnectionProvider;
+    private int bcryptCost;
 
     /**
      * Constructs a new JDBC authentication provider.
@@ -98,9 +128,12 @@ public class JDBCAuthProvider implements AuthProvider {
         JiveGlobals.migrateProperty("jdbcAuthProvider.passwordType");
         JiveGlobals.migrateProperty("jdbcAuthProvider.setPasswordSQL");
         JiveGlobals.migrateProperty("jdbcAuthProvider.allowUpdate");
-
+        JiveGlobals.migrateProperty("jdbcAuthProvider.bcrypt.cost");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.useConnectionProvider");
+        JiveGlobals.migrateProperty("jdbcAuthProvider.acceptPreHashedPassword");
+        
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcAuthProvider.useConnectionProvider");
-
+        
         if (!useConnectionProvider) {
             // Load the JDBC driver and connection string.
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
@@ -120,15 +153,35 @@ public class JDBCAuthProvider implements AuthProvider {
 
         allowUpdate = JiveGlobals.getBooleanProperty("jdbcAuthProvider.allowUpdate",false);
 
-        passwordType = PasswordType.plain;
-        try {
-            passwordType = PasswordType.valueOf(
-                    JiveGlobals.getProperty("jdbcAuthProvider.passwordType", "plain"));
-        }
-        catch (IllegalArgumentException iae) {
-            Log.error(iae.getMessage(), iae);
-        }
+        setPasswordTypes(JiveGlobals.getProperty("jdbcAuthProvider.passwordType", "plain"));
+        bcryptCost = JiveGlobals.getIntProperty("jdbcAuthProvider.bcrypt.cost", -1);
+        PropertyEventDispatcher.addListener(this);
     }
+    
+    private void setPasswordTypes(String passwordTypeProperty){
+        Collection<String> passwordTypeStringList = StringUtils.stringToCollection(passwordTypeProperty);
+        List<PasswordType> passwordTypeList = new ArrayList<>(passwordTypeStringList.size());
+        Iterator<String> it = passwordTypeStringList.iterator();
+        while(it.hasNext()){
+            try {
+                PasswordType type = PasswordType.valueOf(it.next().toLowerCase());
+                passwordTypeList.add(type);
+                if(type == PasswordType.bcrypt){
+                    // Do not support chained hashes beyond bcrypt
+                    if(it.hasNext()){
+                        Log.warn("The jdbcAuthProvider.passwordType setting in invalid.  Bcrypt must be the final hashType if a series is given.  Ignoring all hash types beyond bcrypt: {}", passwordTypeProperty);
+                    }
+                    break;
+                }
+            }
+            catch (IllegalArgumentException iae) { }
+        }
+        if(passwordTypeList.isEmpty()){
+            Log.warn("The jdbcAuthProvider.passwordType setting is not set or contains invalid values.  Setting the type to 'plain'");
+            passwordTypeList.add(PasswordType.plain);
+        }
+        passwordTypes = passwordTypeList;
+    }    
 
     @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
@@ -154,35 +207,64 @@ public class JDBCAuthProvider implements AuthProvider {
         catch (UserNotFoundException unfe) {
             throw new UnauthorizedException();
         }
-        // If the user's password doesn't match the password passed in, authentication
-        // should fail.
-        if (passwordType == PasswordType.md5) {
-            password = StringUtils.hash(password, "MD5");
-        }
-        else if (passwordType == PasswordType.sha1) {
-            password = StringUtils.hash(password, "SHA-1");
-        }
-        else if (passwordType == PasswordType.sha256) {
-            password = StringUtils.hash(password, "SHA-256");
-        }
-        else if (passwordType == PasswordType.sha512) {
-            password = StringUtils.hash(password, "SHA-512");
-        }
-        if (!password.equals(userPassword)) {
+        
+        if (comparePasswords(password, userPassword)) {
+            // Got this far, so the user must be authorized.
+            createUser(username);
+        } else {
             throw new UnauthorizedException();
         }
+    }
+    
+    // @VisibleForTesting
+    protected boolean comparePasswords(String plainText, String hashed) {
+        int lastIndex = passwordTypes.size() - 1;
+        if (passwordTypes.get(lastIndex) == PasswordType.bcrypt) {
+            for (int i = 0; i < lastIndex; i++) {
+                plainText = hashPassword(plainText, passwordTypes.get(i));
+            }
+            return OpenBSDBCrypt.checkPassword(hashed, plainText.toCharArray());
+        }
 
-        // Got this far, so the user must be authorized.
-        createUser(username);
+        return hashPassword(plainText).equals(hashed);
     }
 
+    private String hashPassword(String password) {
+        for (PasswordType type : passwordTypes) {
+            password = hashPassword(password, type);
+        }
+        return password;
+    }
+
+    // @VisibleForTesting
+    protected String hashPassword(String password, PasswordType type) {
+        switch (type) {
+            case md5:
+                return StringUtils.hash(password, "MD5");
+            case sha1:
+                return StringUtils.hash(password, "SHA-1");
+            case sha256:
+                return StringUtils.hash(password, "SHA-256");
+            case sha512:
+                return StringUtils.hash(password, "SHA-512");
+            case bcrypt:
+                byte[] salt = new byte[16];
+                new SecureRandom().nextBytes(salt);
+                int cost = (bcryptCost < 4 || bcryptCost > 31) ? DEFAULT_BCRYPT_COST : bcryptCost;
+                return OpenBSDBCrypt.generate(password.toCharArray(), salt, cost);
+            case plain:
+            default:
+                return password;
+        }
+    }
+        
     @Override
     public void authenticate(String username, String token, String digest)
             throws UnauthorizedException
     {
-        if (passwordType != PasswordType.plain) {
+        if (passwordTypes.size() != 1 || passwordTypes.get(0) != PasswordType.plain) {
             throw new UnsupportedOperationException("Digest authentication not supported for "
-                    + "password type " + passwordType);
+                    + "password type " + passwordTypes.get(0));
         }
         if (username == null || token == null || digest == null) {
             throw new UnauthorizedException();
@@ -224,7 +306,7 @@ public class JDBCAuthProvider implements AuthProvider {
     @Override
     public boolean isDigestSupported() {
         // The auth SQL must be defined and the password type is supported.
-        return (passwordSQL != null && passwordType == PasswordType.plain);
+        return (passwordSQL != null && passwordTypes.size() == 1 && passwordTypes.get(0) == PasswordType.plain);
     }
 
     @Override
@@ -262,7 +344,7 @@ public class JDBCAuthProvider implements AuthProvider {
 
     @Override
     public boolean supportsPasswordRetrieval() {
-        return (passwordSQL != null && passwordType == PasswordType.plain);
+        return (passwordSQL != null && passwordTypes.size() == 1 && passwordTypes.get(0) == PasswordType.plain);
     }
 
     private Connection getConnection() throws SQLException {
@@ -337,18 +419,7 @@ public class JDBCAuthProvider implements AuthProvider {
             con = getConnection();
             pstmt = con.prepareStatement(setPasswordSQL);
             pstmt.setString(2, username);
-            if (passwordType == PasswordType.md5) {
-                password = StringUtils.hash(password, "MD5");
-            }
-            else if (passwordType == PasswordType.sha1) {
-                password = StringUtils.hash(password, "SHA-1");
-            }
-            else if (passwordType == PasswordType.sha256) {
-                password = StringUtils.hash(password, "SHA-256");
-            }
-            else if (passwordType == PasswordType.sha512) {
-                password = StringUtils.hash(password, "SHA-512");
-            }
+            password = hashPassword(password);
             pstmt.setString(1, password);
             pstmt.executeQuery();
         }
@@ -391,7 +462,12 @@ public class JDBCAuthProvider implements AuthProvider {
         /**
           * The password is stored as a hex-encoded SHA-512 hash.
           */
-        sha512;
+        sha512,
+              
+        /**
+          * The password is stored as a bcrypt hash.
+          */
+        bcrypt;
    }
 
     /**
@@ -399,7 +475,8 @@ public class JDBCAuthProvider implements AuthProvider {
      *
      * @param username the username.
      */
-    private static void createUser(String username) {
+    // @VisibleForTesting
+    protected void createUser(String username) {
         // See if the user exists in the database. If not, automatically create them.
         UserManager userManager = UserManager.getInstance();
         try {
@@ -422,4 +499,56 @@ public class JDBCAuthProvider implements AuthProvider {
         // TODO Auto-generated method stub
         return false;
     }
+    
+    /**
+     * Support a subset of JDBCAuthProvider properties when updated via REST,
+     * web GUI, or other sources. Provider strings (and related settings) must
+     * be set via XML.
+     *
+     * @param property the name of the property.
+     * @param params event parameters.
+     */
+    @Override
+    public void propertySet(String property, Map<String, Object> params) {
+        String value = (String) params.get("value");
+        switch (property) {
+            case "jdbcAuthProvider.passwordSQL":
+                passwordSQL = value;
+                Log.debug("jdbcAuthProvider.passwordSQL configured to: {}", passwordSQL);
+                break;
+            case "jdbcAuthProvider.setPasswordSQL":
+                setPasswordSQL = value;
+                Log.debug("jdbcAuthProvider.setPasswordSQL configured to: {}", setPasswordSQL);
+                break;
+            case "jdbcAuthProvider.allowUpdate":
+                allowUpdate = Boolean.parseBoolean(value);
+                Log.debug("jdbcAuthProvider.allowUpdate configured to: {}", allowUpdate);
+                break;
+            case "jdbcAuthProvider.passwordType":
+                setPasswordTypes(value);
+                Log.debug("jdbcAuthProvider.passwordType configured to: {}", Arrays.toString(passwordTypes.toArray()));
+                break;
+            case "jdbcAuthProvider.bcrypt.cost":
+                try {
+                    bcryptCost = Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    bcryptCost = -1;
+                }
+                Log.debug("jdbcAuthProvider.bcrypt.cost configured to: {}", bcryptCost);
+                break;
+        }
+    }
+
+    @Override
+    public void propertyDeleted(String property, Map<String, Object> params) {
+        propertySet(property, Collections.<String, Object>emptyMap());
+    }
+
+    @Override
+    public void xmlPropertySet(String property, Map<String, Object> params) {
+    }
+
+    @Override
+    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+    }                            
 }

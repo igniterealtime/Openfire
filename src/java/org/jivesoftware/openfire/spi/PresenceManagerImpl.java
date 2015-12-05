@@ -337,6 +337,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
 
     @Override
     public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException {
+        if (probee.equals(prober.getNode()) && XMPPServer.getInstance().isLocal(prober)) {
+            return true;
+        }
         RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
         return item.getSubStatus() == RosterItem.SUB_FROM
                 || item.getSubStatus() == RosterItem.SUB_BOTH;

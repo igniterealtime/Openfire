@@ -1,5 +1,24 @@
 package org.jivesoftware.openfire.keystore;
 
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Provider;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathBuilderResult;
+import java.security.cert.CertStore;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathBuilderResult;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
+import java.security.cert.X509Certificate;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -10,16 +29,7 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-
 import org.jivesoftware.util.Base64;
-import sun.security.provider.X509Factory;
-
-import java.math.BigInteger;
-import java.security.*;
-import java.security.cert.*;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Utility functions that are intended to be used by unit tests.
@@ -29,7 +39,9 @@ import java.util.Set;
 public class KeystoreTestUtils
 {
     private static final Provider PROVIDER = new BouncyCastleProvider();
-
+    private static final Object BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+    private static final Object END_CERT = "-----END CERTIFICATE-----";
+    
     static
     {
         // Add the BC provider to the list of security providers
@@ -44,9 +56,9 @@ public class KeystoreTestUtils
      */
     public static String toPemFormat( X509Certificate certificate ) throws Exception {
         final StringBuilder sb = new StringBuilder();
-        sb.append( X509Factory.BEGIN_CERT ).append( '\n' );
+        sb.append( BEGIN_CERT ).append( '\n' );
         sb.append( Base64.encodeBytes( certificate.getEncoded() ) ).append( '\n' );
-        sb.append( X509Factory.END_CERT).append( '\n' );
+        sb.append( END_CERT).append( '\n' );
         return sb.toString();
     }
 

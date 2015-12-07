@@ -1259,8 +1259,8 @@
                     destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
                     includeAntRuntime="no"
                     debug="on"
-                    source="1.5"
-                    target="1.5"
+                    source="${javac.source}"
+                    target="${javac.target}"
                     >
                 <src path="@{pluginsrc}/@{parentPlug}/src/java"/>
                 <classpath>

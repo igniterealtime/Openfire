@@ -181,20 +181,17 @@ public class HistoryStrategy {
         }
 
         // Room subject change messages are special
-        boolean subjectChange = false;
-        if (packet.getSubject() != null && packet.getSubject().length() > 0){
-            subjectChange = true;
+        boolean subjectChange = isSubjectChangeRequest(packet);
+        if (subjectChange) {
             roomSubject = packet;
         }
 
         // store message according to active strategy
-        if (strategyType == Type.none){
-            if (subjectChange) {
-                history.clear();
-                history.add(packet);
-            }
+        if (strategyType == Type.none && subjectChange) {
+            history.clear();
+            history.add(packet);
         }
-        else if (strategyType == Type.all) {
+        else if (strategyType == Type.all || subjectChange) {
             history.add(packet);
         }
         else if (strategyType == Type.number) {
@@ -322,7 +319,30 @@ public class HistoryStrategy {
         return roomSubject;
     }
 
-    private static class MessageComparator implements Comparator<Message> {
+    /**
+     * Returns true if the given message qualifies as a subject change request for
+     * the target MUC room, per XEP-0045. Note that this does not validate whether 
+     * the sender has permission to make the change, because subject change requests
+     * may be loaded from history or processed "live" during a user's session.
+     * 
+     * Refer to http://xmpp.org/extensions/xep-0045.html#subject-mod for details.
+     * 
+     * @return true if the given packet is a subject change request
+     */
+	public boolean isSubjectChangeRequest(Message message) {
+		
+		// The subject is changed by sending a message of type "groupchat" to the <room@service>, 
+		// where the <message/> MUST contain a <subject/> element that specifies the new subject 
+		// but MUST NOT contain a <body/> element (or a <thread/> element).
+		// An empty <subject/> value means that the room subject should be removed.
+
+		return Message.Type.groupchat == message.getType() && 
+				message.getSubject() != null && 
+				message.getBody() == null && 
+				message.getThread() == null;
+	}
+
+	private static class MessageComparator implements Comparator<Message> {
         @Override
         public int compare(Message o1, Message o2) {
             String stamp1 = o1.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");

@@ -271,9 +271,7 @@ public class LocalMUCUser implements MUCUser {
                 }
                 else {
                     try {
-                        if (packet.getSubject() != null && packet.getSubject().trim().length() > 0 &&
-                                Message.Type.groupchat == packet.getType() &&
-                                (packet.getBody() == null || packet.getBody().trim().length() == 0)) {
+                        if (role.getChatRoom().getRoomHistory().isSubjectChangeRequest(packet)) {
                             // An occupant is trying to change the room's subject
                             role.getChatRoom().changeSubject(packet, role);
 

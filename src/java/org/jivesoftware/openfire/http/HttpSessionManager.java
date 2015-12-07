@@ -26,10 +26,8 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -40,6 +38,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,16 +114,8 @@ public class HttpSessionManager {
 
         sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(), // unbounded task queue
-                new ThreadFactory() { // custom thread factory for BOSH workers
-                    final AtomicInteger counter = new AtomicInteger(1);
-                    @Override
-                    public Thread newThread(Runnable runnable) {
-                        Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                "httpbind-worker-" + counter.getAndIncrement());
-                        thread.setDaemon(true);
-                        return thread;
-                    }
-                });
+                new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
+        );
 
         sendPacketPool.prestartCoreThread();
 

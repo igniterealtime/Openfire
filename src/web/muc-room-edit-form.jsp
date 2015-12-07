@@ -269,7 +269,6 @@
                 message.setSubject(roomSubject);
                 message.setFrom(room.getRole().getRoleAddress());
                 message.setTo(room.getRole().getRoleAddress());
-                message.setID("local-only");
                 room.changeSubject(message, room.getRole());
             }
 

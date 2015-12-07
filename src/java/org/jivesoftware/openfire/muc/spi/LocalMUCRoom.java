@@ -2010,10 +2010,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     public void changeSubject(Message packet, MUCRole role) throws ForbiddenException {
         if ((canOccupantsChangeSubject() && role.getRole().compareTo(MUCRole.Role.visitor) < 0) ||
                 MUCRole.Role.moderator == role.getRole()) {
-            // Do nothing if the new subject is the same as the existing one
-            if (packet.getSubject().equals(subject)) {
-                return;
-            }
             // Set the new subject to the room
             subject = packet.getSubject();
             MUCPersistenceManager.updateRoomSubject(this);
@@ -2024,10 +2020,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             // Fire event signifying that the room's subject has changed.
             MUCEventDispatcher.roomSubjectChanged(getJID(), role.getUserAddress(), subject);
 
-            if (!"local-only".equals(packet.getID())) {
-	            // Let other cluster nodes that the room has been updated
-	            CacheFactory.doClusterTask(new RoomUpdatedEvent(this));
-            }
+            // Let other cluster nodes that the room has been updated
+	        CacheFactory.doClusterTask(new RoomUpdatedEvent(this));
         }
         else {
             throw new ForbiddenException();

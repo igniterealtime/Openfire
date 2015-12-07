@@ -17,6 +17,7 @@ import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.net.StalledSessionsFilter;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class is responsible for accepting new (socket) connections, using Java NIO implementation provided by the
@@ -97,7 +97,7 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
             final int initialSize = ( configuration.getMaxThreadPoolSize() / 4 ) + 1;
             final ExecutorFilter executorFilter = new ExecutorFilter( initialSize, configuration.getMaxThreadPoolSize(), 60, TimeUnit.SECONDS );
             final ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor) executorFilter.getExecutor();
-            final ThreadFactory threadFactory = new DelegatingThreadFactory( name + "-thread-", eventExecutor.getThreadFactory() );
+            final ThreadFactory threadFactory = new NamedThreadFactory( name + "-thread-", eventExecutor.getThreadFactory(), true, null );
             eventExecutor.setThreadFactory( threadFactory );
 
             // Construct a new socket acceptor, and configure it.
@@ -288,27 +288,6 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
 
                 public void serviceIdle( IoService service, IdleStatus idleStatus ) throws Exception {}
             } );
-        }
-    }
-
-    // TODO this is a utility class that can be pulled out. There are several similar implementations throughout the codebase.
-    private static class DelegatingThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadId;
-        private final ThreadFactory originalThreadFactory;
-        private String threadNamePrefix;
-
-        public DelegatingThreadFactory(String threadNamePrefix, ThreadFactory originalThreadFactory) {
-            this.originalThreadFactory = originalThreadFactory;
-            threadId = new AtomicInteger(0);
-            this.threadNamePrefix = threadNamePrefix;
-        }
-
-        public Thread newThread(Runnable runnable)
-        {
-            Thread t = originalThreadFactory.newThread(runnable);
-            t.setName(threadNamePrefix + threadId.incrementAndGet());
-            t.setDaemon(true);
-            return t;
         }
     }
 }

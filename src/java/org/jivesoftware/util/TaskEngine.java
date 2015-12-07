@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Performs tasks using worker threads. It also allows tasks to be scheduled to be
@@ -58,23 +57,8 @@ public class TaskEngine {
      */
     private TaskEngine() {
         timer = new Timer("TaskEngine-timer", true);
-        executor = Executors.newCachedThreadPool(new ThreadFactory() {
-
-            final AtomicInteger threadNumber = new AtomicInteger(1);
-
-            @Override
-            public Thread newThread(Runnable runnable) {
-                // Use our own naming scheme for the threads.
-                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-                                      "TaskEngine-pool-" + threadNumber.getAndIncrement(), 0);
-                // Make workers daemon threads.
-                thread.setDaemon(true);
-                if (thread.getPriority() != Thread.NORM_PRIORITY) {
-                    thread.setPriority(Thread.NORM_PRIORITY);
-                }
-                return thread;
-            }
-        });
+        final ThreadFactory threadFactory = new NamedThreadFactory( "TaskEngine-pool-", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
+        executor = Executors.newCachedThreadPool( threadFactory );
     }
 
     /**

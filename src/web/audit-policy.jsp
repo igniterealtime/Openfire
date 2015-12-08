@@ -55,12 +55,10 @@
     String logDir = ParamUtils.getParameter(request,"logDir");
     String ignore = ParamUtils.getParameter(request,"ignore");
 
-
-    // Get an audit manager:
-    AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
-
     Map<String,String> errors = new HashMap<String,String>();
     if (update) {
+        // Get an audit manager:
+        AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
         auditManager.setEnabled(auditEnabled);
         auditManager.setAuditMessage(auditMessages);
         auditManager.setAuditPresence(auditPresence);
@@ -158,6 +156,7 @@
 
     // Set page vars
     if (errors.size() == 0) {
+        AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
         auditEnabled = auditManager.isEnabled();
         auditMessages = auditManager.isAuditMessage();
         auditPresence = auditManager.isAuditPresence();
@@ -383,7 +382,7 @@
 					<fmt:message key="audit.policy.queued_packets" />
 				</td>
 				<td width="99%">
-					 <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
+					 <%= XMPPServer.getInstance().getAuditManager().getAuditor().getQueuedPacketsNumber() %>
 				</td>
 			</tr>
 		</table>

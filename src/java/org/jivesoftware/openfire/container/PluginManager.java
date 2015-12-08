@@ -44,18 +44,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -105,14 +94,14 @@ public class PluginManager {
      */
     public PluginManager(File pluginDir) {
         this.pluginDirectory = pluginDir.toPath();
-        plugins = new ConcurrentHashMap<>();
+        plugins = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
         pluginDirs = new HashMap<>();
-        pluginFiles = new HashMap<>();
+        pluginFiles = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
         classloaders = new HashMap<>();
         pluginDevelopment = new HashMap<>();
         parentPluginMap = new HashMap<>();
         childPluginMap = new HashMap<>();
-        devPlugins = new HashSet<>();
+        devPlugins = new TreeSet<>( String.CASE_INSENSITIVE_ORDER );
         pluginMonitor = new PluginMonitor();
     }
 
@@ -330,33 +319,13 @@ public class PluginManager {
                     }
                     else {
                         // See if the parent plugin exists but just hasn't been loaded yet.
-                        // This can only be the case if this plugin name is alphabetically before
-                        // the parent.
-                        if (pluginName.compareTo(parentPlugin) < 0) {
-                            // See if the parent exists.
-                            Path file = pluginDir.getParent().resolve(parentPlugin + ".jar");
-                            if (Files.exists(file)) {
-                                // Silently return. The child plugin will get loaded up on the next
-                                // plugin load run after the parent.
-                                return;
-                            }
-                            else {
-                                file = pluginDir.getParent().resolve(parentPlugin + ".war");
-                                if (Files.exists(file)) {
-                                    // Silently return. The child plugin will get loaded up on the next
-                                    // plugin load run after the parent.
-                                    return;
-                                }
-                                else {
-                                    String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
-                                        parentPlugin + " not present.";
-                                    Log.warn(msg);
-                                    System.out.println(msg);
-                                    return;
-                                }
-                            }
-                        }
-                        else {
+                        final Set<String> plugins = new TreeSet<>( String.CASE_INSENSITIVE_ORDER );
+                        plugins.addAll( Arrays.asList( pluginDir.getParent().toFile().list() ) );
+                        if ( plugins.contains( parentPlugin + ".jar" ) || plugins.contains( parentPlugin + ".war" ) ) {
+                            // Silently return. The child plugin will get loaded up on the next
+                            // plugin load run after the parent.
+                            return;
+                        } else {
                             String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
                                 parentPlugin + " not present.";
                             Log.warn(msg);
@@ -423,6 +392,13 @@ public class PluginManager {
                 // If this is a child plugin, register it as such.
                 if (parentPluginNode != null) {
                     String parentPlugin = parentPluginNode.getTextTrim();
+                    // The name of the parent plugin as specified in plugin.xml might have incorrect casing. Lookup the correct name.
+                    for (Map.Entry<String, Plugin> entry : plugins.entrySet() ) {
+                        if ( entry.getKey().equalsIgnoreCase( parentPlugin ) ) {
+                            parentPlugin = entry.getKey();
+                            break;
+                        }
+                    }
                     List<String> childrenPlugins = parentPluginMap.get(plugins.get(parentPlugin));
                     if (childrenPlugins == null) {
                         childrenPlugins = new ArrayList<>();

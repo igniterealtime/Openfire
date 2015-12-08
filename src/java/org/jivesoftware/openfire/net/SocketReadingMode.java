@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
 
+import javax.net.ssl.SSLHandshakeException;
+
 /**
  * Abstract class for {@link BlockingReadingMode}.
  *
@@ -84,8 +86,15 @@ abstract class SocketReadingMode {
             // This code is only used for s2s
             socketReader.connection.startTLS(false);
         }
-        catch (IOException e) {
-            Log.error("Error while negotiating TLS: " + socketReader.connection, e);
+        catch (SSLHandshakeException e) {
+            // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending a <failure/> element.
+            Log.info( "STARTTLS negotiation (with: {}) failed.", socketReader.connection, e );
+            socketReader.connection.close();
+            return false;
+        }
+        catch (IOException | RuntimeException e) {
+            // RFC3620, section 5.4.2.2 "Failure case" - Send a <failure/> element, then close the socket.
+            Log.warn( "An exception occurred while performing STARTTLS negotiation (with: {})", socketReader.connection, e);
             socketReader.connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             socketReader.connection.close();
             return false;

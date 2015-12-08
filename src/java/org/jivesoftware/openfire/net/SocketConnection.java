@@ -473,6 +473,16 @@ public class SocketConnection implements Connection {
         return backupDeliverer;
     }
 
+    /**
+     * Closes the connection without sending any data (not even a stream end-tag).
+     */
+    public void forceClose() {
+        close( true );
+    }
+
+    /**
+     * Closes the connection after trying to send a stream end tag.
+     */
     @Override
     public void close() {
         close( false );
@@ -484,7 +494,7 @@ public class SocketConnection implements Connection {
      * when sending data over the socket has taken a long time and we need to close the socket, discard
      * the connection and its session.
      */
-    private void close(boolean force) {   	
+    private void close(boolean force) {
     	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
     		
             if (session != null) {
@@ -554,7 +564,7 @@ public class SocketConnection implements Connection {
                 Log.debug("Closing connection: " + this + " that started sending data at: " +
                         new Date(writeTimestamp));
             }
-            close(true); // force
+            forceClose();
             return true;
         }
         else {
@@ -567,7 +577,7 @@ public class SocketConnection implements Connection {
                 if (Log.isDebugEnabled()) {
                     Log.debug("Closing connection that has been idle: " + this);
                 }
-                close(true); // force
+                forceClose();
                 return true;
             }
         }

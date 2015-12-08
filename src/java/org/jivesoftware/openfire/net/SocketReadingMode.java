@@ -87,9 +87,9 @@ abstract class SocketReadingMode {
             socketReader.connection.startTLS(false);
         }
         catch (SSLHandshakeException e) {
-            // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending a <failure/> element.
+            // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending any more data (<failure/> nor </stream>).
             Log.info( "STARTTLS negotiation (with: {}) failed.", socketReader.connection, e );
-            socketReader.connection.close();
+            socketReader.connection.forceClose();
             return false;
         }
         catch (IOException | RuntimeException e) {

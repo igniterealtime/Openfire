@@ -98,7 +98,7 @@
 <p>
 <fmt:message key="session.details.info">
     <fmt:param value="<b>${fn:escapeXml(address)}</b>" />
-    <fmt:param value="${empty address.node ? '' : '<b>${fn:escapeXml(address)}</b>'}" />
+    <fmt:param value="<b>${empty address.node ? '' : fn:escapeXml(address)}</b>" />
 </fmt:message>
 
 </p>

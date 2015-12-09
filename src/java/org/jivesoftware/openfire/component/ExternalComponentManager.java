@@ -69,6 +69,10 @@ public class ExternalComponentManager {
     private static List<ExternalComponentManagerListener> listeners =
             new CopyOnWriteArrayList<>();
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
@@ -78,11 +82,19 @@ public class ExternalComponentManager {
         connectionManager.enableComponentListener(enabled);
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static boolean isServiceEnabled() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.isComponentListenerEnabled();
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static void setServicePort(int port) throws ModificationNotAllowedException {
         // Alert listeners about this event
         for (ExternalComponentManagerListener listener : listeners) {
@@ -92,6 +104,10 @@ public class ExternalComponentManager {
         connectionManager.setComponentListenerPort(port);
     }
 
+    /**
+     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
+     */
+    @Deprecated
     public static int getServicePort() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.getComponentListenerPort();

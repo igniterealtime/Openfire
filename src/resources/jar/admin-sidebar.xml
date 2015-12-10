@@ -79,7 +79,7 @@
 
             <!-- External components -->
             <item id="external-components-settings" name="${sidebar.external-components-settings}"
-                  url="external-components-settings.jsp"
+                  url="connection-settings-external-components.jsp"
                   description="${sidebar.external-components-settings.descr}"/>
 
             <!-- Connection Managers -->

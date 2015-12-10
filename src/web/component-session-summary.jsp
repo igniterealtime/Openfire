@@ -144,7 +144,7 @@
 
 <p>
 <fmt:message key="component.session.summary.info">
-    <fmt:param value="<a href=\"external-components-settings.jsp\">" />
+    <fmt:param value="<a href=\"connection-settings-external-components.jsp\">" />
     <fmt:param value="</a>" />
 </fmt:message>
 </p>

@@ -520,14 +520,14 @@
                 <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy ne 'legacyMode'}">
                     <fmt:message key="ports.external_components.desc"/>
                     <fmt:message key="ports.plaintext.desc">
-                        <fmt:param><a href='external-components-settings.jsp'></fmt:param>
+                        <fmt:param><a href='connection-settings-external-components.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
                 <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy eq 'legacyMode'}">
                     <fmt:message key="ports.external_components.desc_old_ssl"/>
                     <fmt:message key="ports.legacymode.desc">
-                        <fmt:param><a href='external-components-settings.jsp'></fmt:param>
+                        <fmt:param><a href='connection-settings-external-components.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>

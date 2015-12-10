@@ -114,6 +114,8 @@ public class PluginServlet extends HttpServlet {
                 else {
                     handleOtherRequest(pathInfo, response);
                 }
+                // Do not allow framing; OF-997
+                response.addHeader("X-Frame-Options", "deny");
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

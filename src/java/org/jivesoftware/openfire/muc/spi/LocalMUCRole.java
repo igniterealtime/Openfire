@@ -163,8 +163,8 @@ public class LocalMUCRole implements MUCRole {
         this.presence = newPresence;
         this.presence.setFrom(getRoleAddress());
         if (extendedInformation != null) {
-            extendedInformation.setParent(null);
-            presence.getElement().add(extendedInformation);
+            Element exi = extendedInformation.createCopy();
+            presence.getElement().add(exi);
         }
     }
 

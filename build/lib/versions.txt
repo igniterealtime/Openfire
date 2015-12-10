@@ -1,7 +1,7 @@
 Name                                |  Version                                                     License
 ---------------------------------------------------------------------------------------------------------------------
 ant.jar                             | Jetty 6.1.0 (1.6.5)                                          | Apache 2.0
-ant-contrib.jar                     | 1.0b1                                                        | Apache 2.0
+ant-contrib.jar                     | 1.0b3                                                        | Apache 2.0
 ant-subdirtask.jar                  | Revision 1.4 (CVS)                                           |
 bcpg-jdk15on.jar                    | 1.53                                                         | See http://www.bouncycastle.org/licence.html
 bcpkix-jdk15on.jar                  | 1.53                                                         | See http://www.bouncycastle.org/licence.html

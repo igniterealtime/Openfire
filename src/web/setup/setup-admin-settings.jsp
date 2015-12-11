@@ -175,7 +175,7 @@
         }
     }
 
-    // This handles the case of reverting back to default settings from LDAP/Clearspace. Will
+    // This handles the case of reverting back to default settings from LDAP. Will
     // add admin to the authorizedJIDs list if the authorizedJIDs list contains
     // entries.
     if (!ldap && !doTest) {

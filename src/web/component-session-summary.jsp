@@ -225,11 +225,6 @@
                 <td><img src="images/irc.gif" width="16" height="16" border="0" alt="IRC"></td>
              <% }
                }
-               else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
-                if ("clearspace".equals(componentSession.getExternalComponent().getType().toLowerCase())) { %>
-                <td><img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace"></td> 
-             <% }
-               }
             %>
             <td><%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %></td>
             </tr></table>

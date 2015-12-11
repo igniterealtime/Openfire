@@ -28,8 +28,6 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
-
 /**
  * Server Factory for supported mechanisms.
  *
@@ -38,10 +36,9 @@ import org.jivesoftware.openfire.clearspace.ClearspaceSaslServer;
 
 public class SaslServerFactoryImpl implements SaslServerFactory {
 
-    private static final String myMechs[] = { "PLAIN", "CLEARSPACE", "SCRAM-SHA-1" };
+    private static final String myMechs[] = { "PLAIN", "SCRAM-SHA-1" };
     private static final int PLAIN = 0;
-    private static final int CLEARSPACE = 1;
-    private static final int SCRAM_SHA_1 = 2;
+    private static final int SCRAM_SHA_1 = 1;
 
     public SaslServerFactoryImpl() {
     }
@@ -65,12 +62,6 @@ public class SaslServerFactoryImpl implements SaslServerFactory {
                 throw new SaslException("CallbackHandler with support for Password, Name, and AuthorizeCallback required");
             }
             return new SaslServerPlainImpl(protocol, serverName, props, cbh);
-        }
-        else if (mechanism.equals(myMechs[CLEARSPACE]) && checkPolicy(props)) {
-            if (cbh == null) {
-                throw new SaslException("CallbackHandler with support for AuthorizeCallback required");
-            }
-            return new ClearspaceSaslServer();
         }
         else if (mechanism.equals(myMechs[SCRAM_SHA_1])) {
         	if (cbh == null) {

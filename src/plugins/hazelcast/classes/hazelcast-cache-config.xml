@@ -339,11 +339,6 @@
         <time-to-live-seconds>600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
-    <map name="Clearspace SSO Nonce">
-        <backup-count>1</backup-count>
-        <time-to-live-seconds>120</time-to-live-seconds>
-        <eviction-policy>LRU</eviction-policy>
-    </map>
     <map name="Javascript Cache">
         <backup-count>1</backup-count>
         <max-size policy="PER_NODE">10000</max-size>

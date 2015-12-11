@@ -264,7 +264,7 @@
 </head>
 <body>
 
-<% if (webManager.getGroupManager().isReadOnly() && webManager.getGroupManager().isPropertyReadOnly()) { %>
+<% if (webManager.getGroupManager().isReadOnly()) { %>
 <div class="error">
     <fmt:message key="group.read_only"/>
 </div>
@@ -354,16 +354,6 @@
 
 	</div>
 	<div class="jive-contentBox">
-            <% if (webManager.getGroupManager().isPropertyReadOnly()) { %>
-        <p>
-                <% if (enableRosterGroups) { %>
-            <fmt:message key="group.edit.share_status_enabled" />
-                <% } else { %>
-            <fmt:message key="group.edit.share_status_disabled" />
-                <% } %>
-        </p>
-
-            <% } else { %>
         <p>
             <fmt:message key="group.edit.share_content" />
         </p>
@@ -469,7 +459,6 @@
         </tr>
     </tbody>
     </table>
-            <% } %>
 	</div>
 	<!-- END contact list settings -->
 

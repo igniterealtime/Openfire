@@ -163,8 +163,8 @@ public class DefaultUserProvider implements UserProvider {
                 pstmt.setString(5, StringUtils.dateToMillis(now));
                 pstmt.execute();
             }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            catch (SQLException e) {
+                throw new RuntimeException(e);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);

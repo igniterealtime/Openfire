@@ -331,19 +331,22 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 connection.close();
             }
         }
-        catch (SSLHandshakeException e) {
-            Log.debug("LocalOutgoingServerSession: Handshake error while creating secured outgoing session to remote " +
-                    "server: " + hostname + "(DNS lookup: " + realHostname + ":" + realPort +
-                    "):", e);
-            // Close the connection
+        catch (SSLHandshakeException e)
+        {
+            // This is a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
+            Log.info( "STARTTLS negotiation (with {} at {}:{}) failed.", hostname, realHostname, realPort, e );
+
+            // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
+            // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
             if (connection != null) {
-                connection.close();
+                connection.forceClose();
             }
         }
-        catch (Exception e) {
-            Log.error("Error creating secured outgoing session to remote server: " + hostname +
-                    "(DNS lookup: " + realHostname + ":" + realPort + ")", e);
-            // Close the connection
+        catch (Exception e)
+        {
+            // This might be RFC3620, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
+            Log.warn( "An exception occurred while creating an encrypted session (with {} at {}:{})",  hostname, realHostname, realPort, e );
+
             if (connection != null) {
                 connection.close();
             }

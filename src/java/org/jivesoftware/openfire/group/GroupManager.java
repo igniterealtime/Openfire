@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
@@ -611,16 +610,6 @@ public class GroupManager {
         return provider.isReadOnly();
     }
 
-    /**
-     * Returns true if properties of groups are read only.
-     * They are read only if Clearspace is the group provider.
-     *
-     * @return true if properties of groups are read only.
-     */
-    public boolean isPropertyReadOnly() {
-        return ClearspaceManager.isEnabled();
-    }
-    
     /**
      * Returns true if searching for groups is supported.
      *

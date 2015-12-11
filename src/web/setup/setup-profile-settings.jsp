@@ -23,8 +23,6 @@
     // Get parameters
     boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
             JiveGlobals.getProperty("provider.auth.className"));
-    boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
-            JiveGlobals.getProperty("provider.auth.className"));
     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
     boolean requestedScramOnly = (request.getParameter("scramOnly") != null);
     boolean next = request.getParameter("continue") != null;
@@ -63,10 +61,6 @@
             response.sendRedirect("setup-ldap-server.jsp");
             return;
         }
-        else if ("clearspace".equals(mode)) {
-            response.sendRedirect("setup-clearspace-integration.jsp");
-            return;
-        }
     }
 %>
 <html>
@@ -91,7 +85,7 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP && !isCLEARSPACE) { %>checked<% } %>>
+        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP) { %>checked<% } %>>
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
@@ -114,15 +108,6 @@
     <td>
         <label for="rb02"><b><fmt:message key="setup.profile.ldap" /></b></label><br>
 	    <fmt:message key="setup.profile.ldap_description" />
-    </td>
-</tr>
-<tr>
-    <td align="center" valign="top">
-        <input type="radio" name="mode" value="clearspace" id="rb03" <% if (isCLEARSPACE) { %>checked<% } %>>
-    </td>
-    <td>
-        <label for="rb03"><b><fmt:message key="setup.profile.clearspace" /></b></label><br>
-        <fmt:message key="setup.profile.clearspace_description" />
     </td>
 </tr>
 </table>

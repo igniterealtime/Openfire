@@ -61,7 +61,6 @@
   <module interface="org.jivesoftware.openfire.FlashCrossDomainHandler" implementation="org.jivesoftware.openfire.FlashCrossDomainHandler" />
   <module interface="org.jivesoftware.openfire.component.InternalComponentManager" implementation="org.jivesoftware.openfire.component.InternalComponentManager" />
   <module interface="org.jivesoftware.openfire.muc.MultiUserChatManager" implementation="org.jivesoftware.openfire.muc.MultiUserChatManager" />
-  <module interface="org.jivesoftware.openfire.clearspace.ClearspaceManager" implementation="org.jivesoftware.openfire.clearspace.ClearspaceManager" />
   <module interface="org.jivesoftware.openfire.handler.IQMessageCarbonsHandler" implementation="org.jivesoftware.openfire.handler.IQMessageCarbonsHandler" />
   <!--  
         Load this module always last since we don't want to start listening for clients

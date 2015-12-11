@@ -201,25 +201,6 @@ http://www.tangosol.com/UserGuide-Reference-CacheConfig.jsp
         </cache-mapping>
 
         <cache-mapping>
-            <cache-name>Clearspace SSO Nonce</cache-name>
-            <scheme-name>replicated</scheme-name>
-            <init-params>
-                <init-param>
-                    <param-name>back-size-high</param-name>
-                    <param-value>0</param-value>
-                </init-param>
-                <init-param>
-                    <param-name>back-expiry</param-name>
-                    <param-value>2m</param-value>
-                </init-param>
-                <init-param>
-                    <param-name>back-size-low</param-name>
-                    <param-value>0</param-value>
-                </init-param>
-            </init-params>
-        </cache-mapping>
-
-        <cache-mapping>
             <cache-name>Client Session Info Cache</cache-name>
             <scheme-name>replicated</scheme-name>
             <init-params>

@@ -32,7 +32,6 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -61,35 +60,6 @@ public class AdminConsole {
     static {
         overrideModels = new LinkedHashMap<>();
         load();
-        
-        // Detect when a new auth provider class is set to ClearspaceAuthProvider
-        // then rebuild the model to add the Clearspace tab
-        // This is to add the tab after Openfire setup
-        PropertyEventListener propListener = new PropertyEventListener() {
-            @Override
-            public void propertySet(String property, Map params) {
-                if ("provider.auth.className".equals(property)) {
-                    String value = (String) params.get("value");
-                    if ("org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(value)) {
-                        rebuildModel();
-                    }
-                }
-            }
-
-            @Override
-            public void propertyDeleted(String property, Map params) {
-                //Ignore
-            }
-            @Override
-            public void xmlPropertySet(String property, Map params) {
-                //Ignore
-            }
-            @Override
-            public void xmlPropertyDeleted(String property, Map params) {
-                //Ignore
-            }
-        };
-        PropertyEventDispatcher.addListener(propListener);
     }
 
     /** Not instantiatable */
@@ -383,32 +353,6 @@ public class AdminConsole {
                     overrideTab(existingTab, tab);
                 }
             }
-        }
-
-        // Special case: show a link to Clearspace admin console if it is integrated with
-        // Openfire.
-        if (ClearspaceManager.isEnabled()) {
-            Element clearspace = generatedModel.addElement("tab");
-            clearspace.addAttribute("id", "tab-clearspace");
-            clearspace.addAttribute("name", LocaleUtils.getLocalizedString("tab.tab-clearspace"));
-            clearspace.addAttribute("url", "clearspace-status.jsp");
-            clearspace.addAttribute("description", LocaleUtils.getLocalizedString("tab.tab-clearspace.descr"));
-            Element sidebar = clearspace.addElement("sidebar");
-            sidebar.addAttribute("id", "sidebar-clearspace");
-            sidebar.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.sidebar-clearspace"));
-
-            Element statusItem = sidebar.addElement("item");
-            statusItem.addAttribute("id", "clearspace-status");
-            statusItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-status"));
-            statusItem.addAttribute("url", "clearspace-status.jsp");
-            statusItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-status.descr"));
-
-            Element adminItem = sidebar.addElement("item");
-            adminItem.addAttribute("id", "clearspace-admin");
-            adminItem.addAttribute("name", LocaleUtils.getLocalizedString("sidebar.clearspace-admin"));
-            adminItem.addAttribute("url", "clearspace-admin.jsp");
-            adminItem.addAttribute("description", LocaleUtils.getLocalizedString("sidebar.clearspace-admin.descr"));
-
         }
     }
 

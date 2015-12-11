@@ -1,6 +1,5 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
-<%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager" %>
 <%--
   -	$RCSfile$
   -	$Revision: $
@@ -31,11 +30,6 @@
         response.sendRedirect("ldap-server.jsp");
         return;
     }
-    else if (request.getParameter("clearspaceedit") != null) {
-        // Redirect to clearspace setup.
-        response.sendRedirect("clearspace-integration.jsp");
-        return;
-    }
 %>
 
 <html>
@@ -46,8 +40,6 @@
     <body>
     <%
         boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
-                JiveGlobals.getProperty("provider.auth.className"));
-        boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
                 JiveGlobals.getProperty("provider.auth.className"));
     %>
     <p>
@@ -63,8 +55,8 @@
             <tbody>
                 <tr>
                     <td width="1%" nowrap>
-                        <input type="radio" <%= (isLDAP || isCLEARSPACE) ? "disabled" : "readonly"%>
-                        <%= ((isLDAP || isCLEARSPACE) ? "" : "checked") %>>
+                        <input type="radio" <%= (isLDAP) ? "disabled" : "readonly"%>
+                        <%= ((isLDAP) ? "" : "checked") %>>
                     </td>
                     <td width="99%">
                         <b><fmt:message key="setup.profile.default" /></b> - <fmt:message key="setup.profile.default_description" />
@@ -143,48 +135,6 @@
                     <tr>
                         <td colspan="2" align="center">
                             <input type="submit" name="ldapedit" value="<fmt:message key="server.properties.edit" />">
-                        </td>
-                    </tr>
-                <% } %>
-                <tr>
-                    <td width="1%" nowrap>
-                        <input type="radio" <%= isCLEARSPACE ? "readonly" : "disabled"%>
-                        <%= (isCLEARSPACE ? "checked" : "") %>>
-                    </td>
-                    <td width="99%">
-                        <b><fmt:message key="setup.profile.clearspace" /></b> - <fmt:message key="setup.profile.clearspace_description" />
-                    </td>
-                </tr>
-                <% if (isCLEARSPACE) { %>
-                <%
-                    String uri = ClearspaceManager.getInstance().getConnectionURI();
-                %>
-                <tr>
-                    <td width="1%" nowrap>
-                        &nbsp;
-                    </td>
-                    <td width="99%">
-                        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="98%" align="right">
-                        <thead>
-                            <tr>
-                                <th colspan="2"><fmt:message key="profile-settings.clearspace_mapping_info" /></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="c1">
-                                    <fmt:message key="setup.clearspace.service.uri" />:
-                                </td>
-                                <td class="c2">
-                                    <%= uri %>
-                                </td>
-                            </tr>
-                        </tbody>
-                        </table>
-                    </td>
-                    <tr>
-                        <td colspan="2" align="center">
-                            <input type="submit" name="clearspaceedit" value="<fmt:message key="server.properties.edit" />">
                         </td>
                     </tr>
                 <% } %>

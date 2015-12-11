@@ -814,15 +814,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 	public void deliver(Packet packet) throws UnauthorizedException {
 
         conn.deliver(packet);
-
-        if(streamManager.isEnabled()) {
-        	streamManager.incrementServerSentStanzas();
-        	// Temporarily store packet until delivery confirmed
-        	streamManager.getUnacknowledgedServerStanzas().addLast(new StreamManager.UnackedPacket(new Date(), packet.createCopy()));
-	        if(getNumServerPackets() % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
-	        	streamManager.sendServerRequest();
-	        }
-        }
+        streamManager.sentStanza(packet);
     }
 
     @Override

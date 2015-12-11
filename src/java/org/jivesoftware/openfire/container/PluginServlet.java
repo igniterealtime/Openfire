@@ -115,7 +115,7 @@ public class PluginServlet extends HttpServlet {
                     handleOtherRequest(pathInfo, response);
                 }
                 // Do not allow framing; OF-997
-                response.addHeader("X-Frame-Options", "deny");
+                response.addHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "deny"));
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);

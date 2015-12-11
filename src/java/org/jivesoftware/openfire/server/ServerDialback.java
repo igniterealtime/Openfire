@@ -245,7 +245,7 @@ public class ServerDialback {
             stream.append(" to=\"").append(remoteDomain).append("\"");
             stream.append(" from=\"").append(localDomain).append("\"");
             stream.append(" xmlns:db=\"jabber:server:dialback\"");
-            stream.append(" version=\"1.0\">");
+            stream.append(">");
             connection.deliverRawText(stream.toString());
 
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever

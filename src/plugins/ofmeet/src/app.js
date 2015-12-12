@@ -736,11 +736,12 @@ $(document).bind('setLocalDescription.jingle', function (event, sid) {
             if (newssrcs[i-1].type === 'video' && isUsingScreenStream) {
                 newssrcs[i-1].type = 'screen';
             }
+                        
             connection.emuc.addMediaToPresence(i,
                 newssrcs[i-1].type, newssrcs[i-1].ssrc, newssrcs[i-1].direction);
         }
 
-        connection.emuc.sendPresence();
+        connection.emuc.sendPresence();      
     }
 });
 
@@ -815,8 +816,8 @@ $(document).bind('entered.muc', function (event, jid, info, pres) {
         'connected');
 
     // Add Peer's container
-    var id = $(pres).find('>userID').text();
-    var email = $(pres).find('>email');
+    var id = $(pres).find('userID').text();
+    var email = $(pres).find('email');
     if(email.length > 0) {
         id = email.text();
     }
@@ -891,20 +892,22 @@ $(document).bind('left.muc', function (event, jid) {
 
 $(document).bind('presence.muc', function (event, jid, info, pres) {
 
+
 /* BAO
 
     //check if the video bridge is available
-    if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
+    if($(pres).find("bridgeIsDown").length > 0 && !bridgeIsDown) {
         bridgeIsDown = true;
         messageHandler.showError("Error",
             "Jitsi Videobridge is currently unavailable. Please try again later!");
     }
-*/
+
     if (info.isFocus)
     {
         return;
     }
 
+*/
     // Remove old ssrcs coming from the jid
     Object.keys(ssrc2jid).forEach(function (ssrc) {
         if (ssrc2jid[ssrc] == jid) {
@@ -913,7 +916,7 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
         }
     });
 
-    $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
+    $(pres).find('media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
         //console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
         var ssrcV = ssrc.getAttribute('ssrc');
         ssrc2jid[ssrcV] = jid;
@@ -951,14 +954,14 @@ $(document).bind('presence.muc', function (event, jid, info, pres) {
 /* BAO
 
     //check if the video bridge is available
-    if($(pres).find(">bridgeIsDown").length > 0 && !bridgeIsDown) {
+    if($(pres).find("bridgeIsDown").length > 0 && !bridgeIsDown) {
         bridgeIsDown = true;
         messageHandler.showError("Error",
             "Jitsi Videobridge is currently unavailable. Please try again later!");
     }
 */
-    var id = $(pres).find('>userID').text();
-    var email = $(pres).find('>email');
+    var id = $(pres).find('userID').text();
+    var email = $(pres).find('email');
     if(email.length > 0) {
         id = email.text();
     }

@@ -18250,7 +18250,18 @@ var ofmeet = (function(of)
 	    var self = this;
 
 	    // Stop the stream to trigger onended event for old stream
-	    oldStream.stop();
+
+	    if (oldStream.getAudioTracks().length) {
+		    oldStream.getAudioTracks().forEach(function(track) {
+			track.stop();
+		    });
+	    }
+
+	    if (oldStream.getVideoTracks().length) {
+		    oldStream.getVideoTracks().forEach(function(track) {
+			track.stop();
+		    });
+	    }
 
 	    // Remember SDP to figure out added/removed SSRCs
 	    var oldSdp = null;
@@ -18672,11 +18683,13 @@ var ofmeet = (function(of)
 	    var self = this;
 	    //console.log('tell', self.peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from' + self.me);
 
-	    if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')){
-		//console.log("Too early to send updates");
-		return;
-	    }
-
+	    //  BAO This code is now redundant
+	    //
+	    //if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')){
+	    //    console.log("Too early to send updates");
+	    //    return;
+	    //}
+	    
 	    this.sendSSRCUpdateIq(sdpMediaSsrcs, self.sid, self.initiator, self.peerjid, isadd);
 	};
 
@@ -28793,7 +28806,7 @@ var ofmeet = (function(of)
 	    },
 	    initPresenceMap: function (myroomjid) {
 		this.presMap['to'] = myroomjid;
-		this.presMap['xns'] = 'http://jabber.org/protocol/muc';
+        	this.presMap['xns'] = 'http://igniterealtime.org/protocol/ofmeet';
 	    },
 	    doJoin: function (jid, password) {
 		this.myroomjid = jid;
@@ -28829,13 +28842,13 @@ var ofmeet = (function(of)
 		}
 
 		// Parse etherpad tag.
-		var etherpad = $(pres).find('>etherpad');
+		var etherpad = $(pres).find('etherpad');
 		if (etherpad.length) {
 		    $(document).trigger('etherpadadded.muc', [from, etherpad.text()]);
 		}
 
 		// Parse prezi tag.
-		var presentation = $(pres).find('>prezi');
+		var presentation = $(pres).find('prezi');
 		if (presentation.length)
 		{
 		    var url = presentation.attr('url');
@@ -28859,18 +28872,18 @@ var ofmeet = (function(of)
 		}
 
 		// Parse audio info tag.
-		var audioMuted = $(pres).find('>audiomuted');
+		var audioMuted = $(pres).find('audiomuted');
 		if (audioMuted.length) {
 		    $(document).trigger('audiomuted.muc', [from, audioMuted.text()]);
 		}
 
 		// Parse video info tag.
-		var videoMuted = $(pres).find('>videomuted');
+		var videoMuted = $(pres).find('videomuted');
 		if (videoMuted.length) {
 		    $(document).trigger('videomuted.muc', [from, videoMuted.text()]);
 		}
 
-		var stats = $(pres).find('>stats');
+		var stats = $(pres).find('stats');
 		if(stats.length)
 		{
 		    var statsObj = {};
@@ -28906,7 +28919,7 @@ var ofmeet = (function(of)
 		    member.isFocus = true;
 		}
 
-		var nicktag = $(pres).find('>nick[xmlns="http://jabber.org/protocol/nick"]');
+		var nicktag = $(pres).find('nick[xmlns="http://jabber.org/protocol/nick"]');
 		member.displayName = (nicktag.length > 0 ? nicktag.text() : null);
 
 		if (from == this.myroomjid) {
@@ -29119,7 +29132,7 @@ var ofmeet = (function(of)
 		    pres.c('password').t(this.presMap['password']).up();
 		}
 
-		pres.up();
+		//pres.up();	// BAO made child elements of <x>
 
 		// Send XEP-0115 'c' stanza that contains our capabilities info
 		if (connection.caps) {
@@ -29894,7 +29907,10 @@ var ofmeet = (function(of)
 			
 			if (this.localStream)
 			{
-				this.localStream.stop();
+				this.localStream.getAudioTracks().forEach(function(track) 
+				{
+					track.stop();
+				});				
 			}
 
 			var iq = $iq({to: config.hosts.bridge, type: 'get'});
@@ -31867,8 +31883,8 @@ var ofmeet = (function(of)
 		'connected');
 
 	    // Add Peer's container
-	    var id = $(pres).find('>userID').text();
-	    var email = $(pres).find('>email');
+	    var id = $(pres).find('userId').text();
+	    var email = $(pres).find('email');
 	    if(email.length > 0) {
 		id = email.text();
 	    }
@@ -31918,12 +31934,13 @@ var ofmeet = (function(of)
 		messageHandler.showError("Error",
 		    "Jitsi Videobridge is currently unavailable. Please try again later!");
 	    }
-	*/
+
 	    if (info.isFocus)
 	    {
 		return;
 	    }
-
+	*/
+	
 	    // Remove old ssrcs coming from the jid
 	    Object.keys(ssrc2jid).forEach(function (ssrc) {
 		if (ssrc2jid[ssrc] == jid) {
@@ -31932,7 +31949,7 @@ var ofmeet = (function(of)
 		}
 	    });
 
-	    $(pres).find('>media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
+	    $(pres).find('media[xmlns="http://estos.de/ns/mjs"]>source').each(function (idx, ssrc) {
 		//console.log(jid, 'assoc ssrc', ssrc.getAttribute('type'), ssrc.getAttribute('ssrc'));
 		var ssrcV = ssrc.getAttribute('ssrc');
 		ssrc2jid[ssrcV] = jid;
@@ -31961,8 +31978,8 @@ var ofmeet = (function(of)
 
 	    if (displayName && displayName.length > 0) $(document).trigger('displaynamechanged',   [jid, displayName]);
 		
-	    var id = $(pres).find('>userID').text();
-	    var email = $(pres).find('>email');
+	    var id = $(pres).find('userId').text();
+	    var email = $(pres).find('email');
 	    if(email.length > 0) {
 		id = email.text();
 	    }

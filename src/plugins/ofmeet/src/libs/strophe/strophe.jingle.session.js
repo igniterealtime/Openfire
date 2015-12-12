@@ -172,12 +172,14 @@ JingleSession.prototype.accept = function () {
 JingleSession.prototype.sendSSRCUpdate = function(sdpMediaSsrcs, fromJid, isadd) {
 
     var self = this;
-    console.log('tell', self.peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from' + self.me);
+    //console.log('tell', self.peerjid, 'about ' + (isadd ? 'new' : 'removed') + ' ssrcs from' + self.me);
 
-    if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')){
-        console.log("Too early to send updates");
-        return;
-    }
+    //  BAO This code is now redundant
+    //
+    //if (!(this.peerconnection.signalingState == 'stable' && this.peerconnection.iceConnectionState == 'connected')){
+    //    console.log("Too early to send updates");
+    //    return;
+    //}
 
     this.sendSSRCUpdateIq(sdpMediaSsrcs, self.sid, self.initiator, self.peerjid, isadd);
 };

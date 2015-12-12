@@ -81,7 +81,18 @@ SessionBase.prototype.switchStreams = function (new_stream, oldStream, success_c
     var self = this;
 
     // Stop the stream to trigger onended event for old stream
-    oldStream.stop();
+    
+    if (oldStream.getAudioTracks().length) {
+	    oldStream.getAudioTracks().forEach(function(track) {
+		track.stop();
+	    });
+    }
+
+    if (oldStream.getVideoTracks().length) {
+	    oldStream.getVideoTracks().forEach(function(track) {
+		track.stop();
+	    });
+    }    
 
     // Remember SDP to figure out added/removed SSRCs
     var oldSdp = null;

@@ -18,7 +18,7 @@ Strophe.addConnectionPlugin('emuc', {
     },
     initPresenceMap: function (myroomjid) {
         this.presMap['to'] = myroomjid;
-        this.presMap['xns'] = 'http://jabber.org/protocol/muc';
+        this.presMap['xns'] = 'http://igniterealtime.org/protocol/ofmeet';
     },
     doJoin: function (jid, password) {
         this.myroomjid = jid;
@@ -54,13 +54,13 @@ Strophe.addConnectionPlugin('emuc', {
         }
 
         // Parse etherpad tag.
-        var etherpad = $(pres).find('>etherpad');
+        var etherpad = $(pres).find('etherpad');
         if (etherpad.length) {
             $(document).trigger('etherpadadded.muc', [from, etherpad.text()]);
         }
 
         // Parse prezi tag.
-        var presentation = $(pres).find('>prezi');
+        var presentation = $(pres).find('prezi');
         if (presentation.length)
         {
             var url = presentation.attr('url');
@@ -84,18 +84,18 @@ Strophe.addConnectionPlugin('emuc', {
         }
 
         // Parse audio info tag.
-        var audioMuted = $(pres).find('>audiomuted');
+        var audioMuted = $(pres).find('audiomuted');
         if (audioMuted.length) {
             $(document).trigger('audiomuted.muc', [from, audioMuted.text()]);
         }
 
         // Parse video info tag.
-        var videoMuted = $(pres).find('>videomuted');
+        var videoMuted = $(pres).find('videomuted');
         if (videoMuted.length) {
             $(document).trigger('videomuted.muc', [from, videoMuted.text()]);
         }
 
-        var stats = $(pres).find('>stats');
+        var stats = $(pres).find('stats');
         if(stats.length)
         {
             var statsObj = {};
@@ -131,7 +131,7 @@ Strophe.addConnectionPlugin('emuc', {
             member.isFocus = true;
         }
 
-        var nicktag = $(pres).find('>nick[xmlns="http://jabber.org/protocol/nick"]');
+        var nicktag = $(pres).find('nick[xmlns="http://jabber.org/protocol/nick"]');
         member.displayName = (nicktag.length > 0 ? nicktag.text() : null);
 
         if (from == this.myroomjid) {
@@ -339,7 +339,7 @@ Strophe.addConnectionPlugin('emuc', {
                 });
     },
     sendPresence: function () 
-    {
+    {    
 	if (!this.presMap['to']) {
 		// Too early to send presence - not initialized
 		return;
@@ -352,7 +352,7 @@ Strophe.addConnectionPlugin('emuc', {
             pres.c('password').t(this.presMap['password']).up();
         }
 
-        pres.up();
+        //pres.up();	// BAO made child elements of <x>
 
         // Send XEP-0115 'c' stanza that contains our capabilities info
         if (connection.caps) {
@@ -433,7 +433,7 @@ Strophe.addConnectionPlugin('emuc', {
         }
 
         pres.up();
-        connection.send(pres);
+        connection.send(pres);      
     },
     addDisplayNameToPresence: function (displayName) {
         this.presMap['displayName'] = displayName;

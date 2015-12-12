@@ -5,7 +5,7 @@
     <name>Openfire Meetings</name>
     <description>Provides high quality, scalable video conferences using Jitsi Meet and Jitsi Videobridge</description>
     <author>Ignite Realtime</author>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <date>11/18/2015</date>
     <minServerVersion>3.11.0 alpha</minServerVersion>
     <adminconsole>

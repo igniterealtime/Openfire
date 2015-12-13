@@ -1269,22 +1269,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
                         router.route(presence);
                     }
 
-                    // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
-                    if(session.getStreamManager().isEnabled()) {
-                            session.getStreamManager().setEnabled(false); // Avoid concurrent usage.
-	                    Deque<StreamManager.UnackedPacket> unacknowledgedStanzas = session.getStreamManager().getUnacknowledgedServerStanzas();
-	                    if(!unacknowledgedStanzas.isEmpty()) {
-	                    	for(StreamManager.UnackedPacket unacked : unacknowledgedStanzas) {
-	                    	    if (unacked.packet instanceof Message) {
-	                    	        Message m = (Message)unacked.packet;
-        	                        Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                                        delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-                                        delayInformation.addAttribute("from", serverAddress.toBareJID());
-	                    	    }
-    	                            router.route(unacked.packet);
-	                    	}
-	                    }
-                    }
+                    session.getStreamManager().onClose(router, serverAddress);
                 }
                 finally {
                     // Remove the session

@@ -525,11 +525,11 @@
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.required_password" />:</td>
-                    <td><input type="password" name="roomconfig_roomsecret" <% if(password != null) { %> value="<%= password %>" <% } %>></td>
+                    <td><input type="password" name="roomconfig_roomsecret" <% if(password != null) { %> value="<%= (password == null ? "" : StringUtils.escapeForXML(password)) %>" <% } %>></td>
                 </tr>
                  <tr>
                     <td><fmt:message key="muc.room.edit.form.confirm_password" />:</td>
-                    <td><input type="password" name="roomconfig_roomsecret2" <% if(confirmPassword != null) { %> value="<%= confirmPassword %>" <% } %>>
+                    <td><input type="password" name="roomconfig_roomsecret2" <% if(confirmPassword != null) { %> value="<%= (confirmPassword == null ? "" : StringUtils.escapeForXML(confirmPassword)) %>" <% } %>>
                     </td>
                 </tr>
                  <tr>

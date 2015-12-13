@@ -15,6 +15,7 @@
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 <%
@@ -503,7 +504,7 @@
             <tr valign="top">
                 <td colspan="2">
                     <label for="defaultSecret"><fmt:message key="component.settings.defaultSecret" /></label>&nbsp;
-                    <input type="text" size="15" maxlength="70" name="defaultSecret" id="defaultSecret" value="${defaultSecret}"/>
+                    <input type="text" size="15" maxlength="70" name="defaultSecret" id="defaultSecret" value="${fn:escapeXml(defaultSecret)}"/>
                 </td>
             </tr>
 
@@ -574,13 +575,13 @@
                     <label for="componentAllowedSubdomain"><fmt:message key="component.settings.subdomain" /></label>
                 </td>
                 <td>
-                    <input type="text" size="40" name="subdomain" id="componentAllowedSubdomain" value="${param.containsKey('componentAllowed') and not empty errors ? param[ 'subdomain' ] : ''}"/>
+                    <input type="text" size="40" name="subdomain" id="componentAllowedSubdomain" value="${fn:escapeXml(param.containsKey('componentAllowed') and not empty errors ? param[ 'subdomain' ] : '')}"/>
                 </td>
                 <td nowrap width="1%">
                     <label for="componentAllowedSecret"><fmt:message key="component.settings.secret" /></label>
                 </td>
                 <td>
-                    <input type="text" size="15" name="secret" id="componentAllowedSecret" value="${param.containsKey('componentAllowed') and not empty errors ? param[ 'secret' ] : ''}"/>
+                    <input type="text" size="15" name="secret" id="componentAllowedSecret" value="${fn:escapeXml(param.containsKey('componentAllowed') and not empty errors ? param[ 'secret' ] : '')}"/>
                 </td>
             </tr>
             <tr align="center">

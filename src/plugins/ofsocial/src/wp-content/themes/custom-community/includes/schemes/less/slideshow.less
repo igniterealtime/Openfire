@@ -1,0 +1,313 @@
+
+/**
+ * Custom styling for the Slideshow
+ * 
+ */
+
+
+/** The CC Slider **/
+
+#cc-slider-container {
+  display: block;
+}
+.cc-slider .cc-slider-wrap {
+  background-color: transparent;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 100%;
+}
+/* center the image always */
+.cc-slider .carousel-inner > .item {
+  text-align: center;
+}
+/* slider nav */
+.cc-slider .carousel-control {
+  width: auto;
+  height: auto;
+  overflow: auto;
+  padding: 10px 12px;
+  opacity: 0.2;
+  transition: all 400ms;
+  -webkit-transition: all 400ms;
+  background: none;
+  top: 40%;
+  bottom: auto;
+}
+@media screen and (min-width: @screen-sm) {
+  .cc-slider .carousel-control {
+    padding: 20px 30px;
+  }
+}
+.cc-slider .cc-slider-secret-wrap:hover .carousel-control {
+  opacity: .85;
+}
+.cc-slider .carousel-control .glyphicon {
+  position: relative;
+  display: block;
+  font-size: 46px;
+  padding: 0;
+  margin: 0;
+}
+.cc-slider .carousel-control.left .glyphicon {
+  left: 0;
+}
+.cc-slider .carousel-control.right .glyphicon {
+  right: 0;
+}
+.cc-slider .carousel-indicators {
+  bottom: 7px;
+  margin-bottom: 0;
+  opacity: .75;
+}
+.cc-slider .carousel-indicators li {
+  margin: 2px;
+  opacity: 1;
+  border: 2px solid #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.cc-slider .carousel-indicators .active {
+  margin: 2px;
+}
+/* caption, title, excerpt */
+.cc-slider .carousel-caption {
+  bottom: 0;
+  left: 15%;
+  right: 15%;
+}
+
+
+
+
+/** Slideshow Bubbles Template **/
+
+// first for the very small devices (xs)
+
+// the bubble list
+.cc-slider .carousel-indicators.cc-slider-bubbles {
+  width: auto;
+  position: relative;
+  left: 0;
+  bottom: 47px;
+  float: right;
+  margin-top: 0px;
+  margin-left: 5%;
+  margin-right: 5%;
+  opacity: 1;
+}
+// the bubble items
+.cc-slider .carousel-indicators li.cc-slider-bubble-wrap {
+  width: 90px;
+  height: 90px;
+  overflow: hidden;
+  border-radius: 500px;
+  margin: 4px;
+  opacity: 1;
+  border: 2px solid #fff;
+  float: left;
+}
+// the bubble preview image
+.cc-slider img.cc-slider-bubble {
+  transition: all 200ms ease-in-out;
+  display: block;
+  opacity: 1;
+  height: 100%;
+  max-width: none;
+  width: auto;
+}
+// the active bubble's overlay
+.cc-slider .cc-slider-bubble-active {
+  position: absolute;
+  top: 0;
+  margin-top: 6px;
+  width: 86px;
+  height: 86px;
+  background: #f2694b;
+  opacity: 0;
+  border-radius: 500px;
+  transition: all 200ms ease;
+}
+.cc-slider .active .cc-slider-bubble-active {
+  opacity: 0.8;
+}
+// the bubble caption wrap
+.cc-slider .cc-slider-bubble-title-wrap {
+  position: absolute;
+  top: 0;
+  margin-top: 6px;
+  width: 86px;
+  height: 86px;
+  background: #000;
+  opacity: 0.6;
+  border-radius: 500px;
+  text-align: center;
+  padding: 30px 5px 0;
+  color: white;
+  display: none;
+}
+.cc-slider li.cc-slider-bubble-wrap:hover .cc-slider-bubble-title-wrap,
+.cc-slider li.cc-slider-bubble-wrap:focus .cc-slider-bubble-title-wrap {
+  display: block;
+}
+// the bubble caption text
+.cc-slider .cc-slider-bubble-title {
+  display: block;
+  text-indent: 0;
+  text-shadow: none;
+  font-size: 11px;
+}
+// the bubble slider main caption
+.cc-slider .cc-slider-bubbles-wrap .carousel-caption {
+  bottom: 30%;
+}
+
+// hide the bubbles on very small devices
+@media screen and (max-width: @screen-xs) {
+  .cc-slider .carousel-indicators.cc-slider-bubbles {
+    display: none;
+  }
+}
+
+// changes for small devices and up
+@media screen and (min-width: @screen-sm) {
+  // the bubble list
+  .cc-slider .carousel-indicators.cc-slider-bubbles {
+    bottom: 60px;
+    margin-top: 0;
+  }
+  // the bubble item
+  .cc-slider .carousel-indicators li.cc-slider-bubble-wrap {
+    width: 120px;
+    height: 120px;
+    border-width: 4px;
+    margin: 8px;
+  }
+  // the bubble caption wrap
+  .cc-slider .cc-slider-bubble-title-wrap {
+    padding-top: 40px;
+  }
+  // the bubble caption on hover and active overlay
+  .cc-slider li.cc-slider-bubble-wrap:hover .cc-slider-bubble-title-wrap,
+  .cc-slider li.cc-slider-bubble-wrap:focus .cc-slider-bubble-title-wrap,
+  .cc-slider .cc-slider-bubble-active {
+    top: 0;
+    margin-top: 12px;
+    width: 112px;
+    height: 112px;
+  }
+  // the bubble caption text
+  .cc-slider .cc-slider-bubble-title {
+    font-size: 12px;
+  }
+}
+
+// changes for medium devices and up
+@media screen and (min-width: @screen-md) {
+  // the bubble list
+  .cc-slider .carousel-indicators.cc-slider-bubbles {
+    bottom: 70px;
+  }
+  // the bubble item
+  .cc-slider .carousel-indicators li.cc-slider-bubble-wrap {
+    width: 150px;
+    height: 150px;
+    border-width: 5px;
+    margin: 8px;
+  }
+  // the bubble caption wrap
+  .cc-slider .cc-slider-bubble-title-wrap {
+    padding-top: 50px;
+  }
+  // the bubble caption on hover and active overlay
+  .cc-slider li.cc-slider-bubble-wrap:hover .cc-slider-bubble-title-wrap,
+  .cc-slider li.cc-slider-bubble-wrap:focus .cc-slider-bubble-title-wrap,
+  .cc-slider .cc-slider-bubble-active {
+    top: 0px;
+    margin-top: 12px;
+    width: 141px;
+    height: 142px;
+  }
+  // the bubble caption text
+  .cc-slider .cc-slider-bubble-title {
+    font-size: 14px;
+  }
+}
+
+
+
+
+
+
+/** Slideshow - Side Preview **/
+.cc-slider .carousel-indicators.cc-slider-side-preview {
+  width: 35%;
+  top: 0;
+  left: 0;
+  background: #fff;
+  height: 100%;
+  position: relative;
+  opacity: 1;
+  box-shadow: -2px 0px 4px rgba(0,0,0,0.4);
+  float: right;
+  margin-left: 0;
+}
+.cc-slider .carousel-indicators li.cc-slider-side-preview-wrap {
+  width: 100%;
+  height: 105px;
+  overflow: hidden;
+  border-radius: 0;
+  margin: 0;
+  padding: 10px;
+  opacity: 1;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  float: none;
+  display: block;
+  border-radius: 0;
+  text-align: left;
+}
+.cc-slider .carousel-indicators li.cc-slider-side-preview-wrap:hover {
+  background: #fafafa;
+}
+.cc-slider .carousel-indicators li.cc-slider-side-preview-wrap:focus,
+.cc-slider .carousel-indicators li.cc-slider-side-preview-wrap.active {
+  background: #f4f4f4;
+}
+.cc-slider .cc-slider-side-preview-img-wrap {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+  margin: 0 10px 0 0;
+  opacity: 1;
+  border: 4px solid #ededed;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  float: left;
+  display: block;
+}
+.carousel-inner.cc-carousel-inner-side-preview > .item > img {
+  max-width: none;
+  height: 420px;
+  width: auto;
+  transition: all 200ms ease-in-out;
+  display: block;
+  opacity: 1;
+}
+.cc-slider .cc-slider-side-preview-title {
+  display: block;
+  text-indent: 0;
+  text-shadow: none;
+  font-size: 17px;
+  line-height: 140%;
+  word-wrap: break-word;
+}
+.cc-slider .cc-slider-side-preview-excerpt {
+  display: block;
+  text-indent: 0;
+  text-shadow: none;
+  font-size: 13px;
+  line-height: 120%;
+  word-wrap: break-word;
+}
+.cc-carousel-inner-side-preview {
+  width: 65%;
+  float: left;
+}

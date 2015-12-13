@@ -1,0 +1,838 @@
+# Copyright (C) 2014 Piklist
+# This file is distributed under the same license as the Piklist package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Piklist 0.9.4\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/piklist\n"
+"POT-Creation-Date: 2014-06-20 01:13:27+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2014-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: assets/class-piklist-checker.php:125
+msgid "The following plugin(s) require Piklist, and have been deactivated:"
+msgstr ""
+
+#: assets/class-piklist-checker.php:137
+msgid "You can:"
+msgstr ""
+
+#: assets/class-piklist-checker.php:151
+msgid "Activate Piklist for this site"
+msgstr ""
+
+#: assets/class-piklist-checker.php:157
+msgid "Network Activate Piklist for all sites."
+msgstr ""
+
+#: assets/class-piklist-checker.php:163
+msgid "Install Piklist"
+msgstr ""
+
+#: assets/class-piklist-checker.php:167
+msgid "%1$s %2$sDismiss this message"
+msgstr ""
+
+#: includes/class-piklist-admin.php:163
+msgid "%1$s and %2$sPiklist%1$s."
+msgstr ""
+
+#: includes/class-piklist-admin.php:218 includes/class-piklist-setting.php:86
+msgid "General"
+msgstr ""
+
+#: includes/class-piklist-admin.php:302
+msgid "Save Changes"
+msgstr ""
+
+#: includes/class-piklist-admin.php:374
+msgid "Dependent plugins or theme are active."
+msgstr ""
+
+#: includes/class-piklist-admin.php:381 includes/class-piklist-setting.php:37
+#: includes/class-piklist-setting.php:38 parts/fields/add-ons.php:41
+msgid "Settings"
+msgstr ""
+
+#: includes/class-piklist-admin.php:382
+msgid "Demo"
+msgstr ""
+
+#: includes/class-piklist-cpt.php:762
+msgid "Custom field updated."
+msgstr ""
+
+#: includes/class-piklist-cpt.php:763
+msgid "Custom field deleted."
+msgstr ""
+
+#: includes/class-piklist-cpt.php:767
+msgid "Page saved."
+msgstr ""
+
+#. translators: Publish box date format, see http:php.net/date
+#: includes/class-piklist-cpt.php:769
+#: parts/shared/post-submit-meta-box.php:189
+msgid "M j, Y @ G:i"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:216
+msgid "1 item"
+msgid_plural "%s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-piklist-list-table.php:240
+msgid "Go to the first page"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:248
+msgid "Go to the previous page"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:255
+msgid "Current page"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:261
+msgctxt "paging"
+msgid "%1$s of %2$s"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:266
+msgid "Go to the next page"
+msgstr ""
+
+#: includes/class-piklist-list-table.php:274
+msgid "Go to the last page"
+msgstr ""
+
+#: includes/class-piklist-setting.php:27
+msgid "About"
+msgstr ""
+
+#: includes/class-piklist-setting.php:50 includes/class-piklist-setting.php:51
+msgid "Add-ons"
+msgstr ""
+
+#: includes/class-piklist-taxonomy.php:232
+msgid "Users"
+msgstr ""
+
+#: includes/class-piklist-validate.php:125
+msgid "is a required field."
+msgstr ""
+
+#: includes/class-piklist-validate.php:179
+msgid "is not valid input"
+msgstr ""
+
+#: includes/class-piklist-validate.php:202
+msgid "Field"
+msgstr ""
+
+#: includes/class-piklist-validate.php:259
+msgid "is not valid HTML"
+msgstr ""
+
+#: includes/class-piklist-validate.php:266
+msgid "is not a valid ip address."
+msgstr ""
+
+#: includes/class-piklist-validate.php:276
+msgid "contains invalid characters. Must contain only letters and numbers."
+msgstr ""
+
+#: includes/class-piklist-validate.php:280
+msgid "is not a valid url."
+msgstr ""
+
+#: includes/class-piklist-validate.php:297
+msgid "does not contain a valid Email Address."
+msgstr ""
+
+#: includes/class-piklist-validate.php:313
+msgid "does not contain a valid Email Domain."
+msgstr ""
+
+#: includes/class-piklist-validate.php:329
+msgid "contains a file that does not exist."
+msgstr ""
+
+#: includes/class-piklist-validate.php:345
+msgid "contains a file that is not an image."
+msgstr ""
+
+#: includes/class-piklist-validate.php:365
+msgid "added"
+msgstr ""
+
+#: includes/class-piklist-validate.php:365
+msgid "selected"
+msgstr ""
+
+#: includes/class-piklist-validate.php:369
+msgid "must have at least %1$s %2$s."
+msgstr ""
+
+#: includes/class-piklist-validate.php:376
+msgid "cannot have more than %1$s %2$s."
+msgstr ""
+
+#: includes/class-piklist-validate.php:404
+msgid "contains a value that is not between %s and %s"
+msgstr ""
+
+#: includes/class-piklist-widget.php:59 includes/class-piklist-widget.php:71
+msgid "Widgets"
+msgstr ""
+
+#: includes/class-piklist-widget.php:64
+msgid "Piklist Widgets"
+msgstr ""
+
+#: includes/class-piklist-widget.php:65
+msgid "Core Widgets for Piklist."
+msgstr ""
+
+#: includes/class-piklist-widget.php:72
+msgid "Widgets for the %s Theme"
+msgstr ""
+
+#: includes/class-piklist.php:477
+msgid "Add New"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:166
+msgid "Welcome to Piklist"
+msgstr ""
+
+#. #-#-#-#-#  plugin.pot (Piklist 0.9.4)  #-#-#-#-#
+#. Description of the plugin/theme
+#: parts/admin-pages/welcome.php:168
+msgid "The most powerful framework available for WordPress."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:171
+msgid "%sP%sIKLIST%s"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:172
+msgid "Version %s"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:190
+msgid "Now even more powerful than before."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:197
+msgid "Post relationships"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:198
+msgid "You'll wish all relationships were this easy."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:199
+msgid ""
+"Post relationships are standard with Piklist and easy to setup. Displaying "
+"them in your theme is even easier, since you can use the standard WordPress "
+"%sget_posts%s function."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:212
+msgid "Add-Mores"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:213
+msgid "The infinite repeater field."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:214
+msgid ""
+"Piklist AddMore fields are the repeater field you always dreamed of. Group "
+"together as many fields as you want and make them repeat indefinitely. Or "
+"place an Add-More within an Add-More within an Add-more..."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:227
+msgid "WorkFlows"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:228
+msgid "The tab system you never knew was possible."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:229
+msgid ""
+"Piklist WorkFlows allows you to place tabs anywhere... and with %sanything"
+"%s. Tabs can include content from any page or even custom views you create."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:242
+msgid "Multiple user roles"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:243
+msgid "Better security, more flexibility."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:244
+msgid ""
+"Powerful web sites and applications require multiple user roles and Piklist "
+"supports this out of the box. Standard WordPress functions can be used to "
+"validate a user's permissions and provide appropriate access to data."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:255
+msgid "Intelligent field system"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:256
+msgid ""
+"Easily create powerful fields just the way you want... and place them "
+"wherever you want."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:261
+msgid "Conditional Logic"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:263
+msgid "Hide/show fields based on another fields value."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:264
+msgid "Auto-update another field."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:269
+msgid "Validate data"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:271
+msgid "Built in validation rules"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:272
+msgid "Easily add your own"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:273
+msgid "Apply multiple rules"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:278
+msgid "Sanitize before saving"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:280
+msgid "Use WordPress sanitization functions."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:281
+msgid "Create your own"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:294
+msgid "Customize everything in WordPress."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:295
+msgid ""
+"Post Types, Taxonomies, User Profiles, Settings, Admin Pages, Widgets, "
+"Dashboard, Contextual Help, and more..."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:300
+msgid "Fields"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:302
+msgid "Lock field values."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:303
+msgid "Define field scopes."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:304
+msgid "Add Tooltip Help."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:305
+msgid "Customize field templates."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:310
+msgid "Meta Boxes"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:312
+msgid "Lock meta boxes"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:313
+msgid "Show/hide by user capability or role"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:314
+msgid "Set the order of meta boxes"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:315
+msgid "Hide meta box when creating a new post/term"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:320
+msgid "Post Types"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:322
+msgid "Create custom post statuses"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:323
+msgid "Change the \"Enter title here\" text"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:324
+msgid "Custom admin body classes"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:325
+msgid "Hide meta boxes"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:334
+msgid "List Tables"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:336
+msgid "Change column headings"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:337
+msgid "Show post states"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:338
+msgid "Hide the post row actions"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:343
+msgid "User Profiles"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:345
+msgid "Profiles can taken advantage of any Piklist field"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:346
+msgid "Show/hide fields by user capability or role"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:347
+msgid "Easily add User Taxonomies"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:352
+msgid "Widgets, Dashboard & Help"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:354
+msgid "Simply create complex widgets"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:355
+msgid "No object oriented programming required"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:356
+msgid "No help needed to create contextual help"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:369
+msgid "Get Started"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:370
+msgid ""
+"The built in demos is a great way to see what Piklist can do, and comes with "
+"tons of sample code."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:371
+msgid "Activate Demos %s"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:374
+msgid "Get Help"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:375
+msgid ""
+"Visit the Piklist community forums to get answers to your questions, and "
+"suggest new features."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:376
+msgid "Visit Forums %s"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:379
+msgid "Get News"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:380
+msgid "Piklist updates in your inbox."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:383
+msgid "Send to:"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:388
+msgid "Subscribe"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:399
+msgid "Piklist is created by a team of passionate individuals."
+msgstr ""
+
+#: parts/admin-pages/welcome.php:402
+msgid "Project Leaders"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:411 parts/admin-pages/welcome.php:419
+msgid "Lead Developer"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:424
+msgid "Contributing Developers"
+msgstr ""
+
+#: parts/admin-pages/welcome.php:456
+msgid "Follow Piklist"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:29
+#: parts/dashboard/dashboard-right-now.php:184
+msgid "Content"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:55
+#: parts/dashboard/dashboard-right-now.php:317
+msgid "Organization"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:83
+#: parts/dashboard/dashboard-right-now.php:243
+msgid "Comments"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:93
+#: parts/dashboard/dashboard-right-now.php:263
+msgid "Approved"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:103
+#: parts/dashboard/dashboard-right-now.php:283
+msgid "Pending"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:113
+#: parts/dashboard/dashboard-right-now.php:303
+msgid "Spam"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:143
+msgid "WordPress %1$s running %2$s theme."
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:148
+#: parts/dashboard/dashboard-right-now.php:425
+msgid "Your site is asking search engines not to index its content"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:149
+#: parts/dashboard/dashboard-right-now.php:426
+msgid "Search Engines Discouraged"
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:369
+msgid ""
+"ERROR: The themes directory is either empty or does not exist. Please check "
+"your installation."
+msgstr ""
+
+#: parts/dashboard/dashboard-right-now.php:401
+#: parts/dashboard/dashboard-right-now.php:405
+msgid "Theme %1$s with %2$s Widget"
+msgid_plural "Theme %1$s with %2$s Widgets"
+msgstr[0] ""
+msgstr[1] ""
+
+#: parts/dashboard/dashboard-right-now.php:412
+#: parts/dashboard/dashboard-right-now.php:416
+msgid "Theme %1$s"
+msgstr ""
+
+#: parts/fields/add-ons.php:35
+msgid "Disable"
+msgstr ""
+
+#: parts/fields/add-ons.php:35
+msgid "Activate"
+msgstr ""
+
+#: parts/fields/file.php:73 parts/fields/file.php:92
+msgid "Remove"
+msgstr ""
+
+#: parts/fields/post-relate.php:6
+msgid "Most Recent"
+msgstr ""
+
+#: parts/fields/post-relate.php:7
+msgid "All"
+msgstr ""
+
+#: parts/settings/add-ons.php:10
+msgid ""
+"Add-ons are Piklist plugins that are included with Piklist core, or another "
+"Piklist plugin. They allow you to turn on additional functionality."
+msgstr ""
+
+#: parts/settings/add-ons.php:19
+msgid "Plugin Add-ons"
+msgstr ""
+
+#: parts/settings/add-ons.php:20
+msgid "Check to activate."
+msgstr ""
+
+#: parts/settings/general.php:14
+msgid ""
+"WARNING: Deactivating Piklist may disable functionality on this website."
+msgstr ""
+
+#: parts/settings/general.php:18
+msgid ""
+"Before deactivating please make sure other Plugins or your Theme do not rely "
+"on Piklist."
+msgstr ""
+
+#: parts/settings/general.php:22
+msgid "If you still want to deactivate Piklist:"
+msgstr ""
+
+#: parts/settings/general.php:24
+msgid "Change the setting below to: Allow Deactivation."
+msgstr ""
+
+#: parts/settings/general.php:25
+msgid "SAVE the Settings."
+msgstr ""
+
+#: parts/settings/general.php:26
+msgid "Return to the %1$sPlugins page%2$s and disable Piklist normally."
+msgstr ""
+
+#: parts/settings/general.php:35
+msgid ""
+"Stops Piklist from being deactivated, and replaces the standard DEACTIVATE "
+"link for Piklist, with a link to this page."
+msgstr ""
+
+#: parts/settings/general.php:39
+msgid ""
+"When a user clicks on the new link on the plugins page, they will be brought "
+"here, and shown a warning."
+msgstr ""
+
+#: parts/settings/general.php:49
+msgid "Piklist Deactivation"
+msgstr ""
+
+#: parts/settings/general.php:50
+msgid "Deactivating Piklist may disable functionality on this website."
+msgstr ""
+
+#: parts/settings/general.php:55
+msgid "Allow Deactivation"
+msgstr ""
+
+#: parts/settings/general.php:56
+msgid "Lock"
+msgstr ""
+
+#: parts/settings/users.php:11
+msgid "Muliple User Roles"
+msgstr ""
+
+#: parts/settings/users.php:12
+msgid "Users can be assigned multiple roles."
+msgstr ""
+
+#: parts/settings/users.php:13
+msgid "Changes the user role dropdown to a select box."
+msgstr ""
+
+#: parts/settings/users.php:15
+msgid "Allow"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:18
+#: parts/shared/post-submit-meta-box.php:29
+#: parts/shared/post-submit-meta-box.php:38
+msgid "Save"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:18
+#: parts/shared/post-submit-meta-box.php:202
+#: parts/shared/post-submit-meta-box.php:210
+msgid "Publish"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:51
+msgid "Preview Changes"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:61
+msgid "Preview"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:87
+msgid "Status:"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:95
+#: parts/shared/post-submit-meta-box.php:150
+#: parts/shared/post-submit-meta-box.php:225
+msgid "Edit"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:107
+#: parts/shared/post-submit-meta-box.php:171
+msgid "OK"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:108
+#: parts/shared/post-submit-meta-box.php:172
+msgid "Cancel"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:123
+msgid "Visibility:"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:128
+#: parts/shared/post-submit-meta-box.php:168
+msgid "Private"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:133
+#: parts/shared/post-submit-meta-box.php:165
+msgid "Password protected"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:138
+msgid "Public, Sticky"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:143
+#: parts/shared/post-submit-meta-box.php:161
+msgid "Public"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:163
+msgid "Stick this post to the front page"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:167
+msgid "Password:"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:194
+#: parts/shared/post-submit-meta-box.php:206
+msgid "Scheduled for: <b>%1$s</b>"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:198
+msgid "Published on: <b>%1$s</b>"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:202
+#: parts/shared/post-submit-meta-box.php:210
+#: parts/shared/post-submit-meta-box.php:280
+#: parts/shared/post-submit-meta-box.php:281
+msgid "Schedule"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:202
+msgid "%simmediately%s"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:210
+msgid "on: <b>%1$s</b>"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:216
+msgid "Publish %simmediately%s"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:257
+msgid "Delete Permanently"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:261
+msgid "Move to Trash"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:292
+#: parts/shared/post-submit-meta-box.php:293
+msgid "Submit for Review"
+msgstr ""
+
+#: parts/shared/post-submit-meta-box.php:300
+msgid "Update"
+msgstr ""
+
+#: parts/shared/update-available.php:18
+msgid "Updating is recommended, here's why:"
+msgstr ""
+
+#: parts/shared/widget-select.php:8 parts/shared/widget-select.php:26
+msgid "Select a Widget"
+msgstr ""
+
+#: parts/shared/widget-select.php:70
+msgid "There are currently no Widgets available."
+msgstr ""
+
+#: parts/shared/widget-select.php:73
+msgid "Learn to make Widgets"
+msgstr ""
+
+#: parts/shared/widget-select.php:76
+msgid ""
+"Check out the documentation for how to easily build your own custom widgets!"
+msgstr ""
+
+#. #-#-#-#-#  plugin.pot (Piklist 0.9.4)  #-#-#-#-#
+#. Plugin Name of the plugin/theme
+#. #-#-#-#-#  plugin.pot (Piklist 0.9.4)  #-#-#-#-#
+#. Author of the plugin/theme
+msgid "Piklist"
+msgstr ""
+
+#. #-#-#-#-#  plugin.pot (Piklist 0.9.4)  #-#-#-#-#
+#. Plugin URI of the plugin/theme
+#. #-#-#-#-#  plugin.pot (Piklist 0.9.4)  #-#-#-#-#
+#. Author URI of the plugin/theme
+msgid "http://piklist.com"
+msgstr ""

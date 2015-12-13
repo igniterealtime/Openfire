@@ -1,0 +1,14 @@
+{
+	'slug':'default',
+	'title':'Base Scheme',
+	'file': 'style.less',
+	'output_file': 'style.css',
+	'output_dir': '%cc2_schemes%',
+	'scheme': {
+		'_font_color':'494949',
+		'_font_family':"\"Century Gothic\", \"Avant Garde\", Arial, sans-serif",
+		'_link_color':'356482',
+		'_hover_color':'6ca4d8',
+	},
+	'settings_file': 'default.settings.json'
+}

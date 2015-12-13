@@ -1,0 +1,29 @@
+/*
+
+Jappix - An open social platform
+This is the anonymous mode CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 06/11/10
+
+*/
+
+#top-content {
+	min-width: 500px !important;
+}
+
+#main-content {
+	min-width: 490px !important;
+	min-height: 450px !important;
+}
+
+#left-content {
+	display: none;
+}
+
+#right-content {
+	left: 0;
+}

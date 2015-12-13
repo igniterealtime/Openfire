@@ -1,0 +1,209 @@
+/*
+
+Jappix - An open social platform
+This is the page-switch CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 22/05/11
+
+*/
+
+#page-switch {
+	position: absolute;
+	top: 15px;
+	left: 10px;
+	right: 10px;
+	z-index: 9;
+}
+
+#page-switch .chans {
+	position: absolute;
+	left: 0;
+	right: 40px;
+	top: 0;
+	height: 25px;
+	overflow: hidden;
+}
+
+#page-switch .more {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+#page-switch .more-button {
+	background-position: 6px -1372px;
+	background-color: #d9e7ea;
+	width: 7px;
+	height: 17px;
+	padding: 1px 6px;
+	font-size: 0.9em;
+	text-decoration: none;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+#page-switch .more-content {
+	background-color: #d9e7ea;
+	width: 200px;
+	max-height: 400px;
+	overflow: auto;
+	position: absolute;
+	margin: -2px 0 0 -181px;
+	padding: 4px 0;
+	font-size: 0.95em;
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+	-moz-border-radius-topleft: 3px;
+	-moz-border-radius-bottomleft: 3px;
+	-moz-border-radius-bottomright: 3px;
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-bottom-left-radius: 3px;
+	-webkit-border-bottom-right-radius: 3px;
+}
+
+#page-switch .switcher {
+	background-color: #d9e7ea;
+	color: #17353b;
+	height: 15px;
+	padding: 5px 10px 5px 5px;
+	margin: 0 2px;
+	font-size: 0.85em;
+	float: left;
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-moz-border-radius-topleft: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-webkit-border-top-left-radius: 3px;
+}
+
+#page-switch .more-content .switcher {
+	background-color: #d9e7ea;
+	float: none;
+	margin: 0;
+	font-size: 0.9em;
+	border-radius: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
+}
+
+#page-switch .more-content .switcher .exit {
+	display: block;
+}
+
+#page-switch .more-button:hover,
+#page-switch .more-button:focus,
+#page-switch .switcher:hover,
+#page-switch .switcher:focus,
+#page-switch .more-content .switcher:hover,
+#page-switch .more-content .switcher:focus {
+	background-color: #cedee1;
+	cursor: pointer;
+}
+
+#page-switch .more-button:active,
+#page-switch .switcher:active,
+#page-switch .more-content .switcher:active {
+	background-color: #c3d3d7;
+}
+
+#page-switch .switcher.activechan {
+	background-color: #e8f1f3;
+}
+
+#page-switch .more-content .switcher.activechan {
+	background-color: #d1e0e3;
+}
+
+#page-switch .icon {
+	height: 16px;
+	width: 16px;
+	float: left;
+}
+
+#page-switch .name {
+	float: left;
+	margin-left: 4px;
+	max-height: 16px;
+	max-width: 140px;
+	overflow: hidden;
+}
+
+#page-switch .exit {
+	display: none;
+	background-color: #bdd9dc;
+	border: 1px solid #80aab0;
+	color: #355e64;
+	height: 14px;
+	width: 13px;
+	margin-left: 10px;
+	font-size: 0.85em;
+	text-align: center;
+	text-decoration: none;
+	float: right;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+#page-switch .exit:hover,
+#page-switch .exit:focus {
+	background-color: #aac7cb;
+}
+
+#page-switch .exit:active {
+	background-color: #9bbdc1;
+}
+
+#page-switch .activechan .exit {
+	display: block;
+	float: right;
+}
+
+#page-switch .chan-newmessage {
+	background-color: #f6edc3 !important;
+}
+
+#page-switch .chan-newmessage:hover,
+#page-switch .chan-newmessage:focus {
+	background-color: #f1eac0 !important;
+}
+
+#page-switch .chan-newmessage:active {
+	background-color: #ede4b8 !important;
+}
+
+#page-switch .composing,
+#page-engine .list .user.composing {
+	color: #217021 !important;
+}
+
+#page-switch .paused,
+#page-switch .chan-unread .name,
+#page-engine .list .user.paused {
+	color: #2431ac !important;
+}
+
+#page-switch .active,
+#page-engine .list .user.active {
+	color: #353535 !important;
+}
+
+#page-switch .inactive,
+#page-engine .list .user.inactive {
+	color: #585858 !important;
+}
+
+#page-switch .gone {
+	color: #851313 !important;
+}
+
+#page-switch .channel .icon {
+	background-position: 0 -55px;
+}

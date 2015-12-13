@@ -1,0 +1,59 @@
+# Translation of the WordPress plugin Private BuddyPress 1.0.4 by Dennis Morhardt.
+# Copyright (C) 2011 Dennis Morhardt
+# This file is distributed under the same license as the Private BuddyPress package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Private BuddyPress 1.0.4\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/private-buddypress\n"
+"POT-Creation-Date: 2010-09-20 09:28+0000\n"
+"PO-Revision-Date: 2010-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: private-buddypress.php:51
+msgid "BuddyPress Protection"
+msgstr ""
+
+#: private-buddypress.php:144
+msgid "Exclude from protection"
+msgstr ""
+
+#: private-buddypress.php:146
+msgid "Front page"
+msgstr ""
+
+#: private-buddypress.php:147
+msgid "Blog pages (posts, archives and non-buddypress pages)"
+msgstr ""
+
+#: private-buddypress.php:148
+msgid "Registration"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Private BuddyPress"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "http://bp-tutorials.de/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Protect your BuddyPress Installation from strangers. Only registered users "
+"will be allowed to view the installation."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Dennis Morhardt"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://www.dennismorhardt.de/"
+msgstr ""

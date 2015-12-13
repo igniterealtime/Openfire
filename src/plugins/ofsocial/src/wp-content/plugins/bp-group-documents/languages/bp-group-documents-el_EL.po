@@ -1,0 +1,652 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: bp-group-managemen 0.4 el_GR\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-group-documents\n"
+"POT-Creation-Date: 2014-03-17 10:01+0200\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Lena Stergatu <stergatu@cti.gr>\n"
+"Language-Team: nts on cti <nts-info@cti.gr>\n"
+"Language: el_GR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Poedit 1.6.4\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:33
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:45
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:153
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:23
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:31
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:49
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:180
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:317
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:419
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/loader.php:124
+msgid "Documents"
+msgstr "Αρχεία"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:91
+#, fuzzy
+msgid "There was an error saving, please try again"
+msgstr "Παρουσιάστηκε ένα λάθος κατά την αποθήκευση. Παρακαλώ προσπαθήστε ξανά"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:93
+msgid "Settings saved successfully"
+msgstr "Οι επιλογές αποθηκεύτηκαν επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:120
+#, fuzzy
+msgid "Category List for"
+msgstr "Κατηγορίες για τα "
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:131
+#, fuzzy
+msgid "Update"
+msgstr "Ενημέρωση"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:136
+#, fuzzy, php-format
+msgid "Are you sure you want to delete category <b>%s</b>?"
+msgstr "Είστε σίγουρος ότι θέλετε να διαγράψετε την κατηγορία <b>%s</b>;"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:139
+#, fuzzy, php-format
+msgid "Any %s in the category will be left with no category."
+msgstr "Τα %s της κατηγορίας θα μείνουν δίχως κατηγορία."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:143
+#, fuzzy
+msgid "You can later assign them to another  category."
+msgstr "Μπορείτε στην συνέχεια να τα εντάξετε σε άλλη κατηγορία."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:146
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:168
+msgid "Delete"
+msgstr "Διαγραφή"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:154
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:164
+msgid "Edit"
+msgstr "Επεξεργασία"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:162
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:23
+#, fuzzy
+msgid "Add"
+msgstr "Προσθήκη:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:171
+msgid "Save Changes"
+msgstr "Αποθήκευση αλλαγών"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:183
+#, fuzzy
+msgid "Upload Permissions:"
+msgstr "Δικαιώματα Φόρτωσης αρχείων:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:192
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:199
+msgid "All Group Members"
+msgstr "Όλα τα μέλη της ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:196
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:203
+#, fuzzy
+msgid "Only Group's Administrators and Moderators"
+msgstr "Μόνο διαχειριστές και συντονιστές ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:235
+#, fuzzy, php-format
+msgid "Group %s category deleted successfully"
+msgstr "%s: Η κατηγορία διαγράφηκε επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:241
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:258
+#, fuzzy, php-format
+msgid "No changes were made. This %s category name is used already"
+msgstr ""
+"Δεν έγιναν αλλαγές. Αυτό το όνομα κατηγορίας για %s χρησιμοποιείται ήδη."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:245
+#, fuzzy, php-format
+msgid "Group %s category renamed successfully"
+msgstr "%s ομάδας: Επιτυχής μετονομασία κατηγορίας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:255
+#, fuzzy, php-format
+msgid "New group %s category created"
+msgstr "Καταχωρήθηκε ως κατηγορία για τα %s  της ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:266
+#, fuzzy
+msgid "Upload Permissions changed successfully"
+msgstr "Οι επιλογές αποθηκεύτηκαν επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/buddypress-group-documents.php:274
+#, fuzzy
+msgid "No changes were made. Either error or you didn't change anything"
+msgstr ""
+"Δεν έγιναν αλλαγές. Είτε συνέβει κάποιο σφάλμα ή δεν έχετε επιλέξει να "
+"αλλάξετε κάτι"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:14
+#, php-format
+msgid "%s uploaded the file: %s to %s"
+msgstr "%s φόρτωσε τα αρχεία: %s έως %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:34
+#, php-format
+msgid "%s edited the file: %s in %s"
+msgstr "%s τροποποίησε το αρχείο: %s στο %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:53
+#, php-format
+msgid "%s deleted the file: %s from %s"
+msgstr "%s διέγραψε το αρχείο: %s από %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:155
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:307
+#, fuzzy, php-format
+msgid "Show New Group %s"
+msgstr "Νέα %s ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/activity.php:157
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:319
+#, fuzzy, php-format
+msgid "Show Group %s Edits"
+msgstr "Αλλαγές σε %s ομάδων"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:88
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+#, fuzzy
+msgid "Settings"
+msgstr "ρυθμίσεις"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:93
+msgid "Settings Updated."
+msgstr "Οι ρυθμίσεις ενημερώθηκαν."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:99
+#, fuzzy
+msgid "Use this name instead of \"documents\" "
+msgstr "Χρήση αυτή της ονομασίας αντί για  \"documents\" "
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:105
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:226
+msgid "Valid File Formats"
+msgstr "Επιτρεπόμενοι τύποι αρχείων"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:111
+msgid "Items per Page"
+msgstr "Στοιχεία ανά σελίδα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:116
+msgid "Upload Permission:"
+msgstr "Δικαιώματα Φόρτωσης:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:120
+msgid "Members &amp; Moderators"
+msgstr "Μέλη &amp; Συντονιστές"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:124
+msgid "Moderators Only"
+msgstr "Μόνο Συντονιστές"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:128
+msgid "Let individual moderators decide"
+msgstr "Ας αποφασίζει ο κάθε συντονιστής "
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:131
+msgid "Use Categories"
+msgstr "Χρήση Κατηγοριών"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:139
+msgid "Display Icons"
+msgstr "Εμφάνιση Εικονιδίων:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:147
+msgid "Display File Size"
+msgstr "Εμφάνιση μέγεθους εγγράφου"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:155
+#, fuzzy
+msgid "Display File Downloads "
+msgstr "Εμφάνιση πλήθους downloads"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:164
+msgid "Save Settings"
+msgstr "Αποθήκευση Ρυθμίσεων"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/admin.php:216
+#, fuzzy
+msgid "Buddypress Group Documents"
+msgstr "Buddypress Group Documents"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:32
+#, fuzzy
+msgid "Group"
+msgstr "στην oμάδα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:36
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:59
+#, fuzzy
+msgid "List"
+msgstr "Λίστα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:66
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:266
+msgid "Category:"
+msgstr "Κατηγορία:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:68
+msgid "All"
+msgstr "Όλα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:76
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:97
+msgid "Go"
+msgstr "Πήγαινε"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:82
+msgid "Order by:"
+msgstr "Ταξινόμηση κατά:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:87
+msgid "Newest"
+msgstr "Νέα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:91
+msgid "Alphabetical"
+msgstr "Αλφαβητικά"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:95
+msgid "Most Popular"
+msgstr "Δημοφιλέστερα"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:149
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:465
+#, php-format
+msgid "Uploaded by %s on %s"
+msgstr "Ανέβηκε από %s στο %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:154
+#, fuzzy
+msgid " downloads since then."
+msgstr " downloads από τότε."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:194
+#, fuzzy
+msgid "There are no documents in the selected category."
+msgstr "Δεν υπάρχουν αρχεία στην επιλεγμένη κατηγορία."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:196
+#, fuzzy
+msgid "There are no documents uploaded for this group."
+msgstr "Δεν υπάρχουν αρχεία σε αυτή την ομάδα."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:221
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:16
+msgid "Choose File:"
+msgstr "Επιλογή Αρχείου:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:231
+#, fuzzy
+msgid "Document:"
+msgstr "Αρχείο:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:237
+msgid "Featured Document"
+msgstr "Προβεβλημένο (Featured) Αρχείο"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:242
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:21
+msgid "Display Name:"
+msgstr "Εμφανιζόμενο Όνομα:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:245
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:25
+msgid "Description:"
+msgstr "Περιγραφή:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:286
+#, fuzzy
+msgid "Save"
+msgstr "Αποθήκευση"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:291
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:167
+msgid "Upload a New Document"
+msgstr "Φόρτωση Νέου Αρχείου"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:315
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:83
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:197
+msgid "There was a security problem"
+msgstr "Παρουσιάστηκε πρόβλημα ασφαλείας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:319
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:218
+msgid "The item to delete could not be found"
+msgstr "Το αντικείμενο προς διαγραφή δεν βρέθηκε"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/bp_group_documents_functions.php:428
+msgid "Group Document Categories"
+msgstr "Κατηγορίες Αρχείων ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:181
+msgid "Whoops!  There was no file selected for upload."
+msgstr "Ουπς! Δεν έχετε επιλέξει αρχείο προς φόρτωση."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:186
+msgid "The type of document submitted is not allowed"
+msgstr "Ο τύπος του αρχείου προς φόρτωση δεν επιτρέπεται."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:194
+msgid ""
+"There was a problem; your file is larger than is allowed by the site "
+"administrator."
+msgstr ""
+"Παρουσιάστηκε πρόβλημα, το αρχείο ειναι μεγαλύτερο από το επιτρεπόμενο "
+"μέγεθος που έχει καθορίσει ο διαχειριστής"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:197
+msgid "There was a problem; the file was only partially uploaded."
+msgstr "Παρουσίαστηκε πρόβλημα: Το αρχείο φορτώθηκε μερικώς."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:200
+msgid "There was a problem; no file was found for the upload."
+msgstr "Παρουσίαστηκε πρόβλημα: Δεν βρέθηκε αρχείο για φόρτωση."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:203
+msgid "There was a problem; the temporary folder for the file is missing."
+msgstr "Παρουσιάστηκε πρόβλημα, ο προσωρινός φάκελος αρχείων λείπει."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:206
+msgid "There was a problem; the file could not be saved."
+msgstr "Παρουσιάστηκε πρόβλημα, δεν στάθηκε δυνατή η αποθήκευση του αρχείου."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:227
+msgid "There was a problem saving your file, please try again."
+msgstr ""
+"Παρουσιάστηκε πρόβλημα κατά την μεταφόρτωση του αρχείου. Παρακαλώ "
+"προσπαθήστε αργότερα."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/classes.php:488
+#, fuzzy
+msgid "In category:"
+msgstr "Κατηγορία "
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:20
+#, fuzzy
+msgid "New Category...!"
+msgstr "Νέα κατηγορία...!"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:21
+#, fuzzy
+msgid "You must select a file to upload!"
+msgstr "Επιλέξτε το αρχείο που θέλετε να ανεβάσετε!"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/cssjs.php:22
+#, fuzzy
+msgid "Are you sure you wish to permanently delete this document?"
+msgstr "Είστε σίγουρος/η ότι θέλετε να διαγράψετε οριστικά αυτό το αρχείο;"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:82
+#, fuzzy
+msgid "That group does not exist."
+msgstr "Η ομάδα δεν υπάρχει."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:91
+#, fuzzy, php-format
+msgid ""
+"You must be a logged-in member of the group %s to access this document. If "
+"you are a member of the group, please log into the site and try again."
+msgstr ""
+"Θα πρέπει να είστε μέλος της ομάδας %s για να έχετε πρόσβαση στο αρχείο. "
+"Συνδεθείτε και προσπαθήστε εκ νέου."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/filters.php:124
+#, fuzzy
+msgid "The file could not be found."
+msgstr "To αρχείο δεν βρέθηκε."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:13
+#, fuzzy
+msgid "Upload document (+)"
+msgstr "Φόρτωση αρχείου (+)"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/group-forum-attachments.php:60
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:107
+msgid "Document successfully uploaded"
+msgstr "Το αρχείο ανέβηκε επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:23
+msgid "A member uploads a document to a group you belong to"
+msgstr "Ένα μέλος ανέβασε ένα αρχείο σε μία ομάδα που συμμετέχετε"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:29
+msgid ""
+"A member uploads a document to a group for which you are an moderator/admin"
+msgstr ""
+"Ένα μέλος ανέβασε ένα αρχείο σε μία ομάδα στην οποία είστε συντονιστής/"
+"διαχειριστής"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:58
+#, php-format
+msgid "A document was uploaded to %s"
+msgstr "Ένα αρχείο ανέβηκε στο %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:111
+#, php-format
+msgid ""
+"%s uploaded a new file: %s to the group: %s.\n"
+"\n"
+"To see %s's profile: %s\n"
+"\n"
+"To see the group %s's homepage: %s\n"
+"\n"
+"To download the new document directly: %s\n"
+"\n"
+"------------------------\n"
+msgstr ""
+"%s ανέβασε ένα νέο αρχείο: %s στην ομάδα: %s.\n"
+"\n"
+"Για να δείτο το προφίλ του  %s: %s\n"
+"\n"
+"Για να δείτε την αρχική σελίδα της ομάδας %s: %s\n"
+"\n"
+"Για να κατεβάσετε απευθείας το νέο αρχείο: %s\n"
+"\n"
+"------------------------\n"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/notifications.php:124
+#, php-format
+msgid "To disable these notifications please log in and go to: %s"
+msgstr ""
+"Για να απενεργοποιήσετε τις ειδοποιήσεις παρακαλούμε συνδεθείτε και "
+"πηγαίνετε στο: %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:121
+msgid "Document successfully edited"
+msgstr "Το αρχείο διορθώθηκε επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:191
+#, fuzzy
+msgid "You don't have permission to upload files"
+msgstr "Δεν έχετε δικαίωμα να ανεβάζετε αρχεία στην ομάδα αυτή"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:201
+#, fuzzy
+msgid "The item to edit could not be found"
+msgstr "Το αντικείμενο προς επεξεργασία δεν βρέθηκε"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:212
+msgid "Edit Document"
+msgstr "Επεξεργασία Εγγράφου"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:222
+msgid "Document successfully deleted"
+msgstr "Το αρχείο διαγράφηκε επιτυχώς"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/templatetags.php:342
+#, php-format
+msgid "Viewing item %s to %s (of %s items)"
+msgstr "Προβολή %s έως %s (από %s )"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:51
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:64
+#, fuzzy, php-format
+msgid "Recent Group %s"
+msgstr "Νέα %s ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:52
+#, fuzzy, php-format
+msgid "The most recently uploaded group %s. Only from public groups"
+msgstr ""
+"Τα πιο πρόσφατα %s που έχουν ανέβει στις ομάδες. Μόνο για δημόσιες ομάδες"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:93
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:229
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:362
+#, fuzzy, php-format
+msgid "posted in %s"
+msgstr "Αναρτήθηκε %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:99
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:240
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:368
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:472
+#, fuzzy, php-format
+msgid "There are no %s to display."
+msgstr "Δεν υπάρχουν %s προς εμφάνιση."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:138
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:269
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:393
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:500
+msgid "Title:"
+msgstr "Τίτλος:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:140
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:271
+msgid "Filter by Group:"
+msgstr "Φιλτράρισμα ανά Ομάδα:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:142
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:273
+msgid "Select Group..."
+msgstr "Επιλογή ομάδας..."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:162
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:293
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:399
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:506
+#, fuzzy, php-format
+msgid "Show featured %s only"
+msgstr "Εμφάνιση μόνο των προβεβλημένων (featured) %s"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:164
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:296
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:402
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:509
+msgid "Number of items to show:"
+msgstr "Πλήθος προς εμφάνιση:"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:182
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:196
+#, fuzzy, php-format
+msgid "Popular Group %s"
+msgstr "Δημοφιλή %s ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:183
+#, fuzzy, php-format
+msgid "The most commonly downloaded group %s. Only for public groups"
+msgstr "Τα πιο δημοφιλή (σε download) %s ομάδων. Μόνο για δημόσιες ομάδες "
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:233
+#, fuzzy
+msgid "downloads"
+msgstr "downloads"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:301
+#, fuzzy
+msgid "Show downloads"
+msgstr "Εμφάνιση πλήθους downloads"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:319
+#, fuzzy, php-format
+msgid "%s in your groups"
+msgstr "%s στις ομάδες σας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:320
+#, fuzzy, php-format
+msgid "%s for a logged in user's groups."
+msgstr "%s  από τις ομάδες του συνδεδεμένου χρήστη."
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:341
+#, fuzzy, php-format
+msgid "Recent %s from your Groups"
+msgstr "Πρόσφατα  %s από τις ομάδες σας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:421
+#, fuzzy, php-format
+msgid "%s in this group"
+msgstr "%1$s | %2$s | Δραστηριότητα ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:422
+#, fuzzy, php-format
+msgid "%s for the current group."
+msgstr "Τρέχων url ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:440
+#, fuzzy, php-format
+msgid "Recent %s for the group"
+msgstr "Νέα %s ομάδας"
+
+#: C:\xampp\htdocs\blogsRun\wp-content\plugins\bp-group-documents/include/widgets.php:474
+#, fuzzy
+msgid "View all"
+msgstr "Προβολή όλων"
+
+#~ msgid "Bulk File Uploads"
+#~ msgstr "Μαζική φόρτωση αρχείων"
+
+#~ msgid "Move File"
+#~ msgstr "Μετακίνηση Εγγράφου"
+
+#~ msgid "You must choose a group for the file."
+#~ msgstr "Θα πρέπει να επιλέξετε μία ομάδα για το αρχείο."
+
+#~ msgid "Document moved successfully."
+#~ msgstr "Το έγγραφο μετακινήθηκε επιτυχώς."
+
+#~ msgid "There was a problem saving the file info."
+#~ msgstr ""
+#~ "Παρουσιάστηκε πρόβλημα κατά την αποθήκευση των πληροφοριών του αρχείου."
+
+#~ msgid "There was a problem moving the file."
+#~ msgstr "Υπήρξε ένα πρόβλημα κατά τη μετακίνηση του αρχείου."
+
+#~ msgid "%s Documents Moved."
+#~ msgstr "%s αρχεία μετακινήθηκαν."
+
+#~ msgid "Group Documents Admin"
+#~ msgstr "Διαχειριστής αρχείων ομάδας"
+
+#~ msgid "Document Upload Permissions:"
+#~ msgstr "Δικαιώματα Φόρτωσης αρχείων:"
+
+#~ msgid "Group Documents"
+#~ msgstr "Αρχεία Ομάδας"
+
+#~ msgid "Document List"
+#~ msgstr "Λίστα Εγγράφων"
+
+#~ msgid "Submit"
+#~ msgstr "Υποβολή"
+
+#~ msgid "Group navigation page name"
+#~ msgstr "Όνομα σελίδας πρόηγηση στην ομάδα"

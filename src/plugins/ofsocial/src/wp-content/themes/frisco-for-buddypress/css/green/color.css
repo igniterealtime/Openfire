@@ -1,0 +1,86 @@
+a {
+    color: #6DA40E;
+    font-weight: bold;
+    text-decoration: none;
+}
+a:hover {
+    color: #3E5E08;
+}
+
+#header #search-bar {
+	background: #6DA40E; 
+	background: -moz-linear-gradient(top, #6DA40E 0%, #6DA40E 15%, #3B5908 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6DA40E), color-stop(15%,#6DA40E), color-stop(100%,#3B5908)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #6DA40E 0%,#6DA40E 15%,#3B5908 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #6DA40E 0%,#6DA40E 15%,#3B5908 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #6DA40E 0%, #6DA40E 15%,#3B5908 100%); /* IE10+ */
+	filter: none; /* IE6-9 */
+	background: linear-gradient(top, #6DA40E 0%,#6DA40E 15%,#3B5908 100%); /* W3C */
+}
+ 
+div.item-list-tabs ul li {
+    background: #7DBB10;
+    border: 1px solid #7DBB10;
+}
+div.item-list-tabs ul li:hover {
+    background: #6DA40E;
+    border-color: #6DA40E;
+}
+
+div.item-list-tabs ul li, 
+div.item-list-tabs ul li.selected, 
+div.item-list-tabs ul li.current {
+	border-bottom: none; 
+	margin-bottom: -1px; 
+}
+
+div.item-list-tabs ul li a span {
+  	background: #3E5E08;
+}
+div.item-list-tabs ul li a:hover span {
+  	background: #2F4606;
+}
+
+#header #search-bar input[type=submit] {
+	background: #0F1702; 
+	background: -moz-linear-gradient(top, #0F1702 0%, #1F2F04 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#0F1702), color-stop(100%,#1F2F04)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #0F1702) 0%,#1F2F04 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #0F1702 0%,#1F2F04 100%); /* Opera11.10+ */
+	background: -ms-linear-gradient(top, #0F1702 0%,#1F2F04 100%); /* IE10+ */
+	filter: none; /* IE6-9 */
+	background: linear-gradient(top, #0F1702 0%,#1F2F04  100%); /* W3C */
+    border-color: #1F2F04 #1F2F04 #1F2F04 #1F2F04;
+    border-right: 1px solid #1F2F04;
+    color: #FFF;
+	text-shadow: 0 1px 0 #000; 	
+}
+#header h1 a {
+	text-shadow: 0 -1px 0 #000000;
+}
+form#whats-new-form textarea:focus {
+	-moz-box-shadow: 0 0 7px #CDF589 inset, 0 0 7px #CDF589 inset;
+   	-webkit-box-shadow: 0 0 7px #CDF589 inset, 0 0 7px #CDF589 inset;
+    box-shadow: 0 0 7px #CDF589 inset, 0 0 7px #CDF589 inset;
+}
+#whats-new:focus {
+    border-color: #A6ED2B !important;
+    outline-color: #A6ED2B;
+}
+#wpadminbar .quicklinks li#wp-admin-bar-bp-notifications #ab-pending-notifications.alert,
+#wpadminbar .quicklinks li#wp-admin-bar-my-account a span.count,
+#wpadminbar .quicklinks li#wp-admin-bar-my-account-with-avatar a span.count {
+    background-color: #7DBB10;
+}
+#wpadminbar .quicklinks .menupop ul li a, 
+#wpadminbar .quicklinks .menupop ul li a strong, 
+#wpadminbar .quicklinks .menupop.hover ul li a,
+#wpadminbar.nojs .quicklinks .menupop:hover ul li a {
+    color: #3B5908;
+}
+#wpadminbar .menupop li:hover, 
+#wpadminbar .menupop li.hover, 
+#wpadminbar .quicklinks .menupop .ab-item:focus, 
+#wpadminbar .quicklinks .ab-top-menu .menupop .ab-item:focus {
+    background-color: #f5faea;
+}

@@ -1,0 +1,893 @@
+# Copyright (C) 2010 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version: BuddyPress Docs\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-docs\n"
+"POT-Creation-Date: 2012-11-19 01:34:26+00:00\n"
+"PO-Revision-Date: 2015-08-31 09:59-0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: da_DK\n"
+"X-Generator: Poedit 1.8.4\n"
+
+#: bp-docs.php:260
+msgctxt "post type general name"
+msgid "BuddyPress Docs"
+msgstr "BP Dokumenter"
+
+#: bp-docs.php:261
+msgctxt "post type singular name"
+msgid "Doc"
+msgstr "Dok."
+
+#: bp-docs.php:262
+msgctxt "add new"
+msgid "Add New"
+msgstr "Tilføj nyt"
+
+#: bp-docs.php:263
+msgid "Add New Doc"
+msgstr "Tilføj nyt dok."
+
+#: bp-docs.php:264
+msgid "Edit Doc"
+msgstr "Rediger dok."
+
+#: bp-docs.php:265 includes/integration-groups.php:726
+#: includes/integration-groups.php:1226
+#: includes/templates/docs/docs-header.php:40
+msgid "New Doc"
+msgstr "Nyt dok."
+
+#: bp-docs.php:266
+msgid "View Doc"
+msgstr "Vis dok."
+
+#: bp-docs.php:267
+msgid "Search Docs"
+msgstr "Søg i dokumenter"
+
+#: bp-docs.php:268
+msgid "No Docs found"
+msgstr "Ingen dokumenter fundet"
+
+#: bp-docs.php:269
+msgid "No Docs found in Trash"
+msgstr "Ingen dokumenter fundet i skraldespand"
+
+#: bp-docs.php:276 includes/component.php:39
+#: includes/integration-groups.php:1021
+msgid "BuddyPress Docs"
+msgstr "BP Dokumenter"
+
+#: bp-docs.php:295
+msgid "Associated Items"
+msgstr "Tilknyttede emner"
+
+#: bp-docs.php:296
+msgid "Associated Item"
+msgstr "Tilknyttede emner"
+
+#: bp-docs.php:496
+msgid "You are not allowed to read that Doc."
+msgstr "Du har ikke rettigheder til at læse det dokument."
+
+#: bp-docs.php:500
+msgid "You are not allowed to create Docs."
+msgstr "Du har ikke rettigheder til at oprette dokumenter."
+
+#: bp-docs.php:504
+msgid "You are not allowed to edit that Doc."
+msgstr "Du har ikke rettigheder til at redigere dokumentet."
+
+#: bp-docs.php:508
+msgid "You are not allowed to view that Doc's history."
+msgstr "Du har ikke rettigheder til at se dette dokuments historik."
+
+#: includes/addon-hierarchy.php:106
+msgid "Parent: "
+msgstr "Forældre:"
+
+#: includes/addon-hierarchy.php:157
+msgid "Children: "
+msgstr "Børn:"
+
+#: includes/addon-history.php:117
+msgid "You have successfully restored the Doc to the revision from %s."
+msgstr "Dokumentet er blevet genskabt til revisionen fra %s."
+
+#: includes/addon-history.php:165
+msgid "Compare Revisions of &#8220;%1$s&#8221;"
+msgstr "Sammenlign revision af &#8220;%1$s&#8221;"
+
+#: includes/addon-history.php:166 includes/addon-history.php:195
+msgid "Revisions"
+msgstr "Revisioner"
+
+#: includes/addon-history.php:194
+msgid "Revision for &#8220;%1$s&#8221; created on %2$s"
+msgstr "Revision for &#8220;%1$s&#8221; oprettet på %2$s"
+
+#. translators: post revision: 1: when, 2: author name
+#: includes/addon-history.php:360
+msgctxt "post revision"
+msgid "%1$s by %2$s"
+msgstr "%1$s af %2$s"
+
+#: includes/addon-history.php:387
+msgid "Restore"
+msgstr "Genskab"
+
+#: includes/addon-history.php:410
+msgid "Compare Revisions"
+msgstr "Sammenlign revisioner"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:426
+msgid "Old"
+msgstr "Gammel"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:427
+msgid "New"
+msgstr "Ny"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:428
+msgid "Date Created"
+msgstr "Oprettet"
+
+#: includes/addon-history.php:429 includes/templates/docs/docs-loop.php:28
+msgid "Author"
+msgstr "Forfatter"
+
+#: includes/addon-history.php:430
+msgid "Actions"
+msgstr "Handlinger"
+
+#: includes/addon-history.php:458 includes/integration-groups.php:735
+#: includes/templatetags.php:846
+msgid "History"
+msgstr "Historie"
+
+#: includes/addon-taxonomy.php:86
+msgid "Docs Tags"
+msgstr "Dokument nøgleord"
+
+#: includes/addon-taxonomy.php:87
+msgid "Docs Tag"
+msgstr "Dokument nøgleord"
+
+#: includes/addon-taxonomy.php:214
+msgid "Tags: %s"
+msgstr "Nøgleord: %s"
+
+#: includes/addon-taxonomy.php:346 includes/templates/docs/single/edit.php:90
+msgid "Tags"
+msgstr "Nøgleord"
+
+#: includes/addon-taxonomy.php:398
+msgid "You are viewing docs with the following tags: %s"
+msgstr "Du ser dokumenter med følgende nøgleord: %s"
+
+#: includes/addon-taxonomy.php:420
+msgid "Filter by tag"
+msgstr "Filtrer efter nøgleord"
+
+#: includes/addon-taxonomy.php:426
+msgid "(%d)"
+msgstr "(%d)"
+
+#: includes/addon-taxonomy.php:508
+msgid "Docs tagged %s"
+msgstr "Dokumenter med nøgleord %s"
+
+#: includes/addon-taxonomy.php:567
+msgid "Most Used"
+msgstr "Oftest anvendt"
+
+#. translators: %s: add new taxonomy label
+#: includes/addon-taxonomy.php:591
+msgid "+ %s"
+msgstr "+ %s"
+
+#: includes/admin.php:63
+msgid "Recent Comments"
+msgstr "Seneste kommentarer"
+
+#: includes/admin.php:138
+msgid "No comments yet."
+msgstr "Ingen kommentarer endnu."
+
+#: includes/component.php:141
+msgid "Search Docs..."
+msgstr "Søg i dokumenter"
+
+#: includes/component.php:232
+msgid "Docs <span>%d</span>"
+msgstr "Docs <span>%d</span>"
+
+#: includes/component.php:241
+msgid "My Docs "
+msgstr "Docs"
+
+#: includes/component.php:241
+msgid "%s&#8217;s Docs"
+msgstr "%s&#8217;s Dokumenter"
+
+#: includes/component.php:244 includes/templatetags.php:1204
+msgid "Started By Me"
+msgstr "Startet af mig"
+
+#: includes/component.php:244
+msgid "Started By %s"
+msgstr "Startet af %s"
+
+#: includes/component.php:253 includes/templatetags.php:1205
+msgid "Edited By Me"
+msgstr "Redigeret af mig"
+
+#: includes/component.php:253
+msgid "Edited By %s"
+msgstr "Redigeret af %s"
+
+#: includes/component.php:336
+msgid ""
+"This doc is currently being edited by %s. To prevent overwrites, you cannot "
+"edit until that user has finished. Please try again in a few minutes."
+msgstr ""
+"Dette dokument bliver i øjeblikket redigeret af %s. For at forebygge "
+"overskrivninger kan du ikke redigere dokumentet før den bruger er færdig. "
+"Prøv igen om lidt."
+
+#: includes/component.php:349
+msgid "You do not have permission to edit the doc."
+msgstr "Du har ikke rettigheder til at redigere dokumentet."
+
+#: includes/component.php:365
+msgid "You do not have permission to create a Doc in this group."
+msgstr "Du har ikke rettigheder til at oprette et dokument i  denne gruppe."
+
+#: includes/component.php:381
+msgid "You do not have permission to view this Doc's history."
+msgstr "Du har ikke rettigheder til at se dette dokuments historik."
+
+#: includes/component.php:405
+msgid "Lock successfully removed"
+msgstr "Låsen er fjernet"
+
+#: includes/component.php:440
+msgid "Doc successfully deleted!"
+msgstr "Dokumentet blev slettet!"
+
+#: includes/component.php:442
+msgid "You do not have permission to delete that doc."
+msgstr "Du har ikke rettigheder til at slette det dokument."
+
+#: includes/component.php:555
+msgid "%1$s commented on the doc %2$s"
+msgstr "%1$s kommenterede dokumentet %2$s"
+
+#: includes/component.php:654
+msgid "Show New Docs"
+msgstr "Vis nye dokumenter"
+
+#: includes/component.php:655
+msgid "Show Doc Edits"
+msgstr "Vis redigeringer af dokumenter"
+
+#: includes/component.php:656
+msgid "Show Doc Comments"
+msgstr "Vis dokument kommentarer"
+
+#: includes/component.php:723
+msgid "%1$s created the doc %2$s"
+msgstr "%1$s oprettede dokumentet %2$s"
+
+#: includes/component.php:725
+msgid "%1$s edited the doc %2$s"
+msgstr "%1$s redigerede dokumentet %2$s"
+
+#: includes/component.php:916
+msgid "Still working?"
+msgstr "Stadig igang?"
+
+#: includes/functions.php:160
+msgid "Docs associated with the %1$s %2$s"
+msgstr "Dokumenter tilknyttet %1$s %2$s"
+
+#: includes/functions.php:437 includes/templatetags.php:1275
+msgid "Logged-in Users"
+msgstr "Brugere der er logget ind"
+
+#: includes/functions.php:442 includes/templatetags.php:1279
+msgid "The Doc author only"
+msgstr "Kun den der opretter dokumentet"
+
+#: includes/functions.php:450 includes/templatetags.php:1274
+msgid "Anyone"
+msgstr "Alle"
+
+#: includes/integration-groups.php:406
+msgid "Members of %s"
+msgstr "Medlemmer af %s"
+
+#: includes/integration-groups.php:411
+msgid "Admins and mods of %s"
+msgstr "Admins og mods i %s"
+
+#: includes/integration-groups.php:488
+msgid "%1$s created the doc %2$s in the group %3$s"
+msgstr "%1$s oprettede dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:490
+msgid "%1$s edited the doc %2$s in the group %3$s"
+msgstr "%1$s redigerede dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:517
+msgid "%1$s commented on the doc %2$s in the group %3$s"
+msgstr "%1$s kommenterede dokumentet %2$s i gruppen %3$s"
+
+#: includes/integration-groups.php:591
+msgid "Group"
+msgstr "Gruppe"
+
+#: includes/integration-groups.php:698
+msgid "%s <span>%d</span>"
+msgstr "%s <span>%d</span>"
+
+#: includes/integration-groups.php:720 includes/integration-groups.php:773
+#: includes/integration-groups.php:838
+msgid "Docs"
+msgstr "Docs"
+
+#: includes/integration-groups.php:733
+#: includes/templates/docs/docs-header.php:30 includes/templatetags.php:842
+#: includes/templatetags.php:1373
+msgid "Edit"
+msgstr "Rediger"
+
+#: includes/integration-groups.php:782
+msgid "BuddyPress Docs group tab name:"
+msgstr "BP Dokumenter gruppe fane navn:"
+
+#: includes/integration-groups.php:939
+msgid "Save Changes"
+msgstr "Gem ændringer"
+
+#: includes/integration-groups.php:964
+msgid "There was an error saving, please try again"
+msgstr "Der opstod en fejl ved at gemme, prøv igen"
+
+#: includes/integration-groups.php:966
+msgid "Settings saved successfully"
+msgstr "Indstillinger gemt"
+
+#: includes/integration-groups.php:1023
+msgid ""
+"BuddyPress Docs is a powerful tool for collaboration with members of your "
+"group. A cross between document editor and wiki, BuddyPress Docs allows you "
+"to co-author and co-edit documents with your fellow group members, which you "
+"can then sort and tag in a way that helps your group to get work done."
+msgstr ""
+"BP Dokumenter er et kraftfuldt værktøj til samarbejde med medlemmerne i din "
+"gruppe. Som en krydsning mellem dokument-editor og wiki, lader BP Dokumenter "
+"dig forfatte og redigere dokumenter sammen med medlemmer af din gruppe. "
+"Dokumenterne kan efterfølgende sortere og beskrive med nøgleord på en måde "
+"der hjælper din gruppes arbejde."
+
+#: includes/integration-groups.php:1026
+msgid "Enable BuddyPress Docs for this group"
+msgstr "Åbn for BuddyPress Docs i denne gruppe"
+
+#: includes/integration-groups.php:1030
+msgid "Options"
+msgstr "Indstillinger"
+
+#: includes/integration-groups.php:1035
+msgid "Minimum role to create new Docs:"
+msgstr "Laveste rolle der kan oprette dokumenter: "
+
+#: includes/integration-groups.php:1040
+msgid "Group admin"
+msgstr "Gruppeadministrator"
+
+#: includes/integration-groups.php:1041
+msgid "Group moderator"
+msgstr "Gruppemoderator"
+
+#: includes/integration-groups.php:1042
+msgid "Group member"
+msgstr "Gruppemedlem"
+
+#: includes/integration-groups.php:1223
+msgid "View Docs"
+msgstr "Vis dokumenter"
+
+#: includes/query-builder.php:415
+msgid "Unknown error. Please try again."
+msgstr "Ukendt fejl. Prøv igen."
+
+#: includes/query-builder.php:430
+msgid "You are not allowed to associate a Doc with that group."
+msgstr "Du har ikke rettigheder til at tilknytte et dokument til  den gruppe."
+
+#: includes/query-builder.php:440
+msgid "Both the title and the content fields are required."
+msgstr "Både titel- og indholdsfeltet er påkrævede."
+
+#: includes/query-builder.php:461
+msgid "There was an error when creating the doc."
+msgstr "Der opstod en fejl under oprettelsen af dokumentet."
+
+#: includes/query-builder.php:470
+msgid "Doc successfully created!"
+msgstr "Dokumentet er oprettet!"
+
+#: includes/query-builder.php:490
+msgid "There was an error when saving the doc."
+msgstr "Der var en fejl ved at gemme dokumentet."
+
+#: includes/query-builder.php:499
+msgid ""
+"You idled a bit too long while in Edit mode. In order to allow others to "
+"edit the doc you were working on, your changes have been autosaved. Click "
+"the Edit button to return to Edit mode."
+msgstr ""
+"Du har været inaktiv i redigeringstilstand lidt for længe. For at andre kan "
+"redigere dokumentet du arbejdede på, er dine ændringer blevet gemt "
+"automatisk. Klik på Rediger knappen for at gå tilbage til "
+"redigeringstilstanden."
+
+#: includes/query-builder.php:502
+msgid "Doc successfully edited!"
+msgstr "Dokumentet blev redigeret!"
+
+#: includes/query-builder.php:530
+msgid ""
+"Your Doc was successfully saved, but some of your access settings have been "
+"changed to match the Doc's permissions."
+msgstr ""
+"Dit dokument er blevet gemt, men nogle af dine indstilligner er blevet "
+"ændret for at matche dokumentets indstillinger."
+
+#: includes/templates/docs/docs-header.php:25 includes/templatetags.php:839
+msgid "Read"
+msgstr "Læs"
+
+#: includes/templates/docs/docs-loop.php:7
+msgid "Search"
+msgstr "Søg"
+
+#: includes/templates/docs/docs-loop.php:24
+#: includes/templates/docs/single/edit.php:32
+msgid "Title"
+msgstr "Titel"
+
+#: includes/templates/docs/docs-loop.php:32
+msgid "Created"
+msgstr "Oprettet"
+
+#: includes/templates/docs/docs-loop.php:36
+msgid "Last Edited"
+msgstr "Sidst redigeret"
+
+#: includes/templates/docs/docs-loop.php:79
+msgid "Viewing %1$s-%2$s of %3$s docs"
+msgstr "Viser %1$s-%2$s af %3$s dokumenter"
+
+#: includes/templates/docs/docs-loop.php:90
+msgid "There are no docs for this view. Why not <a href=\"%s\">create one</a>?"
+msgstr ""
+"Der er ingen dokumenter at vise. Hvad med at <a href=\"%s\">oprette et</a>?"
+
+#: includes/templates/docs/docs-loop.php:92
+msgid "There are no docs for this view."
+msgstr "Der er ingen dokumenter der passer her."
+
+#: includes/templates/docs/index.php:23
+msgid "Docs Directory"
+msgstr "Dokumentmappe"
+
+#: includes/templates/docs/single/comments.php:22
+msgid "Discussion (%d)"
+msgstr "Diskussion (%d)"
+
+#: includes/templates/docs/single/comments.php:44
+msgid "There are no comments for this doc yet."
+msgstr "Der er ingen kommentarer til dette dokument endnu."
+
+#: includes/templates/docs/single/comments.php:53
+msgid "Comment display has been disabled on this doc."
+msgstr "Visning af kommentarer er blevet slået fra for dette dokument."
+
+#: includes/templates/docs/single/comments.php:62
+msgid "Comment posting has been disabled on this doc."
+msgstr "Kommentarer er blevet slået fra for dette dokument."
+
+#: includes/templates/docs/single/edit.php:21
+msgid "You have been idle for <span id=\"idle-warning-time\"></span>"
+msgstr "Du har været inaktiv i <span id=\"idle-warning-time\"></span>"
+
+#: includes/templates/docs/single/edit.php:38
+msgid "Permalink"
+msgstr "Permalink"
+
+#: includes/templates/docs/single/edit.php:44
+msgid "Content"
+msgstr "Indhold"
+
+#: includes/templates/docs/single/edit.php:63
+msgid "Associated Group"
+msgstr "Tilknyttet gruppe"
+
+#: includes/templates/docs/single/edit.php:77
+msgid "Access"
+msgstr "Adgang"
+
+#: includes/templates/docs/single/edit.php:96
+msgid "Tags are words or phrases that help to describe and organize your Docs."
+msgstr ""
+"Nøgleord er ord eller fraser der hjælper med at beskrive og organisere dine "
+"dokumenter."
+
+#: includes/templates/docs/single/edit.php:97
+msgid ""
+"Separate tags with commas (for example: <em>orchestra, snare drum, piccolo, "
+"Brahms</em>)"
+msgstr ""
+"Adskil nøgleord med kommaer (f.eks : <em>orkester, lilletromme, fløjte, "
+"Brahms</em>)"
+
+#: includes/templates/docs/single/edit.php:111
+msgid "Parent"
+msgstr "Forælder"
+
+#: includes/templates/docs/single/edit.php:117
+msgid "Select a parent for this Doc."
+msgstr "Vælg en forælder til dette dokument."
+
+#: includes/templates/docs/single/edit.php:119
+msgid ""
+"(Optional) Assigning a parent Doc means that a link to the parent will "
+"appear at the bottom of this Doc, and a link to this Doc will appear at the "
+"bottom of the parent."
+msgstr ""
+"(Valgfrit) Tildeling af et forælderdokument betyder at et link til "
+"forælderen vil blive vist i bunden af dette dokument og at et link til dette "
+"dokument vil blive vist i bunden af forælderdokumentet."
+
+#: includes/templates/docs/single/edit.php:139
+msgid "Save"
+msgstr "Gem"
+
+#: includes/templates/docs/single/edit.php:139
+msgid "Cancel"
+msgstr "Fortryd"
+
+#: includes/templates/docs/single/edit.php:141
+msgid "Delete"
+msgstr "Slet"
+
+#: includes/templates/docs/single/edit.php:170
+msgid "Are you still there?"
+msgstr "Er du der stadig?"
+
+#: includes/templates/docs/single/edit.php:172
+msgid ""
+"In order to prevent overwriting content, only one person can edit a given "
+"doc at a time. For that reason, you must periodically ensure the system that "
+"you're still actively editing. If you are idle for more than 30 minutes, "
+"your changes will be auto-saved, and you'll be sent out of Edit mode so that "
+"others can access the doc."
+msgstr ""
+"For at undgå at indhold overskrives er der kun en person der kan redigere et "
+"givent dokument ad gangen. Derfor sikrer systemet sig periodisk at du stadig "
+"aktivt redigerer. Hvis du er inaktiv i mere end 30 minutter vil dine "
+"ændringer blive gemt automatisk og du vil sendt ud af Rediger-tilstand så "
+"andre kan få adgang til dokumentet."
+
+#: includes/templates/docs/single/edit.php:174
+msgid "I'm still editing!"
+msgstr "Jeg redigerer stadig!"
+
+#: includes/templates/docs/single/history.php:7
+msgid "Click on a revision date from the list below to view that revision."
+msgstr "Klik på en revisionsdato fra listen nedenfor for at se den revision."
+
+#: includes/templates/docs/single/history.php:9
+msgid ""
+"Alternatively, you can compare two revisions by selecting them in the 'Old' "
+"and 'New' columns, and clicking 'Compare Revisions'."
+msgstr ""
+"Alternativt kan du sammenligne to revisioner ved at vælge dem i 'Gammel' og "
+"'Ny' kolonnerne og klikke 'Sammenlign revisioner'."
+
+#: includes/templates/docs/single/history.php:20
+msgid "Older: %s"
+msgstr "Ældre: %s"
+
+#: includes/templates/docs/single/history.php:21
+msgid "Newer: %s"
+msgstr "Nyere: %s"
+
+#: includes/templates/docs/single/history.php:28
+msgid ""
+"You are currently viewing a revision titled \"%1$s\", saved on %2$s by %3$s"
+msgstr "Du ser i øjeblikket en revision med titlen \"%1$s\", gemt %2$s af %3$s"
+
+#: includes/templates/docs/single/history.php:50
+msgid "These revisions are identical."
+msgstr "Disse revisioner er identiske."
+
+#: includes/templates/docs/single/index.php:8
+msgid "Locked"
+msgstr "Låst"
+
+#: includes/templates/docs/single/index.php:8
+msgid "(click for more info)"
+msgstr "(klik for mere information)"
+
+#: includes/templates/docs/single/index.php:10
+msgid ""
+"This doc is currently being edited by %1$s. In order to prevent edit "
+"conflicts, only one user can edit a doc at a time."
+msgstr ""
+"Dette dokument bliver i øjeblikket redigeret af %1$s. For at forebygge "
+"redigeringskonflikter kan kun en bruger redigere et dokument ad gangen."
+
+#: includes/templates/docs/single/index.php:13
+msgid ""
+"Please try again in a few minutes. Or, as an admin, you can <a href=\"%s"
+"\">force cancel</a> the edit lock."
+msgstr ""
+"Prøv igen om nogle minutter. Alternativt kan du, som administrator, <a href="
+"\"%s\">gennemtvinge ophævelse</a> af redigeringslåsen."
+
+#: includes/templates/docs/single/index.php:15
+msgid "Please try again in a few minutes."
+msgstr "Prøv igen om nogle minutter."
+
+#: includes/templates/docs/single/index.php:39
+msgid "No Doc by this name exists."
+msgstr "Der er ikke noget dokument med det navn."
+
+#: includes/templates/docs/single/index.php:41
+msgid ""
+"<a href=\"%1$s\">View all Docs in this group</a> or <a href=\"%2$s\">create "
+"a new Doc</a>."
+msgstr ""
+"<a href=\"%1$s\">Vis alle dokumenter i denne gruppe</a> eller <a href=\"%2$s"
+"\">opret et nyt dokument</a>."
+
+#: includes/templatetags-edit.php:113
+msgid "(no parent)"
+msgstr "(ingen forælder)"
+
+#: includes/templatetags.php:185
+msgid "You are viewing <strong>all</strong> docs."
+msgstr "Du ser <strong>alle</strong> dokumenter."
+
+#: includes/templatetags.php:194
+msgid ""
+"<strong><a href=\"%s\" title=\"View All Docs\">View All Docs</a></strong>"
+msgstr ""
+"<strong><a href=\"%s\" title=\"View All Docs\">Vis alle dokumenter</a></"
+"strong>"
+
+#: includes/templatetags.php:229
+msgid "You are searching for docs containing the term <em>%s</em>"
+msgstr "Du søger efter dokumenter med termen <em>%s</em>"
+
+#: includes/templatetags.php:670
+msgid "Which group should this Doc be associated with?"
+msgstr "Hvilken gruppe skal dette dokument tilknyttes?"
+
+#: includes/templatetags.php:671
+msgid ""
+"(Optional) Note that the Access settings available for this Doc may be "
+"limited by the privacy settings of the group you choose."
+msgstr ""
+"(Valgfrit) Bemærk at Adgangsindstillingerne for dette dokument kan være "
+"begrænset af adgangsindstillingerne for den gruppe du vælger."
+
+#: includes/templatetags.php:676
+msgid "None"
+msgstr "Ingen"
+
+#: includes/templatetags.php:723
+msgid "%s member"
+msgstr "%s medlem"
+
+#: includes/templatetags.php:723
+msgid "%s members"
+msgstr "%s medlemmer"
+
+#: includes/templatetags.php:727
+msgid "Public Group"
+msgstr "Åben gruppe"
+
+#: includes/templatetags.php:731
+msgid "Private Group"
+msgstr "Lukket gruppe"
+
+#: includes/templatetags.php:735
+msgid "Hidden Group"
+msgstr "Skjult gruppe"
+
+#: includes/templatetags.php:774
+msgid "Who can read this doc?"
+msgstr "Hvem kan læse dette dokument?"
+
+#: includes/templatetags.php:778
+msgid "Who can edit this doc?"
+msgstr "Hvem kan redigere dette dokument"
+
+#: includes/templatetags.php:782
+msgid "Who can read comments on this doc?"
+msgstr "Hvem kan læse kommentarer til dette dokument?"
+
+#: includes/templatetags.php:786
+msgid "Who can post comments on this doc?"
+msgstr "Hvem kan skrive kommentarer til dette dokument?"
+
+#: includes/templatetags.php:790
+msgid "Who can view the history of this doc?"
+msgstr "Hvem kan se dokumentets historik?"
+
+#: includes/templatetags.php:1040
+msgid "&laquo;"
+msgstr "&laquo;"
+
+#: includes/templatetags.php:1041
+msgid "&raquo;"
+msgstr "&raquo;"
+
+#: includes/templatetags.php:1198
+msgid "All Docs"
+msgstr "Dokumenter"
+
+#: includes/templatetags.php:1202
+msgid "%s's Docs"
+msgstr "%s's dokumenter"
+
+#: includes/templatetags.php:1208
+msgid "My Groups"
+msgstr "Grupper"
+
+#: includes/templatetags.php:1227
+msgid "Create New Doc"
+msgstr "Nyt dokument"
+
+#: includes/templatetags.php:1266
+msgid "Group: %s"
+msgstr "Gruppe: %s"
+
+#: includes/templatetags.php:1276
+msgid "My Friends"
+msgstr "Mine venner"
+
+#: includes/templatetags.php:1277
+msgid "Members of: %s"
+msgstr "Medlemmer af: %s"
+
+#: includes/templatetags.php:1278
+msgid "Admins and mods of the group %s"
+msgstr "Kun admins og mods i gruppen %s"
+
+#: includes/templatetags.php:1280
+msgid "Just Me"
+msgstr "Kun mig"
+
+#: includes/templatetags.php:1284
+msgid "The Doc author only (that's you!)"
+msgstr "Kun den der opretter (det er dig!)"
+
+#: includes/templatetags.php:1291
+msgid "This Doc can be read by: <strong>%s</strong>"
+msgstr "Dette dokument kan læses af: <strong>%s</strong>"
+
+#: includes/templatetags.php:1295
+msgid "This Doc can be edited by: <strong>%s</strong>"
+msgstr "Dette dokument kan redigeres af: <strong>%s</strong>"
+
+#: includes/templatetags.php:1299
+msgid "Comments are visible to: <strong>%s</strong>"
+msgstr "Kommentarer kan ses af: <strong>%s</strong>"
+
+#: includes/templatetags.php:1303
+msgid "Comments can be posted by: <strong>%s</strong>"
+msgstr "Kommentarer kan skrives af: <strong>%s</strong>"
+
+#: includes/templatetags.php:1307
+msgid "History can be viewed by: <strong>%s</strong>"
+msgstr "Historik kan ses af: <strong>%s</strong>"
+
+#: includes/templatetags.php:1349
+msgid "Private"
+msgstr "Lukket"
+
+#: includes/templatetags.php:1352
+msgid "Public"
+msgstr "Åben"
+
+#: includes/templatetags.php:1355
+msgid "Limited"
+msgstr "Begrænset"
+
+#: includes/templatetags.php:1359
+msgid "Access: <strong>%s</strong>"
+msgstr "Adgang: <strong>%s</strong>"
+
+#: includes/templatetags.php:1360
+msgid "Show Details"
+msgstr "Vis detaljer"
+
+#: includes/templatetags.php:1375
+msgid "Hide Details"
+msgstr "Skjul detaljer"
+
+#: includes/upgrade.php:40
+msgid "Upgrade complete!"
+msgstr "Opgradering fuldført!"
+
+#: includes/upgrade.php:61 includes/upgrade.php:99
+msgid ""
+"Thanks for updating BuddyPress Docs. We need to run a few quick operations "
+"before your new Docs is ready to use."
+msgstr ""
+"Tak for at opdatere BuddyPress Docs. Vi er nødt til at køre nogle få hurtige "
+"handlinger før din ny Docs er klar til brug."
+
+#: includes/upgrade.php:62
+msgid "Click here to start the upgrade."
+msgstr "Klik her for at starte opgraderingen."
+
+#: includes/upgrade.php:70 includes/upgrade.php:91
+msgid "BuddyPress Docs Upgrade"
+msgstr "BuddyPress Docs opgradering"
+
+#: includes/upgrade.php:71
+msgid "Upgrade"
+msgstr "Opgrader"
+
+#: includes/upgrade.php:101
+msgid "Start the upgrade"
+msgstr "Start opgraderingen"
+
+#: includes/upgrade.php:107
+msgid "Migrating..."
+msgstr "Flytter..."
+
+#: includes/upgrade.php:138
+msgid "Migration complete! <a href=\"%s\">Dashboard</a>"
+msgstr "Flytning fuldført! <a href=\"%s\">Kontrolpanel</a>"
+
+#: includes/upgrade.php:243
+msgid "Docs associated with the group %s"
+msgstr "Dokumenter tilknyttet gruppen %s"
+
+#: includes/upgrade.php:257
+msgid "Group terms migrated. Now migrating Doc access terms...."
+msgstr "Gruppetermer flyttet. Flytter nu Doc adgangstermer..."
+
+#: includes/upgrade.php:305
+msgid "Migrated %s of %s Docs. Migrating...."
+msgstr "Flyttet %s af %s Docs. Flytter..."
+
+#~ msgid "You do not have permission to post comments on this doc."
+#~ msgstr ""
+#~ "Du har ikke rettigheder til at skrive kommentarer til dette dokument."
+
+#~ msgid "Settings"
+#~ msgstr "Indstillinger"
+
+#~ msgid "All members of the group"
+#~ msgstr "Alle medlemmer af gruppen"
+
+#~ msgid "No one"
+#~ msgstr "Ingen"

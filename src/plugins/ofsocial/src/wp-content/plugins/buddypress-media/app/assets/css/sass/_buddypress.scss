@@ -1,0 +1,47 @@
+// BuddyPress Overwites
+
+#buddypress form#whats-new-form textarea {
+
+	// Fixed for 2012
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+
+	min-height: 70px;
+	width: 100%;
+}
+
+#buddypress #whats-new-options {
+    height: auto !important;
+    overflow: hidden;
+}
+
+#buddypress form#whats-new-form p.activity-greeting {
+	line-height: 1;
+}
+
+#buddypress form#whats-new-form #whats-new-options select {
+    border: 1px solid #ccc;
+    font-size: 13px;
+    margin-top: 0;
+	padding: 3px 2px;
+}
+
+#whats-new-submit #aw-whats-new-submit {
+	font-size: 12px;
+	line-height: 18px;
+	padding: 4px 6px;
+}
+
+#whats-new-post-in-box {
+	float: left;
+	font-size: 13px;
+}
+
+#buddypress form#whats-new-form #whats-new-submit {
+	margin-top: 0;
+}
+
+#whats-new-textarea {
+	margin-bottom: 10px;
+}

@@ -1,0 +1,554 @@
+/*
+
+Jappix - An open social platform
+This is the page-engine CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 14/06/11
+
+*/
+
+#page-engine {
+	background-color: #f4f4f4;
+	position: absolute;
+	top: 40px;
+	bottom: 6px;
+	right: 6px;
+	left: 6px;
+	z-index: 8;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#page-engine .top {
+	background: #e8f1f3;
+	background: -moz-linear-gradient(top, #e8f1f3, #dee8ea);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e8f1f3), to(#dee8ea));
+	border-bottom: 1px solid #d0d0d0;
+	color: black;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding: 6px;
+	height: 80px;
+	border-top-right-radius: 3px;
+	border-top-left-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-moz-border-radius-topleft: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-webkit-border-top-left-radius: 3px;
+}
+
+#page-engine .top .avatar-container {
+	text-align: center;
+	margin: 2px 0 0 10px;
+	height: 76px;
+	width: 76px;
+	float: left;
+}
+
+#page-engine .top .avatar {
+	max-height: 76px;
+	max-width: 76px;
+}
+
+#page-engine .top .name {
+	text-align: right;
+	padding: 7px;
+}
+
+#page-engine p.bc-name {
+	font-size: 2.3em;
+	margin-bottom: 5px;
+}
+
+#page-engine p.bc-infos {
+	font-size: 0.85em;
+	height: 16px;
+	overflow: hidden;
+	position: absolute;
+	left: 115px;
+	right: 12px;
+}
+
+#page-engine .page-engine-chan[data-type=groupchat] p.bc-infos {
+	left: 12px;
+}
+
+#page-engine p.bc-infos span.show {
+	padding-left: 18px;
+}
+
+#page-engine p.bc-infos a {
+	text-decoration: underline;
+}
+
+#page-engine div.bc-pep {
+	float: right;
+}
+
+#page-engine div.bc-pep a {
+	height: 16px;
+	width: 16px;
+	margin-left: 4px;
+	float: left;
+}
+
+#page-engine div.bc-pep a:hover {
+	cursor: default;
+}
+
+#page-engine div.bc-pep a[href]:hover {
+	cursor: pointer;
+}
+
+#page-engine .content,
+#page-engine .list {
+	font-size: 0.9em;
+	position: absolute;
+	top: 93px;
+	right: 0;
+	bottom: 29px;
+	overflow: auto;
+	box-shadow: inset 0 3px 10px #e8e8e8;
+	-moz-box-shadow: inset 0 3px 10px #e8e8e8;
+	-webkit-box-shadow: inset 0 3px 10px #e8e8e8;
+}
+
+#page-engine .content {
+	left: 0;
+	padding: 12px 14px 0;
+}
+
+#page-engine .content a {
+	text-decoration: underline;
+}
+
+#page-engine .page-engine-chan {
+	display: none;
+}
+
+#page-engine .chat .content,
+#page-engine .chat .list {
+	bottom: 93px;
+}
+
+#page-engine .chat .content {
+	padding-bottom: 24px;
+}
+
+#page-engine .groupchat-content {
+	padding-bottom: 16px !important;
+	right: 191px !important;
+}
+
+#page-engine .list {
+	border-left: 1px solid #c8c8c8;
+	padding: 8px 0 0;
+	width: 190px;
+	right: 0;
+}
+
+#page-engine .list .role {
+	display: none;
+	margin-bottom: 10px;
+}
+
+#page-engine .list .title {
+	font-weight: bold;
+	color: #383838;
+	margin-left: 8px;
+}
+
+#page-engine .list .user {
+	background: #eff2f2;
+	background: -moz-linear-gradient(top, #eff2f2, #ecefef);
+	background: -webkit-gradient(linear, left top, left bottom, from(#eff2f2), to(#ecefef));
+	border-color: #c8c8c8;
+	border-width: 1px 0;
+	border-style: solid;
+	color: #383838;
+	margin-bottom: 3px;
+	height: 32px;
+	overflow: hidden;
+}
+
+#page-engine .list .user:hover {
+	background: #e9ecec;
+	cursor: pointer;
+}
+
+#page-engine .list .user:active {
+	background: #e3e7e7;
+}
+
+#page-engine .list .user.myself {
+	background-color: #eff2f2;
+	cursor: default;
+}
+
+#page-engine .list .user .name {
+	float: left;
+	height: 18px;
+	overflow: hidden;
+	margin: 7px 0 7px 3px;
+	padding-left: 18px;
+}
+
+#page-engine .list .user .avatar-container {
+	text-align: center;
+	float: right;
+	height: 32px;
+	width: 32px;
+}
+
+#page-engine .list .user .avatar {
+	max-height: 32px;
+	max-width: 32px;
+}
+
+#page-engine .one-group,
+#archives .one-group {
+	border-bottom: 1px dotted #d0d0d0;
+	padding-bottom: 8px;
+	margin-bottom: 10px;
+}
+
+#page-engine .one-line,
+#archives .one-line,
+#page-engine .one-group b.name,
+#archives .one-group b.name {
+	padding-left: 50px;
+	word-wrap: break-word;
+}
+
+#page-engine .one-group b.name,
+#archives .one-group b.name {
+	display: block;
+	margin-bottom: 4px;
+}
+
+#page-engine .one-group b.name.me,
+#archives .one-group b.name.me {
+	color: #123a5c;
+}
+
+#page-engine .one-group b.name.him,
+#archives .one-group b.name.him {
+	color: #801e1e;
+}
+
+#page-engine .one-group span.date,
+#archives .one-group span.date {
+	float: right;
+	font-size: 0.9em;
+}
+
+#page-engine .one-group .avatar-container,
+#archives .one-group .avatar-container {
+	text-align: center;
+	margin: 4px 0 0 6px;
+	height: 30px;
+	width: 30px;
+	float: left;
+}
+
+#page-engine .one-group .avatar,
+#archives .one-group .avatar {
+	max-height: 30px;
+	max-width: 30px;
+}
+
+#page-engine b.name.talk-images {
+	background-position: 50px -99px;
+	padding-left: 68px;
+}
+
+#page-engine .user-message,
+#archives .user-message {
+	margin-bottom: 3px;
+}
+
+#page-engine .system-message {
+	color: #053805 !important;
+	margin-bottom: 3px !important;
+	padding-left: 0 !important;
+}
+
+#page-engine .system-message a {
+	color: #053805 !important;
+}
+
+#page-engine .my-nick {
+	font-weight: bold;
+}
+
+#page-engine .old-message {
+	font-size: 11px !important;
+	margin-bottom: 1px !important;
+}
+
+#page-engine .chatstate {
+	background-color: rgb(234,234,234);
+	background-color: rgba(234,234,234,0.8);
+	color: #2c2c2c;
+	padding: 3px 10px 2px 8px;
+	position: absolute;
+	bottom: 93px;
+	left: 0;
+	font-size: 0.75em;
+	border-top-right-radius: 3px;
+	-moz-border-radius-topright: 3px;
+	-webkit-border-top-right-radius: 3px;
+}
+
+#page-engine .text {
+	height: 93px;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+#page-engine .footer {
+	background: #e8f1f3;
+	background: -moz-linear-gradient(top, #dee8ea, #e8f1f3);
+	background: -webkit-gradient(linear, left top, left bottom, from(#dee8ea), to(#e8f1f3));
+	border-color: #d0d0d0;
+	border-width: 1px 0 0;
+	border-style: solid;
+	color: black;
+	position: absolute;
+	left: 0;
+	right: 0;
+	padding: 6px;
+	height: 16px;
+}
+
+#page-engine .chat .footer {
+	border-width: 1px 0;
+	position: static;
+}
+
+#page-engine .chat-tools-content {
+	height: 16px;
+	width: 16px;
+	margin-right: 8px;
+	float: left;
+}
+
+#page-engine .tools-tooltip {
+	display: block;
+	height: 16px;
+	width: 16px;
+	overflow: hidden;
+	float: left;
+}
+
+#page-engine .text .chat-tools-smileys {
+	margin-left: 4px;
+}
+
+#page-engine .text .tools-smileys {
+	background-position: 0 -388px;
+}
+
+#page-engine .text .tools-style {
+	background-position: 0 -700px;
+}
+
+#page-engine .text .tools-save {
+	background-position: 0 -719px;
+}
+
+#page-engine .text .tools-clear {
+	background-position: 0 -739px;
+}
+
+#page-engine .text .tools-infos,
+#channel .top div.shortcuts a.profile {
+	background-position: 0 -758px;
+}
+
+#page-engine .text .tools-add,
+#page-engine .text .tools-archives {
+	display: none;
+}
+
+#page-engine .text .tools-mucadmin {
+	background-position: 0 -777px;
+	display: none;
+}
+
+#page-engine .bubble-style label.bold {
+	font-weight: bold;
+}
+
+#page-engine .bubble-style label.italic {
+	font-style: italic;
+}
+
+#page-engine .bubble-style label.underline {
+	text-decoration: underline;
+}
+
+#page-engine .bubble-style a.color {
+	height: 18px;
+	width: 18px;
+	border-color: white;
+	border-width: 1px;
+	border-style: solid;
+	margin: 6px 5px 0 0;
+	float: left;
+	opacity: 0.6;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	box-shadow: 0 0 5px black;
+	-moz-box-shadow: 0 0 5px black;
+	-webkit-box-shadow: 0 0 5px black;
+}
+
+#page-engine .bubble-style a.color:hover,
+#page-engine .bubble-style a.color:focus {
+	opacity: 0.7;
+}
+
+#page-engine .bubble-style a.color.selected {
+	opacity: 1;
+	border-color: #ffb20d;
+}
+
+#page-engine .text .compose,
+#page-engine .muc-ask {
+	position: absolute;
+	left: 0;
+}
+
+#page-engine .text .compose {
+	top: 29px;
+	right: 12px;
+	bottom: 12px;
+}
+
+#page-engine .muc-ask {
+	right: 0;
+	bottom: 0;
+}
+
+#page-engine .text textarea {
+	border: 1px solid #c8c8c8;
+	padding: 5px;
+	height: 100%;
+	width: 100%;
+	font-size: 1.1em;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+	-moz-border-radius-topright: 0;
+	-moz-border-radius-topleft: 0;
+	-webkit-border-top-right-radius: 0;
+	-webkit-border-top-left-radius: 0;
+}
+
+#page-engine .muc-ask {
+	background-color: #e8f1f3;
+	height: 64px;
+	font-size: 0.9em;
+	right: 0;
+	z-index: 2;
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+	-moz-border-radius-bottomleft: 3px;
+	-moz-border-radius-bottomright: 3px;
+	-webkit-border-bottom-left-radius: 3px;
+	-webkit-border-bottom-right-radius: 3px;
+}
+
+#page-engine .muc-ask label {
+	color: #224249;
+	margin: 23px 10px 0 16px;
+	font-weight: bold;
+}
+
+#page-engine .muc-ask input {
+	width: 200px;
+	margin: 19px 10px 0 10px;
+	padding: 3px;
+}
+
+#page-engine .tooltip {
+	position: absolute;
+	bottom: 84px;
+	margin-left: -13px;
+	z-index: 40;
+	font-size: 0.8em;
+	color: white;
+}
+
+#page-engine .tooltip a {
+	color: white;
+	text-decoration: underline;
+}
+
+#page-engine .tooltip-subitem {
+	background-color: rgb(0,0,0);
+	background-color: rgba(0,0,0,0.8);
+	padding: 10px;
+	width: 200px;
+	height: 110px;
+	text-shadow: 0 1px 1px black;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+
+#page-engine .tooltip-subarrow {
+	background-position: 0 -251px;
+	opacity: 0.8;
+	height: 10px;
+	width: 18px;
+	margin-left: 12px;
+}
+
+#page-engine .tooltip .tooltip-top {
+	margin-bottom: 8px;
+	font-weight: bold;
+}
+
+#page-engine .tooltip label {
+	margin-bottom: 4px;
+	float: left;
+	clear: both;
+}
+
+#page-engine .tooltip label input[type=checkbox] {
+	margin: 0 6px 0 0;
+	float: left;
+}
+
+#page-engine .tooltip label.select {
+	margin-top: 5px;
+}
+
+#page-engine .tooltip input,
+#page-engine .tooltip select {
+	float: left;
+}
+
+#page-engine .tooltip select {
+	width: 100px;
+}
+
+#page-engine .tooltip .tooltip-actionlog:hover,
+#page-engine .tooltip .tooltip-actionlog:focus {
+	cursor: pointer;
+	text-decoration: underline;
+}

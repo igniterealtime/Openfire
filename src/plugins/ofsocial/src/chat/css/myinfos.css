@@ -1,0 +1,330 @@
+/*
+
+Jappix - An open social platform
+This is the my-infos CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 14/05/11
+
+*/
+
+#my-infos {
+	background-color: rgb(20,20,20);
+	background-color: rgba(20,20,20,0.85);
+	color: #919191;
+	margin-top: 8px;
+	padding: 15px 6px 6px 6px;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	box-shadow: 0 0 6px #5c5c5c;
+	-moz-box-shadow: 0 0 6px #5c5c5c;
+	-webkit-box-shadow: 0 0 6px #5c5c5c;
+}
+
+#my-infos .content {
+	background: #e8f1f3;
+	background: -moz-linear-gradient(top, #e4edef, #e8f1f3);
+	background: -webkit-gradient(linear, left top, left bottom, from(#e4edef), to(#e8f1f3));
+	color: #919191;
+	max-height: 140px;
+	padding: 1px 0;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#my-infos .element {
+	height: 24px;
+	margin: 6px 0;
+	position: relative;
+}
+
+#my-infos .element .icon {
+	background-color: white;
+	border-color: #636363;
+	border-width: 1px;
+	border-style: solid;
+	margin-left: 6px;
+	height: 22px;
+	width: 25px;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+}
+
+#my-infos .element div.bubble a {
+	width: 100%;
+	height: 20px;
+}
+
+#my-infos .element .icon:hover,
+#my-infos .element div.bubble a:hover {
+	background-color: #f4f4f4;
+}
+
+#my-infos .element .icon:active,
+#my-infos .element div.bubble a:active {
+	background-color: #ededed;
+}
+
+#my-infos .f-presence div.bubble a[data-value=available] {
+	background-position: 4px -167px;
+}
+
+#my-infos .f-presence div.bubble a[data-value=away] {
+	background-position: 4px -183px;
+}
+
+#my-infos .f-presence div.bubble a[data-value=xa] {
+	background-position: 4px -199px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=crazy] {
+	background-position: 4px -296px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=excited] {
+	background-position: 4px -314px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=playful] {
+	background-position: 4px -332px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=happy] {
+	background-position: 4px -350px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=shocked] {
+	background-position: 4px -368px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=hot] {
+	background-position: 4px -386px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=sad] {
+	background-position: 4px -404px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=amorous] {
+	background-position: 4px -422px;
+}
+
+#my-infos .f-mood div.bubble a[data-value=confident] {
+	background-position: 4px -440px;
+}
+
+#my-infos .f-mood a[data-value] span {
+	background-position: 0 -352px;
+}
+
+#my-infos .f-mood a[data-value=crazy] span,
+.mood-one {
+	background-position: 0 -298px;
+}
+
+#my-infos .f-mood a[data-value=excited] span,
+.mood-two {
+	background-position: 0 -316px;
+}
+
+#my-infos .f-mood a[data-value=playful] span,
+.mood-three {
+	background-position: 0 -334px;
+}
+
+#my-infos .f-mood a[data-value=happy] span,
+.mood-four {
+	background-position: 0 -352px;
+}
+
+#my-infos .f-mood a[data-value=shocked] span,
+.mood-five {
+	background-position: 0 -370px;
+}
+
+#my-infos .f-mood a[data-value=hot] span,
+.mood-six {
+	background-position: 0 -388px;
+}
+
+#my-infos .f-mood a[data-value=sad] span,
+.mood-seven {
+	background-position: 0 -406px;
+}
+
+#my-infos .f-mood a[data-value=amorous] span,
+.mood-eight {
+	background-position: 0 -424px;
+}
+
+#my-infos .f-mood a[data-value=confident] span,
+.mood-nine {
+	background-position: 0 -442px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=doing_chores] {
+	background-position: 4px -458px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=drinking] {
+	background-position: 4px -476px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=eating] {
+	background-position: 4px -494px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=exercising] {
+	background-position: 4px -512px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=grooming] {
+	background-position: 4px -548px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=having_appointment] {
+	background-position: 4px -566px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=inactive] {
+	background-position: 4px -530px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=relaxing] {
+	background-position: 4px -620px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=talking] {
+	background-position: 4px -602px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=traveling] {
+	background-position: 4px -584px;
+}
+
+#my-infos .f-activity div.bubble a[data-value=working] {
+	background-position: 4px -638px;
+}
+
+#my-infos .f-activity a[data-value] span {
+	background-position: 0 -514px;
+}
+
+#my-infos .f-activity a[data-value=doing_chores] span,
+.activity-doing_chores {
+	background-position: 0 -460px;
+}
+
+#my-infos .f-activity a[data-value=drinking] span,
+.activity-drinking {
+	background-position: 0 -478px;
+}
+
+#my-infos .f-activity a[data-value=eating] span,
+.activity-eating {
+	background-position: 0 -496px;
+}
+
+#my-infos .f-activity a[data-value=exercising] span,
+.activity-exercising {
+	background-position: 0 -514px;
+}
+
+#my-infos .f-activity a[data-value=grooming] span,
+.activity-grooming {
+	background-position: 0 -550px;
+}
+
+#my-infos .f-activity a[data-value=having_appointment] span,
+.activity-having_appointment {
+	background-position: 0 -568px;
+}
+
+#my-infos .f-activity a[data-value=inactive] span,
+.activity-inactive {
+	background-position: 0 -532px;
+}
+
+#my-infos .f-activity a[data-value=relaxing] span,
+.activity-relaxing {
+	background-position: 0 -622px;
+}
+
+#my-infos .f-activity a[data-value=talking] span,
+.activity-talking {
+	background-position: 0 -604px;
+}
+
+#my-infos .f-activity a[data-value=traveling] span,
+.activity-traveling {
+	background-position: 0 -586px;
+}
+
+#my-infos .f-activity a[data-value=working] span,
+.activity-working {
+	background-position: 0 -640px;
+}
+
+#my-infos .element .icon.picker {
+	border-width: 1px 0 1px 1px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	-moz-border-radius-topright: 0;
+	-moz-border-radius-bottomright: 0;
+	-webkit-border-top-right-radius: 0;
+	-webkit-border-bottom-right-radius: 0;
+}
+
+#my-infos .element .icon.disabled {
+	background-color: #f3f3f3;
+	border-color: #989898;
+	cursor: default;
+}
+
+#my-infos .element div.bubble {
+	background-color: white;
+	border-color: #636363;
+	border-width: 1px 1px 0 1px;
+	border-style: solid;
+	width: 25px;
+	padding: 1px 0;
+	position: absolute;
+	bottom: 21px;
+	left: 6px;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	-moz-border-radius-topleft: 2px;
+	-moz-border-radius-topright: 2px;
+	-webkit-border-top-left-radius: 2px;
+	-webkit-border-top-right-radius: 2px;
+}
+
+#my-infos .element a {
+	float: left;
+}
+
+#my-infos .element .icon span {
+	height: 16px;
+	width: 16px;
+	margin: 3px 4px;
+	display: block;
+}
+
+#my-infos .element input {
+	height: 18px;
+	width: 190px;
+	font-size: 0.85em;
+	padding-left: 4px;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	-moz-border-radius-topleft: 0;
+	-moz-border-radius-bottomleft: 0;
+	-webkit-border-top-left-radius: 0;
+	-webkit-border-top-bottom-radius: 0;
+}

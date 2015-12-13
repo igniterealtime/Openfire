@@ -1,0 +1,62 @@
+# Translation of the WordPress plugin Private BuddyPress 1.0 by Dennis Morhardt.
+# Copyright (C) 2010 Dennis Morhardt
+# This file is distributed under the same license as the Private BuddyPress package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Private BuddyPress 1.0\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/private-buddypress\n"
+"POT-Creation-Date: 2010-09-20 09:28+0000\n"
+"PO-Revision-Date: 2010-09-20 11:28+0100\n"
+"Last-Translator: Dennis Morhardt <info@dennismorhardt.de>\n"
+"Language-Team: Dennis Morhardt <info@dennismorhardt.de>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: private-buddypress.php:51
+msgid "BuddyPress Protection"
+msgstr "Schutz der BuddyPress-Seiten"
+
+#: private-buddypress.php:144
+msgid "Exclude from protection"
+msgstr "Ausnahmen vom Schutz"
+
+#: private-buddypress.php:146
+msgid "Front page"
+msgstr "Startseite"
+
+#: private-buddypress.php:147
+msgid "Blog pages (posts, archives and non-buddypress pages)"
+msgstr "Blogseiten (Artikel, Archive und normale statische Seiten)"
+
+#: private-buddypress.php:148
+msgid "Registration"
+msgstr "Registrierung"
+
+#. Plugin Name of the plugin/theme
+msgid "Private BuddyPress"
+msgstr "Privates BuddyPress"
+
+#. Plugin URI of the plugin/theme
+msgid "http://bp-tutorials.de/"
+msgstr "http://bp-tutorials.de/"
+
+#. Description of the plugin/theme
+msgid "Protect your BuddyPress Installation from strangers. Only registered users will be allowed to view the installation."
+msgstr "Schütze Deine BuddyPress-Installation vor Unbekannten. Nur angemeldete Benutzer können Deine Seite aufrufen."
+
+#. Author of the plugin/theme
+msgid "Dennis Morhardt"
+msgstr "Dennis Morhardt"
+
+#. Author URI of the plugin/theme
+msgid "http://www.dennismorhardt.de/"
+msgstr "http://www.dennismorhardt.de/"
+
+#~ msgid "Blog pages"
+#~ msgstr "Blogseiten (Artikel, Archive und Nicht-BuddyPress-Seiten)"

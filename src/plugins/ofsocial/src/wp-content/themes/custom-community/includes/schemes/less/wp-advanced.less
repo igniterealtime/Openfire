@@ -1,0 +1,277 @@
+
+/**
+ * So, we're finished with the minimum needed WordPress styling.
+ *
+ * Now going through each area, starting with some globals, then header, menu, content,..
+ * Please remember that we are already overwriting the Bootstrap CSS.
+ *
+ */
+
+
+/** Globals **/
+
+body {
+  word-wrap: break-word;
+}
+a:focus {
+  outline: none;
+}
+ul, ol {
+  list-style: outside;
+  padding-left: 20px;
+}
+table {
+  font-size: inherit;
+}
+tr {
+  border-bottom: 1px solid @gray-lighter;
+}
+td {
+  padding: 5px 10px 5px 0;
+}
+cite {
+  font-style: italic;
+  font-size: small;
+}
+address {
+  border-left: 5px solid @gray-lighter;
+  padding-left: 20px;
+}
+code {
+  overflow: scroll;
+}
+/* Adapting a little bit the jumbotron */
+.jumbotron {
+  padding: 35px 45px;
+}
+/* h1-h6 will get no margin-top in jumbotrons */
+.jumbotron > h1,
+.jumbotron > h2,
+.jumbotron > h3,
+.jumbotron > h4,
+.jumbotron > h5,
+.jumbotron > h6 {
+  margin-top: 0;
+}
+
+/* Button Love
+ * First a little tweak for the bootstrap buttons */
+.btn {
+  font-size: 15px;
+  font-weight: 200; /* make the fonts sharper */
+  border: 1px solid rgba(0,0,0,0.08); /* Add a nice slight transparent border to make the button look sharper */
+}
+.btn:hover,
+.btn:focus {
+  font-size: 15px;
+  font-weight: 200;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+/* Now resetting all other possible buttons and adapt them to Bootstrap style! */
+button,
+a.button,
+input[type="submit"] {
+  display: inline-block;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 200;
+  line-height: 1.428571429;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 4px;
+  color: @component-active-color;
+  text-shadow: none;
+  background-color: @link-color;
+  background-image: none;
+  /* Resetting possible IE Gradient Filters */
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(enabled=false)";
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+button:hover,
+.button:hover,
+input[type="submit"]:hover {
+  display: inline-block;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 200;
+  line-height: 1.428571429;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 4px;
+  color: @component-active-color;
+  text-shadow: none;
+  background-color: @link-hover-color;
+  background-image: none;
+  /* Resetting possible IE Gradient Filters */
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(enabled=false)";
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+
+
+
+
+
+/** Navigation **/
+.site-navigation {
+  .container {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .navbar {
+    margin-bottom: 0;
+
+    li a {
+      //.transition(all 150ms ease-in-out);
+    }
+  }
+}
+/* the navbar branding */
+.navbar-brand {
+  color: @navbar-default-link-color;
+
+  &:hover {
+    color: @link-hover-color;
+  }
+}
+.navbar-inverse .navbar-brand {
+  color: @navbar-inverse-link-color;
+
+  &:hover {
+    color: @link-hover-color;
+  }
+}
+@media screen and (min-width: @screen-sm) {
+  // the dotted borders for inverse menu
+  .navbar-inverse li > a:first-child {
+    border-left: 1px solid #2f2f2f;
+  }
+  .navbar-inverse ul.nav {
+    border-right: 1px solid #2f2f2f;
+  }
+  // the dotted borders for inverse menu
+  .navbar-default li > a:first-child {
+    border-left: 1px solid rgba(0,0,0,.05);
+  }
+  .navbar-default ul.nav {
+    border-right: 1px solid rgba(0,0,0,.05);
+  }
+  // for the .active hover effect
+  .navbar li.active a:hover {
+    .transition(all 500ms ease-in-out);
+    background: @link-hover-color !important;
+  }
+}
+.navbar-default.navbar-static-top {
+  // border-width: 0;
+  border-color: rgba(0,0,0,.05);
+}
+.navbar-inverse.navbar-static-top {
+  border-width: 0;
+}
+.navbar-inverse {
+  border: 0;
+}
+
+
+
+
+
+
+
+/** Header **/
+.site-header {
+  /* border: 1px solid darken(@body-bg, 6.5%); */
+  /** NOTE: Leads to issues, as there is no setting to adjust this styling; aside of that, its rather .. useless */
+  border: 0;
+  
+}
+.site-header-inner {
+  padding: 0;
+  display: table;
+  width: 100%;
+}
+.site-branding {
+  padding: 20px 0 30px 0;
+  display: table-cell;
+  vertical-align: middle;
+}
+/* the site title */
+.site-title {
+  margin-top: 20px;
+  margin-bottom: 0;
+
+  /* the site title should be never underlined */
+  a {
+    font-size: 72px;
+    text-decoration: none;
+  }
+}
+
+
+
+
+
+/** Content **/
+
+.main-content {
+  padding-top: 10px;
+}
+.main-content-inner {
+  margin-bottom: 30px;
+}
+.page-header {
+  padding-bottom: 0;
+  margin: 30px 0 20px;
+}
+.entry-meta {
+  margin: 10px 0;
+}
+
+/** Sidebars **/
+.sidebar-padder {
+  margin: 30px 0;
+}
+
+/** Widgets **/
+.widget {
+  margin-bottom: 2em;
+}
+.widgetarea ul,
+.widgetarea ol,
+.sidebar ul,
+.sidebar ol {
+  padding-left: 0;
+}
+.widgetarea li,
+.sidebar .widget li {
+  list-style: none outside none;
+  padding: 2px 0;
+}
+.widget_nav_menu .sub-menu li,
+.widget_pages .children li {
+  padding-left: 15px;
+}
+/* Hiding the search widget's button in widgets. thats just too old-skool. :) */
+.widget_search .search-form input[type="submit"] {
+  display: none;
+}
+
+
+/**
+ * Some improvements for the widgets
+ */
+
+body.cc2-bootstrap-support .widget_recent_comments ul#recentcomments {
+	list-style: none;
+	padding-left: 0;
+}

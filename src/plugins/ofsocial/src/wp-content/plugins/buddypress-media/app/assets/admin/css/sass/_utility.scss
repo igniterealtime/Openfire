@@ -1,0 +1,85 @@
+// Alignleft
+.alignleft {
+    float: left;
+}
+
+// Alignright
+.alignright {
+    float: right;
+}
+
+// Aligncenter
+.aligncenter {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+// Clear Both
+.clear-both {
+	clear: both;
+}
+
+// Clear None
+.clear-none {
+	clear: none;
+}
+
+// Clear Left
+.clear-left {
+	clear: left;
+}
+
+// Clear Right
+.clear-right {
+	clear: right;
+}
+
+// inline-block
+.rtm-inline-block {
+	display: inline-block;
+}
+
+// Text Left
+.rtm-text-left {
+	text-align: left;
+}
+
+// Text Right
+.rtm-text-right {
+	text-align: right;
+}
+
+// Text Center
+.rtm-text-center {
+	text-align: center;
+}
+
+// Borders
+.rtm-border-0 {
+	border: 0 !important;
+}
+
+.hide {
+	display: none;
+}
+
+/*------------------------------------*\
+    #CLEARFIX
+\*------------------------------------*/
+
+/**
+ * Micro clearfix, as per: css-101.org/articles/clearfix/latest-new-clearfix-so-far.php
+ * Extend the clearfix class with Sass to avoid the `.clearfix` class appearing
+ * over and over in your markup.
+ */
+.clearfix,
+%clearfix {
+
+    &:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+}

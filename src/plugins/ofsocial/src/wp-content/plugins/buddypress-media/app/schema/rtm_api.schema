@@ -1,0 +1,11 @@
+CREATE TABLE %s (
+    id bigint(20) NOT NULL AUTO_INCREMENT ,
+    user_id bigint(20) NOT NULL DEFAULT 0,
+    ip varchar(255) NOT NULL DEFAULT 0,
+    token_time varchar(1000),
+    token varchar(1000),
+    status varchar(255),
+    last_access TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY  (id)
+)
+DEFAULT CHARACTER SET = utf8 COLLATE = utf8_general_ci;

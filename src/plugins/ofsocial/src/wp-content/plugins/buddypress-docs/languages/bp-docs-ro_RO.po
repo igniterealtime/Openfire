@@ -1,0 +1,580 @@
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-docs\n"
+"POT-Creation-Date: 2011-07-19 21:26:06+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2012-03-22 15:42+0200\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: Romania\n"
+"Language-Team: Web Geeks\n"
+"Last-Translator: \n"
+
+#: bp-docs.php:186
+msgctxt "post type general name"
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Docs"
+
+#: bp-docs.php:187
+msgctxt "post type singular name"
+msgid "Doc"
+msgstr "Doc"
+
+#: bp-docs.php:188
+msgctxt "add new"
+msgid "Add New"
+msgstr "Adăugare nou"
+
+#: bp-docs.php:189
+msgid "Add New Doc"
+msgstr "Adăugaţi noi Doc"
+
+#: bp-docs.php:190
+msgid "Edit Doc"
+msgstr "Editare Doc"
+
+#: bp-docs.php:191
+#: includes/templates/docs/docs-header.php:29
+#: includes/integration-groups.php:669
+#: includes/integration-groups.php:1070
+msgid "New Doc"
+msgstr "Doc noi"
+
+#: bp-docs.php:192
+msgid "View Doc"
+msgstr "Vizualizare Doc"
+
+#: bp-docs.php:193
+msgid "Search Docs"
+msgstr "Căutare Docs"
+
+#: bp-docs.php:194
+msgid "No Docs found"
+msgstr "Nu Docs găsit"
+
+#: bp-docs.php:195
+msgid "No Docs found in Trash"
+msgstr "Nu Docs găsite în coşul de gunoi"
+
+#: bp-docs.php:202
+#: includes/integration-groups.php:955
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Docs"
+
+#: bp-docs.php:218
+msgid "Associated Items"
+msgstr "Elementele asociate"
+
+#: bp-docs.php:219
+msgid "Associated Item"
+msgstr "Articol"
+
+#: includes/addon-taxonomy.php:86
+msgid "Docs Tags"
+msgstr "Tag-uri Docs"
+
+#: includes/addon-taxonomy.php:87
+msgid "Docs Tag"
+msgstr "Tag-ul docs"
+
+#: includes/addon-taxonomy.php:212
+msgid "Tags: %s"
+msgstr "Tag-uri: %s"
+
+#: includes/addon-taxonomy.php:343
+#: includes/templates/docs/edit-doc.php:52
+msgid "Tags"
+msgstr "Tag-uri"
+
+#: includes/addon-taxonomy.php:392
+msgid "You are viewing docs with the following tags: %s"
+msgstr "Sunteţi vizualizarea docs cu următoarele Tag-uri: %s"
+
+#: includes/addon-taxonomy.php:414
+msgid "Filter by tag"
+msgstr "Filtru de tag-ul"
+
+#: includes/addon-taxonomy.php:420
+msgid "(%d)"
+msgstr "(% d)"
+
+#: includes/addon-taxonomy.php:502
+msgid "Docs tagged %s"
+msgstr "Docs tagged %s"
+
+#: includes/addon-taxonomy.php:561
+msgid "Most Used"
+msgstr "Cele mai utilizate"
+
+#. translators: %s: add new taxonomy label
+#: includes/addon-taxonomy.php:585
+msgid "+ %s"
+msgstr "+ %s"
+
+#: includes/addon-hierarchy.php:100
+msgid "Parent: "
+msgstr "Mamă: "
+
+#: includes/addon-hierarchy.php:143
+msgid "Children: "
+msgstr "Copii: "
+
+#: includes/admin.php:63
+msgid "Recent Comments"
+msgstr "Comentarii recente"
+
+#: includes/admin.php:138
+msgid "No comments yet."
+msgstr "Nu există comentarii încă."
+
+#: includes/addon-history.php:127
+msgid "You have successfully restored the Doc to the revision from %s."
+msgstr "Cu succes au restaurat Doc revizuirea la % s."
+
+#: includes/addon-history.php:181
+msgid "Compare Revisions of “%1$s”"
+msgstr "Compara revizuiri ale “ %1$ s ”"
+
+#: includes/addon-history.php:182
+#: includes/addon-history.php:211
+msgid "Revisions"
+msgstr "Revizuiri"
+
+#: includes/addon-history.php:210
+msgid "Revision for “%1$s” created on %2$s"
+msgstr "Revizuirea pentru “ %1$ s ” creat pe %2$ s"
+
+#. translators: post revision: 1: when, 2: author name
+#: includes/addon-history.php:376
+msgctxt "post revision"
+msgid "%1$s by %2$s"
+msgstr "%1$ s %2$ s"
+
+#: includes/addon-history.php:403
+msgid "Restore"
+msgstr "Restaurare"
+
+#: includes/addon-history.php:426
+msgid "Compare Revisions"
+msgstr "Compara revizuiri"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:442
+msgid "Old"
+msgstr "Vechi"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:443
+msgid "New"
+msgstr "Noi"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:444
+msgid "Date Created"
+msgstr "Data creat"
+
+#: includes/addon-history.php:445
+#: includes/templates/docs/docs-loop.php:28
+msgid "Author"
+msgstr "Autor"
+
+#: includes/addon-history.php:446
+msgid "Actions"
+msgstr "Acţiuni"
+
+#: includes/addon-history.php:474
+#: includes/integration-groups.php:678
+#: includes/templatetags.php:504
+msgid "History"
+msgstr "Istoria"
+
+#: includes/templatetags-edit.php:141
+msgid "(no parent)"
+msgstr "(nu-mamă)"
+
+#: includes/templates/docs/docs-loop.php:7
+msgid "Search"
+msgstr "Căutare"
+
+#: includes/templates/docs/docs-loop.php:24
+#: includes/templates/docs/edit-doc.php:26
+msgid "Title"
+msgstr "Titlul"
+
+#: includes/templates/docs/docs-loop.php:32
+msgid "Created"
+msgstr "Creat"
+
+#: includes/templates/docs/docs-loop.php:36
+msgid "Last Edited"
+msgstr "Last Edited"
+
+#: includes/templates/docs/docs-loop.php:79
+msgid "Viewing %1$s-%2$s of %3$s docs"
+msgstr "Vizualizarea %1$ s-% 2$ s de %3$ s docs"
+
+#: includes/templates/docs/docs-loop.php:89
+msgid "There are no docs for this view. Why not <a href=\"%s\">create one</a>?"
+msgstr "Nu există Docs pentru acest punct de vedere. De ce nu <a href=\"%s\">crea unul</a>?"
+
+#: includes/templates/docs/edit-doc.php:15
+msgid "You have been idle for <span id=\"idle-warning-time\"></span>"
+msgstr "Tu ai fost inactiv pentru <span id=\"idle-warning-time\"></span>"
+
+#: includes/templates/docs/edit-doc.php:32
+msgid "Permalink"
+msgstr "Permalink"
+
+#: includes/templates/docs/edit-doc.php:38
+msgid "Content"
+msgstr "Conţinut"
+
+#: includes/templates/docs/edit-doc.php:58
+msgid "Tags are words or phrases that help to describe and organize your Docs."
+msgstr "Etichetele sunt cuvinte sau fraze care ajuta pentru a descrie şi organize al tãu Docs."
+
+#: includes/templates/docs/edit-doc.php:59
+msgid "Separate tags with commas (for example: <em>orchestra, snare drum, piccolo, Brahms</em>)"
+msgstr "Tag-uri separate cu virgule (de exemplu: <em> orchestră, cursă tambur, Piccolo, Brahms </em>)"
+
+#: includes/templates/docs/edit-doc.php:73
+msgid "Parent"
+msgstr "Mamă"
+
+#: includes/templates/docs/edit-doc.php:79
+msgid "Select a parent for this Doc."
+msgstr "Selectaţi un părinte pentru acest Doc."
+
+#: includes/templates/docs/edit-doc.php:81
+msgid "(Optional) Assigning a parent Doc means that a link to the parent will appear at the bottom of this Doc, and a link to this Doc will appear at the bottom of the parent."
+msgstr "(Opţional) Atribuirea unui Doc părinte înseamnă că o legătură de mamă va apărea în partea de jos a acestei Doc, şi un link la acest Doc va apărea în partea de jos a societăţii-mamă."
+
+#: includes/templates/docs/edit-doc.php:96
+msgid "Settings"
+msgstr "Setări"
+
+#: includes/templates/docs/edit-doc.php:114
+msgid "Save"
+msgstr "Salvare"
+
+#: includes/templates/docs/edit-doc.php:114
+msgid "Cancel"
+msgstr "Revocare"
+
+#: includes/templates/docs/edit-doc.php:135
+msgid "Are you still there?"
+msgstr "Eşti încă acolo?"
+
+#: includes/templates/docs/edit-doc.php:137
+msgid "In order to prevent overwriting content, only one person can edit a given doc at a time. For that reason, you must periodically ensure the system that you're still actively editing. If you are idle for more than 30 minutes, your changes will be auto-saved, and you'll be sent out of Edit mode so that others can access the doc."
+msgstr "Pentru a preveni suprascrierea conţinut, doar o singură persoană se poate edita un doc dat la un moment dat. Din acest motiv, trebuie să se asigure periodic sistemul de care sunteţi încă activ de editare. Daca esti inactiv pentru mai mult de 30 de minute, modificările vor fi auto-salvate, şi vei fi trimis din modul Editare, astfel încât alte persoane pot accesa doc."
+
+#: includes/templates/docs/edit-doc.php:139
+msgid "I'm still editing!"
+msgstr "I sînt încă de editare!"
+
+#: includes/templates/docs/single-doc.php:7
+msgid "Locked"
+msgstr "Blocat"
+
+#: includes/templates/docs/single-doc.php:7
+msgid "(click for more info)"
+msgstr "(clic pentru mai multe informaţii)"
+
+#: includes/templates/docs/single-doc.php:9
+msgid "This doc is currently being edited by %1$s. In order to prevent edit conflicts, only one user can edit a doc at a time."
+msgstr "Acest document este în prezent fiind editat de %1$s. În scopul de a preveni conflictele de editare, doar un singur utilizator poate edita un doc la un moment dat."
+
+#: includes/templates/docs/single-doc.php:12
+msgid "Please try again in a few minutes. Or, as an admin, you can <a href=\"%s\">force cancel</a> the edit lock."
+msgstr "Vă rugăm să încercaţi din nou în câteva minute. Sau, ca un admin, aveţi posibilitatea să <a href=\"%s\"> vigoare anula </a> de blocare de editare."
+
+#: includes/templates/docs/single-doc.php:14
+msgid "Please try again in a few minutes."
+msgstr "Vă rugăm să încercaţi din nou în câteva minute."
+
+#: includes/templates/docs/docs-header.php:14
+#: includes/templatetags.php:498
+msgid "Read"
+msgstr "Citire"
+
+#: includes/templates/docs/docs-header.php:19
+#: includes/integration-groups.php:676
+#: includes/templatetags.php:501
+msgid "Edit"
+msgstr "Editare"
+
+#: includes/templates/docs/comments.php:22
+msgid "Discussion (%d)"
+msgstr "Discuţie (% d)"
+
+#: includes/templates/docs/comments.php:44
+msgid "There are no comments for this doc yet."
+msgstr "Există încă nici un comentariu pentru acest doc."
+
+#: includes/templates/docs/comments.php:53
+msgid "Comment display has been disabled on this doc."
+msgstr "Comentariu de afişare a fost dezactivat pe acest cod."
+
+#: includes/templates/docs/comments.php:62
+msgid "Comment posting has been disabled on this doc."
+msgstr "Comentariu de înregistrare a fost dezactivat pe acest cod."
+
+#: includes/templates/docs/history-doc.php:9
+msgid "Click on a revision date from the list below to view that revision."
+msgstr "Faceţi clic pe o dată de revizuire din lista de mai jos pentru a vedea această revizuire."
+
+#: includes/templates/docs/history-doc.php:11
+msgid "Alternatively, you can compare two revisions by selecting them in the 'Old' and 'New' columns, and clicking 'Compare Revisions'."
+msgstr "Alternativ, puteţi compara două revizuiri de selectarea lor în coloanele \"vechi\" şi \"nou\", şi făcând clic pe \"Comparaţi Versiuni\"."
+
+#: includes/templates/docs/history-doc.php:22
+msgid "Older: %s"
+msgstr "Mai vechi: %s"
+
+#: includes/templates/docs/history-doc.php:23
+msgid "Newer: %s"
+msgstr "Mai nou: %s"
+
+#: includes/templates/docs/history-doc.php:30
+msgid "You are currently viewing a revision titled \"%1$s\", saved on %2$s by %3$s"
+msgstr "Sunteţi de vizionare în prezent, o revizuire intitulat \"%1$s\", salvat pe %2$s de %3$s"
+
+#: includes/templates/docs/history-doc.php:52
+msgid "These revisions are identical."
+msgstr "Aceste revizuiri sunt identice."
+
+#: includes/integration-groups.php:382
+msgid "Doc creator only (%s)"
+msgstr "Doc creatorul numai (% s)"
+
+#: includes/integration-groups.php:384
+msgid "Doc creator only (that's you!)"
+msgstr "Doc creatorul numai (care este tu!)"
+
+#: includes/integration-groups.php:392
+msgid "Who can edit this doc?"
+msgstr "Care poate edita acest doc?"
+
+#: includes/integration-groups.php:396
+#: includes/integration-groups.php:413
+#: includes/integration-groups.php:434
+#: includes/integration-groups.php:454
+msgid "All members of the group"
+msgstr "Toţi membrii grupului"
+
+#: includes/integration-groups.php:401
+#: includes/integration-groups.php:416
+#: includes/integration-groups.php:437
+#: includes/integration-groups.php:457
+msgid "Only admins and mods of this group"
+msgstr "Numai de administratori şi mods acestui grup"
+
+#: includes/integration-groups.php:409
+msgid "Who can <em>post</em> comments on this doc?"
+msgstr "Cine poate <em>posta</em> comentarii pe acest doc?"
+
+#: includes/integration-groups.php:419
+#: includes/integration-groups.php:440
+#: includes/integration-groups.php:460
+msgid "No one"
+msgstr "Nimeni"
+
+#: includes/integration-groups.php:426
+msgid "Who can <em>read</em> comments on this doc?"
+msgstr "Cine poate <em>citi</em> comentarii pe acest doc?"
+
+#: includes/integration-groups.php:431
+#: includes/integration-groups.php:452
+msgid "Anyone"
+msgstr "Oricine"
+
+#: includes/integration-groups.php:447
+msgid "Who can view this doc's history?"
+msgstr "Cine poate vizualiza istoricul acest doc?"
+
+#: includes/integration-groups.php:488
+msgid "%1$s created the doc %2$s in the group %3$s"
+msgstr "%1$ s creat doc %2$ s în grupa %3$ s"
+
+#: includes/integration-groups.php:490
+msgid "%1$s edited the doc %2$s in the group %3$s"
+msgstr "%1$ s editat doc %2$ s în grupa %3$ s"
+
+#: includes/integration-groups.php:517
+msgid "%1$s commented on the doc %2$s in the group %3$s"
+msgstr "%1$ s a comentat doc %2$ s în grupa %3$ s"
+
+#: includes/integration-groups.php:641
+msgid "%s <span>%d</span>"
+msgstr "%s <span>%d</span>"
+
+#: includes/integration-groups.php:663
+#: includes/integration-groups.php:751
+#: includes/integration-groups.php:816
+msgid "Docs"
+msgstr "Docs"
+
+#: includes/integration-groups.php:735
+msgid "You do not have permission to post comments on this doc."
+msgstr "Nu aveţi permisiunea de a posta comentarii pe acest cod."
+
+#: includes/integration-groups.php:760
+msgid "BuddyPress Docs group tab name:"
+msgstr "BuddyPress Docs nume fila de grup:"
+
+#: includes/integration-groups.php:873
+msgid "Save Changes"
+msgstr "Salvaţi modificările"
+
+#: includes/integration-groups.php:898
+msgid "There was an error saving, please try again"
+msgstr "Eroare la salvarea, vă rugăm să încercaţi din nou"
+
+#: includes/integration-groups.php:900
+msgid "Settings saved successfully"
+msgstr "Setări salvate cu succes"
+
+#: includes/integration-groups.php:957
+msgid "BuddyPress Docs is a powerful tool for collaboration with members of your group. A cross between document editor and wiki, BuddyPress Docs allows you to co-author and co-edit documents with your fellow group members, which you can then sort and tag in a way that helps your group to get work done."
+msgstr "BuddyPress Docs este un instrument puternic pentru colaborare cu membri ai grupului. O cruce între editor de documente şi wiki, BuddyPress Docs vă permite să co-autor şi co-edita documente cu membrii grupului de colegi, pe care aveţi posibilitatea să sortaţi, apoi şi eticheta într-un mod care ajuta grupul dvs. de a obţine lucru de făcut."
+
+#: includes/integration-groups.php:969
+msgid "Minimum role to create new Docs:"
+msgstr "Rolul minim pentru a crea noi Docs:"
+
+#: includes/integration-groups.php:974
+msgid "Group admin"
+msgstr "Grupul admin"
+
+#: includes/integration-groups.php:975
+msgid "Group moderator"
+msgstr "Moderatorul grupului"
+
+#: includes/integration-groups.php:976
+msgid "Group member"
+msgstr "Membru al grupului"
+
+#: includes/integration-groups.php:1067
+msgid "View Docs"
+msgstr "Vizualizare Docs"
+
+#: includes/query-builder.php:151
+msgid "Groups that have docs associated with them"
+msgstr "Grupuri care au docs asociate acestora"
+
+#: includes/query-builder.php:155
+msgid "Users that have docs associated with them"
+msgstr "Utilizatorii care au docs asociate acestora"
+
+#: includes/query-builder.php:164
+msgid "Groups"
+msgstr "Grupuri"
+
+#: includes/query-builder.php:386
+msgid "Unknown error. Please try again."
+msgstr "Eroare necunoscută. Vă rugăm să încercaţi din nou."
+
+#: includes/query-builder.php:392
+msgid "Both the title and the content fields are required."
+msgstr "Este necesară atât titlul şi câmpurile de conţinut."
+
+#: includes/query-builder.php:413
+msgid "There was an error when creating the doc."
+msgstr "Eroare la crearea doc."
+
+#: includes/query-builder.php:425
+msgid "Doc successfully created!"
+msgstr "Doc creat cu succes!"
+
+#: includes/query-builder.php:453
+msgid "There was an error when saving the doc."
+msgstr "Eroare la salvarea doc."
+
+#: includes/query-builder.php:462
+msgid "You idled a bit too long while in Edit mode. In order to allow others to edit the doc you were working on, your changes have been autosaved. Click the Edit button to return to Edit mode."
+msgstr "Ai idled un pic prea mult în timp ce în modul Editare. În scopul de a permite altora să editeze documentul la care lucraţi, modificările au fost salvată automat. Faceţi clic pe butonul Editare pentru a reveni la modul de editare."
+
+#: includes/query-builder.php:465
+msgid "Doc successfully edited!"
+msgstr "Doc editat cu succes!"
+
+#: includes/templatetags.php:94
+msgid "You are viewing <strong>all</strong> docs."
+msgstr "Vizualizaţi <strong>toate</strong> docs."
+
+#: includes/templatetags.php:103
+msgid "<strong><a href=\"%s\" title=\"View All Docs\">View All Docs</a></strong>"
+msgstr "<strong> <a href=\"%s\" title=\"View Toate Vezi Toate Docs\"> Google Docs </a> </strong>"
+
+#: includes/templatetags.php:138
+msgid "You are searching for docs containing the term <em>%s</em>"
+msgstr "Căutaţi pentru docs care conţin termenul <em>%s</em>"
+
+#: includes/templatetags.php:739
+msgid "«"
+msgstr "«"
+
+#: includes/templatetags.php:740
+msgid "»"
+msgstr "»"
+
+#: includes/integration-bp.php:141
+msgid "This doc is currently being edited by %s. To prevent overwrites, you cannot edit until that user has finished. Please try again in a few minutes."
+msgstr "Acest document este în prezent fiind editat de %s. Pentru a preveni suprascrie, nu se pot edita până la care utilizatorul a terminat. Vă rugăm să încercaţi din nou în câteva minute."
+
+#: includes/integration-bp.php:154
+msgid "You do not have permission to edit the doc."
+msgstr "Nu aveţi permisiunea de a edita doc."
+
+#: includes/integration-bp.php:170
+msgid "You do not have permission to create a Doc in this group."
+msgstr "Nu aveţi permisiunea de a crea un cod în acest grup."
+
+#: includes/integration-bp.php:186
+msgid "You do not have permission to view this Doc's history."
+msgstr "Nu aveţi permisiunea de a vizualiza istoricul acest Doc."
+
+#: includes/integration-bp.php:210
+msgid "Lock successfully removed"
+msgstr "Blocare eliminat cu succes"
+
+#: includes/integration-bp.php:251
+msgid "Doc successfully deleted!"
+msgstr "Doc şters cu succes!"
+
+#: includes/integration-bp.php:253
+msgid "You do not have permission to delete that doc."
+msgstr "Nu aveţi permisiunea să ştergeţi acel cod."
+
+#: includes/integration-bp.php:318
+msgid "Show New Docs"
+msgstr "Arată noi Docs"
+
+#: includes/integration-bp.php:319
+msgid "Show Doc Edits"
+msgstr "Arată Doc editări"
+
+#: includes/integration-bp.php:320
+msgid "Show Doc Comments"
+msgstr "Arată Doc Comentarii"
+
+#: includes/integration-bp.php:387
+msgid "%1$s created the doc %2$s"
+msgstr "%1$ s creat doc %2$ s"
+
+#: includes/integration-bp.php:389
+msgid "%1$s edited the doc %2$s"
+msgstr "%1$ s editat doc %2$ s"
+
+#: includes/integration-bp.php:516
+msgid "%1$s commented on the doc %2$s"
+msgstr "%1$ s a comentat doc %2$ s"
+
+#: includes/integration-bp.php:683
+msgid "Still working?"
+msgstr "Încă de lucru?"
+

@@ -1,0 +1,24 @@
+.rtmedia-album-edit {
+
+	.rtm-checkbox-wrap {
+		background: rgba($white, 0.9);
+		height: 30px;
+		line-height: 1;
+		padding: 10px;
+		position: absolute;
+		z-index: 10;
+	}
+
+	.rtmedia-item-selector {
+		position: relative;
+		top: -7px;
+	}
+
+    .rtmedia-move-container{
+        display: none;
+    }
+}
+
+.rtm-single-actions.rtm-item-actions {
+	float: none;
+}

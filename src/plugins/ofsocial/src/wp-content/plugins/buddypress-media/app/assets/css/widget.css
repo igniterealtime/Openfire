@@ -1,0 +1,39 @@
+#rtmedia_dashboard_widget p.sub{
+	padding: 0px;
+	margin : 0px;
+	color: #8F8F8F;
+	font-size: 14px
+}
+#rtmedia_dashboard_widget div.table{
+	width: 45%;
+	
+}
+#rtmedia_dashboard_widget table{
+	margin-top: 5px;
+	border-top-color: #ECECEC;
+	border-top-width: 1px;
+	border-top-style: solid;
+	color:#21759b;
+}
+#rtmedia_dashboard_widget table td{
+	padding: 3px;	
+}
+
+
+#rtmedia_dashboard_widget .table.table_content{
+	float: left;
+}
+#rtmedia_dashboard_widget .table.table_discussion{
+	float: right;
+}
+
+#rtmedia_dashboard_widget table td.b{
+	padding-right: 6px;
+	text-align: right;
+	font-size: 18px;
+	width: 1%;
+	font-family: Georgia,"Times New Roman","Bitstream Charter",Times,serif;
+}
+#rtmedia_dashboard_widget .versions{
+	clear:both;
+}

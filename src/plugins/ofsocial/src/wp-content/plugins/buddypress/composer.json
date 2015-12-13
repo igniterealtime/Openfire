@@ -1,0 +1,33 @@
+{
+	"name": "buddypress/buddypress",
+	"description": "BuddyPress helps you run any kind of social network on your WordPress, with member profiles, activity streams, user groups, messaging, and more.",
+	"type": "wordpress-plugin",
+	"keywords": [
+		"activity",
+		"community",
+		"forum",
+		"friends",
+		"groups",
+		"messaging",
+		"notifications",
+		"profiles",
+		"social network"
+	],
+	"homepage": "https://buddypress.org",
+	"license": "GPL-2.0+",
+	"authors": [ {
+		"name": "BuddyPress Community",
+		"homepage": "https://buddypress.org/about/"
+	} ],
+	"support": {
+		"forum": "https://buddypress.org/support/",
+		"irc": "irc://irc.freenode.net/buddypress-dev",
+		"issues": "https://buddypress.trac.wordpress.org/",
+		"wiki": "https://codex.buddypress.org/",
+		"source": "https://buddypress.trac.wordpress.org/browser"
+	},
+	"require": {
+		"composer/installers": "~1.0",
+		"php": ">=5.2.4"
+	}
+}

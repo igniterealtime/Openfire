@@ -1,0 +1,1477 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Piklist\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/piklist\n"
+"POT-Creation-Date: 2014-07-23 15:29:23+00:00\n"
+"PO-Revision-Date: 2014-07-23 15:02-0300\n"
+"Last-Translator: Darlan ten Caten <darlan@i9solucoesdigitais.com.br>\n"
+"Language-Team: Piklist\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Generator: Poedit 1.6.7\n"
+"X-Loco-Source-Locale: en_US\n"
+"X-Loco-Target-Locale: pt_BR\n"
+"X-Loco-Project-Id: 2586\n"
+"X-Loco-Api-Version: 1.0.8\n"
+
+#: add-ons/piklist-demos/parts/dashboard/dashboard-piklist-news.php:29
+msgid "No items"
+msgstr "Nenhum item."
+
+#: add-ons/piklist-demos/parts/help/demos-help-sidebar.php:12
+#: add-ons/piklist-demos/parts/meta-boxes/help.php:16
+msgid "Help with Piklist is just a click away."
+msgstr "Ajuda para o Piklist está a um clique de distância."
+
+#: add-ons/piklist-demos/parts/help/demos-help-sidebar.php:15
+#: add-ons/piklist-demos/parts/meta-boxes/help.php:19
+msgid "Tutorials"
+msgstr "Tutoriais"
+
+#: add-ons/piklist-demos/parts/help/demos-help-sidebar.php:16
+#: add-ons/piklist-demos/parts/meta-boxes/help.php:20
+msgid "Documentation"
+msgstr "Documentação"
+
+#: add-ons/piklist-demos/parts/help/demos-help-sidebar.php:17
+#: add-ons/piklist-demos/parts/meta-boxes/help.php:21
+msgid "Support Forum"
+msgstr "Fórum de Suporte"
+
+#: add-ons/piklist-demos/parts/help/demos-help-sidebar.php:18
+#: add-ons/piklist-demos/parts/meta-boxes/help.php:22
+msgid "Disable Piklist Demos"
+msgstr "Desativar Demonstrações do Piklist"
+
+#: add-ons/piklist-demos/parts/help/demos-help.php:10
+msgid ""
+"Piklist Demos are designed to show off Piklist features and demonstrate how "
+"to use them."
+msgstr ""
+"As demonstrações do Piklist foram criadas para mostrar os recursos do "
+"Piklist e demonstrar como usar eles."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:11
+#: parts/admin-pages/welcome.php:214
+msgid ""
+"Piklist AddMore fields are the repeater field you always dreamed of. Group "
+"together as many fields as you want and make them repeat indefinitely. Or "
+"place an Add-More within an Add-More within an Add-more..."
+msgstr ""
+"Os campos AdicionarMais do Piklist são os campos repetíveis que você sempre "
+"sonhou. Combine quantos campos você quiser e faça eles repetíveis "
+"infinitamente. Ou coloque um AdicionarMais com um AdicionarMais com um "
+"AdicionarMais..."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:19
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:13
+msgid "Text"
+msgstr "Texto"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:27
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:21
+#: add-ons/piklist-demos/parts/users/user-add-more.php:121
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:165
+msgid "Todo's (Grouped)"
+msgstr "Para fazer (Agrupado)"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:60
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:54
+#: add-ons/piklist-demos/parts/users/user-add-more.php:146
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:190
+msgid "Todo's (Un-Grouped)"
+msgstr "Para fazer (Desagrupado)"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:93
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:87
+#: add-ons/piklist-demos/parts/users/user-add-more.php:172
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:215
+msgid "Content Section (Grouped)"
+msgstr "Seção de Conteúdo (Agrupado)"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:94
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:148
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:88
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:142
+#: add-ons/piklist-demos/parts/users/user-add-more.php:173
+#: add-ons/piklist-demos/parts/users/user-add-more.php:219
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:216
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:262
+msgid ""
+"When an add-more field is nested it should be grouped to maintain the data "
+"relationships."
+msgstr ""
+"Quando um campo adicionar mais está aninhado ele deve ser agrupado para "
+"manter a relações das informações."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-add-more.php:147
+#: add-ons/piklist-demos/parts/settings/field-add-more.php:141
+#: add-ons/piklist-demos/parts/users/user-add-more.php:218
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:261
+msgid "Content Section with Siblings (Grouped)"
+msgstr "Seção de Conteúdo com Irmãos (Agrupado)"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-colorpicker.php:11
+msgid ""
+"WordPress ColorPicker fields are super simple to create. Piklist handles all "
+"the Javascript."
+msgstr ""
+"Campos de escolha de cores do WordPress são muito fáceis de criar. O Piklist "
+"cuida de todo o Javascript."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-comments.php:13
+msgid "Inline comments fields are a snap to add."
+msgstr "Campos de comentário na mesma linha são fáceis de adicionar."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-comments.php:59
+msgid "on %s"
+msgstr "em %s"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-comments.php:60
+msgid "Status: %s"
+msgstr "Status: %s"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-conditions-party-invite.php:13
+#: add-ons/piklist-demos/parts/settings/field-conditions-party-invite.php:14
+#: add-ons/piklist-demos/parts/users/user-conditions-party-invite.php:13
+#: add-ons/piklist-demos/parts/widgets/conditions-form.php:203
+msgid "We only serve steaks rare."
+msgstr "Nós apenas servimos carne rara."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-conditions-party-invite.php:91
+#: add-ons/piklist-demos/parts/settings/field-conditions-party-invite.php:92
+#: add-ons/piklist-demos/parts/users/user-conditions-party-invite.php:91
+#: add-ons/piklist-demos/parts/widgets/conditions-form.php:281
+msgid "Sorry, only two guests are allowed."
+msgstr "Desculpe, apenas dois convidados são permitidos."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-date-time.php:11
+msgid "DatePicker fields are easy to create and format."
+msgstr "Campos de data são fáceis de criar e formatar."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-featured-image.php:13
+msgid ""
+"With Piklist you can easily replicate the WordPress Featured Image field, "
+"with an added bonus. Piklist allows you to use multiple featured images."
+msgstr ""
+"Com Piklist você pode facilmente replicar a Imagem Destacada do WordPress, "
+"com um bônus: Piklist deixa você utilizar múltiplas imagens destacadas."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-relate.php:33
+msgid "Related Posts"
+msgstr "Posts relacionados"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-taxonomies.php:13
+msgid ""
+"Create your own Taxonomy metabox, and display the terms as a checkbox, "
+"radio, select or any field you can imagine."
+msgstr ""
+"Crie sua própria metabox de Taxonomia e mostre os termos como um checkbox, "
+"radio, select ou qualquer campo que você imaginar."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-text.php:12
+msgid ""
+"Text fields are at the core of most forms, and easily created with Piklist. "
+"Here a text field is marked REQUIRED, which will stop the entire form from "
+"saving unless filled in. Tooltip help can be added to any field with one "
+"line of code, and HTML fields can output your markup in the same format as "
+"other fields."
+msgstr ""
+"Campos de texto estão no core da maioria dos formulários, e são fáceis de "
+"criar com Piklist. Aqui um campo de texto está marcado como REQUERIDO, o que "
+"irá parar o salvamento do formulário inteiro até que ele seja preenchido. "
+"Uma dica pode ser adicionada a qualquer campo com apenas uma linha de "
+"código, e campos HTML podem imprimir sua marcação no mesmo formato que "
+"outros campos."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:21
+msgid ""
+"Piklist comes standard with two upload fields: Basic and Media. The Media "
+"field works just like the standard WordPress media field, while the Basic "
+"uploader is great for simple forms."
+msgstr ""
+"Piklist por padrão vem com dois campos de upload: Básico e Mídia. O campo "
+"Mídia trabalha igual ao padrão de upload do WordPress, enquanto o Básico é "
+"ótimo para formulários simples."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:22
+msgid "The metabox \"look\" can be removed to provide a different look."
+msgstr ""
+"O \"look\" do metabox pode ser removido para fornecer um visual diferente.\t"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:31
+#: add-ons/piklist-demos/parts/settings/field-upload.php:24
+msgid "Basic Upload Field"
+msgstr "Campo de Upload Básico"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:41
+#: add-ons/piklist-demos/parts/settings/field-upload.php:34
+msgid "Media Uploader"
+msgstr "Upload de Mídia"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:42
+#: add-ons/piklist-demos/parts/settings/field-upload.php:35
+msgid "Validation rule set: Upload no more than two files."
+msgstr "Regra de validação escolhida: Máximo de dois arquivos."
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:44
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:136
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:139
+#: add-ons/piklist-demos/parts/settings/field-upload.php:37
+#: add-ons/piklist-demos/parts/settings/field-validate.php:138
+#: add-ons/piklist-demos/parts/settings/field-validate.php:141
+#: add-ons/piklist-demos/parts/users/user-upload.php:32
+#: add-ons/piklist-demos/parts/users/user-upload.php:35
+#: add-ons/piklist-demos/parts/users/user-validate.php:166
+#: add-ons/piklist-demos/parts/users/user-validate.php:168
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:70
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:73
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:166
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:168
+msgid "Add File(s)"
+msgstr "Adicionar Arquivo(s)"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-upload.php:45
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:140
+#: add-ons/piklist-demos/parts/settings/field-upload.php:38
+#: add-ons/piklist-demos/parts/settings/field-validate.php:142
+#: add-ons/piklist-demos/parts/users/user-upload.php:36
+#: add-ons/piklist-demos/parts/users/user-validate.php:169
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:74
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:169
+msgid "Add"
+msgstr "Adicionar"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:64
+#: add-ons/piklist-demos/parts/settings/field-validate.php:66
+#: add-ons/piklist-demos/parts/users/user-validate.php:64
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:64
+msgid "Validate Email and Email Domain"
+msgstr "Validar E-mail e domínio de E-mail"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:81
+#: add-ons/piklist-demos/parts/settings/field-validate.php:83
+#: add-ons/piklist-demos/parts/users/user-validate.php:81
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:81
+msgid "File exists?"
+msgstr "Arquivo existe?"
+
+#: add-ons/piklist-demos/parts/meta-boxes/field-validate.php:96
+#: add-ons/piklist-demos/parts/settings/field-validate.php:98
+#: add-ons/piklist-demos/parts/users/user-validate.php:97
+#: add-ons/piklist-demos/parts/widgets/validation-form.php:97
+msgid "Image"
+msgstr "Imagem"
+
+#: add-ons/piklist-demos/parts/shared/code-locater.php:5
+msgid "The code that built this %s can be found here:"
+msgstr "O código que constrói este %s pode ser encontrado aqui:"
+
+#: add-ons/piklist-demos/parts/users/user-add-more.php:12
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:56
+msgid "Newsletter Signup (Grouped)"
+msgstr "Assinatura de Newsletter (Agrupado_"
+
+#: add-ons/piklist-demos/parts/users/user-add-more.php:13
+#: add-ons/piklist-demos/parts/widgets/advanced-form.php:57
+msgid "Add email addresses with topic selectivity"
+msgstr "Adicione endereço de e-mail com seleção de assunto"
+
+#: add-ons/piklist-demos/parts/users/user-upload.php:21
+msgid "Add File"
+msgstr "Adicionar Arquivo"
+
+#: add-ons/piklist-demos/parts/users/user-upload.php:22
+msgid "This is the basic upload field."
+msgstr "Este é o campo de upload básico."
+
+#: add-ons/piklist-demos/parts/users/user-upload.php:33
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:71
+msgid "This is the uploader seen in the admin by default."
+msgstr "Este é o uploader visto na administração por padrão."
+
+#: add-ons/piklist-demos/parts/users/user-upload.php:59
+#: add-ons/piklist-demos/parts/users/user-upload.php:84
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:97
+#: add-ons/piklist-demos/parts/widgets/basic-form.php:119
+msgid "Slides"
+msgstr "Slides"
+
+#: add-ons/piklist-demos/parts/workflows/edit-editor.php:11
+msgid ""
+"The WordPress post editor can be placed anywhere you like, since Piklist "
+"treats it like any other field. You can also use multiple editors per page."
+msgstr ""
+"O editor de post do WordPress pode ser colocado em qualquer lugar que você "
+"desejar, já que o Piklist trata ele como qualquer outro campo. Inclusive "
+"você pode utilizar múltiplos editores por página."
+
+#: add-ons/piklist-demos/parts/workflows/edit-group.php:10
+msgid ""
+"Grouping fields saves all their data in one field array for convenience. If "
+"you need to search the individual field data then don't group the fields. "
+"Don't worry you can acheive the same layout either way."
+msgstr ""
+"Campos agrupados salvam todas suas informações em um único array por "
+"conveniência. Se você precisa fazer pesquisas individualmente por um campo "
+"então não agrupe ele. Não se preocupe você pode conseguir o mesmo layout de "
+"qualquer maneira."
+
+#: add-ons/piklist-demos/parts/workflows/edit-header.php:11
+msgid "Welcome to the Piklist Demo for custom post types."
+msgstr "Bem vindo a Demonstração de tipos de posts personalizados do Piklist."
+
+#: add-ons/piklist-demos/parts/workflows/edit-header.php:12
+msgid ""
+"Click the Workflow Tabs to see sample field configurations you can easily "
+"build with Piklist."
+msgstr ""
+"Clique na tab do fluxo de trabalho para ver um campo exemplo das "
+"configurações que você pode construir facilmente com Piklist."
+
+#: add-ons/piklist-demos/parts/workflows/edit-lists.php:10
+msgid ""
+"Select, Radio and Checkbox fields have multiple configuration options. You "
+"can display them stacked, single line, as grouped lists and even use nested "
+"fields. "
+msgstr ""
+"Campos Select, Radio e Checkbox possuem múltiplas opções de configurações. "
+"Você pode exibir eles empilhados, em uma única linha, agrupados em listas ou "
+"até mesmo campos aninhados."
+
+#: add-ons/piklist-demos/piklist-demos.php:21
+msgid "Enter a new Demo Title"
+msgstr "Digite o título para a nova Demonstração"
+
+#: add-ons/piklist-demos/piklist-demos.php:39
+#: includes/class-piklist-admin.php:363
+msgid "Demo"
+msgstr "Demonstração"
+
+#: add-ons/piklist-demos/piklist-demos.php:40
+msgid "Assigned to"
+msgstr "Atribuído à"
+
+#: add-ons/piklist-demos/piklist-demos.php:114
+#: add-ons/piklist-demos/piklist-demos.php:115
+msgid "Demo Settings"
+msgstr "Configurações da Demonstração"
+
+#: add-ons/piklist-demos/piklist-demos.php:135
+#: includes/class-piklist-form.php:293
+msgid "User"
+msgstr "Usuário"
+
+#: add-ons/piklist-demos/piklist-demos.php:136
+msgid "Default layout for User fields from Piklist Demos."
+msgstr "Layout padrão pra campos de Usuários das Demonstrações do Piklist."
+
+#: add-ons/piklist-demos/piklist-demos.php:149
+msgid "Theme - Tight"
+msgstr "Tema - Firme"
+
+#: add-ons/piklist-demos/piklist-demos.php:150
+msgid "A front end form wrapper example from Piklist Demos."
+msgstr "Demonstração do Piklist de um formulário Front End."
+
+#: add-ons/piklist-demos/piklist-demos.php:174
+msgid "Create Demo"
+msgstr "Criar Demonstração"
+
+#: assets/class-piklist-checker.php:123
+msgid "The following plugin(s) require Piklist, and have been deactivated:"
+msgstr ""
+"O(s) seguinte(s) plugin(s) requer(em) Piklist e por isso foi(ram) "
+"desativado(s):"
+
+#: assets/class-piklist-checker.php:135
+msgid "You can:"
+msgstr "Você pode:"
+
+#: assets/class-piklist-checker.php:148
+msgid "Activate Piklist for this site"
+msgstr "Ativar Piklist para este site"
+
+#: assets/class-piklist-checker.php:154
+msgid "Network Activate Piklist for all sites."
+msgstr "Ativar Piklist para todos os sites da rede."
+
+#: assets/class-piklist-checker.php:160
+msgid "Install Piklist"
+msgstr "Instalar Piklist"
+
+#: assets/class-piklist-checker.php:164
+msgid "%1$s %2$sDismiss this message."
+msgstr "%1$s %2$sEsconder esta mensagem."
+
+#: includes/class-piklist-admin.php:161
+msgid "%1$s and %2$sPiklist%1$s."
+msgstr "%1$s e %2$sPiklist%1$s."
+
+#: includes/class-piklist-admin.php:216 includes/class-piklist-setting.php:85
+msgid "General"
+msgstr "Geral"
+
+#: includes/class-piklist-admin.php:301
+msgid "Save Changes"
+msgstr "Salvar Alterações"
+
+#: includes/class-piklist-admin.php:355
+msgid "Dependent plugins or theme are active."
+msgstr "Plugins ou Temas dependentes estão ativos."
+
+#: includes/class-piklist-admin.php:362 includes/class-piklist-setting.php:37
+#: includes/class-piklist-setting.php:38 parts/fields/add-ons.php:46
+msgid "Settings"
+msgstr "Configurações"
+
+#: includes/class-piklist-cpt.php:767
+msgid "Custom field updated."
+msgstr "Campo personalizado atualizado."
+
+#: includes/class-piklist-cpt.php:768
+msgid "Custom field deleted."
+msgstr "Campo personalizado excluído."
+
+#: includes/class-piklist-cpt.php:772
+msgid "Page saved."
+msgstr "Página salva."
+
+#. translators: Publish box date format, see http:php.net/date
+#: includes/class-piklist-cpt.php:774
+#: parts/shared/post-submit-meta-box.php:189
+msgid "M j, Y @ G:i"
+msgstr "M j, Y @ G:i"
+
+#: includes/class-piklist-form.php:210
+msgid "Field only"
+msgstr "Apenas campo."
+
+#: includes/class-piklist-form.php:211
+msgid "Displays field with no label."
+msgstr "Exibie campo sem label."
+
+#: includes/class-piklist-form.php:215
+msgid "Default"
+msgstr "Padrão"
+
+#: includes/class-piklist-form.php:216
+msgid "Default field layout."
+msgstr "Layout padrão do campo."
+
+#: includes/class-piklist-form.php:223
+msgid "Widget"
+msgstr "Widget"
+
+#: includes/class-piklist-form.php:224
+msgid "Default layout for Widget fields."
+msgstr "Layout padrão para campos de Widget."
+
+#: includes/class-piklist-form.php:242
+msgid "Widget (classic)"
+msgstr "Widget (clássico)"
+
+#: includes/class-piklist-form.php:243
+msgid "Classic layout for Widget fields."
+msgstr "Layout clássico para campos Widget."
+
+#: includes/class-piklist-form.php:255
+msgid "Post"
+msgstr "Post"
+
+#: includes/class-piklist-form.php:256
+msgid "Default layout for Post fields."
+msgstr "Layout padrão para campos de Post."
+
+#: includes/class-piklist-form.php:272
+msgid "Terms"
+msgstr "Termos"
+
+#: includes/class-piklist-form.php:273
+msgid "Default layout for Term fields."
+msgstr "Layout padrão para campos de Categoria."
+
+#: includes/class-piklist-form.php:294
+msgid "Default layout for User fields."
+msgstr "Layout padrão para campos de Usuários."
+
+#: includes/class-piklist-form.php:314
+msgid "Media"
+msgstr "Mídia"
+
+#: includes/class-piklist-form.php:315
+msgid "Default layout for Media fields."
+msgstr "Layout padrão para campos de Mídia."
+
+#: includes/class-piklist-form.php:334
+msgid "Theme"
+msgstr "Tema"
+
+#: includes/class-piklist-form.php:335
+msgid "Default layout for frontend fields."
+msgstr "Layout padrão para para campos Front End."
+
+#: includes/class-piklist-form.php:351
+msgid "Admin Notice"
+msgstr "Notícia da Administração"
+
+#: includes/class-piklist-form.php:352
+msgid "Default layout for Admin Notices."
+msgstr "Layout padrão para notas de Administradores."
+
+#: includes/class-piklist-form.php:362
+msgid "Admin Error Notice"
+msgstr "Avisos de Erro do Administrador"
+
+#: includes/class-piklist-form.php:363
+msgid "Default layout for Admin Error Notices."
+msgstr "Layout padrão para Avisos de Erro do Administrador."
+
+#: includes/class-piklist-list-table.php:218
+msgid "1 item"
+msgid_plural "%s items"
+msgstr[0] "1 item"
+msgstr[1] "%s itens"
+
+#: includes/class-piklist-list-table.php:242
+msgid "Go to the first page"
+msgstr "Ir para a primeira página"
+
+#: includes/class-piklist-list-table.php:250
+msgid "Go to the previous page"
+msgstr "Ir para a página anterior"
+
+#: includes/class-piklist-list-table.php:257
+msgid "Current page"
+msgstr "Página Atual"
+
+#: includes/class-piklist-list-table.php:263
+msgctxt "paging"
+msgid "%1$s of %2$s"
+msgstr "%1$s de %2$s"
+
+#: includes/class-piklist-list-table.php:268
+msgid "Go to the next page"
+msgstr "Ir para a próxima página"
+
+#: includes/class-piklist-list-table.php:276
+msgid "Go to the last page"
+msgstr "Ir para a última página"
+
+#: includes/class-piklist-setting.php:27
+msgid "About"
+msgstr "Sobre"
+
+#: includes/class-piklist-setting.php:50 includes/class-piklist-setting.php:51
+msgid "Add-ons"
+msgstr "Add-ons"
+
+#: includes/class-piklist-taxonomy.php:231
+msgid "Users"
+msgstr "Usuários"
+
+#: includes/class-piklist-validate.php:237
+msgid "is a required field."
+msgstr "é um campo obrigatório."
+
+#: includes/class-piklist-validate.php:293
+msgid "is not valid input"
+msgstr "entrada inválida"
+
+#: includes/class-piklist-validate.php:383
+msgid "Email Address"
+msgstr "Endereço de E-mail"
+
+#: includes/class-piklist-validate.php:384
+msgid "Verifies that the input is in the proper format for an email address."
+msgstr "Verifica se a endereço de e-mail informado é válido."
+
+#: includes/class-piklist-validate.php:388
+msgid "Email Domain"
+msgstr "Domínio de E-mail"
+
+#: includes/class-piklist-validate.php:389
+msgid "Verifies that the email domain entered is a valid domain."
+msgstr "Verifica se o domínio de e-mail informado é válido."
+
+#: includes/class-piklist-validate.php:393
+msgid "File Exists?"
+msgstr "Arquivo Existe?"
+
+#: includes/class-piklist-validate.php:394
+msgid "Verifies that the file path entered leads to an actual file."
+msgstr "Verifica se o caminho do arquivo informado aponta para o arquivo atual"
+
+#: includes/class-piklist-validate.php:398
+msgid "Valid HTML"
+msgstr "HTML válido"
+
+#: includes/class-piklist-validate.php:399
+msgid "Verifies that the data entered is valid HTML."
+msgstr "Verifica se os dados inseridos são um HTML válido."
+
+#: includes/class-piklist-validate.php:401
+msgid "is not valid HTML"
+msgstr "HTML inválido"
+
+#: includes/class-piklist-validate.php:404
+msgid "Is Image?"
+msgstr "É Imagem?"
+
+#: includes/class-piklist-validate.php:405
+msgid "Verifies that the file path entered leads to an image file."
+msgstr "Verifica se o caminho informado aponta para uma imagem."
+
+#: includes/class-piklist-validate.php:409
+msgid "IP Address"
+msgstr "Endereço IP"
+
+#: includes/class-piklist-validate.php:410
+msgid "Verifies that the data entered is a valid IP Address."
+msgstr "Verifica se o Endereço IP informado é válido."
+
+#: includes/class-piklist-validate.php:412
+msgid "is not a valid ip address."
+msgstr "não é um endereço de IP válido"
+
+#: includes/class-piklist-validate.php:415
+msgid "Entry Limit"
+msgstr "Limite de Entrada"
+
+#: includes/class-piklist-validate.php:416
+msgid "Verifies that the number of items added are within the defined limit."
+msgstr ""
+"Verifica se o número de itens adicionados estão dentro do limite definido."
+
+#: includes/class-piklist-validate.php:420
+msgid "Range"
+msgstr "Tamanho"
+
+#: includes/class-piklist-validate.php:421
+msgid "Verifies that the data entered is within the defined range."
+msgstr "Verifica se os dados informados estão dentro do tamanho definido."
+
+#: includes/class-piklist-validate.php:425
+msgid "Alphanumeric"
+msgstr "Alfanumérico"
+
+#: includes/class-piklist-validate.php:426
+msgid "Verifies that the data entered is alphanumeric."
+msgstr "Verifica se a informação inserida é alfanumérica."
+
+#: includes/class-piklist-validate.php:428
+msgid "contains invalid characters. Must contain only letters and numbers."
+msgstr "contem caracteres inválidos. Precisa conter apenas letras e números."
+
+#: includes/class-piklist-validate.php:431
+msgid "URL"
+msgstr "URL"
+
+#: includes/class-piklist-validate.php:432
+msgid "Verifies that the data entered is a valid URL."
+msgstr "Verifica se a URL inserida é válida."
+
+#: includes/class-piklist-validate.php:434
+msgid "is not a valid url."
+msgstr "URL inválido."
+
+#: includes/class-piklist-validate.php:451
+msgid "does not contain a valid Email Address."
+msgstr "endereço de E-mail inválido."
+
+#: includes/class-piklist-validate.php:467
+msgid "does not contain a valid Email Domain."
+msgstr "não contem um domínio de E-mail válido"
+
+#: includes/class-piklist-validate.php:483
+msgid "contains a file that does not exist."
+msgstr "contem um arquivo que não existe."
+
+#: includes/class-piklist-validate.php:499
+msgid "contains a file that is not an image."
+msgstr "contem um arquivo que não é uma imagem."
+
+#: includes/class-piklist-validate.php:517
+msgid "added"
+msgstr "adicionado"
+
+#: includes/class-piklist-validate.php:517
+msgid "selected"
+msgstr "selecionado"
+
+#: includes/class-piklist-validate.php:524
+msgid "must have exactly %1$s items %2$s."
+msgstr "precisa conter exatamente %1$s itens %2$s."
+
+#: includes/class-piklist-validate.php:528
+msgid "must have between %1$s and %2$s items %3$s."
+msgstr "precisa conter entre %1$s e %2$s itens %3$s."
+
+#: includes/class-piklist-validate.php:556
+msgid "contains a value that is not between %s and %s"
+msgstr "contem um valor que não está entre %s e %s"
+
+#: includes/class-piklist-validate.php:570
+msgid "Email address"
+msgstr "Endereço de e-mail"
+
+#: includes/class-piklist-validate.php:571
+msgid "Strips out all characters that are not allowable in an email address."
+msgstr ""
+"Remove todos os caracteres que não são permitidos em um endereço de e-mail."
+
+#: includes/class-piklist-validate.php:575
+msgid "File name"
+msgstr "Nome de arquivo"
+
+#: includes/class-piklist-validate.php:576
+msgid "Removes or replaces special characters that are illegal in filenames."
+msgstr ""
+"Remove ou substitui caracteres especiais que são ilegais em nomes de "
+"arquivos."
+
+#: includes/class-piklist-validate.php:580
+msgid "HTML class"
+msgstr "Classe HTML"
+
+#: includes/class-piklist-validate.php:581
+msgid "Removes all characters that are not allowable in an HTML classname."
+msgstr ""
+"Remove todos os caracteres que não são permitidos em nomes de classes HTML."
+
+#: includes/class-piklist-validate.php:585
+msgid "Text field"
+msgstr "Campo de Texto"
+
+#: includes/class-piklist-validate.php:586
+msgid ""
+"Removes all HTML markup, as well as extra whitespace, leaving only plain "
+"text."
+msgstr ""
+"Remove toda marcação HTML, bem como espaços extras, deixando apenas texto "
+"puro."
+
+#: includes/class-piklist-validate.php:590
+msgid "Post title"
+msgstr "Título de Post"
+
+#: includes/class-piklist-validate.php:591
+msgid ""
+"Removes all HTML and PHP tags, returning a title that is suitable for a url"
+msgstr ""
+"Remove todo HTML e PHP, retornando um título que é apropriado para uma URL"
+
+#: includes/class-piklist-validate.php:595
+msgid "Username"
+msgstr "Nome de usuário"
+
+#: includes/class-piklist-validate.php:596
+msgid "Removes all unsafe characters for a username."
+msgstr "Remove todos os caracteres não seguros para um nome de usuário."
+
+#: includes/class-piklist-validate.php:600
+msgid "wp_kses"
+msgstr ""
+
+#: includes/class-piklist-validate.php:601
+msgid ""
+"Makes sure that only the allowed HTML element names, attribute names and "
+"attribute values plus only sane HTML entities are accepted."
+msgstr ""
+"Garante que apenas nomes permitidos de elementos HTML, nomes de atributos e "
+"valores de atributos mais entidades HTML são aceitos."
+
+#: includes/class-piklist-validate.php:605
+msgid "wp_filter_kses"
+msgstr ""
+
+#: includes/class-piklist-validate.php:606
+msgid "Makes sure only default HTML elements are accepted."
+msgstr "Garante que apenas elementos padrões de HTML são aceitos."
+
+#: includes/class-piklist-validate.php:610
+msgid "wp_kses_post"
+msgstr ""
+
+#: includes/class-piklist-validate.php:611
+msgid ""
+"Makes sure only appropriate HTML elements for post content are accepted."
+msgstr ""
+"Garante que apenas elementos HTML apropriados para conteúdo de post são "
+"aceitos."
+
+#: includes/class-piklist-widget.php:63 includes/class-piklist-widget.php:78
+msgid "Widgets"
+msgstr "Widgets"
+
+#: includes/class-piklist-widget.php:71
+msgid "Piklist Widgets"
+msgstr "Widgets do Piklist"
+
+#: includes/class-piklist-widget.php:72
+msgid "Core Widgets for Piklist."
+msgstr "Core Widgets para Piklist."
+
+#: includes/class-piklist-widget.php:79
+msgid "Widgets for the %s Theme"
+msgstr "Widgets para o Tema %s"
+
+#: includes/class-piklist.php:494
+msgid "Add New"
+msgstr "Adicionar novo"
+
+#: parts/admin-pages/welcome.php:166
+msgid "Welcome to Piklist"
+msgstr "Bem vindo ao Piklist"
+
+#. Description of the plugin/theme
+#: parts/admin-pages/welcome.php:168
+msgid "The most powerful framework available for WordPress."
+msgstr "O framework mais poderoso disponível para WordPress."
+
+#: parts/admin-pages/welcome.php:171
+msgid "%sP%sIKLIST%s"
+msgstr "%sP%sIKLIST%s"
+
+#: parts/admin-pages/welcome.php:172
+msgid "Version %s"
+msgstr "Versão %s"
+
+#: parts/admin-pages/welcome.php:190
+msgid "Now even more powerful than before."
+msgstr "Agora ainda mais poderoso do que antes."
+
+#: parts/admin-pages/welcome.php:197
+msgid "Post relationships"
+msgstr "Relações de post"
+
+#: parts/admin-pages/welcome.php:198
+msgid "You'll wish all relationships were this easy."
+msgstr "Você vai desejar que todos os relacionamentos sejam tão fáceis."
+
+#: parts/admin-pages/welcome.php:199
+msgid ""
+"Post relationships are standard with Piklist and easy to setup. Displaying "
+"them in your theme is even easier, since you can use the standard WordPress "
+"%sget_posts%s function."
+msgstr ""
+"Relações de post são padrões e fáceis de configurar com Piklist. Mostrar "
+"elas no seu Tema é ainda mais fácil já que você pode utilizar a função "
+"padrão do WordPress %sget_posts%s."
+
+#: parts/admin-pages/welcome.php:212
+msgid "Add-Mores"
+msgstr "Adicionar Mais"
+
+#: parts/admin-pages/welcome.php:213
+msgid "The infinite repeater field."
+msgstr "O campo repetível infinitamente."
+
+#: parts/admin-pages/welcome.php:227
+msgid "WorkFlows"
+msgstr "Fluxos de Trabalho"
+
+#: parts/admin-pages/welcome.php:228
+msgid "The tab system you never knew was possible."
+msgstr "O sistema de guia que você nunca soube que era possível."
+
+#: parts/admin-pages/welcome.php:229
+msgid ""
+"Piklist WorkFlows allows you to place tabs anywhere... and with %sanything"
+"%s. Tabs can include content from any page or even custom views you create."
+msgstr ""
+"O Fluxo de Trabalho do Piklist permite que você coloque guias em qualquer "
+"lugar... e com %sanything%s. Guias podem incluir conteúdo de qualquer página "
+"ou até telas personalizadas que você criar."
+
+#: parts/admin-pages/welcome.php:242
+msgid "Multiple user roles"
+msgstr "Múltiplas funções de Usuário"
+
+#: parts/admin-pages/welcome.php:243
+msgid "Better security, more flexibility."
+msgstr "Melhor segurança, maior flexibilidade."
+
+#: parts/admin-pages/welcome.php:244
+msgid ""
+"Powerful web sites and applications require multiple user roles and Piklist "
+"supports this out of the box. Standard WordPress functions can be used to "
+"validate a user's permissions and provide appropriate access to data."
+msgstr ""
+"Poderosos sites e aplicativos requerem múltiplas funções de usuários e o "
+"Piklist suporta isto sem complicações. Funções padrões do Wordpress podem "
+"ser usadas para validar uma permissão de usuário e prover acesso aos dados "
+"apropriados."
+
+#: parts/admin-pages/welcome.php:255
+msgid "Intelligent field system"
+msgstr "Sistema de campo inteligente"
+
+#: parts/admin-pages/welcome.php:256
+msgid ""
+"Easily create powerful fields just the way you want... and place them "
+"wherever you want."
+msgstr ""
+"Crie facilmente campos poderosos do jeito que você quer... e coloque eles "
+"onde quiser."
+
+#: parts/admin-pages/welcome.php:261
+msgid "Conditional Logic"
+msgstr "Lógica Condicional"
+
+#: parts/admin-pages/welcome.php:263
+msgid "Hide/show fields based on another fields value."
+msgstr "Mostrar/esconder campos baseado no valor de outros campos."
+
+#: parts/admin-pages/welcome.php:264
+msgid "Auto-update another field."
+msgstr "Atualizar automaticamente outro campo."
+
+#: parts/admin-pages/welcome.php:269
+msgid "Validate data"
+msgstr "Validar Dados"
+
+#: parts/admin-pages/welcome.php:271
+msgid "Built in validation rules"
+msgstr "Regras de validação embutídas"
+
+#: parts/admin-pages/welcome.php:272
+msgid "Easily add your own"
+msgstr "Adicione facilmente suas próprias"
+
+#: parts/admin-pages/welcome.php:273
+msgid "Apply multiple rules"
+msgstr "Aplicar múltiplas regras"
+
+#: parts/admin-pages/welcome.php:278
+msgid "Sanitize before saving"
+msgstr "Limpar antes de Salvar"
+
+#: parts/admin-pages/welcome.php:280
+msgid "Use WordPress sanitization functions."
+msgstr "Use as funções de limpeza do WordPress."
+
+#: parts/admin-pages/welcome.php:281
+msgid "Create your own"
+msgstr "Criar o seu próprio"
+
+#: parts/admin-pages/welcome.php:294
+msgid "Customize everything in WordPress."
+msgstr "Personalize tudo no WordPress."
+
+#: parts/admin-pages/welcome.php:295
+msgid ""
+"Post Types, Taxonomies, User Profiles, Settings, Admin Pages, Widgets, "
+"Dashboard, Contextual Help, and more..."
+msgstr ""
+"Tipos de Post, Taxonomias, Perfil de Usuários, Configurações, Páginas "
+"Administrativas, Widgets, Painel, Ajuda e mais..."
+
+#: parts/admin-pages/welcome.php:300
+msgid "Fields"
+msgstr "Campos"
+
+#: parts/admin-pages/welcome.php:302
+msgid "Lock field values."
+msgstr "Valores de campo bloqueado"
+
+#: parts/admin-pages/welcome.php:303
+msgid "Define field scopes."
+msgstr "Definir escopos de campo."
+
+#: parts/admin-pages/welcome.php:304
+msgid "Add Tooltip Help."
+msgstr "Dica de Ajuda"
+
+#: parts/admin-pages/welcome.php:305
+msgid "Customize field templates."
+msgstr "Personalize modelos de Campos"
+
+#: parts/admin-pages/welcome.php:310
+msgid "Meta Boxes"
+msgstr "Meta Boxes"
+
+#: parts/admin-pages/welcome.php:312
+msgid "Lock meta boxes"
+msgstr "Travar meta boxes"
+
+#: parts/admin-pages/welcome.php:313
+msgid "Show/hide by user capability or role"
+msgstr "Mostrar/esconder por capacidade ou função do usuário"
+
+#: parts/admin-pages/welcome.php:314
+msgid "Set the order of meta boxes"
+msgstr "Defina a ordem das meta boxes"
+
+#: parts/admin-pages/welcome.php:315
+msgid "Hide meta box when creating a new post/term"
+msgstr "Esconda meta box quando estiver criando um novo post/term"
+
+#: parts/admin-pages/welcome.php:320
+msgid "Post Types"
+msgstr "Tipos de Post"
+
+#: parts/admin-pages/welcome.php:322
+msgid "Create custom post statuses"
+msgstr "Crie status de post personalizados"
+
+#: parts/admin-pages/welcome.php:323
+msgid "Change the \"Enter title here\" text"
+msgstr "Altere o texto \"Digite o título aqui\""
+
+#: parts/admin-pages/welcome.php:324
+msgid "Custom admin body classes"
+msgstr "Classes de corpo administrativas personalizadas"
+
+#: parts/admin-pages/welcome.php:325
+msgid "Hide meta boxes"
+msgstr "Esconda meta bodes"
+
+#: parts/admin-pages/welcome.php:334
+msgid "List Tables"
+msgstr "Lista de Tabelas"
+
+#: parts/admin-pages/welcome.php:336
+msgid "Change column headings"
+msgstr "Alterar cabeçalhos de colunas"
+
+#: parts/admin-pages/welcome.php:337
+msgid "Show post states"
+msgstr "Mostrar estados de post"
+
+#: parts/admin-pages/welcome.php:338
+msgid "Hide the post row actions"
+msgstr "Esconda as ações de linha do post"
+
+#: parts/admin-pages/welcome.php:343
+msgid "User Profiles"
+msgstr "Perfil de Usuários"
+
+#: parts/admin-pages/welcome.php:345
+msgid "Profiles can taken advantage of any Piklist field"
+msgstr "Os perfis podem utilizar qualquer campo Piklist"
+
+#: parts/admin-pages/welcome.php:346
+msgid "Show/hide fields by user capability or role"
+msgstr "Mostrar/esconder campos pela capacidade ou função do usuário"
+
+#: parts/admin-pages/welcome.php:347
+msgid "Easily add User Taxonomies"
+msgstr "Adicione Taxonomias aos Usuários facilmente"
+
+#: parts/admin-pages/welcome.php:352
+msgid "Widgets, Dashboard & Help"
+msgstr "Widgets, Painel & Ajuda"
+
+#: parts/admin-pages/welcome.php:354
+msgid "Simply create complex widgets"
+msgstr "Crie widgets complexos facilmente"
+
+#: parts/admin-pages/welcome.php:355
+msgid "No object oriented programming required"
+msgstr "Não é necessário programação orientada a objetos"
+
+#: parts/admin-pages/welcome.php:356
+msgid "No help needed to create contextual help"
+msgstr "Não precisa de ajuda para criar ajudas de conteúdo"
+
+#: parts/admin-pages/welcome.php:369
+msgid "Get Started"
+msgstr "Introdução"
+
+#: parts/admin-pages/welcome.php:370
+msgid ""
+"The built in demos is a great way to see what Piklist can do, and comes with "
+"tons of sample code."
+msgstr ""
+"Os demos inclusos são uma ótima maneira de conhecer o que o Piklist pode "
+"fazer, inclusive com vários códigos de exemplo."
+
+#: parts/admin-pages/welcome.php:371
+msgid "Activate Demos %s"
+msgstr "Ativar Demonstrações %s"
+
+#: parts/admin-pages/welcome.php:374
+msgid "Get Help"
+msgstr "Obtenha Ajuda"
+
+#: parts/admin-pages/welcome.php:375
+msgid ""
+"Visit the Piklist community forums to get answers to your questions, and "
+"suggest new features."
+msgstr ""
+"Visite os fóruns da comunidade Piklist para conseguir respostas para sua "
+"pergunta, assim como sugerir novas funcionalidades."
+
+#: parts/admin-pages/welcome.php:376
+msgid "Visit Forums %s"
+msgstr "Visitar Fóruns %s"
+
+#: parts/admin-pages/welcome.php:379
+msgid "Get News"
+msgstr "Receber Novidades"
+
+#: parts/admin-pages/welcome.php:380
+msgid "Piklist updates in your inbox."
+msgstr "Atualizações do Piklist no seu e-mail."
+
+#: parts/admin-pages/welcome.php:383
+msgid "Send to:"
+msgstr "Enviar para:"
+
+#: parts/admin-pages/welcome.php:388
+msgid "Subscribe"
+msgstr "Assine"
+
+#: parts/admin-pages/welcome.php:399
+msgid "Piklist is created by a team of passionate individuals."
+msgstr "Piklist é criado por um time de pessoas apaixonadas."
+
+#: parts/admin-pages/welcome.php:402
+msgid "Project Leaders"
+msgstr "Líderes do Projeto"
+
+#: parts/admin-pages/welcome.php:411 parts/admin-pages/welcome.php:419
+msgid "Lead Developer"
+msgstr "Desenvolvedor Líder"
+
+#: parts/admin-pages/welcome.php:424
+msgid "Contributing Developers"
+msgstr "Desenvolvedores contribuíntes"
+
+#: parts/admin-pages/welcome.php:456
+msgid "Follow Piklist"
+msgstr "Siga Piklist"
+
+#: parts/dashboard/dashboard-right-now.php:29
+#: parts/dashboard/dashboard-right-now.php:184
+msgid "Content"
+msgstr "Conteúdo"
+
+#: parts/dashboard/dashboard-right-now.php:55
+#: parts/dashboard/dashboard-right-now.php:317
+msgid "Organization"
+msgstr "Organização"
+
+#: parts/dashboard/dashboard-right-now.php:83
+#: parts/dashboard/dashboard-right-now.php:243
+msgid "Comments"
+msgstr "Comentários"
+
+#: parts/dashboard/dashboard-right-now.php:93
+#: parts/dashboard/dashboard-right-now.php:263
+msgid "Approved"
+msgstr "Aprovado"
+
+#: parts/dashboard/dashboard-right-now.php:103
+#: parts/dashboard/dashboard-right-now.php:283
+msgid "Pending"
+msgstr "Pendente"
+
+#: parts/dashboard/dashboard-right-now.php:113
+#: parts/dashboard/dashboard-right-now.php:303
+msgid "Spam"
+msgstr "Spam"
+
+#: parts/dashboard/dashboard-right-now.php:143
+msgid "WordPress %1$s running %2$s theme."
+msgstr "Wordpress %1$x com tema %2$s."
+
+#: parts/dashboard/dashboard-right-now.php:148
+#: parts/dashboard/dashboard-right-now.php:425
+msgid "Your site is asking search engines not to index its content"
+msgstr "Seu site está pedindo para que os buscadores não indexem o conteúdo."
+
+#: parts/dashboard/dashboard-right-now.php:149
+#: parts/dashboard/dashboard-right-now.php:426
+msgid "Search Engines Discouraged"
+msgstr "Desencorajar motores de busca"
+
+#: parts/dashboard/dashboard-right-now.php:369
+msgid ""
+"ERROR: The themes directory is either empty or does not exist. Please check "
+"your installation."
+msgstr ""
+"ERRO: O diretório de Temas está vazio ou não existe. Por favor verifique sua "
+"instalação."
+
+#: parts/dashboard/dashboard-right-now.php:401
+#: parts/dashboard/dashboard-right-now.php:405
+msgid "Theme %1$s with %2$s Widget"
+msgid_plural "Theme %1$s with %2$s Widgets"
+msgstr[0] "Tema %1$s com %2$s Widget"
+msgstr[1] "Tema %1$s com %2$s Widgets"
+
+#: parts/dashboard/dashboard-right-now.php:412
+#: parts/dashboard/dashboard-right-now.php:416
+msgid "Theme %1$s"
+msgstr "Tema %1$s"
+
+#: parts/fields/add-ons.php:40
+msgid "Disable"
+msgstr "Desativar"
+
+#: parts/fields/add-ons.php:40
+msgid "Activate"
+msgstr "Ativar"
+
+#: parts/fields/file.php:77 parts/fields/file.php:96
+msgid "Remove"
+msgstr "Remover"
+
+#: parts/fields/post-relate.php:6
+msgid "Most Recent"
+msgstr "Mais Recentes"
+
+#: parts/fields/post-relate.php:7
+msgid "All"
+msgstr "Tudo"
+
+#: parts/settings/add-ons.php:10
+msgid ""
+"Add-ons are plugins that are included with Piklist, or another Piklist "
+"plugin. They allow you to turn on additional functionality."
+msgstr ""
+"Add-ons são plugins que estão inclusos com o Piklist, ou outro plugin "
+"Piklist. Eles permitem que você ligue funcionalidades adicionais."
+
+#: parts/settings/add-ons.php:19
+msgid "Plugin Add-ons"
+msgstr "Plugin Add-ons"
+
+#: parts/settings/add-ons.php:20
+msgid "Check to activate."
+msgstr "Selecione para ativar."
+
+#: parts/settings/general.php:14
+msgid ""
+"WARNING: Deactivating Piklist may disable functionality on this website."
+msgstr ""
+"ALERTA: Desativando o Piklist pode desabilitar as funcionalidades deste site."
+
+#: parts/settings/general.php:18
+msgid ""
+"Before deactivating please make sure other Plugins or your Theme do not rely "
+"on Piklist."
+msgstr ""
+"Antes de desativar tenha certeza que nenhum Plugin ou Tema está usando "
+"Piklist."
+
+#: parts/settings/general.php:22
+msgid "If you still want to deactivate Piklist:"
+msgstr "Se você ainda quer desativar Piklist:"
+
+#: parts/settings/general.php:24
+msgid "Change the setting below to: Allow Deactivation."
+msgstr "Altere a configuração abaixo para: Permitir Desativação."
+
+#: parts/settings/general.php:25
+msgid "SAVE the Settings."
+msgstr "SALVAR as Configurações."
+
+#: parts/settings/general.php:26
+msgid "Return to the %1$sPlugins page%2$s and disable Piklist normally."
+msgstr "Retorne para a %1$sPlugins page%2$s e desative Piklist normalmente."
+
+#: parts/settings/general.php:35
+msgid ""
+"Stops Piklist from being deactivated, and replaces the standard DEACTIVATE "
+"link for Piklist, with a link to this page."
+msgstr ""
+"Não permite que Piklist seja desativado e substitui o link DESATIVAR padrão "
+"do Piklist por um link para esta página."
+
+#: parts/settings/general.php:39
+msgid ""
+"When a user clicks on the new link on the plugins page, they will be brought "
+"here, and shown a warning."
+msgstr ""
+"Quando um usuário clicar no novo link na página de plugins ele será enviado "
+"para cá e mostraremos um alerta."
+
+#: parts/settings/general.php:49
+msgid "Piklist Deactivation"
+msgstr "Desativação do Piklist"
+
+#: parts/settings/general.php:50
+msgid "Deactivating Piklist may disable functionality on this website."
+msgstr "Desativando Piklist pode desabilitar as funcionalidades deste site."
+
+#: parts/settings/general.php:55
+msgid "Allow Deactivation"
+msgstr "Permitir Desativação"
+
+#: parts/settings/general.php:56
+msgid "Lock"
+msgstr "Travar"
+
+#: parts/settings/users.php:12
+msgid "Muliple User Roles"
+msgstr "Múltiplas Funções para o Usuário"
+
+#: parts/settings/users.php:13
+msgid "Users can be assigned multiple roles."
+msgstr "Usuários podem receber múltiplas funções."
+
+#: parts/settings/users.php:14
+msgid "Changes the user role dropdown to a select box."
+msgstr "Altera o select da função de usuário para um check-list."
+
+#: parts/settings/users.php:16
+msgid "Allow"
+msgstr "Permitir"
+
+#: parts/shared/post-submit-meta-box.php:18
+#: parts/shared/post-submit-meta-box.php:29
+#: parts/shared/post-submit-meta-box.php:38
+msgid "Save"
+msgstr "Salvar"
+
+#: parts/shared/post-submit-meta-box.php:18
+#: parts/shared/post-submit-meta-box.php:202
+#: parts/shared/post-submit-meta-box.php:210
+msgid "Publish"
+msgstr "Publicar"
+
+#: parts/shared/post-submit-meta-box.php:51
+msgid "Preview Changes"
+msgstr "Visualizar Alterações"
+
+#: parts/shared/post-submit-meta-box.php:61
+msgid "Preview"
+msgstr "Visualizar"
+
+#: parts/shared/post-submit-meta-box.php:87
+msgid "Status:"
+msgstr "Status:"
+
+#: parts/shared/post-submit-meta-box.php:95
+#: parts/shared/post-submit-meta-box.php:150
+#: parts/shared/post-submit-meta-box.php:225
+msgid "Edit"
+msgstr "Editar"
+
+#: parts/shared/post-submit-meta-box.php:107
+#: parts/shared/post-submit-meta-box.php:171
+msgid "OK"
+msgstr "OK"
+
+#: parts/shared/post-submit-meta-box.php:108
+#: parts/shared/post-submit-meta-box.php:172
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: parts/shared/post-submit-meta-box.php:123
+msgid "Visibility:"
+msgstr "Visibilidade:"
+
+#: parts/shared/post-submit-meta-box.php:128
+#: parts/shared/post-submit-meta-box.php:168
+msgid "Private"
+msgstr "Privado"
+
+#: parts/shared/post-submit-meta-box.php:133
+#: parts/shared/post-submit-meta-box.php:165
+msgid "Password protected"
+msgstr "Protegido por senha"
+
+#: parts/shared/post-submit-meta-box.php:138
+msgid "Public, Sticky"
+msgstr "Público, Fixado"
+
+#: parts/shared/post-submit-meta-box.php:143
+#: parts/shared/post-submit-meta-box.php:161
+msgid "Public"
+msgstr "Público"
+
+#: parts/shared/post-submit-meta-box.php:163
+msgid "Stick this post to the front page"
+msgstr "Fixe este post na página inicial"
+
+#: parts/shared/post-submit-meta-box.php:167
+msgid "Password:"
+msgstr "Senha:"
+
+#: parts/shared/post-submit-meta-box.php:194
+#: parts/shared/post-submit-meta-box.php:206
+msgid "Scheduled for: <b>%1$s</b>"
+msgstr "Agendado para: <b>%1$s</b>"
+
+#: parts/shared/post-submit-meta-box.php:198
+msgid "Published on: <b>%1$s</b>"
+msgstr "Publicado em: <b>%1$s</b>"
+
+#: parts/shared/post-submit-meta-box.php:202
+#: parts/shared/post-submit-meta-box.php:210
+#: parts/shared/post-submit-meta-box.php:280
+#: parts/shared/post-submit-meta-box.php:281
+msgid "Schedule"
+msgstr "Agendar"
+
+#: parts/shared/post-submit-meta-box.php:202
+msgid "%simmediately%s"
+msgstr "%imediatamente%s"
+
+#: parts/shared/post-submit-meta-box.php:210
+msgid "on: <b>%1$s</b>"
+msgstr "em: <b>%1$s</b>"
+
+#: parts/shared/post-submit-meta-box.php:216
+msgid "Publish %simmediately%s"
+msgstr "Publicar %imediatamente%s"
+
+#: parts/shared/post-submit-meta-box.php:257
+msgid "Delete Permanently"
+msgstr "Deletar permanentemente"
+
+#: parts/shared/post-submit-meta-box.php:261
+msgid "Move to Trash"
+msgstr "Mover para a Lixeira"
+
+#: parts/shared/post-submit-meta-box.php:292
+#: parts/shared/post-submit-meta-box.php:293
+msgid "Submit for Review"
+msgstr "Enviar para Revisão"
+
+#: parts/shared/post-submit-meta-box.php:300
+msgid "Update"
+msgstr "Atualizar"
+
+#: parts/shared/update-available.php:18
+msgid "Updating is recommended, here's why:"
+msgstr "A atualização é recomendada, aqui está o porquê: "
+
+#: parts/shared/widget-select.php:8 parts/shared/widget-select.php:26
+msgid "Select a Widget"
+msgstr "Selecione um Widget"
+
+#: parts/shared/widget-select.php:73
+msgid "There are currently no Widgets available."
+msgstr "Nenhum Widgets disponível atualmente."
+
+#: parts/shared/widget-select.php:76
+msgid "Learn to make Widgets"
+msgstr "Aprenda a criar Widgets"
+
+#: parts/shared/widget-select.php:79
+msgid ""
+"Check out the documentation for how to easily build your own custom widgets!"
+msgstr ""
+"Verifique a documentação para ver como é fácil criar seus próprios Widgets!"
+
+#. Plugin Name of the plugin/theme
+#. Author of the plugin/theme
+msgid "Piklist"
+msgstr "Piklist"
+
+#. Plugin URI of the plugin/theme
+#. Author URI of the plugin/theme
+msgid "http://piklist.com"
+msgstr "http://piklist.com"
+
+#~ msgid "cannot have more than %1$s %2$s."
+#~ msgstr "não pode ter mais que %1$s %2$s."

@@ -1,0 +1,17 @@
+/*
+Theme Name: Onetone
+Description: Used to style the TinyMCE editor.
+*/
+
+html .mceContentBody {
+	font-size: 100%;
+	max-width: 604px;
+}
+
+body {
+	color: #141412;
+	font-family: "Source Sans Pro", Helvetica, sans-serif;
+	line-height: 1.5;
+	text-rendering: optimizeLegibility;
+	vertical-align: baseline;
+}

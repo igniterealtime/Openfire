@@ -1,0 +1,701 @@
+/*------------------------------------------------------------------------------
+  14.0 - Media Screen
+------------------------------------------------------------------------------*/
+
+.media-item .describe {
+	border-collapse: collapse;
+	width: 100%;
+	border-top-style: solid;
+	border-top-width: 1px;
+	clear: both;
+	cursor: default;
+}
+
+.media-item.media-blank .describe {
+	border: 0;
+}
+
+.media-item .describe th {
+	vertical-align: top;
+	text-align: left;
+	padding: 5px 10px 10px;
+	width: 140px;
+}
+
+.media-item .describe .align th {
+	padding-top: 0;
+}
+
+.media-item .media-item-info tr {
+	background-color: transparent;
+}
+
+.media-item .describe td {
+	padding: 0 8px 8px 0;
+	vertical-align: top;
+}
+
+.media-item thead.media-item-info td {
+	padding: 4px 10px 0;
+}
+
+.media-item .media-item-info .A1B1 {
+	padding: 0 0 0 10px;
+}
+
+.media-item td.savesend {
+	padding-bottom: 15px;
+}
+
+.media-item .thumbnail {
+	max-height: 128px;
+	max-width: 128px;
+}
+
+#wpbody-content #async-upload-wrap a {
+	display: none;
+}
+
+.media-upload-form {
+	margin-top: 20px;
+}
+
+.media-upload-form td label {
+	margin-right: 6px;
+	margin-left: 2px;
+}
+
+.media-upload-form .align .field label {
+	display: inline;
+	padding: 0 0 0 23px;
+	margin: 0 1em 0 3px;
+	font-weight: bold;
+}
+
+.media-upload-form tr.image-size label {
+	margin: 0 0 0 5px;
+	font-weight: bold;
+}
+
+.media-upload-form th.label label {
+	font-weight: bold;
+	margin: 0.5em;
+	font-size: 13px;
+}
+
+.media-upload-form th.label label span {
+	padding: 0 5px;
+}
+
+abbr.required {
+	border: medium none;
+	text-decoration: none;
+}
+
+.media-item .describe input[type="text"],
+.media-item .describe textarea {
+	width: 460px;
+}
+
+.media-item .describe p.help {
+	margin: 0;
+	padding: 0 0 0 5px;
+}
+
+.media-item .edit-attachment,
+.describe-toggle-on,
+.describe-toggle-off {
+	display: block;
+	line-height: 36px;
+	float: right;
+	margin-right: 15px;
+}
+
+.media-item .describe-toggle-off,
+.media-item.open .describe-toggle-on {
+	display: none;
+}
+
+.media-item.open .describe-toggle-off {
+	display: block;
+}
+
+#media-items .media-item {
+	border-style: solid;
+	border-width: 1px;
+	min-height: 36px;
+	position: relative;
+	margin-top: -1px;
+	width: 100%;
+}
+
+#media-items {
+	width: 623px;
+}
+
+.media-new-php #media-items {
+	margin: 1em 0;
+}
+
+#media-items:empty {
+	border: 0 none;
+}
+
+.media-item .filename {
+	line-height: 36px;
+	overflow: hidden;
+	padding: 0 10px;
+}
+
+.media-item .error-div {
+	padding-left: 10px;
+}
+
+.media-item .pinkynail {
+	float: left;
+	margin: 2px 2px 0;
+	max-width: 40px;
+	max-height: 32px;
+}
+
+.media-item .startopen,
+.media-item .startclosed {
+	display: none;
+}
+
+.media-item .original {
+	position: relative;
+	height: 34px;
+}
+
+.media-item .progress {
+	float: right;
+	height: 22px;
+	margin: 6px 10px 0 0;
+	width: 200px;
+	line-height: 2em;
+	padding: 0;
+	overflow: hidden;
+	margin-bottom: 2px;
+	border: 1px solid #d1d1d1;
+	background: #f7f7f7;
+	background-image: -webkit-gradient(linear, left bottom, left top, from(#fff), to(#f7f7f7));
+	background-image: -webkit-linear-gradient(bottom, #fff, #f7f7f7);
+	background-image:    -moz-linear-gradient(bottom, #fff, #f7f7f7);
+	background-image:      -o-linear-gradient(bottom, #fff, #f7f7f7);
+	background-image: linear-gradient(to top, #fff, #f7f7f7);
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	-webkit-box-shadow: inset 0 0 3px rgba(0,0,0,0.1);
+	box-shadow: inset 0 0 3px rgba(0,0,0,0.1);
+}
+
+.media-item .bar {
+	z-index: 9;
+	width: 0;
+	height: 100%;
+	margin-top: -24px;
+	background-color: #8cc1e9;
+	background-image: -webkit-gradient(linear, left bottom, left top, from(#72a7cf), to(#8cc1e9));
+	background-image: -webkit-linear-gradient(bottom, #72a7cf, #8cc1e9);
+	background-image:    -moz-linear-gradient(bottom, #72a7cf, #8cc1e9);
+	background-image:      -o-linear-gradient(bottom, #72a7cf, #8cc1e9);
+	background-image: linear-gradient(to top, #72a7cf, #8cc1e9);
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	-webkit-box-shadow: 0 0 3px rgba(0,0,0,0.3);
+	box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
+
+.media-item .progress .percent {
+	z-index: 10;
+	position: relative;
+	width: 200px;
+	padding: 0 8px;
+	text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+	color: rgba(0,0,0,0.6);
+}
+
+.upload-php .fixed .column-parent {
+	width: 15%;
+}
+
+.js .html-uploader #plupload-upload-ui {
+	display: none;
+}
+
+.js .html-uploader #html-upload-ui {
+	display: block;
+}
+
+.media-upload-form .media-item.error {
+	margin: 0;
+	padding: 0;
+}
+
+.media-upload-form .media-item.error p,
+.media-item .error-div {
+	line-height: 16px;
+	margin: 5px 10px;
+	padding: 0;
+}
+
+.media-item .error-div a.dismiss {
+	display: block;
+	float: right;
+	margin: 5px 4px 0 15px;
+}
+
+/*------------------------------------------------------------------------------
+  14.1 - Media Library
+------------------------------------------------------------------------------*/
+
+.find-box {
+	width: 600px;
+	height: 300px;
+	overflow: hidden;
+	padding: 33px 0 51px;
+	position: absolute;
+	z-index: 1000;
+}
+
+.find-box-head {
+	cursor: move;
+	font-weight: bold;
+	height: 2em;
+	line-height: 2em;
+	padding: 1px 12px;
+	position: absolute;
+	top: 5px;
+	width: 100%;
+}
+
+.find-box-inside {
+	overflow: auto;
+	padding: 6px;
+	height: 100%;
+}
+
+.find-box-search {
+	overflow: hidden;
+	padding: 9px;
+	position: relative;
+}
+
+.find-box-search .spinner {
+	float: none;
+	left: 125px;
+	position: absolute;
+	top: 9px;
+}
+
+#find-posts-input {
+	float: left;
+	width: 140px;
+	height: 24px;
+}
+
+#find-posts-search {
+	float: left;
+	margin: 1px 4px 0 3px;
+}
+
+#find-posts-response {
+	margin: 8px 0;
+	padding: 0 1px 6px;
+}
+
+#find-posts-response table {
+	width: 100%;
+}
+
+#find-posts-response .found-radio {
+	padding: 3px 0 0 8px;
+	width: 15px;
+}
+
+.find-box-buttons {
+	padding: 8px;
+	overflow: hidden;
+}
+
+.find-box #resize-se {
+	position: absolute;
+	right: 1px;
+	bottom: 1px;
+}
+
+.ui-find-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: #000;
+	opacity: 0.6;
+	filter: alpha(opacity=60);
+}
+
+ul#dismissed-updates {
+	display: none;
+}
+
+form.upgrade {
+	margin-top: 8px;
+}
+
+form.upgrade .hint {
+	font-style: italic;
+	font-size: 85%;
+	margin: -0.5em 0 2em 0;
+}
+
+#poststuff .inside .the-tagcloud {
+	margin: 5px 0 10px;
+	padding: 8px;
+	border-width: 1px;
+	border-style: solid;
+	line-height: 1.8em;
+	word-spacing: 3px;
+	-webkit-border-radius: 6px;
+	border-radius: 6px;
+}
+
+.drag-drop #drag-drop-area {
+	border: 4px dashed #DDDDDD;
+	height: 200px;
+}
+
+.drag-drop .drag-drop-inside {
+	margin: 70px auto 0;
+	width: 250px;
+}
+
+.drag-drop-inside p {
+	color: #aaa;
+	font-size: 14px;
+	margin: 5px 0;
+	display: none;
+}
+
+.drag-drop .drag-drop-inside p {
+	text-align: center;
+}
+
+.drag-drop-inside p.drag-drop-info {
+	font-size: 20px;
+}
+
+.drag-drop .drag-drop-inside p,
+.drag-drop-inside p.drag-drop-buttons {
+	display: block;
+}
+
+/*
+#drag-drop-area:-moz-drag-over {
+	border-color: #83b4d8;
+}
+borger color while dragging a file over the uploader drop area */
+.drag-drop.drag-over #drag-drop-area {
+	border-color: #83b4d8;
+}
+
+#plupload-upload-ui {
+	position: relative;
+}
+
+/*------------------------------------------------------------------------------
+  14.2 - Image Editor
+------------------------------------------------------------------------------*/
+
+.describe .image-editor {
+	vertical-align: top;
+}
+
+.imgedit-wrap {
+	position: relative;
+}
+
+.imgedit-settings p {
+	margin: 8px 0;
+}
+
+.post-php .imgedit-wrap table {
+	width: 100%;
+}
+
+.describe .imgedit-wrap table td,
+.wp_attachment_holder .imgedit-wrap table td {
+	vertical-align: top;
+	padding-top: 0;
+}
+
+.describe .imgedit-wrap table td.imgedit-settings {
+	padding: 0 5px;
+}
+
+.wp_attachment_holder .imgedit-wrap table td.imgedit-settings {
+	width: 250px;
+}
+
+td.imgedit-settings input {
+	margin-top: 0;
+	vertical-align: middle;
+}
+
+.imgedit-wait {
+	position: absolute;
+	top: 0;
+	background: #fff url(../../../../../../wp-admin/images/wpspin_light.gif) no-repeat scroll 22px 10px;
+	background-size: 16px 16px;
+	opacity: 0.7;
+	filter: alpha(opacity=70);
+	width: 100%;
+	height: 500px;
+	display: none;
+}
+
+.spinner {
+	background: url(../../../../../../wp-admin/images/wpspin_light.gif) no-repeat;
+	background-size: 16px 16px;
+	display: none;
+	float: right;
+	opacity: 0.7;
+	filter: alpha(opacity=70);
+	width: 16px;
+	height: 16px;
+	margin: 5px 5px 0;
+}
+
+.no-float {
+	float: none;
+}
+
+.media-disabled,
+.imgedit-settings .disabled  {
+	color: grey;
+}
+
+.wp_attachment_image,
+.A1B1 {
+	overflow: hidden;
+}
+
+.wp_attachment_image .button,
+.A1B1 .button {
+	float: left;
+}
+
+.no-js .wp_attachment_image .button {
+	display: none;
+}
+
+.wp_attachment_image .spinner,
+.A1B1 .spinner {
+	float: left;
+	padding: 0 4px 4px;
+	vertical-align: bottom;
+}
+
+.imgedit-menu {
+	margin: 0 0 12px;
+	min-width: 300px;
+}
+
+.imgedit-menu div {
+	float: left;
+	width: 32px;
+	height: 32px;
+}
+
+.imgedit-crop-wrap {
+	position: relative;
+}
+
+.imgedit-crop {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -9px -31px;
+	margin: 0 8px 0 0;
+}
+
+.imgedit-crop.disabled:hover {
+	background-position: -9px -31px;
+}
+
+.imgedit-crop:hover {
+	background-position: -9px -1px;
+}
+
+.imgedit-rleft {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -46px -31px;
+	margin: 0 3px;
+}
+
+.imgedit-rleft.disabled:hover {
+	background-position: -46px -31px;
+}
+
+.imgedit-rleft:hover {
+	background-position: -46px -1px;
+}
+
+.imgedit-rright {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -77px -31px;
+	margin: 0 8px 0 3px;
+}
+
+.imgedit-rright.disabled:hover {
+	background-position: -77px -31px;
+}
+
+.imgedit-rright:hover {
+	background-position: -77px -1px;
+}
+
+.imgedit-flipv {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -115px -31px;
+	margin: 0 3px;
+}
+
+.imgedit-flipv.disabled:hover {
+	background-position: -115px -31px;
+}
+
+.imgedit-flipv:hover {
+	background-position: -115px -1px;
+}
+
+.imgedit-fliph {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -147px -31px;
+	margin: 0 8px 0 3px;
+}
+
+.imgedit-fliph.disabled:hover {
+	background-position: -147px -31px;
+}
+
+.imgedit-fliph:hover {
+	background-position: -147px -1px;
+}
+
+.imgedit-undo {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -184px -31px;
+	margin: 0 3px;
+}
+
+.imgedit-undo.disabled:hover {
+	background-position: -184px -31px;
+}
+
+.imgedit-undo:hover {
+	background-position: -184px -1px;
+}
+
+.imgedit-redo {
+	background: transparent url('../../../../../../wp-admin/images/imgedit-icons.png') no-repeat scroll -215px -31px;
+	margin: 0 8px 0 3px;
+}
+
+.imgedit-redo.disabled:hover {
+	background-position: -215px -31px;
+}
+
+.imgedit-redo:hover {
+	background-position: -215px -1px;
+}
+
+.imgedit-applyto img {
+	margin: 0 8px 0 0;
+}
+
+.imgedit-group-top {
+	margin: 5px 0;
+}
+
+.imgedit-applyto .imgedit-label {
+	padding: 2px 0 0;
+	display: block;
+}
+
+.imgedit-help {
+	display: none;
+	font-style: italic;
+	margin-bottom: 8px;
+}
+
+a.imgedit-help-toggle {
+	text-decoration: none;
+}
+
+.form-table td.imgedit-response {
+	padding: 0;
+}
+
+.imgedit-submit {
+	margin: 8px 0;
+}
+
+.imgedit-submit-btn {
+	margin-left: 20px;
+}
+
+.imgedit-wrap .nowrap {
+	white-space: nowrap;
+}
+
+span.imgedit-scale-warn {
+	color: red;
+	font-size: 20px;
+	font-style: normal;
+	visibility: hidden;
+	vertical-align: middle;
+}
+
+.imgedit-group {
+	border-width: 1px;
+	border-style: solid;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	margin-bottom: 8px;
+	padding: 2px 10px;
+}
+
+.wp_attachment_details {
+	margin-bottom: 20px;
+}
+
+.imgedit-menu div {
+	border-color: #d5d5d5;
+	background-color: #f1f1f1;
+}
+
+.imgedit-menu div:hover {
+	border-color: #c1c1c1;
+	background-color: #eaeaea;
+}
+
+.imgedit-menu div.disabled {
+	border-color: #ccc;
+	background-color: #ddd;
+	filter: alpha(opacity=50);
+	opacity: 0.5;
+}
+
+/*------------------------------------------------------------------------------
+  Custom Styles
+------------------------------------------------------------------------------*/
+
+.bp-media-image-editor-cotnainer { margin-top : 35px; }
+.wp_attachment_image .bp-media-image-edit { float: left; }
+.wp_attachment_image .thumbnail { max-width: 300px; }
+.wp_attachment_image .spinner { display: none; }
+.bp-media-image-editor-cotnainer .hidden { display: none; }
+.bp-media-image-editor-cotnainer div.updated { 
+    margin: 5px 0 15px;
+    background-color: #ffffe0;
+    border-color: #e6db55;
+    padding: 0 .6em;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+}
+ 
+.bp-media-image-editor-cotnainer div.updated p { margin: .5em 0;padding: 2px; }

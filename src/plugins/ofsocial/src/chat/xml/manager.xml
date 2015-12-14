@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<jappix xmlns="jappix:file:get">
+	<css>main.css~manager.css~images.css</css>
+	<js></js>
+</jappix>

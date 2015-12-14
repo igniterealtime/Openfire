@@ -1,0 +1,54 @@
+/*
+Theme Name: Custom Community
+Theme URI: http://themekraft.com/store/custom-community-2-free-responsive-wordpress-bootstrap-theme/
+Author: ThemeKraft
+Author URI: http://themekraft.com/
+Description: Professional-grade responsive and extremely adaptable WordPress Customizer theme. Featuring the latest Bootstrap and Font Awesome versions, with a few sane improvements, 3 pre-defined colour schemes, user-friendly Slideshow integration and including 140+ settings to customize your site to YOUR choices. Supports BuddyPress, WooCommerce and most common plugins out of the box.
+Version: 2.0.28
+License: GNU General Public License
+License URI: see license.txt
+Tags: dark, light, white, green, brown, black, one-column, two-columns, left-sidebar, right-sidebar, responsive-layout, buddypress, custom-colors, custom-header, custom-background, flexible-header, full-width-template, theme-options, translation-ready, threaded-comments
+
+Custom Community 2, like WordPress, is licensed under the GPL.
+Use it to make something cool, have fun, and share what you've learned with others.
+
+This theme is developed on the _tk starter theme:
+http://themekraft.com/tk-wordpress-bootstrap-starter-theme/
+_tk is an ultra minimal starter theme based on Twitter Bootstrap Framework and
+the _s starter theme from Automattic, the guys behind WordPress.
+
+If you like to customize inside your CSS files directly,
+you should consider to create a child theme instead of changing theme files - this would break your updates.
+
+Learn more about child themes here:
+http://codex.wordpress.org/Child_Themes
+
+*/
+/* Import Bootstrap Styles */
+@import url( 'includes/resources/bootstrap/less/bootstrap.less' );
+
+/*
+ * Now come a few needed CSS additions to integrate bootstrap truly into WordPress,
+ * We kept this slim as possible. Try to avoid any overwriting if not really needed.
+ *
+ */
+@import url( 'includes/schemes/less/wp-basic.less');
+
+/* So, we're finished with the minimum needed WordPress styling.
+ *
+ * Now going through each area, starting with some globals, then header, menu, content,..
+ * Please remember that we are already overwriting the Bootstrap CSS.
+ *
+ */
+
+@import url('includes/schemes/less/wp-advanced.less');
+
+/**
+ * CC Slider love
+ */
+
+@import url( 'includes/schemes/less/slideshow.less');
+
+
+
+

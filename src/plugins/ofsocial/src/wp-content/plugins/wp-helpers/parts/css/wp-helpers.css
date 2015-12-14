@@ -1,0 +1,27 @@
+/*
+ * Alert code based on Bootstrap
+ */
+
+  #wp-helpers-notice.alert {
+    text-align: center;
+    padding: 8px 35px 8px 14px;
+    margin-bottom: 5px;
+    color: #000;
+  }
+
+  #wp-helpers-notice.alert-success {
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+  }
+
+  #wp-helpers-notice.alert-warning,
+  #wp-helpers-notice.alert-danger {
+    background-color: #f2dede;
+    border-color: #eed3d7;
+  }
+
+  #wp-helpers-notice.alert-info {
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+  }
+

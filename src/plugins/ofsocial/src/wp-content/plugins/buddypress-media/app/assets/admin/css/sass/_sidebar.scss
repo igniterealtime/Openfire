@@ -1,0 +1,35 @@
+#rtmedia-encoding-usage {
+	strong {
+		display: inline-block;
+		min-width: 120px;
+	}
+
+	p {
+		overflow: hidden;
+	}
+}
+
+.encoding-used, .encoding-remaining {
+    background: $success;
+    float: right;
+    height: 12px;
+    margin-top: 3px;
+    width: 12px;
+}
+
+.encoding-remaining {
+	background: $border-dark;
+}
+
+#rtprogressbar {
+    background: $border-dark;
+    height: 10px;
+    position: relative;
+
+	div {
+		background: $success;
+		height: 10px;
+		left: 0;
+		position: absolute;
+	}
+}

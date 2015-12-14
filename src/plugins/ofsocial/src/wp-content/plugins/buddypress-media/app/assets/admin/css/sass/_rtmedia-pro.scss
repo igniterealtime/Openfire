@@ -1,0 +1,84 @@
+.rtm-page-container {
+	background: $white;
+	overflow: hidden;
+    padding: 20px;
+}
+
+.rtm-pro-feature-list {
+
+	li {
+		box-sizing: border-box;
+		float: left;
+		padding: 0 10px 20px;
+		width: 33%;
+	}
+
+	.rtm-icon-wrap {
+		float: left;
+		margin-top: 15px;
+		width: 30px;
+	}
+
+	.dashicons {
+		font-size: 18px;
+	}
+
+	.rtm-title {
+		font-size: 18px;
+		margin-left: 30px;
+		margin-top: 0px;
+	}
+
+	.rtm-content {
+		font-size: 14px;
+		line-height: 25px;
+		margin-left: 30px;
+		color: #8a8a8a;
+		width: auto;
+	}
+}
+
+.rtm-update-to-pro {
+	text-align: center;
+}
+
+.rtm-button {
+	background-color: $link;
+    border: 0;
+    border-radius: 3px;
+    color: $white;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 10px;
+    padding: 12px 26px;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+
+	&:hover, &:focus {
+		background-color: darken($link, 5);
+		color: $white;
+	}
+
+	&.large {
+		font-size: 16px;
+		margin-bottom: 20px;
+		padding: 20px 40px;
+	}
+
+	&.rtm-button-success {
+		background-color: #2ecc71;
+
+		&:hover, &:focus {
+			background-color: darken(#34bf49, 5);
+		}
+	}
+}
+
+.rtm-hire-points {
+	font-size: 14px;
+	margin-bottom: 24px;
+}

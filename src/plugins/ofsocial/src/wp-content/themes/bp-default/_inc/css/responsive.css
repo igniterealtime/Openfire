@@ -1,0 +1,283 @@
+/*--------------------------------------------------------------
+Hello, this is the BuddyPress Responsive theme stylesheet
+
+----------------------------------------------------------------
+>>> TABLE OF CONTENTS:
+----------------------------------------------------------------
+1.0 - iPad
+	1.1 - Landscape
+	1.2 - Portrait
+2.0 - Smartphone
+3.0 - iPhone
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+1.1 - iPad Landscape
+--------------------------------------------------------------*/
+@media only screen and (max-width: 768px) {
+	html {
+		background-color: #eaeaea;
+	}
+	body {
+		margin-top: -28px !important;
+		background: #eaeaea;
+	}
+	#wpadminbar {
+		display: none;
+	}
+	div#content .padder {
+		margin-right: 0;
+		width: auto;
+		float: none;
+		border: none;
+	}
+	div#sidebar {
+		width: auto;
+		float: none;
+		margin: 2em 0 0 0;
+		border: none;
+	}
+	ul#nav {
+		padding-bottom: 1em;
+	}
+	ul#nav li {
+		width: 46%;
+		margin-bottom: 1em;
+		margin-right: 0;
+	}
+	ul#nav li:nth-child(even) {
+		margin-left: 3%;
+		margin-right: 0;
+	}
+	ul#nav li a {
+		-moz-border-radius: 0.25em;
+		-webkit-border-radius: 0.25em;
+		border-radius: 0.25em;
+		margin-bottom: 0;
+	}
+	.wp-caption {
+		width: 99% !important;
+	}
+	.entry {
+		width: 100%;
+	}
+	.entry img {
+		max-width: 100%;
+		height: auto;
+	}
+	.wp-caption img {
+		max-width: 99%;
+		height: auto;
+	}
+	#footer-widgets {
+		padding: 19px 10px;
+	}
+}
+
+
+/*--------------------------------------------------------------
+1.2 - iPad Portrait
+--------------------------------------------------------------*/
+@media only screen and (max-width: 640px) {
+	div.dir-search {
+		float: none;
+		margin: 1.25em 0 0;
+	}
+	ul.item-list li div.action {
+		padding-left: 64px;
+		position: relative;
+		right: auto;
+		text-align: left;
+		top: 1em;
+		margin-bottom: 1.25em;
+	}
+	.wp-caption {
+		width: 99% !important;
+	}
+	.entry {
+		width: 100%;
+	}
+	.entry img {
+		max-width: 100%;
+		height: auto;
+	}
+	.wp-caption img {
+		max-width: 99%;
+		height: auto;
+	}
+	#footer-widget-area div.widget-area > ul {
+		float: left;
+		width: 100%;
+	}
+	#footer-widgets {
+		padding: 19px 10px;
+	}
+}
+
+
+/*--------------------------------------------------------------
+2.0 - Smartphone (any)
+--------------------------------------------------------------*/
+@media screen and (max-device-width: 480px), screen and (-webkit-min-device-pixel-ratio: 2) {
+	-webkit-text-size-adjust: none;
+}
+
+@media only screen and (max-width: 480px) {
+	body {
+		width: 100%;
+		margin: 0;
+	}
+	#container {
+		border: none;
+	}
+	div.item-list-tabs ul li {
+		float: none;
+		margin: 0.3em 0.6em;
+		background:none;
+	}
+	div.item-list-tabs ul li.last {
+		float: none;
+		margin: 0.3em 0.6em;
+	}
+	div#subnav.item-list-tabs ul li.last {
+		margin-top: 1em;
+	}
+	div.item-list-tabs ul li.selected,
+	div.item-list-tabs ul li.current {
+		margin: 0.3em 0.6em;
+	}
+	div.item-list-tabs ul li.selected a,
+	div.item-list-tabs ul li.current a {
+		background: #eee;
+		font-weight: bold;
+	}
+	div.item-list-tabs {
+		background: none;
+	}
+	div.item-list-tabs ul li:first-child {
+		margin: 0.6em 0.6em 0.5em 0.6em;
+	}
+	div.item-list-tabs ul li a,
+	div.item-list-tabs ul li span {
+		padding: 0.3em;
+	}
+	div#subnav ul {
+		padding-top: 0.6em;
+	}
+	div.pagination {
+		padding: 0.6em;
+	}
+	div.item-list-tabs ul {
+		border-top: 1px solid #EAEAEA;
+		padding-top: 0;
+	}
+	div.item-list-tabs ul li {
+		margin-top: 0;
+	}
+	form.standard-form #basic-details-section,
+	form.standard-form #blog-details-section,
+	form.standard-form #profile-details-section {
+		float: none;
+		width: 100%;
+	}
+ 	.wp-caption {
+		width: 99% !important;
+ 	}
+ 	.entry {
+		width: 100%;
+ 	}
+ 	.entry img {
+		max-width: 100%;
+		height: auto;
+ 	}
+ 	.wp-caption img {
+		max-width: 99%;
+		height: auto;
+ 	}
+	#footer-widget-area div.widget-area > ul {
+		float: left;
+		width: 100%;
+	}
+	#footer-widgets {
+		padding: 19px 10px;
+	}
+}
+
+
+/*--------------------------------------------------------------
+3.0 - iPhone
+--------------------------------------------------------------*/
+@media only screen and (max-width: 320px) {
+	ul#nav li {
+		float: none;
+		width: 100%;
+		margin-bottom: 0.6em;
+		margin-right: 0;
+		margin-left: 0;
+	}
+	ul#nav li:nth-child(even) {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	ul#nav li a {
+		-moz-border-radius: 0.25em;
+		-webkit-border-radius: 0.25em;
+		border-radius: 0.25em;
+		margin-bottom: 0;
+	}
+	form#groups-directory-form h3 a {
+		display: block;
+		margin-top: 0.6em;
+	}
+	div.post div.author-box,
+	div.comment-avatar-box {
+		display: none;
+	}
+	div.post div.post-content,
+	div.comment-content {
+		margin-left: 0px;
+	}
+	form#whats-new-form div#whats-new-avatar {
+		display:none;
+	}
+	form#whats-new-form h5 {
+		margin: 0 0 0 0px;
+	}
+	form#whats-new-form #whats-new-content {
+		margin-left: 0px;
+		padding-left: 0px;
+	}
+	ul#activity-stream.item-list li div.activity-avatar {
+		display: none;
+	}
+	body.activity-permalink .activity-list li .activity-content {
+		margin-left: 0;
+	}
+	body.activity-permalink .activity-list li.mini .activity-meta {
+		left: 0;
+	}
+ 	div.post .entry {
+		width: 100%;
+ 	}
+ 	.wp-caption {
+		width: 99%!important;
+ 	}
+ 	.entry {
+		width: 100%;
+ 	}
+ 	.entry img {
+		width: 100%;
+		height: auto;
+ 	}
+ 	.wp-caption img {
+		width: 99%;
+		height: auto;
+ 	}
+ 	#footer-widget-area div.widget-area > ul {
+		float: left;
+		width: 100%;
+ 	}
+ 	#footer-widgets {
+		padding: 19px 10px;
+	}
+}

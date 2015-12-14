@@ -1,0 +1,91 @@
+/*
+
+Jappix - An open social platform
+This is the mucadmin CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 11/05/11
+
+*/
+
+#mucadmin .content {
+	padding: 10px 0 10px 0;
+}
+
+#mucadmin .content p {
+	margin: 5px 10px 5px 10px;
+	text-align: justify;
+}
+
+#mucadmin .mucadmin-head-jid {
+	text-decoration: underline;
+	font-size: 0.9em;
+	float: right;
+	margin: 1px 4px 1px 1px;
+}
+
+#mucadmin .mucadmin-forms {
+	height: 310px;
+	width: 620px;
+	margin: -5px 0 0 10px;
+	padding: 6px 0 0 0;
+	overflow: auto;
+}
+
+#mucadmin .mucadmin-forms label {
+	width: 260px;
+}
+
+#mucadmin .mucadmin-topic label,
+#mucadmin .mucadmin-aut label,
+#mucadmin .mucadmin-others label {
+	font-size: 0.9em;
+}
+
+#mucadmin .mucadmin-forms textarea {
+	height: 60px;
+	width: 300px;
+	margin: 5px 12px 10px 0;
+}
+
+#mucadmin .results {
+	height: auto;
+	width: auto;
+	overflow: visible;
+	margin: 5px;
+}
+
+#mucadmin .aut-group {
+	float: left;
+	padding-bottom: 4px;
+}
+
+#mucadmin .one-aut {
+	clear: both;
+	margin: 0 10px 5px 0;
+}
+
+#mucadmin .aut-add {
+	clear: both;
+	float: left;
+	margin-bottom: 5px;
+	font-size: 0.9em;
+}
+
+#mucadmin .aut-remove {
+	float: left;
+}
+
+#mucadmin .aut-remove:hover,
+#mucadmin .aut-remove:focus {
+	font-weight: bold;
+	text-decoration: none;
+}
+
+#mucadmin .mucadmin-others a {
+	float: left;
+	font-size: 0.9em;
+}

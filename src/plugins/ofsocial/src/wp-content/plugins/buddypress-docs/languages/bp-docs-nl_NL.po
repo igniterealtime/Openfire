@@ -1,0 +1,1059 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BuddyPress Docs v1.2.3\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/buddypress-docs\n"
+"POT-Creation-Date: 2012-11-17 16:37:01+00:00\n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-Language: \n"
+"X-Poedit-Country: \n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;\n"
+"X-Poedit-Basepath: \n"
+"X-Poedit-Bookmarks: \n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Textdomain-Support: yes"
+
+#: bp-docs.php:260
+#@ bp-docs
+msgctxt "post type general name"
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Documenten"
+
+#: bp-docs.php:261
+#@ bp-docs
+msgctxt "post type singular name"
+msgid "Doc"
+msgstr "Document"
+
+#: bp-docs.php:262
+#@ bp-docs
+msgctxt "add new"
+msgid "Add New"
+msgstr "Nieuw document toevoegen"
+
+#: bp-docs.php:263
+#@ bp-docs
+msgid "Add New Doc"
+msgstr "Nieuw document toevoegen"
+
+#: bp-docs.php:264
+#@ bp-docs
+msgid "Edit Doc"
+msgstr "Document aanpassen"
+
+#: bp-docs.php:265
+#: includes/integration-groups.php:726
+#: includes/integration-groups.php:1283
+#: includes/templates/docs/docs-header.php:40
+#@ bp-docs
+msgid "New Doc"
+msgstr "Nieuw document"
+
+#: bp-docs.php:266
+#@ bp-docs
+msgid "View Doc"
+msgstr "Document bekijken"
+
+#: bp-docs.php:267
+#@ bp-docs
+msgid "Search Docs"
+msgstr "Documenten zoeken"
+
+#: bp-docs.php:268
+#@ bp-docs
+msgid "No Docs found"
+msgstr "Geen documenten gevonden"
+
+#: bp-docs.php:269
+#@ bp-docs
+msgid "No Docs found in Trash"
+msgstr "Er zijn geen documenten in de prullenbak gevonden"
+
+#: bp-docs.php:276
+#: includes/component.php:39
+#: includes/integration-groups.php:1078
+#@ bp-docs
+msgid "BuddyPress Docs"
+msgstr "BuddyPress Documenten"
+
+#: bp-docs.php:295
+#@ bp-docs
+msgid "Associated Items"
+msgstr "Categorieën"
+
+#: bp-docs.php:296
+#@ bp-docs
+msgid "Associated Item"
+msgstr "Toegewezen categorie"
+
+#: bp-docs.php:496
+#@ bp-docs
+msgid "You are not allowed to read that Doc."
+msgstr "U heeft onvoldoende rechten om dit document te bekijken."
+
+#: bp-docs.php:500
+#@ bp-docs
+msgid "You are not allowed to create Docs."
+msgstr "U heeft onvoldoende rechten om documenten toe te voegen."
+
+#: bp-docs.php:504
+#@ bp-docs
+msgid "You are not allowed to edit that Doc."
+msgstr "U heeft onvoldoende rechten om dit document aan te passen."
+
+#: bp-docs.php:508
+#@ bp-docs
+msgid "You are not allowed to view that Doc's history."
+msgstr "U heeft onvoldoende rechten om de historiek van dit document te bekijken."
+
+#: includes/addon-hierarchy.php:106
+#@ bp-docs
+msgid "Parent: "
+msgstr "Ouders:"
+
+#: includes/addon-hierarchy.php:157
+#@ bp-docs
+msgid "Children: "
+msgstr "Kinderen:"
+
+#: includes/addon-history.php:117
+#, php-format
+#@ bp-docs
+msgid "You have successfully restored the Doc to the revision from %s."
+msgstr "U heeft de revisie van %s teruggeplaatst."
+
+#: includes/addon-history.php:165
+#, php-format
+#@ bp-docs
+msgid "Compare Revisions of &#8220;%1$s&#8221;"
+msgstr "Vergelijk de revisies van &#8220;%1$s&#8221;"
+
+#: includes/addon-history.php:166
+#: includes/addon-history.php:195
+#@ bp-docs
+msgid "Revisions"
+msgstr "Revisies"
+
+#: includes/addon-history.php:194
+#, php-format
+#@ bp-docs
+msgid "Revision for &#8220;%1$s&#8221; created on %2$s"
+msgstr "Revisie voor &#8220;%1$s&#8221; gemaakt op %2$s"
+
+#. translators: post revision: 1: when, 2: author name
+#: includes/addon-history.php:360
+#, php-format
+#@ default
+msgctxt "post revision"
+msgid "%1$s by %2$s"
+msgstr "%1$s door %2$s"
+
+#: includes/addon-history.php:387
+#@ bp-docs
+msgid "Restore"
+msgstr "Terugplaatsen"
+
+#: includes/addon-history.php:410
+#@ bp-docs
+msgid "Compare Revisions"
+msgstr "Vergelijk revisies"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:426
+#@ bp-docs
+msgid "Old"
+msgstr "Oud"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:427
+#@ bp-docs
+msgid "New"
+msgstr "Nieuw"
+
+#. translators: column name in revisons
+#: includes/addon-history.php:428
+#@ bp-docs
+msgid "Date Created"
+msgstr "Datum"
+
+#: includes/addon-history.php:429
+#: includes/templates/docs/docs-loop.php:28
+#@ bp-docs
+msgid "Author"
+msgstr "Auteur"
+
+#: includes/addon-history.php:430
+#@ bp-docs
+msgid "Actions"
+msgstr "Acties"
+
+#: includes/addon-history.php:458
+#: includes/integration-groups.php:735
+#: includes/templatetags.php:828
+#@ bp-docs
+msgid "History"
+msgstr "Historiek"
+
+#: includes/addon-taxonomy.php:86
+#@ bp-docs
+msgid "Docs Tags"
+msgstr "Document tags"
+
+#: includes/addon-taxonomy.php:87
+#@ bp-docs
+msgid "Docs Tag"
+msgstr "Document tags"
+
+#: includes/addon-taxonomy.php:212
+#, php-format
+#@ bp-docs
+msgid "Tags: %s"
+msgstr "Tags: %s"
+
+#: includes/addon-taxonomy.php:343
+#: includes/templates/docs/single/edit.php:90
+#@ bp-docs
+msgid "Tags"
+msgstr "Tags"
+
+#: includes/addon-taxonomy.php:395
+#, php-format
+#@ bp-docs
+msgid "You are viewing docs with the following tags: %s"
+msgstr "U bekijkt de document met volgende tags: %s"
+
+#: includes/addon-taxonomy.php:417
+#@ bp-docs
+msgid "Filter by tag"
+msgstr "Filteren op tag"
+
+#: includes/addon-taxonomy.php:423
+#, php-format
+#@ bp-docs
+msgid "(%d)"
+msgstr "(%d)"
+
+#: includes/addon-taxonomy.php:505
+#, php-format
+#@ bp-docs
+msgid "Docs tagged %s"
+msgstr "Documenten getagd met %s"
+
+#: includes/addon-taxonomy.php:564
+#@ bp-docs
+msgid "Most Used"
+msgstr "Meest gebruikt"
+
+#. translators: %s: add new taxonomy label
+#: includes/addon-taxonomy.php:588
+#, php-format
+#@ default
+msgid "+ %s"
+msgstr "+ %s"
+
+#: includes/admin.php:63
+#@ default
+msgid "Recent Comments"
+msgstr "Recente reacties"
+
+#: includes/admin.php:138
+#@ default
+msgid "No comments yet."
+msgstr "Nog geen reacties beschikbaar"
+
+#: includes/component.php:141
+#@ buddypress
+msgid "Search Docs..."
+msgstr "Documenten zoeken..."
+
+#: includes/component.php:232
+#, php-format
+#@ bp-docs
+msgid "Docs <span>%d</span>"
+msgstr "Documenten <span>%d</span>"
+
+#: includes/component.php:241
+#@ bp-docs
+msgid "My Docs "
+msgstr "Mijn documenten"
+
+#: includes/component.php:241
+#, php-format
+#@ default
+msgid "%s&#8217;s Docs"
+msgstr "Documenten van %s"
+
+#: includes/component.php:244
+#: includes/templatetags.php:1193
+#@ bp-docs
+msgid "Started By Me"
+msgstr "Door mij geplaatst"
+
+#: includes/component.php:244
+#, php-format
+#@ bp-docs
+msgid "Started By %s"
+msgstr "Geplaatst door %s"
+
+#: includes/component.php:253
+#: includes/templatetags.php:1194
+#@ bp-docs
+msgid "Edited By Me"
+msgstr "Aangepast door mij"
+
+#: includes/component.php:253
+#, php-format
+#@ bp-docs
+msgid "Edited By %s"
+msgstr "Aangepast door %s"
+
+#: includes/component.php:336
+#, php-format
+#@ bp-docs
+msgid "This doc is currently being edited by %s. To prevent overwrites, you cannot edit until that user has finished. Please try again in a few minutes."
+msgstr "Dit document wordt momenteel aangepast door %s. Om problemen te vermijden kan u dit niet aanpassen tot %s dit document weer heeft gesloten. Probeer binnen een aantal minuten opnieuw."
+
+#: includes/component.php:349
+#@ bp-docs
+msgid "You do not have permission to edit the doc."
+msgstr "U heeft onvoldoende rechten om dit document aan te passen."
+
+#: includes/component.php:365
+#@ bp-docs
+msgid "You do not have permission to create a Doc in this group."
+msgstr "U heeft onvoldoende rechten om een document aan te maken in deze groep."
+
+#: includes/component.php:381
+#@ bp-docs
+msgid "You do not have permission to view this Doc's history."
+msgstr "U heeft onvoldoende rechten om de historiek van dit document te bekijken."
+
+#: includes/component.php:405
+#@ bp-docs
+msgid "Lock successfully removed"
+msgstr "Beveiliging verwijderd"
+
+#: includes/component.php:439
+#@ bp-docs
+msgid "Doc successfully deleted!"
+msgstr "Document verwijderd"
+
+#: includes/component.php:441
+#@ bp-docs
+msgid "You do not have permission to delete that doc."
+msgstr "U heeft onvoldoende rechten om dit document te verwijderen."
+
+#: includes/component.php:562
+#, php-format
+#@ bp-docs
+msgid "%1$s commented on the doc %2$s"
+msgstr "%1$s heeft gereageerd op document %2$s"
+
+#: includes/component.php:661
+#@ bp-docs
+msgid "Show New Docs"
+msgstr "Toon nieuwe documenten"
+
+#: includes/component.php:662
+#@ bp-docs
+msgid "Show Doc Edits"
+msgstr "Toon recent aangepaste documenten"
+
+#: includes/component.php:663
+#@ bp-docs
+msgid "Show Doc Comments"
+msgstr "Toon reacties op documenten"
+
+#: includes/component.php:730
+#, php-format
+#@ bp-docs
+msgid "%1$s created the doc %2$s"
+msgstr "%1$s heeft document %2$s aangemaakt"
+
+#: includes/component.php:732
+#, php-format
+#@ bp-docs
+msgid "%1$s edited the doc %2$s"
+msgstr "%1$s heeft document %2$s aangepast"
+
+#: includes/component.php:923
+#@ bp-docs
+msgid "Still working?"
+msgstr "Nog aan het werk?"
+
+#: includes/functions.php:160
+#, php-format
+#@ bp-docs
+msgid "Docs associated with the %1$s %2$s"
+msgstr "Documenten met categorie %1$s %2$s"
+
+#: includes/functions.php:434
+#: includes/templatetags.php:1264
+#@ bp-docs
+msgid "Logged-in Users"
+msgstr "Ingelogde gebruikers"
+
+#: includes/functions.php:439
+#: includes/templatetags.php:1268
+#@ bp-docs
+msgid "The Doc author only"
+msgstr "Enkel de auteur van het document"
+
+#: includes/functions.php:447
+#: includes/templatetags.php:1263
+#@ bp-docs
+msgid "Anyone"
+msgstr "Iedereen"
+
+#: includes/integration-groups.php:409
+#, php-format
+#@ bp-docs
+msgid "Members of %s"
+msgstr "Leden van %s"
+
+#: includes/integration-groups.php:414
+#, php-format
+#@ bp-docs
+msgid "Admins and mods of %s"
+msgstr "Admins en beheerders van %s"
+
+#: includes/integration-groups.php:491
+#, php-format
+#@ bp-docs
+msgid "%1$s created the doc %2$s in the group %3$s"
+msgstr "%1$s heeft het document %2$s in groep %3$s aangemaakt"
+
+#: includes/integration-groups.php:493
+#, php-format
+#@ bp-docs
+msgid "%1$s edited the doc %2$s in the group %3$s"
+msgstr "%1$s heeft document %2$s in groep %3$s aangepast"
+
+#: includes/integration-groups.php:520
+#, php-format
+#@ bp-docs
+msgid "%1$s commented on the doc %2$s in the group %3$s"
+msgstr "%1$s heeft gereageerd op document %2$s in groep %3$s"
+
+#: includes/integration-groups.php:594
+#@ bp-docs
+msgid "Group"
+msgstr "Groep"
+
+#: includes/integration-groups.php:698
+#, php-format
+#@ bp-docs
+msgid "%s <span>%d</span>"
+msgstr "%s <span>%d</span>"
+
+#: includes/integration-groups.php:720
+#: includes/integration-groups.php:830
+#: includes/integration-groups.php:895
+#@ bp-docs
+msgid "Docs"
+msgstr "Documenten"
+
+#: includes/integration-groups.php:733
+#: includes/templates/docs/docs-header.php:30
+#: includes/templatetags.php:824
+#: includes/templatetags.php:1362
+#@ bp-docs
+msgid "Edit"
+msgstr "Aanpassen"
+
+#: includes/integration-groups.php:805
+#@ bp-docs
+msgid "You do not have permission to post comments on this doc."
+msgstr "U heeft onvoldoende rechten om te reageren op dit document."
+
+#: includes/integration-groups.php:839
+#@ bp-docs
+msgid "BuddyPress Docs group tab name:"
+msgstr "BuddyPress Documenten groep-tab-naam:"
+
+#: includes/integration-groups.php:996
+#@ bp-docs
+msgid "Save Changes"
+msgstr "Wijzigingen bewaren"
+
+#: includes/integration-groups.php:1021
+#@ buddypress
+msgid "There was an error saving, please try again"
+msgstr "Er is een fout opgetreden bij het bewaren, gelieve dit nogmaals te proberen."
+
+#: includes/integration-groups.php:1023
+#@ buddypress
+msgid "Settings saved successfully"
+msgstr "Instellingen bewaard"
+
+#: includes/integration-groups.php:1080
+#@ bp-docs
+msgid "BuddyPress Docs is a powerful tool for collaboration with members of your group. A cross between document editor and wiki, BuddyPress Docs allows you to co-author and co-edit documents with your fellow group members, which you can then sort and tag in a way that helps your group to get work done."
+msgstr "BuddyPress Documenten is een tool voor samenwerking met leden vanuw groep. Als kruising tussen documentbewerking en wiki laat het u samenwerken aan documenten met uw groepsgenoten, en deze documenten categoriseren op zinvolle wijze."
+
+#: includes/integration-groups.php:1083
+#@ bp-docs
+msgid "Enable BuddyPress Docs for this group"
+msgstr "BuddyPress Documenten voor volgende groepen activeren"
+
+#: includes/integration-groups.php:1087
+#@ bp-docs
+msgid "Options"
+msgstr "Opties"
+
+#: includes/integration-groups.php:1092
+#@ bp-docs
+msgid "Minimum role to create new Docs:"
+msgstr "Laagste rol om nieuwe documenten aan te maken:"
+
+#: includes/integration-groups.php:1097
+#@ bp-docs
+msgid "Group admin"
+msgstr "Groepsadministrator"
+
+#: includes/integration-groups.php:1098
+#@ bp-docs
+msgid "Group moderator"
+msgstr "Groepsmoderator"
+
+#: includes/integration-groups.php:1099
+#@ bp-docs
+msgid "Group member"
+msgstr "Groepslid"
+
+#: includes/integration-groups.php:1280
+#@ bp-docs
+msgid "View Docs"
+msgstr "Documenten bekijken"
+
+#: includes/query-builder.php:415
+#@ bp-docs
+msgid "Unknown error. Please try again."
+msgstr "Er is een onbekende fout opgetreden. Gelieve het opnieuw te proberen."
+
+#: includes/query-builder.php:430
+#@ bp-docs
+msgid "You are not allowed to associate a Doc with that group."
+msgstr "U heeft onvoldoende rechten om een document aan deze groep toe te wijzen."
+
+#: includes/query-builder.php:440
+#@ bp-docs
+msgid "Both the title and the content fields are required."
+msgstr "Zowel de titel- als de inhoudsvelden moeten ingevuld zijn."
+
+#: includes/query-builder.php:461
+#@ bp-docs
+msgid "There was an error when creating the doc."
+msgstr "Er is een fout opgetreden bij het aanmaken van dit document."
+
+#: includes/query-builder.php:470
+#@ bp-docs
+msgid "Doc successfully created!"
+msgstr "Document aangemaakt"
+
+#: includes/query-builder.php:490
+#@ bp-docs
+msgid "There was an error when saving the doc."
+msgstr "Er is een fout opgetreden bij het opslaan van dit document."
+
+#: includes/query-builder.php:499
+#@ bp-docs
+msgid "You idled a bit too long while in Edit mode. In order to allow others to edit the doc you were working on, your changes have been autosaved. Click the Edit button to return to Edit mode."
+msgstr "Uw aanpassingen zijn automatisch opgeslagen, en uw sessie is verlopen. Klik opnieuw op Aanpassen om verdere aanpassingen te maken."
+
+#: includes/query-builder.php:502
+#@ bp-docs
+msgid "Doc successfully edited!"
+msgstr "Document aangepast"
+
+#: includes/query-builder.php:530
+#@ bp-docs
+msgid "Your Doc was successfully saved, but some of your access settings have been changed to match the Doc's permissions."
+msgstr "Uw document is opgeslagen, maar sommige van uw instellingen zijn aangepast om overeen te komen met de instellingen van het document."
+
+#: includes/templates/docs/docs-header.php:25
+#: includes/templatetags.php:821
+#@ bp-docs
+msgid "Read"
+msgstr "Lezen"
+
+#: includes/templates/docs/docs-loop.php:7
+#@ bp-docs
+msgid "Search"
+msgstr "Zoeken"
+
+#: includes/templates/docs/docs-loop.php:24
+#: includes/templates/docs/single/edit.php:32
+#@ bp-docs
+msgid "Title"
+msgstr "Titel"
+
+#: includes/templates/docs/docs-loop.php:32
+#@ bp-docs
+msgid "Created"
+msgstr "Aangemaakt"
+
+#: includes/templates/docs/docs-loop.php:36
+#@ bp-docs
+msgid "Last Edited"
+msgstr "Aangepast"
+
+#: includes/templates/docs/docs-loop.php:79
+#, php-format
+#@ bp-docs
+msgid "Viewing %1$s-%2$s of %3$s docs"
+msgstr "%1$s-%2$s van %3$s documenten bekijken"
+
+#: includes/templates/docs/docs-loop.php:90
+#, php-format
+#@ bp-docs
+msgid "There are no docs for this view. Why not <a href=\"%s\">create one</a>?"
+msgstr "Er zijn hier geen documenten te vinden. Wil u er eentje <a href=\"%s\">aanmaken</a>?"
+
+#: includes/templates/docs/docs-loop.php:92
+#@ bp-docs
+msgid "There are no docs for this view."
+msgstr "Er zijn hier geen documenten te vinden."
+
+#: includes/templates/docs/index.php:23
+#@ bp-docs
+msgid "Docs Directory"
+msgstr "Documenten"
+
+#: includes/templates/docs/single/comments.php:22
+#, php-format
+#@ bp-docs
+msgid "Discussion (%d)"
+msgstr "Discussie (%d)"
+
+#: includes/templates/docs/single/comments.php:44
+#@ bp-docs
+msgid "There are no comments for this doc yet."
+msgstr "Er zijn nog geen reacties voor dit document."
+
+#: includes/templates/docs/single/comments.php:53
+#@ bp-docs
+msgid "Comment display has been disabled on this doc."
+msgstr "Reacties zijn uitgeschakeld voor dit document."
+
+#: includes/templates/docs/single/comments.php:62
+#@ bp-docs
+msgid "Comment posting has been disabled on this doc."
+msgstr "Reacties zijn uitgeschakeld voor dit document."
+
+#: includes/templates/docs/single/edit.php:21
+#@ bp-docs
+msgid "You have been idle for <span id=\"idle-warning-time\"></span>"
+msgstr "U was inactief gedurende <span id=\"idle-warning-time\"></span>"
+
+#: includes/templates/docs/single/edit.php:38
+#@ bp-docs
+msgid "Permalink"
+msgstr "Permalink"
+
+#: includes/templates/docs/single/edit.php:44
+#@ bp-docs
+msgid "Content"
+msgstr "Inhoud"
+
+#: includes/templates/docs/single/edit.php:63
+#@ bp-docs
+msgid "Associated Group"
+msgstr "Toegewezen groepen"
+
+#: includes/templates/docs/single/edit.php:77
+#@ bp-docs
+msgid "Access"
+msgstr "Toegang"
+
+#: includes/templates/docs/single/edit.php:96
+#@ bp-docs
+msgid "Tags are words or phrases that help to describe and organize your Docs."
+msgstr "Tags zijn woorden of zinnen die helpen om uw documenten te beschrijven en organiseren."
+
+#: includes/templates/docs/single/edit.php:97
+#@ bp-docs
+msgid "Separate tags with commas (for example: <em>orchestra, snare drum, piccolo, Brahms</em>)"
+msgstr "Gelieve meerdere tags te scheiden met komma's (bijvoorbeeld: <em>Tibhar, JOOLA, XIOM</em>)"
+
+#: includes/templates/docs/single/edit.php:111
+#@ bp-docs
+msgid "Parent"
+msgstr "Ouders"
+
+#: includes/templates/docs/single/edit.php:117
+#@ bp-docs
+msgid "Select a parent for this Doc."
+msgstr "Kies een ouder voor dit document."
+
+#: includes/templates/docs/single/edit.php:119
+#@ bp-docs
+msgid "(Optional) Assigning a parent Doc means that a link to the parent will appear at the bottom of this Doc, and a link to this Doc will appear at the bottom of the parent."
+msgstr "(Optioneel) Een ouder toewijzen betekent dat er onderaan dit document een link naar de ouder zal verschijnen, en vice versa."
+
+#: includes/templates/docs/single/edit.php:138
+#@ bp-docs
+msgid "Save"
+msgstr "Bewaren"
+
+#: includes/templates/docs/single/edit.php:138
+#@ bp-docs
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: includes/templates/docs/single/edit.php:169
+#@ bp-docs
+msgid "Are you still there?"
+msgstr "Bent u er nog?"
+
+#: includes/templates/docs/single/edit.php:171
+#@ bp-docs
+msgid "In order to prevent overwriting content, only one person can edit a given doc at a time. For that reason, you must periodically ensure the system that you're still actively editing. If you are idle for more than 30 minutes, your changes will be auto-saved, and you'll be sent out of Edit mode so that others can access the doc."
+msgstr "Om het overschrijven van inhoud te vermijden, kan er maar één persoon tegelijk aan een document werken. Daarom moet u het systeem af en toe laten weten dat u nog actief bent. Bij een inactiviteit van 30 minuten worden uw wijzigingen bewaard, en wordt u automatisch uitgelogd."
+
+#: includes/templates/docs/single/edit.php:173
+#@ bp-docs
+msgid "I'm still editing!"
+msgstr "Ik ben nog actief!"
+
+#: includes/templates/docs/single/history.php:7
+#@ bp-docs
+msgid "Click on a revision date from the list below to view that revision."
+msgstr "Klik op de revisie-datum om deze revisie te bekijken."
+
+#: includes/templates/docs/single/history.php:9
+#@ bp-docs
+msgid "Alternatively, you can compare two revisions by selecting them in the 'Old' and 'New' columns, and clicking 'Compare Revisions'."
+msgstr "U kan ook twee revisies vergelijken door deze te selecteren in de 'Oud' en 'Nieuw' kolom, en dan op 'Revisies vergelijken' te klikken."
+
+#: includes/templates/docs/single/history.php:20
+#, php-format
+#@ bp-docs
+msgid "Older: %s"
+msgstr "Ouder: %s"
+
+#: includes/templates/docs/single/history.php:21
+#, php-format
+#@ bp-docs
+msgid "Newer: %s"
+msgstr "Nieuwer: %s"
+
+#: includes/templates/docs/single/history.php:28
+#, php-format
+#@ bp-docs
+msgid "You are currently viewing a revision titled \"%1$s\", saved on %2$s by %3$s"
+msgstr "Dit is revisie \"%1$s\", bewaard op %2$s door %3$s"
+
+#: includes/templates/docs/single/history.php:50
+#@ bp-docs
+msgid "These revisions are identical."
+msgstr "Deze revisies zijn identiek."
+
+#: includes/templates/docs/single/index.php:8
+#@ bp-docs
+msgid "Locked"
+msgstr "Beveiligd"
+
+#: includes/templates/docs/single/index.php:8
+#@ bp-docs
+msgid "(click for more info)"
+msgstr "(klik hier voor meer info)"
+
+#: includes/templates/docs/single/index.php:10
+#, php-format
+#@ bp-docs
+msgid "This doc is currently being edited by %1$s. In order to prevent edit conflicts, only one user can edit a doc at a time."
+msgstr "Dit document wordt momenteel aangepast door %1$s. Om overschrijvingen te vermijden, kan er maar één gebruiker tegelijk een document aanpassen."
+
+#: includes/templates/docs/single/index.php:13
+#, php-format
+#@ bp-docs
+msgid "Please try again in a few minutes. Or, as an admin, you can <a href=\"%s\">force cancel</a> the edit lock."
+msgstr "Gelieve binnen enkele minuten opnieuw te proberen. Of, als admin, kan u de beveiliging <a href=\"%s\">forceren</a>."
+
+#: includes/templates/docs/single/index.php:15
+#@ bp-docs
+msgid "Please try again in a few minutes."
+msgstr "Gelieve binnen enkele minuten opnieuw te proberen."
+
+#: includes/templates/docs/single/index.php:39
+#@ bp-docs
+msgid "No Doc by this name exists."
+msgstr "Er is geen document met deze naam gevonden."
+
+#: includes/templates/docs/single/index.php:41
+#, php-format
+#@ bp-docs
+msgid "<a href=\"%1$s\">View all Docs in this group</a> or <a href=\"%2$s\">create a new Doc</a>."
+msgstr "<a href=\"%1$s\">Alle documenten in deze groep bekijken</a> of <a href=\"%2$s\">een nieuw document aanmaken</a>."
+
+#: includes/templatetags-edit.php:113
+#@ bp-docs
+msgid "(no parent)"
+msgstr "(geen ouder)"
+
+#: includes/templatetags.php:185
+#@ bp-docs
+msgid "You are viewing <strong>all</strong> docs."
+msgstr "U bekijkt <strong>alle</strong> documenten."
+
+#: includes/templatetags.php:194
+#, php-format
+#@ bp-docs
+msgid "<strong><a href=\"%s\" title=\"View All Docs\">View All Docs</a></strong>"
+msgstr "<strong><a href=\"%s\" title=\"Alle documenten bekijken\">Alle documenten bekijken</a></strong>"
+
+#: includes/templatetags.php:229
+#, php-format
+#@ bp-docs
+msgid "You are searching for docs containing the term <em>%s</em>"
+msgstr "U zoekt naar documenten met de term <em>%s</em>"
+
+#: includes/templatetags.php:670
+#@ bp-docs
+msgid "Which group should this Doc be associated with?"
+msgstr "Aan welke groep moet dit document toegewezen worden?"
+
+#: includes/templatetags.php:671
+#@ bp-docs
+msgid "(Optional) Note that the Access settings available for this Doc may be limited by the privacy settings of the group you choose."
+msgstr "(Optioneel) De beschikbaarheid van dit document kan beperkt worden door de instellingen van de groep waaraan u dit document toewijst."
+
+#: includes/templatetags.php:676
+#@ bp-docs
+msgid "None"
+msgstr "Geen"
+
+#: includes/templatetags.php:723
+#, php-format
+#@ bp-docs
+msgid "%s member"
+msgstr "%s leden"
+
+#: includes/templatetags.php:723
+#, php-format
+#@ bp-docs
+msgid "%s members"
+msgstr "%s leden"
+
+#: includes/templatetags.php:729
+#, php-format
+#@ bp-docs
+msgid "%s Group"
+msgstr "%s groepen"
+
+#: includes/templatetags.php:756
+#@ bp-docs
+msgid "Who can read this doc?"
+msgstr "Wie kan dit document bekijken?"
+
+#: includes/templatetags.php:760
+#@ bp-docs
+msgid "Who can edit this doc?"
+msgstr "Wie kan dit document aanpassen?"
+
+#: includes/templatetags.php:764
+#@ bp-docs
+msgid "Who can read comments on this doc?"
+msgstr "Wie kan reacties op dit document lezen?"
+
+#: includes/templatetags.php:768
+#@ bp-docs
+msgid "Who can post comments on this doc?"
+msgstr "Wie kan reacties op dit document plaatsen?"
+
+#: includes/templatetags.php:772
+#@ bp-docs
+msgid "Who can view the history of this doc?"
+msgstr "Wie kan de historiek van dit document raadplegen?"
+
+#: includes/templatetags.php:1029
+#@ default
+msgid "&laquo;"
+msgstr "&laquo;"
+
+#: includes/templatetags.php:1030
+#@ default
+msgid "&raquo;"
+msgstr "&raquo;"
+
+#: includes/templatetags.php:1187
+#@ bp-docs
+msgid "All Docs"
+msgstr "Alle documenten"
+
+#: includes/templatetags.php:1191
+#, php-format
+#@ bp-docs
+msgid "%s's Docs"
+msgstr "Documenten van %s"
+
+#: includes/templatetags.php:1197
+#@ bp-docs
+msgid "My Groups"
+msgstr "Mijn groepen"
+
+#: includes/templatetags.php:1216
+#@ bp-docs
+msgid "Create New Doc"
+msgstr "Nieuw document aanmaken"
+
+#: includes/templatetags.php:1255
+#, php-format
+#@ bp-docs
+msgid "Group: %s"
+msgstr "Groep: %s"
+
+#: includes/templatetags.php:1265
+#@ bp-docs
+msgid "My Friends"
+msgstr "Mijn vrienden"
+
+#: includes/templatetags.php:1266
+#, php-format
+#@ bp-docs
+msgid "Members of: %s"
+msgstr "Leden van: %s"
+
+#: includes/templatetags.php:1267
+#, php-format
+#@ bp-docs
+msgid "Admins and mods of the group %s"
+msgstr "Admins en moderators van %s"
+
+#: includes/templatetags.php:1269
+#@ bp-docs
+msgid "Just Me"
+msgstr "Enkel ik"
+
+#: includes/templatetags.php:1273
+#@ bp-docs
+msgid "The Doc author only (that's you!)"
+msgstr "Enkel de auteur (en dat bent u!)"
+
+#: includes/templatetags.php:1280
+#, php-format
+#@ bp-docs
+msgid "This Doc can be read by: <strong>%s</strong>"
+msgstr "Dit document kan gelezen worden door <strong>%s</strong>"
+
+#: includes/templatetags.php:1284
+#, php-format
+#@ bp-docs
+msgid "This Doc can be edited by: <strong>%s</strong>"
+msgstr "Dit document kan aangepast worden door <strong>%s</strong>"
+
+#: includes/templatetags.php:1288
+#, php-format
+#@ bp-docs
+msgid "Comments are visible to: <strong>%s</strong>"
+msgstr "Reacties zijn zichtbaar voor <strong>%s</strong>"
+
+#: includes/templatetags.php:1292
+#, php-format
+#@ bp-docs
+msgid "Comments can be posted by: <strong>%s</strong>"
+msgstr "Reacties kunnen geplaatst worden door <strong>%s</strong>"
+
+#: includes/templatetags.php:1296
+#, php-format
+#@ bp-docs
+msgid "History can be viewed by: <strong>%s</strong>"
+msgstr "Historiek is zichtbaar voor <strong>%s</strong>"
+
+#: includes/templatetags.php:1338
+#@ bp-docs
+msgid "Private"
+msgstr "Privé"
+
+#: includes/templatetags.php:1341
+#@ bp-docs
+msgid "Public"
+msgstr "Publiek"
+
+#: includes/templatetags.php:1344
+#@ bp-docs
+msgid "Limited"
+msgstr "Beperkt"
+
+#: includes/templatetags.php:1348
+#, php-format
+#@ bp-docs
+msgid "Access: <strong>%s</strong>"
+msgstr "Toegang: <strong>%s</strong>"
+
+#: includes/templatetags.php:1349
+#@ bp-docs
+msgid "Show Details"
+msgstr "Details tonen"
+
+#: includes/templatetags.php:1364
+#@ bp-docs
+msgid "Hide Details"
+msgstr "Details verbergen"
+
+#: includes/upgrade.php:40
+#@ bp-docs
+msgid "Upgrade complete!"
+msgstr "Upgrade afgerond!"
+
+#: includes/upgrade.php:61
+#: includes/upgrade.php:99
+#@ bp-docs
+msgid "Thanks for updating BuddyPress Docs. We need to run a few quick operations before your new Docs is ready to use."
+msgstr "Bedankt voor het updaten van BuddyPress Docs. We moeten nog enkele snelle aanpassingen doen voor uw nieuwe Docs helemaal gebruiksklaar is."
+
+#: includes/upgrade.php:62
+#@ bp-docs
+msgid "Click here to start the upgrade."
+msgstr "Klik hier om de upgrade te starten."
+
+#: includes/upgrade.php:70
+#: includes/upgrade.php:91
+#@ bp-docs
+msgid "BuddyPress Docs Upgrade"
+msgstr "BuddyPress Docs Upgrade"
+
+#: includes/upgrade.php:71
+#@ bp-docs
+msgid "Upgrade"
+msgstr "Upgrade"
+
+#: includes/upgrade.php:101
+#@ bp-docs
+msgid "Start the upgrade"
+msgstr "Upgrade starten"
+
+#: includes/upgrade.php:107
+#@ bp-docs
+msgid "Migrating..."
+msgstr "Overzetten..."
+
+#: includes/upgrade.php:138
+#, php-format
+#@ bp-docs
+msgid "Migration complete! <a href=\"%s\">Dashboard</a>"
+msgstr "Overzetten volledig! <a href=\"%s\">Dashboard</a>"
+
+#: includes/upgrade.php:243
+#, php-format
+#@ bp-docs
+msgid "Docs associated with the group %s"
+msgstr "Documenten toegewezen aan groep %s"
+
+#: includes/upgrade.php:257
+#@ bp-docs
+msgid "Group terms migrated. Now migrating Doc access terms...."
+msgstr "Categorieën overgezet. Nu de toegangsvoorwaarden..."
+
+#: includes/upgrade.php:305
+#, php-format
+#@ bp-docs
+msgid "Migrated %s of %s Docs. Migrating...."
+msgstr "%s van %s documenten overgezet. Verder overzetten..."

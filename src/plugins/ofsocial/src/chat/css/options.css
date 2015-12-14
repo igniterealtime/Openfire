@@ -1,0 +1,97 @@
+/*
+
+Jappix - An open social platform
+This is the options CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 26/04/11
+
+*/
+
+#options label {
+	width: 190px;
+	font-size: 0.94em;
+}
+
+#options .forms {
+	width: 610px;
+	height: 328px;
+	margin: 15px 15px 15px 15px;
+	float: left;
+}
+
+#options .forms select {
+	margin-top: -3px;
+	min-width: 120px;
+	float: left;
+}
+
+#options .forms a.linked {
+	font-size: 0.9em;
+	float: left;
+}
+
+#options fieldset.privacy {
+	display: none;
+}
+
+#options .sub-ask-delete, #options .sub-ask-pass, #options .sub-ask-pass-success {
+	display: none;
+}
+
+#options .sub-ask {
+	display: none;
+	width: 592px;
+	padding: 8px;
+	float: left;
+	border: 1px #879da2 dotted;
+	background: #cbdde1;
+}
+
+#options .sub-ask-top {
+	font-size: 0.9em;
+	margin-top: -3px;
+}
+
+#options .sub-ask-title {
+	margin-bottom: 4px;
+	float: left;
+}
+
+#options .sub-ask-close {
+	float: right;
+}
+
+#options .sub-ask-close:hover {
+	cursor: pointer;
+}
+
+#options .sub-ask-content {
+	clear: both;
+	height: 25px;
+	font-size: 0.9em;
+	border-top: 1px #416972 solid;
+	padding: 12px 0;
+}
+
+#options .sub-ask-content label {
+	width: 125px;
+}
+
+#options .sub-ask-content input {
+	width: 125px;
+}
+
+#options .sub-ask-bottom {
+	clear: both;
+	font-size: 0.9em;
+	float: right;
+	text-decoration: underline;
+}
+
+#options .sub-ask-bottom:hover {
+	cursor: pointer;
+}

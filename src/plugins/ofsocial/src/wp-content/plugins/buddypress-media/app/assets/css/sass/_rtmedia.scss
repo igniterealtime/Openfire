@@ -1,0 +1,403 @@
+// rtMedia Defaults
+
+.rtmedia-container {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+
+	* {
+		&,
+		&:before,
+			&:after {
+			-webkit-box-sizing: inherit;
+			-moz-box-sizing: inherit;
+			box-sizing: inherit;
+		}
+
+	}
+}
+
+
+.rtmedia-list {
+
+	// Increased specificity with double class to overwrite defualt styles. 2012
+	&.rtmedia-list {
+		list-style: none;
+		margin: 0; // theme 2015/2014
+		padding: 0; // theme 2013
+	}
+}
+
+.rtmedia-list-item > a {
+    border: 0;
+    display: inline-block;
+	text-decoration: none; // 2012
+
+	&:focus {
+		outline: 0; // theme 2015
+	}
+
+	& + p {
+		display: none;
+	}
+
+	.rtmedia-item-thumbnail {
+		img {
+			display: inline-block; // Remove extra white space below image.
+		}
+	}
+}
+
+// Uploader
+#rtmedia-uploader-form .rtm-plupload-list, #rtmedia_uploader_filelist {
+	list-style: none;
+	margin-left: -4px;
+	margin-right: -4px;
+	padding-left: 0;
+	padding-top: 10px;
+
+	li {
+		background: $light;
+		float: left;
+		margin: 4px;
+		max-width: 110px;
+		padding: 5px;
+		position: relative;
+
+        &.upload-error {
+            border: 1px solid red;
+        }
+	}
+    
+    img {
+        max-width: 100%;
+    }
+
+	canvas {
+		display: block;
+		max-width: 100%;
+	}
+}
+
+.rtm-plupload-list {
+	&:empty {
+		display: none;
+	}
+}
+
+.rtmedia-uploader-div,
+.rtmedia-uploader {
+	clear: both;
+}
+
+button#rtmedia-add-media-button-post-update {
+	padding: 3px 6px;
+
+	.dashicons {
+		font-size: 18px;
+		line-height: 20px;
+	}
+}
+
+.plupload_file_name {
+	font-size: 11px;
+	font-weight: bold;
+	line-height: 1.2;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plupload_file_size {
+	color: #666;
+	font-size: 10px;
+}
+
+.plupload_file_action {
+	background: $light;
+    position: absolute;
+	height: 18px;
+    right: 0;
+    top: 0;
+	width: 18px;
+    z-index: 10;
+
+	.dashicons {
+		color: $error;
+		cursor: pointer;
+		font-size: 16px;
+		height: 18px;
+		padding: 2px 1px;
+		width: 18px;
+	}
+}
+
+.plupload_file_status {
+    height: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.plupload_file_progress {
+	background: $success;
+	height: 4px;
+    position: absolute;
+    top: 0;
+}
+
+.rtm-form {
+	.rtm-field-wrap {
+		margin-bottom: 20px;
+	}
+}
+
+// Pagination
+.rtmedia_next_prev {
+	padding: 0 10px;
+}
+
+.rtm-page-number {
+	float: left;
+
+	.rtm-label {
+		line-height: 30px;
+	}
+
+	.rtm-label,
+	.rtm-go-to-num,
+	.rtmedia-page-link {
+		float: left;
+	}
+}
+
+.rtm-pagination {
+
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: small;
+    margin: 0;
+    position: relative;
+    display: block;
+    float: left;
+    width: 100%;
+    padding: 10px 0;
+
+	.rtm-paginate {
+
+		float: right;
+		font-size: 15px;
+
+		a, span {
+			display: inline-block;
+			line-height: 1;
+			margin: 0 2px;
+			padding: 8px;
+			text-decoration: none; //2012
+		}
+
+		a.rtmedia-page-link {
+			padding: 8px;
+		}
+	}
+
+	.dashicons {
+		font-size: 14px;
+		height: auto;
+		line-height: 1.2;
+		margin: 0;
+		padding: 0;
+		width: auto;
+	}
+}
+
+#rtmedia_go_to_num {
+	font-size: 16px;
+	margin: 0 5px;
+	padding: 4px 5px;
+	width: 80px;
+}
+
+.rtmedia-upload-not-allowed {
+	background-color: #fcf8e3;
+    border-bottom: 1px solid #EEE;
+    color: #c09853;
+	margin-bottom: 20px;
+    padding: 10px 15px;
+}
+
+.plupload_file_name {
+	position: relative;
+
+	.dashicons {
+		background: $light;
+		color: $error;
+		cursor: pointer;
+		font-size: 14px;
+		height: auto;
+		padding: 0 2px 0 5px;
+		position: absolute;
+		right: 0;
+		top: 0;
+		width: auto;
+	}
+
+	.dashicons-yes {
+		color: $success;
+	}
+}
+
+// Gallery Items on hover actions
+.rtmedia-gallery-item-actions {
+	background-color: rgba(0, 0, 0, 0.6);
+	opacity: 0;
+	position: absolute;
+	text-align: center;
+	@include transition(all ease-in-out 0.4s);
+	width: 100%;
+	z-index: 9;
+
+	// Image container
+	a {
+		border: 0;
+		box-shadow: 0 0 0;
+		color: #fff;
+		display: inline-block;
+		font-size: 12px;
+		outline: none;
+		padding: 4px;
+		text-align: left;
+		text-decoration: none;
+		text-transform: uppercase;
+	}
+
+	// Icons
+	.dashicons {
+		font-size: 17px;
+		margin-right: 2px;
+		position: relative;
+		top: 3px;
+	}
+
+	.dashicons-trash {
+		font-size: 15px;
+	}
+
+}
+
+// Hover actions
+.rtm-pro-allow-action {
+    .rtmedia-list-item:hover {
+		.rtmedia-gallery-item-actions {
+			opacity: 1;
+		}
+
+		.rtmedia-bulk-edit-item-wrap + .rtmedia-gallery-item-actions {
+			opacity: 0;
+		}
+	}
+}
+
+// Footer Link
+.rtmedia-footer-link {
+	clear: both;
+	overflow: hidden;
+	padding: 16px 0;
+	position: relative;
+	text-align: center;
+}
+
+//table form Media list edit tab
+
+.rtmedia-text-link-decoration {
+    text-decoration: none;
+    &:hover { 
+        text-decoration: underline;
+    }
+}
+
+.rtmedia-container .rtmedia-edit-list-media-table {
+    max-height: 300px;
+    overflow-y: auto;
+    
+    thead {
+        tr {
+            background-color: #50A1D7;
+        }
+        
+        th {
+            text-align: center; 
+            color: #FFF; 
+        }
+    }
+    
+    tbody {
+        tr {
+            &:nth-child(odd) { 
+                background: #FFF; 
+            }
+        }
+        
+        tr {
+            &:nth-child(even) { 
+                background: #DCDCDC; 
+            }
+        }
+    }
+}
+
+table.rtmedia-edit-media-list {
+    tr {
+        line-height: 30px;
+        th { 
+            color: #333; 
+            padding: 4px 10px; 
+            line-height: 20px; 
+        }
+        .rtm-edit-media-list-heading {
+            width: 44%;
+        }
+        .rtm-edit-media-list-title-heading {
+            width: 56%;
+        }
+        
+        td.rtm-edit-media-list-edit, 
+        td.rtm-edit-media-list-delete, 
+        td.rtm-edit-media-list-title {
+            padding: 4px; 
+            font-size: 14px;
+            line-height: 24px;
+            
+            a,span { 
+                @extend .rtmedia-text-link-decoration; 
+            }
+        }
+        
+        td.rtm-edit-media-list-title {
+           
+            a { 
+                text-decoration: none; 
+                color: #333; 
+            }
+        }
+        
+        td.rtm-edit-media-list-edit {
+            text-align: center;
+            
+            a { 
+                color: #333; 
+                font-size: 13px; 
+            }
+        }
+        
+        td.rtm-edit-media-list-delete {
+            text-align: center;
+            
+            span { 
+                color: #FF0000; 
+                cursor: pointer; 
+                font-size: 13px;
+            }
+        }
+    }
+}

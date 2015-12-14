@@ -1,0 +1,61 @@
+#buddypress {
+
+	.mejs-controls {
+
+		button {
+			padding: 4px 8px;
+			border: none;
+			background: rgba(0, 0, 0, 0) url('../../../lib/media-element/controls.png') no-repeat;
+		}
+
+		.mejs-play {
+			button {
+				background-position: 0 0;
+			}
+		}
+
+		.mejs-pause {
+			button {
+				background-position: 0 -16px;
+			}
+		}
+
+		.mejs-unmute {
+			button {
+				background-position: -16px 0;
+			}
+		}
+
+		.mejs-mute {
+			button {
+				background-position: -16px -16px;
+			}
+		}
+
+		.mejs-fullscreen-button {
+			button {
+				background-position: -32px 0;
+			}
+		}
+
+		.mejs-unfullscreen {
+			button {
+				background-position: -32px -16px;
+			}
+		}
+	}
+}
+
+.mejs-container .mejs-controls .mejs-time {
+	padding: 10px 3px 0;content: '';
+}
+
+.rtmedia-activity-container, .rtmedia-media {
+	.mejs-playpause-button.mejs-play, .mejs-playpause-button.mejs-pause, .mejs-volume-button.mejs-mute, .mejs-fullscreen-button{
+		button {
+			&:before {
+				content: '';
+			}
+		}
+	}
+}

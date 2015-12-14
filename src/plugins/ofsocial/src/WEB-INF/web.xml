@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+  
+  <display-name>ofsocial</display-name>
+  <description>Openfire Social</description>
+
+<init-param>
+	<param-name>logLevel</param-name>
+	<param-value>slf4j</param-value>
+</init-param>  
+  
+<filter>
+   <filter-name>UrlRewriteFilter</filter-name>
+   <filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</filter-class> 
+</filter>
+
+<filter-mapping>
+   <filter-name>UrlRewriteFilter</filter-name>
+   <url-pattern>/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+    <dispatcher>FORWARD</dispatcher>   
+</filter-mapping>
+
+  <servlet>
+    <servlet-name>Quercus Servlet</servlet-name>
+    <servlet-class>com.caucho.quercus.servlet.QuercusServlet</servlet-class>
+
+    <!--
+      Specifies the encoding Quercus should use to read in PHP scripts.
+    -->
+    <!--
+    <init-param>
+      <param-name>script-encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+    -->
+
+    <!--
+      Tells Quercus to use the following JDBC database and to ignore the
+      arguments of mysql_connect().
+    -->
+    <!--
+    <init-param>
+      <param-name>database</param-name>
+      <param-value>jdbc/test</param-value>
+    </init-param>
+    -->
+
+    <!--
+    <init-param>
+      <param-name>ini-file</param-name>
+      <param-value>WEB-INF/php.ini</param-value>
+    </init-param>
+    -->
+    
+    <!--
+      Location of the license to enable php to java compilation.
+    -->
+    <!--
+    <init-param>
+      <param-name>license-directory</param-name>
+      <param-value>WEB-INF/licenses</param-value>
+    </init-param>
+    --> 
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>Quercus Servlet</servlet-name>
+    <url-pattern>*.php</url-pattern>
+  </servlet-mapping>
+
+  <welcome-file-list>
+    <welcome-file>index.php</welcome-file>
+  </welcome-file-list>
+  
+</web-app>

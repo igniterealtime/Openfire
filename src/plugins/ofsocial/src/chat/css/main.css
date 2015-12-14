@@ -1,0 +1,128 @@
+/*
+
+Jappix - An open social platform
+This is the main CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 02/05/11
+
+*/
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font: normal 0.9em helvetica, "Lucida Grande", "Lucida Sans", "Lucida Sans Unicode", Arial, sans-serif;
+	text-shadow: 0 0 5px white;
+}
+
+h1 {
+	margin-bottom: 15px;
+}
+
+a {
+	text-decoration: none;
+	color: black;
+	outline-style: none;
+}
+
+a:hover,
+a:focus {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+legend {
+	color: black;
+}
+
+input,
+textarea {
+	background-color: white;
+	border: 1px solid #636363;
+	font-size: 0.95em;
+	padding: 2px;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	box-shadow: inset 0 3px 10px #dcdcdc;
+	-moz-box-shadow: inset 0 3px 10px #dcdcdc;
+	-webkit-box-shadow: inset 0 3px 10px #dcdcdc;
+}
+
+textarea {
+	font-size: 1.1em;
+}
+
+input:focus,
+input[type=submit]:hover,
+textarea:focus {
+	border: 1px solid #e1a014;
+	box-shadow: inset 0 3px 10px #edd9bc;
+	-moz-box-shadow: inset 0 3px 10px #edd9bc;
+	-webkit-box-shadow: inset 0 3px 10px #edd9bc;
+}
+
+input[type=submit] {
+	cursor: pointer;
+}
+
+input[type=submit]:active {
+	box-shadow: inset 0 3px 15px #e1a753;
+	-moz-box-shadow: inset 0 3px 15px #e1a753;
+	-webkit-box-shadow: inset 0 3px 15px #e1a753;
+}
+
+input[disabled],
+textarea[disabled] {
+	background-color: #f3f3f3;
+	border: 1px solid #989898;
+}
+
+input:placeholder {
+	color: #67787c !important;
+}
+
+input:-moz-placeholder {
+	color: #67787c !important;
+}
+
+input::-webkit-input-placeholder {
+	color: #67787c !important;
+}
+
+input.placeholder {
+	color: #67787c !important;
+}
+
+input[type=checkbox] {
+	margin-top: 2px;
+}
+
+input[type=checkbox],
+input[type=radio] {
+	background: transparent none !important;
+	border: 0 none !important;
+}
+
+.please-complete,
+.please-complete:hover,
+.please-complete:focus {
+	border: 1px #ac2525 solid !important;
+	box-shadow: inset 0 3px 10px #f39c9c !important;
+	-moz-box-shadow: inset 0 3px 10px #f39c9c !important;
+	-webkit-box-shadow: inset 0 3px 10px #f39c9c !important;
+}
+
+.hidden {
+	display: none !important;
+}
+
+.clear {
+	clear: both !important;
+}

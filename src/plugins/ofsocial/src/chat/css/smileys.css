@@ -1,0 +1,196 @@
+/*
+
+Jappix - An open social platform
+This is the smileys CSS stylesheet for Jappix
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 16/02/11
+
+*/
+
+.emoticon {
+	width: 16px;
+	height: 16px;
+}
+
+a.emoticon {
+	margin: 2px;
+	float: left;
+}
+
+a.emoticon:hover,
+a.emoticon:focus {
+	opacity: 0.8;
+}
+
+a.emoticon:active {
+	opacity: 0.7;
+}
+
+img.emoticon {
+	border: 0 none;
+	vertical-align: bottom;
+}
+
+.emoticon-biggrin {
+	background-position: 0 0;
+}
+
+.emoticon-devil {
+	background-position: -16px 0;
+}
+
+.emoticon-coolglasses {
+	background-position: -32px 0;
+}
+
+.emoticon-tongue {
+	background-position: -48px 0;
+}
+
+.emoticon-smile {
+	background-position: -64px 0;
+}
+
+.emoticon-wink {
+	background-position: -80px 0;
+}
+
+.emoticon-blush {
+	background-position: -96px 0;
+}
+
+.emoticon-stare {
+	background-position: -112px 0;
+}
+
+.emoticon-frowning {
+	background-position: -128px 0;
+}
+
+.emoticon-oh {
+	background-position: -144px 0;
+}
+
+.emoticon-unhappy {
+	background-position: -160px 0;
+}
+
+.emoticon-cry {
+	background-position: -176px 0;
+}
+
+.emoticon-angry {
+	background-position: -192px 0;
+}
+
+.emoticon-puke {
+	background-position: -208px 0;
+}
+
+.emoticon-hugright {
+	background-position: -224px 0;
+}
+
+.emoticon-hugleft {
+	background-position: -240px 0;
+}
+
+.emoticon-lion {
+	background-position: -256px 0;
+}
+
+.emoticon-pussy {
+	background-position: -272px 0;
+}
+
+.emoticon-bat {
+	background-position: -288px 0;
+}
+
+.emoticon-kiss {
+	background-position: -304px 0;
+}
+
+.emoticon-heart {
+	background-position: -320px 0;
+}
+
+.emoticon-brheart {
+	background-position: -336px 0;
+}
+
+.emoticon-flower {
+	background-position: -352px 0;
+}
+
+.emoticon-brflower {
+	background-position: -368px 0;
+}
+
+.emoticon-thumbup {
+	background-position: -384px 0;
+}
+
+.emoticon-thumbdown {
+	background-position: -400px 0;
+}
+
+.emoticon-lamp {
+	background-position: -416px 0;
+}
+
+.emoticon-coffee {
+	background-position: -432px 0;
+}
+
+.emoticon-drink {
+	background-position: -448px 0;
+}
+
+.emoticon-beer {
+	background-position: -464px 0;
+}
+
+.emoticon-boy {
+	background-position: -480px 0;
+}
+
+.emoticon-girl {
+	background-position: -496px 0;
+}
+
+.emoticon-phone {
+	background-position: -512px 0;
+}
+
+.emoticon-photo {
+	background-position: -528px 0;
+}
+
+.emoticon-music {
+	background-position: -544px 0;
+}
+
+.emoticon-cuffs {
+	background-position: -560px 0;
+}
+
+.emoticon-mail {
+	background-position: -576px 0;
+}
+
+.emoticon-rainbow {
+	background-position: -592px 0;
+}
+
+.emoticon-star {
+	background-position: -608px 0;
+}
+
+.emoticon-moon {
+	background-position: -624px 0;
+}

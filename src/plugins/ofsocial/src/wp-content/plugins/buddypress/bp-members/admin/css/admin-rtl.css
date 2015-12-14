@@ -1,0 +1,166 @@
+/**** BP Members Profile Administration Screens ****/
+
+div#profile-page.wrap form#your-profile {
+	position: relative;
+	padding-top: 50px;
+}
+
+div#profile-page.wrap form#your-profile h3:first-of-type {
+	margin-top:5em;
+}
+
+div#profile-page.wrap form#your-profile #profile-nav {
+	position: absolute;
+	top: 0;
+	width: 97%;
+}
+
+div#community-profile-page #profile-nav {
+	margin-bottom: 1em;
+}
+
+#bp_members_admin_user_stats ul {
+	margin-bottom: 0;
+}
+div#community-profile-page li.bp-members-profile-stats:before,
+div#community-profile-page li.bp-friends-profile-stats:before,
+div#community-profile-page li.bp-groups-profile-stats:before,
+div#community-profile-page li.bp-blogs-profile-stats:before,
+div#community-profile-page a.bp-xprofile-avatar-user-admin:before,
+div#community-profile-page a.bp-xprofile-avatar-user-edit:before {
+	font: normal 20px/1 'dashicons';
+	speak: none;
+	display: inline-block;
+	padding: 0 0 0 2px;
+	top: 0;
+	right: -1px;
+	position: relative;
+	vertical-align: top;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-decoration: none !important;
+	color: #888;
+}
+
+div#community-profile-page li.bp-members-profile-stats:before {
+	content: "\f130";
+}
+
+div#community-profile-page li.bp-friends-profile-stats:before {
+	content: "\f454";
+}
+
+div#community-profile-page li.bp-groups-profile-stats:before {
+	content: "\f456";
+}
+
+div#community-profile-page li.bp-blogs-profile-stats:before {
+	content: "\f120";
+}
+
+div#community-profile-page a.bp-xprofile-avatar-user-admin:before {
+	content:"\f182";
+}
+
+div#community-profile-page a.bp-xprofile-avatar-user-edit:before {
+	content: "\f107";
+}
+
+div#community-profile-page div#bp_xprofile_user_admin_avatar div.avatar {
+	width:150px;
+	margin:0 auto;
+}
+
+div#community-profile-page div#bp_xprofile_user_admin_avatar div.avatar img {
+	max-width: 100%;
+	height: auto;
+}
+
+div#community-profile-page div#bp_xprofile_user_admin_avatar a {
+	display:block;
+	margin:1em 0;
+	text-decoration:none;
+	color:#888;
+}
+
+div#community-profile-page p.not-activated {
+	margin:1em 1em 0;
+	color:red;
+}
+
+#community-profile-page #submitdiv #publishing-action {
+	float: none;
+	width: 100%;
+}
+
+.bp-view-profile {
+	float: right;
+}
+
+.alt {
+	background: none;
+}
+.bp-profile-field {
+	border-bottom: dotted 1px #ccc;
+	font-size: 14px;
+	margin: 15px 0;
+	padding: 10px;
+}
+.bp-profile-field:last-child {
+	border-bottom: 0;
+}
+.bp-profile-field p {
+	font-size: 14px;
+}
+.bp-profile-field .datebox > label,
+.bp-profile-field .radio > label,
+.bp-profile-field > label {  /* label takes on left side 200px */
+	display: inline-block;
+	font-weight: 600;
+	text-align: right;
+	vertical-align: middle;
+	width: 200px;
+}
+
+.field_type_textarea > label,
+.field_type_multiselectbox > label,
+.field_type_radio .radio > label,
+.field_type_checkbox .checkbox > label {  /* these fields are usually pretty tall, so align the label for better consistency */
+	vertical-align: top;
+}
+.bp-profile-field .description {  /* description also sits in the right side column */
+	margin: 10px 200px 10px 0;
+	text-align: right;
+}
+.clear-value {  /* 'clear value' option also sits in the right side column */
+	display: block;
+	font-size: 12px;
+	margin-right: 200px;
+}
+.field_type_checkbox .checkbox > label + label {  /* force checkboxes to new lines, in the right side column */
+	display: block;
+	margin-right: 200px;
+	width: auto;
+}
+.field_type_radio .radio div:not(.field-visibility-settings) label {  /* force radio buttons to new lines */
+	display: block;
+}
+.field_type_radio .radio div:not(.field-visibility-settings) {  /* make the radio buttons sit in the right side column */
+	display: inline-block;
+}
+.field-visibility-settings-notoggle,
+.field-visibility-settings-toggle {  /* visibility settings go in the left column */
+	margin: 10px 200px 10px 0;
+	text-align: right;
+}
+.field-visibility-settings {  /* visibility settings go in the left column */
+	display: none;
+	margin-right: 200px;
+}
+.field-visibility-settings .button {  /* visibility setting close button */
+	margin-bottom: 15px;
+}
+#normal-sortables .field-visibility-settings legend {  /* id required for css selector weight */
+	font-size: 16px;
+	margin-bottom: 10px;
+}

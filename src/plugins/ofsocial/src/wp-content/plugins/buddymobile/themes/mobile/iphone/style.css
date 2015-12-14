@@ -1,0 +1,749 @@
+/*
+Theme Name: iphone
+Theme URI: http://buddypress.org
+Description: A Buddypress mobile theme.
+Version: 1.9
+Author: modemlooper
+Author URI: http://twitter.com/modemlooper
+Tags: buddypress, mobile, iphone
+*/
+* {
+-webkit-box-sizing: border-box;
+-webkit-text-size-adjust: none;
+-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+html {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	background-image: url(none) !important;
+	color: #505050;
+}
+
+.overthrow-enabled .overthrow {
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+#content {
+	padding-top: 44px;
+	min-height: 360px;
+}
+
+a, a:visited {
+	text-decoration: none;
+	color: #519fd0;
+}
+
+a#bbp_reply_content-tmce,
+a#bbp_reply_content-html{
+	height: 25px;
+	border-bottom: none;
+}
+
+a.friendship-button,
+a.button.remove {
+	margin-top: 5px;
+}
+
+div#delete-group-avatar-button.generic-button {
+	margin-top: 20px;
+}
+
+a#bbp_topic_content-tmce,
+a#bbp_topic_content-html {
+	height: 25px;
+	border-bottom: none;
+}
+
+textarea#bbp_topic_content.bbp-the-content.wp-editor-area {
+	height: 80px;
+}
+
+#buddypress div.profile {
+	margin: 10px;
+}
+
+ul {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
+p {
+	font-size: 13px;
+	line-height: 16px;
+	margin: 10px;
+}
+
+#topbar {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	background-color: #009ada;
+	margin-bottom: 0px;
+	height: 44px;
+	-webkit-touch-callout: none;
+	z-index: 999;
+	font-weight: normal;
+	font-style: normal;
+}
+
+#title {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding: 0;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	color: #FFF;
+	height: 44px;
+	font-size: 13pt;
+	line-height: 44px;
+	z-index: 0;
+	-webkit-touch-callout: none;
+	width: 180px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#leftnav a, #rightnav a, #leftnav-login a {
+	color: #fffeff;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+#leftnav {
+	z-index: 10;
+	float: left;
+	color: #fffeff;
+	position: absolute;
+	margin-top: 6px;
+	font-weight: normal;
+	padding: 4px;
+}
+
+#rightnav {
+	z-index: 10;
+	float: left;
+	color: #fffeff;
+	position: absolute;
+	margin-top: 6px;
+	right: 5px;
+	font-weight: normal;
+	padding: 4px;
+}
+
+input#members_search_submit, input#groups_search_submit, input#forums_search_submit, input#events_search_submit {
+	background-color: #fffeff;
+	padding: 6px 10px 7px;
+}
+
+div#mobileNav {
+	position: absolute;
+	visibility: hidden;
+	-webkit-box-shadow: 0px 1px 10px #333;
+	width: 100%;
+	background-color: #373737;
+	z-index: 0;
+	height: 0px;
+	overflow: hidden;
+}
+
+#mobileNav ul.sub-menu li a {
+	padding-left: 30px;
+}
+
+#mobileNav ul li a {
+	border-top: 1px solid #4a494a;
+	border-bottom: 1px solid #1f1e1f;
+}
+#mobileNav ul li.sep {
+	padding: 5px 10px;
+	color: #989898;
+	background-color: #424242;
+	border-top: 1px solid #4a494a;
+	border-bottom: 1px solid #1f1e1f;
+}
+
+.navLoad {
+	padding-right: 25px !important;
+	background: #303131 url(images/ajax-loader.gif) no-repeat 95% 50%;
+}
+
+#mobileNav ul li a {
+	display: block;
+	padding: 10px;
+	font-weight: bold;
+	font-size: 17px;
+	color: #d3d2d4 !important;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+#loginNav {
+	position: absolute;
+	background-color: #373737;
+	z-index: 99;
+	visibility: hidden;
+	top: 44px;
+	color: #fffeff;
+	border-bottom: 1px solid #3c4755;
+	-webkit-box-shadow: 0px 1px 10px #333;
+	padding: 0 10px 10px;
+	width: 100%;
+}
+
+#mobileNav ul li span {
+	padding: 2px 4px;
+	font-size: 12px;
+	background-color: #585858;
+	-webkit-border-radius: 4px;
+}
+
+body.blog .post p a img, body.single .post p a img {
+	max-width: 100%;
+	height: auto;
+}
+
+body.blog .post,
+body.single .post,
+body.archive .post,
+body.page #blog-latest .post {
+	margin: 10px;
+	padding: 0px;
+	background-color: #ffffff;
+	overflow: hidden;
+	border: 1px solid #cfced0;
+}
+
+div.entry-header {
+	padding: 10px;
+	background-color: #f7f7f7;
+}
+
+body.blog #blog-page,
+body.blog #content,
+body.single #blog-single,
+body.archive #blog-page,
+body.page #blog-latest {
+	background-color: #e3e3e3;
+	overflow: hidden;
+}
+
+body.page #blog-latest .post-content {
+	padding: 10px;
+}
+
+h2.pagetitle, h2.entry-title {
+	font-size: 14px;
+	margin: 0;
+	padding: 0px;
+}
+
+body.post-type-archive h2.pagetitle,
+body.post-type-archive h2.entry-title {
+	font-size: 14px;
+	margin: 0;
+	padding: 10px;
+}
+
+#buddypress div.bbp-reply-author a.bbp-author-avatar img.avatar {
+	width: 40px;
+	height: 40px;
+	margin-top: 0;
+}
+
+#buddypress div.bbp-reply-author {
+	width: 90px !important;
+}
+
+#buddypress div.bbp-reply-content {
+	margin-left: 95px !important;
+	padding: 0 !important;
+}
+
+
+body.group-admin #members-list li div,
+#mods-list li div, #admins-list li div {
+	display: inline-block;
+}
+
+body.group-admin #members-list li h5 span.small a.button,
+body.group-admin #mods-list li h5 span.small a.button,
+body.group-admin #admins-list li h5 span.small a.button {
+	display: inline-block;
+	padding: 0 4px;
+	margin-bottom: 5px;
+}
+
+body.group-admin .bp-widget h5 {
+	margin: 10px 0 0 !important;
+}
+
+textarea#bbp_reply_content.bbp-the-content.wp-editor-area {
+	height: 100px;
+}
+
+div#bbpress-forums {
+
+}
+
+div#bbpress-forums div#bbpress-forums {
+	padding: 10px;
+}
+
+fieldset.bbp-form {
+	padding: 0 !important;
+	border-style: none !important;
+}
+
+img.alignleft {
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
+
+img.alignright {
+	padding-bottom: 10px;
+	padding-left: 10px;
+}
+
+h3.pagetitle {
+
+}
+
+#bbpress-forums h3 {
+	padding-left: 10px;
+	padding-right: 10px;
+	margin-bottom: 0;
+}
+
+h2.posttitle {
+	margin: 5px 10px;
+	font-size: 19px;
+}
+
+p.date {
+	margin-top: 5px;
+	margin-bottom: 0;
+	font-size: 12px;
+}
+
+#respond {
+	margin: 10px;
+	background-color: #ffffff;
+	padding: 10px;
+	border: 1px solid #c4c4c4;
+}
+
+h3#reply.comments-header {
+	margin: 0;
+	font-weight: normal;
+	font-style: normal;
+	font-size: 14px;
+}
+
+textarea#comment {
+	width: 100%;
+}
+
+ul.commentlist {
+	margin-left: 10px;
+	margin-right: 10px;
+	background-color: #ffffff;
+	border: 1px solid #eeedef;
+	border-bottom-style: none;
+}
+
+div.comment-body {
+	padding: 10px;
+	border-bottom: 1px solid #eeedef;
+}
+
+div.tags {
+	margin-bottom: 10px;
+}
+
+p.postmetadata span.comments {
+	font-size: 12px;
+	position: absolute;
+	right: 0;
+	bottom: -7px;
+}
+
+p.postmetadata {
+	position: relative;
+	padding-bottom: 5px;
+	padding-top: 5px;
+}
+
+nav#nav-posts {
+	padding-bottom: 10px;
+	padding-left: 5px;
+	padding-right: 5px;
+	font-size: 14px;
+	overflow: hidden;
+}
+
+#nav-posts div.prev {
+	float: left;
+}
+
+#nav-posts div.next {
+	float: right;
+}
+
+div.page-header {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+div.entry {
+	font-size: 12px;
+
+}
+
+div.entry p {
+	margin: 10px 0;
+}
+
+body.blog div.entry,
+body.tag div.entry,
+body.category div.entry {
+	margin: 10px;
+}
+
+body.single div.entry {
+	padding: 10px;
+	border: none;
+}
+
+body.single div.post {
+	border: none;
+}
+
+body.post-type-archive div.entry {
+	padding: 10px;
+}
+
+div.entry-meta {
+	padding: 4px 10px;
+	font-size: 12px;
+	background-color: #f7f7f7;
+	height: 22px;
+}
+::-webkit-scrollbar {
+    display: none;
+}
+
+div.post-tags {
+	padding-right: 10px;
+	padding-left: 10px;
+	padding-bottom: 5px;
+	font-size: 12px;
+}
+div.comment-author.vcard {
+}
+div.comment-author.vcard .photo {
+	float: left;
+	margin-right: 10px;
+}
+
+div.comment-meta.commentmetadata {
+	font-size: 11px;
+	padding-top: 5px;
+}
+
+a.comment-reply-link {
+	float: right;
+	font-size: 12px;
+}
+
+div.reply {
+	overflow: hidden;
+}
+
+#userInfo {
+
+}
+
+#userInfo a.button.logout {
+	background-color: #585858;
+	padding: 4px 20px;
+	text-align: center;
+	-webkit-border-radius: 4px;
+	float: right;
+}
+
+#userInfo a {
+	color: #bdbdbd;
+}
+
+#userInfo a img.avatar {
+	float: left;
+	margin-right: 10px;
+}
+
+.hide {
+	visibility: hidden !important;
+}
+
+.show {
+	visibility: visible !important;
+	display: block !important;
+	height: auto !important;
+}
+
+.top {
+	top: 44px !important;
+}
+
+#whats-new-content {
+	margin-top: 10px;
+}
+
+#whats-new-textarea {
+	width:100%;
+}
+
+#footer {
+	text-align: center;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+#blog-page {
+	min-height: 340px;
+}
+
+#login, #menu, #status {
+	font-size: 13px;
+	padding-bottom: 3px;
+	padding-top: 1px;
+	font-weight: normal;
+	font-style: normal;
+	padding: 5px;
+}
+
+.page-template-default .post {
+	padding: 10px;
+}
+
+#post-form-nav ul li a {
+	color: #424242 !important;
+}
+
+#buddypress .post  {
+	padding: 0px;
+}
+
+#buddypress .padder {
+	padding: 10px;
+}
+
+#buddypress div.activity-inner p iframe {
+	max-width: 100%;
+	height: auto;
+}
+
+#buddypress .picture-inner-container img {
+	max-width: 100%;
+	height: auto;
+}
+
+thead, tfoot {
+	background-color: #f1f1f1;
+}
+
+td {
+	padding: 0 4px;
+}
+
+#buddypress .single-picture-meta, #buddypress .single-picture-links {
+	padding: 0 10px;
+}
+/* Add 2 home */
+
+#addToHomeScreen {
+	z-index:9999;
+	-webkit-user-select:none;
+	-webkit-box-sizing:border-box;
+	width:208px;
+	font-size:13px;
+	padding:10px;
+	text-align:left;
+	font-family:helvetica;
+	background-image:-webkit-gradient(linear,0 0,0 100%,color-stop(0,#fff),color-stop(0.02,#eee),color-stop(0.98,#ccc),color-stop(1,#a3a3a3));
+	border:1px solid #505050;
+	-webkit-border-radius:8px;
+	-webkit-background-clip:padding-box;
+	color:#333;
+	text-shadow:0 1px 0 rgba(255,255,255,0.75);
+	line-height:130%;
+	-webkit-box-shadow:0 0 4px rgba(0,0,0,0.5);
+}
+
+
+/**
+ *
+ * The 'wide' class is added when the popup contains the touch icon
+ *
+ */
+#addToHomeScreen.wide {
+	width:240px;
+}
+
+
+/**
+ *
+ * The balloon arrow
+ *
+ */
+#addToHomeScreen .arrow {
+	position:absolute;
+	background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(0,rgba(204,204,204,0)),color-stop(0.4,rgba(204,204,204,0)),color-stop(0.4,#ccc));
+	border-width:0 1px 1px 0;
+	border-style:solid;
+	border-color:#505050;
+	width:16px; height:16px;
+	-webkit-transform:rotateZ(45deg);
+	bottom:-9px; left:50%;
+	margin-left:-8px;
+	-webkit-box-shadow:inset -1px -1px 0 #a9a9a9;
+	-webkit-border-bottom-right-radius:2px;
+}
+
+
+/**
+ *
+ * The balloon arrow for iPad
+ *
+ */
+#addToHomeScreen.ipad .arrow {
+	-webkit-transform:rotateZ(-135deg);
+	background-image:-webkit-gradient(linear,0 0,100% 100%,color-stop(0,rgba(238,238,238,0)),color-stop(0.4,rgba(238,238,238,0)),color-stop(0.4,#eee));
+	-webkit-box-shadow:inset -1px -1px 0 #fff;
+	top:-9px; bottom:auto; left:50%;
+}
+
+
+/**
+ *
+ * Close button
+ *
+ */
+#addToHomeScreen .close {
+	-webkit-box-sizing:border-box;
+	position:absolute;
+	right:2px;
+	top:2px;
+	width:14px;
+	height:14px; line-height:10px;
+	text-align:center;
+	text-indent:1px;
+	font-size:14px;
+	-webkit-border-radius:7px;
+	background:rgba(0,0,0,0.12);
+	color:#707070;
+	-webkit-box-shadow:0 1px 0 #fff;
+	font-size:13px;
+}
+
+
+/**
+ *
+ * The '+' icon, displayed only on iOS < 4.2
+ *
+ */
+#addToHomeScreen .plus {
+	font-weight:bold;
+	font-size:1.3em;
+}
+
+
+/**
+ *
+ * The 'share' icon, displayed only on iOS >= 4.2
+ *
+ */
+#addToHomeScreen .share {
+	display:inline-block;
+	width:18px;
+	height:15px;
+	background-repeat:no-repeat;
+	background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAPCAQAAABDj1eZAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAUdJREFUKFNtkLtLw1AYxS/qJLhXVKr2ZRulUNtiqgSb3CziICI6ucTFVYcOnaQOFRwUnNTRwUWXgpP/QdHNUEQUHGxofYBTlRs83iZNjKTncOGe7/vx3QchXUWn6FL3jhfKUdCCr5zuifV5oDiHQM+c+CIhiiCSWNu08iq9oHXKLAiqrgR4UXqlOEYZt++ExEL0wW7+OW0G10muLv9gmqfe5FAWKmTMYQYiFL7PYwyLOD8lSjNh2gdnPzMII4QUBxc4OothbAF7GCBKQ0YbSWyPQsIhqvetS+y0ygGMo/KFZfviDvR4AhwgZU9dGYnA0J/6ndc15i3ouYIMcVVUcEXIoOxCeRCfwP8sXBSdjtpUv/1QW+K16kCCIUC4id9Fa0JtkluwVkSfqPL6RwfSDA0aNlx7k/bWgViB7bMS2/1vk5sdsZLN/ALSuL3tylO4RAAAAABJRU5ErkJggg==);
+	background-size:18px 15px;
+	text-indent:-9999em;
+	overflow:hidden;
+}
+
+
+/**
+ *
+ * The touch icon (if available)
+ *
+ */
+#addToHomeScreen .touchIcon {
+	display:block;
+	float:left;
+	-webkit-border-radius:8px;
+	-webkit-box-shadow:0 1px 3px rgba(0,0,0,0.5),
+		inset 0 0 2px rgba(255,255,255,0.9);
+	background-repeat:none;
+	width:44px; height:44px;
+	-webkit-background-size:44px 44px;
+	margin:0 10px 5px 0;
+	border:1px solid #333;
+	-webkit-background-clip:padding-box;
+}
+
+
+/**
+ *
+ * The 'share' icon for retina display
+ *
+ */
+@media all and (-webkit-min-device-pixel-ratio: 2) {
+	#addToHomeScreen .share {
+		background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAeCAQAAADu6HTYAAADPElEQVR4Xq3TX2gcRRzA8e/M7mVv2+TSNpc/TZtrY6jUGqgaSAmEChKLrYK0YH0RFC2CSCkEfCghiKU04J8qNigq6os+iQV98MHWFwVBrQQRWs21lBw5cw3NNb1/udu72RGG5Y77IzXW77D7sAwf5scyYoL6BGXSDKFZwaGpLvIUaeoCkvX1MmsM0Ny6oRSQYOLuIS+YZOpfQdqslpUxcZrzTVAz4qPwW2O3CeIwC/RSzeY6Ow1QhUrkr+YOWfEKDkEP8Rij7CHKJmrFSDHBdwGEE5wiGChPN+PnT8VdRtEIl1d4gRj/1EVe5ZSBKGh8iqQpo/Fo5+3C/gz0MYg4zgwbqday1/Q4B8BGQ45d/Hi54lakCrU5obOcidJpu1+Lg9whjabyaOYLnrIBFFaRD+xe2ybMDWY66GmP/WA9cGfGp0CWhy0wkMN8inepFiH2rV1j0NQSNQbFLRQnS8/8YSDBBpadfv4CYDub2fmeHDNAsL1MBWUel0iA+Xik6eHcyvD3vAMSU1TGuA/YRS+dD7ovCQN43GKRFCU20Kd3V/avDVVyAZ5niTEuLA5/zBGWg9EEEhfJKN200Tat8CmRAQb9+wv7soPlHt2tQorsz1uPbr0HTY4sJwrH47zJZwABBAKLMBoQXepwgTwdHCo+fXMkQ4lrxEmQ5AaXipPqDY9V2vn09tgvTPI71EEGYxM+/uMJLJ4svpgaWGKOi/xKgmqLSUGSUd5f2vIVJ/CgBaTIUsZ7ZBsn0+NzfMOXLFCXQyTcybN6ep5ZZgUOHn7jpfUpsZshdugPGf+E5zjbyHTSRyQ8xfRPPM/s63RHeuknSoT22mjmmnAOIMkUZ6D1xSfPPAfd1WFKM3sO2CMaHx8M1NjnXKHaAGGkOW0C02WeYHUz4qMtx+w5gUDS8NckYe5lHsMYwCZEPyEEmjLDZFmAS7CDviMdxyTkMNVBKEmYLvbiQQBIBBbCQG04bGQvFWz6CfsCQLWCigILFwcfkGYBiOpbYuOizTAyYyDdCtrGaRG1LCkIgMYEFhI0WqQZoSlbGRyHKe4qOx7iv2bVQW9dp4dlM/x6kmwnWQcd/Q3FCqwTEiT5s+6D5v/pb0SSHyg7uhMWAAAAAElFTkSuQmCC);
+	}
+}
+
+#buddypress #options-nav-icon {
+	color: #a2a2a2;
+	text-align: right;
+	font-size: 15px;
+}
+
+div#avatar-crop-pane {
+	width: 150px;
+	height: 150px;
+	overflow: hidden;
+}
+
+#standard-form table thead tr th.title {
+	text-align: left;
+}
+
+#item-body div.profile div.bp-widget table.profile-fields tbody tr {
+	background-color: #f0f1f0;
+}
+
+#bbpress-forums p.bbp-topic-meta img.avatar {
+
+   width: 25px;
+
+}
+
+.post-thumb img.attachment-mobile-thumb.wp-post-image {
+	max-width: 100%;
+	height: auto;
+}

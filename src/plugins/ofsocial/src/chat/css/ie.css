@@ -1,0 +1,146 @@
+/*
+
+Jappix - An open social platform
+These are all the IE compliant CSS classes
+
+-------------------------------------------------
+
+License: AGPL
+Author: Valérian Saliou
+Last revision: 22/04/11
+
+*/
+
+/* rgba(255,255,255,0.9) */
+.search ul {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#edffffff,endColorstr=#edffffff);
+}
+
+/* rgba(255,255,255,0.3) */
+a.finish:active,
+#manager-buttons input:active,
+#install-buttons input:active {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#49ffffff,endColorstr=#49ffffff);
+}
+
+/* rgba(255,255,255,0.2) */
+a.finish:hover,
+a.finish:focus,
+#manager-buttons input:hover,
+#manager-buttons input:focus,
+#install-buttons input:hover,
+#install-buttons input:focus,
+.notifications-content .one-notification:active {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#33ffffff,endColorstr=#33ffffff);
+}
+
+/* rgba(255,255,255,0.14) */
+#home .locale .list a:active {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#2fffffff,endColorstr=#2fffffff);
+}
+
+/* rgba(255,255,255,0.1) */
+#home .locale .list a:hover,
+#home .locale .list a:focus,
+a.finish,
+a.finish.disabled:hover,
+a.finish.disabled:focus,
+a.finish.disabled:active,
+#manager-buttons input,
+#install-buttons input,
+.notifications-content .one-notification:hover,
+.notifications-content .one-notification:focus {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#20ffffff,endColorstr=#20ffffff);
+}
+
+/* rgba(255,239,104,0.8) */
+.popup .infos {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#deffef68,endColorstr=#deffef68);
+}
+
+/* rgba(225,160,20,0.3) */
+.search ul li.hovered {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#46e1a014,endColorstr=#46e1a014);
+}
+
+/* rgba(248,246,186,0.9) */
+#board .one-board.info {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#edf8f6ba,endColorstr=#edf8f6ba);
+}
+
+/* rgba(241,160,160,0.9) */
+#board .one-board.error {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#edf1a0a0,endColorstr=#edf1a0a0);
+}
+
+/* rgba(234,234,234,0.8) */
+#page-engine .chatstate {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#deeaeaea,endColorstr=#deeaeaea);
+}
+
+/* rgba(20,20,20,0.6) */
+#home .locale,
+#home .obsolete,
+#home .notice.simple {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#a0141414,endColorstr=#a0141414);
+}
+
+/* rgba(20,20,20,0.8) */
+#home .main,
+#reconnect .pane,
+#my-infos,
+#right-content,
+#buddy-list,
+#manager,
+#install {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#de141414,endColorstr=#de141414);
+}
+
+/* rgba(20,20,20,0.9) */
+.popup {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#ed141414,endColorstr=#ed141414);
+}
+
+/* rgba(0,0,0,0.2) */
+#install-top .step {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#33000000,endColorstr=#33000000);
+}
+
+/* rgba(0,0,0,0.6) */
+.lock {
+	background: url(../img/others/lock.png) repeat !important;
+}
+
+/* rgba(0,0,0,0.8) */
+#page-engine .tooltip-subitem,
+.attach-subitem,
+.buddy-infos-subitem,
+.buddy-conf-subitem,
+.tools-content-subitem {
+	background: transparent;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#de000000,endColorstr=#de000000);
+}
+
+/* Fix a fieldset padding bug */
+legend {
+	margin-bottom: 5px !important;
+}
+
+/* Fix an opacity bug */
+a.finish.disabled {
+	filter: alpha(opacity = 20) !important;
+}

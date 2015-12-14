@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<jappix xmlns="jappix:file:get">
+	<css>mini.css</css>
+	<js>jxhr.js~base64.js~jsjac.js~jquery.timers.js~constants.js~datastore.js~browser-detect.js~common.js~date.js~links.js~mini.js</js>
+</jappix>

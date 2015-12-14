@@ -1,0 +1,12 @@
+/*
+Theme Name: OneTone Child
+Theme URI: http://www.mageewp.com/onetone-theme.html
+Description: Child theme for the OneTone.
+Template: onetone
+Version: 1.1.9
+Author: MageeWP
+Author URI: http://www.mageewp.com
+
+*/
+@import url("../onetone/style.css");
+.home-header{ background:gray;}

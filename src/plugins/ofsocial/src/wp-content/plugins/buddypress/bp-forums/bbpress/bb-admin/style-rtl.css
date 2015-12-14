@@ -1,0 +1,465 @@
+/*
+Start with some basic resets
+*/
+
+caption,th{text-align:right;}
+
+
+body {
+	font-family: Tahoma, "Times New Roman";
+}
+
+
+
+/* Header */
+
+div#bbHead h1 {
+	padding-right: 39px;
+	padding-left: 0;
+	margin-right: 16px;
+	margin-left: 0;
+	background-position: 100% 7px;
+	font-family: "Times New Roman", Tahoma;
+}
+
+div#bbHead h1 a em {
+	margin-left: auto;
+	margin-right: 5px;
+}
+
+div#bbUserInfo {
+	right: auto;
+	left: 15px;
+}
+
+
+
+/* Body */
+
+div#bbBody {
+	margin-left: 0;
+	margin-right: 175px;
+	padding-right: 0;
+	padding-left: 15px;
+}
+
+body.bb-menu-folded div#bbBody {
+	margin-left: auto;
+	margin-right: 59px;
+}
+
+h2 {
+	padding-right: 0;
+	padding-left: 15px;
+	font-family: "Times New Roman", Tahoma;
+}
+
+body.bb-admin-dashboard h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -172px;
+}
+
+body.bb-admin-forums h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -802px;
+}
+
+body.bb-admin-topics h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -802px;
+}
+
+body.bb-admin-posts h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -802px;
+}
+
+body.bb-admin-appearance h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% 8px;
+}
+
+body.bb-admin-plugins h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -532px;
+}
+
+body.bb-admin-users h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -891px;
+}
+
+body.bb-admin-tools h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -621px;
+}
+
+body.bb-admin-settings h2 {
+	padding-left: auto;
+	padding-right: 47px;
+	background-position: 100% -712px;
+}
+
+
+
+
+
+/* Menu */
+ul#bbAdminMenu {
+	float: right;
+	margin-right: -160px;
+	margin-left: 5px;
+}
+
+body.bb-menu-folded ul#bbAdminMenu {
+	margin-left: 5px;
+	margin-right: -44px;
+}
+
+ul#bbAdminMenu li.bb-menu a {
+	font-family: "Times New Roman", Tahoma;
+}
+
+ul#bbAdminMenu li.bb-menu div.bb-menu-toggle {
+	float: left;
+	background-image: url('images/menu-bits-rtl.gif');
+	background-position: 100% -110px;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-has-submenu.bb-menu-current div.bb-menu-toggle {
+	background-position: 100% -208px;
+}
+
+ul#bbAdminMenu li.bb-menu a div.bb-menu-icon {
+	float: right;
+	background-position: -331px -39px;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li.bb-menu a:hover div.bb-menu-icon {
+	background-position: -331px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-dashboard a div.bb-menu-icon {
+	background-position: -62px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-dashboard.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-dashboard a:hover div.bb-menu-icon {
+	background-position: -62px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-forums a div.bb-menu-icon {
+	background-position: -272px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-forums.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-forums a:hover div.bb-menu-icon {
+	background-position: -272px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-topics a div.bb-menu-icon {
+	background-position: -272px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-topics.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-topics a:hover div.bb-menu-icon {
+	background-position: -272px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-posts a div.bb-menu-icon {
+	background-position: -272px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-posts.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-posts a:hover div.bb-menu-icon {
+	background-position: -272px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-appearance a div.bb-menu-icon {
+	background-position: -1px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-appearance.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-appearance a:hover div.bb-menu-icon {
+	background-position: -1px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-plugins a div.bb-menu-icon {
+	background-position: -181px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-plugins.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-plugins a:hover div.bb-menu-icon {
+	background-position: -181px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-users a div.bb-menu-icon {
+	background-position: -303px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-users.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-users a:hover div.bb-menu-icon {
+	background-position: -303px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-tools a div.bb-menu-icon {
+	background-position: -212px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-tools.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-tools a:hover div.bb-menu-icon {
+	background-position: -212px -7px;
+}
+
+ul#bbAdminMenu li#bb-menu-settings a div.bb-menu-icon {
+	background-position: -241px -39px;
+}
+
+ul#bbAdminMenu li#bb-menu-settings.bb-menu-current a div.bb-menu-icon,
+ul#bbAdminMenu li#bb-menu-settings a:hover div.bb-menu-icon {
+	background-position: -241px -7px;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-separator a {
+	background-position: -55px -34px;
+	cursor: e-resize;
+}
+
+body.bb-menu-folded ul#bbAdminMenu li.bb-menu.bb-menu-separator a {
+	background-position: 0 5px;
+	cursor: w-resize;
+}
+
+ul#bbAdminMenu li.bb-menu div.bb-menu-sub-wrap {
+	border-left-width: 1px;
+	border-right-width: 0;
+}
+
+body.bb-menu-folded ul#bbAdminMenu li.bb-menu div.bb-menu-sub-wrap {
+	left: auto;
+	right: 36px;
+}
+
+ul#bbAdminMenu li.bb-menu div.bb-menu-sub-wrap span {
+	font-family: "Times New Roman", Tahoma;
+	padding-right: 10px;
+	padding-left: 5px;
+}
+
+ul#bbAdminMenu li.bb-menu li.bb-menu-sub a {
+	font-family: Tahoma, "Times New Roman";
+	padding-right:12px;
+	padding-left: 5px;
+	background-image: url('images/menu-bits-rtl.gif');
+	background-position: 100% -306px;
+}
+
+body.bb-menu-folded ul#bbAdminMenu li.bb-menu li.bb-menu-sub a {
+	background-image: url('images/menu-bits-rtl.gif');
+	background-position: 100% -306px;
+	border-right-width: 0 !important;
+	border-left-width: 1px !important;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-current li.bb-menu-sub a {
+	background-image: url('images/menu-dark-rtl.gif');
+	background-position: 100% -20px !important;
+}
+
+body.bb-menu-folded ul#bbAdminMenu li.bb-menu.bb-menu-current li.bb-menu-sub a {
+	background-image: url('images/menu-dark-rtl.gif');
+	background-position: 100% -20px !important;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-current li.bb-menu-sub.bb-menu-sub-current a {
+	background-position: 100% 0 !important;
+}
+
+body.bb-menu-folded ul#bbAdminMenu li.bb-menu.bb-menu-current li.bb-menu-sub.bb-menu-sub-current a {
+	background-position: 100% 0 !important;
+}
+
+ul#bbAdminMenu li.bb-menu.bb-menu-open li.bb-menu-sub a {
+	background-position: 100% -306px;
+}
+
+
+
+/* Dashboard */
+
+div.dashboard div.versions p.theme a.button {
+	float: left;
+}
+
+
+
+/* Search forms */
+
+form.search-form fieldset, form.bulk-form fieldset {
+	clear: right;
+	float: right;
+}
+
+form.search-form fieldset div {
+	float: right;
+	margin-right: 0;
+	margin-left: 5px;
+}
+
+
+
+/* Table nav */
+
+div.tablenav {
+	float: left;
+}
+
+span.displaying-num {
+	text-align: left;
+}
+
+span.displaying-pages {
+	float: left;
+}
+
+span.displaying-pages span,
+span.displaying-pages a {
+	float: right;
+}
+
+
+
+/* Tabled info */
+
+table#plugins-list.widefat tr.autoload td.plugin-name {
+	background-position: 0 0;
+	padding-right: 7px;
+	padding-left: 20px;
+}
+
+table.widefat .check-column {
+	padding-right: 7px;
+	padding-left: 0;
+}
+
+/* Forums */
+
+ul#forum-list li ul li {
+	border-left-width: 0;
+	border-right: 1px dashed rgb(223, 223, 223);
+}
+
+ul#forum-list li ul.list-block {
+	padding: 0 30px 0 0;
+}
+
+ul#forum-list li img.sort-handle {
+	float: right;
+	margin: 0 -4px 0 3px;
+}
+
+#dragHelper img.sort-handle {
+	float: right;
+	margin: 0 0 0 3px;
+}
+
+#dragHelper div.row-description {
+	margin: 0 4px 0 0;
+}
+
+
+
+/* Themes */
+
+table.theme-list td {
+	border-left: 1px solid rgb(221, 221, 221);
+	border-right-width: 0;
+}
+
+table.theme-list td.position-3 {
+	border-left: none;
+}
+
+table.theme-list-active td div.screen-shot {
+	float: right;
+	margin-right: 0;
+	margin-left: 15px;
+}
+
+
+
+/* Options */
+
+form.settings div {
+	margin-right: 0;
+	margin-left: 10px;
+}
+
+form.settings div label,
+form.settings div div.label {
+	float: right;
+}
+
+form.settings div.disabled label,
+form.settings div.disabled div.label {
+	background-position: 0 0;
+	padding-right: 0;
+	padding-left: 20px;
+}
+
+form.settings div div.inputs {
+	margin: 0 210px 0 0;
+}
+
+form.settings div.table {
+	margin: 0 220px 0 0;
+}
+
+form.settings div p {
+	margin: 0 3em 0 0;
+	border-left-width: 0;
+	border-right: 1px solid rgb(223, 223, 223);
+}
+
+form.settings a.cancel {
+	float: right;
+	margin-right: 0;
+	margin-left: 6px;
+}
+
+form.settings select#timezone-string option {
+	margin-left: auto;
+	margin-right: 1em;
+}
+
+
+
+/* Footer */
+
+p#bbShowOff {
+	margin-right: 0;
+	margin-left: 8px;
+	float: left;
+	font-family: "Times New Roman", Tahoma;
+}
+
+div#bbFoot {
+	font-family: "Times New Roman", Tahoma;
+}
+
+p#bbThanks {
+	float: right;
+}
+
+p#bbVersion {
+	text-align: left;
+}

@@ -4,7 +4,6 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 <%@ page import="java.util.HashMap" %>
@@ -31,39 +30,10 @@
         // plaintext
         final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
         final int plaintextTcpPort          = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
-        final int plaintextReadBuffer       = ParamUtils.getIntParameter( request, "plaintext-readBuffer", plaintextConfiguration.getMaxBufferSize() );
-        final String plaintextTlsPolicyText = ParamUtils.getParameter( request, "plaintext-tlspolicy", true );
-        final Connection.TLSPolicy plaintextTlsPolicy;
-        if ( plaintextTlsPolicyText == null || plaintextTlsPolicyText.isEmpty() ) {
-            plaintextTlsPolicy = plaintextConfiguration.getTlsPolicy();
-        } else {
-            plaintextTlsPolicy = Connection.TLSPolicy.valueOf( plaintextTlsPolicyText );
-        }
-        final String plaintextMutualAuthenticationText = ParamUtils.getParameter( request, "plaintext-mutualauthentication", true );
-        final Connection.ClientAuth plaintextMutualAuthentication;
-        if ( plaintextMutualAuthenticationText == null || plaintextMutualAuthenticationText.isEmpty() ) {
-            plaintextMutualAuthentication = plaintextConfiguration.getClientAuth();
-        } else {
-            plaintextMutualAuthentication = Connection.ClientAuth.valueOf( plaintextMutualAuthenticationText );
-        }
-        final int plaintextListenerMaxThreads = ParamUtils.getIntParameter( request, "plaintext-maxThreads", plaintextConfiguration.getMaxThreadPoolSize() );
-        final boolean plaintextAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "plaintext-accept-self-signed-certificates" );
-        final boolean plaintextVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "plaintext-verify-certificate-validity" );
 
         // legacymode
         final boolean legacymodeEnabled      = ParamUtils.getBooleanParameter( request, "legacymode-enabled" );
         final int legacymodeTcpPort          = ParamUtils.getIntParameter( request, "legacymode-tcpPort", legacymodeConfiguration.getPort() );
-        final int legacymodeReadBuffer       = ParamUtils.getIntParameter( request, "legacymode-readBuffer", legacymodeConfiguration.getMaxBufferSize() );
-        final String legacymodeMutualAuthenticationText = ParamUtils.getParameter( request, "legacymode-mutualauthentication", true );
-        final Connection.ClientAuth legacymodeMutualAuthentication;
-        if ( legacymodeMutualAuthenticationText == null || legacymodeMutualAuthenticationText.isEmpty() ) {
-            legacymodeMutualAuthentication = legacymodeConfiguration.getClientAuth();
-        } else {
-            legacymodeMutualAuthentication = Connection.ClientAuth.valueOf( legacymodeMutualAuthenticationText );
-        }
-        final int legacymodeListenerMaxThreads = ParamUtils.getIntParameter( request, "legacymode-maxThreads", legacymodeConfiguration.getMaxThreadPoolSize() );
-        final boolean legacymodeAcceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "legacymode-accept-self-signed-certificates" );
-        final boolean legacymodeVerifyCertificateValidity = ParamUtils.getBooleanParameter( request, "legacymode-verify-certificate-validity" );
 
         // Apply
         final ConnectionListener plaintextListener  = manager.getListener( connectionType, false );
@@ -71,23 +41,12 @@
 
         plaintextListener.enable( plaintextEnabled );
         plaintextListener.setPort( plaintextTcpPort );
-        // TODO: plaintextListener.setMaxBufferSize( plaintextReadBuffer );
-        plaintextListener.setTLSPolicy( plaintextTlsPolicy );
-        plaintextListener.setClientAuth( plaintextMutualAuthentication );
-        // TODO: plaintextListener.setMaxThreadPoolSize( plaintextListenerMaxThreads);
-        plaintextListener.setAcceptSelfSignedCertificates( plaintextAcceptSelfSignedCertificates );
-        plaintextListener.setVerifyCertificateValidity( plaintextVerifyCertificateValidity );
 
         legacymodeListener.enable( legacymodeEnabled );
         legacymodeListener.setPort( legacymodeTcpPort );
-        // TODO: legacymodeListener.setMaxBufferSize( legacymodeReadBuffer );
-        legacymodeListener.setClientAuth( legacymodeMutualAuthentication );
-        // TODO:  legacymodeListener.setMaxThreadPoolSize( legacymodeListenerMaxThreads);
-        legacymodeListener.setAcceptSelfSignedCertificates( legacymodeAcceptSelfSignedCertificates );
-        legacymodeListener.setVerifyCertificateValidity( legacymodeVerifyCertificateValidity );
 
         // Log the event
-        webManager.logEvent( "Updated connection settings for " + connectionType, "Applied configuration to plain-text as well as legacy-mode connection listeners." );
+        webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nlegacy: enabled=" + legacymodeEnabled+ ", port=" + legacymodeTcpPort+ "\n" );
         response.sendRedirect( "connection-settings-socket-c2s.jsp?success=true" );
 
 
@@ -174,105 +133,16 @@
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td>
-                    <input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled">Enabled</label>
-                </td>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled">Enabled</label></td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap><label for="plaintext-tcpPort">Port number</label></td>
+                <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+            </tr>
+            <tr valign="middle">
+                <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=plain"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
-
-        <div id="plaintext-config">
-
-            <br/>
-
-            <h4>TCP settings</h4>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="plaintext-tcpPort">Port number</label></td>
-                    <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
-                </tr>
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="plaintext-readBuffer">Read buffer</label></td>
-                    <td width="99%"><input type="text" name="plaintext-readBuffer" id="plaintext-readBuffer" value="${plaintextConfiguration.maxBufferSize}" readonly/> (in bytes)</td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>STARTTLS policy</h4>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-tlspolicy" value="disabled" id="plaintext-tlspolicy-disabled" ${plaintextConfiguration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''}/>
-                        <label for="plaintext-tlspolicy-disabled"><b>Disabled</b> - Encryption is not allowed.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-tlspolicy" value="optional" id="plaintext-tlspolicy-optional" ${plaintextConfiguration.tlsPolicy.name() eq 'optional' ? 'checked' : ''}/>
-                        <label for="plaintext-tlspolicy-optional"><b>Optional</b> - Encryption may be used, but is not required.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-tlspolicy" value="required" id="plaintext-tlspolicy-required" ${plaintextConfiguration.tlsPolicy.name() eq 'required' ? 'checked' : ''}/>
-                        <label for="plaintext-tlspolicy-required"><b>Required</b> - Connections cannot be established unless they are encrypted.</label>
-                    </td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Mutual Authentication</h4>
-            <p>In addition to requiring peers to use encryption (which will force them to verify the security certificates of this Openfire instance) an additional level of security can be enabled. With this option, the server can be configured to verify certificates that are to be provided by the peers. This is commonly referred to as 'mutual authentication'.</p>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-mutualauthentication" value="disabled" id="plaintext-mutualauthentication-disabled" ${plaintextConfiguration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
-                        <label for="plaintext-mutualauthentication-disabled"><b>Disabled</b> - Peer certificates are not verified.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-mutualauthentication" value="wanted" id="plaintext-mutualauthentication-wanted" ${plaintextConfiguration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>
-                        <label for="plaintext-mutualauthentication-wanted"><b>Wanted</b> - Peer certificates are verified, but only when they are presented by the peer.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="plaintext-mutualauthentication" value="needed" id="plaintext-mutualauthentication-needed" ${plaintextConfiguration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>
-                        <label for="plaintext-mutualauthentication-needed"><b>Needed</b> - A connection cannot be established if the peer does not present a valid certificate.</label>
-                    </td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Certificate chain checking</h4>
-            <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td>
-                        <input type="checkbox" name="plaintext-accept-self-signed-certificates" id="plaintext-accept-self-signed-certificates" ${plaintextConfiguration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="plaintext-accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="checkbox" name="plaintext-verify-certificate-validity" id="plaintext-verify-certificate-validity" ${plaintextConfiguration.verifyCertificateValidity ? 'checked' : ''}/><label for="plaintext-verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
-                    </td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Miscellaneous settings</h4>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="plaintext-maxThreads">Maximum worker threads</label></td>
-                    <td width="99%"><input type="text" name="plaintext-maxThreads" id="plaintext-maxThreads" value="${plaintextConfiguration.maxThreadPoolSize}" readonly/></td>
-                </tr>
-            </table>
-
-        </div>
 
     </admin:contentBox>
 
@@ -282,79 +152,16 @@
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+            </tr>
+            <tr valign="middle">
+                <td width="1%" nowrap><label for="legacymode-tcpPort">Port number</label></td>
+                <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
+            </tr>
+            <tr valign="middle">
+                <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=legacy"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
-
-        <div id="legacymode-config">
-
-            <br/>
-
-            <h4>TCP settings</h4>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="legacymode-tcpPort">Port number</label></td>
-                    <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
-                </tr>
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="legacymode-readBuffer">Read buffer</label></td>
-                    <td width="99%"><input type="text" name="legacymode-readBuffer" id="legacymode-readBuffer" value="${legacymodeConfiguration.maxBufferSize}" readonly/> (in bytes)</td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Mutual Authentication</h4>
-            <p>In addition to requiring peers to use encryption (which will force them to verify the security certificates of this Openfire instance) an additional level of security can be enabled. With this option, the server can be configured to verify certificates that are to be provided by the peers. This is commonly referred to as 'mutual authentication'.</p>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="legacymode-mutualauthentication" value="disabled" id="legacymode-mutualauthentication-disabled" ${legacymodeConfiguration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
-                        <label for="legacymode-mutualauthentication-disabled"><b>Disabled</b> - Peer certificates are not verified.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="legacymode-mutualauthentication" value="wanted" id="legacymode-mutualauthentication-wanted" ${legacymodeConfiguration.clientAuth.name() eq 'optional' ? 'checked' : ''}/>
-                        <label for="legacymode-mutualauthentication-wanted"><b>Wanted</b> - Peer certificates are verified, but only when they are presented by the peer.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="radio" name="legacymode-mutualauthentication" value="needed" id="legacymode-mutualauthentication-needed" ${legacymodeConfiguration.clientAuth.name() eq 'required' ? 'checked' : ''}/>
-                        <label for="legacymode-mutualauthentication-needed"><b>Needed</b> - A connection cannot be established if the peer does not present a valid certificate.</label>
-                    </td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Certificate chain checking</h4>
-            <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td>
-                        <input type="checkbox" name="legacymode-accept-self-signed-certificates" id="legacymode-accept-self-signed-certificates" ${legacymodeConfiguration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="legacymode-accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
-                    </td>
-                </tr>
-                <tr valign="middle">
-                    <td>
-                        <input type="checkbox" name="legacymode-verify-certificate-validity" id="legacymode-verify-certificate-validity" ${legacymodeConfiguration.verifyCertificateValidity ? 'checked' : ''}/><label for="legacymode-verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
-                    </td>
-                </tr>
-            </table>
-
-            <br/>
-
-            <h4>Miscellaneous settings</h4>
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="legacymode-maxThreads">Maximum worker threads</label></td>
-                    <td width="99%"><input type="text" name="legacymode-maxThreads" id="legacymode-maxThreads" value="${legacymodeConfiguration.maxThreadPoolSize}" readonly/></td>
-                </tr>
-            </table>
-
-        </div>
 
     </admin:contentBox>
 

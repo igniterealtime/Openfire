@@ -215,6 +215,7 @@
 
     <patternset id="test.sources">
         <include name="**/*Test.java"/>
+        <exclude name="**/CheckChainTrustedTest.java" if="skipResourceIntensiveTests"/>
     </patternset>
 
     <patternset id="web.sources">

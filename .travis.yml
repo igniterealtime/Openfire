@@ -2,4 +2,11 @@ sudo: false
 language: java
 jdk:
   - oraclejdk8
-script: ant -Dhalt.on.plugin.error=true -f build/build.xml openfire test plugins
+env:
+  - ENVTARGET=compile
+  - ENVTARGET=test
+  - ENVTARGET=openfire
+  - ENVTARGET=plugins
+
+script: ant -Dhalt.on.plugin.error=true -f build/build.xml clean $ENVTARGET 
+

@@ -16,7 +16,6 @@ import java.util.List;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@Ignore // These tests make the continuous integration on GitHub (Travis) fail.
 @RunWith( Parameterized.class )
 public class CheckChainTrustedTest
 {

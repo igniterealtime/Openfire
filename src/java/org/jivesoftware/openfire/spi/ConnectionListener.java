@@ -434,7 +434,7 @@ public class ConnectionListener
             return;
         }
         Log.debug( "Changing client auth configuration from '{}' to '{}'.", oldValue, clientAuth );
-        JiveGlobals.setProperty( tlsPolicyPropertyName, clientAuth.toString() );
+        JiveGlobals.setProperty( clientAuthPolicyPropertyName, clientAuth.toString() );
         restart();
     }
 

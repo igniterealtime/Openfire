@@ -51,7 +51,6 @@
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/truststore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="34" file="${compiler:RELEASE_FULL_PATH}/resources/security/keystore" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/openfire.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
-      <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/modules.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="46" file="${compiler:RELEASE_FULL_PATH}/conf/security.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <fileEntry mountPoint="47" file="${compiler:RELEASE_FULL_PATH}/lib/log4j.xml" overwrite="0" shared="false" mode="644" uninstallMode="1" />
       <dirEntry mountPoint="1" file="${compiler:RELEASE_FULL_PATH}" overwrite="4" shared="false" mode="644" uninstallMode="0" excludeSuffixes="" dirMode="755">

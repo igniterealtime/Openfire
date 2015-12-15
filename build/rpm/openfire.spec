@@ -112,7 +112,6 @@ exit 0
 %{homedir}/bin/embedded-db-viewer.sh
 %dir %{homedir}/conf
 %config(noreplace) %{homedir}/conf/openfire.xml
-%config(noreplace) %{homedir}/conf/modules.xml
 %config(noreplace) %{homedir}/conf/security.xml
 %config(noreplace) %{homedir}/conf/crowd.properties
 %dir %{homedir}/lib

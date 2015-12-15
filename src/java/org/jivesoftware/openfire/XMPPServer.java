@@ -17,33 +17,7 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.admin.AdminManager;
@@ -62,20 +36,19 @@ import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
-import org.jivesoftware.openfire.keystore.*;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.net.MulticastDNSService;
-import org.jivesoftware.openfire.net.SSLConfig;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
+import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.UserManager;
@@ -85,6 +58,16 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -498,7 +481,6 @@ public class XMPPServer {
         }
     }
 
-    @SuppressWarnings("unchecked")
 	private void loadModules() {
         // Load boot modules
         loadModule(RoutingTableImpl.class.getName());
@@ -527,7 +509,6 @@ public class XMPPServer {
         loadModule(IQPrivateHandler.class.getName());
         loadModule(IQRegisterHandler.class.getName());
         loadModule(IQRosterHandler.class.getName());
-        loadModule(IQTimeHandler.class.getName());
         loadModule(IQEntityTimeHandler.class.getName());
         loadModule(IQvCardHandler.class.getName());
         loadModule(IQVersionHandler.class.getName());
@@ -551,9 +532,9 @@ public class XMPPServer {
         loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());
         loadModule(MultiUserChatManager.class.getName());
-        loadModule(ClearspaceManager.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
-        
+        loadModule(CertificateStoreManager.class.getName());
+
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
@@ -568,7 +549,7 @@ public class XMPPServer {
      */
     private void loadModule(String module) {
         try {
-            Class<Module> modClass = (Class<Module>) loader.loadClass(moduleImpl);
+            Class<Module> modClass = (Class<Module>) loader.loadClass(module);
             Module mod = modClass.newInstance();
             this.modules.put(modClass, mod);
         }

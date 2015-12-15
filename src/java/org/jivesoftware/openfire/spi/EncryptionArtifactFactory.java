@@ -325,4 +325,30 @@ public class EncryptionArtifactFactory
         }
         return filter;
     }
+
+    /**
+     * Returns the names of all encryption protocols that are supported (but not necessarily enabled).
+     *
+     * @return An array of protocol names. Not expected to be empty.
+     */
+    public static String[] getSupportedProtocols() throws NoSuchAlgorithmException, KeyManagementException
+    {
+        // TODO Might want to cache the result. It's unlikely to change at runtime.
+        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        context.init( null, null, null );
+        return context.createSSLEngine().getSupportedProtocols();
+    }
+
+    /**
+     * Returns the names of all encryption cipher suites that are supported (but not necessarily enabled).
+     *
+     * @return An array of cipher suite names. Not expected to be empty.
+     */
+    public static String[] getSupportedCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
+    {
+        // TODO Might want to cache the result. It's unlikely to change at runtime.
+        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        context.init( null, null, null );
+        return context.createSSLEngine().getSupportedCipherSuites();
+    }
 }

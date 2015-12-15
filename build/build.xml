@@ -142,6 +142,9 @@
     <taskdef name="propertymerge" classname="org.jugbb.ant.propertymerge.PropertyMergeTask">
         <classpath refid="ant.dependencies" />
     </taskdef>
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
 
     <!-- ======================================================================================= -->
     <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
@@ -657,7 +660,7 @@
 
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}"/>
-        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
+        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}" includeantruntime="false">
 	    <sysproperty key="openfireHome" value="${target.openfireHome}"/>
 
             <!-- We must add our own classes to the classpath for testing -->

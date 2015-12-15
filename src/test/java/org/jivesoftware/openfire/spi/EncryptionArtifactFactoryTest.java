@@ -3,6 +3,8 @@ package org.jivesoftware.openfire.spi;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collection;
+
 /**
  * Unit tests that verify the functionality of {@link EncryptionArtifactFactory}.
  *
@@ -20,10 +22,26 @@ public class EncryptionArtifactFactoryTest
         // (not needed)
 
         // Execute system under test.
-        final String[] result = EncryptionArtifactFactory.getSupportedProtocols();
+        final Collection<String> result = EncryptionArtifactFactory.getSupportedProtocols();
 
         // Verify results.
-        Assert.assertTrue( result.length > 0 );
+        Assert.assertFalse( result.isEmpty() );
+    }
+
+    /**
+     * Verifies that the collection of default encryption protocols is not empty.
+     */
+    @Test
+    public void testHasDefaultProtocols() throws Exception
+    {
+        // Setup fixture.
+        // (not needed)
+
+        // Execute system under test.
+        final Collection<String> result = EncryptionArtifactFactory.getDefaultProtocols();
+
+        // Verify results.
+        Assert.assertFalse( result.isEmpty() );
     }
 
     /**
@@ -36,9 +54,25 @@ public class EncryptionArtifactFactoryTest
         // (not needed)
 
         // Execute system under test.
-        final String[] result = EncryptionArtifactFactory.getSupportedCipherSuites();
+        final Collection<String> result = EncryptionArtifactFactory.getSupportedCipherSuites();
 
         // Verify results.
-        Assert.assertTrue( result.length > 0 );
+        Assert.assertFalse( result.isEmpty() );
+    }
+
+    /**
+     * Verifies that the collection of default cipher suites is not empty.
+     */
+    @Test
+    public void testHasDefaultCipherSuites() throws Exception
+    {
+        // Setup fixture.
+        // (not needed)
+
+        // Execute system under test.
+        final Collection<String> result = EncryptionArtifactFactory.getDefaultCipherSuites();
+
+        // Verify results.
+        Assert.assertFalse( result.isEmpty() );
     }
 }

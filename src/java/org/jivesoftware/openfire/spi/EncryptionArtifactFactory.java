@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.*;
 import java.security.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -109,49 +111,19 @@ public class EncryptionArtifactFactory
         final SSLEngine sslEngine = sslContext.createSSLEngine();
 
         // Configure protocol support.
-        final Set<String> protocolsEnabled = configuration.getEncryptionProtocolsEnabled();
-        if ( !protocolsEnabled.isEmpty() )
+        final Set<String> protocols = configuration.getEncryptionProtocols();
+        if ( !protocols.isEmpty() )
         {
-            // When an explicit list of enabled protocols is defined, use only those.
-            sslEngine.setEnabledProtocols( protocolsEnabled.toArray( new String[ protocolsEnabled.size() ] ) );
-        }
-        else
-        {
-            // Otherwise, use all supported protocols (except for the ones that are explicitly disabled).
-            final Set<String> disabled = configuration.getEncryptionProtocolsDisabled();
-            final ArrayList<String> supported = new ArrayList<>();
-            for ( final String candidate : sslEngine.getSupportedProtocols() )
-            {
-                if ( !disabled.contains( candidate ) )
-                {
-                    supported.add( candidate );
-                }
-            }
-
-            sslEngine.setEnabledProtocols( supported.toArray( new String[ supported.size()] ) );
+            // When an explicit list of enabled protocols is defined, use only those (otherwise, an implementation-specific default will be used).
+            sslEngine.setEnabledProtocols( protocols.toArray( new String[ protocols.size() ] ) );
         }
 
         // Configure cipher suite support.
-        final Set<String> cipherSuitesEnabled = configuration.getCipherSuitesEnabled();
-        if ( !cipherSuitesEnabled.isEmpty() )
+        final Set<String> cipherSuites = configuration.getEncryptionCipherSuites();
+        if ( !cipherSuites.isEmpty() )
         {
-            // When an explicit list of enabled protocols is defined, use only those.
-            sslEngine.setEnabledCipherSuites( cipherSuitesEnabled.toArray( new String[ cipherSuitesEnabled.size() ] ) );
-        }
-        else
-        {
-            // Otherwise, use all supported cipher suites (except for the ones that are explicitly disabled).
-            final Set<String> disabled = configuration.getCipherSuitesDisabled();
-            final ArrayList<String> supported = new ArrayList<>();
-            for ( final String candidate : sslEngine.getSupportedCipherSuites() )
-            {
-                if ( !disabled.contains( candidate ) )
-                {
-                    supported.add( candidate );
-                }
-            }
-
-            sslEngine.setEnabledCipherSuites( supported.toArray( new String[ supported.size() ] ) );
+            // When an explicit list of enabled protocols is defined, use only those (otherwise, an implementation-specific default will be used)..
+            sslEngine.setEnabledCipherSuites( cipherSuites.toArray( new String[ cipherSuites.size() ] ) );
         }
 
         return sslEngine;
@@ -221,20 +193,20 @@ public class EncryptionArtifactFactory
             sslContextFactory.setKeyStorePassword( new String( configuration.getIdentityStore().getConfiguration().getPassword() ) );
 
             // Configure protocol support
-            if ( configuration.getEncryptionProtocolsEnabled() != null && !configuration.getEncryptionProtocolsEnabled().isEmpty() )
+            final Set<String> protocols = configuration.getEncryptionProtocols();
+            if ( !protocols.isEmpty() )
             {
-                sslContextFactory.setIncludeProtocols( configuration.getEncryptionProtocolsEnabled().toArray( new String[ configuration.getEncryptionProtocolsEnabled().size() ] ) );
+                sslContextFactory.setIncludeProtocols( protocols.toArray( new String[ protocols.size() ] ) );
             }
-            sslContextFactory.setExcludeProtocols( configuration.getEncryptionProtocolsDisabled().toArray( new String[ configuration.getEncryptionProtocolsDisabled().size() ] ) );
 
             // Configure cipher suite support.
-            if ( configuration.getCipherSuitesEnabled() != null && !configuration.getCipherSuitesEnabled().isEmpty() )
+            final Set<String> cipherSuites = configuration.getEncryptionCipherSuites();
+            if ( !cipherSuites.isEmpty() )
             {
-                sslContextFactory.setIncludeCipherSuites( configuration.getCipherSuitesEnabled().toArray( new String[ configuration.getCipherSuitesEnabled().size() ] ) );
+                sslContextFactory.setIncludeCipherSuites( cipherSuites.toArray( new String[ cipherSuites.size() ] ) );
             }
-            sslContextFactory.setExcludeCipherSuites( configuration.getCipherSuitesDisabled().toArray( new String[ configuration.getCipherSuitesDisabled().size() ] ) );
 
-            //Set policy for checking client certificates
+            // Set policy for checking client certificates.
             switch ( configuration.getClientAuth() )
             {
                 case disabled:
@@ -331,12 +303,25 @@ public class EncryptionArtifactFactory
      *
      * @return An array of protocol names. Not expected to be empty.
      */
-    public static String[] getSupportedProtocols() throws NoSuchAlgorithmException, KeyManagementException
+    public static List<String> getSupportedProtocols() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
         final SSLContext context = SSLContext.getInstance( "TLSv1" );
         context.init( null, null, null );
-        return context.createSSLEngine().getSupportedProtocols();
+        return Arrays.asList( context.createSSLEngine().getSupportedProtocols() );
+    }
+
+    /**
+     * Returns the names of all encryption protocols that are enabled by default.
+     *
+     * @return An array of protocol names. Not expected to be empty.
+     */
+    public static List<String> getDefaultProtocols() throws NoSuchAlgorithmException, KeyManagementException
+    {
+        // TODO Might want to cache the result. It's unlikely to change at runtime.
+        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        context.init( null, null, null );
+        return Arrays.asList( context.createSSLEngine().getEnabledProtocols() );
     }
 
     /**
@@ -344,11 +329,25 @@ public class EncryptionArtifactFactory
      *
      * @return An array of cipher suite names. Not expected to be empty.
      */
-    public static String[] getSupportedCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
+    public static List<String> getSupportedCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
     {
         // TODO Might want to cache the result. It's unlikely to change at runtime.
         final SSLContext context = SSLContext.getInstance( "TLSv1" );
         context.init( null, null, null );
-        return context.createSSLEngine().getSupportedCipherSuites();
+        return Arrays.asList( context.createSSLEngine().getSupportedCipherSuites() );
     }
+
+    /**
+     * Returns the names of all encryption cipher suites that are enabled by default.
+     *
+     * @return An array of cipher suite names. Not expected to be empty.
+     */
+    public static List<String> getDefaultCipherSuites() throws NoSuchAlgorithmException, KeyManagementException
+    {
+        // TODO Might want to cache the result. It's unlikely to change at runtime.
+        final SSLContext context = SSLContext.getInstance( "TLSv1" );
+        context.init( null, null, null );
+        return Arrays.asList( context.createSSLEngine().getEnabledCipherSuites() );
+    }
+
 }

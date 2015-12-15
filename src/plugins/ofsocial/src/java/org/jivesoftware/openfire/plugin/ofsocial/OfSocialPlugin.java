@@ -116,10 +116,11 @@ public class OfSocialPlugin implements Plugin, ClusterEventListener  {
 				} catch ( Exception e ) { }
 			}
 
-			sockets.clear();
-
 			cleanupWordPress();
         	ClusterManager.removeListener(this);
+
+			sockets.clear();
+
 
         } catch (Exception e) {
 
@@ -165,89 +166,85 @@ public class OfSocialPlugin implements Plugin, ClusterEventListener  {
 
 	private void setupWordPress()
 	{
-		if ("SELECT user_pass FROM wp_users WHERE user_nicename=?".equals(JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL")))
-		{
-			Log.info("WordPress found as auth Provider");
+		Log.info("Setting WordPress as new auth Provider");
 
-		} else {
+		JiveGlobals.setProperty("jdbcAuthProvider.passwordSQL", "SELECT user_pass FROM wp_users WHERE user_nicename=?");
+		JiveGlobals.setProperty("jdbcAuthProvider.setPasswordSQL", "");
+		JiveGlobals.setProperty("jdbcAuthProvider.allowUpdate", "false");
+		JiveGlobals.setProperty("jdbcAuthProvider.passwordType", "md5");
+		JiveGlobals.setProperty("jdbcAuthProvider.useConnectionProvider", "true");
 
-			Log.info("Setting WordPress as new auth Provider");
+		JiveGlobals.setProperty("provider.auth.className",  "org.jivesoftware.openfire.auth.JDBCAuthProvider");
 
-			JiveGlobals.setProperty("jdbcAuthProvider.passwordSQL", "SELECT user_pass FROM wp_users WHERE user_nicename=?");
-			JiveGlobals.setProperty("jdbcAuthProvider.setPasswordSQL", "");
-			JiveGlobals.setProperty("jdbcAuthProvider.allowUpdate", "false");
-			JiveGlobals.setProperty("jdbcAuthProvider.passwordType", "md5");
-			JiveGlobals.setProperty("jdbcAuthProvider.useConnectionProvider", "true");
-			JiveGlobals.setProperty("provider.auth.className",  "org.jivesoftware.openfire.auth.JDBCAuthProvider");
+		Log.info("Setting WordPress as user Provider");
 
-			Log.info("Setting WordPress as user Provider");
+		JiveGlobals.setProperty("jdbcUserProvider.loadUserSQL", "SELECT user_nicename, user_email FROM wp_users WHERE user_nicename=?");
+		JiveGlobals.setProperty("jdbcUserProvider.userCountSQL", "SELECT COUNT(*) FROM wp_users");
+		JiveGlobals.setProperty("jdbcUserProvider.allUsersSQL", "SELECT user_nicename FROM wp_users");
+		JiveGlobals.setProperty("jdbcUserProvider.searchSQL", "SELECT user_nicename FROM wp_users WHERE");
+		JiveGlobals.setProperty("jdbcUserProvider.user_loginField", "user_nicename");
+		JiveGlobals.setProperty("jdbcUserProvider.nameField", "display_name");
+		JiveGlobals.setProperty("jdbcUserProvider.emailField", "user_email");
+		JiveGlobals.setProperty("jdbcUserProvider.useConnectionProvider", "true");
 
-			JiveGlobals.setProperty("jdbcUserProvider.loadUserSQL", "SELECT user_nicename, user_email FROM wp_users WHERE user_nicename=?");
-			JiveGlobals.setProperty("jdbcUserProvider.userCountSQL", "SELECT COUNT(*) FROM wp_users");
-			JiveGlobals.setProperty("jdbcUserProvider.allUsersSQL", "SELECT user_nicename FROM wp_users");
-			JiveGlobals.setProperty("jdbcUserProvider.searchSQL", "SELECT user_nicename FROM wp_users WHERE");
-			JiveGlobals.setProperty("jdbcUserProvider.user_loginField", "user_nicename");
-			JiveGlobals.setProperty("jdbcUserProvider.nameField", "display_name");
-			JiveGlobals.setProperty("jdbcUserProvider.emailField", "user_email");
-			JiveGlobals.setProperty("jdbcUserProvider.useConnectionProvider", "true");
-			JiveGlobals.setProperty("provider.user.className",  "org.jivesoftware.openfire.user.JDBCUserProvider");
+		JiveGlobals.setProperty("provider.user.className",  "org.jivesoftware.openfire.user.JDBCUserProvider");
 
-			Log.info("Setting WordPress as group Provider");
+		Log.info("Setting WordPress as group Provider");
 
-			JiveGlobals.setProperty("jdbcGroupProvider.groupCountSQL", "SELECT count(*) FROM wp_bp_groups");
-			JiveGlobals.setProperty("jdbcGroupProvider.allGroupsSQL", "SELECT name FROM wp_bp_groups");
-			JiveGlobals.setProperty("jdbcGroupProvider.userGroupsSQL", "SELECT name FROM wp_bp_groups INNER JOIN wp_bp_groups_members ON wp_bp_groups.id = wp_bp_groups_members.group_id WHERE wp_bp_groups_members.user_id IN (SELECT ID FROM wp_users WHERE user_nicename=?) AND is_confirmed=1");
-			JiveGlobals.setProperty("jdbcGroupProvider.descriptionSQL", "SELECT description FROM wp_bp_groups WHERE name=?");
-			JiveGlobals.setProperty("jdbcGroupProvider.loadMembersSQL", "SELECT user_nicename FROM wp_users INNER JOIN wp_bp_groups_members ON wp_users.ID = wp_bp_groups_members.user_id WHERE wp_bp_groups_members.group_id IN (SELECT id FROM wp_bp_groups WHERE name=?) AND user_nicename<>'admin' AND is_confirmed=1");
-			JiveGlobals.setProperty("jdbcGroupProvider.loadAdminsSQL", "SELECT user_nicename FROM wp_users INNER JOIN wp_bp_groups_members ON wp_users.ID = wp_bp_groups_members.user_id WHERE wp_bp_groups_members.group_id IN (SELECT id FROM wp_bp_groups WHERE name=?) AND user_nicename='admin' AND is_confirmed=1");
-			JiveGlobals.setProperty("jdbcGroupProvider.useConnectionProvider", "true");
-			JiveGlobals.setProperty("provider.group.className",  "org.jivesoftware.openfire.group.JDBCGroupProvider");
+		JiveGlobals.setProperty("jdbcGroupProvider.groupCountSQL", "SELECT count(*) FROM wp_bp_groups");
+		JiveGlobals.setProperty("jdbcGroupProvider.allGroupsSQL", "SELECT name FROM wp_bp_groups");
+		JiveGlobals.setProperty("jdbcGroupProvider.userGroupsSQL", "SELECT name FROM wp_bp_groups INNER JOIN wp_bp_groups_members ON wp_bp_groups.id = wp_bp_groups_members.group_id WHERE wp_bp_groups_members.user_id IN (SELECT ID FROM wp_users WHERE user_nicename=?) AND is_confirmed=1");
+		JiveGlobals.setProperty("jdbcGroupProvider.descriptionSQL", "SELECT description FROM wp_bp_groups WHERE name=?");
+		JiveGlobals.setProperty("jdbcGroupProvider.loadMembersSQL", "SELECT user_nicename FROM wp_users INNER JOIN wp_bp_groups_members ON wp_users.ID = wp_bp_groups_members.user_id WHERE wp_bp_groups_members.group_id IN (SELECT id FROM wp_bp_groups WHERE name=?) AND user_nicename<>'admin' AND is_confirmed=1");
+		JiveGlobals.setProperty("jdbcGroupProvider.loadAdminsSQL", "SELECT user_nicename FROM wp_users INNER JOIN wp_bp_groups_members ON wp_users.ID = wp_bp_groups_members.user_id WHERE wp_bp_groups_members.group_id IN (SELECT id FROM wp_bp_groups WHERE name=?) AND user_nicename='admin' AND is_confirmed=1");
+		JiveGlobals.setProperty("jdbcGroupProvider.useConnectionProvider", "true");
 
-			JiveGlobals.setProperty("cache.groupMeta.maxLifetime", "60000");
-			JiveGlobals.setProperty("cache.group.maxLifetime", "60000");
-			JiveGlobals.setProperty("cache.userCache.maxLifetime", "60000");
-		}
+		JiveGlobals.setProperty("provider.group.className",  "org.jivesoftware.openfire.group.JDBCGroupProvider");
+
+		JiveGlobals.setProperty("cache.groupMeta.maxLifetime", "60000");
+		JiveGlobals.setProperty("cache.group.maxLifetime", "60000");
+		JiveGlobals.setProperty("cache.userCache.maxLifetime", "60000");
 	}
 
 	private void cleanupWordPress()
 	{
-		if ("SELECT user_pass FROM wp_users WHERE user_nicename=?".equals(JiveGlobals.getProperty("jdbcAuthProvider.passwordSQL")))
-		{
-			Log.info("Cleanup WordPress as new auth Provider");
+		Log.info("Cleanup WordPress as new auth Provider");
 
-			JiveGlobals.deleteProperty("jdbcAuthProvider.passwordSQL");
-			JiveGlobals.deleteProperty("jdbcAuthProvider.setPasswordSQL");
-			JiveGlobals.deleteProperty("jdbcAuthProvider.allowUpdate");
-			JiveGlobals.deleteProperty("jdbcAuthProvider.passwordType");
-			JiveGlobals.deleteProperty("jdbcAuthProvider.useConnectionProvider");
-			JiveGlobals.setProperty("provider.auth.className",  "org.jivesoftware.openfire.auth.DefaultAuthProvider");
+		JiveGlobals.deleteProperty("jdbcAuthProvider.passwordSQL");
+		JiveGlobals.deleteProperty("jdbcAuthProvider.setPasswordSQL");
+		JiveGlobals.deleteProperty("jdbcAuthProvider.allowUpdate");
+		JiveGlobals.deleteProperty("jdbcAuthProvider.passwordType");
+		JiveGlobals.deleteProperty("jdbcAuthProvider.useConnectionProvider");
 
-			Log.info("Cleanup WordPress as user Provider");
+		JiveGlobals.setProperty("provider.auth.className",  "org.jivesoftware.openfire.auth.DefaultAuthProvider");
 
-			JiveGlobals.deleteProperty("jdbcUserProvider.loadUserSQL");
-			JiveGlobals.deleteProperty("jdbcUserProvider.userCountSQL");
-			JiveGlobals.deleteProperty("jdbcUserProvider.allUsersSQL");
-			JiveGlobals.deleteProperty("jdbcUserProvider.searchSQL");
-			JiveGlobals.deleteProperty("jdbcUserProvider.user_loginField");
-			JiveGlobals.deleteProperty("jdbcUserProvider.nameField");
-			JiveGlobals.deleteProperty("jdbcUserProvider.emailField");
-			JiveGlobals.deleteProperty("jdbcUserProvider.useConnectionProvider");
-			JiveGlobals.setProperty("provider.user.className",  "org.jivesoftware.openfire.user.DefaultUserProvider");
+		Log.info("Cleanup WordPress as user Provider");
 
-			Log.info("Cleanup WordPress as group Provider");
+		JiveGlobals.deleteProperty("jdbcUserProvider.loadUserSQL");
+		JiveGlobals.deleteProperty("jdbcUserProvider.userCountSQL");
+		JiveGlobals.deleteProperty("jdbcUserProvider.allUsersSQL");
+		JiveGlobals.deleteProperty("jdbcUserProvider.searchSQL");
+		JiveGlobals.deleteProperty("jdbcUserProvider.user_loginField");
+		JiveGlobals.deleteProperty("jdbcUserProvider.nameField");
+		JiveGlobals.deleteProperty("jdbcUserProvider.emailField");
+		JiveGlobals.deleteProperty("jdbcUserProvider.useConnectionProvider");
 
-			JiveGlobals.deleteProperty("jdbcGroupProvider.groupCountSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.allGroupsSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.userGroupsSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.descriptionSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.loadMembersSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.loadAdminsSQL");
-			JiveGlobals.deleteProperty("jdbcGroupProvider.useConnectionProvider");
-			JiveGlobals.setProperty("provider.group.className",  "org.jivesoftware.openfire.group.DefaultGroupProvider");
+		JiveGlobals.setProperty("provider.user.className",  "org.jivesoftware.openfire.user.DefaultUserProvider");
 
-			JiveGlobals.deleteProperty("cache.groupMeta.maxLifetime");
-			JiveGlobals.deleteProperty("cache.group.maxLifetime");
-			JiveGlobals.deleteProperty("cache.userCache.maxLifetime");
-		}
+		Log.info("Cleanup WordPress as group Provider");
+
+		JiveGlobals.deleteProperty("jdbcGroupProvider.groupCountSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.allGroupsSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.userGroupsSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.descriptionSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.loadMembersSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.loadAdminsSQL");
+		JiveGlobals.deleteProperty("jdbcGroupProvider.useConnectionProvider");
+
+		JiveGlobals.setProperty("provider.group.className",  "org.jivesoftware.openfire.group.DefaultGroupProvider");
+
+		JiveGlobals.deleteProperty("cache.groupMeta.maxLifetime");
+		JiveGlobals.deleteProperty("cache.group.maxLifetime");
+		JiveGlobals.deleteProperty("cache.userCache.maxLifetime");
 	}
 }

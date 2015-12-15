@@ -2797,6 +2797,144 @@ function bp_is_register_page() {
 }
 
 /**
+ * Get the title parts of the BuddyPress displayed page
+ *
+ * @since 2.4.3
+ *
+ * @param string $seplocation
+ * @return array the title parts
+ */
+function bp_get_title_parts( $seplocation = 'right' ) {
+	$bp = buddypress();
+
+	// Defaults to an empty array
+	$bp_title_parts = array();
+
+	// If this is not a BP page, return the empty array.
+	if ( bp_is_blog_page() ) {
+		return $bp_title_parts;
+	}
+
+	// If this is a 404, return the empty array.
+	if ( is_404() ) {
+		return $bp_title_parts;
+	}
+
+	// If this is the front page of the site, return the empty array.
+	if ( is_front_page() || is_home() ) {
+		return $bp_title_parts;
+	}
+
+	// Return the empty array if not a BuddyPress page.
+	if ( ! is_buddypress() ) {
+		return $bp_title_parts;
+	}
+
+	// Now we can build the BP Title Parts
+	// Is there a displayed user, and do they have a name?
+	$displayed_user_name = bp_get_displayed_user_fullname();
+
+	// Displayed user.
+	if ( ! empty( $displayed_user_name ) && ! is_404() ) {
+
+		// Get the component's ID to try and get its name.
+		$component_id = $component_name = bp_current_component();
+
+		// Set empty subnav name.
+		$component_subnav_name = '';
+
+		// Use the component nav name.
+		if ( ! empty( $bp->bp_nav[$component_id] ) ) {
+			$component_name = _bp_strip_spans_from_title( $bp->bp_nav[ $component_id ]['name'] );
+
+		// Fall back on the component ID.
+		} elseif ( ! empty( $bp->{$component_id}->id ) ) {
+			$component_name = ucwords( $bp->{$component_id}->id );
+		}
+
+		// Append action name if we're on a member component sub-page.
+		if ( ! empty( $bp->bp_options_nav[ $component_id ] ) && ! empty( $bp->canonical_stack['action'] ) ) {
+			$component_subnav_name = wp_filter_object_list( $bp->bp_options_nav[ $component_id ], array( 'slug' => bp_current_action() ), 'and', 'name' );
+
+			if ( ! empty( $component_subnav_name ) ) {
+				$component_subnav_name = array_shift( $component_subnav_name );
+			}
+		}
+
+		// If on the user profile's landing page, just use the fullname.
+		if ( bp_is_current_component( $bp->default_component ) && ( bp_get_requested_url() === bp_displayed_user_domain() ) ) {
+			$bp_title_parts[] = $displayed_user_name;
+
+		// Use component name on member pages.
+		} else {
+			$bp_title_parts = array_merge( $bp_title_parts, array_map( 'strip_tags', array(
+				$displayed_user_name,
+				$component_name,
+			) ) );
+
+			// If we have a subnav name, add it separately for localization.
+			if ( ! empty( $component_subnav_name ) ) {
+				$bp_title_parts[] = strip_tags( $component_subnav_name );
+			}
+		}
+
+	// A single group.
+	} elseif ( bp_is_active( 'groups' ) && ! empty( $bp->groups->current_group ) && ! empty( $bp->bp_options_nav[ $bp->groups->current_group->slug ] ) ) {
+		$subnav      = isset( $bp->bp_options_nav[ $bp->groups->current_group->slug ][ bp_current_action() ]['name'] ) ? $bp->bp_options_nav[ $bp->groups->current_group->slug ][ bp_current_action() ]['name'] : '';
+		$bp_title_parts = array( $bp->bp_options_title, $subnav );
+
+	// A single item from a component other than groups.
+	} elseif ( bp_is_single_item() ) {
+		$bp_title_parts = array( $bp->bp_options_title, $bp->bp_options_nav[ bp_current_item() ][ bp_current_action() ]['name'] );
+
+	// An index or directory.
+	} elseif ( bp_is_directory() ) {
+		$current_component = bp_current_component();
+
+		// No current component (when does this happen?).
+		$bp_title_parts = array( _x( 'Directory', 'component directory title', 'buddypress' ) );
+
+		if ( ! empty( $current_component ) ) {
+			$bp_title_parts = array( bp_get_directory_title( $current_component ) );
+		}
+
+	// Sign up page.
+	} elseif ( bp_is_register_page() ) {
+		$bp_title_parts = array( __( 'Create an Account', 'buddypress' ) );
+
+	// Activation page.
+	} elseif ( bp_is_activation_page() ) {
+		$bp_title_parts = array( __( 'Activate Your Account', 'buddypress' ) );
+
+	// Group creation page.
+	} elseif ( bp_is_group_create() ) {
+		$bp_title_parts = array( __( 'Create a Group', 'buddypress' ) );
+
+	// Blog creation page.
+	} elseif ( bp_is_create_blog() ) {
+		$bp_title_parts = array( __( 'Create a Site', 'buddypress' ) );
+	}
+
+	// Strip spans.
+	$bp_title_parts = array_map( '_bp_strip_spans_from_title', $bp_title_parts );
+
+	// Sep on right, so reverse the order.
+	if ( 'right' === $seplocation ) {
+		$bp_title_parts = array_reverse( $bp_title_parts );
+	}
+
+	/**
+	 * Filter BuddyPress title parts before joining.
+	 *
+	 * @since 2.4.3
+	 *
+	 * @param  array $bp_title_parts Current BuddyPress title parts
+	 * @return array
+	 */
+	return (array) apply_filters( 'bp_get_title_parts', $bp_title_parts );
+}
+
+/**
  * Customize the body class, according to the currently displayed BP content.
  */
 function bp_the_body_class() {

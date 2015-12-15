@@ -660,121 +660,14 @@ add_filter( 'wpmu_signup_user_notification', 'bp_core_activation_signup_user_not
  * @return string              New page title.
  */
 function bp_modify_page_title( $title = '', $sep = '&raquo;', $seplocation = 'right' ) {
-	global $bp, $paged, $page, $_wp_theme_features;
+	global $paged, $page, $_wp_theme_features;
 
-	// If this is not a BP page, just return the title produced by WP
-	if ( bp_is_blog_page() ) {
+	// Get the BuddyPress title parts
+	$bp_title_parts = bp_get_title_parts( $seplocation );
+
+	// If not set, simply return the original title
+	if ( ! $bp_title_parts ) {
 		return $title;
-	}
-
-	// If this is a 404, let WordPress handle it
-	if ( is_404() ) {
-		return $title;
-	}
-
-	// If this is the front page of the site, return WP's title
-	if ( is_front_page() || is_home() ) {
-		return $title;
-	}
-
-	// Return WP's title if not a BuddyPress page
-	if ( ! is_buddypress() ) {
-		return $title;
-	}
-
-	// Setup an empty title parts array
-	$title_parts = array();
-
-	// Is there a displayed user, and do they have a name?
-	$displayed_user_name = bp_get_displayed_user_fullname();
-
-	// Displayed user
-	if ( ! empty( $displayed_user_name ) && ! is_404() ) {
-
-		// Get the component's ID to try and get its name
-		$component_id = $component_name = bp_current_component();
-
-		// Set empty subnav name
-		$component_subnav_name = '';
-
-		// Use the component nav name
-		if ( ! empty( $bp->bp_nav[$component_id] ) ) {
-			$component_name = _bp_strip_spans_from_title( $bp->bp_nav[ $component_id ]['name'] );
-
-		// Fall back on the component ID
-		} elseif ( ! empty( $bp->{$component_id}->id ) ) {
-			$component_name = ucwords( $bp->{$component_id}->id );
-		}
-
-		// Append action name if we're on a member component sub-page
-		if ( ! empty( $bp->bp_options_nav[ $component_id ] ) && ! empty( $bp->canonical_stack['action'] ) ) {
-			$component_subnav_name = wp_filter_object_list( $bp->bp_options_nav[ $component_id ], array( 'slug' => bp_current_action() ), 'and', 'name' );
-
-			if ( ! empty( $component_subnav_name ) ) {
-				$component_subnav_name = array_shift( $component_subnav_name );
-			}
-		}
-
-		// If on the user profile's landing page, just use the fullname
-		if ( bp_is_current_component( $bp->default_component ) && ( bp_get_requested_url() === bp_displayed_user_domain() ) ) {
-			$title_parts[] = $displayed_user_name;
-
-		// Use component name on member pages
-		} else {
-			$title_parts = array_merge( $title_parts, array_map( 'strip_tags', array(
-				$displayed_user_name,
-				$component_name,
-			) ) );
-
-			// If we have a subnav name, add it separately for localization
-			if ( ! empty( $component_subnav_name ) ) {
-				$title_parts[] = strip_tags( $component_subnav_name );
-			}
-		}
-
-	// A single group
-	} elseif ( bp_is_active( 'groups' ) && ! empty( $bp->groups->current_group ) && ! empty( $bp->bp_options_nav[ $bp->groups->current_group->slug ] ) ) {
-		$subnav      = isset( $bp->bp_options_nav[ $bp->groups->current_group->slug ][ bp_current_action() ]['name'] ) ? $bp->bp_options_nav[ $bp->groups->current_group->slug ][ bp_current_action() ]['name'] : '';
-		$title_parts = array( $bp->bp_options_title, $subnav );
-
-	// A single item from a component other than groups
-	} elseif ( bp_is_single_item() ) {
-		$title_parts = array( $bp->bp_options_title, $bp->bp_options_nav[ bp_current_item() ][ bp_current_action() ]['name'] );
-
-	// An index or directory
-	} elseif ( bp_is_directory() ) {
-		$current_component = bp_current_component();
-
-		// No current component (when does this happen?)
-		$title_parts = array( _x( 'Directory', 'component directory title', 'buddypress' ) );
-
-		if ( ! empty( $current_component ) ) {
-			$title_parts = array( bp_get_directory_title( $current_component ) );
- 		}
-
-	// Sign up page
-	} elseif ( bp_is_register_page() ) {
-		$title_parts = array( __( 'Create an Account', 'buddypress' ) );
-
-	// Activation page
-	} elseif ( bp_is_activation_page() ) {
-		$title_parts = array( __( 'Activate Your Account', 'buddypress' ) );
-
-	// Group creation page
-	} elseif ( bp_is_group_create() ) {
-		$title_parts = array( __( 'Create a Group', 'buddypress' ) );
-
-	// Blog creation page
-	} elseif ( bp_is_create_blog() ) {
-		$title_parts = array( __( 'Create a Site', 'buddypress' ) );
-	}
-
-	// Strip spans
-	$title_parts = array_map( '_bp_strip_spans_from_title', $title_parts );
-
-	// sep on right, so reverse the order
-	if ( 'right' == $seplocation ) {
-		$title_parts = array_reverse( $title_parts );
 	}
 
 	// Get the blog name, so we can check if the original $title included it
@@ -790,10 +683,10 @@ function bp_modify_page_title( $title = '', $sep = '&raquo;', $seplocation = 'ri
 
 	// Append the site title to title parts if theme supports title tag
 	if ( true === $title_tag_compatibility ) {
-		$title_parts[] = $blogname;
+		$bp_title_parts['site'] = $blogname;
 
-		if ( ( $paged >= 2 || $page >= 2 ) && ! is_404() ) {
-			$title_parts[] = sprintf( __( 'Page %s', 'buddypress' ), max( $paged, $page ) );
+		if ( ( $paged >= 2 || $page >= 2 ) && ! is_404() && ! bp_is_single_activity() ) {
+			$bp_title_parts['page'] = sprintf( __( 'Page %s', 'buddypress' ), max( $paged, $page ) );
 		}
 	}
 
@@ -801,7 +694,7 @@ function bp_modify_page_title( $title = '', $sep = '&raquo;', $seplocation = 'ri
 	$prefix = str_pad( $sep, strlen( $sep ) + 2, ' ', STR_PAD_BOTH );
 
 	// Join the parts together
-	$new_title = join( $prefix, array_filter( $title_parts ) );
+	$new_title = join( $prefix, array_filter( $bp_title_parts ) );
 
 	// Append the prefix for pre `title-tag` compatibility
 	if ( false === $title_tag_compatibility ) {
@@ -809,7 +702,7 @@ function bp_modify_page_title( $title = '', $sep = '&raquo;', $seplocation = 'ri
 	}
 
 	/**
-	 * Filters the page title for BuddyPress pages.
+	 * Filters the older 'wp_title' page title for BuddyPress pages.
 	 *
 	 * @since  1.5.0
 	 *
@@ -820,29 +713,58 @@ function bp_modify_page_title( $title = '', $sep = '&raquo;', $seplocation = 'ri
 	 */
 	return apply_filters( 'bp_modify_page_title', $new_title, $title, $sep, $seplocation );
 }
-add_filter( 'wp_title', 'bp_modify_page_title', 20, 3 );
-add_filter( 'bp_modify_page_title', 'wptexturize'     );
-add_filter( 'bp_modify_page_title', 'convert_chars'   );
-add_filter( 'bp_modify_page_title', 'esc_html'        );
+add_filter( 'wp_title',             'bp_modify_page_title', 20, 3 );
+add_filter( 'bp_modify_page_title', 'wptexturize'                 );
+add_filter( 'bp_modify_page_title', 'convert_chars'               );
+add_filter( 'bp_modify_page_title', 'esc_html'                    );
 
 /**
- * Strip span tags out of title part strings.
+ * Filter the document title for BuddyPress pages.
  *
- * This is a temporary function for compatibility with WordPress versions
- * less than 4.0, and should be removed at a later date.
+ * @since 2.4.3
  *
- * @param  string $title_part
- *
- * @return string
+ * @param array $title The WordPress document title parts
+ * @return array the unchanged title parts or the BuddyPress ones
  */
-function _bp_strip_spans_from_title( $title_part = '' ) {
-	$title = $title_part;
-	$span = strpos( $title, '<span' );
-	if ( false !== $span ) {
-		$title = substr( $title, 0, $span - 1 );
+function bp_modify_document_title_parts( $title = array() ) {
+	// Get the BuddyPress title parts
+	$bp_title_parts = bp_get_title_parts();
+
+	// If not set, simply return the original title
+	if ( ! $bp_title_parts ) {
+		return $title;
 	}
-	return $title;
+
+	// Get the separator used by wp_get_document_title()
+	$sep = apply_filters( 'document_title_separator', '-' );
+
+	// Build the BuddyPress portion of the title.
+	// We don't need to sanitize this as WordPress will take care of it.
+	$bp_title = array(
+		'title' => join( " $sep ", $bp_title_parts )
+	);
+
+	// Add the pagination number if needed (not sure if this is necessary).
+	if ( isset( $title['page'] ) && ! bp_is_single_activity() ) {
+		$bp_title['page'] = $title['page'];
+	}
+
+	// Add the sitename if needed.
+	if ( isset( $title['site'] ) ) {
+		$bp_title['site'] = $title['site'];
+	}
+
+	/**
+	 * Filters BuddyPress title parts that will be used into the document title.
+	 *
+	 * @since  2.4.3
+	 *
+	 * @param  array $bp_title   The BuddyPress page title parts.
+	 * @param  array $title      The original WordPress title parts.
+	 */
+	return apply_filters( 'bp_modify_document_title_parts', $bp_title, $title );
 }
+add_filter( 'document_title_parts', 'bp_modify_document_title_parts', 20, 1 );
 
 /**
  * Add BuddyPress-specific items to the wp_nav_menu.

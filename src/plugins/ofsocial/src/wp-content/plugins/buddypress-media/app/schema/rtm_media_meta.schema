@@ -1,7 +1,0 @@
-CREATE TABLE %s (
-    id bigint(20) NOT NULL AUTO_INCREMENT ,
-    media_id bigint(20) NOT NULL DEFAULT 0,
-    meta_key varchar(255),
-    meta_value longtext,
-    PRIMARY KEY  (id)
-);

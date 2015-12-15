@@ -1313,14 +1313,19 @@ function bp_member_random_profile_data() {
  * Output hidden input for preserving member search params on form submit.
  */
 function bp_member_hidden_fields() {
-	if ( isset( $_REQUEST['s'] ) )
-		echo '<input type="hidden" id="search_terms" value="' . esc_attr( $_REQUEST['s'] ) . '" name="search_terms" />';
+	$query_arg = bp_core_get_component_search_query_arg( 'members' );
 
-	if ( isset( $_REQUEST['letter'] ) )
+	if ( isset( $_REQUEST[ $query_arg ] ) ) {
+		echo '<input type="hidden" id="search_terms" value="' . esc_attr( $_REQUEST[ $query_arg ] ) . '" name="search_terms" />';
+	}
+
+	if ( isset( $_REQUEST['letter'] ) ) {
 		echo '<input type="hidden" id="selected_letter" value="' . esc_attr( $_REQUEST['letter'] ) . '" name="selected_letter" />';
+	}
 
-	if ( isset( $_REQUEST['members_search'] ) )
+	if ( isset( $_REQUEST['members_search'] ) ) {
 		echo '<input type="hidden" id="search_terms" value="' . esc_attr( $_REQUEST['members_search'] ) . '" name="search_terms" />';
+	}
 }
 
 /**

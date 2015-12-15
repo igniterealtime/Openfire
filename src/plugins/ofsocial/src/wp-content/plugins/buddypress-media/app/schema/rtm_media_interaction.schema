@@ -1,9 +1,0 @@
-CREATE TABLE %s (
-    id bigint(20) NOT NULL AUTO_INCREMENT ,
-    user_id bigint(20) NOT NULL DEFAULT 0,
-    media_id bigint(20) NOT NULL DEFAULT 0,
-    action varchar(255),
-    value varchar(255),
-    action_date TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY  (id)
-);

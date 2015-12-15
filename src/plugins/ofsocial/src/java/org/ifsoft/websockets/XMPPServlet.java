@@ -129,7 +129,10 @@ public final class XMPPServlet extends WebSocketServlet
 					int conflictCount = session.incrementConflictCount();
 
 					if (conflictCount > conflictLimit) {
-						session.close();
+						try {
+							session.close();
+						} catch (Exception e) {}
+
 						SessionManager.getInstance().removeSession(session);
 					}
 					else {
@@ -206,7 +209,7 @@ public final class XMPPServlet extends WebSocketServlet
 						socket.setSession( session );
 					}
 					catch (Exception e1) {
-						Log.error( "An error occurred while attempting to create a new socket " + e1);
+						Log.error( "An error occurred while attempting to create a new socket ", e1);
 						return false;
 					}
 
@@ -214,12 +217,13 @@ public final class XMPPServlet extends WebSocketServlet
 					Log.debug( "Total websockets created : " + sockets.size() );
 
 				} catch ( Exception e ) {
-					Log.error( "An error occurred while attempting to create a new socket " + e);
+					Log.error( "An error occurred while attempting to create a new socket ", e);
 					return false;
 				}
 
 
 			} catch ( Exception e ) {
+				Log.error( "An error occurred while attempting to create a new socket ", e);
 				if (socket.getSession() != null) SessionManager.getInstance().removeSession(socket.getSession());
 				return false;
 			}

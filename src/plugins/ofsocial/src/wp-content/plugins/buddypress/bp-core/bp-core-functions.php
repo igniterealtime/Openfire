@@ -2296,6 +2296,23 @@ function bp_remove_adjacent_posts_rel_link() {
 }
 add_action( 'bp_init', 'bp_remove_adjacent_posts_rel_link' );
 
+/**
+ * Strip the span count of a menu item or of a title part.
+ *
+ * @since 2.2.2
+ *
+ * @param string $title_part Title part to clean up.
+ * @return string
+ */
+function _bp_strip_spans_from_title( $title_part = '' ) {
+	$title = $title_part;
+	$span = strpos( $title, '<span' );
+	if ( false !== $span ) {
+		$title = substr( $title, 0, $span - 1 );
+	}
+	return trim( $title );
+}
+
 /** Nav Menu ******************************************************************/
 
 /**
@@ -2347,8 +2364,7 @@ function bp_nav_menu_get_loggedin_pages() {
 	foreach ( $bp_menu_items as $bp_item ) {
 
 		// Remove <span>number</span>
-		$item_name = preg_replace( '/([.0-9]+)/', '', $bp_item['name'] );
-		$item_name = trim( strip_tags( $item_name ) );
+		$item_name = _bp_strip_spans_from_title( $bp_item['name'] );
 
 		$page_args[ $bp_item['slug'] ] = (object) array(
 			'ID'             => -1,

@@ -3632,8 +3632,10 @@ function bp_group_status_message( $group = null ) {
  * @since 1.0.0
  */
 function bp_group_hidden_fields() {
-	if ( isset( $_REQUEST['s'] ) ) {
-		echo '<input type="hidden" id="search_terms" value="' . esc_attr( $_REQUEST['s'] ) . '" name="search_terms" />';
+	$query_arg = bp_core_get_component_search_query_arg( 'groups' );
+
+	if ( isset( $_REQUEST[ $query_arg ] ) ) {
+		echo '<input type="hidden" id="search_terms" value="' . esc_attr( $_REQUEST[ $query_arg ] ) . '" name="search_terms" />';
 	}
 
 	if ( isset( $_REQUEST['letter'] ) ) {

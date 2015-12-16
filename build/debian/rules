@@ -23,6 +23,5 @@ install/openfire::
 	cp -r $(TARGET)/resources/database $(OPENFIRE)/resources/database
 	cp $(TARGET)/conf/openfire.xml $(ETCDIR)
 	cp $(TARGET)/conf/security.xml $(ETCDIR)
-	cp $(TARGET)/conf/modules.xml $(ETCDIR)
 	cp -r $(TARGET)/resources/security $(ETCDIR)/security
 	cp -r $(TARGET)/plugins $(VARDIR)/plugins

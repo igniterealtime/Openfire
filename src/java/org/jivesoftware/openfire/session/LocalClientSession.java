@@ -21,12 +21,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -71,11 +66,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Keep the list of IP address that are allowed to connect to the server. If the list is
      * empty then anyone is allowed to connect to the server.<p>
      *
-     * Note: Key = IP address or IP range; Value = empty string. A hash map is being used for
-     * performance reasons.
+     * Note: value = IP address or IP range
      */
-    private static Map<String,String> allowedIPs = new HashMap<>();
-    private static Map<String,String> allowedAnonymIPs = new HashMap<>();
+    private static Set<String> allowedIPs = new HashSet<>();
+    private static Set<String> allowedAnonymIPs = new HashSet<>();
 
     private boolean messageCarbonsEnabled;
 
@@ -124,14 +118,13 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         StringTokenizer tokens = new StringTokenizer(allowed, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
-            allowedIPs.put(address, "");
+            allowedIPs.add( address );
         }
         String allowedAnonym = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, "");
         tokens = new StringTokenizer(allowedAnonym, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
-            allowedAnonymIPs.put(address, "");
-
+            allowedAnonymIPs.add(address);
         }
     }
 
@@ -142,19 +135,52 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * non-anonymous users.
      *
      * @return the list of IP address that are allowed to connect to the server.
+     * @deprecated Use #getWhitelistedIPs instead.
      */
-    public static Map<String, String> getAllowedIPs() {
-        return allowedIPs;
+    @Deprecated
+    public static Map<String, String> getAllowedIPs()
+    {
+        final Map<String, String> result = new HashMap<>();
+        for ( String item : allowedIPs )
+        {
+            result.put( item, null );
+        }
+        return result;
     }
 
+    /**
+     * Returns the list of IP address that are allowed to connect to the server. If the list is empty then anyone is
+     * allowed to connect to the server except for anonymous users that are subject to
+     * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
+     *
+     * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getWhitelistedIPs() { return allowedIPs; }
 
     /**
      * Returns the list of IP address that are allowed to connect to the server for anonymous
      * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
      *
      * @return the list of IP address that are allowed to connect to the server.
+     * @deprecated Use #getWhitelistedAnonymousIPs instead.
      */
-    public static Map<String, String> getAllowedAnonymIPs() {
+    public static Map<String, String> getAllowedAnonymIPs()
+    {
+        final Map<String, String> result = new HashMap<>();
+        for ( String item : allowedAnonymIPs )
+        {
+            result.put( item, null );
+        }
+        return result;
+    }
+
+    /**
+     * Returns the list of IP address that are allowed to connect to the server for anonymous users. If the list is
+     * empty then anonymous will be only restricted by {@link #getWhitelistedIPs()}.
+     *
+     * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getWhitelistedAnonymousIPs() {
         return allowedAnonymIPs;
     }
 
@@ -339,15 +365,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             // is authorized to connect to the server
             boolean forbidAccess = false;
             try {
-                if (!allowedIPs.containsKey(connection.getHostAddress())) {
+                if (!allowedIPs.contains(connection.getHostAddress())) {
                     byte[] address = connection.getAddress();
-                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
-                            (address[2] & 0xff) +
-                            ".*";
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
                     String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
                     String range3 = (address[0] & 0xff) + ".*.*.*";
-                    if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
-                            !allowedIPs.containsKey(range3)) {
+                    if (!allowedIPs.contains(range1) && !allowedIPs.contains(range2) && !allowedIPs.contains(range3)) {
                         forbidAccess = true;
                     }
                 }
@@ -366,8 +389,24 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * non-anonymous users.
      *
      * @param allowed the list of IP address that are allowed to connect to the server.
+     * @deprecated Use setWhitelistedIPs instead.
      */
+    @Deprecated
     public static void setAllowedIPs(Map<String, String> allowed) {
+        setWhitelistedIPs( allowed.keySet() );
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server. If the list is empty then anyone is
+     * allowed to connect to the server except for anonymous users that are subject to
+     * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
+     */
+    public static void setWhitelistedIPs(Set<String> allowed) {
+        if (allowed == null) {
+            throw new NullPointerException();
+        }
         allowedIPs = allowed;
         if (allowedIPs.isEmpty()) {
             JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ALLOWED);
@@ -375,7 +414,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // Iterate through the elements in the map.
             StringBuilder buf = new StringBuilder();
-            Iterator<String> iter = allowedIPs.keySet().iterator();
+            Iterator<String> iter = allowedIPs.iterator();
             if (iter.hasNext()) {
                 buf.append(iter.next());
             }
@@ -391,8 +430,23 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
      *
      * @param allowed the list of IP address that are allowed to connect to the server.
+     * @deprecated use #setWhitelistedAnonymousIPs instead.
      */
+    @Deprecated
     public static void setAllowedAnonymIPs(Map<String, String> allowed) {
+        setWhitelistedAnonymousIPs( allowed.keySet() );
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server for anonymous users. If the list is empty
+     * then anonymous will be only restricted by {@link #getWhitelistedIPs()}.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
+     */
+    public static void setWhitelistedAnonymousIPs(Set<String> allowed) {
+        if (allowed == null) {
+            throw new NullPointerException();
+        }
         allowedAnonymIPs = allowed;
         if (allowedAnonymIPs.isEmpty()) {
             JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED);
@@ -400,7 +454,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // Iterate through the elements in the map.
             StringBuilder buf = new StringBuilder();
-            Iterator<String> iter = allowedAnonymIPs.keySet().iterator();
+            Iterator<String> iter = allowedAnonymIPs.iterator();
             if (iter.hasNext()) {
                 buf.append(iter.next());
             }
@@ -409,6 +463,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
             JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, buf.toString());
         }
+
     }
 
     /**

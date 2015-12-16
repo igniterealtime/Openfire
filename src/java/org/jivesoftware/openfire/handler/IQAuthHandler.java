@@ -333,17 +333,15 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             boolean forbidAccess = false;
             try {
                 String hostAddress = session.getConnection().getHostAddress();
-                if (!LocalClientSession.getAllowedAnonymIPs().isEmpty() &&
-                        !LocalClientSession.getAllowedAnonymIPs().containsKey(hostAddress)) {
+                if (!LocalClientSession.getWhitelistedAnonymousIPs().isEmpty() && !LocalClientSession.getWhitelistedAnonymousIPs().contains( hostAddress )) {
                     byte[] address = session.getConnection().getAddress();
-                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
-                            (address[2] & 0xff) +
-                            ".*";
+                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
                     String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
                     String range3 = (address[0] & 0xff) + ".*.*.*";
-                    if (!LocalClientSession.getAllowedAnonymIPs().containsKey(range1) &&
-                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range2) &&
-                            !LocalClientSession.getAllowedAnonymIPs().containsKey(range3)) {
+                    if (!LocalClientSession.getWhitelistedAnonymousIPs().contains(range1) &&
+                        !LocalClientSession.getWhitelistedAnonymousIPs().contains(range2) &&
+                        !LocalClientSession.getWhitelistedAnonymousIPs().contains(range3))
+                    {
                         forbidAccess = true;
                     }
                 }

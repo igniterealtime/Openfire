@@ -24,11 +24,8 @@
                  org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Iterator"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern" %>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -64,26 +61,26 @@
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Map<String, String> newMap = new HashMap<String, String>();
+        Set<String> allowedSet = new HashSet<String>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                newMap.put(address, "");
+                allowedSet.add(address);
             }
         }
         
 
-        Map<String, String> allowedAnonymMap = new HashMap<String, String>();
+        Set<String> allowedAnonymousSet = new HashSet<String>();
         StringTokenizer tokens1 = new StringTokenizer(allowedAnonymIPs, ", ");
         while (tokens1.hasMoreTokens()) {
             String address = tokens1.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                allowedAnonymMap.put(address, "");
+                allowedAnonymousSet.add(address);
             }
         }
-        LocalClientSession.setAllowedIPs(newMap);
-        LocalClientSession.setAllowedAnonymIPs(allowedAnonymMap);
+        LocalClientSession.setWhitelistedIPs( allowedSet );
+        LocalClientSession.setWhitelistedAnonymousIPs( allowedAnonymousSet );
 
         // Log the event
         webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs);
@@ -95,7 +92,7 @@
     anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }
@@ -105,7 +102,7 @@
     allowedIPs = buf.toString();
 
     StringBuilder buf1 = new StringBuilder();
-    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getAllowedAnonymIPs().keySet().iterator();
+    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedAnonymousIPs().iterator();
     if (iter1.hasNext()) {
         buf1.append(iter1.next());
     }

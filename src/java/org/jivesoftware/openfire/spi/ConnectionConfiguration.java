@@ -34,10 +34,8 @@ public class ConnectionConfiguration
     private final CertificateStoreConfiguration trustStoreConfiguration;
     private final boolean acceptSelfSignedCertificates;
     private final boolean verifyCertificateValidity;
-    private final Set<String> encryptionProtocolsEnabled;
-    private final Set<String> encryptionProtocolsDisabled;
-    private final Set<String> cipherSuitesEnabled;
-    private final Set<String> cipherSuitesDisabled;
+    private final Set<String> encryptionProtocols;
+    private final Set<String> encryptionCipherSuites;
     private final Connection.CompressionPolicy compressionPolicy;
 
     // derived
@@ -55,7 +53,7 @@ public class ConnectionConfiguration
      * @param tlsPolicy The TLS policy that is applied to connections (cannot be null).
      */
     // TODO input validation
-    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocolsEnabled, Set<String> encryptionProtocolsDisabled, Set<String> cipherSuitesEnabled, Set<String> cipherSuitesDisabled, Connection.CompressionPolicy compressionPolicy )
+    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy )
     {
         if ( maxThreadPoolSize <= 0 ) {
             throw new IllegalArgumentException( "Argument 'maxThreadPoolSize' must be equal to or greater than one." );
@@ -76,21 +74,8 @@ public class ConnectionConfiguration
         this.trustStoreConfiguration = trustStoreConfiguration;
         this.acceptSelfSignedCertificates = acceptSelfSignedCertificates;
         this.verifyCertificateValidity = verifyCertificateValidity;
-
-        // Remove all disabled protocols from the enabled ones.
-        final Set<String> protocolsEnabled = new HashSet<>();
-        protocolsEnabled.addAll( encryptionProtocolsEnabled );
-        protocolsEnabled.removeAll( encryptionProtocolsDisabled );
-        this.encryptionProtocolsEnabled = Collections.unmodifiableSet( protocolsEnabled );
-        this.encryptionProtocolsDisabled = Collections.unmodifiableSet( encryptionProtocolsDisabled );
-
-        // Remove all disabled suites from the enabled ones.
-        final Set<String> suitesEnabled = new HashSet<>();
-        suitesEnabled.addAll( cipherSuitesEnabled );
-        suitesEnabled.removeAll( cipherSuitesDisabled );
-        this.cipherSuitesEnabled = Collections.unmodifiableSet( suitesEnabled );
-        this.cipherSuitesDisabled = Collections.unmodifiableSet( cipherSuitesDisabled );
-
+        this.encryptionProtocols = Collections.unmodifiableSet( encryptionProtocols );
+        this.encryptionCipherSuites = Collections.unmodifiableSet( encryptionCipherSuites );
         this.compressionPolicy = compressionPolicy;
 
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
@@ -175,66 +160,30 @@ public class ConnectionConfiguration
      * When non-empty, the list is intended to specify those protocols (from a larger collection of implementation-
      * supported protocols) that can be used to establish encryption.
      *
-     * Values returned by {@link #getEncryptionProtocolsDisabled()} are not included in the result of this method.
-     *
      * The order over which values are iterated in the result is equal to the order of values in the comma-separated
      * configuration string. This can, but is not guaranteed to, indicate preference.
      *
      * @return An (ordered) set of protocols, never null but possibly empty.
      */
-    public Set<String> getEncryptionProtocolsEnabled()
+    public Set<String> getEncryptionProtocols()
     {
-        return encryptionProtocolsEnabled;
-    }
-
-    /**
-     * A collection of protocols that must not be used for encryption of connections.
-     *
-     * When non-empty, the list is intended to specify those protocols (from a larger collection of implementation-
-     * supported protocols) that must not be used to establish encryption.
-     *
-     * The order over which values are iterated in the result is equal to the order of values in the comma-separated
-     * configuration string.
-     *
-     * @return An (ordered) set of protocols, never null but possibly empty.
-     */
-    public Set<String> getEncryptionProtocolsDisabled()
-    {
-        return encryptionProtocolsDisabled;
+        return encryptionProtocols;
     }
 
     /**
      * A collection of cipher suite names that can be used for encryption of connections.
      *
      * When non-empty, the list is intended to specify those cipher suites (from a larger collection of implementation-
-     * supported cipher suties) that can be used to establish encryption.
-     *
-     * Values returned by {@link #getCipherSuitesDisabled()} are not included in the result of this method.
+     * supported cipher suites) that can be used to establish encryption.
      *
      * The order over which values are iterated in the result is equal to the order of values in the comma-separated
      * configuration string. This can, but is not guaranteed to, indicate preference.
      *
      * @return An (ordered) set of cipher suites, never null but possibly empty.
      */
-    public Set<String> getCipherSuitesEnabled()
+    public Set<String> getEncryptionCipherSuites()
     {
-        return cipherSuitesEnabled;
-    }
-
-    /**
-     * A collection of cipher suites that must not be used for encryption of connections.
-     *
-     * When non-empty, the list is intended to specify those cipher suites (from a larger collection of implementation-
-     * supported cipher suites) that must not be used to establish encryption.
-     *
-     * The order over which values are iterated in the result is equal to the order of values in the comma-separated
-     * configuration string.
-     *
-     * @return An (ordered) set of cipher suites, never null but possibly empty.
-     */
-    public Set<String> getCipherSuitesDisabled()
-    {
-        return cipherSuitesDisabled;
+        return encryptionCipherSuites;
     }
 
     public IdentityStore getIdentityStore()

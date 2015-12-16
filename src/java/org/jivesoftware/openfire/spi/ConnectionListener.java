@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -259,10 +260,8 @@ public class ConnectionListener
                 trustStoreConfiguration,
                 acceptSelfSignedCertificates(),
                 verifyCertificateValidity(),
-                getEncryptionProtocolsEnabled(),
-                getEncryptionProtocolsDisabled(),
-                getCipherSuitesEnabled(),
-                getCipherSuitesDisabled(),
+                getEncryptionProtocols(),
+                getEncryptionCipherSuites(),
                 getCompressionPolicy()
         );
     }
@@ -434,7 +433,7 @@ public class ConnectionListener
             return;
         }
         Log.debug( "Changing client auth configuration from '{}' to '{}'.", oldValue, clientAuth );
-        JiveGlobals.setProperty( tlsPolicyPropertyName, clientAuth.toString() );
+        JiveGlobals.setProperty( clientAuthPolicyPropertyName, clientAuth.toString() );
         restart();
     }
 
@@ -655,7 +654,7 @@ public class ConnectionListener
      * If the listener is currently enabled, this configuration change will be applied immediately (which will cause a
      * restart of the underlying connection acceptor).
      *
-     * @return The configuration of the identity store (not null)
+     * @param configuration The configuration of the identity store (not null)
      */
     public void setTrustStoreConfiguration( CertificateStoreConfiguration configuration )
     {
@@ -668,188 +667,6 @@ public class ConnectionListener
         this.trustStoreConfiguration = configuration;
         restart();
     }
-
-//    /**
-//     * The KeyStore type (jks, jceks, pkcs12, etc) for the identity and trust store for connections created by this
-//     * listener.
-//     *
-//     * @return a store type (never null).
-//     * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
-//     */
-//    public String getKeyStoreType()
-//    {
-//        final String propertyName = type.getPrefix() + "storeType";
-//        final String defaultValue = "jks";
-//
-//        if ( type.getFallback() == null )
-//        {
-//            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
-//        }
-//        else
-//        {
-//            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getKeyStoreType() ).trim();
-//        }
-//    }
-//
-//    public void setKeyStoreType( String keyStoreType )
-//    {
-//        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-//        JiveGlobals.setProperty( type.getPrefix() + "storeType", keyStoreType );
-//
-//        final String oldKeyStoreType = getKeyStoreType();
-//        if ( oldKeyStoreType.equals( keyStoreType ) )
-//        {
-//            Log.debug( "Ignoring KeyStore type change request (to '{}'): listener already in this state.", keyStoreType );
-//            return;
-//        }
-//
-//        Log.debug( "Changing KeyStore type from '{}' to '{}'.", oldKeyStoreType, keyStoreType );
-//        restart();
-//    }
-//
-//    /**
-//     * The password of the identity store for connection created by this listener.
-//     *
-//     * @return a password (never null).
-//     */
-//    public String getIdentityStorePassword()
-//    {
-//        final String propertyName = type.getPrefix() + "keypass";
-//        final String defaultValue = "changeit";
-//
-//        if ( type.getFallback() == null )
-//        {
-//            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
-//        }
-//        else
-//        {
-//            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getIdentityStorePassword() ).trim();
-//        }
-//    }
-//
-//    public void setIdentityStorePassword( String password )
-//    {
-//        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-//        JiveGlobals.setProperty( type.getPrefix() + "keypass", password );
-//
-//        final String oldPassword = getIdentityStorePassword();
-//        if ( oldPassword.equals( password ) )
-//        {
-//            Log.debug( "Ignoring identity store password change request: listener already in this state." ); // Do not put passwords in a logfile.
-//            return;
-//        }
-//
-//        Log.debug( "Changing identity store password." ); // Do not put passwords in a logfile.
-//        restart();
-//    }
-//
-//    /**
-//     * The password of the trust store for connections created by this listener.
-//     *
-//     * @return a password (never null).
-//     */
-//    public String getTrustStorePassword()
-//    {
-//        final String propertyName = type.getPrefix() + "trustpass";
-//        final String defaultValue = "changeit";
-//
-//        if ( type.getFallback() == null )
-//        {
-//            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
-//        }
-//        else
-//        {
-//            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getTrustStorePassword() ).trim();
-//        }
-//    }
-//
-//    public void setTrustStorePassword( String password )
-//    {
-//        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-//        JiveGlobals.setProperty( type.getPrefix() + "trustpass", password );
-//
-//        final String oldPassword = getTrustStorePassword();
-//        if ( oldPassword.equals( password ) )
-//        {
-//            Log.debug( "Ignoring trust store password change request: listener already in this state." ); // Do not put passwords in a logfile.
-//            return;
-//        }
-//
-//        Log.debug( "Changing trust store password." ); // Do not put passwords in a logfile.
-//        restart();
-//    }
-//
-//    /**
-//     * The location (relative to OPENFIRE_HOME) of the identity store for connections created by this listener.
-//     *
-//     * @return a path (never null).
-//     */
-//    public String getIdentityStoreLocation()
-//    {
-//        final String propertyName = type.getPrefix()  + "keystore";
-//        final String defaultValue = "resources" + File.separator + "security" + File.separator + "keystore";
-//
-//        if ( type.getFallback() == null )
-//        {
-//            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
-//        }
-//        else
-//        {
-//            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getIdentityStoreLocation() ).trim();
-//        }
-//    }
-//
-//    public void setIdentityStoreLocation( String location )
-//    {
-//        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-//        JiveGlobals.setProperty( type.getPrefix() + "keystore", location );
-//
-//        final String oldLocation = getIdentityStoreLocation();
-//        if ( oldLocation.equals( location ) )
-//        {
-//            Log.debug( "Ignoring identity store location change request (to '{}'): listener already in this state.", location );
-//            return;
-//        }
-//
-//        Log.debug( "Changing identity store location from '{}' to '{}'.", oldLocation, location );
-//        restart();
-//    }
-//
-//    /**
-//     * The location (relative to OPENFIRE_HOME) of the trust store for connections created by this listener.
-//     *
-//     * @return a path (never null).
-//     */
-//    public String getTrustStoreLocation()
-//    {
-//        final String propertyName = type.getPrefix()  + "truststore";
-//        final String defaultValue = "resources" + File.separator + "security" + File.separator + "truststore";
-//
-//        if ( type.getFallback() == null )
-//        {
-//            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
-//        }
-//        else
-//        {
-//            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getTrustStoreLocation() ).trim();
-//        }
-//    }
-//
-//    public void setTrustStoreLocation( String location )
-//    {
-//        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-//        JiveGlobals.setProperty( type.getPrefix() + "truststore", location );
-//
-//        final String oldLocation = getTrustStoreLocation();
-//        if ( oldLocation.equals( location ) )
-//        {
-//            Log.debug( "Ignoring trust store location change request (to '{}'): listener already in this state.", location );
-//            return;
-//        }
-//
-//        Log.debug( "Changing trust store location from '{}' to '{}'.", oldLocation, location );
-//        restart();
-//    }
 
     /**
      * A boolean that indicates if self-signed peer certificates can be used to establish an encrypted connection.
@@ -945,27 +762,32 @@ public class ConnectionListener
      * When non-empty, the list is intended to specify those protocols (from a larger collection of implementation-
      * supported protocols) that can be used to establish encryption.
      *
-     * Values returned by {@link #getEncryptionProtocolsDisabled()} are not included in the result of this method.
-     *
      * The order over which values are iterated in the result is equal to the order of values in the comma-separated
      * configuration string. This can, but is not guaranteed to, indicate preference.
      *
      * @return An (ordered) set of protocols, never null but possibly empty.
      */
     // TODO add setter!
-    public Set<String> getEncryptionProtocolsEnabled()
+    public Set<String> getEncryptionProtocols()
     {
         final Set<String> result = new LinkedHashSet<>();
-        final String csv = getEncryptionProtocolsEnabledCommaSeparated();
-        result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
-        result.removeAll( getEncryptionProtocolsDisabled() );
+        final String csv = getEncryptionProtocolsCommaSeparated();
+        if ( csv.isEmpty() ) {
+            try {
+                result.addAll( EncryptionArtifactFactory.getDefaultProtocols() );
+            } catch ( Exception ex ) {
+                Log.error( "An error occurred while obtaining the default encryption protocol setting.", ex );
+            }
+        } else {
+            result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
+        }
         return result;
     }
 
-    protected String getEncryptionProtocolsEnabledCommaSeparated()
+    protected String getEncryptionProtocolsCommaSeparated()
     {
-        final String propertyName = type.getPrefix() + "protocols.enabled";
-        final String defaultValue = "TLSv1,TLSv1.1,TLSv1.2";
+        final String propertyName = type.getPrefix() + "protocols";
+        final String defaultValue = "";
 
         if ( type.getFallback() == null )
         {
@@ -973,71 +795,97 @@ public class ConnectionListener
         }
         else
         {
-            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getEncryptionProtocolsEnabledCommaSeparated() ).trim();
+            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getEncryptionProtocolsCommaSeparated() ).trim();
         }
     }
 
     /**
-     * A collection of protocols that must not be used for encryption of connections.
+     * Defines the collection of protocols (by name) that can be used for encryption of connections.
      *
      * When non-empty, the list is intended to specify those protocols (from a larger collection of implementation-
-     * supported protocols) that must not be used to establish encryption.
+     * supported protocols) that can be used to establish encryption. An empty list will cause an implementation
+     * default to be used.
      *
-     * The order over which values are iterated in the result is equal to the order of values in the comma-separated
-     * configuration string.
+     * The order over which values are presented can, but is not guaranteed to, indicate preference.
      *
-     * @return An (ordered) set of protocols, never null but possibly empty.
+     * @param protocols An (ordered) set of protocol names, can be null.
      */
-    // TODO add setter!
-    public Set<String> getEncryptionProtocolsDisabled()
-    {
-        final Set<String> result = new LinkedHashSet<>();
-        final String csv = getEncryptionProtocolsDisabledCommaSeparated();
-        result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
-        return result;
+    public void setEncryptionProtocols( Set<String> protocols ) {
+        if ( protocols == null ) {
+            setEncryptionProtocols( new String[0] );
+        } else {
+            setEncryptionProtocols( protocols.toArray( new String[ protocols.size() ] ) );
+        }
     }
 
-    protected String getEncryptionProtocolsDisabledCommaSeparated()
+    /**
+     * Defines the collection of protocols (by name) that can be used for encryption of connections.
+     *
+     * When non-empty, the list is intended to specify those protocols (from a larger collection of implementation-
+     * supported protocols) that can be used to establish encryption. An empty list will cause an implementation
+     * default to be used.
+     *
+     * The order over which values are presented can, but is not guaranteed to, indicate preference.
+     *
+     * @param protocols An array of protocol names, can be null.
+     */
+    public void setEncryptionProtocols( String[] protocols )
     {
-        final String propertyName = type.getPrefix() + "protocols.disabled";
-        final String defaultValue = "SSLv1,SSLv2,SSLv2Hello,SSLv3";
+        if ( protocols == null) {
+            protocols = new String[0];
+        }
+        final String oldValue = getEncryptionProtocolsCommaSeparated();
 
-        if ( type.getFallback() == null )
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        final StringBuilder csv = new StringBuilder();
+        for( String protocol : protocols )
         {
-            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+            csv.append( protocol );
+            csv.append( ',' );
         }
-        else
+        final String newValue = csv.length() > 0 ? csv.substring( 0, csv.length() - 1 ) : "";
+        JiveGlobals.setProperty( type.getPrefix() + "protocols", newValue );
+
+        if ( oldValue.equals( newValue ) )
         {
-            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getEncryptionProtocolsDisabledCommaSeparated() ).trim();
+            Log.debug( "Ignoring protocol configuration change request (to '{}'): listener already in this state.", newValue );
+            return;
         }
+
+        Log.debug( "Changing protocol configuration from '{}' to '{}'.", oldValue, newValue );
+        restart();
     }
 
     /**
      * A collection of cipher suite names that can be used for encryption of connections.
      *
      * When non-empty, the list is intended to specify those cipher suites (from a larger collection of implementation-
-     * supported cipher suties) that can be used to establish encryption.
-     *
-     * Values returned by {@link #getCipherSuitesDisabled()} are not included in the result of this method.
+     * supported cipher suites) that can be used to establish encryption.
      *
      * The order over which values are iterated in the result is equal to the order of values in the comma-separated
      * configuration string. This can, but is not guaranteed to, indicate preference.
      *
-     * @return An (ordered) set of cipher suites, never null but possibly empty.
+     * @return An (ordered) set of cipher suite names, never null but possibly empty.
      */
-    // TODO add setter!
-    public Set<String> getCipherSuitesEnabled()
+    public Set<String> getEncryptionCipherSuites()
     {
         final Set<String> result = new LinkedHashSet<>();
-        final String csv = getCipherSuitesEnabledCommaSeparated();
-        result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
-        result.removeAll( getCipherSuitesDisabled() );
+        final String csv = getEncryptionCipherSuitesCommaSeparated();
+        if ( csv.isEmpty() ) {
+            try {
+                result.addAll( EncryptionArtifactFactory.getDefaultCipherSuites() );
+            } catch ( Exception ex ) {
+                Log.error( "An error occurred while obtaining the default encryption cipher suite setting.", ex );
+            }
+        } else {
+            result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
+        }
         return result;
     }
 
-    protected String getCipherSuitesEnabledCommaSeparated()
+    protected String getEncryptionCipherSuitesCommaSeparated()
     {
-        final String propertyName = type.getPrefix() + "ciphersuites.enabled";
+        final String propertyName = type.getPrefix() + "ciphersuites";
         final String defaultValue = "";
 
         if ( type.getFallback() == null )
@@ -1046,43 +894,65 @@ public class ConnectionListener
         }
         else
         {
-            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getCipherSuitesEnabledCommaSeparated() );
+            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getEncryptionCipherSuitesCommaSeparated() );
         }
     }
 
     /**
-     * A collection of cipher suites that must not be used for encryption of connections.
+     * Defines the collection of cipher suite (by name) that can be used for encryption of connections.
      *
      * When non-empty, the list is intended to specify those cipher suites (from a larger collection of implementation-
-     * supported cipher suites) that must not be used to establish encryption.
+     * supported cipher suites) that can be used to establish encryption. An empty list will cause an implementation
+     * default to be used.
      *
-     * The order over which values are iterated in the result is equal to the order of values in the comma-separated
-     * configuration string.
+     * The order over which values are presented can, but is not guaranteed to, indicate preference.
      *
-     * @return An (ordered) set of cipher suites, never null but possibly empty.
+     * @param cipherSuites An (ordered) set of cipher suite names, can be null.
      */
-    // TODO add setter!
-    public Set<String> getCipherSuitesDisabled()
-    {
-        final Set<String> result = new LinkedHashSet<>();
-        final String csv = getCipherSuitesDisabledCommaSeparated();
-        result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
-        return result;
+    public void setEncryptionCipherSuites( Set<String> cipherSuites ) {
+        if ( cipherSuites == null ) {
+            setEncryptionCipherSuites( new String[0] );
+        } else {
+            setEncryptionCipherSuites( cipherSuites.toArray( new String[ cipherSuites.size() ] ) );
+        }
     }
 
-    protected String getCipherSuitesDisabledCommaSeparated()
+    /**
+     * Defines the collection of cipher suite (by name) that can be used for encryption of connections.
+     *
+     * When non-empty, the list is intended to specify those cipher suites (from a larger collection of implementation-
+     * supported cipher suites) that can be used to establish encryption. An empty list will cause an implementation
+     * default to be used.
+     *
+     * The order over which values are presented can, but is not guaranteed to, indicate preference.
+     *
+     * @param cipherSuites An array of cipher suite names, can be null.
+     */
+    public void setEncryptionCipherSuites( String[] cipherSuites )
     {
-        final String propertyName = type.getPrefix() + "ciphersuites.disabled";
-        final String defaultValue = "";
+        if ( cipherSuites == null) {
+            cipherSuites = new String[0];
+        }
+        final String oldValue = getEncryptionCipherSuitesCommaSeparated();
 
-        if ( type.getFallback() == null )
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        final StringBuilder csv = new StringBuilder();
+        for( String cipherSuite : cipherSuites )
         {
-            return JiveGlobals.getProperty( propertyName, defaultValue ).trim();
+            csv.append( cipherSuite );
+            csv.append( ',' );
         }
-        else
+        final String newValue = csv.length() > 0 ? csv.substring( 0, csv.length() - 1 ) : "";
+        JiveGlobals.setProperty( type.getPrefix() + "ciphersuites", newValue );
+
+        if ( oldValue.equals( newValue ) )
         {
-            return JiveGlobals.getProperty( propertyName, getConnectionListener( type.getFallback() ).getCipherSuitesDisabledCommaSeparated() ).trim();
+            Log.debug( "Ignoring cipher suite configuration change request (to '{}'): listener already in this state.", newValue );
+            return;
         }
+
+        Log.debug( "Changing cipher suite configuration from '{}' to '{}'.", oldValue, newValue );
+        restart();
     }
 
     /**

@@ -62,13 +62,20 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
 
     /**
-     * Keep the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server.<p>
+     * Keep the list of IP address that are allowed to connect to the server.
      *
-     * Note: value = IP address or IP range
+     * If the list is  empty then anyone is allowed to connect to the server, unless the IP is on the blacklist (which
+     * always takes precedence over the whitelist).
+     *
+     * Note: the values in this list can be hostnames, IP addresses or IP ranges (with wildcards).
      */
     private static Set<String> allowedIPs = new HashSet<>();
     private static Set<String> allowedAnonymIPs = new HashSet<>();
+
+    /**
+     * Similar to {@link #allowedIPs}, but used for blacklisting rather than whitelisting.
+     */
+    private static Set<String> blockedIPs = new HashSet<>();
 
     private boolean messageCarbonsEnabled;
 
@@ -125,6 +132,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             String address = tokens.nextToken().trim();
             allowedAnonymIPs.add(address);
         }
+        String blocked = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_BLOCKED, "");
+        tokens = new StringTokenizer(blocked, ", ");
+        while (tokens.hasMoreTokens()) {
+            String address = tokens.nextToken().trim();
+            blockedIPs.add( address );
+        }
     }
 
     /**
@@ -132,6 +145,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * empty then anyone is allowed to connect to the server except for anonymous users that are
      * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
      * non-anonymous users.
+     *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
      *
      * @return the list of IP address that are allowed to connect to the server.
      * @deprecated Use #getWhitelistedIPs instead.
@@ -152,6 +167,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * allowed to connect to the server except for anonymous users that are subject to
      * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
      *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
      * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
      */
     public static Set<String> getWhitelistedIPs() { return allowedIPs; }
@@ -159,6 +176,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     /**
      * Returns the list of IP address that are allowed to connect to the server for anonymous
      * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
+     *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
      *
      * @return the list of IP address that are allowed to connect to the server.
      * @deprecated Use #getWhitelistedAnonymousIPs instead.
@@ -177,11 +196,22 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Returns the list of IP address that are allowed to connect to the server for anonymous users. If the list is
      * empty then anonymous will be only restricted by {@link #getWhitelistedIPs()}.
      *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
      * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
      */
     public static Set<String> getWhitelistedAnonymousIPs() {
         return allowedAnonymIPs;
     }
+
+    /**
+     * Returns the list of IP address that are disallowed to connect to the server. If the list is empty then anyone is
+     * allowed to connect to the server, subject to whitelisting. This list is used for both anonymous and
+     * non-anonymous users.
+     *
+     * @return the collection of IP address that are not allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getBlacklistedIPs() { return blockedIPs; }
 
     /**
      * Returns a newly created session between the server and a client. The session will
@@ -213,26 +243,23 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                     "admin.error.bad-namespace"));
         }
 
-        if (!allowedIPs.isEmpty()) {
+        if (!isAllowed(connection))
+        {
+            // Client cannot connect from this IP address so end the stream and TCP connection.
             String hostAddress = "Unknown";
-            // The server is using a whitelist so check that the IP address of the client
-            // is authorized to connect to the server
             try {
-               hostAddress = connection.getHostAddress();
+                hostAddress = connection.getHostAddress();
             } catch (UnknownHostException e) {
                 // Do nothing
             }
-            if (!isAllowed(connection)) {
-                // Client cannot connect from this IP address so end the stream and
-                // TCP connection
-                Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
-                // Include the not-authorized error in the response
-                StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                connection.deliverRawText(error.toXML());
-                // Close the underlying connection
-                connection.close();
-                return null;
-            }
+
+            Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
+            // Include the not-authorized error in the response
+            StreamError error = new StreamError(StreamError.Condition.not_authorized);
+            connection.deliverRawText(error.toXML());
+            // Close the underlying connection
+            connection.close();
+            return null;
         }
 
         // Default language is English ("en").
@@ -358,37 +385,46 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         return session;
     }
 
-    public static boolean isAllowed(Connection connection) {
-        if (!allowedIPs.isEmpty()) {
-            // The server is using a whitelist so check that the IP address of the client
-            // is authorized to connect to the server
-            boolean forbidAccess = false;
-            try {
-                if (!allowedIPs.contains(connection.getHostAddress())) {
-                    forbidAccess = !isAddressInRange( connection.getAddress(), allowedIPs );
-                }
-            } catch (UnknownHostException e) {
-                forbidAccess = true;
+    public static boolean isAllowed( Connection connection )
+    {
+        try
+        {
+            final String hostAddress = connection.getHostAddress();
+            final byte[] address = connection.getAddress();
+
+            // Blacklist takes precedence over whitelist.
+            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+                return false;
             }
-            return !forbidAccess;
+
+            // When there's a whitelist (not empty), you must be on it to be allowed.
+            return allowedIPs.isEmpty() || allowedIPs.contains( hostAddress ) || isAddressInRange( address, allowedIPs );
         }
-        return true;
+        catch ( UnknownHostException e )
+        {
+            return false;
+        }
     }
 
-    public static boolean isAllowedAnonymous(Connection connection) {
-        if (!allowedAnonymIPs.isEmpty()) {
-            boolean forbidAccess = false;
-            try {
-                if (!allowedAnonymIPs.contains(connection.getHostAddress())) {
-                    forbidAccess = !isAddressInRange( connection.getAddress(), allowedAnonymIPs );
-                }
+    public static boolean isAllowedAnonymous( Connection connection )
+    {
+        try
+        {
+            final String hostAddress = connection.getHostAddress();
+            final byte[] address = connection.getAddress();
+
+            // Blacklist takes precedence over whitelist.
+            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+                return false;
             }
-            catch (UnknownHostException e){
-                forbidAccess = true;
-            }
-            return !forbidAccess;
+
+            // When there's a whitelist (not empty), you must be on it to be allowed.
+            return allowedAnonymIPs.isEmpty() || allowedAnonymIPs.contains( hostAddress ) || isAddressInRange( address, allowedAnonymIPs );
         }
-        return true;
+        catch ( UnknownHostException e )
+        {
+            return false;
+        }
     }
 
     // TODO Add IPv6 support
@@ -415,9 +451,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
-     * Sets the list of IP address that are allowed to connect to the server. If the list is empty then anyone is
-     * allowed to connect to the server except for anonymous users that are subject to
+     * Sets the list of IP address that are allowed to connect to the server. If the list is empty then anyone not on
+     * {@link #getBlacklistedIPs()} is  allowed to connect to the server except for anonymous users that are subject to
      * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
+     *
+     * Note that blacklisting takes precedence over whitelisting: if an address is matched by both, access is denied.
      *
      * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
      */
@@ -457,7 +495,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     /**
      * Sets the list of IP address that are allowed to connect to the server for anonymous users. If the list is empty
-     * then anonymous will be only restricted by {@link #getWhitelistedIPs()}.
+     * then anonymous will be only restricted by {@link #getBlacklistedIPs()} and {@link #getWhitelistedIPs()}.
      *
      * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
      */
@@ -481,7 +519,34 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
             JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, buf.toString());
         }
+    }
 
+    /**
+     * Sets the list of IP address that are not allowed to connect to the server. This list is used for both anonymous
+     * and non-anonymous users, and always takes precedence over a whitelist.
+     *
+     * @param blocked the list of IP address that are not allowed to connect to the server. Can be empty, but not null.
+     */
+    public static void setBlacklistedIPs(Set<String> blocked) {
+        if (blocked == null) {
+            throw new NullPointerException();
+        }
+        blockedIPs = blocked;
+        if (blockedIPs.isEmpty()) {
+            JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_BLOCKED);
+        }
+        else {
+            // Iterate through the elements in the map.
+            StringBuilder buf = new StringBuilder();
+            Iterator<String> iter = blocked.iterator();
+            if (iter.hasNext()) {
+                buf.append(iter.next());
+            }
+            while (iter.hasNext()) {
+                buf.append(", ").append(iter.next());
+            }
+            JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_BLOCKED, buf.toString());
+        }
     }
 
     /**

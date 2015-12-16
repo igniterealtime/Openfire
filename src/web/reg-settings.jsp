@@ -48,6 +48,7 @@
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     String allowedIPs = request.getParameter("allowedIPs");
     String allowedAnonymIPs = request.getParameter("allowedAnonymIPs");
+    String blockedIPs = request.getParameter("blockedIPs");
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
     IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
@@ -66,7 +67,7 @@
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                allowedSet.add(address);
+                allowedSet.add( address );
             }
         }
         
@@ -76,14 +77,24 @@
         while (tokens1.hasMoreTokens()) {
             String address = tokens1.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                allowedAnonymousSet.add(address);
+                allowedAnonymousSet.add( address );
+            }
+        }
+
+        Set<String> blockedSet = new HashSet<String>();
+        StringTokenizer tokens2 = new StringTokenizer(blockedIPs, ", ");
+        while (tokens2.hasMoreTokens()) {
+            String address = tokens2.nextToken().trim();
+            if (pattern.matcher(address).matches()) {
+                blockedSet.add( address );
             }
         }
         LocalClientSession.setWhitelistedIPs( allowedSet );
         LocalClientSession.setWhitelistedAnonymousIPs( allowedAnonymousSet );
+        LocalClientSession.setBlacklistedIPs( blockedSet );
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs);
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs);
     }
 
     // Reset the value of page vars:
@@ -110,6 +121,17 @@
         buf1.append(", ").append(iter1.next());
     }
     allowedAnonymIPs = buf1.toString();
+
+    StringBuilder buf2 = new StringBuilder();
+    Iterator<String> iter2 = org.jivesoftware.openfire.session.LocalClientSession.getBlacklistedIPs().iterator();
+    if (iter2.hasNext()) {
+        buf2.append(iter2.next());
+    }
+    while (iter2.hasNext()) {
+        buf2.append(", ").append(iter2.next());
+    }
+    blockedIPs = buf2.toString();
+
 %>
 
 <p>
@@ -231,6 +253,20 @@
 	<br>
 
 	<h4><fmt:message key="reg.settings.allowed_ips" /></h4>
+    <p>
+        <fmt:message key="reg.settings.allowed_ips_blocked_info" />
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <tbody>
+        <tr>
+            <td valign='top'><b><fmt:message key="reg.settings.ips_blocked" /></b></td>
+            <td>
+                <textarea name="blockedIPs" cols="40" rows="3" wrap="virtual"><%= ((blockedIPs != null) ? blockedIPs : "") %></textarea>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
 	<p>
     <fmt:message key="reg.settings.allowed_ips_info" />
     </p>

@@ -31,7 +31,6 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -366,13 +365,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             boolean forbidAccess = false;
             try {
                 if (!allowedIPs.contains(connection.getHostAddress())) {
-                    byte[] address = connection.getAddress();
-                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
-                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-                    String range3 = (address[0] & 0xff) + ".*.*.*";
-                    if (!allowedIPs.contains(range1) && !allowedIPs.contains(range2) && !allowedIPs.contains(range3)) {
-                        forbidAccess = true;
-                    }
+                    forbidAccess = !isAddressInRange( connection.getAddress(), allowedIPs );
                 }
             } catch (UnknownHostException e) {
                 forbidAccess = true;
@@ -380,6 +373,31 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             return !forbidAccess;
         }
         return true;
+    }
+
+    public static boolean isAllowedAnonymous(Connection connection) {
+        if (!allowedAnonymIPs.isEmpty()) {
+            boolean forbidAccess = false;
+            try {
+                if (!allowedAnonymIPs.contains(connection.getHostAddress())) {
+                    forbidAccess = !isAddressInRange( connection.getAddress(), allowedAnonymIPs );
+                }
+            }
+            catch (UnknownHostException e){
+                forbidAccess = true;
+            }
+            return !forbidAccess;
+        }
+        return true;
+    }
+
+    // TODO Add IPv6 support
+    public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
+        final String range0 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + "." + (address[3] & 0xff);
+        final String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
+        final String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+        final String range3 = (address[0] & 0xff) + ".*.*.*";
+        return ranges.contains(range0) || ranges.contains(range1) || ranges.contains(range2) || ranges.contains(range3);
     }
 
     /**

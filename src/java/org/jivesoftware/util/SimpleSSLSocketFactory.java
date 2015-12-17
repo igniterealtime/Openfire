@@ -56,7 +56,7 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory implements Comparat
     public SimpleSSLSocketFactory() {
 
         try {
-            final SSLContext sslContext = SSLContext.getDefault();
+            final SSLContext sslContext = SSLContext.getInstance("TLSv1");
             sslContext.init(null, // KeyManager not required
                             new TrustManager[] { new DummyTrustManager() },
                             new java.security.SecureRandom());

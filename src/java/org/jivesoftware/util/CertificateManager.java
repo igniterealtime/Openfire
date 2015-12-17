@@ -705,8 +705,12 @@ public class CertificateManager {
             throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null or an empty String.");
         }
 
-        final Collection<X509Certificate> certificates;
-        try ( InputStream inputStream = new ByteArrayInputStream( pemRepresentation.trim().getBytes() ) )
+        // The parser is very picky. We should trim each line of the input string.
+        final String pem = pemRepresentation
+                .replaceAll( "(?m) +$", "" )  // remove trailing whitespace
+                .replaceAll( "(?m)^ +", "" ); // remove leading whitespace
+
+        try ( InputStream inputStream = new ByteArrayInputStream( pem.getBytes() ) )
         {
             final CertificateFactory certificateFactory = CertificateFactory.getInstance( "X509" );
             return (Collection<X509Certificate>) certificateFactory.generateCertificates( inputStream );

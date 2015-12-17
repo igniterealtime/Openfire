@@ -219,7 +219,15 @@ public class TLSStreamHandler {
 
         case NEED_UNWRAP:
             if (rbc.read(incomingNetBB) == -1) {
-                tlsEngine.closeInbound();
+                try {
+                    tlsEngine.closeInbound();
+                } catch (javax.net.ssl.SSLException ex) {
+                    // OF-1009 Ignore these - it's the peer closing the connection abruptly.
+                    if (! "Inbound closed before receiving peer's close_notify: possible truncation attack?".equals( ex.getMessage() ) ) {
+                        throw ex;
+                    }
+                }
+
                 return initialHSComplete;
             }
 

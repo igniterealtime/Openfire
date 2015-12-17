@@ -136,7 +136,16 @@ public class TLSWrapper {
     public ByteBuffer unwrap(ByteBuffer net, ByteBuffer app) throws SSLException {
         ByteBuffer out = app;
         out = resizeApplicationBuffer(out);// guarantees enough room for unwrap
-        tlsEngineResult = tlsEngine.unwrap(net, out);
+        try {
+            tlsEngineResult = tlsEngine.unwrap( net, out );
+        } catch ( SSLException e ) {
+            if ( e.getMessage().startsWith( "Unsupported record version Unknown-" ) ) {
+                throw new SSLException( "We appear to have received plain text data where we expected encrypted data. A common cause for this is a peer sending us a plain-text error message when it shouldn't send a message, but close the socket instead).", e );
+            }
+            else {
+                throw e;
+            }
+        }
         log("server unwrap: ", tlsEngineResult);
         if (tlsEngineResult.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
             // If the result indicates that we have outstanding tasks to do, go

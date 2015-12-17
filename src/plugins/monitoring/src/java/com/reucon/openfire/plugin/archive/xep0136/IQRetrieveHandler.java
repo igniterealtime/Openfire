@@ -75,8 +75,12 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 
 		final List<ArchivedMessage> messages = conversation.getMessages()
 				.subList(fromIndex, toIndex);
-		for (ArchivedMessage message : messages) {
-			addMessageElement(chatElement, conversation, message);
+		for (int i = 0; i < messages.size(); i++) {
+			if (i == 0) {
+				addMessageElement(chatElement, conversation, messages.get(i), null);
+			} else {
+				addMessageElement(chatElement, conversation, messages.get(i), messages.get(i - 1));
+			}
 		}
 
 		if (resultSet != null) {
@@ -98,11 +102,16 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 	}
 
 	private Element addMessageElement(Element parentElement,
-			Conversation conversation, ArchivedMessage message) {
+			Conversation conversation, ArchivedMessage message, ArchivedMessage previousMessage) {
 		final Element messageElement;
+		
 		final long secs;
-
-		secs = (message.getTime().getTime() - conversation.getStart().getTime()) / 1000;
+		if (previousMessage == null) {
+			secs = (message.getTime().getTime() - conversation.getStart().getTime()) / 1000;
+		} else {
+			secs = (message.getTime().getTime() - previousMessage.getTime().getTime()) / 1000;
+		}
+		
 		messageElement = parentElement.addElement(message.getDirection()
 				.toString());
 		messageElement.addAttribute("secs", Long.toString(secs));

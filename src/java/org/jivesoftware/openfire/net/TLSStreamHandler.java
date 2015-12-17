@@ -28,6 +28,7 @@ import org.jivesoftware.util.JiveGlobals;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
@@ -219,7 +220,16 @@ public class TLSStreamHandler {
 
         case NEED_UNWRAP:
             if (rbc.read(incomingNetBB) == -1) {
-                tlsEngine.closeInbound();
+                try {
+                    tlsEngine.closeInbound();
+                } catch (javax.net.ssl.SSLException ex) {
+                    // OF-1009 Process these as a 'normal' handshake rejection - it's the peer closing the connection abruptly.
+                    if ("Inbound closed before receiving peer's close_notify: possible truncation attack?".equals( ex.getMessage() ) ) {
+                        throw new SSLHandshakeException( "The peer closed the connection while performing a TLS handshake." );
+                    }
+                    throw ex;
+                }
+
                 return initialHSComplete;
             }
 

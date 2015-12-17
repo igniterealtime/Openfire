@@ -20,13 +20,6 @@
 
 package org.jivesoftware.openfire;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -43,11 +36,10 @@ import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
+import org.xmpp.packet.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Routes iq packets throughout the server. Routing is based on the recipient
@@ -468,21 +460,19 @@ public class IQRouter extends BasicModule {
     }
 
     /**
-     * Notification message indicating that a packet has failed to be routed to the receipient.
+     * Notification message indicating that a packet has failed to be routed to the recipient.
      *
-     * @param receipient address of the entity that failed to receive the packet.
-     * @param packet IQ packet that failed to be sent to the receipient.
+     * @param recipient address of the entity that failed to receive the packet.
+     * @param packet    IQ packet that failed to be sent to the recipient.
      */
-    public void routingFailed(JID receipient, Packet packet) {
-        IQ iq = (IQ) packet;
-        // If a route to the target address was not found then try to answer a
-        // service_unavailable error code to the sender of the IQ packet
-        if (IQ.Type.result != iq.getType() && IQ.Type.error != iq.getType()) {
-            Log.info("Packet sent to unreachable address " + packet.toXML());
-            sendErrorPacket(iq, PacketError.Condition.service_unavailable);
-        }
-        else {
-            Log.warn("Error or result packet could not be delivered " + packet.toXML());
+    public void routingFailed( JID recipient, Packet packet )
+    {
+        Log.debug( "IQ sent to unreachable address: " + packet.toXML() );
+        final IQ iq = (IQ) packet;
+        // If a route to the target address was not found then try to answer a service_unavailable error code to the sender of the IQ packet
+        if ( iq.isRequest() )
+        {
+            sendErrorPacket( iq, PacketError.Condition.service_unavailable );
         }
     }
 

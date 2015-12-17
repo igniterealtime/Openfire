@@ -368,6 +368,28 @@
         <p>These are all encryption protocols that this instance of Openfire supports. Those with a checked box are enabled, and can be used to establish an encrypted connection. Deselecting all values will cause a default to be restored.</p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
             <c:forEach var="supportedProtocol" items="${supportedProtocols}">
+                <c:if test="${supportedProtocol ne 'SSLv2Hello'}">
+                    <c:set var="idForForm">protocol-<c:out value="${supportedProtocol}"/></c:set>
+                    <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
+                    <tr valign="middle">
+                        <td>
+                            <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
+                        </td>
+                    </tr>
+                </c:if>
+            </c:forEach>
+        </table>
+        <c:if test="${supportedProtocols.contains( 'SSLv2Hello' )}">
+            <br/>
+            <c:set var="supportedProtocol" value="SSLv2Hello"/>
+            <p>
+                When setting up a new encrypted connection some encryption protocols allow you to have part of the
+                handshake (the 'hello') encapsulated in an SSLv2 format. The SSLv2Hello option below controls this
+                encapsulation. When disabled, all incoming data must conform to the SSLv3/TLSv1 handshake format, and
+                all outgoing data (which applies to outbound server-to-server connections) will conform to the SSLv3/TLSv1
+                format.
+            </p>
+            <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
                 <c:set var="idForForm">protocol-<c:out value="${supportedProtocol}"/></c:set>
                 <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
                 <tr valign="middle">
@@ -375,12 +397,12 @@
                         <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
                     </td>
                 </tr>
-            </c:forEach>
-        </table>
+            </table>
+        </c:if>
     </admin:contentBox>
 
     <admin:contentBox title="Encryption cipher suites">
-        <p>These are all encryption cipher suites that this instance of Openfire supports. Those with a checked box are enabled, and can be used to establish an encrypted connection. Deselecting all values will cause a default to be restored.</p>
+        <p>These are all encryption cipher suites that this instance of Openfire supports. Those in the list on the left are enabled, and can be used to establish an encrypted connection. Removing all values from that list will cause a default to be restored.</p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
             <tr><th>Enabled</th><th></th><th>Supported</th></tr>
             <tr>

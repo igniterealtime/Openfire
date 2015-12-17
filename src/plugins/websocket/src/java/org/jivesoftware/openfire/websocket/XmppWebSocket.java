@@ -103,22 +103,23 @@ public class XmppWebSocket {
 	@OnWebSocketMessage 
 	public void onTextMethod(String stanza)
 	{
+		XMPPPacketReader reader = null;
 		try {
-			
-			XMPPPacketReader reader = readerPool.borrowObject();
+			reader = readerPool.borrowObject();
 			Document doc = reader.read(new StringReader(stanza));
-	        readerPool.returnObject(reader);
 	        
 			if (xmppSession == null) {
 				initiateSession(doc.getRootElement());
 			} else {
 				processStanza(doc.getRootElement());
 			}
-			
 		} catch (Exception ex) {
-			Log.error("Failed to initiate XMPP session", ex);
+			Log.error("Failed to process XMPP stanza", ex);
+		} finally {
+			if (reader != null) {
+				readerPool.returnObject(reader);
+			}
 		}
-		
 	}
 
 	@OnWebSocketError 
@@ -127,7 +128,9 @@ public class XmppWebSocket {
 		Log.error("Error detected; session: " + wsSession, error);
 		closeStream(new StreamError(StreamError.Condition.internal_server_error));
     	try {
-    		wsSession.disconnect();
+    		if (wsSession != null) {
+    			wsSession.disconnect();
+    		}
     	} catch ( Exception e ) {
         	Log.error("Error disconnecting websocket", e);
 		}
@@ -176,7 +179,7 @@ public class XmppWebSocket {
             	xmppSession.incrementServerPacketCount();
             	wsSession.getRemote().sendStringByFuture(packet);
             } catch (Exception e) {
-                Log.error("Packet delivery  failed; session: " + wsSession, e);
+                Log.error("Packet delivery failed; session: " + wsSession, e);
 				Log.warn("Failed to deliver packet:\n" + packet );
             }
         } else {
@@ -251,7 +254,7 @@ public class XmppWebSocket {
 		Locale language = Locale.forLanguageTag(stanza.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI), "en"));
         if (STREAM_FOOTER.equals(stanza.getName())) {
         	// an error occurred while setting up the session
-			closeStream(null);
+			Log.warn("Client closed stream before session was established");
     	} else if (!STREAM_HEADER.equals(stanza.getName())) {
             streamError = new StreamError(StreamError.Condition.unsupported_stanza_type);
             Log.warn("Closing session due to incorrect stream header. Tag: " + stanza.getName());
@@ -259,21 +262,20 @@ public class XmppWebSocket {
             // Validate the stream namespace (https://tools.ietf.org/html/rfc7395#section-3.3.2)
             streamError = new StreamError(StreamError.Condition.invalid_namespace);
             Log.warn("Closing session due to invalid namespace in stream header. Namespace: " + stanza.getNamespace().getURI());
-        } else if (STREAM_FOOTER.equals(stanza.getName())) {
-			closeStream(null);
     	} else if (!validateHost(host)) {
             streamError = new StreamError(StreamError.Condition.host_unknown);
             Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host);
         } else {
+        	// valid stream; initiate session
         	xmppSession = SessionManager.getInstance().createClientSession(wsConnection, language);
         	xmppSession.setSessionData("ws", Boolean.TRUE);
         }
 
-        if (streamError == null) {
+        if (xmppSession == null) {
+        	closeStream(streamError);
+        } else {
             openStream(language.toLanguageTag(), stanza.attributeValue("from"));
             configureStream();
-        } else {
-            closeStream(streamError);
         }
 	}
 
@@ -355,10 +357,10 @@ public class XmppWebSocket {
 	private synchronized void initializePool() {
 		if (readerPool == null) {
 			readerPool = new GenericObjectPool<XMPPPacketReader>(new XMPPPPacketReaderFactory());
-			readerPool.setMaxTotal(32);
+			readerPool.setMaxTotal(-1);
+			readerPool.setBlockWhenExhausted(false);
 			readerPool.setTestOnReturn(true);
-			readerPool.setNumTestsPerEvictionRun(-2); // evict half of the idle instances
-			readerPool.setTimeBetweenEvictionRunsMillis(JiveConstants.HOUR);
+			readerPool.setTimeBetweenEvictionRunsMillis(JiveConstants.MINUTE);
 		}
 	}
 

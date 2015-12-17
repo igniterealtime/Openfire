@@ -252,7 +252,7 @@ public class MessageRouter extends BasicModule {
         final Message msg = (Message) packet;
 
         if ( msg.getType().equals( Message.Type.chat ) && serverName.equals( recipient.getDomain() ) && recipient.getResource() != null
-                && userManager.isRegisteredUser( recipient.getNode() ) )
+                && routingTable.hasClientRoute( recipient.asBareJID() ) )
         {
             // If message was sent to an unavailable full JID of a user then retry using the bare JID.
             routingTable.routePacket( recipient.asBareJID(), packet, false );

@@ -22,7 +22,7 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.StreamIDFactory;
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * A basic stream ID factory that produces id's using java.util.Random
@@ -32,14 +32,12 @@ import java.util.Random;
  */
 public class BasicStreamIDFactory implements StreamIDFactory {
 
-    /**
-     * The random number to use, someone with Java can predict stream IDs if they can guess the current seed *
-     */
-    Random random = new Random();
-
     @Override
     public StreamID createStreamID() {
-        return new BasicStreamID(Integer.toHexString(random.nextInt()));
+    /**
+     * The random number to use, can create a lot of conflic in the high concurrent connection.
+     */
+        return new BasicStreamID(UUID.randomUUID().toString());
     }
 
     public StreamID createStreamID(String name) {

@@ -34,8 +34,13 @@ public abstract class MUCEventDelegate {
     public enum InvitationResult {
         HANDLED_BY_DELEGATE,
         HANDLED_BY_OPENFIRE,
-        REJECTED;
-    }
+        REJECTED
+    };
+    
+    public enum InvitationRejectionResult {
+        HANDLED_BY_DELEGATE,
+        HANDLED_BY_OPENFIRE,
+    };
 
     /**
      * This event will be triggered when an entity joins an existing room.
@@ -60,6 +65,19 @@ public abstract class MUCEventDelegate {
      * @return true if the user is allowed to join the room.
      */
     public abstract InvitationResult sendingInvitation(MUCRoom room, JID inviteeJID, JID inviterJID, String inviteMessage);
+
+    /**
+     * This event will be triggered when an entity reject invite from someone to a room.
+     *
+     * Returns a String indicating whether the invitation should be abandoned, handled by the delegate, or handled by openfire.
+     *
+     * @param room the MUC room.
+     * @param to the JID of the user the rejecting of invitation will be sent to.
+     * @param from the JID of the user that is sending the rejecting of invitation
+     * @param reason the (optional) message that is sent explaining the rejection invitation
+     * @return true if the user is allowed to join the room.
+     */
+    public abstract InvitationRejectionResult sendingInvitationRejection(MUCRoom room, JID to, JID from, String reason);
 
     /**
      * Returns a map containing room configuration variables and values.

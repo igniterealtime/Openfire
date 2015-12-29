@@ -227,7 +227,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 Pattern.compile("(?i)(^" + manager.getUsernameField() + "=)([^,]+)(.+)");
 
         SearchControls searchControls = new SearchControls();
-        searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
+        searchControls.setReturningAttributes(new String[] { "distinguishedName", manager.getUsernameField() });
         // See if recursive searching is enabled. Otherwise, only search one level.
         if (manager.isSubTreeSearch()) {
             searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -283,9 +283,18 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             NamingEnumeration usrAnswer = ctx.search("",
                                     userFilter.toString(), searchControls);
                             if (usrAnswer != null && usrAnswer.hasMoreElements()) {
-                                Attribute usernameAttr = ((SearchResult)usrAnswer.next()).getAttributes().get(manager.getUsernameField());
-                                if (usernameAttr != null) {
-                                    username = (String)usernameAttr.get();
+                                SearchResult searchResult = null;
+                                // We may get multiple search results for the same user CN.
+                                // Iterate through the entire set to find a matching distinguished name.
+                                while(usrAnswer.hasMoreElements()) {
+                                    searchResult = (SearchResult) usrAnswer.nextElement();
+                                    Attributes attrs = searchResult.getAttributes();
+                                    Attribute userdnAttr = attrs.get("distinguishedName");
+                                    if (username.equals((String)userdnAttr.get())) {
+                                        // Exact match found, use it.
+                                        username = (String)attrs.get(manager.getUsernameField()).get();
+                                        break;
+                                    }
                                 }
                             }
                             // Close the enumeration.

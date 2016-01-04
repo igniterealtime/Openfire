@@ -28,11 +28,12 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -60,6 +61,12 @@ public abstract class SocketReader implements Runnable {
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
     private static String CHARSET = "UTF-8";
+
+    /**
+     * A factory that generates random stream IDs
+     */
+    private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
+
     /**
      * Reuse the same factory for all the connections.
      */
@@ -394,7 +401,7 @@ public abstract class SocketReader implements Runnable {
             // Append stream header
             sb.append("<stream:stream ");
             sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");
@@ -423,7 +430,7 @@ public abstract class SocketReader implements Runnable {
             // Append stream header
             sb.append("<stream:stream ");
             sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");

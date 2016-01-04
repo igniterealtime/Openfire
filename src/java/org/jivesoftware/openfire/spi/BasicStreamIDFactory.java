@@ -28,8 +28,7 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 /**
- * A basic stream ID factory that produces id's using java.util.Random
- * and a simple hex representation of a random int.
+ * A basic stream ID factory that produces IDs using a cryptographically strong random number generator.
  *
  * @author Iain Shigeoka
  */

@@ -43,10 +43,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.DNSUtil;
-import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
@@ -105,80 +102,119 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     private OutgoingServerSocketReader socketReader;
 
     /**
-     * Creates a new outgoing connection to the specified hostname if no one exists. The port of
-     * the remote server could be configured by setting the <b>xmpp.server.socket.remotePort</b>
-     * property or otherwise the standard port 5269 will be used. Either a new connection was
-     * created or already existed the specified hostname will be authenticated with the remote
-     * server. Once authenticated the remote server will start accepting packets from the specified
-     * domain.<p>
+     * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
+     * start accepting data from the local domain.
      *
-     * The Server Dialback method is currently the only implemented method for server-to-server
-     * authentication. This implies that the remote server will ask the Authoritative Server
-     * to verify the domain to authenticate. Most probably this (local) server will act as the
-     * Authoritative Server. See {@link IncomingServerSession} for more information.
+     * This implementation will attempt to re-use an existing connection. An connection is deemed re-usable when it is either:
+     * <ul>
+     *     <li>authenticated to the remote domain itself, or:</li>
+     *     <li>authenticated to a sub- or superdomain of the remote domain AND offers dialback.</li>
+     * </ul>
      *
-     * @param domain the local domain to authenticate with the remote server.
-     * @param hostname the hostname of the remote server.
+     * When no re-usable connection exists, a new connection will be created.
+     *
+     * DNS will be used to find hosts for the remote domain. When DNS records do not specify a port, port 5269 will be
+     * used unless this default is overridden by the <b>xmpp.server.socket.remotePort</b> property.
+     *
+     * @param localDomain the local domain to authenticate with the remote server.
+     * @param remoteDomain the remote server, to which the local domain intends to send data.
      * @return True if the domain was authenticated by the remote server.
      */
-    public static boolean authenticateDomain(final String domain, final String hostname) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate domain: " + domain + " (hostname: " + hostname + ")]" );
+    public static boolean authenticateDomain(final String localDomain, final String remoteDomain) {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate local domain: '" + localDomain + "' to remote domain: '" + remoteDomain + "']" );
 
-        log.debug( "Authenticating... " );
-        if (hostname == null || hostname.length() == 0 || hostname.trim().indexOf(' ') > -1) {
-            // Do nothing if the target hostname is empty, null or contains whitespaces
-            log.warn( "Unable to authenticate a domain when an empty hostname is provided!" );
+        log.debug( "Start domain authentication ..." );
+        if (remoteDomain == null || remoteDomain.length() == 0 || remoteDomain.trim().indexOf(' ') > -1) {
+            // Do nothing if the target domain is empty, null or contains whitespaces
+            log.warn( "Unable to authenticate: remote domain is invalid." );
             return false;
         }
         try {
-            // Check if the remote hostname is in the blacklist
-            if (!RemoteServerManager.canAccess(hostname)) {
-                log.info( "Unable to authenticate: Hostname is not accessible according to our configuration (typical causes: server federation is disabled, or hostname is blacklisted)." );
+            // Check if the remote domain is in the blacklist
+            if (!RemoteServerManager.canAccess(remoteDomain)) {
+                log.info( "Unable to authenticate: Remote domain is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted)." );
                 return false;
             }
 
-            log.debug( "Searching for a pre-existing session to this hostname... If one exists, it will be re-used to authenticate this domain." );
+            log.debug( "Searching for pre-existing outgoing sessions to the remote domain (if one exists, it will be re-used) ..." );
             OutgoingServerSession session;
             SessionManager sessionManager = SessionManager.getInstance();
             if (sessionManager == null) {
                 // Server is shutting down while we are trying to create a new s2s connection
-                log.warn( "Unable to authenticate: the SessionManager instance is not available. This should not occur unless Openfire is starting up or shutting down." );
+                log.warn( "Unable to authenticate: a SessionManager instance is not available. This should not occur unless Openfire is starting up or shutting down." );
                 return false;
             }
-            session = sessionManager.getOutgoingServerSession(hostname);
-            if (session == null) {
-                log.debug( "There is no pre-existing session to this hostname." );
+            session = sessionManager.getOutgoingServerSession(remoteDomain);
 
-                log.debug( "Searching for pre-existing sessions to other hostnames that previously authenticated this domain... If one exists, it will be re-used to authenticate this domain." );
-                // Try locating if the remote server has previously authenticated with this server
-                for (IncomingServerSession incomingSession : sessionManager.getIncomingServerSessions(hostname)) {
-                    for (String otherHostname : incomingSession.getValidatedDomains()) {
-                        session = sessionManager.getOutgoingServerSession(otherHostname);
-                        if (session != null) {
-                            if (session.isUsingServerDialback()) {
-                                log.debug( "A session to the same remote server but with different hostname ('{}') was found. This session will be re-used.", otherHostname );
+            if (session == null)
+            {
+                log.debug( "There are no pre-existing outgoing sessions to the remote domain itself. Searching for pre-existing outgoing sessions to super- or subdomains of the remote domain (if one exists, it might be re-usable) ..." );
+
+                for ( IncomingServerSession incomingSession : sessionManager.getIncomingServerSessions( remoteDomain ) )
+                {
+                    // These are the remote domains that are allowed to send data to the local domain - expected to be sub- or superdomains of remoteDomain
+                    for ( String otherRemoteDomain : incomingSession.getValidatedDomains() )
+                    {
+                        // See if there's an outgoing session to any of the (other) domains hosted by the remote domain.
+                        session = sessionManager.getOutgoingServerSession( otherRemoteDomain );
+                        if (session != null)
+                        {
+                            log.debug( "An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain );
+
+                            // As this sub/superdomain is different from the original remote domain, we need to check if it supports dialback.
+                            if ( session.isUsingServerDialback() )
+                            {
+                                log.debug( "Dialback was used for '{}'. This session can be re-used.", otherRemoteDomain );
                                 break;
-                            } else {
+                            }
+                            else
+                            {
+                                log.debug( "Dialback was not used for '{}'. This session cannot be re-used.", otherRemoteDomain );
                                 session = null;
                             }
                         }
                     }
                 }
+
                 if (session == null) {
-                    log.debug( "There are no pre-existing session to other hostnames for this domain." );
+                    log.debug( "There are no pre-existing session to other domains hosted on the remote domain." );
                 }
             }
-            if (session == null) {
-                log.debug( "Creating new authenticated session..." );
-                int port = RemoteServerManager.getPortForServer(hostname);
-                session = createOutgoingSession(domain, hostname, port);
+
+            if ( session != null )
+            {
+                log.debug( "A pre-existing session can be re-used. The session was established using server dialback so it is possible to do piggybacking to authenticate more domains." );
+                if ( session.getAuthenticatedDomains().contains( localDomain ) && session.getHostnames().contains( remoteDomain ) )
+                {
+                    // Do nothing since the domain has already been authenticated.
+                    log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
+                    return true;
+                }
+
+                // A session already exists so authenticate the domain using that session.
+                if ( session.authenticateSubdomain( localDomain, remoteDomain ) )
+                {
+                    log.debug( "Authentication successful (domain authentication was added using a pre-existing session)." );
+                    return true;
+                }
+                else
+                {
+                    log.warn( "Unable to authenticate: Unable to add authentication to pre-exising session." );
+                    return false;
+                }
+            }
+            else
+            {
+                log.debug( "Unable to re-use an existing session. Creating a new session ..." );
+                int port = RemoteServerManager.getPortForServer(remoteDomain);
+                session = createOutgoingSession(localDomain, remoteDomain, port);
                 if (session != null) {
                     log.debug( "Created a new session." );
 
                     // Add the validated domain as an authenticated domain
-                    session.addAuthenticatedDomain(domain);
-                    // Add the new hostname to the list of names that the server may have
-                    session.addHostname(hostname);
+                    session.addAuthenticatedDomain(localDomain);
+                    // Add the new domain to the list of names that the server may have
+                    session.addHostname(remoteDomain);
                     // Notify the SessionManager that a new session has been created
                     sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
                     log.debug( "Authentication successful." );
@@ -188,95 +224,50 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     return false;
                 }
             }
-
-            log.debug( "A session already exists. The session was established using server dialback so it is possible to do piggybacking to authenticate more domains." );
-            if (session.getAuthenticatedDomains().contains(domain) && session.getHostnames().contains(hostname)) {
-                // Do nothing since the domain has already been authenticated
-                log.debug( "Authentication successful (domain was already authenticated in the pre-existing session)." );
-                return true;
-            }
-
-            // A session already exists so authenticate the domain using that session
-            if ( session.authenticateSubdomain( domain, hostname ) ) {
-                log.debug( "Authentication successful (domain authentication was added using a pre-existing session)." );
-                return true;
-            } else {
-                log.warn( "Unable to authenticate: Unable to add authentication to pre-exising session." );
-                return false;
-            }
         }
-        catch (Exception e) {
-            log.error( "An exception occurred while authenticating domain with remote server!", e );
+        catch (Exception e)
+        {
+            log.error( "An exception occurred while authenticating remote domain!", e );
+            return false;
         }
-        log.warn( "Unable to authenticate: exhausted session (re-)usage options." );
-        return false;
     }
 
     /**
-     * Establishes a new outgoing session to a remote server. If the remote server supports TLS
-     * and SASL then the new outgoing connection will be secured with TLS and authenticated
-     * using SASL. However, if TLS or SASL is not supported by the remote server or if an
-     * error occured while securing or authenticating the connection using SASL then server
-     * dialback method will be used.
+     * Establishes a new outgoing session to a remote domain. If the remote domain supports TLS and SASL then the new
+     * outgoing connection will be secured with TLS and authenticated  using SASL. However, if TLS or SASL is not
+     * supported by the remote domain or if an error occurred while securing or authenticating the connection using SASL
+     * then server dialback will be used.
      *
-     * @param domain the local domain to authenticate with the remote server.
-     * @param hostname the hostname of the remote server.
+     * @param localDomain the local domain to authenticate with the remote domain.
+     * @param remoteDomain the remote domain.
      * @param port default port to use to establish the connection.
-     * @return new outgoing session to a remote server.
+     * @return new outgoing session to a remote domain, or null.
      */
-    private static LocalOutgoingServerSession createOutgoingSession(String domain, String hostname, int port) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Create outgoing session to: " + domain + " (" + hostname + ":"+ port+")]" );
+    private static LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Create outgoing session for: " + localDomain + " to " + remoteDomain + "]" );
 
         log.debug( "Creating new session..." );
 
         String localDomainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
-        RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(hostname);
+        RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(remoteDomain);
         if (configuration != null) {
-            // TODO Use the specific TLS configuration for this remote server
+            // TODO Use the specific TLS configuration for this remote domain
             //useTLS = configuration.isTLSEnabled();
         }
 
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
-        String realHostname = null;
-        int realPort = port;
-        Socket socket = null;
-        log.debug( "Get a list of real hostnames to connect to using DNS lookup of the specified hostname." );
-        List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, port);
-        for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
-            try {
-                socket = new Socket();
-                DNSUtil.HostAddress address = it.next();
-                realHostname = address.getHost();
-                realPort = address.getPort();
-                log.debug( "Trying to create plain socket connection to: {}:{} ...", realHostname, realPort );
-                socket.connect(new InetSocketAddress(realHostname, realPort), RemoteServerManager.getSocketTimeout());
-                log.debug( "Plain socket connection to {}:{} successful!", realHostname, realPort );
-                break;
-            }
-            catch (Exception e) {
-                log.debug( "An exception occurred while trying to create a plain socket connection to: {}:{}", realHostname, realPort, e );
-                log.warn( "Unable to create plain socket connection to: {}:{}. Cause: {} (a full stacktrace is logged on debug level)", realHostname, realPort, e.getMessage() );
-                try {
-                    if (socket != null) {
-                        socket.close();
-                    }
-                }
-                catch (IOException ex) {
-                    log.debug( "Additional exception while trying to close socket when connection to remote server failed.", ex);
-                }
-            }
-        }
-        if (!socket.isConnected()) {
-            log.info( "Unable to create new session: Cannot create a plain socket connection with any applicable host." );
+        log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
+        final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
+
+        if ( socket == null ) {
+            log.info( "Unable to create new session: Cannot create a plain socket connection with any applicable remote host." );
             return null;
         }
 
         SocketConnection connection = null;
         try {
-            connection =
-                    new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
-                            false);
+            connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
 
             log.debug( "Send the stream header and wait for response..." );
             StringBuilder openingStream = new StringBuilder();
@@ -285,7 +276,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(localDomainName).append("\""); // OF-673
-            openingStream.append(" to=\"").append(hostname).append("\"");
+            openingStream.append(" to=\"").append(remoteDomain).append("\"");
             openingStream.append(" version=\"1.0\">");
             connection.deliverRawText(openingStream.toString());
 
@@ -312,13 +303,13 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 // Restore default timeout
                 socket.setSoTimeout(soTimeout);
 
-                log.debug( "Processing stream features of the remote server..." );
+                log.debug( "Processing stream features of the remote domain..." );
                 Element features = reader.parseDocument().getRootElement();
                 if (features != null) {
                     log.debug( "Check if both us as well as the remote server have enabled STARTTLS and/or dialback ..." );
                     if (useTLS && features.element("starttls") != null) {
                         log.debug( "Both us and the remote server support the STARTTLS feature. Secure and authenticate the connection with TLS & SASL..." );
-                        LocalOutgoingServerSession answer = secureAndAuthenticate(hostname, connection, reader, openingStream, domain);
+                        LocalOutgoingServerSession answer = secureAndAuthenticate(remoteDomain, connection, reader, openingStream, localDomain);
                         if (answer != null) {
                             log.debug( "Successfully secured/authenticated the connection with TLS/SASL)!" );
                             // Everything went fine so return the secured and
@@ -331,15 +322,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     // Check if we are going to try server dialback (XMPP 1.0)
                     else if (ServerDialback.isEnabled() && features.element("dialback") != null) {
                         log.debug( "Both us and the remote server support the 'dialback' feature. Authenticate the connection with dialback..." );
-                        ServerDialback method = new ServerDialback(connection, domain);
+                        ServerDialback method = new ServerDialback(connection, localDomain);
                         OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
-                        if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
+                        if (method.authenticateDomain(newSocketReader, localDomain, remoteDomain, id)) {
                             log.debug( "Successfully authenticated the connection with dialback!" );
                             StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
+                            LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, newSocketReader, streamID);
                             connection.init(session);
                             // Set the hostname as the address of the session
-                            session.setAddress(new JID(null, hostname, null));
+                            session.setAddress(new JID(null, remoteDomain, null));
                             log.debug( "Successfully created new session!" );
                             return session;
                         }
@@ -363,7 +354,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         catch (SSLHandshakeException e)
         {
             // This is a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
-            log.info( "STARTTLS negotiation (with {}:{}) failed. Closing connection (without sending any data such as <failure/> or </stream>).", realHostname, realPort, e );
+            log.info( "STARTTLS negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", e );
 
             // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
             // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
@@ -374,7 +365,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         catch (Exception e)
         {
             // This might be RFC3620, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
-            log.warn( "An exception occurred while creating an encrypted session (with {}:{}). Closing connection.", realHostname, realPort, e );
+            log.warn( "An exception occurred while creating an encrypted session. Closing connection.", e );
 
             if (connection != null) {
                 connection.close();
@@ -386,7 +377,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug( "Unable to create a new session. Going to try connecting using server dialback as a fallback." );
 
             // Use server dialback (pre XMPP 1.0) over a plain connection
-            final LocalOutgoingServerSession outgoingSession = new ServerDialback().createOutgoingSession( domain, hostname, port );
+            final LocalOutgoingServerSession outgoingSession = new ServerDialback().createOutgoingSession( localDomain, remoteDomain, port );
             if ( outgoingSession != null) { // TODO this success handler behaves differently from a similar success handler above. Shouldn't those be the same?
                 log.debug( "Successfully created new session (using dialback as a fallback)!" );
                 return outgoingSession;
@@ -402,11 +393,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
     }
 
-    private static LocalOutgoingServerSession secureAndAuthenticate(String hostname, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream, String domain) throws Exception {
-    	final Logger log = LoggerFactory.getLogger(Log.getName() + "[Secure/Authenticate connection to: " + domain + " (" + hostname + ")]" );
+    private static LocalOutgoingServerSession secureAndAuthenticate(String remoteDomain, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream, String localDomain) throws Exception {
+    	final Logger log = LoggerFactory.getLogger(Log.getName() + "[Secure/Authenticate connection for: " + localDomain + " to: " + remoteDomain + "]" );
         Element features;
 
-        log.debug( "Securing and authenticating connection...");
+        log.debug( "Securing and authenticating connection ...");
 
         log.debug( "Indicating we want TLS and wait for response." );
         connection.deliverRawText( "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>" );
@@ -415,7 +406,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         // Wait for the <proceed> response
         Element proceed = reader.parseDocument().getRootElement();
         if (proceed != null && proceed.getName().equals("proceed")) {
-            log.debug( "Recevied 'proceed' from remote server. Negotiating TLS..." );
+            log.debug( "Received 'proceed' from remote server. Negotiating TLS..." );
             try {
 //                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
 //                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
@@ -426,7 +417,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 throw e;
             }
             log.debug( "TLS negotiation was successful. Connection secured. Proceeding with authentication..." );
-            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname, true)) {
+            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), remoteDomain, true)) {
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     log.debug( "SASL authentication failed. Will continue with dialback." );
                 } else {
@@ -497,15 +488,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 }
                             }
                             else {
-                                log.debug("Stream compression was rejected by " + hostname);
+                                log.debug("Stream compression was rejected by " + remoteDomain);
                             }
                         }
                         else {
-                            log.debug("Stream compression found but zlib method is not supported by " + hostname);
+                            log.debug("Stream compression found but zlib method is not supported by " + remoteDomain);
                         }
                     }
                     else {
-                        log.debug("Stream compression not supported by " + hostname);
+                        log.debug("Stream compression not supported by " + remoteDomain);
                     }
                 }
 
@@ -532,7 +523,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 // first, try SASL
             	if (saslEXTERNALoffered) {
                     log.debug( "Trying to authenticate with EXTERNAL SASL." );
-            		result = attemptSASLexternal(connection, xpp, reader, domain, hostname, id, openingStream);
+            		result = attemptSASLexternal(connection, xpp, reader, localDomain, remoteDomain, id, openingStream);
                     if (result == null) {
                         log.debug( "Failed to authenticate with EXTERNAL SASL." );
                     } else {
@@ -543,7 +534,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 // SASL unavailable or failed, try dialback.
             	if (result == null) {
                     log.debug( "Trying to authenticate with dialback." );
-            		result = attemptDialbackOverTLS(connection, reader, domain, hostname, id);
+            		result = attemptDialbackOverTLS(connection, reader, localDomain, remoteDomain, id);
                     if (result == null) {
                         log.debug( "Failed to authenticate with dialback." );
                     } else {
@@ -570,20 +561,20 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
     }
 
-    private static LocalOutgoingServerSession attemptDialbackOverTLS(Connection connection, XMPPPacketReader reader, String domain, String hostname, String id) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Dialback over TLS for: " + domain + " (" + hostname + ") Stream ID: " + id + "]" );
+    private static LocalOutgoingServerSession attemptDialbackOverTLS(Connection connection, XMPPPacketReader reader, String localDomain, String remoteDomain, String id) {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Dialback over TLS for: " + localDomain + " to: " + remoteDomain + " (Stream ID: " + id + ")]" );
 
         if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
             log.debug("Trying to connecting using dialback over TLS.");
-            ServerDialback method = new ServerDialback(connection, domain);
+            ServerDialback method = new ServerDialback(connection, localDomain);
             OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
-            if (method.authenticateDomain(newSocketReader, domain, hostname, id)) {
+            if (method.authenticateDomain(newSocketReader, localDomain, remoteDomain, id)) {
                 log.debug("Dialback over TLS was successful.");
                 StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain, connection, newSocketReader, streamID);
+                LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, newSocketReader, streamID);
                 connection.init(session);
                 // Set the hostname as the address of the session
-                session.setAddress(new JID(null, hostname, null));
+                session.setAddress(new JID(null, remoteDomain, null));
                 return session;
             }
             else {
@@ -597,11 +588,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }    	
     }
     
-    private static LocalOutgoingServerSession attemptSASLexternal(SocketConnection connection, MXParser xpp, XMPPPacketReader reader, String domain, String hostname, String id, StringBuilder openingStream) throws DocumentException, IOException, XmlPullParserException {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[EXTERNAL SASL for: " + domain + " (" + hostname + ") Stream ID: " + id + "]" );
+    private static LocalOutgoingServerSession attemptSASLexternal(SocketConnection connection, MXParser xpp, XMPPPacketReader reader, String localDomain, String remoteDomain, String id, StringBuilder openingStream) throws DocumentException, IOException, XmlPullParserException {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[EXTERNAL SASL for: " + localDomain + " to: " + remoteDomain + " (Stream ID: " + id + ")]" );
 
         log.debug("Starting EXTERNAL SASL.");
-        if (doExternalAuthentication(domain, connection, reader)) {
+        if (doExternalAuthentication(localDomain, connection, reader)) {
             log.debug("EXTERNAL SASL was successful.");
             // SASL was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
@@ -618,11 +609,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // SASL authentication was successful so create new OutgoingServerSession
             id = xpp.getAttributeValue("", "id");
             StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
-            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domain,
-                    connection, new OutgoingServerSocketReader(reader), streamID);
+            LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, new OutgoingServerSocketReader(reader), streamID);
             connection.init(session);
             // Set the hostname as the address of the session
-            session.setAddress(new JID(null, hostname, null));
+            session.setAddress(new JID(null, remoteDomain, null));
             // Set that the session was created using TLS+SASL (no server dialback)
             session.usingServerDialback = false;
             return session;
@@ -633,12 +623,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }  	
     }
     
-    private static boolean doExternalAuthentication(String domain, SocketConnection connection,
+    private static boolean doExternalAuthentication(String localDomain, SocketConnection connection,
             XMPPPacketReader reader) throws DocumentException, IOException, XmlPullParserException {
 
         StringBuilder sb = new StringBuilder();
         sb.append("<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"EXTERNAL\">");
-        sb.append(StringUtils.encodeBase64(domain));
+        sb.append(StringUtils.encodeBase64(localDomain));
         sb.append("</auth>");
         connection.deliverRawText(sb.toString());
 
@@ -646,9 +636,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         return response != null && "success".equals(response.getName());
     }
 
-    public LocalOutgoingServerSession(String serverName, Connection connection,
-            OutgoingServerSocketReader socketReader, StreamID streamID) {
-        super(serverName, connection, streamID);
+    public LocalOutgoingServerSession(String localDomain, Connection connection, OutgoingServerSocketReader socketReader, StreamID streamID) {
+        super(localDomain, connection, streamID);
         this.socketReader = socketReader;
         socketReader.setSession(this);
     }
@@ -680,19 +669,19 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-    public boolean authenticateSubdomain(String domain, String hostname) {
+    public boolean authenticateSubdomain(String localDomain, String remoteDomain) {
         if (!usingServerDialback) {
             // Using SASL so just assume that the domain was validated
             // (note: this may not be correct)
-            addAuthenticatedDomain(domain);
-            addHostname(hostname);
+            addAuthenticatedDomain(localDomain);
+            addHostname(remoteDomain);
             return true;
         }
-        ServerDialback method = new ServerDialback(getConnection(), domain);
-        if (method.authenticateDomain(socketReader, domain, hostname, getStreamID().getID())) {
+        ServerDialback method = new ServerDialback(getConnection(), localDomain);
+        if (method.authenticateDomain(socketReader, localDomain, remoteDomain, getStreamID().getID())) {
             // Add the validated domain as an authenticated domain
-            addAuthenticatedDomain(domain);
-            addHostname(hostname);
+            addAuthenticatedDomain(localDomain);
+            addHostname(remoteDomain);
             return true;
         }
         return false;

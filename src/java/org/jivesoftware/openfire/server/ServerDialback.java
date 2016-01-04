@@ -208,7 +208,7 @@ public class ServerDialback {
      * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
      */
     public LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Create Outgoing Session from: " + localDomain + " to: " + remoteDomain + " (port: " + port+ ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Create Outgoing Session from: " + localDomain + " to RS at: " + remoteDomain + " (port: " + port+ ")]" );
 
         log.debug( "Creating new outgoing session..." );
 
@@ -311,7 +311,7 @@ public class ServerDialback {
      */
     public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String localDomain, String remoteDomain, String id) {
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate locate domain: " + localDomain + " to remote: " + remoteDomain + " (id: " + id + ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Authenticate domain: " + localDomain + " with RS: " + remoteDomain + " (id: " + id + ")]" );
 
         log.debug( "Authenticating domain ..." );
 
@@ -482,7 +482,7 @@ public class ServerDialback {
         String recipient = doc.attributeValue("to");
         String remoteDomain = doc.attributeValue("from");
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Validate domain:" + recipient + "(id " + streamID + ") for: " + remoteDomain + "]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain:" + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
 
         log.debug( "Validating domain...");
         if (!RemoteServerManager.canAccess(remoteDomain)) {
@@ -594,7 +594,7 @@ public class ServerDialback {
     }
 
     private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key with AS: " + remoteDomain + " for: " + recipient + " (id " + streamID + ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         VerifyResult result = VerifyResult.error;
         TLSStreamHandler tlsStreamHandler;
@@ -744,7 +744,7 @@ public class ServerDialback {
      */
     private VerifyResult verifyKey(String key, String streamID, String recipient, String remoteDomain, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key with AS: " + remoteDomain + " for: " + recipient + " (id " + streamID + ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         log.debug( "Verifying key ..." );
         XMPPPacketReader reader;
@@ -810,7 +810,7 @@ public class ServerDialback {
         String key = doc.getTextTrim();
         String id = doc.attributeValue("id");
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key for RS: " + verifyFROM + " (id " + id+ ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Authoritative Server: Verify key sent by RS: " + verifyFROM + " (id " + id+ ")]" );
 
         log.debug( "Verifying key... ");
 

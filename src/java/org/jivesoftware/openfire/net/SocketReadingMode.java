@@ -278,7 +278,7 @@ abstract class SocketReadingMode {
         sb.append("\" id=\"");
         sb.append(socketReader.session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
-        sb.append(socketReader.session.getLanguage());
+        sb.append(socketReader.session.getLanguage().toLanguageTag());
         sb.append("\" version=\"");
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");

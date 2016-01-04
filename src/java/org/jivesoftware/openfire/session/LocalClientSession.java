@@ -347,7 +347,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         sb.append("\" id=\"");
         sb.append(session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
-        sb.append(language);
+        sb.append(language.toLanguageTag());
         // Don't include version info if the version is 0.0.
         if (majorVersion != 0) {
             sb.append("\" version=\"");

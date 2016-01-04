@@ -560,6 +560,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 session.process(packet);
             }
         }
+        
+        if (JiveGlobals.getBooleanProperty("route.really-all-resources", false))
+        	return true;
 
         // Get the highest priority sessions for normal processing.
         List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);

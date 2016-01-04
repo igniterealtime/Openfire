@@ -248,14 +248,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
         log.debug( "Creating new session..." );
 
-        String localDomainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-        boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
-        RemoteServerConfiguration configuration = RemoteServerManager.getConfiguration(remoteDomain);
-        if (configuration != null) {
-            // TODO Use the specific TLS configuration for this remote domain
-            //useTLS = configuration.isTLSEnabled();
-        }
-
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
         log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
         final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
@@ -275,7 +267,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(localDomainName).append("\""); // OF-673
+            openingStream.append(" from=\"").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("\""); // OF-673
             openingStream.append(" to=\"").append(remoteDomain).append("\"");
             openingStream.append(" version=\"1.0\">");
             connection.deliverRawText(openingStream.toString());
@@ -307,6 +299,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 Element features = reader.parseDocument().getRootElement();
                 if (features != null) {
                     log.debug( "Check if both us as well as the remote server have enabled STARTTLS and/or dialback ..." );
+                    final boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
                     if (useTLS && features.element("starttls") != null) {
                         log.debug( "Both us and the remote server support the STARTTLS feature. Secure and authenticate the connection with TLS & SASL..." );
                         LocalOutgoingServerSession answer = secureAndAuthenticate(remoteDomain, connection, reader, openingStream, localDomain);
@@ -440,77 +433,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Get new stream features
             features = reader.parseDocument().getRootElement();
             if (features != null) {
-                // Check if we can use stream compression
-                final Connection.CompressionPolicy compressionPolicy = connection.getConfiguration().getCompressionPolicy();
-                if (Connection.CompressionPolicy.optional == compressionPolicy) {
-                    // Verify if the remote server supports stream compression
-                    Element compression = features.element("compression");
-                    if (compression != null) {
-                        boolean zlibSupported = false;
-                        Iterator it = compression.elementIterator("method");
-                        while (it.hasNext()) {
-                            Element method = (Element) it.next();
-                            if ("zlib".equals(method.getTextTrim())) {
-                                zlibSupported = true;
-                            }
-                        }
-                        if (zlibSupported) {
-                            log.debug("Suppressing request to perform compression; unsupported in this version.");
-                            zlibSupported = false;
-                        }
-                        if (zlibSupported) {
-                            log.debug("Requesting stream compression (zlib).");
-                            connection.deliverRawText("<compress xmlns='http://jabber.org/protocol/compress'><method>zlib</method></compress>");
-                            // Check if we are good to start compression
-                            Element answer = reader.parseDocument().getRootElement();
-                            if ("compressed".equals(answer.getName())) {
-                                // Server confirmed that we can use zlib compression
-                                connection.addCompression();
-                                connection.startCompression();
-                                log.debug("Stream compression was successful.");
-                                // Stream compression was successful so initiate a new stream
-                                connection.deliverRawText(openingStream.toString());
-                                // Reset the parser to use stream compression over TLS
-                                ZInputStream in = new ZInputStream(
-                                        connection.getTLSStreamHandler().getInputStream());
-                                in.setFlushMode(JZlib.Z_PARTIAL_FLUSH);
-                                xpp.setInput(new InputStreamReader(in, StandardCharsets.UTF_8));
-                                // Skip the opening stream sent by the server
-                                for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;)
-                                {
-                                    eventType = xpp.next();
-                                }
-                                // Get new stream features
-                                features = reader.parseDocument().getRootElement();
-                                if (features == null) {
-                                    log.debug("Error, EXTERNAL SASL was not offered.");
-                                    return null;
-                                }
-                            }
-                            else {
-                                log.debug("Stream compression was rejected by " + remoteDomain);
-                            }
-                        }
-                        else {
-                            log.debug("Stream compression found but zlib method is not supported by " + remoteDomain);
-                        }
-                    }
-                    else {
-                        log.debug("Stream compression not supported by " + remoteDomain);
-                    }
-                }
-
                 // Bookkeeping: determine what functionality the remote server offers.
                 boolean saslEXTERNALoffered = false;
-                if (features != null) {
-                    if (features.element("mechanisms") != null) {
-                        Iterator<Element> it = features.element("mechanisms").elementIterator();
-                        while (it.hasNext()) {
-                            Element mechanism = it.next();
-                            if ("EXTERNAL".equals(mechanism.getTextTrim())) {
-                            	saslEXTERNALoffered = true;
-                            	break;
-                            }
+                if (features.element("mechanisms") != null) {
+                    Iterator<Element> it = features.element("mechanisms").elementIterator();
+                    while (it.hasNext()) {
+                        Element mechanism = it.next();
+                        if ("EXTERNAL".equals(mechanism.getTextTrim())) {
+                            saslEXTERNALoffered = true;
+                            break;
                         }
                     }
                 }

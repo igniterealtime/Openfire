@@ -30,6 +30,7 @@ import java.net.IDN;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.BreakIterator;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -515,11 +516,9 @@ public final class StringUtils {
     }
 
     /**
-     * Pseudo-random number generator object for use with randomString().
-     * The Random class is not considered to be cryptographically secure, so
-     * only use these random Strings for low to medium security applications.
+     * A cryptographically strong random number generator object for use with randomString().
      */
-    private static Random randGen = new Random();
+    private static Random randGen = new SecureRandom();
 
     /**
      * Array of numbers and letters of mixed case. Numbers appear in the list
@@ -532,10 +531,8 @@ public final class StringUtils {
 
     /**
      * Returns a random String of numbers and letters (lower and upper case)
-     * of the specified length. The method uses the Random class that is
-     * built-in to Java which is suitable for low to medium grade security uses.
-     * This means that the output is only pseudo random, i.e., each number is
-     * mathematically generated so is not truly random.
+     * of the specified length. The method uses a cryptographically strong
+     * random number generator as provided by {@link SecureRandom}
      * <p>
      * The specified length must be at least one. If not, the method will return
      * null.</p>

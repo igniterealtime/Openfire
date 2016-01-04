@@ -336,8 +336,8 @@ public class HistoryStrategy {
 		// where the <message/> MUST contain a <subject/> element that specifies the new subject 
 		// but MUST NOT contain a <body/> element (or a <thread/> element).
 		// Unfortunately, many clients do not follow these strict guidelines from the specs, so we
-		// implement a lenient policy for detecting subject change requests by default. This can
-		// be overridden by setting the "xmpp.muc.subject.change.strict" property to true.
+		// allow a lenient policy for detecting non-conforming subject change requests. This can be
+		// configured by setting the "xmpp.muc.subject.change.strict" property to false (true by default).
 		// An empty <subject/> value means that the room subject should be removed.
 
 		return Message.Type.groupchat == message.getType() && 
@@ -348,7 +348,7 @@ public class HistoryStrategy {
 	}
 
 	private boolean isSubjectChangeStrict() {
-		return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", false);
+		return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
 	}
 
 	private static class MessageComparator implements Comparator<Message> {

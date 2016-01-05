@@ -96,7 +96,7 @@ public final class HttpBindManager {
 
     public static final String HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY = "httpbind.client.cert.policy";
 
-    public static final int HTTP_BIND_THREADS_DEFAULT = 8;
+    public static final int HTTP_BIND_THREADS_DEFAULT = 200;
 
 	private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
 
@@ -224,13 +224,12 @@ public final class HttpBindManager {
         return JiveGlobals.getBooleanProperty(HTTP_BIND_ENABLED, HTTP_BIND_ENABLED_DEFAULT);
     }
 
-    private void createConnector(int port, int bindThreads) {
+    private void createConnector(int port) {
         httpConnector = null;
         if (port > 0) {
 			HttpConfiguration httpConfig = new HttpConfiguration();
 			configureProxiedConnector(httpConfig);
-            ServerConnector connector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
-            		new HttpConnectionFactory(httpConfig));
+            ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
 
             // Listen on a specific network interface if it has been set.
             connector.setHost(getBindInterface());
@@ -239,7 +238,7 @@ public final class HttpBindManager {
         }
     }
 
-    private void createSSLConnector(int securePort, int bindThreads) {
+    private void createSSLConnector(int securePort) {
         httpsConnector = null;
         try {
             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
@@ -265,10 +264,10 @@ public final class HttpBindManager {
 				if ("npn".equals(JiveGlobals.getXMLProperty("spdy.protocol", "")))
 				{
 					sslConnector = new HTTPSPDYServerConnector(httpBindServer, sslContextFactory);
-				} else {
-
-					sslConnector = new ServerConnector(httpBindServer, null, null, null, -1, bindThreads,
-							new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
+				}
+				else
+				{
+					sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
 				}
                 sslConnector.setHost(getBindInterface());
                 sslConnector.setPort(securePort);
@@ -504,9 +503,9 @@ public final class HttpBindManager {
      */
     private synchronized void configureHttpBindServer(int port, int securePort) {
     	// this is the number of threads allocated to each connector/port
-    	int bindThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
+    	final int processingThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
 
-        final QueuedThreadPool tp = new QueuedThreadPool();
+        final QueuedThreadPool tp = new QueuedThreadPool(processingThreads);
         tp.setName("Jetty-QTP-BOSH");
 
         httpBindServer = new Server(tp);
@@ -515,8 +514,8 @@ public final class HttpBindManager {
         	httpBindServer.addBean(jmx.getContainer());
         }
 
-        createConnector(port, bindThreads);
-        createSSLConnector(securePort, bindThreads);
+        createConnector(port);
+        createSSLConnector(securePort);
         if (httpConnector == null && httpsConnector == null) {
             httpBindServer = null;
             return;

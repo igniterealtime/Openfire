@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
@@ -64,6 +65,8 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
+
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -530,7 +533,7 @@ public class ServerDialback {
 
                 String key = doc.getTextTrim();
 
-                final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
+                Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
 
                 if ( socket == null )
                 {
@@ -539,9 +542,30 @@ public class ServerDialback {
                     return false;
                 }
 
+                VerifyResult result;
                 try {
                     log.debug( "Verifying dialback key..." );
-                    VerifyResult result = verifyKey(key, streamID.toString(), recipient, remoteDomain, socket);
+                    try
+                    {
+                        result = verifyKey( key, streamID.toString(), recipient, remoteDomain, socket, false );
+                    }
+                    catch (SSLHandshakeException e)
+                    {
+                        log.debug( "Verification of dialback key failed due to TLS failure. Retry without TLS...", e );
+
+                        // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
+                        // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
+                        final SocketAddress oldAddress = socket.getRemoteSocketAddress();
+                        socket.close();
+                        log.debug( "Re-opening socket (with the same remote peer)..." );
+
+                        // Retry, without TLS.
+                        socket = new Socket();
+                        socket.connect( oldAddress, RemoteServerManager.getSocketTimeout() );
+                        log.debug( "Successfully re-opened socket! Try to validate dialback key again (without TLS this time)..." );
+
+                        result = verifyKey( key, streamID.toString(), recipient, remoteDomain, socket, true );
+                    }
 
                     switch(result) {
                     case valid:
@@ -593,7 +617,7 @@ public class ServerDialback {
         return host_unknown;
     }
 
-    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket, boolean skipTLS) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         VerifyResult result = VerifyResult.error;
@@ -621,7 +645,7 @@ public class ServerDialback {
             eventType = xpp.next();
         }
 
-        log.debug( "Got a response. Check if the remote server is XMPP 1.0 compliant..." ); // TODO there's code duplication here with LocalOutgoingServerSession.
+        log.debug( "Got a response." ); // TODO there's code duplication here with LocalOutgoingServerSession.
         if ((xpp.getAttributeValue("", "version") != null) && (xpp.getAttributeValue("", "version").equals("1.0"))) {
             log.debug( "The remote server is XMPP 1.0 compliant (or at least reports to be).");
             Document doc;
@@ -633,7 +657,7 @@ public class ServerDialback {
             }
             Element features = doc.getRootElement();
             Element starttls = features.element("starttls");
-            if (starttls != null) {
+            if (!skipTLS && starttls != null) {
                 writer.write("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
                 writer.flush();
                 try {
@@ -650,16 +674,16 @@ public class ServerDialback {
 
                 log.debug( "Negotiating TLS with AS... " );
                 // Ugly hacks, apparently, copied from SocketConnection.
-                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-                tlsStreamHandler = new TLSStreamHandler(socket, connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration(), true);
+                final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
+                tlsStreamHandler = new TLSStreamHandler( socket, connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration(), true );
                 // Start handshake
                 tlsStreamHandler.start();
                 // Use new wrapped writers
-                writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
-                reader.getXPPParser().setInput(new InputStreamReader(tlsStreamHandler.getInputStream(),StandardCharsets.UTF_8));
+                writer = new BufferedWriter( new OutputStreamWriter( tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8 ) );
+                reader.getXPPParser().setInput( new InputStreamReader( tlsStreamHandler.getInputStream(), StandardCharsets.UTF_8 ) );
                 log.debug( "Successfully negotiated TLS with AS... " );
                 /// Recurses!
-                return sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket);
+                return sendVerifyKey( key, streamID, recipient, remoteDomain, writer, reader, socket, skipTLS );
             }
         }
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
@@ -742,7 +766,7 @@ public class ServerDialback {
     /**
      * Verifies the key with the Authoritative Server.
      */
-    private VerifyResult verifyKey(String key, String streamID, String recipient, String remoteDomain, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private VerifyResult verifyKey(String key, String streamID, String recipient, String remoteDomain, Socket socket, boolean skipTLS ) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
 
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
@@ -759,7 +783,7 @@ public class ServerDialback {
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
             // Get a writer for sending the open stream tag
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
-            result = sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket);
+            result = sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket, skipTLS );
         }
         finally {
             try {

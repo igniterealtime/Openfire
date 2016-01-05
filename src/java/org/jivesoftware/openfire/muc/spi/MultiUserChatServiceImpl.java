@@ -45,6 +45,7 @@ import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
 import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
@@ -676,6 +677,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     private void removeChatRoom(String roomName, boolean notify) {
         MUCRoom room = rooms.remove(roomName);
+		Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
+		if (room instanceof LocalMUCRoom)
+			GroupEventDispatcher.removeListener((LocalMUCRoom) room);
         if (room != null) {
             totalChatTime += room.getChatLength();
             if (notify) {

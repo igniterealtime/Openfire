@@ -2115,6 +2115,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public void sendInvitationRejection(JID to, String reason, JID sender) {
+	if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
+        	switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitationRejection(this, to, sender, reason)) {
+                	case HANDLED_BY_DELEGATE:
+                    	//if the delegate is taking care of it, there's nothing for us to do
+                    		return;
+                	case HANDLED_BY_OPENFIRE:
+                    	//continue as normal if we're asked to handle it
+                    		break;
+            	}
+        }
+
         Message message = new Message();
         message.setFrom(role.getRoleAddress());
         message.setTo(to);

@@ -147,7 +147,9 @@ public class AuditorImpl implements Auditor {
         baseFolder = new File(logDir);
         // Create the folder if it does not exist
         if (!baseFolder.exists()) {
-            baseFolder.mkdir();
+            if ( !baseFolder.mkdir() ) {
+                Log.error( "Unable to create log directory: {}", baseFolder );
+            }
         }
     }
 
@@ -233,6 +235,10 @@ public class AuditorImpl implements Auditor {
             }
         };
         File[] files = baseFolder.listFiles(filter);
+        if (files == null) {
+            Log.debug( "Path '{}' does not denote a directory, or an IO exception occured while trying to list its content.", baseFolder );
+            return;
+        }
         long totalLength = 0;
         for (File file : files) {
             totalLength = totalLength + file.length();
@@ -256,7 +262,10 @@ public class AuditorImpl implements Auditor {
                     close();
                 }
                 // Delete oldest file
-                fileToDelete.delete();
+                if ( !fileToDelete.delete() )
+                {
+                    Log.warn( "Unable to delete file '{}' as part of regular log rotation based on size of files (Openfire failed to clean up after itself)!", fileToDelete );
+                }
             }
         }
     }
@@ -292,7 +301,10 @@ public class AuditorImpl implements Auditor {
                 // Close current file
                 close();
             }
-            fileToDelete.delete();
+            if ( !fileToDelete.delete() )
+            {
+                Log.warn( "Unable to delete file '{}' as part of regular log rotation based on age of file. (Openfire failed to clean up after itself)!", fileToDelete );
+            }
         }
     }
 

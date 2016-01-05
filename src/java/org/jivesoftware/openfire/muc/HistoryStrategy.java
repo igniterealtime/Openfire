@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -334,12 +335,20 @@ public class HistoryStrategy {
 		// The subject is changed by sending a message of type "groupchat" to the <room@service>, 
 		// where the <message/> MUST contain a <subject/> element that specifies the new subject 
 		// but MUST NOT contain a <body/> element (or a <thread/> element).
+		// Unfortunately, many clients do not follow these strict guidelines from the specs, so we
+		// allow a lenient policy for detecting non-conforming subject change requests. This can be
+		// configured by setting the "xmpp.muc.subject.change.strict" property to false (true by default).
 		// An empty <subject/> value means that the room subject should be removed.
 
 		return Message.Type.groupchat == message.getType() && 
 				message.getSubject() != null && 
-				message.getBody() == null && 
-				message.getThread() == null;
+				(!isSubjectChangeStrict() || 
+				    (message.getBody() == null && 
+				     message.getThread() == null));
+	}
+
+	private boolean isSubjectChangeStrict() {
+		return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
 	}
 
 	private static class MessageComparator implements Comparator<Message> {

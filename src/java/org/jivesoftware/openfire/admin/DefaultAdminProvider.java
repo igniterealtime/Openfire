@@ -55,7 +55,6 @@ public class DefaultAdminProvider implements AdminProvider {
         PropertyEventListener propListener = new PropertyEventListener() {
             @Override
             public void propertySet(String property, Map params) {
-                Log.debug("DefaultAdminProvider: Property was set: "+property);
                 if ("admin.authorizedJIDs".equals(property)) {
                     AdminManager.getInstance().refreshAdminAccounts();
                 }
@@ -63,7 +62,6 @@ public class DefaultAdminProvider implements AdminProvider {
 
             @Override
             public void propertyDeleted(String property, Map params) {
-                Log.debug("DefaultAdminProvider: Property was deleted: "+property);
                 if ("admin.authorizedJIDs".equals(property)) {
                     AdminManager.getInstance().refreshAdminAccounts();
                 }
@@ -71,13 +69,11 @@ public class DefaultAdminProvider implements AdminProvider {
 
             @Override
             public void xmlPropertySet(String property, Map params) {
-                Log.debug("DefaultAdminProvider: XML Property was set: "+property);
                 //Ignore
             }
 
             @Override
             public void xmlPropertyDeleted(String property, Map params) {
-                Log.debug("DefaultAdminProvider: XML Property was deleted: "+property);
                 //Ignore
             }
         };

@@ -1024,6 +1024,11 @@ public class Roster implements Cacheable, Externalizable {
                     } else {
                         item.setSubStatus(RosterItem.SUB_TO);
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);                	
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
@@ -1085,6 +1090,11 @@ public class Roster implements Cacheable, Externalizable {
                             }
                         }
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);

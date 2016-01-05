@@ -8,10 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.security.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Instances of this class will be able to generate various encryption-related artifacts based on a specific connection
@@ -90,7 +87,7 @@ public class EncryptionArtifactFactory
      */
     public synchronized SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException
     {
-        final SSLContext sslContext = SSLContext.getInstance( "TLSv1" );
+        final SSLContext sslContext = SSLContext.getInstance("TLSv1");
         sslContext.init( getKeyManagers(), getTrustManagers(), new SecureRandom() );
         return sslContext;
     }
@@ -164,12 +161,24 @@ public class EncryptionArtifactFactory
      *
      * For Openfire, an engine of this mode is typically used when the server tries to connect to another server.
      *
+     * These SSLEngines never send SSLV2 ClientHello messages.
+     *
      * @return An initialized SSLEngine instance (never null).
      */
     public SSLEngine createClientModeSSLEngine() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException
     {
-        final SSLEngine sslEngine = createSSLEngine(  );
+        final SSLEngine sslEngine = createSSLEngine();
         sslEngine.setUseClientMode( true );
+        String[] protocols = sslEngine.getEnabledProtocols();
+        if (this.configuration.getEncryptionProtocols().contains("SSLv2Hello")) {
+            Set<String> set = new HashSet<>();
+            for (String s : protocols) {
+                if (!s.equals("SSLv2Hello")) {
+                    set.add(s);
+                }
+            }
+            sslEngine.setEnabledProtocols(set.toArray(new String[set.size()]));
+        }
 
         return sslEngine;
     }
@@ -196,7 +205,8 @@ public class EncryptionArtifactFactory
             final Set<String> protocols = configuration.getEncryptionProtocols();
             if ( !protocols.isEmpty() )
             {
-                sslContextFactory.setIncludeProtocols( protocols.toArray( new String[ protocols.size() ] ) );
+                // Note that this is always server-mode, so may support SSLv2Hello.
+                sslContextFactory.setIncludeProtocols(protocols.toArray(new String[protocols.size()]));
             }
 
             // Configure cipher suite support.

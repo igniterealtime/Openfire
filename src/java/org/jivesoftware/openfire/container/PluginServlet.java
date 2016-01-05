@@ -155,7 +155,7 @@ public class PluginServlet extends HttpServlet {
             }
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
-            List classes = doc.selectNodes("//servlet");
+            List classes = doc.getRootElement().elements("servlet");
             Map<String, Class> classMap = new HashMap<>();
             for (int i = 0; i < classes.size(); i++) {
                 Element servletElement = (Element)classes.get(i);
@@ -164,7 +164,7 @@ public class PluginServlet extends HttpServlet {
                 classMap.put(name, manager.loadClass(plugin, className));
             }
             // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
+            List names = doc.getRootElement().elements("servlet-mapping");
             for (int i = 0; i < names.size(); i++) {
                 Element nameElement = (Element)names.get(i);
                 String name = nameElement.element("servlet-name").getTextTrim();
@@ -211,8 +211,8 @@ public class PluginServlet extends HttpServlet {
             saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
                 false);
             Document doc = saxReader.read(webXML);
-            // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
+            // Find all <servlet-mapping> entries to discover name to URL mapping.
+            List names = doc.getRootElement().elements("servlet-mapping");
             for (int i = 0; i < names.size(); i++) {
                 Element nameElement = (Element)names.get(i);
                 String url = nameElement.element("url-pattern").getTextTrim();

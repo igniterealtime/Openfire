@@ -208,7 +208,7 @@ public class ServerDialback {
      * @return an OutgoingServerSession if the domain was authenticated or <tt>null</tt> if none.
      */
     public LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Create Outgoing Session from: " + localDomain + " to: " + remoteDomain + " (port: " + port+ ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Create Outgoing Session from: " + localDomain + " to RS at: " + remoteDomain + " (port: " + port+ ")]" );
 
         log.debug( "Creating new outgoing session..." );
 
@@ -216,29 +216,14 @@ public class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            Socket socket = new Socket();
-            log.debug( "Get a list of real hostnames to connect to using DNS lookup of the specified hostname." );
-            List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(remoteDomain, port);
-            for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) {
-                try {
-                    DNSUtil.HostAddress address = it.next();
-                    hostname = address.getHost();
-                    realPort = address.getPort();
-                    log.debug( "Trying to create plain socket connection to: {}:{} ...", hostname, realPort );
-                    // Establish a TCP connection to the Receiving Server
-                    socket.connect(new InetSocketAddress(hostname, realPort), RemoteServerManager.getSocketTimeout());
-                    log.debug( "Plain socket connection to {}:{} successful!", hostname, realPort );
-                    break;
-                }
-                catch (Exception e) {
-                    log.debug( "An exception occurred while trying to create a plain socket connection to: {}:{}", hostname, realPort, e );
-                    log.warn( "Unable to create plain socket connection to: {}:{}. Cause: {} (a full stacktrace is logged on debug level)", hostname, realPort, e.getMessage() );
-                    // TODO should this not stop processing? lots of this code is very similar to the implementation in LocalOutgoingServerSession. Should implementations be merged?
-                }
+            final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
+
+            if ( socket == null ) {
+                log.info( "Unable to create new outgoing session: Cannot create a plain socket connection with any applicable remote host." );
+                return null;
             }
-            connection =
-                    new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket,
-                            false);
+
+            connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
 
             log.debug( "Send the stream header and wait for response..." );
             StringBuilder stream = new StringBuilder();
@@ -319,14 +304,14 @@ public class ServerDialback {
      * Most probably the Originating Server machine will be the Authoritative Server too.
      *
      * @param socketReader the reader to use for reading the answer from the Receiving Server.
-     * @param domain the domain to authenticate.
-     * @param hostname the hostname of the remote server (i.e. Receiving Server).
+     * @param localDomain the domain to authenticate.
+     * @param remoteDomain the domain of the remote server (i.e. Receiving Server).
      * @param id the stream id to be used for creating the dialback key.
      * @return true if the Receiving Server authenticated the domain with the Authoritative Server.
      */
-    public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String domain, String hostname, String id) {
+    public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String localDomain, String remoteDomain, String id) {
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate domain: " + domain + " (id " + id + ") with hostname: " + hostname + "]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Authenticate domain: " + localDomain + " with RS: " + remoteDomain + " (id: " + id + ")]" );
 
         log.debug( "Authenticating domain ..." );
 
@@ -336,8 +321,8 @@ public class ServerDialback {
             log.debug( "Sending dialback key and wait for the validation response..." );
             StringBuilder sb = new StringBuilder();
             sb.append("<db:result");
-            sb.append(" from=\"").append(domain).append("\"");
-            sb.append(" to=\"").append(hostname).append("\">");
+            sb.append(" from=\"").append(localDomain).append("\"");
+            sb.append(" to=\"").append(remoteDomain).append("\">");
             sb.append(key);
             sb.append("</db:result>");
             connection.deliverRawText(sb.toString());
@@ -495,44 +480,44 @@ public class ServerDialback {
     public boolean validateRemoteDomain(Element doc, StreamID streamID) {
         StringBuilder sb;
         String recipient = doc.attributeValue("to");
-        String hostname = doc.attributeValue("from");
+        String remoteDomain = doc.attributeValue("from");
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Validate remote domain:" + recipient + "(id " + streamID + ") for: " + hostname + "]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain:" + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
 
         log.debug( "Validating domain...");
-        if (!RemoteServerManager.canAccess(hostname)) {
+        if (!RemoteServerManager.canAccess(remoteDomain)) {
             connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
             // Close the underlying connection
             connection.close();
-            log.debug( "Unable to validate domain: Remote server is not allowed to establish a connection to this server." );
+            log.debug( "Unable to validate domain: Remote domain is not allowed to establish a connection to this server." );
             return false;
         }
         else if (isHostUnknown(recipient)) {
-            dialbackError(recipient, hostname, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
-            log.debug( "Unable to validate domain: Hostname not recognized." );
+            dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
+            log.debug( "Unable to validate domain: recipient not recognized as a local domain." );
             return false;
         }
         else {
-            log.debug( "Check if the remote server already has a connection to the target domain/subdomain" );
+            log.debug( "Check if the remote domain already has a connection to the target domain/subdomain" );
             boolean alreadyExists = false;
-            for (IncomingServerSession session : sessionManager.getIncomingServerSessions(hostname)) {
+            for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
                 if (recipient.equals(session.getLocalDomain())) {
                     alreadyExists = true;
                 }
             }
             if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
-                dialbackError(recipient, hostname, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.cancel, "Incoming session already exists"));
-                log.debug( "Unable to validate domain: An incoming connection already exists from this remote host, and multiple connections are not allowed." );
+                dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.resource_constraint, PacketError.Type.cancel, "Incoming session already exists"));
+                log.debug( "Unable to validate domain: An incoming connection already exists from this remote domain, and multiple connections are not allowed." );
                 return false;
             }
             else {
-                log.debug( "Checking to see if the remote host provides stronger authentication based on SASL. If that's the case, dialback-based authentication can be skipped." );
-                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), hostname, true)) {
+                log.debug( "Checking to see if the remote server provides stronger authentication based on SASL. If that's the case, dialback-based authentication can be skipped." );
+                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), remoteDomain, true)) {
                     log.debug( "Host authenticated based on SASL. Weaker dialback-based authentication is skipped." );
                     sb = new StringBuilder();
                     sb.append("<db:result");
                     sb.append(" from=\"").append(recipient).append("\"");
-                    sb.append(" to=\"").append(hostname).append("\"");
+                    sb.append(" to=\"").append(remoteDomain).append("\"");
                     sb.append(" type=\"valid\"");
                     sb.append("/>");
                     connection.deliverRawText(sb.toString());
@@ -545,51 +530,28 @@ public class ServerDialback {
 
                 String key = doc.getTextTrim();
 
-                log.debug( "Get a list of real hostnames and try to using DNS lookup of the specified domain." );
-                List<DNSUtil.HostAddress> hosts = DNSUtil.resolveXMPPDomain(hostname, RemoteServerManager.getPortForServer(hostname));
-                Socket socket = new Socket();
-                String realHostname = null;
-                int realPort;
-                for (Iterator<DNSUtil.HostAddress> it = hosts.iterator(); it.hasNext();) { // TODO Remove code duplication (also in LocalOutgoingServerSession)
-                    try {
-                        DNSUtil.HostAddress address = it.next();
-                        realHostname = address.getHost();
-                        realPort = address.getPort();
-                        log.debug( "Trying to create plain socket connection to: {}:{} ...", realHostname, realPort );
-                        // Establish a TCP connection to the Receiving Server
-                        socket.connect(new InetSocketAddress(realHostname, realPort), RemoteServerManager.getSocketTimeout());
-                        log.debug( "Plain socket connection to {}:{} successful!", realHostname, realPort );
-                        break;
-                    }
-                    catch (Exception e) {
-                        log.debug( "An exception occurred while trying to create a plain socket connection to: {}", realHostname, e );
-                        log.warn( "Unable to create plain socket connection to: {}. Cause: {} (a full stacktrace is logged on debug level)", realHostname, e.getMessage() );
-                    }
-                }
-                if (!socket.isConnected()) {
+                final Socket socket = SocketUtil.createSocketToXmppDomain( remoteDomain, RemoteServerManager.getPortForServer(remoteDomain) );
+
+                if ( socket == null )
+                {
                     log.debug( "Unable to validate domain: No server available for verifying key of remote server." );
-                    dialbackError(recipient, hostname, new PacketError(PacketError.Condition.remote_server_not_found, PacketError.Type.cancel, "Unable to connect to authoritative server"));
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        log.warn("Socket error on close", e);
-                    }
+                    dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_not_found, PacketError.Type.cancel, "Unable to connect to authoritative server"));
                     return false;
                 }
 
                 try {
                     log.debug( "Verifying dialback key..." );
-                    VerifyResult result = verifyKey(key, streamID.toString(), recipient, hostname, socket);
+                    VerifyResult result = verifyKey(key, streamID.toString(), recipient, remoteDomain, socket);
 
                     switch(result) {
                     case valid:
                     case invalid:
                         boolean valid = (result == VerifyResult.valid);
-                        log.debug( "Dialback key is" + (valid? "valid":"invalid") + ". Sending verification result to remote host." );
+                        log.debug( "Dialback key is" + (valid? "valid":"invalid") + ". Sending verification result to remote domain." );
                         sb = new StringBuilder();
                         sb.append("<db:result");
                         sb.append(" from=\"").append(recipient).append("\"");
-                        sb.append(" to=\"").append(hostname).append("\"");
+                        sb.append(" to=\"").append(remoteDomain).append("\"");
                         sb.append(" type=\"");
                         sb.append(valid ? "valid" : "invalid");
                         sb.append("\"/>");
@@ -608,11 +570,11 @@ public class ServerDialback {
                         break;
                     }
                     log.debug( "Unable to validate domain: key verification did not complete (the AS likely returned an error or a time out occurred)." );
-                    dialbackError(recipient, hostname, new PacketError(PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server returned error"));
+                    dialbackError( recipient, remoteDomain, new PacketError( PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server returned error" ) );
                     return false;
                 }
                 catch (Exception e) {
-                    dialbackError(recipient, hostname, new PacketError(PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server failed"));
+                    dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.remote_server_timeout, PacketError.Type.cancel, "Authoritative server failed"));
                     log.warn( "Unable to validate domain: An exception occurred while verifying the dialback key.", e );
                     return false;
                 }
@@ -631,8 +593,8 @@ public class ServerDialback {
         return host_unknown;
     }
 
-    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String hostname, Writer writer, XMPPPacketReader reader, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key with AS: " + hostname + " for: " + recipient + " (id " + streamID + ")]" );
+    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         VerifyResult result = VerifyResult.error;
         TLSStreamHandler tlsStreamHandler;
@@ -644,7 +606,7 @@ public class ServerDialback {
         stream.append(" xmlns=\"jabber:server\"");
         stream.append(" xmlns:db=\"jabber:server:dialback\"");
         stream.append(" to=\"");
-        stream.append(hostname);
+        stream.append(remoteDomain);
         stream.append("\"");
         stream.append(" from=\"");
         stream.append(recipient);
@@ -697,7 +659,7 @@ public class ServerDialback {
                 reader.getXPPParser().setInput(new InputStreamReader(tlsStreamHandler.getInputStream(),StandardCharsets.UTF_8));
                 log.debug( "Successfully negotiated TLS with AS... " );
                 /// Recurses!
-                return sendVerifyKey(key, streamID, recipient, hostname, writer, reader, socket);
+                return sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket);
             }
         }
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
@@ -705,7 +667,7 @@ public class ServerDialback {
             StringBuilder sb = new StringBuilder();
             sb.append("<db:verify");
             sb.append(" from=\"").append(recipient).append("\"");
-            sb.append(" to=\"").append(hostname).append("\"");
+            sb.append(" to=\"").append(remoteDomain).append("\"");
             sb.append(" id=\"").append(streamID).append("\">");
             sb.append(key);
             sb.append("</db:verify>");
@@ -723,7 +685,7 @@ public class ServerDialback {
                         // condition is sent to the Originating Server
                         throw new RemoteConnectionFailedException("Invalid ID");
                     }
-                    else if (isHostUnknown(doc.attributeValue("to"))) {
+                    else if (isHostUnknown( doc.attributeValue( "to" ) )) {
                         // Include the host-unknown stream error condition in the response
                         writer.write(
                                 new StreamError(StreamError.Condition.host_unknown).toXML());
@@ -732,7 +694,7 @@ public class ServerDialback {
                         // condition is sent to the Originating Server
                         throw new RemoteConnectionFailedException("Host unknown");
                     }
-                    else if (!hostname.equals(doc.attributeValue("from"))) {
+                    else if (!remoteDomain.equals(doc.attributeValue("from"))) {
                         // Include the invalid-from stream error condition in the response
                         writer.write(
                                 new StreamError(StreamError.Condition.invalid_from).toXML());
@@ -780,9 +742,9 @@ public class ServerDialback {
     /**
      * Verifies the key with the Authoritative Server.
      */
-    private VerifyResult verifyKey(String key, String streamID, String recipient, String hostname, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private VerifyResult verifyKey(String key, String streamID, String recipient, String remoteDomain, Socket socket) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key with AS: " + hostname + " for: " + recipient + " (id " + streamID + ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         log.debug( "Verifying key ..." );
         XMPPPacketReader reader;
@@ -797,7 +759,7 @@ public class ServerDialback {
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
             // Get a writer for sending the open stream tag
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
-            result = sendVerifyKey(key, streamID, recipient, hostname, writer, reader, socket);
+            result = sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket);
         }
         finally {
             try {
@@ -848,7 +810,7 @@ public class ServerDialback {
         String key = doc.getTextTrim();
         String id = doc.attributeValue("id");
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Verify key for RS: " + verifyFROM + " (id " + id+ ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Authoritative Server: Verify key sent by RS: " + verifyFROM + " (id " + id+ ")]" );
 
         log.debug( "Verifying key... ");
 

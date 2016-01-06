@@ -57,21 +57,8 @@ public class StreamManagementPacketRouter extends SessionPacketRouter {
 	@Override
 	public void route(Element wrappedElement) throws UnknownStanzaException {
 		
-        String tag = wrappedElement.getName();
 		if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {
-        	switch(tag) {
-	    		case "enable":
-	    			session.enableStreamMangement(wrappedElement);
-	    			break;
-        		case "r":
-        			session.getStreamManager().sendServerAcknowledgement();
-        			break;
-        		case "a":
-        			session.getStreamManager().processClientAcknowledgement(wrappedElement);
-        			break;
-        		default:
-	    			session.getStreamManager().sendUnexpectedError();
-        	}
+			session.getStreamManager().process( wrappedElement, session.getAddress() );
         } else {
         	super.route(wrappedElement);
 			if (isUnsolicitedAckExpected()) {

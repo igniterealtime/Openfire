@@ -453,28 +453,6 @@ public abstract class LocalSession implements Session {
         return "NONE";
     }
 
-    /**
-     * Enables stream management for session
-     * @param enable XEP-0198 <enable/> element
-     */
-    public void enableStreamMangement(Element enable) {
-
-    	// Do nothing if already enabled
-    	if(streamManager.isEnabled()) {
-    		return;
-    	}
-
-		streamManager.setNamespace(enable.getNamespace().getStringValue());
-
-    	// Ensure that resource binding has occurred
-    	if(getAddress().getResource() == null) {
-    		streamManager.sendUnexpectedError();
-    		return;
-    	}
-
-    	streamManager.setEnabled(true);
-	}
-
     @Override
     public final Locale getLanguage() {
         return language;

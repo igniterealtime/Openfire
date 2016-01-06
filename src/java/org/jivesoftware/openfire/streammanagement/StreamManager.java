@@ -134,9 +134,9 @@ public class StreamManager {
 	 */
 	public void processClientAcknowledgement(Element ack) {
 		if(isEnabled()) {
-			synchronized (this) {
-				if (ack.attribute("h") != null) {
-					long count = Long.valueOf(ack.attributeValue("h"));
+			if (ack.attribute("h") != null) {
+				long count = Long.valueOf(ack.attributeValue("h"));
+				synchronized (this) {
 					// Remove stanzas from temporary storage as now acknowledged
 					Log.debug("Ack: h={} mine={} length={}", count, clientProcessedStanzas, unacknowledgedServerStanzas.size());
 					if (count < clientProcessedStanzas) {

@@ -138,25 +138,26 @@ public class StreamManager {
 				if (ack.attribute("h") != null) {
 					long count = Long.valueOf(ack.attributeValue("h"));
 					// Remove stanzas from temporary storage as now acknowledged
-					long i = getClientProcessedStanzas();
-					Log.debug("Ack: h={} mine={} length={}", count, i, unacknowledgedServerStanzas.size());
-					if (count < i) {
+					Log.debug("Ack: h={} mine={} length={}", count, clientProcessedStanzas, unacknowledgedServerStanzas.size());
+					if (count < clientProcessedStanzas) {
                                     /* Consider rollover? */
 						Log.debug("Maybe rollover");
-						if (i > mask) {
-							while (count < i) {
+						if (clientProcessedStanzas > mask) {
+							while (count < clientProcessedStanzas) {
 								Log.debug("Rolling...");
 								count += mask + 1;
 							}
 						}
 					}
-					while (i < count) {
+					while (clientProcessedStanzas < count) {
 						unacknowledgedServerStanzas.removeFirst();
-						i++;
-						Log.debug("In Ack: h={} mine={} length={}", count, i, unacknowledgedServerStanzas.size());
+						clientProcessedStanzas++;
+						Log.debug("In Ack: h={} mine={} length={}", count, clientProcessedStanzas, unacknowledgedServerStanzas.size());
 					}
 
-					setClientProcessedStanzas(count);
+					if(count >= clientProcessedStanzas) {
+						clientProcessedStanzas = count;
+					}
 				}
 			}
 		}
@@ -279,25 +280,6 @@ public class StreamManager {
 	public void incrementServerProcessedStanzas() {
 		if(isEnabled()) {
 			this.serverProcessedStanzas++;
-		}
-	}
-
-	/**
-	 * Retrieve the number of stanzas processed by the client since
-	 * Stream Management was enabled.
-	 * @return number of stanzas processed by the client
-	 */
-	public long getClientProcessedStanzas() {
-		return clientProcessedStanzas;
-	}
-
-	/**
-	 * Sets the count of stanzas processed by the client since
-	 * Stream Management was enabled.
-	 */
-	public void setClientProcessedStanzas(long count) {
-		if(count >= clientProcessedStanzas) {
-			clientProcessedStanzas = count;
 		}
 	}
 }

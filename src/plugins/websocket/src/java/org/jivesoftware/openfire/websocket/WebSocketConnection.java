@@ -75,11 +75,17 @@ public class WebSocketConnection extends VirtualConnection
 	@Override
     public void deliver(Packet packet) throws UnauthorizedException
     {
-    	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
-    		packet.getElement().add(Namespace.get(CLIENT_NAMESPACE));
-    	}
+        final String xml;
+        if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
+            // use string-based operation here to avoid cascading xmlns wonkery
+            StringBuilder packetXml = new StringBuilder(packet.toXML());
+            packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
+            xml = packetXml.toString();
+        } else {
+            xml = packet.toXML();
+        }
     	if (validate()) {
-    		deliverRawText(packet.toXML());
+    		deliverRawText(xml);
     	} else {
     		// use fallback delivery mechanism (offline)
     		getPacketDeliverer().deliver(packet);

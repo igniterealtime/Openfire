@@ -896,7 +896,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"><optional/></session>");
 
             // Offer XEP-0198 stream management capabilities if enabled.
-            if(JiveGlobals.getBooleanProperty("stream.management.active", true)) {
+            if(JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true)) {
             	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
             	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }

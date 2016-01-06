@@ -35,6 +35,8 @@ public class StreamManager {
             packet = p;
         }
     }
+    
+    public static final String SM_ACTIVE = "stream.management.active";
 
     /**
      * Stanza namespaces

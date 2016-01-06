@@ -190,21 +190,8 @@ public abstract class StanzaHandler {
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
-        } else if(isStreamManagementStanza(doc)) {
-        	switch(tag) {
-        		case "enable":
-        			session.enableStreamMangement(doc);
-        			break;
-        		case "r":
-        			session.getStreamManager().sendServerAcknowledgement();
-        			break;
-        		case "a":
-        			session.getStreamManager().processClientAcknowledgement(doc);
-        			break;
-        		default:
-        			process(doc);
-        			break;
-        	}
+        } else if (isStreamManagementStanza(doc)) {
+            session.getStreamManager().process( doc, session.getAddress() );
         }
         else {
             process(doc);

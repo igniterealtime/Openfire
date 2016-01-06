@@ -96,7 +96,43 @@ public class StreamManager {
     	this.connection = connection;
     }
 
-    /**
+	/**
+	 * Processes a stream management element.
+	 *
+	 * @param element The stream management element to be processed.
+	 * @param onBehalfOf The (full) JID of the entity for which the element is processed.
+	 */
+	public void process( Element element, JID onBehalfOf )
+	{
+		switch(element.getName()) {
+			case "enable":
+
+				// Do nothing if already enabled
+				if(isEnabled()) {
+					return;
+				}
+
+				// Ensure that resource binding has occurred
+				if( onBehalfOf.getResource() == null ) {
+					sendUnexpectedError();
+					return;
+				}
+
+				setNamespace( element.getNamespace().getStringValue() );
+				setEnabled(true);
+				break;
+			case "r":
+				sendServerAcknowledgement();
+				break;
+			case "a":
+				processClientAcknowledgement( element);
+				break;
+			default:
+				sendUnexpectedError();
+		}
+	}
+
+	/**
      * Sends XEP-0198 acknowledgement <a /> to client from server
      */
 	public void sendServerAcknowledgement() {

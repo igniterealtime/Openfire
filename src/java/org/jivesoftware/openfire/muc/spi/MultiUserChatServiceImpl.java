@@ -29,8 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,6 +38,7 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
@@ -96,7 +96,8 @@ import org.xmpp.resultsetmanagement.ResultSet;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider {
+        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener
+{
 
 	private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
@@ -391,7 +392,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void shutdown() {
-		stop();
+		enableService( false, false );
     }
 
     @Override
@@ -401,6 +402,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     public JID getAddress() {
         return new JID(null, getServiceDomain(), null, true);
+    }
+
+    @Override
+    public void serverStarted()
+    {}
+
+    @Override
+    public void serverStopping()
+    {
+        // When this is executed, we can be certain that all server modules have not yet shut down. This allows us to
+        // inform all users.
+        shutdown();
     }
 
     /**
@@ -414,6 +427,75 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 		public void run() {
             checkForTimedOutUsers();
         }
+    }
+
+    /**
+     * Informs all users local to this cluster node that he or she is being removed from the room because the MUC
+     * service is being shut down.
+     *
+     * The implementation is optimized to run as fast as possible (to prevent prolonging the shutdown).
+     */
+    private void broadcastShutdown()
+    {
+        Log.debug( "Notifying all local users about the imminent destruction of chat service '{}'", chatServiceName );
+
+        if (users.isEmpty()) {
+            return;
+        }
+
+        // A thread pool is used to broadcast concurrently, as well as to limit the execution time of this service.
+        final ExecutorService service = Executors.newFixedThreadPool( Math.min( users.size(), 10 ) );
+
+        // Queue all tasks in the executor service.
+        for ( final LocalMUCUser user : users.values() )
+        {
+            // Submit a concurrent task for each local user (that could be in more than one (local) room).
+            service.submit( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
+                    {
+                        for ( final LocalMUCRole role : user.getRoles() )
+                        {
+                            final MUCRoom room = role.getChatRoom();
+
+                            // Send a presence stanza of type "unavailable" to the occupant
+                            final Presence presence = room.createPresence( Presence.Type.unavailable );
+                            presence.setFrom( role.getRoleAddress() );
+
+                            // A fragment containing the x-extension.
+                            final Element fragment = presence.addChildElement( "x", "http://jabber.org/protocol/muc#user" );
+                            final Element item = fragment.addElement( "item" );
+                            item.addAttribute( "affiliation", "none" );
+                            item.addAttribute( "role", "none" );
+                            fragment.addElement( "status" ).addAttribute( "code", "301" );
+
+                            // Make sure that the presence change for each user is only sent to that user (and not broadcasted in the room)!
+                            role.send( presence );
+                        }
+                    }
+                    catch ( Exception e )
+                    {
+                        Log.debug( "Unable to inform {} about the imminent destruction of chat service '{}'", user.getAddress(), chatServiceName, e );
+                    }
+                }
+            } );
+        }
+
+        // Try to shutdown - wait - force shutdown.
+        service.shutdown();
+        try
+        {
+            service.awaitTermination( 500, TimeUnit.MILLISECONDS );
+            Log.debug( "Successfully notified all {} local users about the imminent destruction of chat service '{}'", users.size(), chatServiceName );
+        }
+        catch ( InterruptedException e )
+        {
+            Log.debug( "Interrupted while waiting for all users to be notified of shutdown of chat service '{}'. Shutting down immediately.", chatServiceName );
+        }
+        service.shutdownNow();
     }
 
     private void checkForTimedOutUsers() {
@@ -1126,6 +1208,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void start() {
+        XMPPServer.getInstance().addServerListener( this );
+
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default
         // values)
         userTimeoutTask = new UserTimeoutTask();
@@ -1159,8 +1243,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         XMPPServer.getInstance().getServerItemsProviders().remove(this);
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
+        broadcastShutdown();
         logAllConversation();
-
+        XMPPServer.getInstance().removeServerListener( this );
     }
 
     @Override

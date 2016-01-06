@@ -178,9 +178,11 @@ public class StreamManager {
 					for (StreamManager.UnackedPacket unacked : unacknowledgedStanzas) {
 						if (unacked.packet instanceof Message) {
 							Message m = (Message) unacked.packet;
-							Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-							delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-							delayInformation.addAttribute("from", serverAddress.toBareJID());
+							if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+								Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+								delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+								delayInformation.addAttribute("from", serverAddress.toBareJID());
+							}
 						}
 						router.route(unacked.packet);
 					}

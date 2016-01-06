@@ -60,10 +60,7 @@ import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
-import org.jivesoftware.util.JiveProperties;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -488,7 +485,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         service.shutdown();
         try
         {
-            service.awaitTermination( 500, TimeUnit.MILLISECONDS );
+            service.awaitTermination( JiveGlobals.getIntProperty( "xmpp.muc.await-termination-millis", 500 ), TimeUnit.MILLISECONDS );
             Log.debug( "Successfully notified all {} local users about the imminent destruction of chat service '{}'", users.size(), chatServiceName );
         }
         catch ( InterruptedException e )

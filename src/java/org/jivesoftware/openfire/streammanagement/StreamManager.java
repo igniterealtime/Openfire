@@ -107,19 +107,7 @@ public class StreamManager {
 		switch(element.getName()) {
 			case "enable":
 
-				// Do nothing if already enabled
-				if(isEnabled()) {
-					return;
-				}
-
-				// Ensure that resource binding has occurred
-				if( onBehalfOf.getResource() == null ) {
-					sendUnexpectedError();
-					return;
-				}
-
-				setNamespace( element.getNamespace().getStringValue() );
-				setEnabled(true);
+				enable( onBehalfOf, element.getNamespace().getStringValue() );
 				break;
 			case "r":
 				sendServerAcknowledgement();
@@ -130,6 +118,35 @@ public class StreamManager {
 			default:
 				sendUnexpectedError();
 		}
+	}
+
+	/**
+	 * Attempts to enable Stream Management for the entity identified by the provided JID.
+	 *
+	 * @param onBehalfOf The address of the entity for which SM is to be enabled.
+	 * @param namespace The namespace that defines what version of SM is to be enabled.
+	 */
+	private void enable( JID onBehalfOf, String namespace )
+	{
+		// Ensure that resource binding has occurred.
+		if( onBehalfOf.getResource() == null ) {
+			sendUnexpectedError();
+			return;
+		}
+
+		synchronized ( this )
+		{
+			// Do nothing if already enabled
+			if ( isEnabled() )
+			{
+				return;
+			}
+
+			setNamespace( namespace );
+		}
+
+		// Send confirmation to the requestee.
+		getConnection().deliverRawText( String.format("<enabled xmlns='%s'/>", getNamespace()) );
 	}
 
 	/**
@@ -217,17 +234,16 @@ public class StreamManager {
 
 	public void onClose(PacketRouter router, JID serverAddress) {
 		// Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
+		synchronized (this) {
 		if(isEnabled()) {
-			setEnabled(false); // Avoid concurrent usage.
-			synchronized (this) {
-				if (!unacknowledgedServerStanzas.isEmpty()) {
+				namespace = null; // disable stream management.
 					for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
 						if (unacked.packet instanceof Message) {
 							Message m = (Message) unacked.packet;
 							if (m.getExtension("delay", "urn:xmpp:delay") == null) {
-								Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-								delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-								delayInformation.addAttribute("from", serverAddress.toBareJID());
+							Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+							delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+							delayInformation.addAttribute("from", serverAddress.toBareJID());
 							}
 						}
 						router.route(unacked.packet);
@@ -252,21 +268,7 @@ public class StreamManager {
 	 * @return true when stream management is enabled, otherwise false.
 	 */
 	public boolean isEnabled() {
-		return enabled;
-	}
-
-	/**
-	 * Sets whether Stream Management enabled for session this
-	 * manager belongs to.
-	 * @param enabled true when stream management is to be enabled, false when it is to be disabled.
-	 */
-	synchronized public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-
-		if(enabled) {
-	    	String enabledStanza = String.format("<enabled xmlns='%s'/>", getNamespace());
-	    	getConnection().deliverRawText(enabledStanza);
-		}
+		return namespace != null;
 	}
 
 	/**

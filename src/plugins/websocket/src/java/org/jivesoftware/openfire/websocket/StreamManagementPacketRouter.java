@@ -15,8 +15,6 @@
  */
 package org.jivesoftware.openfire.websocket;
 
-import java.io.UnsupportedEncodingException;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionPacketRouter;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;

@@ -71,5 +71,34 @@ connector. To establish a secure WebSocket, modify the following URL as appropri
     wss://your.openfire.host:7443/ws/
 </pre>
 
+
+<h2>Configuration</h2>
+
+<p>
+The WebSocket plugin implements the Stream Management (<a href="http://xmpp.org/extensions/xep-0198.html">XEP-0198</a>) 
+"ack" capabilities introduced with Openfire 4.0. This provides assurance for XMPP packet delivery by allowing the peers
+to agree on the number of stanzas exchanged. Two system properties are available to configure this feature:
+</p>
+
+<dl>
+<dt><pre>stream.management.active</pre></dt>
+<dd>Boolean property to enable/disable stream management (default: true)</dd>
+<dt><pre>stream.management.unsolicitedAckFrequency</pre></dt>
+<dd>Integer property indicating frequency of unsolicited ack's from the server to the client (default: 0)</dd>
+</dl>
+
+<p>
+XEP-0198 allows either party (client or server) to send unsolicited ack/answer
+stanzas on a periodic basis. This implementation approximates BOSH ack behavior
+by sending unsolicited <a /> stanzas from the server to the client after a
+configurable number of stanzas have been received from the client. 
+</p>
+<p>
+Setting the system property to "1" would indicate that each client packet should 
+be ack'd by the server when stream management is enabled for a particular stream. 
+To disable unsolicited server acks, use the default value for system property
+"stream.management.unsolicitedAckFrequency" ("0"). This setting does not affect
+server responses to explicit ack requests from the client.
+</p>
 </body>
 </html>

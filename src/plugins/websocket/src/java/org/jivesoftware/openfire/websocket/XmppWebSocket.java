@@ -41,6 +41,7 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SASLAuthentication.Status;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -304,7 +305,7 @@ public class XmppWebSocket {
             sb.append(String.format("<session xmlns='%s'><optional/></session>", "urn:ietf:params:xml:ns:xmpp-session"));
 
             if (isStreamManagementAvailable()) {
-            	sb.append(String.format("<sm xmlns='%s'/>", "urn:xmpp:sm:3"));
+            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
         }
         
@@ -365,13 +366,7 @@ public class XmppWebSocket {
 	}
 
 	private boolean isStreamManagementAvailable() {
-		try {
-			// use reflection to determine whether stream management is supported
-			Class.forName("org.jivesoftware.openfire.streammanagement.StreamManager");
-			return JiveGlobals.getBooleanProperty("stream.management.active", true);
-		} catch (ClassNotFoundException cnfe) {
-			return false;
-		}
+		return JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true);
 	}
 
 	//-- Keep-alive ping for idle peers

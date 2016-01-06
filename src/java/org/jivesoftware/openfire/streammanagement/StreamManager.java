@@ -48,12 +48,6 @@ public class StreamManager {
 	private final Connection connection;
 
 	/**
-	 * Whether Stream Management is enabled for session
-	 * the manager belongs to.
-	 */
-	private boolean enabled;
-
-    /**
      * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
      */
     private String namespace;
@@ -101,7 +95,6 @@ public class StreamManager {
 	{
 		switch(element.getName()) {
 			case "enable":
-
 				enable( onBehalfOf, element.getNamespace().getStringValue() );
 				break;
 			case "r":
@@ -155,7 +148,7 @@ public class StreamManager {
 	}
 
 	/**
-         * Sends XEP-0198 request <r /> to client from server
+	 * Sends XEP-0198 request <r /> to client from server
 	 */
 	private void sendServerRequest() {
 		if(isEnabled()) {
@@ -190,8 +183,9 @@ public class StreamManager {
 
 					if ( !unacknowledgedServerStanzas.isEmpty() && h > unacknowledgedServerStanzas.getLast().x ) {
 						Log.warn( "Client acknowledges stanzas that we didn't sent! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
-						clientProcessedStanzas = h; // Correct the bookkeeping on our end.
 					}
+
+					clientProcessedStanzas = h;
 
 					// Remove stanzas from temporary storage as now acknowledged
 					Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
@@ -214,7 +208,7 @@ public class StreamManager {
 						}
 					}
 
-					Log.trace("After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
+					Log.trace( "After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
 				}
 			}
 		}
@@ -262,16 +256,15 @@ public class StreamManager {
 	public void onClose(PacketRouter router, JID serverAddress) {
 		// Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
 		synchronized (this) {
-		if(isEnabled()) {
+			if(isEnabled()) {
 				namespace = null; // disable stream management.
-					for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
-						if (unacked.packet instanceof Message) {
-							Message m = (Message) unacked.packet;
-							if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+				for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+					if (unacked.packet instanceof Message) {
+						Message m = (Message) unacked.packet;
+						if (m.getExtension("delay", "urn:xmpp:delay") == null) {
 							Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
 							delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
 							delayInformation.addAttribute("from", serverAddress.toBareJID());
-							}
 						}
 						router.route(unacked.packet);
 					}

@@ -142,11 +142,11 @@ public class StreamManager {
 				return;
 			}
 
-			setNamespace( namespace );
+			this.namespace = namespace;
 		}
 
 		// Send confirmation to the requestee.
-		getConnection().deliverRawText( String.format("<enabled xmlns='%s'/>", getNamespace()) );
+		connection.deliverRawText( String.format( "<enabled xmlns='%s'/>", namespace ) );
 	}
 
 	/**
@@ -154,8 +154,8 @@ public class StreamManager {
      */
 	public void sendServerAcknowledgement() {
 		if(isEnabled()) {
-			String ack = String.format("<a xmlns='%s' h='%s' />", getNamespace(), getServerProcessedStanzas() & mask);
-			getConnection().deliverRawText(ack);
+			String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas & mask);
+			connection.deliverRawText( ack );
 		}
 	}
 
@@ -164,8 +164,8 @@ public class StreamManager {
 	 */
 	private void sendServerRequest() {
 		if(isEnabled()) {
-			String request = String.format("<r xmlns='%s' />", getNamespace());
-			getConnection().deliverRawText(request);
+			String request = String.format("<r xmlns='%s' />", namespace);
+			connection.deliverRawText( request );
 		}
 	}
 
@@ -173,11 +173,11 @@ public class StreamManager {
 	 * Send an error if a XEP-0198 stanza is received at an unexpected time.
 	 * e.g. before resource-binding has completed.
 	 */
-	public void sendUnexpectedError() {
-		getConnection().deliverRawText(
-				String.format( "<failed xmlns='%s'>", getNamespace() )
-				+ new PacketError( PacketError.Condition.unexpected_request ).toXML()
-				+ "</failed>"
+	private void sendUnexpectedError() {
+		connection.deliverRawText(
+				String.format( "<failed xmlns='%s'>", namespace )
+						+ new PacketError( PacketError.Condition.unexpected_request ).toXML()
+						+ "</failed>"
 		);
 	}
 
@@ -185,7 +185,7 @@ public class StreamManager {
 	 * Receive and process acknowledgement packet from client
 	 * @param ack XEP-0198 acknowledgement <a /> stanza to process
 	 */
-	public void processClientAcknowledgement(Element ack) {
+	private void processClientAcknowledgement(Element ack) {
 		if(isEnabled()) {
 			if (ack.attribute("h") != null) {
 				long count = Long.valueOf(ack.attributeValue("h"));
@@ -220,12 +220,13 @@ public class StreamManager {
 
 		if(isEnabled()) {
 			synchronized (this) {
-				incrementServerSentStanzas();
+				this.serverSentStanzas++;
+
 				// Temporarily store packet until delivery confirmed
 				unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( new Date(), packet.createCopy() ) );
-				Log.debug("Added stanza of type {}, now {} / {}", packet.getClass().getName(), getServerSentStanzas(), unacknowledgedServerStanzas.size());
+				Log.debug("Added stanza of type {}, now {} / {}", packet.getClass().getName(), serverSentStanzas, unacknowledgedServerStanzas.size());
 			}
-			if(getServerSentStanzas() % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
+			if(serverSentStanzas % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
 				sendServerRequest();
 			}
 		}
@@ -255,60 +256,12 @@ public class StreamManager {
 	}
 
 	/**
-	 * Get connection (stream) for the session
-	 * @return connection (stream) for the session
-	 */
-	public Connection getConnection() {
-		return connection;
-	}
-
-	/**
 	 * Determines whether Stream Management enabled for session this
 	 * manager belongs to.
 	 * @return true when stream management is enabled, otherwise false.
 	 */
 	public boolean isEnabled() {
 		return namespace != null;
-	}
-
-	/**
-	 * Retrieve configured XEP-0198 namespace (depending on XEP-0198 version used by client)
-	 * @return XEP-0198 namespace
-	 */
-	public String getNamespace() {
-		return namespace;
-	}
-
-	/**
-	 * Configure XEP-0198 namespace (depending on XEP-0198 version used by client).
-	 * @param namespace sets XEP-0198 namespace
-	 */
-	public void setNamespace(String namespace) {
-		this.namespace = namespace;
-	}
-
-	/**
-	 * Retrieves number of stanzas sent to client by server.
-	 * @return number of stanzas sent to client by server.
-	 */
-	public long getServerSentStanzas() {
-		return serverSentStanzas;
-	}
-
-	/**
-	 * Increments the count of stanzas sent to client by server.
-	 */
-	public void incrementServerSentStanzas() {
-		this.serverSentStanzas++;
-	}
-
-	/**
-	 * Retrieve the number of stanzas processed by the server since
-	 * Stream Management was enabled.
-	 * @return the number of stanzas processed by the server
-	 */
-	public long getServerProcessedStanzas() {
-		return serverProcessedStanzas;
 	}
 
 	/**

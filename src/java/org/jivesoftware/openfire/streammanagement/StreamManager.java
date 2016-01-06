@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.streammanagement;
 
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -23,7 +24,7 @@ import org.xmpp.packet.PacketError;
  * @author jonnyheavey
  */
 public class StreamManager {
-	private static final Logger Log = LoggerFactory.getLogger(StreamManager.class);
+	private final Logger Log;
     public static class UnackedPacket {
         public final Date timestamp;
         public final Packet packet;
@@ -82,6 +83,16 @@ public class StreamManager {
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     public StreamManager(Connection connection) {
+		String address;
+		try {
+			address = connection.getHostAddress();
+		}
+		catch ( UnknownHostException e )
+		{
+			address = null;
+		}
+
+		this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
     	this.connection = connection;
     }
 
@@ -110,11 +121,11 @@ public class StreamManager {
 	 * e.g. before resource-binding has completed.
 	 */
 	public void sendUnexpectedError() {
-		StringBuilder sb = new StringBuilder(340);
-		sb.append(String.format("<failed xmlns='%s'>", getNamespace()));
-		sb.append(new PacketError(PacketError.Condition.unexpected_request).toXML());
-		sb.append("</failed>");
-		getConnection().deliverRawText(sb.toString());	
+		getConnection().deliverRawText(
+				String.format( "<failed xmlns='%s'>", getNamespace() )
+				+ new PacketError( PacketError.Condition.unexpected_request ).toXML()
+				+ "</failed>"
+		);
 	}
 
 	/**
@@ -194,7 +205,7 @@ public class StreamManager {
 
 	/**
 	 * Get connection (stream) for the session
-	 * @return
+	 * @return connection (stream) for the session
 	 */
 	public Connection getConnection() {
 		return connection;
@@ -203,7 +214,7 @@ public class StreamManager {
 	/**
 	 * Determines whether Stream Management enabled for session this
 	 * manager belongs to.
-	 * @return
+	 * @return true when stream management is enabled, otherwise false.
 	 */
 	public boolean isEnabled() {
 		return enabled;
@@ -212,7 +223,7 @@ public class StreamManager {
 	/**
 	 * Sets whether Stream Management enabled for session this
 	 * manager belongs to.
-	 * @param enabled
+	 * @param enabled true when stream management is to be enabled, false when it is to be disabled.
 	 */
 	synchronized public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
@@ -224,16 +235,16 @@ public class StreamManager {
 	}
 
 	/**
-	 * Retrieve configured XEP-0198 namespace
-	 * @return
+	 * Retrieve configured XEP-0198 namespace (depending on XEP-0198 version used by client)
+	 * @return XEP-0198 namespace
 	 */
 	public String getNamespace() {
 		return namespace;
 	}
 
 	/**
-	 * Configure XEP-0198 namespace
-	 * @param namespace
+	 * Configure XEP-0198 namespace (depending on XEP-0198 version used by client).
+	 * @param namespace sets XEP-0198 namespace
 	 */
 	public void setNamespace(String namespace) {
 		this.namespace = namespace;
@@ -241,7 +252,7 @@ public class StreamManager {
 
 	/**
 	 * Retrieves number of stanzas sent to client by server.
-	 * @return
+	 * @return number of stanzas sent to client by server.
 	 */
 	public long getServerSentStanzas() {
 		return serverSentStanzas;
@@ -257,7 +268,7 @@ public class StreamManager {
 	/**
 	 * Retrieve the number of stanzas processed by the server since
 	 * Stream Management was enabled.
-	 * @return
+	 * @return the number of stanzas processed by the server
 	 */
 	public long getServerProcessedStanzas() {
 		return serverProcessedStanzas;
@@ -276,7 +287,7 @@ public class StreamManager {
 	/**
 	 * Retrieve the number of stanzas processed by the client since
 	 * Stream Management was enabled.
-	 * @return
+	 * @return number of stanzas processed by the client
 	 */
 	public long getClientProcessedStanzas() {
 		return clientProcessedStanzas;
@@ -294,7 +305,7 @@ public class StreamManager {
 
 	/**
 	 * Retrieves all unacknowledged stanzas sent to client from server.
-	 * @return
+	 * @return  all unacknowledged stanzas sent to client from server.
 	 */
 	public Deque<UnackedPacket> getUnacknowledgedServerStanzas() {
 		return unacknowledgedServerStanzas;

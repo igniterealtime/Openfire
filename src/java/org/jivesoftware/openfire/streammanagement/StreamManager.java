@@ -184,6 +184,8 @@ public class StreamManager {
 		if(isEnabled()) {
 			if (ack.attribute("h") != null) {
 				final long h = Long.valueOf(ack.attributeValue("h"));
+
+				Log.debug( "Received acknowledgement from client: h={}", h );
 				synchronized (this) {
 
 					if ( !unacknowledgedServerStanzas.isEmpty() && h > unacknowledgedServerStanzas.getLast().x ) {
@@ -192,7 +194,7 @@ public class StreamManager {
 					}
 
 					// Remove stanzas from temporary storage as now acknowledged
-					Log.debug("Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
+					Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
 
 					// Pop all acknowledged stanzas.
 					while( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getFirst().x <= h )
@@ -212,7 +214,7 @@ public class StreamManager {
 						}
 					}
 
-					Log.debug("After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
+					Log.trace("After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
 				}
 			}
 		}
@@ -236,7 +238,7 @@ public class StreamManager {
 
 				size = unacknowledgedServerStanzas.size();
 
-				Log.debug( "Added stanza of type {} to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
+				Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
 
 				// Prevent keeping to many stanzas in memory.
 				if ( size > getMaximumUnacknowledgedStanzas() )
@@ -249,7 +251,8 @@ public class StreamManager {
 			}
 
 			// When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
-			if ( size >= requestFrequency ) {
+			if ( size % requestFrequency == 0 ) {
+				Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
 				sendServerRequest();
 			}
 		}

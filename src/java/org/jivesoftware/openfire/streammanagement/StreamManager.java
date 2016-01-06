@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.streammanagement;
 
+import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -74,7 +75,7 @@ public class StreamManager {
      */
     private long clientProcessedStanzas = 0;
 
-    static private long mask = 0xFFFFFFFF; /* 2**32 - 1; this is used to emulate rollover */
+    static private long mask = new BigInteger("2").pow(32).longValue() - 1; // This is used to emulate rollover.
 
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
@@ -205,8 +206,8 @@ public class StreamManager {
 					}
 
 					// Ensure that unacknowledged stanzas are purged after the client rolled over 'h' which occurs at h= (2^32)-1
-					final boolean clientHadRollOver = h < 10000 && unacknowledgedServerStanzas.getLast().x > mask - 10000;
-					if (clientHadRollOver )
+					final boolean clientHadRollOver = h < 10000 && !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - 10000;
+					if ( clientHadRollOver )
 					{
 						Log.info( "Client rolled over 'h'. Purging high-numbered unacklowledged stanzas." );
 						while ( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > mask - 10000)

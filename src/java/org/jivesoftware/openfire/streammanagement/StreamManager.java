@@ -59,12 +59,6 @@ public class StreamManager {
 
     /**
      * Count of how many stanzas/packets
-     * have been sent from the server to the client (not necessarily processed)
-     */
-    private long serverSentStanzas = 0;
-
-    /**
-     * Count of how many stanzas/packets
      * sent from the client that the server has processed
      */
     private long serverProcessedStanzas = 0;
@@ -229,15 +223,19 @@ public class StreamManager {
 	public void sentStanza(Packet packet) {
 
 		if(isEnabled()) {
-			synchronized (this) {
-				this.serverSentStanzas++;
+			final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
+			final boolean requestAck;
 
+			synchronized (this) {
 				// The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
 				final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas : unacknowledgedServerStanzas.getLast().x );
 				unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
-				Log.debug("Added stanza of type {} to collection of unacknowledged stanzas (x={}). Collection size is now {} / {}", packet.getElement().getName(), x, serverSentStanzas, unacknowledgedServerStanzas.size());
+
+				requestAck = unacknowledgedServerStanzas.size() >= requestFrequency;
+				Log.debug("Added stanza of type {} to collection of unacknowledged stanzas (x={}). Collection size is now {} / {}", packet.getElement().getName(), x, unacknowledgedServerStanzas.size());
 			}
-			if(serverSentStanzas % JiveGlobals.getLongProperty("stream.management.requestFrequency", 5) == 0) {
+
+			if(requestAck) {
 				sendServerRequest();
 			}
 		}

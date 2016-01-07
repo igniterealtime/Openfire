@@ -53,11 +53,11 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
 	private static final Logger Log = LoggerFactory.getLogger(PrivateStorage.class);
 
     private static final String LOAD_PRIVATE =
-        "SELECT privateData FROM ofPrivate WHERE username=? AND namespace=?";
+        "SELECT privateData FROM ofPrivate WHERE username=? AND name=? AND namespace=?";
     private static final String INSERT_PRIVATE =
-        "INSERT INTO ofPrivate (privateData,name,username,namespace) VALUES (?,?,?,?)";
+        "INSERT INTO ofPrivate (privateData, name, username, namespace) VALUES (?,?,?,?)";
     private static final String UPDATE_PRIVATE =
-        "UPDATE ofPrivate SET privateData=?, name=? WHERE username=? AND namespace=?";
+        "UPDATE ofPrivate SET privateData=? WHERE name=? AND username=? AND namespace=?";
     private static final String DELETE_PRIVATES =
         "DELETE FROM ofPrivate WHERE username=?";
 
@@ -119,7 +119,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
-                pstmt.setString(2, data.getNamespaceURI());
+                pstmt.setString(2, data.getName());
+                pstmt.setString(3, data.getNamespaceURI());
                 rs = pstmt.executeQuery();
                 boolean update = false;
                 if (rs.next()) {
@@ -173,7 +174,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
-                pstmt.setString(2, data.getNamespaceURI());
+                pstmt.setString(2, data.getName());                
+                pstmt.setString(3, data.getNamespaceURI());
                 rs = pstmt.executeQuery();
                 if (rs.next()) {
                     data.clearContent();

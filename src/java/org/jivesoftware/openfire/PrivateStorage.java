@@ -174,7 +174,8 @@ public class PrivateStorage extends BasicModule implements UserEventListener {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PRIVATE);
                 pstmt.setString(1, username);
-                pstmt.setString(2, data.getNamespaceURI());
+                pstmt.setString(2, data.getName());                
+                pstmt.setString(3, data.getNamespaceURI());
                 rs = pstmt.executeQuery();
                 if (rs.next()) {
                     data.clearContent();

@@ -631,6 +631,20 @@
             </filterset>
         </copy>
 
+        <!-- When there is a web.xml in the overlay use that. -->
+        <if>
+            <available file="${overlay.web.dir}/WEB-INF/web.xml" />
+            <then>
+                <copy file="${overlay.web.dir}/WEB-INF/web.xml"
+                      toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+                      overwrite="true">
+                    <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
+                        <filter token="JSPC-SERVLETS" value="${servlet-xml}"/>
+                    </filterset>
+                </copy>
+            </then>
+        </if>
+
         <!-- Copy over other WEB-INF files. -->
         <copy todir="${webapp.dest.dir}/WEB-INF" overwrite="true">
             <fileset dir="${web.dir}/WEB-INF">

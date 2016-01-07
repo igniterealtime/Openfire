@@ -260,16 +260,17 @@
 
 <form action="connection-settings-external-components.jsp" method="post">
 
-    <admin:contentBox title="Plain-text (with STARTTLS) connections">
+    <fmt:message key="component.settings.plaintext.boxtitle" var="plaintextboxtitle"/>
+    <admin:contentBox title="${plaintextboxtitle}">
 
-        <p>Openfire can accept plain-text connections, which, depending on the policy that is configured here, can be upgraded to encrypted connections (using the STARTTLS protocol).</p>
+        <p><fmt:message key="component.settings.plaintext.info"/></p>
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled">Enabled</label></td>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="component.settings.plaintext.label_enable"/></label></td>
             </tr>
             <tr valign="middle">
-                <td width="1%" nowrap><label for="plaintext-tcpPort">Port number</label></td>
+                <td width="1%" nowrap><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
             <tr valign="middle">
@@ -279,16 +280,17 @@
 
     </admin:contentBox>
 
-    <admin:contentBox title="Encrypted (legacy-mode) connections">
+    <fmt:message key="component.settings.legacymode.boxtitle" var="legacymodeboxtitle"/>
+    <admin:contentBox title="${legacymodeboxtitle}">
 
-        <p>Connections of this type are established using encryption immediately (as opposed to using STARTTLS). This type of connectivity is commonly referred to as the "legacy" method of establishing encrypted communications.</p>
+        <p><fmt:message key="component.settings.legacymode.info"/></p>
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled">Enabled</label></td>
+                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="component.settings.legacymode.label_enable"/></label></td>
             </tr>
             <tr valign="middle">
-                <td width="1%" nowrap><label for="legacymode-tcpPort">Port number</label></td>
+                <td width="1%" nowrap><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
             </tr>
             <tr valign="middle">

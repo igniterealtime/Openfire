@@ -108,9 +108,9 @@
 <!-- BEGIN 'Import Private Key and Certificate' -->
 <form action="import-keystore-certificate.jsp?connectionType=${connectionType}" method="post">
 
-    <c:set var="title">Private Key</c:set>
+    <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.private-key.title"/></c:set>
     <admin:contentBox title="${title}">
-        <p>Please provide the PEM representation of the private key that should be used to identify Openfire.</p>
+        <p><fmt:message key="ssl.import.certificate.keystore.private-key.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="top">
                 <td width="1%" nowrap class="c1">
@@ -131,9 +131,9 @@
         </table>
     </admin:contentBox>
 
-    <c:set var="title">Certificate</c:set>
+    <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.certificate.title"/></c:set>
     <admin:contentBox title="${title}">
-        <p>Please provide the PEM representation of the certificate chain that represents the identity of Openfire. Note that the certificate chain must be based on the private key provided above.</p>
+        <p><fmt:message key="ssl.import.certificate.keystore.certificate.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="top">
                 <td width="1%" nowrap class="c1">

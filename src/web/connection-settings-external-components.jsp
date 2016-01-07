@@ -302,9 +302,7 @@
 </form>
 
 <!-- BEGIN 'Allowed to Connect' -->
-<c:set var="allowedTitle">
-    <fmt:message key="component.settings.allowed" />
-</c:set>
+<fmt:message key="component.settings.allowed" var="allowedTitle" />
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-external-components.jsp" method="post">
         <table cellpadding="3" cellspacing="0" border="0" width="100%" >
@@ -402,9 +400,7 @@
 <!-- END 'Allowed to Connect' -->
 
 <!-- BEGIN 'Not Allowed to Connect' -->
-<c:set var="disallowedTitle">
-    <fmt:message key="component.settings.disallowed" />
-</c:set>
+<fmt:message key="component.settings.disallowed" var="disallowedTitle"/>
 <admin:contentBox title="${disallowedTitle}">
     <p><fmt:message key="component.settings.disallowed.info" /></p>
     <table class="jive-table" cellpadding="3" cellspacing="0" border="0" >

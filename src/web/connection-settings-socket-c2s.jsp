@@ -166,9 +166,7 @@
     </admin:contentBox>
 
     <!-- BEGIN 'Idle Connection Policy' -->
-    <c:set var="idleTitle">
-        <fmt:message key="client.connections.settings.idle.title" />
-    </c:set>
+    <fmt:message key="client.connections.settings.idle.title" var="idleTitle" />
     <admin:contentBox title="${idleTitle}">
         <p><fmt:message key="client.connections.settings.idle.info" /></p>
         <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -187,9 +185,7 @@
                     <label for="IDL02"><fmt:message key="client.connections.settings.idle.enable" /></label>
                     <br />
                     <c:if test="${clientIdle gt 0}">
-                        <c:set var="seconds">
-                            <fmt:parseNumber integerOnly="true">${clientIdle div 1000}</fmt:parseNumber>
-                        </c:set>
+                        <fmt:parseNumber integerOnly="true" var="seconds">${clientIdle div 1000}</fmt:parseNumber>
                     </c:if>
                     <input type="text" name="clientIdle" value="${clientIdle gt 0 ? seconds : ''}" size="5" maxlength="5">&nbsp;<fmt:message key="global.seconds" />
                     <c:if test="${not empty errors['clientIdle']}">

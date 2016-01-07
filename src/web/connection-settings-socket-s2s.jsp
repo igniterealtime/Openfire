@@ -289,9 +289,7 @@
 
 <!-- BEGIN 'Idle Connection Settings' -->
 <form action="connection-settings-socket-s2s.jsp?closeSettings" method="post">
-    <c:set var="idleTitle">
-        <fmt:message key="server2server.settings.close_settings" />
-    </c:set>
+    <fmt:message key="server2server.settings.close_settings" var="idleTitle"/>
     <admin:contentBox title="${idleTitle}">
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
@@ -300,9 +298,7 @@
                 </td>
                 <td width="99%">
                     <c:if test="${webManager.sessionManager.serverSessionIdleTime gt -1}">
-                        <c:set var="minutes">
-                            <fmt:parseNumber integerOnly="true">${webManager.sessionManager.serverSessionIdleTime div 60000}</fmt:parseNumber>
-                        </c:set>
+                        <fmt:parseNumber integerOnly="true" var="minutes">${webManager.sessionManager.serverSessionIdleTime div 60000}</fmt:parseNumber>
                     </c:if>
 
                     <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
@@ -329,9 +325,7 @@
 <br/>
 
 <!-- BEGIN 'Allowed to Connect' -->
-<c:set var="allowedTitle">
-    <fmt:message key="server2server.settings.allowed" />
-</c:set>
+<fmt:message key="server2server.settings.allowed" var="allowedTitle"/>
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-socket-s2s.jsp" method="post">
         <table cellpadding="3" cellspacing="0" border="0">
@@ -410,9 +404,7 @@
 <!-- END 'Allowed to Connect' -->
 
 <!-- BEGIN 'Not Allowed to Connect' -->
-<c:set var="disallowedTitle">
-    <fmt:message key="server2server.settings.disallowed" />
-</c:set>
+<fmt:message key="server2server.settings.disallowed" var="disallowedTitle"/>
 <admin:contentBox title="${disallowedTitle}">
     <table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
         <fmt:message key="server2server.settings.disallowed.info" />

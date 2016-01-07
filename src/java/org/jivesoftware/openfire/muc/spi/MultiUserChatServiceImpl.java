@@ -467,7 +467,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             final Element item = fragment.addElement( "item" );
                             item.addAttribute( "affiliation", "none" );
                             item.addAttribute( "role", "none" );
-                            fragment.addElement( "status" ).addAttribute( "code", "301" );
+                            fragment.addElement( "status" ).addAttribute( "code", "332" );
 
                             // Make sure that the presence change for each user is only sent to that user (and not broadcasted in the room)!
                             role.send( presence );

@@ -24,12 +24,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -60,7 +66,11 @@ import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1636,7 +1646,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (!isServiceEnabled()) {
             return null;
         }
-        List<DiscoItem> answer = new ArrayList<>();
+        Set<DiscoItem> answer = new HashSet<>();
 		if (name == null && node == null)
 		{
 			// Answer all the public rooms as items

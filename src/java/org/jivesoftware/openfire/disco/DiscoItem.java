@@ -203,7 +203,7 @@ public class DiscoItem implements Result {
 
 	@Override
 	public String toString() {
-		return element == null ? null : element.asXML();
+		return element.asXML();
 	}
 	
 }

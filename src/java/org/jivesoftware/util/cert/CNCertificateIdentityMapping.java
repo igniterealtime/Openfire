@@ -21,7 +21,7 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
 	 * Maps certificate CommonName as identity credentials
 	 * 
 	 * @param certificate
-	 * @return
+	 * @return A List of names.
 	 */
 	@Override
 	public List<String> mapIdentity(X509Certificate certificate) {

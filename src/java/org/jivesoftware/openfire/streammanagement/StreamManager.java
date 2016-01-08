@@ -140,7 +140,7 @@ public class StreamManager {
 	}
 
 	/**
-     * Sends XEP-0198 acknowledgement <a /> to client from server
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; to client from server
      */
 	public void sendServerAcknowledgement() {
 		if(isEnabled()) {

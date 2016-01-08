@@ -302,7 +302,7 @@ public abstract class LocalSession implements Session {
 
     /**
      * Get XEP-0198 Stream manager for session
-     * @return
+     * @return The StreamManager for the session.
      */
     public StreamManager getStreamManager() {
     	return streamManager;

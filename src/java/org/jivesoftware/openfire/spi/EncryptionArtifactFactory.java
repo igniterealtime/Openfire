@@ -169,16 +169,9 @@ public class EncryptionArtifactFactory
     {
         final SSLEngine sslEngine = createSSLEngine();
         sslEngine.setUseClientMode( true );
-        String[] protocols = sslEngine.getEnabledProtocols();
-        if (this.configuration.getEncryptionProtocols().contains("SSLv2Hello")) {
-            Set<String> set = new HashSet<>();
-            for (String s : protocols) {
-                if (!s.equals("SSLv2Hello")) {
-                    set.add(s);
-                }
-            }
-            sslEngine.setEnabledProtocols(set.toArray(new String[set.size()]));
-        }
+        final Set<String> protocols = new LinkedHashSet<>( Arrays.asList( sslEngine.getEnabledProtocols() ) );
+        protocols.remove( "SSLv2Hello" );
+        sslEngine.setEnabledProtocols( protocols.toArray( new String[ protocols.size() ] ) );
 
         return sslEngine;
     }

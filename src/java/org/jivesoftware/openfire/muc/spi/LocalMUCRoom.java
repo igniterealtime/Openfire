@@ -512,7 +512,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public int getOccupantsCount() {
-        return occupantsByFullJID.size();
+        return occupantsByNickname.size();
     }
 
     @Override

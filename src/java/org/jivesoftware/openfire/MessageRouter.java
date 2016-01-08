@@ -38,6 +38,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -250,9 +251,22 @@ public class MessageRouter extends BasicModule {
     {
         log.debug( "Message sent to unreachable address: " + packet.toXML() );
         final Message msg = (Message) packet;
+        boolean storeOffline = true;
 
-        if ( msg.getType().equals( Message.Type.chat ) && serverName.equals( recipient.getDomain() ) && recipient.getResource() != null
-                && routingTable.hasClientRoute( recipient.asBareJID() ) )
+
+        if ( msg.getType().equals( Message.Type.chat ) && serverName.equals( recipient.getDomain() ) && recipient.getResource() != null ) {
+            // Find an existing AVAILABLE session with non-negative priority.
+            for (JID address : routingTable.getRoutes(recipient.asBareJID(), packet.getFrom())) {
+                ClientSession session = routingTable.getClientRoute(address);
+                if (session != null && session.isInitialized()) {
+                    if (session.getPresence().getPriority() >= 1) {
+                        storeOffline = false;
+                    }
+                }
+            }
+        }
+
+        if ( !storeOffline )
         {
             // If message was sent to an unavailable full JID of a user then retry using the bare JID.
             routingTable.routePacket( recipient.asBareJID(), packet, false );

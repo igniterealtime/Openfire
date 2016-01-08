@@ -297,6 +297,11 @@ public class IQRouter extends BasicModule {
                 return;
             }
         }
+
+        // No to attribute is equivalent to sending to the client's bare jid.
+        if (recipientJID == null) {
+            recipientJID = packet.getFrom().asBareJID();
+        }
         if (packet.getID() != null && (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType())) {
             // The server got an answer to an IQ packet that was sent from the server
             IQResultListener iqResultListener = resultListeners.remove(packet.getID());

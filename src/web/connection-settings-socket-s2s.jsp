@@ -263,16 +263,17 @@
 
 <form action="connection-settings-socket-s2s.jsp" method="post">
 
-    <admin:contentBox title="Plain-text (with STARTTLS) connections">
+    <fmt:message key="server2server.settings.boxtitle" var="boxtitle"/>
+    <admin:contentBox title="${boxtitle}">
 
-        <p>Openfire can accept plain-text connections, which, depending on the policy that is configured here, can be upgraded to encrypted connections (using the STARTTLS protocol).</p>
+        <p><fmt:message key="server2server.settings.boxinfo"/></p>
 
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled">Enabled</label></td>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="server2server.settings.label_enable"/></label></td>
             </tr>
             <tr valign="middle">
-                <td width="1%" nowrap><label for="plaintext-tcpPort">Port number</label></td>
+                <td width="1%" nowrap><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
             <tr valign="middle">
@@ -289,9 +290,7 @@
 
 <!-- BEGIN 'Idle Connection Settings' -->
 <form action="connection-settings-socket-s2s.jsp?closeSettings" method="post">
-    <c:set var="idleTitle">
-        <fmt:message key="server2server.settings.close_settings" />
-    </c:set>
+    <fmt:message key="server2server.settings.close_settings" var="idleTitle"/>
     <admin:contentBox title="${idleTitle}">
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
@@ -300,9 +299,7 @@
                 </td>
                 <td width="99%">
                     <c:if test="${webManager.sessionManager.serverSessionIdleTime gt -1}">
-                        <c:set var="minutes">
-                            <fmt:parseNumber integerOnly="true">${webManager.sessionManager.serverSessionIdleTime div 60000}</fmt:parseNumber>
-                        </c:set>
+                        <fmt:parseNumber integerOnly="true" var="minutes">${webManager.sessionManager.serverSessionIdleTime div 60000}</fmt:parseNumber>
                     </c:if>
 
                     <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
@@ -329,9 +326,7 @@
 <br/>
 
 <!-- BEGIN 'Allowed to Connect' -->
-<c:set var="allowedTitle">
-    <fmt:message key="server2server.settings.allowed" />
-</c:set>
+<fmt:message key="server2server.settings.allowed" var="allowedTitle"/>
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-socket-s2s.jsp" method="post">
         <table cellpadding="3" cellspacing="0" border="0">
@@ -410,9 +405,7 @@
 <!-- END 'Allowed to Connect' -->
 
 <!-- BEGIN 'Not Allowed to Connect' -->
-<c:set var="disallowedTitle">
-    <fmt:message key="server2server.settings.disallowed" />
-</c:set>
+<fmt:message key="server2server.settings.disallowed" var="disallowedTitle"/>
 <admin:contentBox title="${disallowedTitle}">
     <table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
         <fmt:message key="server2server.settings.disallowed.info" />

@@ -241,8 +241,8 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
-            <c:when test="${err.key eq 'connectionType'}">The connection type is unrecognized.</c:when>
-            <c:when test="${err.key eq 'connectionMode'}">The connection mode is unrecognized.</c:when>
+            <c:when test="${err.key eq 'connectionType'}"><fmt:message key="connection.advanced.settings.error.connectiontype"/></c:when>
+            <c:when test="${err.key eq 'connectionMode'}"><fmt:message key="connection.advanced.settings.error.connectionmode"/></c:when>
             <c:otherwise>
                 <c:if test="${not empty err.value}">
                     <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
@@ -275,97 +275,104 @@
 
 <!-- Introduction at the top of the page -->
 <p>
-    The configuration on this page applies to ${connectionModeTranslation} ${connectionTypeTranslation} connections.
+    <fmt:message key="connection.advanced.settings.info">
+        <fmt:param value="${connectionModeTranslation} ${connectionTypeTranslation}" />
+    </fmt:message>
 </p>
 
 <form action="connection-settings-advanced.jsp?connectionType=${connectionType}&connectionMode=${connectionMode}" onsubmit="selectAllOptions('cipherSuitesEnabled')" method="post">
     <input type="hidden" name="update" value="true" />
 
-    <admin:contentBox title="TCP Settings">
+    <fmt:message key="connection.advanced.settings.tcp.boxtitle" var="tcpboxtitle"/>
+    <admin:contentBox title="${tcpboxtitle}">
         
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td width="100%" colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/><label for="enabled">Enabled</label></td>
+                <td width="100%" colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/><label for="enabled"><fmt:message key="connection.advanced.settings.tcp.label_enable"/></label></td>
             </tr>
             <tr valign="middle">
-                <td width="1%" nowrap><label for="tcpPort">Port number</label></td>
+                <td width="1%" nowrap><label for="tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td width="99%"><input type="text" name="tcpPort" id="tcpPort" value="${configuration.port}"/></td>
             </tr>
             <tr valign="middle">
-                <td width="1%" nowrap><label for="readBuffer">Read buffer</label></td>
-                <td width="99%"><input type="text" name="readBuffer" id="readBuffer" value="${configuration.maxBufferSize gt 0 ? configuration.maxBufferSize : ''}" readonly/> (in bytes - empty for unlimited size)</td>
+                <td width="1%" nowrap><label for="readBuffer"><fmt:message key="connection.advanced.settings.tcp.label_readbuffer"/></label></td>
+                <td width="99%"><input type="text" name="readBuffer" id="readBuffer" value="${configuration.maxBufferSize gt 0 ? configuration.maxBufferSize : ''}" readonly/> <fmt:message key="connection.advanced.settings.tcp.label_readbuffer_suffix"/></td>
             </tr>
         </table>
 
     </admin:contentBox>
 
     <c:if test="${connectionMode eq 'plain'}">
-        <admin:contentBox title="STARTTLS policy">
+        <fmt:message key="connection.advanced.settings.starttls.boxtitle" var="starttlsboxtitle"/>
+        <admin:contentBox title="${starttlsboxtitle}">
             <table cellpadding="3" cellspacing="0" border="0">
                 <tr valign="middle">
                     <td>
                         <input type="radio" name="tlspolicy" value="disabled" id="tlspolicy-disabled" ${configuration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''} onclick="applyDisplayable()"/>
-                        <label for="tlspolicy-disabled"><b>Disabled</b> - Encryption is not allowed.</label>
+                        <label for="tlspolicy-disabled"><fmt:message key="connection.advanced.settings.starttls.label_disabled"/></label>
                     </td>
                 </tr>
                 <tr valign="middle">
                     <td>
                         <input type="radio" name="tlspolicy" value="optional" id="tlspolicy-optional" ${configuration.tlsPolicy.name() eq 'optional' ? 'checked' : ''} onclick="applyDisplayable()"/>
-                        <label for="tlspolicy-optional"><b>Optional</b> - Encryption may be used, but is not required.</label>
+                        <label for="tlspolicy-optional"><fmt:message key="connection.advanced.settings.starttls.label_optional"/></label>
                     </td>
                 </tr>
                 <tr valign="middle">
                     <td>
                         <input type="radio" name="tlspolicy" value="required" id="tlspolicy-required" ${configuration.tlsPolicy.name() eq 'required' ? 'checked' : ''} onclick="applyDisplayable()"/>
-                        <label for="tlspolicy-required"><b>Required</b> - Connections cannot be established unless they are encrypted.</label>
+                        <label for="tlspolicy-required"><fmt:message key="connection.advanced.settings.starttls.label_required"/></label>
                     </td>
                 </tr>
             </table>
         </admin:contentBox>
     </c:if>
 
-    <admin:contentBox title="Mutual Authentication">
-        <p>In addition to requiring peers to use encryption (which will force them to verify the security certificates of this Openfire instance) an additional level of security can be enabled. With this option, the server can be configured to verify certificates that are to be provided by the peers. This is commonly referred to as 'mutual authentication'.</p>
+    <fmt:message key="connection.advanced.settings.clientauth.boxtitle" var="clientauthboxtitle"/>
+    <admin:contentBox title="${clientauthboxtitle}">
+        <p><fmt:message key="connection.advanced.settings.clientauth.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
             <tr valign="middle">
                 <td>
                     <input type="radio" name="mutualauthentication" value="disabled" id="mutualauthentication-disabled" ${configuration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
-                    <label for="mutualauthentication-disabled"><b>Disabled</b> - Peer certificates are not verified.</label>
+                    <label for="mutualauthentication-disabled"><fmt:message key="connection.advanced.settings.clientauth.label_disabled"/></label>
                 </td>
             </tr>
             <tr valign="middle">
                 <td>
                     <input type="radio" name="mutualauthentication" value="wanted" id="mutualauthentication-wanted" ${configuration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>
-                    <label for="mutualauthentication-wanted"><b>Wanted</b> - Peer certificates are verified, but only when they are presented by the peer.</label>
+                    <label for="mutualauthentication-wanted"><fmt:message key="connection.advanced.settings.clientauth.label_wanted"/></label>
                 </td>
             </tr>
             <tr valign="middle">
                 <td>
                     <input type="radio" name="mutualauthentication" value="needed" id="mutualauthentication-needed" ${configuration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>
-                    <label for="mutualauthentication-needed"><b>Needed</b> - A connection cannot be established if the peer does not present a valid certificate.</label>
+                    <label for="mutualauthentication-needed"><fmt:message key="connection.advanced.settings.clientauth.label_needed"/></label>
                 </td>
             </tr>
         </table>
     </admin:contentBox>
 
-    <admin:contentBox title="Certificate chain checking">
-        <p>These options configure some aspects of the verification/validation of the certificates that are presented by peers while setting up encrypted connections.</p>
+    <fmt:message key="connection.advanced.settings.certchain.boxtitle" var="certchainboxtitle"/>
+    <admin:contentBox title="${certchainboxtitle}">
+        <p><fmt:message key="connection.advanced.settings.certchain.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
             <tr valign="middle">
                 <td>
-                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="accept-self-signed-certificates">Allow peer certificates to be self-signed.</label>
+                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="accept-self-signed-certificates"><fmt:message key="connection.advanced.settings.certchain.label_selfsigned"/></label>
                 </td>
             </tr>
             <tr valign="middle">
                 <td>
-                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/><label for="verify-certificate-validity">Verify that the certificate is currently valid (based on the 'notBefore' and 'notAfter' values of the certificate).</label>
+                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/><label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
                 </td>
             </tr>
         </table>
     </admin:contentBox>
 
-    <admin:contentBox title="Encryption protocols">
-        <p>These are all encryption protocols that this instance of Openfire supports. Those with a checked box are enabled, and can be used to establish an encrypted connection. Deselecting all values will cause a default to be restored.</p>
+    <fmt:message key="connection.advanced.settings.protocols.boxtitle" var="protocolsboxtitle"/>
+    <admin:contentBox title="${protocolsboxtitle}">
+        <p><fmt:message key="connection.advanced.settings.protocols.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
             <c:forEach var="supportedProtocol" items="${supportedProtocols}">
                 <c:if test="${supportedProtocol ne 'SSLv2Hello'}">
@@ -382,13 +389,7 @@
         <c:if test="${supportedProtocols.contains( 'SSLv2Hello' )}">
             <br/>
             <c:set var="supportedProtocol" value="SSLv2Hello"/>
-            <p>
-                When setting up a new encrypted connection some encryption protocols allow you to have part of the
-                handshake (the 'hello') encapsulated in an SSLv2 format. The SSLv2Hello option below controls this
-                encapsulation. When disabled, all incoming data must conform to the SSLv3/TLSv1 handshake format, and
-                all outgoing data (which applies to outbound server-to-server connections) will conform to the SSLv3/TLSv1
-                format.
-            </p>
+            <p><fmt:message key="connection.advanced.settings.protocols.sslv2hello.info"/></p>
             <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
                 <c:set var="idForForm">protocol-<c:out value="${supportedProtocol}"/></c:set>
                 <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
@@ -401,10 +402,11 @@
         </c:if>
     </admin:contentBox>
 
-    <admin:contentBox title="Encryption cipher suites">
-        <p>These are all encryption cipher suites that this instance of Openfire supports. Those in the list on the left are enabled, and can be used to establish an encrypted connection. Removing all values from that list will cause a default to be restored.</p>
+    <fmt:message key="connection.advanced.settings.ciphersuites.boxtitle" var="ciphersuitesboxtitle"/>
+    <admin:contentBox title="${ciphersuitesboxtitle}">
+        <p><fmt:message key="connection.advanced.settings.ciphersuites.info"/></p>
         <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
-            <tr><th>Enabled</th><th></th><th>Supported</th></tr>
+            <tr><th><fmt:message key="connection.advanced.settings.ciphersuites.label_enable"/></th><th></th><th><fmt:message key="connection.advanced.settings.ciphersuites.label_supported"/></th></tr>
             <tr>
                 <td>
                     <select name="cipherSuitesEnabled" id="cipherSuitesEnabled" size="10" multiple>
@@ -432,10 +434,11 @@
         </table>
     </admin:contentBox>
 
-    <admin:contentBox title="Miscellaneous settings">
+    <fmt:message key="connection.advanced.settings.misc.boxtitle" var="miscboxtitle"/>
+    <admin:contentBox title="${miscboxtitle}">
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="middle">
-                <td width="1%" nowrap><label for="maxThreads">Maximum worker threads</label></td>
+                <td width="1%" nowrap><label for="maxThreads"><fmt:message key="connection.advanced.settings.misc.label_workers"/></label></td>
                 <td width="99%"><input type="text" name="maxThreads" id="maxThreads" value="${configuration.maxThreadPoolSize}" readonly/></td>
             </tr>
         </table>

@@ -675,6 +675,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @param presence the presence.
      */
     public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
+        // RFC 6121 4.4.2 says we always send to the originating resource.
+        presence.setTo(originatingResource);
+        routingTable.routePacket(originatingResource, presence, false);
         if (!SessionManager.isOtherResourcePresenceEnabled()) {
             return;
         }

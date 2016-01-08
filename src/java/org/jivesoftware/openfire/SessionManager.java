@@ -379,7 +379,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
     /**
      * Creates a new <tt>ClientSession</tt> with the specified streamID.
      *
-     * @param conn the connection to create the session from.
+     * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.
      * @return a newly created session.
      */

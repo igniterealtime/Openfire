@@ -30,7 +30,7 @@ import java.util.List;
  * regarding the port while hiding implementation details.
  *
  * @author Iain Shigeoka
- * @Deprecated
+ * @deprecated
  */
 @Deprecated
 public class ServerPort {

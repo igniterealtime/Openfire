@@ -42,6 +42,8 @@ public class DiscoItem implements Result {
 	private final String node;
 	private final String action;
     private final Element element;
+    
+    private volatile String uid = null;
 
     public DiscoItem(Element element) {
         this.element = element;
@@ -169,17 +171,39 @@ public class DiscoItem implements Result {
 	 */
 	@Override
 	public String getUID() {
-		final StringBuilder sb = new StringBuilder(jid.toString());
-		if (name != null) {
-			sb.append(name);
+		if (uid == null) {
+			synchronized(this) {
+				if (uid == null) {
+					final StringBuilder sb = new StringBuilder(jid.toString());
+					if (name != null) {
+						sb.append(name);
+					}
+					if (node != null) {
+						sb.append(node);
+					}
+					if (action != null) {
+						sb.append(action);
+					}
+					uid = sb.toString();
+				}
+			}
 		}
-		if (node != null) {
-			sb.append(node);
-		}
-		if (action != null) {
-			sb.append(action);
-		}
-
-		return sb.toString();
+		return uid;
 	}
+
+	@Override
+	public int hashCode() {
+		return getUID().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof DiscoItem && getUID().equals(((DiscoItem)obj).getUID());
+	}
+
+	@Override
+	public String toString() {
+		return element.asXML();
+	}
+	
 }

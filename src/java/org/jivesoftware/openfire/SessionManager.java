@@ -620,12 +620,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
             routingTable.addClientRoute(session.getAddress(), session);
             // Broadcast presence between the user's resources
             broadcastPresenceOfOtherResource(session);
-
-            // RFC 6121 § 4.4.2.
-            // The user's server MUST also send the presence stanza to all of the user's available resources (including the resource that generated the presence notification in the first place).
-            Presence selfPresence = presence.createCopy();
-            selfPresence.setTo(session.getAddress());
-            routingTable.routePacket(session.getAddress(), selfPresence, false);
         }
     }
 
@@ -676,6 +670,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      */
     public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
         // RFC 6121 4.4.2 says we always send to the originating resource.
+        // Also RFC 6121 4.2.2 for updates.
         presence.setTo(originatingResource);
         routingTable.routePacket(originatingResource, presence, false);
         if (!SessionManager.isOtherResourcePresenceEnabled()) {

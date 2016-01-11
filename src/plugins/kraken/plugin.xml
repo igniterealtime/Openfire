@@ -10,7 +10,7 @@
     <author>Daniel Henninger</author>
     <version>1.3.0</version>
     <date>10/12/2015</date>
-    <minServerVersion>3.11.0 alpha</minServerVersion>
+    <minServerVersion>4.0.0</minServerVersion>
     <databaseKey>gateway</databaseKey>
     <databaseVersion>12</databaseVersion>
     <licenseType>gpl</licenseType>

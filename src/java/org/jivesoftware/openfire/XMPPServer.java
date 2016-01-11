@@ -315,7 +315,7 @@ public class XMPPServer {
             host = "127.0.0.1";        	
         }
 
-        version = new Version(4, 0, 0, Version.ReleaseStatus.Release, -1);
+        version = new Version(4, 1, 0, Version.ReleaseStatus.Alpha, -1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }

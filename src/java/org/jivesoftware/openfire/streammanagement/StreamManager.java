@@ -184,7 +184,7 @@ public class StreamManager {
 				synchronized (this) {
 
 					if ( !unacknowledgedServerStanzas.isEmpty() && h > unacknowledgedServerStanzas.getLast().x ) {
-						Log.warn( "Client acknowledges stanzas that we didn't sent! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
+						Log.warn( "Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}", h, unacknowledgedServerStanzas.getLast().x );
 					}
 
 					clientProcessedStanzas = h;

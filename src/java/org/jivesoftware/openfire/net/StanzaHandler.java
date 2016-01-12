@@ -150,7 +150,9 @@ public abstract class StanzaHandler {
 
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
-            session.close();
+            if (session != null) {
+                session.close();
+            }
             return;
         }
         // Ignore <?xml version="1.0"?> stanzas sent by clients

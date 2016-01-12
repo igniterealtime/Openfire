@@ -1815,7 +1815,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
             // outcast trumps member when an affiliation is changed
             else if (outcasts.includes(occupantJID)) {
-            	newAffiliation = MUCRole.Affiliation.none;
+                newAffiliation = MUCRole.Affiliation.outcast;
                 newRole = MUCRole.Role.none;
                 kickMember = true;
                 isOutcast = true;

@@ -1815,7 +1815,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
             // outcast trumps member when an affiliation is changed
             else if (outcasts.includes(occupantJID)) {
-            	newAffiliation = MUCRole.Affiliation.none;
+                newAffiliation = MUCRole.Affiliation.outcast;
                 newRole = MUCRole.Role.none;
                 kickMember = true;
                 isOutcast = true;
@@ -1836,7 +1836,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             Log.info("New affiliation: " + newAffiliation);
             try {
             	List<Presence> thisOccupant = changeOccupantAffiliation(senderRole, occupantJID, newAffiliation, newRole);
-                if (isMembersOnly() && kickMember) {
+                if (kickMember) {
                     // If the room is members-only, remove the user from the room including a status
                     // code of 321 to indicate that the user was removed because of an affiliation change
                 	// a status code of 301 indicates the user was removed as an outcast

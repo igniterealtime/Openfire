@@ -33,7 +33,17 @@
             <!-- Don't include jsp pages, they will be compiled -->
             <excludes>
                 <exclude>**/*.jsp</exclude>
+                <exclude>web/WEB-INF/web.xml</exclude>
             </excludes>
+        </fileSet>
+
+        <!-- web.xml (it will be modified by JspC -->
+        <fileSet>
+            <outputDirectory>/web/WEB-INF</outputDirectory>
+            <directory>${project.build.directory}</directory>
+            <includes>
+                <include>web.xml</include>
+            </includes>
         </fileSet>
 
         <!-- The jar-file containing the compiled plugin code. This is assembled
@@ -43,16 +53,6 @@
             <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>plugin-${project.artifactId}.jar</include>
-            </includes>
-        </fileSet>
-
-        <!-- The jar-file containing the pre-compiled JSP pages. This is assembled
-             by the assembly descriptor "openfire-plugin-jspc" -->
-        <fileSet>
-            <directory>${project.build.directory}</directory>
-            <outputDirectory>/lib</outputDirectory>
-            <includes>
-                <include>plugin-${project.artifactId}-jspc.jar</include>
             </includes>
         </fileSet>
 

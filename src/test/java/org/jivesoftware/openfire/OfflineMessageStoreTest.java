@@ -76,6 +76,16 @@ public class OfflineMessageStoreTest {
     }
 
     @Test
+    public void shouldNotStoreEmptyChatMessagesWithOnlyChatStatesAndThread() {
+        Message message = new Message();
+        message.setType(Message.Type.chat);
+        message.setThread("1234");
+        PacketExtension chatState = new PacketExtension("composing", "http://jabber.org/protocol/chatstates");
+        message.addExtension(chatState);
+        assertFalse(OfflineMessageStore.shouldStoreMessage(message));
+    }
+
+    @Test
     public void shouldStoreEmptyChatMessagesWithOtherExtensions() {
         Message message = new Message();
         message.setType(Message.Type.chat);

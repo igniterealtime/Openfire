@@ -22,6 +22,7 @@ package org.jivesoftware.openfire;
 
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
@@ -492,7 +493,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
                     if (item instanceof Element) {
                         Element el = (Element) item;
-
+                        if (Namespace.NO_NAMESPACE.equals(el.getNamespace())) {
+                            continue;
+                        }
                         if (!el.getNamespaceURI().equals("http://jabber.org/protocol/chatstates")
                                 && !(el.getQName().equals(QName.get("rtt", "urn:xmpp:rtt:0")))
                                 ) {
@@ -501,7 +504,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     }
                 }
 
-                return false;
+                return message.getBody() != null && !message.getBody().isEmpty();
 
             case groupchat:
             case headline:

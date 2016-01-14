@@ -34,7 +34,6 @@
         <module>motd</module>
         <module>mucservice</module>
         <module>nodejs</module>
-        <!--<module>ofmeet</module>-->
         <module>packetFilter</module>
         <!--<module>rayo</module>-->
         <module>presence</module>

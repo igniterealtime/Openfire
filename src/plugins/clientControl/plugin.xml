@@ -8,11 +8,9 @@
     <name>Client Control</name>
     <description>Controls clients allowed to connect and available features</description>
     <author>Jive Software</author>
-    <version>1.3.1</version>
-    <date>11/05/2015</date>
+    <version>2.0.0</version>
+    <date>1/11/2015</date>
     <minServerVersion>4.0.0</minServerVersion>
-    <databaseKey>clientcontrol</databaseKey>
-    <databaseVersion>0</databaseVersion>
 
     <!-- UI extension -->
     <adminconsole>		
@@ -24,12 +22,6 @@
                 <item id="client-version" name="${admin.item.client-version.name}"
                       url="permitted-clients.jsp"
                       description="${admin.item.client-version.description}"/>
-                <item id="groupchat-bookmarks" name="${admin.item.groupchat-bookmarks.name}"
-                      url="groupchat-bookmarks.jsp"
-                      description="${admin.item.groupchat-bookmarks.description}"/>
-                <item id="url-bookmarks" name="${admin.item.url-bookmarks.name}"
-                      url="url-bookmarks.jsp"
-                      description="${admin.item.url-bookmarks.description}"/>
                 <item id="spark-version" name="${admin.item.spark-version.name}"
                       url="spark-form.jsp"
                       description="${admin.item.spark-version.description}"/>

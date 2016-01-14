@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+    <!-- Main plugin class -->
+    <class>org.igniterealtime.openfire.plugin.BookmarksPlugin</class>
+    
+    <!-- Plugin meta-data -->
+    <name>Bookmarks</name>
+    <description>Allows clients to store URL and group chat bookmarks (XEP-0048)</description>
+    <author>Ignite Realtime</author>
+    <version>1.0.0</version>
+    <date>1/11/2015</date>
+    <minServerVersion>4.0.0</minServerVersion>
+
+    <!-- Keep the 'clientcontrol' database key for backwards compatibility. Client control itself does not have any database. -->
+    <databaseKey>clientcontrol</databaseKey>
+    <databaseVersion>0</databaseVersion>
+
+    <!-- UI extension -->
+    <adminconsole>		
+        <tab id="tab-server">
+            <sidebar id="bookmarks" name="${admin.sidebar.bookmarks.name}" description="${admin.sidebar.bookmarks.description}">
+                <item id="groupchat-bookmarks" name="${admin.item.groupchat-bookmarks.name}"
+                      url="groupchat-bookmarks.jsp"
+                      description="${admin.item.groupchat-bookmarks.description}"/>
+                <item id="url-bookmarks" name="${admin.item.url-bookmarks.name}"
+                      url="url-bookmarks.jsp"
+                      description="${admin.item.url-bookmarks.description}"/>
+            </sidebar>
+        </tab>
+    </adminconsole>
+    
+</plugin>

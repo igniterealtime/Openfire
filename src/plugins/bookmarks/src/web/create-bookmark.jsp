@@ -1,10 +1,6 @@
 <%@ page import="org.jivesoftware.openfire.plugin.spark.Bookmark" %>
-<%@ page import="org.jivesoftware.openfire.plugin.spark.SparkUtil" %>
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.muc.MUCRoom" %>
-<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.HashMap" %>
@@ -68,21 +64,21 @@
     }
 
     if (submit && createURLBookmark) {
-        if (!SparkUtil.hasLength(url)) {
-            errors.put("url", LocaleUtils.getLocalizedString("bookmark.url.error", "clientcontrol"));
+        if (url == null || url.trim().isEmpty()) {
+            errors.put("url", LocaleUtils.getLocalizedString("bookmark.url.error", "bookmarks"));
         }
 
-        if (!SparkUtil.hasLength(urlName)) {
-            errors.put("urlName", LocaleUtils.getLocalizedString("bookmark.urlName.error", "clientcontrol"));
+        if (urlName == null || urlName.trim().isEmpty()) {
+            errors.put("urlName", LocaleUtils.getLocalizedString("bookmark.urlName.error", "bookmarks"));
         }
     }
     else if (submit && createGroupchat) {
-        if (!SparkUtil.hasLength(groupchatName)) {
-            errors.put("groupchatName", LocaleUtils.getLocalizedString("bookmark.groupchat.name.error", "clientcontrol"));
+        if (groupchatName == null ||groupchatName.trim().isEmpty()) {
+            errors.put("groupchatName", LocaleUtils.getLocalizedString("bookmark.groupchat.name.error", "bookmarks"));
         }
 
-        if (!SparkUtil.hasLength(groupchatJID) || !groupchatJID.contains("@")) {
-            errors.put("groupchatJID", LocaleUtils.getLocalizedString("bookmark.groupchat.address.error", "clientcontrol"));
+        if (groupchatJID == null || !groupchatJID.contains("@")) {
+            errors.put("groupchatJID", LocaleUtils.getLocalizedString("bookmark.groupchat.address.error", "bookmarks"));
         }
     }
 
@@ -208,27 +204,22 @@
         }
     }
 
-    String description = LocaleUtils.getLocalizedString("bookmark.url.create.description", "clientcontrol");
+    String description = LocaleUtils.getLocalizedString("bookmark.url.create.description", "bookmarks");
     if (groupchatType) {
-        description = LocaleUtils.getLocalizedString("bookmark.groupchat.create.description", "clientcontrol");
+        description = LocaleUtils.getLocalizedString("bookmark.groupchat.create.description", "bookmarks");
         if(edit){
-            description = LocaleUtils.getLocalizedString("bookmark.groupchat.edit.description", "clientcontrol");
+            description = LocaleUtils.getLocalizedString("bookmark.groupchat.edit.description", "bookmarks");
         }
     }
     else if(edit){
-        description = LocaleUtils.getLocalizedString("bookmark.url.edit.description", "clientcontrol");
+        description = LocaleUtils.getLocalizedString("bookmark.url.edit.description", "bookmarks");
     }
 
 %>
-
-
 <html>
 <head>
-    <title><%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.edit", "clientcontrol") : LocaleUtils.getLocalizedString("bookmark.create", "clientcontrol")%></title>
-    <link rel="stylesheet" type="text/css" href="/style/global.css">
+    <title><%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.edit", "bookmarks") : LocaleUtils.getLocalizedString("bookmark.create", "bookmarks")%></title>
     <meta name="pageID" content="<%= groupchatType ? "groupchat-bookmarks" : "url-bookmarks"%>"/>
-    <script src="/js/prototype.js" type="text/javascript"></script>
-    <script src="/js/scriptaculous.js" type="text/javascript"></script>
     <script type="text/javascript">
         function toggleAllElement(ele, users, groups) {
             users.disabled = ele.checked;
@@ -250,9 +241,6 @@
             border-color: #ccc;
             border-style: dotted;
         }
-    </style>
-    <style type="text/css">
-        @import "style/style.css";
     </style>
 </head>
 
@@ -314,7 +302,7 @@
         <tr><td><b><fmt:message key="bookmark.create.rss.feed" /></b></td><td><input type="checkbox" name="rss" <%= isRSS ? "checked" : "" %>/></td></tr>
 
         <tr><td></td><td><input type="submit" name="createURLBookmark"
-                                value="<%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.save.changes", "clientcontrol") : LocaleUtils.getLocalizedString("create", "clientcontrol")  %>"/>
+                                value="<%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.save.changes", "bookmarks") : LocaleUtils.getLocalizedString("create", "bookmarks")  %>"/>
             &nbsp;<input type="button" value="<fmt:message key="cancel" />"
                          onclick="window.location.href='url-bookmarks.jsp'; return false;">
         </td>
@@ -380,7 +368,7 @@ else { %>
 
         <tr>
             <td></td>
-            <td><input type="submit" name="createGroupchatBookmark"  value="<%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.save.changes", "clientcontrol") : LocaleUtils.getLocalizedString("create", "clientcontrol")  %>"/>&nbsp;
+            <td><input type="submit" name="createGroupchatBookmark"  value="<%= editBookmark != null ? LocaleUtils.getLocalizedString("bookmark.save.changes", "bookmarks") : LocaleUtils.getLocalizedString("create", "bookmarks")  %>"/>&nbsp;
                 <input type="button" value="Cancel" onclick="window.location.href='groupchat-bookmarks.jsp'; return false;">
             </td>
         </tr>

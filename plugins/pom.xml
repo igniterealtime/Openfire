@@ -113,6 +113,11 @@
                             <goals>
                                 <goal>jspc</goal>
                             </goals>
+                            <configuration>
+                                <jspc>
+                                    <package>org.jivesoftware.openfire.plugin.${project.artifactId}</package>
+                                </jspc>
+                            </configuration>
                         </execution>
                     </executions>
                     <dependencies>

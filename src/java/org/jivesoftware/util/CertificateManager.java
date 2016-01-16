@@ -971,7 +971,7 @@ public class CertificateManager {
      * Creates an X509 version3 certificate.
      *
      * @param kp           KeyPair that keeps the public and private keys for the new certificate.
-     * @param months       time to live
+     * @param days       time to live
      * @param issuerDN     Issuer string e.g "O=Grid,OU=OGSA,CN=ACME"
      * @param subjectDN    Subject string e.g "O=Grid,OU=OGSA,CN=John Doe"
      * @param domain       Domain of the server.
@@ -980,7 +980,7 @@ public class CertificateManager {
      * @throws GeneralSecurityException
      * @throws IOException
      */
-    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int months, String issuerDN,
+    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerDN,
                                                                         String subjectDN, String domain,
                                                                         String signAlgoritm)
             throws GeneralSecurityException, IOException {
@@ -1000,7 +1000,7 @@ public class CertificateManager {
         certGenerator.setIssuerDN(new X509Name(issuerDN));
         certGenerator.setNotBefore(new Date(System.currentTimeMillis()));
         certGenerator.setNotAfter(
-                new Date(System.currentTimeMillis() + months * (1000L * 60 * 60 * 24 * 30)));
+                new Date(System.currentTimeMillis() + days * (1000L * 60 * 60 * 24)));
         certGenerator.setSubjectDN(new X509Name(subjectDN));
         certGenerator.setPublicKey(pubKey);
         certGenerator.setSignatureAlgorithm(signAlgoritm);

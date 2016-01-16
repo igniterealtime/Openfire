@@ -87,34 +87,27 @@
     pageContext.setAttribute( "errors", errors );
 
 
-
-    /**
     if (generate) {
         String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         try {
-            if (errors.containsKey("ioerror") && keyStore == null) {
-                keyStore = sslConfig.initializeKeyStore();
+            if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate("DSA")) {
+                identityStore.addSelfSignedDomainCertificate("DSA");
             }
-            if (errors.containsKey("ioerror") || !CertificateManager.isDSACertificate(keyStore, domain)) {
-                CertificateManager
-                        .createDSACert(keyStore, sslConfig.getKeyStorePassword(), domain + "_dsa", "cn=" + domain, "cn=" + domain, "*." + domain);
-            }
-            if (errors.containsKey("ioerror") || !CertificateManager.isRSACertificate(keyStore, domain)) {
-                CertificateManager
-                        .createRSACert(keyStore, sslConfig.getKeyStorePassword(), domain + "_rsa", "cn=" + domain, "cn=" + domain, "*." + domain);
+            if (errors.containsKey("ioerror") || !identityStore.containsDomainCertificate("RSA")) {
+                identityStore.addSelfSignedDomainCertificate("RSA");
             }
             // Save new certificates into the key store
-            sslConfig.saveStores();
+            identityStore.persist();
             // Log the event
             webManager.logEvent("generated SSL self-signed certs", null);
-            response.sendRedirect("security-keystore.jsp?connectivityType="+connectivityType);
+            response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
             return;
         } catch (Exception e) {
             e.printStackTrace();
             errors.put("generate", e.getMessage());
         }
     }
-
+/*
     if (importReply) {
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
@@ -124,7 +117,7 @@
                 sslConfig.saveStores();
                 // Log the event
                 webManager.logEvent( "imported SSL certificate with alias " + alias, null );
-                response.sendRedirect("security-keystore.jsp?connectivityType="+connectivityType);
+                response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
                 return;
             } catch (Exception e) {
                 e.printStackTrace();

@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.operator.OperatorCreationException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.util.CertificateManager;
@@ -99,7 +100,7 @@ public class IdentityStore extends CertificateStore
 
             return pemCSR;
         }
-        catch ( IOException | NoSuchProviderException | SignatureException | InvalidKeyException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e )
+        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException e )
         {
             throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"'", e );
         }

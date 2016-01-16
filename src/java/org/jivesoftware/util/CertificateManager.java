@@ -20,9 +20,22 @@
 
 package org.jivesoftware.util;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.math.BigInteger;
-import java.security.*;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathBuilderException;
@@ -36,42 +49,61 @@ import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x500.X500NameBuilder;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.X509Extensions;
-import org.bouncycastle.asn1.x509.X509Name;
-import org.bouncycastle.jce.PKCS10CertificationRequest;
-import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.cert.CertException;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.openssl.MiscPEMGenerator;
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.PKCSException;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.bouncycastle.util.io.pem.PemObjectGenerator;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.jivesoftware.openfire.keystore.CertificateStore;
-import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
 import org.jivesoftware.openfire.keystore.CertificateUtils;
-import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
+import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,11 +121,6 @@ public class CertificateManager {
     private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
 
-    /**
-     * The maximum length of lines in certification requests
-     */
-    private static final int CERT_REQ_LINE_LENGTH = 76;
-
     private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<>();
 
     private static List<CertificateIdentityMapping> serverCertMapping = new ArrayList<>();
@@ -108,7 +135,7 @@ public class CertificateManager {
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
-                    Class c_provider = ClassUtils.forName(s_provider);
+                    Class<?> c_provider = ClassUtils.forName(s_provider);
                     CertificateIdentityMapping provider =
                             (CertificateIdentityMapping)(c_provider.newInstance());
                     Log.debug("CertificateManager: Loaded server identity mapping " + s_provider);
@@ -132,7 +159,7 @@ public class CertificateManager {
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
-                    Class c_provider = ClassUtils.forName(s_provider);
+                    Class<?> c_provider = ClassUtils.forName(s_provider);
                     CertificateIdentityMapping provider =
                             (CertificateIdentityMapping)(c_provider.newInstance());
                     Log.debug("CertificateManager: Loaded client identity mapping " + s_provider);
@@ -450,44 +477,26 @@ public class CertificateManager {
      * @param privKey the private key of the certificate.
      * @return the content of a new singing request for the specified certificate.
      */
-    public static String createSigningRequest(X509Certificate cert, PrivateKey privKey) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException, IOException
-    {
-        StringBuilder sb = new StringBuilder();
+    public static String createSigningRequest(X509Certificate cert, PrivateKey privKey) throws OperatorCreationException, IOException {
 
-        String subject = cert.getSubjectDN().getName();
-        X509Name xname = new X509Name(subject);
+        JcaPKCS10CertificationRequestBuilder csrBuilder = new JcaPKCS10CertificationRequestBuilder( //
+                cert.getSubjectX500Principal(), //
+                cert.getPublicKey() //
+                );
 
-        PublicKey pubKey = cert.getPublicKey();
+        String signatureAlgorithm = "SHA256WITH" + cert.getPublicKey().getAlgorithm();
 
-        String signatureAlgorithm = "DSA".equals(pubKey.getAlgorithm()) ? "SHA1withDSA" : "SHA1WITHRSAENCRYPTION";
+        ContentSigner signer = new JcaContentSignerBuilder(signatureAlgorithm).build(privKey);
+        PKCS10CertificationRequest csr = csrBuilder.build(signer);
 
-        PKCS10CertificationRequest csr =
-                new PKCS10CertificationRequest(signatureAlgorithm, xname, pubKey, null, privKey);
+        StringWriter string = new StringWriter();
+        PemWriter pemWriter = new PemWriter(string);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DEROutputStream deros = new DEROutputStream(baos);
-        deros.writeObject(csr.toASN1Primitive());
-        String sTmp = new String(org.bouncycastle.util.encoders.Base64.encode(baos.toByteArray()));
+        PemObjectGenerator objGen = new MiscPEMGenerator(csr);
+        pemWriter.writeObject(objGen);
+        pemWriter.close();
 
-        // Header
-        sb.append("-----BEGIN NEW CERTIFICATE REQUEST-----\n");
-
-        // Add signing request content (base 64 encoded)
-        for (int iCnt = 0; iCnt < sTmp.length(); iCnt += CERT_REQ_LINE_LENGTH) {
-            int iLineLength;
-
-            if ((iCnt + CERT_REQ_LINE_LENGTH) > sTmp.length()) {
-                iLineLength = sTmp.length() - iCnt;
-            } else {
-                iLineLength = CERT_REQ_LINE_LENGTH;
-            }
-
-            sb.append(sTmp.substring(iCnt, iCnt + iLineLength)).append("\n");
-        }
-
-        // Footer
-        sb.append("-----END NEW CERTIFICATE REQUEST-----\n");
-        return sb.toString();
+        return string.toString();
     }
 
     /**
@@ -613,15 +622,15 @@ public class CertificateManager {
         return true;
     }
 
-    /**
-     * @deprecated Use {@link #parsePrivateKey(String, String)} instead.
-     */
-    @Deprecated
-    public static PrivateKey parsePrivateKey( InputStream pemRepresentation, String passPhrase ) throws IOException
-    {
-        // see http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-        final java.util.Scanner s = new java.util.Scanner( pemRepresentation ).useDelimiter("\\A");
-        return parsePrivateKey( s.hasNext() ? s.next() : "", passPhrase );
+
+    public static PrivateKey parsePrivateKey(String pemRepresentation, String passPhrase) throws IOException {
+
+        if (pemRepresentation == null || pemRepresentation.trim().isEmpty()) {
+            throw new IllegalArgumentException("Argument 'pemRepresentation' cannot be null or an empty String.");
+        }
+
+        ByteArrayInputStream input = new ByteArrayInputStream(pemRepresentation.getBytes(StandardCharsets.UTF_8));
+        return parsePrivateKey(input, passPhrase);
     }
 
     /**
@@ -633,17 +642,15 @@ public class CertificateManager {
      * @param passPhrase optional pass phrase (must be present if the private key is encrypted).
      * @return a PrivateKey instance (never null)
      */
-    public static PrivateKey parsePrivateKey( String pemRepresentation, String passPhrase ) throws IOException
-    {
-        if ( pemRepresentation == null || pemRepresentation.trim().isEmpty() ) {
-            throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null or an empty String.");
-        }
+    public static PrivateKey parsePrivateKey(InputStream pemRepresentation, String passPhrase) throws IOException {
+
         if ( passPhrase == null ) {
             passPhrase = "";
         }
-        try ( Reader reader = new StringReader( pemRepresentation.trim() ))
-        {
-            final Object object = new PEMParser( reader ).readObject();
+        try (Reader reader = new InputStreamReader(pemRepresentation); //
+                PEMParser pemParser = new PEMParser(reader)) {
+
+            final Object object = pemParser.readObject();
             final JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider( "BC" );
 
             final KeyPair kp;
@@ -682,15 +689,16 @@ public class CertificateManager {
         }
     }
 
-    /**
-     * @deprecated Use {@link #parseCertificates(String)} instead.
-     */
-    @Deprecated
-    public static Collection<X509Certificate> parseCertificates( InputStream pemRepresentation ) throws IOException, CertificateException
-    {
-        // see http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-        final java.util.Scanner s = new java.util.Scanner( pemRepresentation ).useDelimiter("\\A");
-        return parseCertificates( s.hasNext() ? s.next() : "" );
+    public static Collection<X509Certificate> parseCertificates(String pemRepresentation) throws IOException,
+            CertificateException {
+
+        // The parser is very picky. We should trim each line of the input string.
+        final String pem = pemRepresentation //
+                .replaceAll("(?m) +$", "") // remove trailing whitespace
+                .replaceAll("(?m)^ +", ""); // remove leading whitespace
+
+        ByteArrayInputStream input = new ByteArrayInputStream(pem.getBytes(StandardCharsets.UTF_8));
+        return parseCertificates(input);
     }
 
     /**
@@ -699,22 +707,12 @@ public class CertificateManager {
      * @param pemRepresentation a PEM representation of a certificate or certificate chain (cannot be null or empty)
      * @return A collection of certificates (possibly empty, but never null).
      */
-    public static Collection<X509Certificate> parseCertificates( String pemRepresentation ) throws IOException, CertificateException
-    {
-        if ( pemRepresentation == null || pemRepresentation.trim().isEmpty() ) {
-            throw new IllegalArgumentException( "Argument 'pemRepresentation' cannot be null or an empty String.");
-        }
+    @SuppressWarnings("unchecked")
+    public static Collection<X509Certificate> parseCertificates(InputStream pemRepresentation) throws IOException,
+            CertificateException {
 
-        // The parser is very picky. We should trim each line of the input string.
-        final String pem = pemRepresentation
-                .replaceAll( "(?m) +$", "" )  // remove trailing whitespace
-                .replaceAll( "(?m)^ +", "" ); // remove leading whitespace
-
-        try ( InputStream inputStream = new ByteArrayInputStream( pem.getBytes() ) )
-        {
-            final CertificateFactory certificateFactory = CertificateFactory.getInstance( "X509" );
-            return (Collection<X509Certificate>) certificateFactory.generateCertificates( inputStream );
-        }
+        final CertificateFactory certificateFactory = CertificateFactory.getInstance("X509");
+        return (Collection<X509Certificate>) certificateFactory.generateCertificates(pemRepresentation);
     }
 
     /**
@@ -993,32 +991,57 @@ public class CertificateManager {
         random.nextBytes(serno);
         BigInteger serial = (new java.math.BigInteger(serno)).abs();
 
-        X509V3CertificateGenerator certGenerator = new X509V3CertificateGenerator();
-        certGenerator.reset();
+        // subjectDN
+        X500NameBuilder subjectBuilder = new X500NameBuilder();
+        subjectBuilder.addRDN(BCStyle.CN, subjectDN);
 
-        certGenerator.setSerialNumber(serial);
-        certGenerator.setIssuerDN(new X509Name(issuerDN));
-        certGenerator.setNotBefore(new Date(System.currentTimeMillis()));
-        certGenerator.setNotAfter(
-                new Date(System.currentTimeMillis() + days * (1000L * 60 * 60 * 24)));
-        certGenerator.setSubjectDN(new X509Name(subjectDN));
-        certGenerator.setPublicKey(pubKey);
-        certGenerator.setSignatureAlgorithm(signAlgoritm);
+        // issuerDN
+        X500NameBuilder issuerBuilder = new X500NameBuilder();
+        issuerBuilder.addRDN(BCStyle.CN, issuerDN);
 
-        // Generate the subject alternative name
+        // builder
+        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder( //
+                issuerBuilder.build(), //
+                serial, //
+                new Date(), //
+                new Date(System.currentTimeMillis() + days * (1000L * 60 * 60 * 24)), //
+                subjectBuilder.build(), 
+                pubKey //
+                );
+
+        // add subjectAlternativeName extension
         boolean critical = subjectDN == null || "".equals(subjectDN.trim());
         ASN1Sequence othernameSequence = new DERSequence(new ASN1Encodable[]{
-                new DERObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(domain))});
+                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(domain))});
         GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);
         GeneralNames subjectAltNames = new GeneralNames(new GeneralName[]{othernameGN});
-        // Add subject alternative name extension
-        certGenerator.addExtension(X509Extensions.SubjectAlternativeName, critical, subjectAltNames);
+        certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAltNames);
 
-        X509Certificate cert =
-                certGenerator.generateX509Certificate(privKey, "BC", new SecureRandom());
-        cert.checkValidity(new Date());
-        cert.verify(pubKey);
+        // add keyIdentifiers extensions
+        JcaX509ExtensionUtils utils = new JcaX509ExtensionUtils();
+        certBuilder.addExtension(Extension.subjectKeyIdentifier, false, utils.createSubjectKeyIdentifier(pubKey));
+        certBuilder.addExtension(Extension.authorityKeyIdentifier, false, utils.createAuthorityKeyIdentifier(pubKey));
 
-        return cert;
+        try {
+            // build the certificate
+            ContentSigner signer = new JcaContentSignerBuilder(signAlgoritm).build(privKey);
+            X509CertificateHolder cert = certBuilder.build(signer);
+
+            // verify the validity
+            if (!cert.isValidOn(new Date())) {
+                throw new GeneralSecurityException("Certificate validity not valid");
+            }
+
+            // verify the signature (self-signed)
+            ContentVerifierProvider verifierProvider = new JcaContentVerifierProviderBuilder().build(pubKey);
+            if (!cert.isSignatureValid(verifierProvider)) {
+                throw new GeneralSecurityException("Certificate signature not valid");
+            }
+
+            return new JcaX509CertificateConverter().getCertificate(cert);
+
+        } catch (OperatorCreationException | CertException e) {
+            throw new GeneralSecurityException(e);
+        }
     }
 }

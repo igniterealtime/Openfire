@@ -970,16 +970,16 @@ public class CertificateManager {
      *
      * @param kp           KeyPair that keeps the public and private keys for the new certificate.
      * @param days       time to live
-     * @param issuerDN     Issuer string e.g "O=Grid,OU=OGSA,CN=ACME"
-     * @param subjectDN    Subject string e.g "O=Grid,OU=OGSA,CN=John Doe"
+     * @param issuerCommonName     Issuer CN string
+     * @param subjectCommonName    Subject CN string
      * @param domain       Domain of the server.
      * @param signAlgoritm Signature algorithm. This can be either a name or an OID.
      * @return X509 V3 Certificate
      * @throws GeneralSecurityException
      * @throws IOException
      */
-    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerDN,
-                                                                        String subjectDN, String domain,
+    public static synchronized X509Certificate createX509V3Certificate(KeyPair kp, int days, String issuerCommonName,
+                                                                        String subjectCommonName, String domain,
                                                                         String signAlgoritm)
             throws GeneralSecurityException, IOException {
         PublicKey pubKey = kp.getPublic();
@@ -993,11 +993,11 @@ public class CertificateManager {
 
         // subjectDN
         X500NameBuilder subjectBuilder = new X500NameBuilder();
-        subjectBuilder.addRDN(BCStyle.CN, subjectDN);
+        subjectBuilder.addRDN(BCStyle.CN, subjectCommonName);
 
         // issuerDN
         X500NameBuilder issuerBuilder = new X500NameBuilder();
-        issuerBuilder.addRDN(BCStyle.CN, issuerDN);
+        issuerBuilder.addRDN(BCStyle.CN, issuerCommonName);
 
         // builder
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder( //
@@ -1010,7 +1010,7 @@ public class CertificateManager {
                 );
 
         // add subjectAlternativeName extension
-        boolean critical = subjectDN == null || "".equals(subjectDN.trim());
+        boolean critical = subjectCommonName == null || "".equals(subjectCommonName.trim());
         ASN1Sequence othernameSequence = new DERSequence(new ASN1Encodable[]{
                 new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(domain))});
         GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);

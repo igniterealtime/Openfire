@@ -7,8 +7,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.Certificate;
@@ -394,12 +392,12 @@ public class IdentityStore extends CertificateStore
         {
             case "RSA":
                 keySize = JiveGlobals.getIntProperty( "cert.rsa.keysize", 2048 );
-                signAlgorithm = "SHA1WITHRSAENCRYPTION";
+                signAlgorithm = "SHA256WITHRSAENCRYPTION";
                 break;
 
             case "DSA":
                 keySize = JiveGlobals.getIntProperty( "cert.dsa.keysize", 1024 );
-                signAlgorithm = "SHA1withDSA";
+                signAlgorithm = "SHA256withDSA";
                 break;
 
             default:

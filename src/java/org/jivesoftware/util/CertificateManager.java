@@ -44,7 +44,6 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CollectionCertStoreParameters;
@@ -81,7 +80,6 @@ import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.cert.CertException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.openssl.MiscPEMGenerator;
@@ -425,15 +423,11 @@ public class CertificateManager {
      * @throws KeyStoreException if an error happens while usign the keystore
      */
     public static boolean isSelfSignedCertificate(X509Certificate certificate) throws KeyStoreException {
-
         try {
-            JcaX509CertificateHolder certificateHolder = new JcaX509CertificateHolder(certificate);
-            ContentVerifierProvider verifier = new JcaContentVerifierProviderBuilder().setProvider("BC").build(
-                    certificate.getPublicKey());
-
-            return certificateHolder.isSignatureValid(verifier);
-        } catch (CertException | CertificateEncodingException | OperatorCreationException e) {
-            return certificate.getSubjectDN().equals(certificate.getIssuerDN());
+            certificate.verify(certificate.getPublicKey());
+            return true;
+        } catch (GeneralSecurityException e) {
+            return false;
         }
     }
 

@@ -990,8 +990,8 @@ public class CertificateManager {
      *
      * @param kp           KeyPair that keeps the public and private keys for the new certificate.
      * @param days       time to live
-     * @param issuerBuilder     Issuer CN builder
-     * @param subjectBuilder    Subject CN builder
+     * @param issuerBuilder     IssuerDN builder
+     * @param subjectBuilder    SubjectDN builder
      * @param domain       Domain of the server.
      * @param signAlgoritm Signature algorithm. This can be either a name or an OID.
      * @return X509 V3 Certificate
@@ -1010,7 +1010,7 @@ public class CertificateManager {
         BigInteger serial = (new java.math.BigInteger(serno)).abs();
 
         X500Name issuerDN = issuerBuilder.build();
-        X500Name subjectDN = issuerBuilder.build();
+        X500Name subjectDN = subjectBuilder.build();
 
         // builder
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder( //

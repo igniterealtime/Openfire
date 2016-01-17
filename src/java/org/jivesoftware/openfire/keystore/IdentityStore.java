@@ -195,7 +195,7 @@ public class IdentityStore extends CertificateStore
         final X509Certificate x509Certificate = (X509Certificate) certificate;
 
         // First certificate in the chain should correspond with the certificate in the store
-        if ( !x509Certificate.getSerialNumber().equals( certificates.get( 0 ).getSerialNumber() ) )
+        if ( !x509Certificate.getPublicKey().equals(certificates.get(0).getPublicKey()) )
         {
             return false;
         }

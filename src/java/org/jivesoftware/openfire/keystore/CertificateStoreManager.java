@@ -95,7 +95,7 @@ public class CertificateStoreManager extends BasicModule
         return trustStores.get( configuration );
     }
 
-    public void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -114,7 +114,7 @@ public class CertificateStoreManager extends BasicModule
             if ( !identityStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
-                final IdentityStore store = new IdentityStore( configuration, true );
+                final IdentityStore store = new IdentityStore( configuration, createIfAbsent );
                 identityStores.put( configuration, store );
             }
 
@@ -143,7 +143,7 @@ public class CertificateStoreManager extends BasicModule
         JiveGlobals.setProperty( type.getPrefix() + "keypass", new String( configuration.getPassword() ) );
     }
 
-    public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -162,7 +162,7 @@ public class CertificateStoreManager extends BasicModule
             if ( !trustStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
-                final TrustStore store = new TrustStore( configuration, true );
+                final TrustStore store = new TrustStore( configuration, createIfAbsent );
                 trustStores.put( configuration, store );
             }
 

@@ -144,6 +144,12 @@ public class HistoryStrategy {
         if (newType != null){
             type = newType;
         }
+        if (newType == Type.none ) {
+            history.clear();
+        }
+        if (newType == Type.number) {
+            limitHistoryTo(maxNumber);
+        }
         if (contextPrefix != null){
             MUCPersistenceManager.setProperty(contextSubdomain, contextPrefix + ".type", type.toString());
         }
@@ -196,21 +202,25 @@ public class HistoryStrategy {
             history.add(packet);
         }
         else if (strategyType == Type.number) {
-            if (history.size() >= strategyMaxNumber) {
-                // We have to remove messages so the new message won't exceed
-                // the max history size
-                // This is complicated somewhat because we must skip over the
-                // last room subject
-                // message because we want to preserve the room subject if
-                // possible.
-                Iterator<Message> historyIter = history.iterator();
-                while (historyIter.hasNext() && history.size() > strategyMaxNumber) {
-                    if (historyIter.next() != roomSubject) {
-                        historyIter.remove();
-                    }
+            limitHistoryTo(strategyMaxNumber);
+            history.add(packet);
+        }
+    }
+
+    private void limitHistoryTo(int max) {
+        if (history.size() >= max) {
+            // We have to remove messages so the new message won't exceed
+            // the max history size
+            // This is complicated somewhat because we must skip over the
+            // last room subject
+            // message because we want to preserve the room subject if
+            // possible.
+            Iterator<Message> historyIter = history.iterator();
+            while (historyIter.hasNext() && history.size() >= max) {
+                if (historyIter.next() != roomSubject) {
+                    historyIter.remove();
                 }
             }
-            history.add(packet);
         }
     }
 

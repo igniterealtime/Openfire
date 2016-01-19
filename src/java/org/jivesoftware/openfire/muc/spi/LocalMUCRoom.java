@@ -373,7 +373,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         this.canChangeNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canChangeNickname", true);
         this.registrationEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.registrationEnabled", true);
         // TODO Allow to set the history strategy from the configuration form?
-        roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
+        roomHistory = new MUCRoomHistory(this, mucService.getHistoryStrategy());
         this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
         this.iqAdminHandler = new IQAdminHandler(this, packetRouter);
         // No one can join the room except the room's owner

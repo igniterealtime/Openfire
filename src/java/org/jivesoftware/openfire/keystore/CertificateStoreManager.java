@@ -43,32 +43,34 @@ public class CertificateStoreManager extends BasicModule
         {
             try
             {
+                Log.debug( "(identity store for connection type '{}') Initializing store...", type );
                 final CertificateStoreConfiguration identityStoreConfiguration = getIdentityStoreConfiguration( type );
-                typeToIdentityStore.put( type, identityStoreConfiguration );
                 if ( !identityStores.containsKey( identityStoreConfiguration ) )
                 {
                     final IdentityStore store = new IdentityStore( identityStoreConfiguration, false );
                     identityStores.put( identityStoreConfiguration, store );
                 }
+                typeToIdentityStore.put( type, identityStoreConfiguration );
             }
             catch ( CertificateStoreConfigException | IOException e )
             {
-                Log.warn( "Unable to instantiate identity store for type '" + type + "'", e );
+                Log.warn( "(identity store for connection type '{}') Unable to instantiate store ", type, e );
             }
 
             try
             {
+                Log.debug( "(trust store for connection type '{}') Initializing store...", type );
                 final CertificateStoreConfiguration trustStoreConfiguration = getTrustStoreConfiguration( type );
-                typeToTrustStore.put( type, trustStoreConfiguration );
                 if ( !trustStores.containsKey( trustStoreConfiguration ) )
                 {
                     final TrustStore store = new TrustStore( trustStoreConfiguration, false );
                     trustStores.put( trustStoreConfiguration, store );
                 }
+                typeToTrustStore.put( type, trustStoreConfiguration );
             }
             catch ( CertificateStoreConfigException | IOException e )
             {
-                Log.warn( "Unable to instantiate trust store for type '" + type + "'", e );
+                Log.warn( "(trust store for connection type '{}') Unable to instantiate store ", type, e );
             }
         }
     }

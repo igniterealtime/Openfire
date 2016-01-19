@@ -86,12 +86,18 @@ public class CertificateStoreManager extends BasicModule
     public IdentityStore getIdentityStore( ConnectionType type )
     {
         final CertificateStoreConfiguration configuration = typeToIdentityStore.get( type );
+        if (configuration == null) {
+            return null;
+        }
         return identityStores.get( configuration );
     }
 
     public TrustStore getTrustStore( ConnectionType type )
     {
         final CertificateStoreConfiguration configuration = typeToTrustStore.get( type );
+        if (configuration == null) {
+            return null;
+        }
         return trustStores.get( configuration );
     }
 

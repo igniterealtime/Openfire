@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "session")
-@XmlType(propOrder = { "sessionId", "username", "ressource", "node", "sessionStatus", "presenceStatus", "priority",
+@XmlType(propOrder = { "sessionId", "username", "ressource", "node", "sessionStatus", "presenceStatus", "presenceMessage", "priority",
 		"hostAddress", "hostName", "creationDate", "lastActionDate", "secure" })
 public class SessionEntity {
 
@@ -17,6 +17,7 @@ public class SessionEntity {
 	private String node;
 	private String sessionStatus;
 	private String presenceStatus;
+	private String presenceMessage;
 	private int priority;
 	private String hostAddress;
 	private String hostName;
@@ -81,6 +82,14 @@ public class SessionEntity {
 
 	public void setPresenceStatus(String presenceStatus) {
 		this.presenceStatus = presenceStatus;
+	}
+
+	public String getPresenceMessage() {
+		return presenceMessage;
+	}
+
+	public void setPresenceMessage(String presenceMessage) {
+		this.presenceMessage = presenceMessage;
 	}
 
 	@XmlElement

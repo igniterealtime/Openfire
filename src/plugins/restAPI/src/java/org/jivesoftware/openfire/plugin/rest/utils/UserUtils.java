@@ -16,7 +16,6 @@ import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.packet.JID;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class UserUtils.
  */

@@ -13,10 +13,12 @@ import org.jivesoftware.openfire.plugin.rest.entity.SessionEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 /**
@@ -104,7 +106,12 @@ public class SessionController {
 			}
 
 			session.setRessource(clientSession.getAddress().getResource());
-			session.setNode(session.getNode());
+			
+			if (clientSession instanceof LocalClientSession) {
+				  session.setNode("Local");
+			} else {
+				session.setNode("Remote");
+			}
 
 			String status = "";
 			if (clientSession.getStatus() == Session.STATUS_CLOSED) {
@@ -119,9 +126,25 @@ public class SessionController {
 			session.setSessionStatus(status);
 
 			if (clientSession.getPresence() != null) {
-				session.setPresenceStatus(clientSession.getPresence().getStatus());
+				session.setPresenceMessage(clientSession.getPresence().getStatus());
+
+				Presence.Show show = clientSession.getPresence().getShow();
+				if(show == Presence.Show.away) {
+					session.setPresenceStatus("Away");
+				} else if(show == Presence.Show.chat) {
+					session.setPresenceStatus("Available to Chat");
+				} else if(show == Presence.Show.dnd) {
+					session.setPresenceStatus("Do Not Disturb");
+				} else if(show == Presence.Show.xa) {
+					session.setPresenceStatus("Extended Away");
+				} else if(show == null) {
+					session.setPresenceStatus("Online");
+				} else {
+					session.setPresenceStatus("Unknown/Not Recognized");
+				}
 				session.setPriority(clientSession.getPresence().getPriority());
 			}
+			
 			try {
 				session.setHostAddress(clientSession.getHostAddress());
 				session.setHostName(clientSession.getHostName());

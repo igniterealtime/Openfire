@@ -148,12 +148,15 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
                     store(message);
                 }
                 else {
+                    Log.debug( "Unable to store, as user is over storage quota. Bouncing message instead: " + message.toXML() );
                     bounce(message);
                 }
                 break;
             case store_and_drop:
                 if (underQuota(message)) {
                     store(message);
+                } else {
+                    Log.debug( "Unable to store, as user is over storage quota. Silently dropping message: " + message.toXML() );
                 }
                 break;
             case drop:
@@ -200,7 +203,7 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
 
     private void bounce(Message message) {
         // Do nothing if the sender was the server itself
-        if (message.getFrom() == null) {
+        if (message.getFrom() == null || message.getFrom().equals( serverAddress )) {
             return;
         }
         try {

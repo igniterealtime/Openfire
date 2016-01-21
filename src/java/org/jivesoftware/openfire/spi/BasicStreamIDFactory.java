@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.StreamIDFactory;
 
@@ -49,15 +50,18 @@ public class BasicStreamIDFactory implements StreamIDFactory {
         return new BasicStreamID(new BigInteger( MAX_STRING_SIZE * 5, random ).toString( 36 ));
     }
 
-    public StreamID createStreamID(String name) {
+    public static StreamID createStreamID(String name) {
         return new BasicStreamID(name);
     }
 
-    private class BasicStreamID implements StreamID {
+    private static class BasicStreamID implements StreamID {
         String id;
 
         public BasicStreamID(String id) {
-            this.id = id;
+            if ( id == null || id.isEmpty() ) {
+                throw new IllegalArgumentException( "Argument 'id' cannot be null." );
+            }
+            this.id = StringEscapeUtils.escapeXml( id );
         }
 
         @Override
@@ -73,6 +77,11 @@ public class BasicStreamIDFactory implements StreamIDFactory {
         @Override
 		public int hashCode() {
             return id.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return id.equals( obj );
         }
     }
 }

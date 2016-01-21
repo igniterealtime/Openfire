@@ -198,7 +198,7 @@ public class PluginManager {
      * @return a Collection of all installed plugins.
      */
     public Collection<Plugin> getPlugins() {
-        return Collections.unmodifiableCollection(plugins.values());
+        return Collections.unmodifiableCollection(Arrays.asList( plugins.values().toArray( new Plugin[ plugins.size() ]) ));
     }
 
     /**

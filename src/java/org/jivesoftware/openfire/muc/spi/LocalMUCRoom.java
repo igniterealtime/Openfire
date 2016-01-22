@@ -999,7 +999,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 item.addAttribute("affiliation", "none");
                 item.addAttribute("role", "none");
                 if (alternateJID != null) {
-                    fragment.addElement("destroy").addAttribute("jid", alternateJID.toFullJID());
+                    fragment.addElement("destroy").addAttribute("jid", alternateJID.toString());
                 }
                 if (reason != null && reason.length() > 0) {
                     Element destroy = fragment.element("destroy");

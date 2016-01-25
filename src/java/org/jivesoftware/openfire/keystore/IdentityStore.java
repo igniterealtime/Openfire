@@ -7,7 +7,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import java.io.IOException;
 import java.security.*;
@@ -40,26 +39,21 @@ public class IdentityStore extends CertificateStore
 {
     private static final Logger Log = LoggerFactory.getLogger( IdentityStore.class );
 
-//    protected final KeyManagerFactory keyFactory;
-
     public IdentityStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         super( configuration, createIfAbsent );
-//        try
-//        {
-//            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
-//            keyFactory.init( store, configuration.getPassword() );
-//        }
-//        catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )
-//        {
-//            throw new CertificateStoreConfigException( "Unable to load store of type '" + configuration.getType() + "' from location '" + configuration.getFile() + "'", ex );
-//        }
-    }
 
-//    public KeyManager[] getKeyManagers()
-//    {
-//        return keyFactory.getKeyManagers();
-//    }
+        try
+        {
+            final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+            keyManagerFactory.init( this.getStore(), configuration.getPassword() );
+        }
+        catch ( NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex )
+        {
+            throw new CertificateStoreConfigException( "Unable to initialize identity store (a common cause: the password for a key is different from the password of the entire store).", ex );
+        }
+
+    }
 
     /**
      * Creates a Certificate Signing Request based on the private key and certificate identified by the provided alias.

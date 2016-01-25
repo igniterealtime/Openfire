@@ -21,6 +21,10 @@ package org.jivesoftware.util;
 
 import java.io.InputStream;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginClassLoader;
+
 /**
  * A utility class to assist with loading classes or resources by name. Many application servers use
  * custom classloaders, which will break uses of:
@@ -64,6 +68,22 @@ public class ClassUtils {
     private ClassUtils() {}
 
     public Class loadClass(String className) throws ClassNotFoundException {
+		// added by xingqisheng start===============
+		// 当of启动的时候，此时还没有加载vplugin,因此无法加载vauthplugin.
+		// 当加载vplugin的时候，VClassLoader已经初始化，之后extedplugin会改写与用户有关的provider，
+		// 此时再加载相关的类已经可以了，但是需要在此坐下判断，否则仍然无法加载
+		if (className.startsWith("com.vidmt")) {
+			Plugin vplugin = XMPPServer.getInstance().getPluginManager().getPlugin("vplugin");
+			if (vplugin != null) {
+				PluginClassLoader pcl = XMPPServer.getInstance().getPluginManager().getPluginClassloader(vplugin);
+				try {
+					return pcl.loadClass(className);
+				} catch (ClassNotFoundException e) {
+					System.err.println("===类没有被加载:" + className + "====");
+				}
+			}
+		}
+		//added by xingqisheng end=================
         Class theClass = null;
         try {
             theClass = Class.forName(className);

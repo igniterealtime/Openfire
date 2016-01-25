@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+<!-- add begin -->
+	<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="【%-5p %d{yyyy-MM-dd HH:mm:ss} %c{3}:%L】 - %m%n" />
+		</layout>
+	</appender>
+	<appender name="statistics-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/statistics.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="3"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="【%-5p %d{yyyy-MM-dd HH:mm:ss} %c{3}:%L】 - %m%n" />
+		</layout>
+	</appender>
+	<appender name="cache-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/cache.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="3"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="【%-5p %d{yyyy-MM-dd HH:mm:ss} %c{3}:%L】 - %m%n" />
+		</layout>
+	</appender>
+	<!-- add end --> 
+	
+	<appender name="debug-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/debug.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %c - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="debug" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<appender name="info-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/info.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %c - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="info" />
+			<param name="LevelMin" value="info" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<appender name="warn-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/warn.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %c - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="warn" />
+			<param name="LevelMin" value="warn" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+	
+	<appender name="error-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/error.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %c - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="error" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<appender name="all-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/all.log" />
+		<param name="MaxFileSize" value="1024KB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %m%n" />
+		</layout>
+	</appender>
+
+	<!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
+	<logger name="org.eclipse.jetty">
+		<level value="warn" />
+	</logger>
+	
+	<!-- add begin -->
+	<logger name="com.vidmt.of.plugin.spring.StatisticsIntercepter" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="statistics-out" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+	<logger name="com.vidmt.of.plugin.spring.CacheUtil" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="cache-out" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+	<logger name="com.vidmt" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="all-out" />
+	</logger>
+	<!-- add end -->
+	
+	
+   	<root>
+		<level value="info" />
+		<!-- add begin -->  
+        <appender-ref ref="STDOUT" /> 
+        <!-- add end --> 
+		<appender-ref ref="all-out" />
+		<appender-ref ref="debug-out" />
+		<appender-ref ref="info-out" />
+		<appender-ref ref="warn-out" />
+		<appender-ref ref="error-out" />
+	</root>
+	
+</log4j:configuration>

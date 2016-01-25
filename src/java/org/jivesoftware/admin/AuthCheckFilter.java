@@ -88,14 +88,24 @@ public class AuthCheckFilter implements Filter {
         // character then the URL is allowed if it exactly matches everything before the * and there are no ".."
         // characters after the "*". All data in the URL before
 
-        if (exclude.endsWith("*")) {
-            if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
-                // Now make sure that there are no ".." characters in the rest of the URL.
-                if (!url.contains("..") && !url.toLowerCase().contains("%2e")) {
-                    return true;
-                }
-            }
-        }
+//        if (exclude.endsWith("*")) {
+//            if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
+//                // Now make sure that there are no ".." characters in the rest of the URL.
+//                if (!url.contains("..") && !url.toLowerCase().contains("%2e")) {
+//                    return true;
+//                }
+//            }
+//        }
+		//用正则去匹配*，by xingqisheng start===============================
+		//原有判断无法处理*.xml,*.json类似的格式，此处做了兼容
+		if((exclude.contains("*"))){
+			if (!url.contains("..") && !url.toLowerCase().contains("%2e")) {
+				exclude.replace(".", "\\.");
+	  		exclude = exclude.replace("*", ".*");
+	  		return url.matches(exclude);
+	      }
+		}
+		//by xingqisheng end===============================
         else if (exclude.contains("?")) {
             if (url.equals(exclude)) {
                 return true;

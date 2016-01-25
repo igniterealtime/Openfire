@@ -403,7 +403,7 @@ public class IdentityStore extends CertificateStore
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
         final String distinctName = "cn=" + name;
-        final int validityInDays = 60;
+        final int validityInDays = 5*365;
 
         Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys

@@ -72,8 +72,6 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public DefaultConnectionProvider() {
         loadProperties();
-
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
     @Override

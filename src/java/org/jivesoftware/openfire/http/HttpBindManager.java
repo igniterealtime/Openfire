@@ -155,9 +155,6 @@ public final class HttpBindManager {
     }
 
     private HttpBindManager() {
-        // JSP 2.0 uses commons-logging, so also override that implementation.
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
-
         JiveGlobals.migrateProperty(HTTP_BIND_ENABLED);
         JiveGlobals.migrateProperty(HTTP_BIND_PORT);
         JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT);

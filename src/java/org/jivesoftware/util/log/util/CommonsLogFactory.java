@@ -27,7 +27,10 @@ import org.slf4j.LoggerFactory;
 /**
  * A LogFactory implementation to override the default commons-logging behavior. All log
  * statements are written to the Openfire logs. Info level logging is sent to debug.
+ *
+ * @Deprecated Openfire uses SLF4J's 'jcl-over-slf4j' instead. See http://www.slf4j.org/legacy.html
  */
+@Deprecated
 public class CommonsLogFactory extends LogFactory {
 
 	private static final Logger Log = LoggerFactory.getLogger(CommonsLogFactory.class);

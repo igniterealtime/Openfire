@@ -91,9 +91,6 @@ public class AdminConsolePlugin implements Plugin {
      */
     public AdminConsolePlugin() {
         contexts = new ContextHandlerCollection();
-        
-        // JSP 2.0 uses commons-logging, so also override that implementation.
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
     /**
@@ -142,7 +139,7 @@ public class AdminConsolePlugin implements Plugin {
         sslEnabled = false;
         try {
             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
-            if (adminSecurePort > 0 )
+            if (identityStore != null && adminSecurePort > 0 )
             {
                 if ( identityStore.getAllCertificates().isEmpty() )
                 {
@@ -189,7 +186,7 @@ public class AdminConsolePlugin implements Plugin {
         }
         catch ( Exception e )
         {
-            Log.error( "An exception occured while trying to make available the admin console via HTTPS.", e );
+            Log.error( "An exception occurred while trying to make available the admin console via HTTPS.", e );
         }
 
         // Make sure that at least one connector was registered.
@@ -206,13 +203,13 @@ public class AdminConsolePlugin implements Plugin {
 
         try {
             adminServer.start();
+
+            // Log the ports that the admin server is listening on.
+            logAdminConsolePorts();
         }
         catch (Exception e) {
             Log.error("Could not start admin console server", e);
         }
-
-        // Log the ports that the admin server is listening on.
-        logAdminConsolePorts();
     }
 
 	/**

@@ -15,38 +15,38 @@ concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5      
 dbutil.jar                          | Jive Code, no release version.                               | GPL
 hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
 jcl-over-slf4j.jar                  | 1.7.7                                                        | http://www.slf4j.org/license.html
-jetty-continuation.jar              | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-http.jar                      | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-io.jar                        | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-jmx.jar                       | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-plus.jar                      | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-schemas.jar                   | 3.1 - from Jetty 9.2.9.v20150224                             | Apache 2.0, Eclipse 1.0
-jetty-security.jar                  | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-server.jar                    | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-servlet.jar                   | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-servlets.jar                  | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-util.jar                      | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-webapp.jar                    | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-jetty-xml.jar                       | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-spdy-client.jar                     | Jetty 9.2.9.v20150224 (see #2)                               | Apache 2.0, Eclipse 1.0
-spdy-core.jar                       | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-spdy-http-common.jar                | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-spdy-http-server.jar                | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-spdy-server.jar                     | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-websocket-api.jar                   | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-websocket-client.jar                | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-websocket-common.jar                | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-websocket-server.jar                | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-websocket-servlet.jar               | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-javax-websocket-client-impl.jar     | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-javax-websocket-server-impl.jar     | Jetty 9.2.9.v20150224                                        | Apache 2.0, Eclipse 1.0
-javax.websocket-api.jar             | Jetty 9.2.9.v20150224                                        | CDDL+GPL 1.1 (https://glassfish.java.net/public/CDDL+GPL_1_1.html)
-org.apache.taglibs.taglibs-standard-impl.jar     | 1.2.1           (from Jetty 9.2.9.v20150224)    | Apache 2.0
-org.apache.taglibs.taglibs-standard-spec.jar     | 1.2.1           (from Jetty 9.2.9.v20150224)    | Apache 2.0
-org.eclipse.jetty.apache-jsp.jar                 | 9.2.9.v20150224 (from Jetty 9.2.9.v20150224)    | Apache 2.0, Eclipse 1.0
-org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar | 3.8.2.v20130121 (from Jetty 9.2.9.v20150224)    | Eclipse 1.0
-org.mortbay.jasper.apache-el.jar                 | 8.0.9.M3        (from Jetty 9.2.9.v20150224)    | Apache 2.0
-org.mortbay.jasper.apache-jsp.jar                | 8.0.9.M3        (from Jetty 9.2.9.v20150224)    | Apache 2.0
+jetty-continuation.jar              | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-http.jar                      | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-io.jar                        | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-jmx.jar                       | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-plus.jar                      | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-schemas.jar                   | 3.1 - from Jetty 9.2.14.v20151106                            | Apache 2.0, Eclipse 1.0
+jetty-security.jar                  | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-server.jar                    | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-servlet.jar                   | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-servlets.jar                  | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-util.jar                      | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-webapp.jar                    | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+jetty-xml.jar                       | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+spdy-client.jar                     | Jetty 9.2.14.v20151106 (see #2)                              | Apache 2.0, Eclipse 1.0
+spdy-core.jar                       | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+spdy-http-common.jar                | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+spdy-http-server.jar                | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+spdy-server.jar                     | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+websocket-api.jar                   | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+websocket-client.jar                | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+websocket-common.jar                | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+websocket-server.jar                | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+websocket-servlet.jar               | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+javax-websocket-client-impl.jar     | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+javax-websocket-server-impl.jar     | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
+javax.websocket-api.jar             | 1.0 (from Jetty 9.2.14.v20151106)                            | CDDL+GPL 1.1 (https://glassfish.java.net/public/CDDL+GPL_1_1.html)
+org.apache.taglibs.taglibs-standard-impl.jar     | 1.2.1            (from Jetty 9.2.14.v20151106)  | Apache 2.0
+org.apache.taglibs.taglibs-standard-spec.jar     | 1.2.1            (from Jetty 9.2.14.v20151106)  | Apache 2.0
+org.eclipse.jetty.apache-jsp.jar                 | 9.2.14.v20151106 (from Jetty 9.2.14.v20151106)  | Apache 2.0, Eclipse 1.0
+org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar | 3.8.2.v20130121  (from Jetty 9.2.14.v20151106)  | Eclipse 1.0
+org.mortbay.jasper.apache-el.jar                 | 8.0.9.M3         (from Jetty 9.2.14.v20151106)  | Apache 2.0
+org.mortbay.jasper.apache-jsp.jar                | 8.0.9.M3         (from Jetty 9.2.14.v20151106)  | Apache 2.0
 jaxen.jar                           | 1.1 beta 4 (from DOM4J 1.6.1)                                | Apache 1.1
 jdom.jar                            | 1.0 (required by rome)                                       | Apache 1.1
 jmdns.jar                           | PRE 1.0, patched                                             | Apache 2.0
@@ -74,7 +74,7 @@ postgres.jar                        | 9.4-1201.jdbc4                            
 proxool.jar                         | 0.9.0RC3+ (see note #1)                                      | Apache 1.1 (http://proxool.sourceforge.net/licence.html)
 rome.jar                            | 0.9                                                          | Apache 2.0
 rome-fetcher.jar                    | 0.9                                                          | Apache 2.0
-servlet-api.jar                     | 3.1 - from Jetty 9.2.9.v20150224                             | CDDL Version 1.0 (https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html)
+servlet-api.jar                     | 3.1 - from Jetty 9.2.14.v20151106                            | CDDL Version 1.0 (https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html)
 shaj.jar                            | 0.5                                                          | Apache 2.0
 sitemesh.jar                        | 2.2.1                                                        | Apache 1.1
 slf4j-api                           | 1.7.7                                                        | http://www.slf4j.org/license.html

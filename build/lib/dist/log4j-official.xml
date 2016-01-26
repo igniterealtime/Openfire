@@ -119,7 +119,7 @@
 		<appender-ref ref="STDOUT" />
 	</logger>
 	<logger name="com.vidmt" additivity="false">
-		<level value="warn" />
+		<level value="info" />
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="all-out" />
 	</logger>

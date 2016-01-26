@@ -118,7 +118,7 @@
         <releaseDirectory>${project.build.directory}/release</releaseDirectory>
         <openfireSource>${releaseDirectory}/openfire_src</openfireSource>
         <!-- Versions -->
-        <jetty.version>9.2.9.v20150224</jetty.version>
+        <jetty.version>9.2.14.v20151106</jetty.version>
         <mina.version>2.0.7</mina.version>
         <bouncycastle.version>1.53</bouncycastle.version>
         <slf4j.version>1.7.7</slf4j.version>

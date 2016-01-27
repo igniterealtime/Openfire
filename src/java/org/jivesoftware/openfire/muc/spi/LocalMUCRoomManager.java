@@ -22,6 +22,7 @@ public class LocalMUCRoomManager {
     }
     public void addRoom(String roomname,LocalMUCRoom room){
     	rooms.put(roomname, room);
+        GroupEventDispatcher.addListener(room);
     }
     
     public Collection<LocalMUCRoom> getRooms(){

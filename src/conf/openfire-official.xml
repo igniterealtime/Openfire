@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    This file stores bootstrap properties needed by Openfire.
+    Property names must be in the format: "prop.name.is.blah=value"
+    That will be stored as:
+        <prop>
+            <name>
+                <is>
+                    <blah>value</blah>
+                </is>
+            </name>
+        </prop>
+
+    Most properties are stored in the Openfire database. A
+    property viewer and editor is included in the admin console.
+-->
+<!-- root element, all properties must be under this element -->
+<jive> 
+  <adminConsole> 
+    <!-- Disable either port by setting the value to -1 -->  
+    <port>9090</port>  
+    <securePort>9091</securePort> 
+  </adminConsole>  
+  <locale>zh_CN</locale>  
+  <!-- Network settings. By default, Openfire will bind to all network interfaces.
+      Alternatively, you can specify a specific network interfaces that the server
+      will listen on. For example, 127.0.0.1. This setting is generally only useful
+       on multi-homed servers. -->  
+  <!--
+    <network>
+        <interface></interface>
+    </network>
+    -->  
+  <!-- SPDY  Protocol is npn.
+    	(note: npn does not work with Java 8)
+    	add -Xbootclasspath/p:/OPENFIRE_HOME/lib/npn-boot.jar to .vmoptions file    -->  
+  <!--
+    <spdy>
+    	<protocol>npn</protocol>
+    </spdy>
+    -->  
+  <!-- XEP-0198 properties -->  
+  <stream> 
+    <management> 
+      <!-- Whether stream management is offered to clients by server. -->  
+      <active>true</active>  
+      <!-- Number of stanzas sent to client before a stream management
+    			 acknowledgement request is made. -->  
+      <requestFrequency>5</requestFrequency> 
+    </management> 
+  </stream>  
+  <connectionProvider>
+    <className>org.jivesoftware.database.DefaultConnectionProvider</className>
+  </connectionProvider> 
+  <database>
+    <defaultProvider>
+      <driver>com.mysql.jdbc.Driver</driver> 
+      <serverURL>jdbc:mysql://telephone.mysql.rds.aliyuncs.com:3306/openfire?rewriteBatchedStatements=true&amp;amp;useUnicode=true&amp;amp;characterEncoding=UTF-8</serverURL> 
+      <username encrypted="true">10b3b7193ac7135d7649f88b1604575e6c35e1c78674b23ff8f79ce59fe91f64</username> 
+      <password encrypted="true">0f379f1e92627a78ed3e11230eb00ce6fd84a1c42f7f932831710f8041324a25a167550358775dbe</password> 
+      <testSQL>select 1</testSQL> 
+      <testBeforeUse>false</testBeforeUse> 
+      <testAfterUse>false</testAfterUse> 
+      <minConnections>50</minConnections> 
+      <maxConnections>150</maxConnections> 
+      <connectionTimeout>1.0</connectionTimeout>
+    </defaultProvider>
+  </database> 
+  <setup>true</setup>
+</jive>

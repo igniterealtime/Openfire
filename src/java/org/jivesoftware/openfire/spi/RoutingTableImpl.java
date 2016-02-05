@@ -418,9 +418,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		                // This is a route to a local component hosted in this node (route
 		                // could have been added after our previous check)
 		                try {
-		                    localRoutingTable.getRoute(jid.getDomain()).process(packet);
-		                    routed = true;
-		                    break;
+		                    RoutableChannelHandler localRoute = localRoutingTable.getRoute(jid.getDomain());
+		                    if (localRoute != null) {
+		                        localRoute.process(packet);
+		                        routed = true;
+		                        break;
+		                    }
 		                } catch (UnauthorizedException e) {
 		                    Log.error("Unable to route packet " + packet.toXML(), e);
 		                }

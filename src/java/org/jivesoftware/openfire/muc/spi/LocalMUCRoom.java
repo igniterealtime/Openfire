@@ -1869,19 +1869,34 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         return lockedTime > 0 && creationDate.getTime() != lockedTime;
     }
 
+    /**
+     * Handles occupants updating their presence in the chatroom. Assumes the user updates their presence whenever their
+     * availability in the room changes. This method should not be called to handle other presence related updates, such
+     * as nickname changes.
+     * {@inheritDoc}
+     */
     @Override
-    public void presenceUpdated(MUCRole occupantRole, Presence newPresence) {
-        // Ask other cluster nodes to update the presence of the occupant
-        UpdatePresence request = new UpdatePresence(this, newPresence.createCopy(), occupantRole.getNickname());
-        CacheFactory.doClusterTask(request);
+    public void presenceUpdated(final MUCRole occupantRole, final Presence newPresence) {
+        final String occupantNickName = occupantRole.getNickname();
 
-        // Update the presence of the occupant
-        request = new UpdatePresence(this, newPresence.createCopy(), occupantRole.getNickname());
-        request.setOriginator(true);
-        request.run();
+        // Update the presence of the occupant on the local node with the occupant's new availability. Updates the
+        // local node first so the remote nodes receive presence that correctly reflects the occupant's new
+        // availability and previously existing role and affiliation with the room.
+        final UpdatePresence localUpdateRequest = new UpdatePresence(this, newPresence.createCopy(), occupantNickName);
+        localUpdateRequest.setOriginator(true);
+        localUpdateRequest.run();
 
-        // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence().createCopy(), false);
+        // Get the new, updated presence for the occupant in the room. The presence reflects the occupant's updated
+        // availability and their existing association.
+        final Presence updatedPresence = occupantRole.getPresence().createCopy();
+
+        // Ask other cluster nodes to update the presence of the occupant. Uses the updated presence from the local
+        // MUC role.
+        final UpdatePresence clusterUpdateRequest = new UpdatePresence(this, updatedPresence, occupantNickName);
+        CacheFactory.doClusterTask(clusterUpdateRequest);
+
+        // Broadcast updated presence of occupant.
+        broadcastPresence(updatedPresence, false);
     }
 
     /**

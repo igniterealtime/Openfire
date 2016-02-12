@@ -396,7 +396,7 @@ public class HttpBindServlet extends HttpServlet {
     class ReadListenerImpl implements ReadListener {
 
         private final AsyncContext context;
-        private final StringBuilder buffer = new StringBuilder(512);
+        private final ByteArrayOutputStream outStream = new ByteArrayOutputStream(1024);
         private final String remoteAddress;
 
         ReadListenerImpl(AsyncContext context) {
@@ -413,14 +413,14 @@ public class HttpBindServlet extends HttpServlet {
             byte b[] = new byte[1024];
             int length;
             while (inputStream.isReady() && (length = inputStream.read(b)) != -1) {
-                buffer.append(new String(b, 0, length, StandardCharsets.UTF_8));
+                outStream.write(b, 0, length);
             }
         }
 
         @Override
         public void onAllDataRead() throws IOException {
             Log.trace("All data has been read from [" + remoteAddress + "]");
-            processContent(context, buffer.toString());
+            processContent(context, outStream.toString(StandardCharsets.UTF_8.name()));
         }
 
         @Override

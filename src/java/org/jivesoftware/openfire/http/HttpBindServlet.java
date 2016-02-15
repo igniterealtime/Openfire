@@ -35,6 +35,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -348,8 +349,7 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     protected static String createErrorBody(String type, String condition) {
-        final Element body = DocumentHelper.createElement("body");
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         body.addAttribute("type", type);
         body.addAttribute("condition", condition);
         return body.asXML();

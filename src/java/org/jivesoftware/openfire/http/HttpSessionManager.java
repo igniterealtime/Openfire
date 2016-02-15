@@ -317,8 +317,7 @@ public class HttpSessionManager {
     }
 
     private static String createSessionCreationResponse(HttpSession session) throws DocumentException {
-        Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
         response.addAttribute("from", session.getServerName());
         response.addAttribute("authid", session.getStreamID().getID());

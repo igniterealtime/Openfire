@@ -1074,17 +1074,15 @@ public class HttpSession extends LocalClientSession {
 
     protected String createEmptyBody(boolean terminate)
     {
-        final Element body = DocumentHelper.createElement("body");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
         return body.asXML();
     }
 
     private String createSessionRestartResponse()
     {
-        final Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
 
         final Element features = response.addElement("stream:features");

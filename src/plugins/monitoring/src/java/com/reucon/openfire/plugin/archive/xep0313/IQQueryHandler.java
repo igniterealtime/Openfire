@@ -177,6 +177,7 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			final QueryRequest queryRequest) {
 
 		Message finalMessage = new Message();
+		finalMessage.setTo(session.getAddress());
 		Element fin = finalMessage.addChildElement("fin", NAMESPACE);
 		if(queryRequest.getQueryid() != null) {
 			fin.addAttribute("queryid", queryRequest.getQueryid());

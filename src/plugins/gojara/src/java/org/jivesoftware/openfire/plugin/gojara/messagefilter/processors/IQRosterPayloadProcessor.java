@@ -8,6 +8,7 @@ import java.util.TimerTask;
 
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.dom4j.QName;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.SharedGroupException;
@@ -76,7 +77,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 
 		IQ response = IQ.createResultIQ(requestPacket);
 		response.setTo(subdomain);
-		Element query = new DefaultElement("query");
+		Element query = new DefaultElement( QName.get("query","jabber:iq:roster"));
 		for (RosterItem i : items) {
 			String jid = i.getJid().toString();
 			if (!jid.equals(subdomain) && jid.contains(subdomain)) {
@@ -93,8 +94,6 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 				query.add(item);
 			}
 		}
-		query.addNamespace("", "jabber:iq:roster");
-
 		response.setChildElement(query);
 		dispatchPacket(response);
 	}
@@ -103,8 +102,7 @@ public class IQRosterPayloadProcessor extends AbstractRemoteRosterProcessor {
 		IQ iq = (IQ) requestPacket;
 		IQ response = IQ.createResultIQ(iq);
 		response.setTo(subdomain);
-		Element query = new DefaultElement("query");
-		query.addNamespace("", "jabber:iq:roster");
+		Element query = new DefaultElement( QName.get("query","jabber:iq:roster") );
 		response.setChildElement(query);
 		dispatchPacket(response);
 	}

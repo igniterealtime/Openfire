@@ -76,8 +76,6 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			}
 		}
 
-		sendAcknowledgementResult(packet, session);
-
 		final QueryRequest queryRequest = new QueryRequest(packet.getChildElement(), archiveJid);
 		Collection<ArchivedMessage> archivedMessages = retrieveMessages(queryRequest);
 
@@ -86,6 +84,8 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		}
 
 		sendFinalMessage(session, queryRequest);
+
+		sendAcknowledgementResult(packet, session);
 
 		return null;
 	}

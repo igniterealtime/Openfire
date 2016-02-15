@@ -1154,7 +1154,7 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Deliverable {
+    static class Deliverable {
         private final String text;
         private final Collection<String> packets;
 
@@ -1171,7 +1171,10 @@ public class HttpSession extends LocalClientSession {
             	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
             		// use string-based operation here to avoid cascading xmlns wonkery
             		StringBuilder packetXml = new StringBuilder(packet.toXML());
-            		packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
+                    final int noslash = packetXml.indexOf( ">" );
+                    final int slash = packetXml.indexOf( "/>" );
+                    final int insertAt = ( noslash - 1 == slash ? slash : noslash );
+            		packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
             		this.packets.add(packetXml.toString());
             	} else {
             		this.packets.add(packet.toXML());

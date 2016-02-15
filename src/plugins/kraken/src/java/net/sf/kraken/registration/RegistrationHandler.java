@@ -268,8 +268,7 @@ public class RegistrationHandler implements ChannelHandler<IQ> {
         }
 
         // Add special indicator for rosterless gateway handling.
-        response.addElement("x")
-                .addNamespace("", NameSpace.IQ_GATEWAY_REGISTER);
+        response.addElement( QName.get( "x", NameSpace.IQ_GATEWAY_REGISTER) );
 
         result.setChildElement(response);
 

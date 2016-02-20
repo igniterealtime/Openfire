@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.RoutingTable;
@@ -45,7 +46,9 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -692,6 +695,23 @@ public class Roster implements Cacheable, Externalizable {
         if (sessionManager == null) {
             sessionManager = SessionManager.getInstance();
         }
+        // When roster versioning is enabled, the server MUST include 
+        // the updated roster version with each roster push.
+        if (RosterManager.isRosterVersioningEnabled()) {
+            try {
+                synchronized (this) {
+                    User user = UserManager.getInstance().getUser(username);
+                    String rosterVersionStr = user.getProperties().get("roster.version");
+                    long rosterVersion = StringUtils.isNumeric(rosterVersionStr) ? Long.parseLong(rosterVersionStr) : 0;
+                    rosterVersion++;
+                    user.getProperties().put("roster.version", Long.toString(rosterVersion));
+
+                    roster.getChildElement().addAttribute("ver", Long.toString(rosterVersion));
+                }
+            } catch (UserNotFoundException e) {
+                // should not happen
+            }
+        }
         sessionManager.userBroadcast(username, roster);
     }
 
@@ -1152,5 +1172,20 @@ public class Roster implements Cacheable, Externalizable {
         username = ExternalizableUtil.getInstance().readSafeUTF(in);
         ExternalizableUtil.getInstance().readExternalizableMap(in, rosterItems, getClass().getClassLoader());
         ExternalizableUtil.getInstance().readStringsMap(in, implicitFrom);
+    }
+    
+    public boolean hasRosterVersionBeenModified(String requestedVersion) {
+        if (StringUtils.isBlank(requestedVersion))
+            return true;
+
+        String currentVersion = User.getPropertyValue(username, "roster.version");
+        if (StringUtils.isBlank(currentVersion))
+            return true;
+
+        return !requestedVersion.equals(currentVersion);
+    }
+
+    public String getLatestRosterVersion() {
+        return User.getPropertyValue(username, "roster.version");
     }
 }

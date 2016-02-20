@@ -198,7 +198,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                         returnPacket.getChildElement().addAttribute("ver", cachedRoster.getLatestRosterVersion());
                     } else {
                         // ... or return an empty IQ-result
-                        returnPacket = new org.xmpp.packet.Roster();
+                        returnPacket = new org.xmpp.packet.IQ();
                     }
                 } else {
                     returnPacket = cachedRoster.getReset();

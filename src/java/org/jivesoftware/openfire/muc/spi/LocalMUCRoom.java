@@ -1611,7 +1611,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new ConflictException();
             }
             // Check if the room has reserved nicknames, but the provided nickname is empty
-            if (isLoginRestrictedToNickname() && (nickname != null || nickname.trim().length() == 0)) {
+            if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().length() == 0)) {
                 throw new ConflictException();
             }
             // Check if user is already an member

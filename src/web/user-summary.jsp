@@ -261,7 +261,7 @@
             %>
         </td>
         <td width="12%">
-            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
         </td>
         <td width="23%">
             <% long logoutTime = presenceManager.getLastActivity(user);

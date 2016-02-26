@@ -20,7 +20,16 @@
 
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -34,72 +43,125 @@ import javax.security.sasl.SaslServerFactory;
  * @author Jay Kline
  */
 
-public class SaslServerFactoryImpl implements SaslServerFactory {
-
-    private static final String myMechs[] = { "PLAIN", "SCRAM-SHA-1" };
-    private static final int PLAIN = 0;
-    private static final int SCRAM_SHA_1 = 1;
-
-    public SaslServerFactoryImpl() {
-    }
+public class SaslServerFactoryImpl implements SaslServerFactory
+{
+    private final static Logger Log = LoggerFactory.getLogger( SaslServerFactoryImpl.class );
 
     /**
-     * Creates a <code>SaslServer</code> implementing a supported mechanism using the parameters supplied.
-     *
-     * @param mechanism The non-null IANA-registered named of a SASL mechanism.
-     * @param protocol The non-null string name of the protocol for which the authentication is being performed (e.g., "ldap").
-     * @param serverName The non-null fully qualified host name of the server to authenticate to.
-     * @param props The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism. 
-     * @param cbh The possibly null callback handler to used by the SASL mechanisms to get further information from the application/library to complete the authentication. 
-     * @return A possibly null SaslServer created using the parameters supplied. If null, this factory cannot produce a SaslServer  using the parameters supplied.
-     * @throws SaslException If cannot create a SaslServer because of an error.
+     * All mechanisms provided by this factory.
      */
+    private final Set<Mechanism> allMechanisms;
+
+    public SaslServerFactoryImpl()
+    {
+        allMechanisms = new HashSet<>();
+        allMechanisms.add( new Mechanism( "PLAIN", true, true ) );
+        allMechanisms.add( new Mechanism( "SCRAM_SHA_1", false, false ) );
+        allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
+        allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
+    }
 
     @Override
-    public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        if (mechanism.equals(myMechs[PLAIN]) && checkPolicy(props)) {
-            if (cbh == null) {
-                throw new SaslException("CallbackHandler with support for Password, Name, and AuthorizeCallback required");
+    public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException
+    {
+        if ( !Arrays.asList( getMechanismNames( props )).contains( mechanism ) )
+        {
+            Log.debug( "This implementation is unable to create a SaslServer instance for the {} mechanism using the provided properties.", mechanism );
+            return null;
+        }
+
+        switch ( mechanism.toUpperCase() )
+        {
+            case "PLAIN":
+                if ( cbh != null )
+                {
+                    Log.debug( "Unable to instantiate {} SaslServer: A callbackHandler with support for Password, Name, and AuthorizeCallback required.", mechanism );
+                    return null;
+                }
+                return new SaslServerPlainImpl( protocol, serverName, props, cbh );
+
+            case "SCRAM_SHA_1":
+                return new ScramSha1SaslServer();
+
+            case "ANONYMOUS":
+                if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                {
+                    Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
+                    return null;
+                }
+                else
+                {
+                    final LocalSession session = (LocalSession) props.get( LocalSession.class.getCanonicalName() );
+                    return new AnonymousSaslServer( session );
+                }
+
+            case "EXTERNAL":
+                if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                {
+                    Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
+                    return null;
+                }
+                else
+                {
+                    final Object session = props.get( LocalSession.class.getCanonicalName() );
+                    if ( session instanceof LocalClientSession )
+                    {
+                        return new ExternalClientSaslServer( (LocalClientSession) session );
+                    }
+                    if ( session instanceof LocalIncomingServerSession )
+                    {
+                        return new ExternalServerSaslServer( (LocalIncomingServerSession) session );
+                    }
+
+                    Log.debug( "Unable to instantiate {} Sasl Server: Provided properties contains neither LocalClientSession nor LocalIncomingServerSession instance.", mechanism );
+                    return null;
+                }
+
+            case JiveSharedSecretSaslServer.NAME:
+                return new JiveSharedSecretSaslServer();
+
+            default:
+                throw new IllegalStateException(); // Fail fast - this should not be possible, as the first check in this method already verifies wether the mechanism is supported.
+        }
+    }
+
+    @Override
+    public String[] getMechanismNames( Map<String, ?> props )
+    {
+        final Set<String> result = new HashSet<>();
+
+        for ( final Mechanism mechanism : allMechanisms )
+        {
+            if ( mechanism.allowsAnonymous && props.containsKey( Sasl.POLICY_NOANONYMOUS ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOANONYMOUS ) ) )
+            {
+                // Do not include a mechanism that allows anonymous authentication when the 'no anonymous' policy is set.
+                continue;
             }
-            return new SaslServerPlainImpl(protocol, serverName, props, cbh);
+
+            if ( mechanism.isPlaintext && props.containsKey( Sasl.POLICY_NOPLAINTEXT ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOPLAINTEXT ) ) )
+            {
+                // Do not include a mechanism that is susceptible to simple plain passive attacks when the 'no plaintext' policy is set.
+                continue;
+            }
+
+            // Mechanism passed all filters. It should be part of the result.
+            result.add( mechanism.name );
         }
-        else if (mechanism.equals(myMechs[SCRAM_SHA_1])) {
-        	if (cbh == null) {
-                throw new SaslException("CallbackHandler with support for AuthorizeCallback required");
-        	}
-        	return new ScramSha1SaslServer();
-        }
-        return null;
+
+        return result.toArray( new String[ result.size() ] );
     }
 
-    /**
-     * Requires supported mechanisms to allow anonymous logins
-     * 
-     * @param props The security properties to check
-     * @return true if the policy allows anonymous logins
-     */
-    private boolean checkPolicy(Map<String, ?> props) {
-		boolean result = true;
-		if (props != null) {
-			String policy = (String) props.get(Sasl.POLICY_NOANONYMOUS);
-			if (Boolean.parseBoolean(policy)) {
-				result = false;
-			}
-		}
-		return result;
-	}
+    private static class Mechanism
+    {
+        final String name;
+        final boolean allowsAnonymous;
+        final boolean isPlaintext;
 
-	/**
-     * Returns an array of names of mechanisms that match the specified mechanism selection policies.
-     * @param props The possibly null set of properties used to specify the security policy of the SASL mechanisms.
-     * @return A non-null array containing a IANA-registered SASL mechanism names.
-     */
-
-    @Override
-    public String[] getMechanismNames(Map<String, ?> props) {
-    	if (checkPolicy(props)) {
-    		return myMechs;
-    	}
-    	return new String [] { };
+        private Mechanism( String name, boolean allowsAnonymous, boolean isPlaintext )
+        {
+            this.name = name;
+            this.allowsAnonymous = allowsAnonymous;
+            this.isPlaintext = isPlaintext;
+        }
     }
 }

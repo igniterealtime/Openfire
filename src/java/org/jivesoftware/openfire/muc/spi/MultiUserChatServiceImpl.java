@@ -528,7 +528,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         room = role.getChatRoom();
                         try {
                             kickedPresence =
-                                    room.kickOccupant(user.getAddress(), null, null);
+                                    room.kickOccupant(user.getAddress(), null, null, null);
                             // Send the updated presence to the room occupants
                             room.send(kickedPresence);
                         }

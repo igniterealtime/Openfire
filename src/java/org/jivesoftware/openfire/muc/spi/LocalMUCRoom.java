@@ -1848,7 +1848,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                             x.element("item").addElement("reason").setText(reason);
                         }
                         x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
-                        kickPresence(presence, senderRole.getUserAddress());
+                        kickPresence(presence, senderRole.getUserAddress(), senderRole.getNickname());
                     }
                 }
     			updatedPresences.addAll(thisOccupant);
@@ -2256,7 +2256,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public Presence kickOccupant(JID jid, JID actorJID, String reason)
+    public Presence kickOccupant(JID jid, JID actorJID, String actorNickname, String reason)
             throws NotAllowedException {
         // Update the presence with the new role and inform all occupants
         Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.none);
@@ -2272,7 +2272,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
 
             // Effectively kick the occupant from the room
-            kickPresence(updatedPresence, actorJID);
+            kickPresence(updatedPresence, actorJID, actorNickname);
 
             //Inform the other occupants that user has been kicked
             broadcastPresence(updatedPresence, false);
@@ -2287,18 +2287,22 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param kickPresence the presence of the occupant to kick from the room.
      * @param actorJID The JID of the actor that initiated the kick or <tt>null</tt> if the info
+     * @param nick The actor nickname.
      * was not provided.
      */
-    private void kickPresence(Presence kickPresence, JID actorJID) {
+    private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
         List<MUCRole> occupants = new ArrayList<>(occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase()));
         for (MUCRole kickedRole : occupants) {
-            kickPresence = kickPresence.createCopy();
             // Add the actor's JID that kicked this user from the room
             if (actorJID != null && actorJID.toString().length() > 0) {
                 Element frag = kickPresence.getChildElement(
                         "x", "http://jabber.org/protocol/muc#user");
-                frag.element("item").addElement("actor").addAttribute("jid", actorJID.toBareJID());
+                Element actor = frag.element("item").addElement("actor");
+                actor.addAttribute("jid", actorJID.toBareJID());
+                if (nick != null) {
+                    actor.addAttribute("nick", nick);
+                }
             }
             // Send the unavailable presence to the banned user
             kickedRole.send(kickPresence);
@@ -2377,7 +2381,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             for (MUCRole occupant : occupantsByFullJID.values()) {
                 if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
                     try {
-                        presences.add(kickOccupant(occupant.getRoleAddress(), null,
+                        presences.add(kickOccupant(occupant.getRoleAddress(), null, null,
                                 LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
                     }
                     catch (NotAllowedException e) {

@@ -83,7 +83,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -112,7 +112,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -142,7 +142,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -313,7 +313,7 @@ public class KeystoreTestUtils
     private static X509Certificate generateTestCertificate( final boolean isValid, final boolean isSelfSigned, int indexAwayFromEndEntity ) throws Exception
     {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         final KeyPair subjectKeyPair;
         final KeyPair issuerKeyPair;

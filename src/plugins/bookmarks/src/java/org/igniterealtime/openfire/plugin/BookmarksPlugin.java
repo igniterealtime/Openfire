@@ -30,8 +30,6 @@ public class BookmarksPlugin implements Plugin
 
     public void initializePlugin( PluginManager manager, File pluginDirectory )
     {
-        System.out.println( "Starting Bookmarks Plugin" );
-
         boolean foundIncompatiblePlugin = false;
         try
         {

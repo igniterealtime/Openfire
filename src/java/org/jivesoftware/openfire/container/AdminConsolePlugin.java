@@ -323,7 +323,7 @@ public class AdminConsolePlugin implements Plugin {
             adminServer.start();
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An exception occurred while restarting the admin console:", e);
         }
     }
 

@@ -124,17 +124,19 @@ public class PluginManager {
      * Shuts down all running plugins.
      */
     public void shutdown() {
+        Log.info("Shutting down. Unloading all installed plugins...");
         // Stop the plugin monitoring service.
         if (executor != null) {
             executor.shutdown();
         }
         // Shutdown all installed plugins.
-        for (Plugin plugin : plugins.values()) {
+        for (Map.Entry<String, Plugin> plugin : plugins.entrySet()) {
             try {
-                plugin.destroyPlugin();
+                plugin.getValue().destroyPlugin();
+                Log.info("Unloaded plugin '{}'.", plugin.getKey());
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An exception occurred while trying to unload plugin '{}':", plugin.getKey(), e);
             }
         }
         plugins.clear();
@@ -154,8 +156,12 @@ public class PluginManager {
      * @return true if the plugin was successfully installed or updated.
      */
     public boolean installPlugin(InputStream in, String pluginFilename) {
-        if (in == null || pluginFilename == null || pluginFilename.length() < 1) {
-            Log.error("Error installing plugin: Input stream was null or pluginFilename was null or had no length.");
+        if ( pluginFilename == null || pluginFilename.isEmpty()) {
+            Log.error("Error installing plugin: pluginFilename was null or empty.");
+            return false;
+        }
+        if (in == null) {
+            Log.error("Error installing plugin '{}': Input stream was null.", pluginFilename);
             return false;
         }
         try {
@@ -176,7 +182,7 @@ public class PluginManager {
             pluginMonitor.run();
         }
         catch (IOException e) {
-            Log.error("Error installing new version of plugin: " + pluginFilename, e);
+            Log.error("An exception occurred while installing new version of plugin '{}':", pluginFilename, e);
             return false;
         }
         return true;
@@ -265,7 +271,8 @@ public class PluginManager {
         if (XMPPServer.getInstance().isSetupMode() && !(pluginDir.getFileName().toString().equals("admin"))) {
             return;
         }
-        Log.debug("PluginManager: Loading plugin " + pluginDir.getFileName().toString());
+        String pluginName = pluginDir.getFileName().toString();
+        Log.debug("Loading plugin '{}'...", pluginName);
         Plugin plugin;
         try {
             Path pluginConfig = pluginDir.resolve("plugin.xml");
@@ -281,10 +288,7 @@ public class PluginManager {
                     Version requiredVersion = new Version(minServerVersion.getTextTrim());
                     Version currentVersion = XMPPServer.getInstance().getServerInfo().getVersion();
                     if (requiredVersion.isNewerThan(currentVersion)) {
-                        String msg = "Ignoring plugin " + pluginDir.getFileName() + ": requires " +
-                            "server version " + requiredVersion;
-                        Log.warn(msg);
-                        System.out.println(msg);
+                        Log.warn("Ignoring plugin '{}': requires server version {}. Current server version is {}.", pluginName, requiredVersion, currentVersion);
                         return;
                     }
                 }
@@ -295,7 +299,6 @@ public class PluginManager {
                 // re-use the parent plugin's class loader so that the plugins can interact.
                 Element parentPluginNode = (Element)pluginXML.selectSingleNode("/plugin/parentPlugin");
 
-                String pluginName = pluginDir.getFileName().toString();
                 String webRootKey = pluginName + ".webRoot";
                 String classesDirKey = pluginName + ".classes";
                 String webRoot = System.getProperty(webRootKey);
@@ -326,10 +329,7 @@ public class PluginManager {
                             // plugin load run after the parent.
                             return;
                         } else {
-                            String msg = "Ignoring plugin " + pluginName + ": parent plugin " +
-                                parentPlugin + " not present.";
-                            Log.warn(msg);
-                            System.out.println(msg);
+                            Log.warn("Ignoring plugin '{}': parent plugin '{}' not present.", pluginName, parentPlugin);
                             return;
                         }
                     }
@@ -346,9 +346,7 @@ public class PluginManager {
                 PluginDevEnvironment dev = null;
                 if (webRoot != null || classesDir != null) {
                     dev = new PluginDevEnvironment();
-
-                    System.out.println("Plugin " + pluginName + " is running in development mode.");
-                    Log.info("Plugin " + pluginName + " is running in development mode.");
+                    Log.info("Plugin '{}' is running in development mode.", pluginName);
                     if (webRoot != null) {
                         Path webRootDir = Paths.get(webRoot);
                         if (Files.notExists(webRootDir)) {
@@ -417,10 +415,7 @@ public class PluginManager {
                 // Check the plugin's database schema (if it requires one).
                 if (!DbConnectionManager.getSchemaManager().checkPluginSchema(plugin)) {
                     // The schema was not there and auto-upgrade failed.
-                    Log.error(pluginName + " - " +
-                            LocaleUtils.getLocalizedString("upgrade.database.failure"));
-                    System.out.println(pluginName + " - " +
-                            LocaleUtils.getLocalizedString("upgrade.database.failure"));
+                    Log.error("Error while loading plugin '{}': {}", pluginName, LocaleUtils.getLocalizedString("upgrade.database.failure"));
                 }
 
                 // Load any JSP's defined by the plugin.
@@ -445,6 +440,7 @@ public class PluginManager {
                 ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
                 Thread.currentThread().setContextClassLoader(pluginLoader);
                 plugin.initializePlugin(this, pluginDir.toFile());
+                Log.debug("Initialized plugin '{}'.", pluginName);
                 Thread.currentThread().setContextClassLoader(oldLoader);
 
                 // If there a <adminconsole> section defined, register it.
@@ -499,12 +495,13 @@ public class PluginManager {
                 firePluginCreatedEvent(pluginName, plugin);
             }
             else {
-                Log.warn("Plugin " + pluginDir + " could not be loaded: no plugin.xml file found");
+                Log.warn("Plugin '{}' could not be loaded: no plugin.xml file found.", pluginName);
             }
         }
         catch (Throwable e) {
-            Log.error("Error loading plugin: " + pluginDir, e);
+            Log.error("An exception occurred while loading plugin '{}':", pluginName, e);
         }
+        Log.info( "Successfully loaded plugin '{}'.", pluginName );
     }
 
     private void configureCaches(Path pluginDir, String pluginName) {
@@ -516,7 +513,7 @@ public class PluginManager {
                 configurator.configure(pluginName);
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An exception occurred while trying to configure caches for plugin '{}':", pluginName, e);
             }
         }
     }
@@ -547,7 +544,7 @@ public class PluginManager {
      * @param pluginName the name of the plugin to unload.
      */
     public void unloadPlugin(String pluginName) {
-        Log.debug("PluginManager: Unloading plugin " + pluginName);
+        Log.debug("Unloading plugin '{}'...",pluginName);
 
         Plugin plugin = plugins.get(pluginName);
         if (plugin != null) {
@@ -560,7 +557,7 @@ public class PluginManager {
                         parentPluginMap.get(plugin).toArray(new String[parentPluginMap.get(plugin).size()]);
                 parentPluginMap.remove(plugin);
                 for (String childPlugin : childPlugins) {
-                    Log.debug("Unloading child plugin: " + childPlugin);
+                    Log.debug("Unloading child plugin: '{}'.", childPlugin);
                     childPluginMap.remove(plugins.get(childPlugin));
                     unloadPlugin(childPlugin);
                 }
@@ -583,9 +580,10 @@ public class PluginManager {
             // resources.
             try {
                 plugin.destroyPlugin();
+                Log.debug( "Destroyed plugin '{}'.", pluginName );
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error( "An exception occurred while unloading plugin '{}':", pluginName, e);
             }
         }
 
@@ -601,7 +599,7 @@ public class PluginManager {
         if (pluginLoader != null) {
         	pluginLoader.unloadJarFiles();
         } else {
-        	Log.warn("No plugin loader found for " + pluginName);
+        	Log.warn("No plugin loader found for '{}'.",pluginName);
         }
 
         // Try to remove the folder where the plugin was exploded. If this works then
@@ -615,13 +613,13 @@ public class PluginManager {
             System.gc();
             int count = 0;
             while (!deleteDir(dir) && count++ < 5) {
-                Log.warn("Error unloading plugin " + pluginName + ". " + "Will attempt again momentarily.");
-                Thread.sleep(8000);
+                Log.warn("Error unloading plugin '{}'. Will attempt again momentarily.", pluginName);
+                Thread.sleep( 8000 );
                 // Ask the system to clean up references.
                 System.gc();
             }
         } catch (InterruptedException e) {
-            Log.error(e.getMessage(), e);
+            Log.debug( "Stopped waiting for plugin '{}' to be fully unloaded.", pluginName, e );
         }
 
         if (plugin != null && Files.notExists(dir)) {
@@ -650,9 +648,10 @@ public class PluginManager {
                 unloadPlugin(parentPluginName);
             }
             firePluginDestroyedEvent(pluginName, plugin);
+            Log.info("Successfully unloaded plugin '{}'.", pluginName);
         }
         else if (plugin != null) {
-            // Restore references since we failed to remove the plugin
+            Log.info("Restore references since we failed to remove the plugin '{}'.", pluginName);
             plugins.put(pluginName, plugin);
             pluginDirs.put(plugin, pluginFile);
             classloaders.put(plugin, pluginLoader);
@@ -784,7 +783,7 @@ public class PluginManager {
                 return Integer.parseInt(versionString.trim());
             }
             catch (NumberFormatException nfe) {
-                Log.error(nfe.getMessage(), nfe);
+                Log.error("Unable to parse the database version for plugin '{}'.", getName( plugin ), nfe);
             }
         }
         return -1;
@@ -809,7 +808,7 @@ public class PluginManager {
                 return License.valueOf(licenseString.toLowerCase().trim());
             }
             catch (IllegalArgumentException iae) {
-                Log.error(iae.getMessage(), iae);
+                Log.error("Unrecognized license type '{}' for plugin '{}'.", licenseString.toLowerCase().trim(), getName( plugin ), iae);
             }
         }
         return License.other;
@@ -851,7 +850,7 @@ public class PluginManager {
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("Unable to get element value '{}' from plugin.xml of plugin '{}':", xpath, getName(plugin), e);
         }
         return null;
     }
@@ -939,7 +938,7 @@ public class PluginManager {
                 }
 
                 // Turn the list of JAR/WAR files into a set so that we can do lookups.
-                Set<String> jarSet = new HashSet<String>();
+                Set<String> jarSet = new HashSet<>();
 
                 try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(pluginDirectory, new DirectoryStream.Filter<Path>() {
                     @Override
@@ -1014,7 +1013,7 @@ public class PluginManager {
                 // due to the JAR file being deleted (ignore admin plugin).
                 // Build a list of plugins to delete first so that the plugins
                 // keyset isn't modified as we're iterating through it.
-                List<String> toDelete = new ArrayList<String>();
+                List<String> toDelete = new ArrayList<>();
                 for (Path pluginDir : dirs) {
                     String pluginName = pluginDir.getFileName().toString();
                     if (pluginName.equals("admin")) {
@@ -1022,6 +1021,7 @@ public class PluginManager {
                     }
                     if (!jarSet.contains(pluginName + ".jar")) {
                         if (!jarSet.contains(pluginName + ".war")) {
+                            Log.info( "Plugin '{}' was removed from the file system.", pluginName);
                             toDelete.add(pluginName);
                         }
                     }
@@ -1031,12 +1031,19 @@ public class PluginManager {
                 }
 
                 // Load all plugins that need to be loaded.
+                boolean somethingChanged = false;
                 for (Path dirFile : dirs) {
                     // If the plugin hasn't already been started, start it.
                     if (Files.exists(dirFile) && !plugins.containsKey(dirFile.getFileName().toString())) {
+                        somethingChanged = true;
                         loadPlugin(dirFile);
                     }
                 }
+
+                if ( somethingChanged ) {
+                    Log.info( "Finished processing all plugins." );
+                }
+
                 // Set that at least one iteration was done. That means that "all available" plugins
                 // have been loaded by now.
                 if (!XMPPServer.getInstance().isSetupMode()) {
@@ -1047,7 +1054,7 @@ public class PluginManager {
                 firePluginsMonitored();
             }
             catch (Throwable e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An unexpected exception occurred:", e);
             }
             // Finished running task.
             synchronized (this) {
@@ -1074,7 +1081,7 @@ public class PluginManager {
                 Files.createDirectory(dir);
                 // Set the date of the JAR file to the newly created folder
                 Files.setLastModifiedTime(dir, Files.getLastModifiedTime(file));
-                Log.debug("PluginManager: Extracting plugin: " + pluginName);
+                Log.debug("Extracting plugin '{}'...", pluginName);
                 for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
                     JarEntry entry = (JarEntry)e.nextElement();
                     Path entryFile = dir.resolve(entry.getName());
@@ -1089,9 +1096,10 @@ public class PluginManager {
                         }
                     }
                 }
+                Log.debug("Successfully extracted plugin '{}'.", pluginName);
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An exception occurred while trying to extract plugin '{}':", pluginName, e);
             }
         }
     }
@@ -1111,7 +1119,7 @@ public class PluginManager {
                         try {
                             Files.deleteIfExists(file);
                         } catch (IOException e) {
-                            Log.debug("PluginManager: Plugin removal: could not delete: " + file);
+                            Log.debug("Plugin removal: could not delete: {}", file);
                             throw e;
                         }
                         return FileVisitResult.CONTINUE;
@@ -1122,7 +1130,7 @@ public class PluginManager {
                         try {
                             Files.deleteIfExists(dir);
                         } catch (IOException e) {
-                            Log.debug("PluginManager: Plugin removal: could not delete: " + dir);
+                            Log.debug("Plugin removal: could not delete: {}", dir);
                             throw e;
                         }
                         return FileVisitResult.CONTINUE;

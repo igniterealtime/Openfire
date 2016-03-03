@@ -43,7 +43,6 @@ INSERT INTO JIVEUSER VALUES('admin','admin',NULL,'Administrator','admin@example.
 INSERT INTO JIVEID VALUES(18,1)
 INSERT INTO JIVEID VALUES(19,1)
 INSERT INTO JIVEID VALUES(23,1)
-INSERT INTO JIVEPROPERTY VALUES('xmpp.auth.anonymous','true')
 INSERT INTO JIVEPROPERTY VALUES('xmpp.domain','localhost')
 INSERT INTO JIVEPROPERTY VALUES('xmpp.muc.history.type','number')
 INSERT INTO JIVEPROPERTY VALUES('xmpp.session.conflict-limit','0')

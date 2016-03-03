@@ -48,8 +48,6 @@ public class ClientControlPlugin implements Plugin {
     // Plugin Interface
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        System.out.println("Starting Client Control Plugin");
-
         // Check if we Enterprise is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {

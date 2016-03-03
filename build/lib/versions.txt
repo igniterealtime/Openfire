@@ -58,7 +58,7 @@ junit.jar                           | 4.11                                      
 hamcrest-core.jar                   | 1.3 (required by junit)                                      | new BSD licence
 jzlib.jar                           | 1.0.7                                                        | GPL
 libidn.jar                          | 1.15                                                         | GNU Lesser General Public License version 2.1 or later (http://www.gnu.org/licenses/licenses.html)
-log4j.jar                           | 1.2.15                                                       | Apache 2.0 (http://logging.apache.org/log4j/1.2/license.html)
+log4j.jar                           | 1.2.17                                                       | Apache 2.0 (http://logging.apache.org/log4j/1.2/license.html)
 mail.jar                            | 1.4.1 (JavaMail)                                             |
 mina-core.jar                       | Apache Mina 2.0.7                                            | Apache 2.0
 mina-filter-compression.jar         | Apache Mina 2.0.7                                            | Apache 2.0

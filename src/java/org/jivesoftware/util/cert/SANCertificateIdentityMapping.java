@@ -1,6 +1,5 @@
 package org.jivesoftware.util.cert;
 
-import java.io.IOException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -19,9 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Certificate identity mapping that uses XMPP-OtherName SubjectAlternativeName
- * as the identity credentials
- * 
+ * Certificate identity mapping that uses SubjectAlternativeName as the identity credentials. This implementation
+ * combines subjectAltName entries of type otherName with an ASN.1 Object Identifier of "id-on-xmppAddr" with entries
+ * of type DNS.
+ *
  * @author Victor Hong
  *
  */
@@ -48,59 +48,28 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
             if (altNames == null) {
                 return Collections.emptyList();
             }
-            // Use the type OtherName to search for the certified server name
             for (List<?> item : altNames) {
-                Integer type = (Integer) item.get(0);
-                if (type == 0) {
-                    // Type OtherName found so return the associated value
-                    try (ASN1InputStream decoder = new ASN1InputStream((byte[]) item.get(1))) {
-                        // Value is encoded using ASN.1 so decode it to get the server's identity
-                        Object object = decoder.readObject();
-                        ASN1Sequence otherNameSeq = null;
-                        if (object != null && object instanceof ASN1Sequence) {
-                        	otherNameSeq = (ASN1Sequence) object;
-                        } else {
-                        	continue;
-                        }
-                        // Check the object identifier
-                        ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
-                    	Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
-
-                        if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
-                            // Not a XMPP otherName
-                            Log.debug("Ignoring non-XMPP otherName, " + objectId.getId());
-                            continue;
-                        }
-
-                        // Get identity string
-                        try {
-                        	final String identity;
-	                        ASN1Encodable o = otherNameSeq.getObjectAt(1);
-	                        if (o instanceof DERTaggedObject) {
-	                        	ASN1TaggedObject ato = DERTaggedObject.getInstance(o);
-	                        	Log.debug("... processing DERTaggedObject: " + ato.toString());
-	                        	// TODO: there's bound to be a better way...
-	                        	identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
-	                        } else {
-	                        	DERUTF8String derStr = DERUTF8String.getInstance(o);
-		                        identity = derStr.getString();
-	                        }
-	                        if (identity != null && identity.length() > 0) {
-	                            // Add the decoded server name to the list of identities
-	                            identities.add(identity);
-	                        }
-                        } catch (IllegalArgumentException ex) {
-                        	// OF-517: othername formats are extensible. If we don't recognize the format, skip it.
-                        	Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
-                        }
-                    } catch (IOException e) {
-                        // Ignore
-                    }
-                    catch (Exception e) {
-                        Log.error("Error decoding subjectAltName", e);
-                    }
+                final Integer type = (Integer) item.get(0);
+                final Object value = item.get(1);
+                final String result;
+                switch ( type ) {
+                    case 0:
+                        // OtherName: search for "id-on-xmppAddr"
+                        result = parseOtherName( (byte[]) value );
+                        break;
+                    case 2:
+                        // DNS
+                        result = (String) value;
+                        break;
+                    default:
+                        // Other types are not applicable for XMPP, so silently ignore them
+                        result = null;
+                        break;
                 }
-                // Other types are not applicable for XMPP, so silently ignore them
+
+                if ( result != null ) {
+                    identities.add( result );
+                }
             }
         }
         catch (CertificateParsingException e) {
@@ -110,13 +79,69 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
 	}
 
 	/**
-	 * Returns the short name of mapping
+	 * Returns the short name of mapping.
 	 * 
-	 * @return The short name of the mapping
+	 * @return The short name of the mapping (never null).
 	 */
 	@Override
 	public String name() {
 		return "Subject Alternative Name Mapping";
 	}
+
+    /**
+     * Parses the byte-array representation of a subjectAltName 'otherName' entry, returning the "id-on-xmppAddr" value
+     * when that is in the entry.
+     *
+     * @param item A byte array representation of a subjectAltName 'otherName' entry (cannot be null).
+     * @return an "id-on-xmppAddr" value (which is expected to be a JID), or null.
+     */
+    public static String parseOtherName( byte[] item ) {
+        // Type OtherName found so return the associated value
+        try (ASN1InputStream decoder = new ASN1InputStream(item)) {
+            // Value is encoded using ASN.1 so decode it to get the server's identity
+            Object object = decoder.readObject();
+            ASN1Sequence otherNameSeq = null;
+            if (object != null && object instanceof ASN1Sequence) {
+                otherNameSeq = (ASN1Sequence) object;
+            } else {
+                return null;
+            }
+            // Check the object identifier
+            ASN1ObjectIdentifier objectId = (ASN1ObjectIdentifier) otherNameSeq.getObjectAt(0);
+            Log.debug("Parsing otherName for subject alternative names: " + objectId.toString() );
+
+            if ( !OTHERNAME_XMPP_OID.equals(objectId.getId())) {
+                // Not a XMPP otherName
+                Log.debug("Ignoring non-XMPP otherName, " + objectId.getId());
+                return null;
+            }
+
+            // Get identity string
+            try {
+                final String identity;
+                ASN1Encodable o = otherNameSeq.getObjectAt(1);
+                if (o instanceof DERTaggedObject) {
+                    ASN1TaggedObject ato = DERTaggedObject.getInstance(o);
+                    Log.debug("... processing DERTaggedObject: " + ato.toString());
+                    // TODO: there's bound to be a better way...
+                    identity = ato.toString().substring(ato.toString().lastIndexOf(']')+1).trim();
+                } else {
+                    DERUTF8String derStr = DERUTF8String.getInstance(o);
+                    identity = derStr.getString();
+                }
+                if (identity != null && identity.length() > 0) {
+                    // Add the decoded server name to the list of identities
+                    return identity;
+                }
+            } catch (IllegalArgumentException ex) {
+                // OF-517: othername formats are extensible. If we don't recognize the format, skip it.
+                Log.debug("Cannot parse altName, likely because of unknown record format.", ex);
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error decoding subjectAltName", e);
+        }
+        return null;
+    }
 
 }

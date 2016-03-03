@@ -23,7 +23,6 @@ package org.jivesoftware.openfire.handler;
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,11 +73,9 @@ import org.xmpp.packet.StreamError;
  *
  * @author Iain Shigeoka
  */
-public class IQAuthHandler extends IQHandler implements IQAuthInfo {
+public class IQAuthHandler extends IQHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQAuthHandler.class);
-
-    private boolean anonymousAllowed;
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -104,7 +101,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             probeResponse.addElement("digest");
         }
         probeResponse.addElement("resource");
-        anonymousAllowed = JiveGlobals.getBooleanProperty("xmpp.auth.anonymous");
     }
 
     @Override
@@ -328,7 +324,7 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
     private IQ anonymousLogin(LocalClientSession session, IQ packet) {
         IQ response = IQ.createResultIQ(packet);
-        if (anonymousAllowed) {
+        if (JiveGlobals.getBooleanProperty("xmpp.auth.anonymous")) {
             // Verify that client can connect from his IP address
             boolean forbidAccess = !LocalClientSession.isAllowedAnonymous( session.getConnection() );
             if (forbidAccess) {
@@ -350,17 +346,6 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             response.setError(PacketError.Condition.forbidden);
         }
         return response;
-    }
-
-    @Override
-    public boolean isAnonymousAllowed() {
-        return anonymousAllowed;
-    }
-
-    @Override
-    public void setAllowAnonymous(boolean isAnonymous) throws UnauthorizedException {
-        anonymousAllowed = isAnonymous;
-        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonymousAllowed));
     }
 
     @Override

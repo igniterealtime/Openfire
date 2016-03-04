@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -94,10 +95,8 @@ public class IQAuthHandler extends IQHandler {
 
         probeResponse = DocumentHelper.createElement(QName.get("query", "jabber:iq:auth"));
         probeResponse.addElement("username");
-        if (AuthFactory.isPlainSupported()) {
+        if (AuthFactory.supportsPasswordRetrieval()) {
             probeResponse.addElement("password");
-        }
-        if (AuthFactory.isDigestSupported()) {
             probeResponse.addElement("digest");
         }
         probeResponse.addElement("resource");
@@ -250,12 +249,12 @@ public class IQAuthHandler extends IQHandler {
         username = username.toLowerCase();
         // Verify that supplied username and password are correct (i.e. user authentication was successful)
         AuthToken token = null;
-        if (password != null && AuthFactory.isPlainSupported()) {
-            token = AuthFactory.authenticate(username, password);
-        }
-        else if (digest != null && AuthFactory.isDigestSupported()) {
-            token = AuthFactory.authenticate(username, session.getStreamID().toString(),
-                    digest);
+        if ( AuthFactory.supportsPasswordRetrieval() ) {
+            if ( password != null) {
+                token = AuthFactory.authenticate( username, password );
+            } else if ( digest != null) {
+                token = authenticate(username, session.getStreamID().toString(), digest );
+            }
         }
         if (token == null) {
             throw new UnauthorizedException();
@@ -361,4 +360,54 @@ public class IQAuthHandler extends IQHandler {
 	public IQHandlerInfo getInfo() {
         return info;
     }
+
+    /**
+     * Authenticates a user with a username, token, and digest and returns an AuthToken.
+     * The digest should be generated using the {@link AuthFactory#createDigest(String, String)} method.
+     * If the username and digest do not match the record of any user in the system, the
+     * method throws an UnauthorizedException.
+     *
+     * @param username the username.
+     * @param token the token that was used with plain-text password to generate the digest.
+     * @param digest the digest generated from plain-text password and unique token.
+     * @return an AuthToken token if the username and digest are correct for the user's
+     *      password and given token.
+     * @throws UnauthorizedException if the username and password do not match any
+     *      existing user or the account is locked out.
+     */
+    public static AuthToken authenticate(String username, String token, String digest)
+            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
+        if (username == null || token == null || digest == null) {
+            throw new UnauthorizedException();
+        }
+        if ( LockOutManager.getInstance().isAccountDisabled(username)) {
+            LockOutManager.getInstance().recordFailedLogin(username);
+            throw new UnauthorizedException();
+        }
+        username = username.trim().toLowerCase();
+        if (username.contains("@")) {
+            // Check that the specified domain matches the server's domain
+            int index = username.indexOf("@");
+            String domain = username.substring(index + 1);
+            if (domain.equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                username = username.substring(0, index);
+            } else {
+                // Unknown domain. Return authentication failed.
+                throw new UnauthorizedException();
+            }
+        }
+        try {
+            String password = AuthFactory.getPassword( username );
+            String anticipatedDigest = AuthFactory.createDigest(token, password);
+            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
+                throw new UnauthorizedException();
+            }
+        }
+        catch (UserNotFoundException unfe) {
+            throw new UnauthorizedException();
+        }
+        // Got this far, so the user must be authorized.
+        return new AuthToken(username);
+    }
+
 }

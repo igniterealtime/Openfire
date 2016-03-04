@@ -127,7 +127,7 @@ public class SASLAuthentication {
         /**
          * SASL negotiation has been successful.
          */
-        authenticated;
+        authenticated
     }
 
     /**
@@ -230,7 +230,7 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalClientSession.class.getCanonicalName(), session );
-                    props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed() ) );
+                    props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", session.getServerName(), props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
@@ -437,7 +437,7 @@ public class SASLAuthentication {
      * mechanism by Openfire. Actual SASL handling is done by Java itself, so you must add
      * the provider to Java.
      *
-     * @param mechanism the name of the new SASL mechanism (cannot be null or an empty String).
+     * @param mechanismName the name of the new SASL mechanism (cannot be null or an empty String).
      */
     public static void addSupportedMechanism(String mechanismName) {
         if ( mechanismName == null || mechanismName.isEmpty() ) {
@@ -490,7 +490,7 @@ public class SASLAuthentication {
             }
             else if (mech.equals("ANONYMOUS")) {
                 // Check anonymous is supported
-                if (!XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
+                if (!JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" )) {
                     it.remove();
                 }
             }

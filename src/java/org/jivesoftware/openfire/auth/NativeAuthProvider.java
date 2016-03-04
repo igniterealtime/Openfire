@@ -183,23 +183,6 @@ public class NativeAuthProvider implements AuthProvider {
     }
 
     @Override
-    public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    @Override
-    public boolean isDigestSupported() {
-        return false;
-    }
-
-    @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {

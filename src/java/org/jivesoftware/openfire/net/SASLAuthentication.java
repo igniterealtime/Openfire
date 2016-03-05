@@ -20,26 +20,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.UnsupportedEncodingException;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
-
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -48,22 +28,28 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.auth.AuthorizationManager;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.sasl.Failure;
+import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
+import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import java.security.KeyStore;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -89,78 +75,55 @@ public class SASLAuthentication {
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
-    private static final String SASL_NAMESPACE = "xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"";
+    private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
 
-    private static Map<String, ElementType> typeMap = new TreeMap<>();
+    private static Set<String> mechanisms = new HashSet<>();
 
-    private static Set<String> mechanisms = null;
+    static
+    {
+        // Add (proprietary) Providers of SASL implementation to the Java security context.
+        Security.addProvider( new org.jivesoftware.openfire.sasl.SaslProvider() );
 
-    static {
         initMechanisms();
     }
 
-    public enum ElementType {
+    public enum ElementType
+    {
+        ABORT,
+        AUTH,
+        RESPONSE,
+        CHALLENGE,
+        FAILURE,
+        UNDEF;
 
-        ABORT("abort"), AUTH("auth"), RESPONSE("response"), CHALLENGE("challenge"), FAILURE("failure"), UNDEF("");
-
-        private String name = null;
-
-        @Override
-		public String toString() {
-            return name;
-        }
-
-        private ElementType(String name) {
-            this.name = name;
-            typeMap.put(this.name, this);
-        }
-
-        public static ElementType valueof(String name) {
-            if (name == null) {
+        public static ElementType valueOfCaseInsensitive( String name )
+        {
+            if ( name == null || name.isEmpty() ) {
                 return UNDEF;
             }
-            ElementType e = typeMap.get(name);
-            return e != null ? e : UNDEF;
+            try
+            {
+                return ElementType.valueOf( name.toUpperCase() );
+            }
+            catch ( Throwable t )
+            {
+                return UNDEF;
+            }
         }
     }
 
-    private enum Failure {
-
-        ABORTED("aborted"),
-        ACCOUNT_DISABLED("account-disabled"),
-        CREDENTIALS_EXPIRED("credentials-expired"),
-        ENCRYPTION_REQUIRED("encryption-required"),
-        INCORRECT_ENCODING("incorrect-encoding"),
-        INVALID_AUTHZID("invalid-authzid"),
-        INVALID_MECHANISM("invalid-mechanism"),
-        MALFORMED_REQUEST("malformed-request"),
-        MECHANISM_TOO_WEAK("mechanism-too-weak"),
-        NOT_AUTHORIZED("not-authorized"),
-        TEMPORARY_AUTH_FAILURE("temporary-auth-failure");
-
-        private String name = null;
-
-        private Failure(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-
-    public enum Status {
+    public enum Status
+    {
         /**
-         * Entity needs to respond last challenge. Session is still negotiating
-         * SASL authentication.
+         * Entity needs to respond last challenge. Session is still negotiatingSASL authentication.
          */
         needResponse,
+
         /**
-         * SASL negotiation has failed. The entity may retry a few times before the connection
-         * is closed.
+         * SASL negotiation has failed. The entity may retry a few times before the connection is closed.
          */
         failed,
+
         /**
          * SASL negotiation has been successful.
          */
@@ -176,47 +139,53 @@ public class SASLAuthentication {
      *
      * @return a string with the valid SASL mechanisms available for the specified session.
      */
-    public static String getSASLMechanisms(LocalSession session) {
-        if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
+    public static String getSASLMechanisms( LocalSession session )
+    {
+        if ( session instanceof ClientSession )
+        {
+            return getSASLMechanismsElement( (ClientSession) session ).asXML();
+        }
+        else if ( session instanceof LocalIncomingServerSession )
+        {
+            return getSASLMechanismsElement( (LocalIncomingServerSession) session ).asXML();
+        }
+        else
+        {
+            Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
             return "";
         }
-        Element mechs = getSASLMechanismsElement(session);
-        return mechs.asXML();
     }
 
-    public static Element getSASLMechanismsElement(Session session) {
-        if (!(session instanceof ClientSession) && !(session instanceof IncomingServerSession)) {
-            return null;
+    public static Element getSASLMechanismsElement( ClientSession session )
+    {
+        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
+        for (String mech : getSupportedMechanisms()) {
+            final Element mechanism = result.addElement("mechanism");
+            mechanism.setText(mech);
         }
+        return result;
+    }
 
-        Element mechs = DocumentHelper.createElement( new QName( "mechanisms",
-                new Namespace( "", "urn:ietf:params:xml:ns:xmpp-sasl" ) ) );
-        if (session instanceof LocalIncomingServerSession) {
-            // Server connections don't follow the same rules as clients
-            if (session.isSecure()) {
-                LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                final KeyStore keyStore   = svr.getConnection().getConfiguration().getIdentityStore().getStore();
-                final KeyStore trustStore = svr.getConnection().getConfiguration().getTrustStore().getStore();
-                final X509Certificate trusted = CertificateManager.getEndEntityCertificate( svr.getConnection().getPeerCertificates(), keyStore, trustStore );
+    public static Element getSASLMechanismsElement( LocalIncomingServerSession session )
+    {
+        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
+        if (session.isSecure()) {
+            final Connection connection   = session.getConnection();
+            final KeyStore keyStore       = connection.getConfiguration().getIdentityStore().getStore();
+            final KeyStore trustStore     = session.getConnection().getConfiguration().getTrustStore().getStore();
+            final X509Certificate trusted = CertificateManager.getEndEntityCertificate( session.getConnection().getPeerCertificates(), keyStore, trustStore );
 
-                boolean haveTrustedCertificate = trusted != null;
-                if (trusted != null && svr.getDefaultIdentity() != null) {
-                    haveTrustedCertificate = verifyCertificate(trusted, svr.getDefaultIdentity());
-                }
-                if (haveTrustedCertificate) {
-                    // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
-                    Element mechanism = mechs.addElement("mechanism");
-                    mechanism.setText("EXTERNAL");
-                }
+            boolean haveTrustedCertificate = trusted != null;
+            if (trusted != null && session.getDefaultIdentity() != null) {
+                haveTrustedCertificate = verifyCertificate(trusted, session.getDefaultIdentity());
+            }
+            if (haveTrustedCertificate) {
+                // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
+                final Element mechanism = result.addElement("mechanism");
+                mechanism.setText("EXTERNAL");
             }
         }
-        else {
-            for (String mech : getSupportedMechanisms()) {
-                Element mechanism = mechs.addElement("mechanism");
-                mechanism.setText(mech);
-            }
-        }
-        return mechs;
+        return result;
     }
 
     /**
@@ -230,390 +199,142 @@ public class SASLAuthentication {
      * @return value that indicates whether the authentication has finished either successfully
      *         or not or if the entity is expected to send a response to a challenge.
      */
-    public static Status handle(LocalSession session, Element doc) {
-        Status status;
-        String mechanism;
-        if (doc.getNamespace().asXML().equals(SASL_NAMESPACE)) {
-            ElementType type = ElementType.valueof(doc.getName());
-            switch (type) {
+    public static Status handle(LocalSession session, Element doc)
+    {
+        try
+        {
+            if ( !doc.getNamespaceURI().equals( SASL_NAMESPACE ) )
+            {
+                throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+            }
+
+            switch ( ElementType.valueOfCaseInsensitive( doc.getName() ) )
+            {
                 case ABORT:
-                    authenticationFailed(session, Failure.ABORTED);
-                    status = Status.failed;
-                    break;
+                    throw new SaslFailureException( Failure.ABORTED );
+
                 case AUTH:
-                    mechanism = doc.attributeValue("mechanism");
-                    // http://xmpp.org/rfcs/rfc6120.html#sasl-errors-invalid-mechanism
-                    // The initiating entity did not specify a mechanism
-                    if (mechanism == null) {
-                        authenticationFailed(session, Failure.INVALID_MECHANISM);
-                        status = Status.failed;
-                        break;
+                    if ( doc.attributeValue( "mechanism" ) == null )
+                    {
+                        throw new SaslFailureException( Failure.INVALID_MECHANISM, "Peer did not specify a mechanism." );
                     }
-                    // Store the requested SASL mechanism by the client
-                    session.setSessionData("SaslMechanism", mechanism);
-                    //Log.debug("SASLAuthentication.doHandshake() AUTH entered: "+mechanism);
-                    if (mechanism.equalsIgnoreCase("ANONYMOUS") &&
-                            mechanisms.contains("ANONYMOUS")) {
-                        status = doAnonymousAuthentication(session);
-                    }
-                    else if (mechanism.equalsIgnoreCase("EXTERNAL")) {
-                        status = doExternalAuthentication(session, doc);
-                    }
-                    else if (mechanisms.contains(mechanism)) {
-                        // The selected SASL mechanism requires the server to send a challenge
-                        // to the client
-                        try {
-                            Map<String, String> props = new TreeMap<>();
-                            props.put(Sasl.QOP, "auth");
-                            if (mechanism.equals("GSSAPI")) {
-                                props.put(Sasl.SERVER_AUTH, "TRUE");
-                            }
-                            SaslServer ss = Sasl.createSaslServer(mechanism, "xmpp",
-                                    session.getServerName(), props,
-                                    new XMPPCallbackHandler());
 
-                            if (ss == null) {
-                                authenticationFailed(session, Failure.INVALID_MECHANISM);
-                                return Status.failed;
-                            }
+                    final String mechanismName = doc.attributeValue( "mechanism" ).toUpperCase();
 
-                            // evaluateResponse doesn't like null parameter
-                            byte[] token = new byte[0];
-                            String value = doc.getTextTrim();
-                            if (value.length() > 0) {
-                                if (!BASE64_ENCODED.matcher(value).matches()) {
-                                    authenticationFailed(session, Failure.INCORRECT_ENCODING);
-                                    return Status.failed;
-                                }
-                                // If auth request includes a value then validate it
-                                token = StringUtils.decodeBase64(value);
-                                if (token == null) {
-                                    token = new byte[0];
-                                }
-                            }
-                            if (mechanism.equals("DIGEST-MD5")) {
-                                // RFC2831 (DIGEST-MD5) says the client MAY provide an initial response on subsequent
-                                // authentication. Java SASL does not (currently) support this and thows an exception
-                                // if we try.  This violates the RFC, so we just strip any initial token.
-                                token = new byte[0];
-                            }
-                            byte[] challenge = ss.evaluateResponse(token);
-                            if (ss.isComplete()) {
-                                authenticationSuccessful(session, ss.getAuthorizationID(),
-                                    challenge);
-                                status = Status.authenticated;
-                            }
-                            else {
-                                // Send the challenge
-                                sendChallenge(session, challenge);
-                                status = Status.needResponse;
-                            }
-                            session.setSessionData("SaslServer", ss);
-                        }
-                        catch (SaslException e) {
-                        	Log.info("User Login Failed. " + e.getMessage());
-                            authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                            status = Status.failed;
-                        }
+                    // See if the mechanism is supported by configuration as well as by implementation.
+                    if ( !mechanisms.contains( mechanismName ) )
+                    {
+                        throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
-                    else {
-                        Log.warn("Client wants to do a MECH we don't support: '" +
-                                mechanism + "'");
-                        authenticationFailed(session, Failure.INVALID_MECHANISM);
-                        status = Status.failed;
+
+                    // Construct the configuration properties
+                    final Map<String, Object> props = new HashMap<>();
+                    props.put( LocalClientSession.class.getCanonicalName(), session );
+                    props.put( Sasl.POLICY_NOANONYMOUS, !XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed() );
+
+                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", session.getServerName(), props, new XMPPCallbackHandler() );
+                    if ( saslServer == null )
+                    {
+                        throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );
                     }
-                    break;
+
+                    session.setSessionData( "SaslServer", saslServer );
+
+                    if ( mechanismName.equals( "DIGEST-MD5" ) )
+                    {
+                        // RFC2831 (DIGEST-MD5) says the client MAY provide data in the initial response. Java SASL does
+                        // not (currently) support this and throws an exception. For XMPP, such data violates
+                        // the RFC, so we just strip any initial token.
+                        doc.setText( "" );
+                    }
+
+                    // intended fall-through
                 case RESPONSE:
-                    // Store the requested SASL mechanism by the client
-                    mechanism = (String) session.getSessionData("SaslMechanism");
-                    if (mechanism.equalsIgnoreCase("EXTERNAL")) {
-                        status = doExternalAuthentication(session, doc);
+
+                    saslServer = (SaslServer) session.getSessionData( "SaslServer" );
+
+                    if ( saslServer == null )
+                    {
+                        // Client sends response without a preceding auth?
+                        throw new IllegalStateException( "A SaslServer instance was not initialized and/or stored on the session." );
                     }
-                    else if (mechanism.equalsIgnoreCase("JIVE-SHAREDSECRET")) {
-                        status = doSharedSecretAuthentication(session, doc);
+
+                    // Decode any data that is provided in the client response.
+                    final String encoded = doc.getTextTrim();
+                    final byte[] decoded;
+                    if ( encoded == null || encoded.isEmpty() )
+                    {
+                        decoded = new byte[ 0 ];
                     }
-                    else if (mechanisms.contains(mechanism)) {
-                        SaslServer ss = (SaslServer) session.getSessionData("SaslServer");
-                        if (ss != null) {
-                            boolean ssComplete = ss.isComplete();
-                            String response = doc.getTextTrim();
-                            if (response.length() > 0) {
-                                if (!BASE64_ENCODED.matcher(response).matches()) {
-                                    authenticationFailed(session, Failure.INCORRECT_ENCODING);
-                                    return Status.failed;
-                                }
-                            }
-                            try {
-                                if (ssComplete) {
-                                    authenticationSuccessful(session, ss.getAuthorizationID(),
-                                            null);
-                                    status = Status.authenticated;
-                                }
-                                else {
-                                    byte[] data = StringUtils.decodeBase64(response);
-                                    if (data == null) {
-                                        data = new byte[0];
-                                    }
-                                    byte[] challenge = ss.evaluateResponse(data);
-                                    if (ss.isComplete()) {
-                                        authenticationSuccessful(session, ss.getAuthorizationID(),
-                                                challenge);
-                                        status = Status.authenticated;
-                                    }
-                                    else {
-                                        // Send the challenge
-                                        sendChallenge(session, challenge);
-                                        status = Status.needResponse;
-                                    }
-                                }
-                            }
-                            catch (SaslException e) {
-                                Log.debug("SASLAuthentication: SaslException", e);
-                                authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                                status = Status.failed;
-                            }
+                    else
+                    {
+                        // TODO: We shouldn't depend on regex-based validation. Instead, use a proper decoder implementation and handle any exceptions that it throws.
+                        if ( !BASE64_ENCODED.matcher( encoded ).matches() )
+                        {
+                            throw new SaslFailureException( Failure.INCORRECT_ENCODING );
                         }
-                        else {
-                            Log.error("SaslServer is null, should be valid object instead.");
-                            authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                            status = Status.failed;
+
+                        decoded = StringUtils.decodeBase64( encoded );
+                    }
+
+                    // Process client response.
+                    final byte[] challenge = saslServer.evaluateResponse( decoded ); // Either a challenge or success data.
+
+                    if ( !saslServer.isComplete() )
+                    {
+                        // Not complete: client is challenged for additional steps.
+                        sendChallenge( session, challenge );
+                        return Status.needResponse;
+                    }
+
+                    // Success!
+                    if ( session instanceof IncomingServerSession )
+                    {
+                        // Flag that indicates if certificates of the remote server should be validated.
+                        final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
+                        if ( verify && verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                        {
+                            ( (LocalIncomingServerSession) session ).tlsAuth();
+                        }
+                        else
+                        {
+                            throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
                         }
                     }
-                    else {
-                        Log.warn(
-                                "Client responded to a MECH we don't support: '" + mechanism + "'");
-                        authenticationFailed(session, Failure.INVALID_MECHANISM);
-                        status = Status.failed;
-                    }
-                    break;
+
+                    authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );
+                    session.removeSessionData( "SaslServer" );
+                    return Status.authenticated;
+
                 default:
-                    authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                    status = Status.failed;
-                    // Ignore
-                    break;
+                    throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
             }
         }
-        else {
-            Log.debug("SASLAuthentication: Unknown namespace sent in auth element: " + doc.asXML());
-            authenticationFailed(session, Failure.MALFORMED_REQUEST);
-            status = Status.failed;
-        }
-        // Check if SASL authentication has finished so we can clean up temp information
-        if (status == Status.failed || status == Status.authenticated) {
-            // Remove the SaslServer from the Session
-            session.removeSessionData("SaslServer");
-            // Remove the requested SASL mechanism by the client
-            session.removeSessionData("SaslMechanism");
-        }
-        return status;
-    }
-
-    /**
-     * Returns true if shared secret authentication is enabled. Shared secret
-     * authentication creates an anonymous session, but requires that the authenticating
-     * entity know a shared secret key. The client sends a digest of the secret key,
-     * which is compared against a digest of the local shared key.
-     *
-     * @return true if shared secret authentication is enabled.
-     */
-    public static boolean isSharedSecretAllowed() {
-        return JiveGlobals.getBooleanProperty("xmpp.auth.sharedSecretEnabled");
-    }
-
-    /**
-     * Sets whether shared secret authentication is enabled. Shared secret
-     * authentication creates an anonymous session, but requires that the authenticating
-     * entity know a shared secret key. The client sends a digest of the secret key,
-     * which is compared against a digest of the local shared key.
-     *
-     * @param sharedSecretAllowed true if shared secret authentication should be enabled.
-     */
-    public static void setSharedSecretAllowed(boolean sharedSecretAllowed) {
-        JiveGlobals.setProperty("xmpp.auth.sharedSecretEnabled", sharedSecretAllowed ? "true" : "false");
-    }
-
-    /**
-     * Returns the shared secret value, or <tt>null</tt> if shared secret authentication is
-     * disabled. If this is the first time the shared secret value has been requested (and
-     * shared secret auth is enabled), the key will be randomly generated and stored in the
-     * property <tt>xmpp.auth.sharedSecret</tt>.
-     *
-     * @return the shared secret value.
-     */
-    public static String getSharedSecret() {
-        if (!isSharedSecretAllowed()) {
-            return null;
-        }
-        String sharedSecret = JiveGlobals.getProperty("xmpp.auth.sharedSecret");
-        if (sharedSecret == null) {
-            sharedSecret = StringUtils.randomString(8);
-            JiveGlobals.setProperty("xmpp.auth.sharedSecret", sharedSecret);
-        }
-        return sharedSecret;
-    }
-
-    /**
-     * Returns true if the supplied digest matches the shared secret value. The digest
-     * must be an MD5 hash of the secret key, encoded as hex. This value is supplied
-     * by clients attempting shared secret authentication.
-     *
-     * @param digest the MD5 hash of the secret key, encoded as hex.
-     * @return true if authentication succeeds.
-     */
-    public static boolean authenticateSharedSecret(String digest) {
-        if (!isSharedSecretAllowed()) {
-            return false;
-        }
-        String sharedSecert = getSharedSecret();
-        return StringUtils.hash(sharedSecert).equals( digest );
-    }
-
-
-    private static Status doAnonymousAuthentication(LocalSession session) {
-        if (XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed()) {
-            // Verify that client can connect from his IP address
-            boolean forbidAccess = !LocalClientSession.isAllowedAnonymous( session.getConnection() );
-            if (forbidAccess) {
-                authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                return Status.failed;
+        catch ( SaslException ex )
+        {
+            Log.debug( "SASL negotiation failed for session: {}", session, ex );
+            final Failure failure;
+            if ( ex instanceof SaslFailureException && ((SaslFailureException) ex).getFailure() != null )
+            {
+                failure = ((SaslFailureException) ex).getFailure();
             }
-            // Just accept the authentication :)
-            authenticationSuccessful(session, null, null);
-            return Status.authenticated;
+            else
+            {
+                failure = Failure.NOT_AUTHORIZED;
+            }
+            authenticationFailed( session, failure );
+            session.removeSessionData( "SaslServer" );
+            return Status.failed;
         }
-        else {
-            // anonymous login is disabled so close the connection
-            authenticationFailed(session, Failure.NOT_AUTHORIZED);
+        catch( Exception ex )
+        {
+            Log.warn( "An unexpected exception occurred during SASL negotiation. Affected session: {}", session, ex );
+            authenticationFailed( session, Failure.NOT_AUTHORIZED );
+            session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
     }
 
-    private static Status doExternalAuthentication(LocalSession session, Element doc) {
-        // At this point the connection has already been secured using TLS
-
-        if (session instanceof IncomingServerSession) {
-
-            String hostname = doc.getTextTrim();
-            if (hostname == null || hostname.length() == 0) {
-                // No hostname was provided so send a challenge to get it
-                sendChallenge(session, new byte[0]);
-                return Status.needResponse;
-            }
-    
-            hostname = new String(StringUtils.decodeBase64(hostname), StandardCharsets.UTF_8);
-            if (hostname.length() == 0) {
-                hostname = null;
-            }
-            try {
-                LocalIncomingServerSession svr = (LocalIncomingServerSession)session;
-                String defHostname = svr.getDefaultIdentity();
-                if (hostname == null) {
-                    hostname = defHostname;
-                } else if (!hostname.equals(defHostname)) {
-                    // Mismatch; really odd.
-                    Log.info("SASLAuthentication rejected from='{}' and authzid='{}'", hostname, defHostname);
-                    authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                    return Status.failed; 
-                }
-            } catch(Exception e) {
-                // Erm. Nothing?
-            }
-            if (hostname == null) {
-                Log.info("No authzid supplied for anonymous session.");
-                authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                return Status.failed;
-            }
-            // Check if certificate validation is disabled for s2s
-            // Flag that indicates if certificates of the remote server should be validated.
-            // Disabling certificate validation is not recommended for production environments.
-            boolean verify =
-                    JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true);
-            if (!verify) {
-                authenticationSuccessful(session, hostname, null);
-                return Status.authenticated;
-            } else if(verifyCertificates(session.getConnection().getPeerCertificates(), hostname, true)) {
-                authenticationSuccessful(session, hostname, null);
-                LocalIncomingServerSession s = (LocalIncomingServerSession)session;
-                if (s != null) {
-                    s.tlsAuth();
-                }
-                return Status.authenticated;
-            }
-        }
-        else if (session instanceof LocalClientSession) {
-            // Client EXTERNAL login
-            Log.debug("SASLAuthentication: EXTERNAL authentication via SSL certs for c2s connection");
-            
-            // This may be null, we will deal with that later
-            String username = new String(StringUtils.decodeBase64(doc.getTextTrim()), StandardCharsets.UTF_8);
-            String principal = "";
-            ArrayList<String> principals = new ArrayList<>();
-            Connection connection = session.getConnection();
-            if (connection.getPeerCertificates().length < 1) {
-                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no certificates found.");
-                authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                return Status.failed; 
-            }
-
-            final KeyStore keyStore   = connection.getConfiguration().getIdentityStore().getStore();
-            final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
-
-            final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
-
-            if (trusted == null) {
-                Log.debug("SASLAuthentication: EXTERNAL authentication requested, but EE cert untrusted.");
-                authenticationFailed(session, Failure.NOT_AUTHORIZED);
-                return Status.failed;
-            }
-            principals.addAll(CertificateManager.getClientIdentities(trusted));
-
-            if(principals.size() == 1) {
-                principal = principals.get(0);
-            } else if(principals.size() > 1) {
-                Log.debug("SASLAuthentication: EXTERNAL authentication: more than one principal found, using first.");
-                principal = principals.get(0);
-            } else {
-                Log.debug("SASLAuthentication: EXTERNAL authentication: No principals found.");
-            }
-
-            if (username == null || username.length() == 0) {
-                // No username was provided, according to XEP-0178 we need to:
-                //    * attempt to get it from the cert first
-                //    * have the server assign one
-
-                // There shouldn't be more than a few principals in here. One ideally
-                // We set principal to the first one in the list to have a sane default
-                // If this list is empty, then the cert had no identity at all, which
-                // will cause an authorization failure
-                for(String princ : principals) {
-                    String u = AuthorizationManager.map(princ);
-                    if(!u.equals(princ)) {
-                        username = u;
-                        principal = princ;
-                        break;
-                    }
-                }
-                if (username == null || username.length() == 0) {
-                    // Still no username.  Punt.
-                    username = principal;
-                }
-                Log.debug("SASLAuthentication: no username requested, using "+username);
-            }
-
-            //Its possible that either/both username and principal are null here
-            //The providers should not allow a null authorization
-            if (AuthorizationManager.authorize(username,principal)) {
-                Log.debug("SASLAuthentication: "+principal+" authorized to "+username);
-                authenticationSuccessful(session, username,  null);
-                return Status.authenticated;
-            }
-        } else {
-            Log.debug("SASLAuthentication: unknown session type. Cannot perform EXTERNAL authentication");
-        }
-        authenticationFailed(session, Failure.NOT_AUTHORIZED);
-        return Status.failed;
-    }
-    
     public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
         for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
             // Verify that either the identity is the same as the hostname, or for wildcarded
@@ -638,29 +359,6 @@ public class SASLAuthentication {
             return verifyCertificate(trusted, hostname);
         }
         return false;
-    }
-
-    private static Status doSharedSecretAuthentication(LocalSession session, Element doc) {
-        String secretDigest;
-        String response = doc.getTextTrim();
-        if (response == null || response.length() == 0) {
-            // No info was provided so send a challenge to get it
-            sendChallenge(session, new byte[0]);
-            return Status.needResponse;
-        }
-
-        // Parse data and obtain username & password
-        String data = new String(StringUtils.decodeBase64(response), StandardCharsets.UTF_8);
-        StringTokenizer tokens = new StringTokenizer(data, "\0");
-        tokens.nextToken();
-        secretDigest = tokens.nextToken();
-        if (authenticateSharedSecret(secretDigest)) {
-            authenticationSuccessful(session, null, null);
-            return Status.authenticated;
-        }
-        // Otherwise, authentication failed.
-        authenticationFailed(session, Failure.NOT_AUTHORIZED);
-        return Status.failed;
     }
 
     private static void sendChallenge(Session session, byte[] challenge) {
@@ -739,19 +437,30 @@ public class SASLAuthentication {
      * mechanism by Openfire. Actual SASL handling is done by Java itself, so you must add
      * the provider to Java.
      *
-     * @param mechanism the new SASL mechanism.
+     * @param mechanism the name of the new SASL mechanism (cannot be null or an empty String).
      */
-    public static void addSupportedMechanism(String mechanism) {
-        mechanisms.add(mechanism);
+    public static void addSupportedMechanism(String mechanismName) {
+        if ( mechanismName == null || mechanismName.isEmpty() ) {
+            throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
+        }
+        mechanisms.add( mechanismName.toUpperCase() );
+        Log.info( "Support added for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
     }
 
     /**
      * Removes a SASL mechanism from the list of supported SASL mechanisms by the server.
      *
-     * @param mechanism the SASL mechanism to remove.
+     * @param mechanismName the name of the SASL mechanism to remove (cannot be null or empty, not case sensitive).
      */
-    public static void removeSupportedMechanism(String mechanism) {
-        mechanisms.remove(mechanism);
+    public static void removeSupportedMechanism(String mechanismName) {
+        if ( mechanismName == null || mechanismName.isEmpty() ) {
+            throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
+        }
+
+        if ( mechanisms.remove( mechanismName.toUpperCase() ) )
+        {
+            Log.info( "Support removed for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
+        }
     }
 
     /**
@@ -787,7 +496,7 @@ public class SASLAuthentication {
             }
             else if (mech.equals("JIVE-SHAREDSECRET")) {
                 // Check shared secret is supported
-                if (!isSharedSecretAllowed()) {
+                if (!JiveSharedSecretSaslServer.isSharedSecretAllowed()) {
                     it.remove();
                 }
             }
@@ -795,59 +504,27 @@ public class SASLAuthentication {
         return answer;
     }
 
-    private static void initMechanisms() {
+    private static void initMechanisms()
+    {
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("sasl.mechs");
         JiveGlobals.migrateProperty("sasl.gssapi.debug");
         JiveGlobals.migrateProperty("sasl.gssapi.config");
         JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
 
-        mechanisms = new HashSet<>();
-        String available = JiveGlobals.getProperty("sasl.mechs");
-        if (available == null) {
-            mechanisms.add("ANONYMOUS");
-            mechanisms.add("PLAIN");
-            mechanisms.add("DIGEST-MD5");
-            mechanisms.add("CRAM-MD5");
-            mechanisms.add("SCRAM-SHA-1");
-            mechanisms.add("JIVE-SHAREDSECRET");
-        }
-        else {
-            StringTokenizer st = new StringTokenizer(available, " ,\t\n\r\f");
-            while (st.hasMoreTokens()) {
-                String mech = st.nextToken().toUpperCase();
-                // Check that the mech is a supported mechansim. Maybe we shouldnt check this and allow any?
-                if (mech.equals("ANONYMOUS") ||
-                        mech.equals("PLAIN") ||
-                        mech.equals("DIGEST-MD5") ||
-                        mech.equals("CRAM-MD5") ||
-                        mech.equals("SCRAM-SHA-1") ||
-                        mech.equals("GSSAPI") ||
-                        mech.equals("EXTERNAL") ||
-                        mech.equals("JIVE-SHAREDSECRET")) 
-                {
-                    Log.debug("SASLAuthentication: Added " + mech + " to mech list");
-                    mechanisms.add(mech);
-                }
+        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET" );
+        final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
+        while ( st.hasMoreTokens() )
+        {
+            final String mech = st.nextToken().toUpperCase();
+            try
+            {
+                addSupportedMechanism( mech );
             }
-
-            if (mechanisms.contains("GSSAPI")) {
-                if (JiveGlobals.getProperty("sasl.gssapi.config") != null) {
-                    System.setProperty("java.security.krb5.debug",
-                            JiveGlobals.getProperty("sasl.gssapi.debug", "false"));
-                    System.setProperty("java.security.auth.login.config",
-                            JiveGlobals.getProperty("sasl.gssapi.config"));
-                    System.setProperty("javax.security.auth.useSubjectCredsOnly",
-                            JiveGlobals.getProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
-                }
-                else {
-                    //Not configured, remove the option.
-                    Log.debug("SASLAuthentication: Removed GSSAPI from mech list");
-                    mechanisms.remove("GSSAPI");
-                }
+            catch ( Exception ex )
+            {
+                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", mech, ex );
             }
         }
-        //Add our providers to the Security class
-        Security.addProvider(new org.jivesoftware.openfire.sasl.SaslProvider());
     }
 }

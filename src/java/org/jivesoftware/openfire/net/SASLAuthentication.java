@@ -230,7 +230,7 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalClientSession.class.getCanonicalName(), session );
-                    props.put( Sasl.POLICY_NOANONYMOUS, !XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed() );
+                    props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed() ) );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", session.getServerName(), props, new XMPPCallbackHandler() );
                     if ( saslServer == null )

@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.JiveGlobals;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -45,7 +46,7 @@ public class AnonymousSaslServer implements SaslServer
         complete = true;
 
         // Verify server-wide policy.
-        if ( !XMPPServer.getInstance().getIQAuthHandler().isAnonymousAllowed() )
+        if ( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) )
         {
             throw new SaslException( "Authentication failed" );
         }

@@ -279,7 +279,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             comp.addElement("method").setText("zlib");
         }
         // Add info about Non-SASL authentication
-        child.addElement("auth", "http://jabber.org/features/iq-auth");
+        if (XMPPServer.getInstance().getIQRouter().supports("jabber:iq:auth")) {
+            child.addElement("auth", "http://jabber.org/features/iq-auth");
+        }
         // Add info about In-Band Registration
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
             child.addElement("register", "http://jabber.org/features/iq-register");

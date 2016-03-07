@@ -18,7 +18,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.openfire.handler.IQAuthHandler,
                  org.jivesoftware.openfire.handler.IQRegisterHandler,
                  org.jivesoftware.openfire.session.LocalClientSession,
                  org.jivesoftware.util.ParamUtils"
@@ -26,6 +25,7 @@
 %>
 <%@ page import="java.util.regex.Pattern" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -51,12 +51,11 @@
     String blockedIPs = request.getParameter("blockedIPs");
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
-    IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
-        authHandler.setAllowAnonymous(anonLogin);
+        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonLogin));
 
         // Build a Map with the allowed IP addresses
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
@@ -100,7 +99,7 @@
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = authHandler.isAnonymousAllowed();
+    anonLogin = JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" );
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
     Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();

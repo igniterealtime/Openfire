@@ -56,7 +56,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
     {
         allMechanisms = new HashSet<>();
         allMechanisms.add( new Mechanism( "PLAIN", true, true ) );
-        allMechanisms.add( new Mechanism( "SCRAM_SHA_1", false, false ) );
+        allMechanisms.add( new Mechanism( "SCRAM-SHA-1", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
     }
@@ -80,7 +80,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 }
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
-            case "SCRAM_SHA_1":
+            case "SCRAM-SHA-1":
                 return new ScramSha1SaslServer();
 
             case "ANONYMOUS":

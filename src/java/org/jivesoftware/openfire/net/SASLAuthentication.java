@@ -229,7 +229,7 @@ public class SASLAuthentication {
 
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
-                    props.put( LocalClientSession.class.getCanonicalName(), session );
+                    props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", session.getServerName(), props, new XMPPCallbackHandler() );

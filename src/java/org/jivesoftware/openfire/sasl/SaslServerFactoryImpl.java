@@ -132,16 +132,19 @@ public class SaslServerFactoryImpl implements SaslServerFactory
 
         for ( final Mechanism mechanism : allMechanisms )
         {
-            if ( mechanism.allowsAnonymous && props.containsKey( Sasl.POLICY_NOANONYMOUS ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOANONYMOUS ) ) )
+            if ( props != null )
             {
-                // Do not include a mechanism that allows anonymous authentication when the 'no anonymous' policy is set.
-                continue;
-            }
+                if ( mechanism.allowsAnonymous && props.containsKey( Sasl.POLICY_NOANONYMOUS ) && (Boolean) props.get( Sasl.POLICY_NOANONYMOUS ) )
+                {
+                    // Do not include a mechanism that allows anonymous authentication when the 'no anonymous' policy is set.
+                    continue;
+                }
 
-            if ( mechanism.isPlaintext && props.containsKey( Sasl.POLICY_NOPLAINTEXT ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOPLAINTEXT ) ) )
-            {
-                // Do not include a mechanism that is susceptible to simple plain passive attacks when the 'no plaintext' policy is set.
-                continue;
+                if ( mechanism.isPlaintext && props.containsKey( Sasl.POLICY_NOPLAINTEXT ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOPLAINTEXT ) ) )
+                {
+                    // Do not include a mechanism that is susceptible to simple plain passive attacks when the 'no plaintext' policy is set.
+                    continue;
+                }
             }
 
             // Mechanism passed all filters. It should be part of the result.

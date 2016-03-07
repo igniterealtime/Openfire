@@ -134,7 +134,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         {
             if ( props != null )
             {
-                if ( mechanism.allowsAnonymous && props.containsKey( Sasl.POLICY_NOANONYMOUS ) && (Boolean) props.get( Sasl.POLICY_NOANONYMOUS ) )
+                if ( mechanism.allowsAnonymous && props.containsKey( Sasl.POLICY_NOANONYMOUS ) && Boolean.parseBoolean( (String) props.get( Sasl.POLICY_NOANONYMOUS ) ) )
                 {
                     // Do not include a mechanism that allows anonymous authentication when the 'no anonymous' policy is set.
                     continue;

@@ -55,7 +55,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
     public SaslServerFactoryImpl()
     {
         allMechanisms = new HashSet<>();
-        allMechanisms.add( new Mechanism( "PLAIN", true, true ) );
+        allMechanisms.add( new Mechanism( "PLAIN", false, true ) );
         allMechanisms.add( new Mechanism( "SCRAM-SHA-1", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
@@ -73,7 +73,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         switch ( mechanism.toUpperCase() )
         {
             case "PLAIN":
-                if ( cbh != null )
+                if ( cbh == null )
                 {
                     Log.debug( "Unable to instantiate {} SaslServer: A callbackHandler with support for Password, Name, and AuthorizeCallback required.", mechanism );
                     return null;

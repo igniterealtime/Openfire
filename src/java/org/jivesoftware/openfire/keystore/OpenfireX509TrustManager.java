@@ -267,6 +267,10 @@ public class OpenfireX509TrustManager implements X509TrustManager
             // This exception generally isn't very helpful. This block attempts to print more debug information.
             try
             {
+                Log.debug( "** Accepted Issuers (trust anchors, \"root CA's\"):" );
+                for ( X509Certificate acceptedIssuer : acceptedIssuers) {
+                    Log.debug( "   - " + acceptedIssuer.getSubjectDN() + "/" + acceptedIssuer.getIssuerDN() );
+                }
                 Log.debug( "** Chain to be validated:" );
                 Log.debug( "   length: " + chain.length );
                 for (int i=0; i<chain.length; i++) {

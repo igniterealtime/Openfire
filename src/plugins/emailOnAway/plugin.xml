@@ -6,8 +6,8 @@
     <name>Email on Away</name>
     <description>Messages sent to alternate location when recipient is away</description>
     <author>Nick Mossie</author>
-    <version>1.0.1</version>
+    <version>1.0.1<!--update by wroot@igniterealtime.org--></version>
     <date>03/11/2016</date>
-    <minServerVersion>2.3.0</minServerVersion><!--update by wroot@igniterealtime.org-->
+    <minServerVersion>2.3.0</minServerVersion>
 
 </plugin>

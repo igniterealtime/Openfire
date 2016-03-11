@@ -20,3 +20,4 @@ out/
 # Ignore Netbeans project files
 nbproject/
 nbbuild/
+/bin/

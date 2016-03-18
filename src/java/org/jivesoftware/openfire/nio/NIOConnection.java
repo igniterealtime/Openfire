@@ -295,10 +295,6 @@ public class NIOConnection implements Connection {
             IoBuffer buffer = IoBuffer.allocate(4096);
             buffer.setAutoExpand(true);
             try {
-            	// OF-464: if the connection has been dropped, fail over to backupDeliverer (offline)
-            	if (!ioSession.isConnected()) {
-            		throw new IOException("Connection reset/closed by peer");
-            	}
                 buffer.putString(packet.getElement().asXML(), encoder.get());
                 if (flashClient) {
                     buffer.put((byte) '\0');
@@ -344,10 +340,6 @@ public class NIOConnection implements Connection {
                 buffer.flip();
                 ioSessionLock.lock();
                 try {
-                    // OF-464: handle dropped connections (no backupDeliverer in this case?)
-                    if (!ioSession.isConnected()) {
-                        throw new IOException("Connection reset/closed by peer");
-                    }
                     ioSession.write(buffer);
                 }
                 finally {

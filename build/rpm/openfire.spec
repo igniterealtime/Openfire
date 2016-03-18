@@ -1,15 +1,15 @@
 Summary: Openfire XMPP Server
 Name: openfire
 Version: %{OPENFIRE_VERSION}
-Release: 1
+Release: %{OPENFIRE_RELEASE}
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{OPENFIRE_SOURCE}
 %ifnarch noarch
 Source1: %{JRE_BUNDLE}
 %endif
 Group: Applications/Communications
-Vendor: Jive Software
-Packager: Jive Software
+Vendor: Igniterealtime Community
+Packager: Igniterealtime Community
 License: Apache license v2.0
 AutoReqProv: no
 URL: http://www.igniterealtime.org/
@@ -24,8 +24,6 @@ URL: http://www.igniterealtime.org/
 Openfire is a leading Open Source, cross-platform IM server based on the
 XMPP (Jabber) protocol. It has great performance, is easy to setup and use,
 and delivers an innovative feature set.
-
-This particular release includes a bundled JRE.
 
 %prep
 %setup -q -n openfire_src
@@ -152,5 +150,5 @@ exit 0
 %endif
 
 %changelog
-* %{OPENFIRE_BUILDDATE} Jive Software <webmaster@jivesoftware.com> %{OPENFIRE_VERSION}-1
-- Automatic RPM build.
+* %{OPENFIRE_BUILDDATE} Igniterealtime Community <webmaster@igniterealtime.org> %{OPENFIRE_VERSION}-%{OPENFIRE_RELEASE}
+- Automated RPM build with git rev-parse --short HEAD of %{OPENFIRE_REPOVERSION}

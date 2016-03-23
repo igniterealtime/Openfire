@@ -2,6 +2,8 @@
 <%@page import="java.util.LinkedHashMap"%>
 <%@page import="java.security.PrivateKey"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
@@ -25,13 +27,27 @@
 <% webManager.init(request, response, session, application, out); %>
 
 <% // Get parameters:
-    final boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
-    final boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
-    final boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
+    boolean generate          = ParamUtils.getBooleanParameter(request, "generate");
+    boolean delete            = ParamUtils.getBooleanParameter(request, "delete");
+    boolean importReply       = ParamUtils.getBooleanParameter(request, "importReply");
     final String alias              = ParamUtils.getParameter( request, "alias" );
     final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
     final Map<String, String> errors = new HashMap<>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (generate | delete | importReply) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            generate = false;
+            delete = false;
+            importReply = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     ConnectionType connectionType = null;
     IdentityStore identityStore = null;
@@ -174,7 +190,7 @@
         <c:if test="${not validDSACert or not validRSACert}">
             <admin:infobox type="warning">
                 <fmt:message key="ssl.certificates.keystore.no_installed">
-                    <fmt:param value="<a href='security-keystore.jsp?generate=true&connectionType=${connectionType}'>"/>
+                    <fmt:param value="<a href='security-keystore.jsp?csrf=${csrf}&generate=true&connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
                     <fmt:param value="<a href='import-keystore-certificate.jsp?connectionType=${connectionType}'>"/>
                     <fmt:param value="</a>"/>
@@ -305,7 +321,7 @@
                                     <c:out value="${certificate.publicKey.algorithm}"/>
                                 </td>
                                 <td width="1" align="center">
-                                    <a href="security-keystore.jsp?alias=${alias}&connectionType=${connectionType}&delete=true"
+                                    <a href="security-keystore.jsp?csrf=${csrf}&alias=${alias}&connectionType=${connectionType}&delete=true"
                                        title="<fmt:message key="global.click_delete"/>"
                                        onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -314,6 +330,7 @@
 
                             <% if (isSigningPending) { %>
                             <form action="security-keystore.jsp?connectionType=${connectionType}" method="post">
+                                <input type="hidden" name="csrf" value="csrf">
                                 <input type="hidden" name="importReply" value="true">
                                 <input type="hidden" name="alias" value="${alias}">
                                 <tr>

@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.AlreadyExistsException,
                  java.util.*"
     errorPage="error.jsp"
@@ -46,6 +47,17 @@
     boolean success = request.getParameter("success") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
     String mucdesc = ParamUtils.getParameter(request,"mucdesc");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Load the service object
     if (!create && !webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
@@ -153,6 +165,7 @@
 
 <!-- BEGIN 'Service Name'-->
 <form action="muc-service-edit-form.jsp" method="post">
+    <input type="hidden" name="csrf" value="csrf">
 <input type="hidden" name="save" value="true">
 <% if (!create) { %>
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">

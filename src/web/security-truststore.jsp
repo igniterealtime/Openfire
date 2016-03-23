@@ -1,7 +1,9 @@
 <%@ page errorPage="error.jsp"%>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.Collections" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
@@ -17,12 +19,24 @@
 <jsp:useBean id="now" class="java.util.Date"/>
 <%  webManager.init(request, response, session, application, out );
 
-    final boolean delete          = ParamUtils.getBooleanParameter( request, "delete" );
+    boolean delete          = ParamUtils.getBooleanParameter( request, "delete" );
     final String alias            = ParamUtils.getParameter( request, "alias" );
 
     final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
     final Map<String, String> errors = new HashMap<>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     ConnectionType connectionType = null;
     TrustStore trustStore = null;
@@ -207,7 +221,7 @@
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
                                     <td width="1" align="center">
-                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true"
+                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true&csrf=csrf"
                                            title="<fmt:message key="global.click_delete"/>"
                                            onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                                 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

@@ -35,6 +35,17 @@
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
     String groupName = ParamUtils.getParameter(request,"group");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
@@ -81,6 +92,7 @@
 </p>
 
 <form action="group-delete.jsp">
+    <input type="hidden" name="csrf" value="csrf">
 <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
 <input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

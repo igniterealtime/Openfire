@@ -11,6 +11,7 @@
 <%@page import="org.bouncycastle.asn1.x509.Extension"%>
 <%@page import="org.bouncycastle.asn1.x500.X500NameBuilder"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.util.HashMap" %>
@@ -27,7 +28,7 @@
     String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
      // Get parameters:
-    final boolean save              = ParamUtils.getParameter(request, "save") != null;
+    boolean save              = ParamUtils.getParameter(request, "save") != null;
     final String name               = domain;
     final String organizationalUnit = ParamUtils.getParameter(request, "ou");
     final String organization       = ParamUtils.getParameter(request, "o");
@@ -37,6 +38,18 @@
     final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
     final Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     ConnectionType connectionType = null;
     IdentityStore identityStore = null;
@@ -160,6 +173,7 @@
 
 <!-- BEGIN 'Issuer information form' -->
 <form action="security-keystore-signing-request.jsp" method="post">
+    <input type="hidden" name="csrf" value="csrf">
     <input type="hidden" name="save" value="true">
     <input type="hidden" name="connectionType" value="${connectionType}">
     <div class="jive-contentBoxHeader">

@@ -7,6 +7,9 @@
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfiguration" %>
 <%@ page import="java.io.File" %>
 <%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -23,7 +26,19 @@
     pageContext.setAttribute( "connectionTypes", ConnectionType.values() );
     pageContext.setAttribute( "certificateStoreManager", certificateStoreManager );
 
-    final boolean update = request.getParameter("update") != null;
+    boolean update = request.getParameter("update") != null;
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if ( update ) {
         ConnectionType connectionType = null;
         try {
@@ -130,6 +145,7 @@
     </c:set>
 
     <form action="security-certificate-store-management.jsp" method="post">
+        <input type="hidden" name="csrf" value="csrf">
         <input type="hidden" name="connectionType" value="${connectionType}"/>
 
         <admin:contentBox title="${title}">

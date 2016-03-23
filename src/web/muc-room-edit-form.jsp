@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
@@ -105,6 +106,18 @@
 
     // Handle an save
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         // do validation
 
@@ -445,6 +458,7 @@
 <% if (!create) { %>
     <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 <% } %>
+    <input type="hidden" name="csrf" value="csrf">
 <input type="hidden" name="save" value="true">
 <input type="hidden" name="create" value="<%= create %>">
 <input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">

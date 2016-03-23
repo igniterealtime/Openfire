@@ -45,18 +45,20 @@
     Map<String, String> errors = new HashMap<String, String>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    // Handle a cancel
-    if (request.getParameter("cancel") != null) {
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
-        return;
-    }
-
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             save = false;
             errors.put("csrf", "CSRF Failure");
         }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    // Handle a cancel
+    if (request.getParameter("cancel") != null) {
+        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        return;
     }
 
     // Load the user object
@@ -101,9 +103,6 @@
             return;
         }
     }
-
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
 %>
 
 <html>
@@ -157,7 +156,7 @@
 
 <form action="user-edit-form.jsp">
 
-<input type="hidden" name="csrf" value="<%= StringUtils.escapeForXML(csrfParam) %>">
+<input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="hidden" name="save" value="true">
 

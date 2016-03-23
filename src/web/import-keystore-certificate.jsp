@@ -117,7 +117,7 @@
                     <label for="passPhrase"><fmt:message key="ssl.import.certificate.keystore.pass-phrase" /></label>
                 </td>
                 <td width="99%">
-                    <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="${param.passPhrase}">
+                    <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="<c:out value="${param.passPhrase}"/>">
                 </td>
             </tr>
             <tr valign="top">

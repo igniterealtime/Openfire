@@ -201,7 +201,7 @@
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
    <% if (groupName != null) { %>
     <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>" id="existingName">

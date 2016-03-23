@@ -104,7 +104,7 @@
 </p>
 
 <form action="muc-room-delete.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 
 <fieldset>

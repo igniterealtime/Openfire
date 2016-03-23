@@ -180,7 +180,7 @@
 <%  } %>
 
 <form action="connection-managers-settings.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <fieldset>
     <div>

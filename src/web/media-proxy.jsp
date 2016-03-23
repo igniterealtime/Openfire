@@ -141,7 +141,7 @@
 <% } %>
 
 <form action="media-proxy.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <div class="jive-contentBoxHeader">
         <fmt:message key="mediaproxy.form.label"/>
     </div>
@@ -336,7 +336,7 @@
         </tbody>
     </table>
     <form action="">
-        <input type="hidden" name="csrf" value="csrf">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="submit" name="stop" value="<fmt:message key="mediaproxy.summary.stopbutton" />"/>
     </form>
 </div>

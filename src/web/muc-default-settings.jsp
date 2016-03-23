@@ -194,7 +194,7 @@
 
 <!-- BEGIN 'Default Room Settings' -->
 <form action="muc-default-settings.jsp?save" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
         <fmt:message key="muc.default.settings.title" />

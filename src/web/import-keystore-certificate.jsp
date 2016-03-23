@@ -121,7 +121,7 @@
 
 <!-- BEGIN 'Import Private Key and Certificate' -->
 <form action="import-keystore-certificate.jsp?connectionType=${connectionType}" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.private-key.title"/></c:set>
     <admin:contentBox title="${title}">

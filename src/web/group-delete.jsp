@@ -92,7 +92,7 @@
 </p>
 
 <form action="group-delete.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
 <input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

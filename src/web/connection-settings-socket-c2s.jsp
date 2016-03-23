@@ -140,7 +140,7 @@
 </p>
 
 <form action="connection-settings-socket-c2s.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <fmt:message key="ssl.settings.client.plaintext.boxtitle" var="plaintextboxtitle"/>
     <admin:contentBox title="${plaintextboxtitle}">

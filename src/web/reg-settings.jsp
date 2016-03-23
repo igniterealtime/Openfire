@@ -151,7 +151,7 @@
 </p>
 
 <form action="reg-settings.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <% if (save) { %>
 

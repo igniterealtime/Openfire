@@ -157,7 +157,7 @@
 } %>
 
 <form action="http-bind.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <div class="jive-contentBox" style="-moz-border-radius: 3px;">
         <table cellpadding="3" cellspacing="0" border="0">

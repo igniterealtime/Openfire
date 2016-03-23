@@ -143,7 +143,7 @@ else if (updateSucess) { %>
 
 <!-- BEGIN manage updates settings -->
 <form action="manage-updates.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<!--<div class="jive-contentBoxHeader">
 
 	</div>-->

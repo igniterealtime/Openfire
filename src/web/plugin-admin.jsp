@@ -645,7 +645,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
     <h3><fmt:message key="plugin.admin.upload_plugin" /></h3>
     <p><fmt:message key="plugin.admin.upload_plugin.info" /></p>
     <form action="plugin-admin.jsp?uploadplugin" enctype="multipart/form-data" method="post">
-        <input type="hidden" name="csrf" value="csrf">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="file" name="uploadfile" />
         <input type="submit" value="<fmt:message key="plugin.admin.upload_plugin" />" />
     </form>

@@ -83,7 +83,7 @@
 
 <!-- BEGIN 'Set Private Data Policy' -->
 <form action="private-data-settings.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="private.data.settings.policy" />
 	</div>

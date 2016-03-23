@@ -279,7 +279,7 @@
 </p>
 
 <form action="connection-settings-socket-s2s.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <fmt:message key="server2server.settings.boxtitle" var="boxtitle"/>
     <admin:contentBox title="${boxtitle}">
@@ -308,7 +308,7 @@
 
 <!-- BEGIN 'Idle Connection Settings' -->
 <form action="connection-settings-socket-s2s.jsp?closeSettings" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <fmt:message key="server2server.settings.close_settings" var="idleTitle"/>
     <admin:contentBox title="${idleTitle}">
         <table cellpadding="3" cellspacing="0" border="0">
@@ -348,7 +348,7 @@
 <fmt:message key="server2server.settings.allowed" var="allowedTitle"/>
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-socket-s2s.jsp" method="post">
-        <input type="hidden" name="csrf" value="csrf">
+        <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="top">
                 <td width="1%" nowrap>
@@ -377,7 +377,7 @@
     </form>
 
     <form action="connection-settings-socket-s2s.jsp" method="post">
-        <input type="hidden" name="csrf" value="csrf">
+        <input type="hidden" name="csrf" value="${csrf}">
         <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
             <tr>
                 <th width="1%">&nbsp;</th>
@@ -469,7 +469,7 @@
     </table>
     <br>
     <form action="connection-settings-socket-s2s.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="1" border="0" width="100%">
             <tr>
                 <td nowrap width="1%">

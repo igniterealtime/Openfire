@@ -211,7 +211,7 @@
 
 <!-- BEGIN 'Offline Message Policy' -->
 <form action="offline-messages.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="offline.messages.policy" />
 	</div>

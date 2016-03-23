@@ -147,7 +147,7 @@
 
 <!-- BEGIN 'History Settings' -->
 <form action="muc-history-settings.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.history.settings.legend" />

@@ -286,7 +286,7 @@
 </p>
 
 <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <fmt:message key="component.settings.plaintext.boxtitle" var="plaintextboxtitle"/>
     <admin:contentBox title="${plaintextboxtitle}">
@@ -335,7 +335,7 @@
 <fmt:message key="component.settings.allowed" var="allowedTitle" />
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="0" border="0" width="100%" >
             <tr valign="top">
                 <td colspan="2">
@@ -409,7 +409,7 @@
     <br/>
 
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td nowrap width="1%">
@@ -473,7 +473,7 @@
     <br/>
 
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td nowrap width="1%">

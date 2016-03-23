@@ -128,7 +128,7 @@
 </p>
 
 <form action="chatroom-history-settings.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <fieldset>
     <legend><fmt:message key="chatroom.history.settings.policy" /></legend>

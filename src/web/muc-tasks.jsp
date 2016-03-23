@@ -200,7 +200,7 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.user_setting" />
@@ -242,7 +242,7 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.conversation.logging" />

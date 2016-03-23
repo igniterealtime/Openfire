@@ -458,7 +458,7 @@
 <% if (!create) { %>
     <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 <% } %>
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="save" value="true">
 <input type="hidden" name="create" value="<%= create %>">
 <input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">

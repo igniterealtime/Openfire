@@ -330,7 +330,7 @@
 
                             <% if (isSigningPending) { %>
                             <form action="security-keystore.jsp?connectionType=${connectionType}" method="post">
-                                <input type="hidden" name="csrf" value="csrf">
+                                <input type="hidden" name="csrf" value="${csrf}">
                                 <input type="hidden" name="importReply" value="true">
                                 <input type="hidden" name="alias" value="${alias}">
                                 <tr>

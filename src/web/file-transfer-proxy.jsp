@@ -128,7 +128,7 @@ else { %>
 
 <!-- BEGIN 'Proxy Service' -->
 <form action="file-transfer-proxy.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="filetransferproxy.settings.enabled.legend"/>
 	</div>

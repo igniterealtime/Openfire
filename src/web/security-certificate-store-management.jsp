@@ -145,7 +145,7 @@
     </c:set>
 
     <form action="security-certificate-store-management.jsp" method="post">
-        <input type="hidden" name="csrf" value="csrf">
+        <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="connectionType" value="${connectionType}"/>
 
         <admin:contentBox title="${title}">

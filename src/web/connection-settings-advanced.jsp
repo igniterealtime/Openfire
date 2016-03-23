@@ -295,7 +295,7 @@
 </p>
 
 <form action="connection-settings-advanced.jsp?connectionType=${connectionType}&connectionMode=${connectionMode}" onsubmit="selectAllOptions('cipherSuitesEnabled')" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="update" value="true" />
 
     <fmt:message key="connection.advanced.settings.tcp.boxtitle" var="tcpboxtitle"/>

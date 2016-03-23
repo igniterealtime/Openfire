@@ -173,7 +173,7 @@
 
 <!-- BEGIN 'Issuer information form' -->
 <form action="security-keystore-signing-request.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="save" value="true">
     <input type="hidden" name="connectionType" value="${connectionType}">
     <div class="jive-contentBoxHeader">

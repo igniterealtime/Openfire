@@ -205,7 +205,7 @@
 
 <!-- BEGIN 'Permission Policy' -->
 <form action="muc-create-permission.jsp?save" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.policy" />
@@ -245,7 +245,7 @@
 <%  if (mucService.isRoomCreationRestricted()) { %>
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.allowed_users" />

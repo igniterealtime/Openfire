@@ -341,7 +341,7 @@
 	<div class="jive-horizontalRule"></div>
 
 <form name="ff" action="group-edit.jsp">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>"/>
 
@@ -496,7 +496,7 @@
 		</p>
 
         <form action="group-edit.jsp" method="post" name="f">
-            <input type="hidden" name="csrf" value="csrf">
+            <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
@@ -515,7 +515,7 @@
         <% } %>
 
         <form action="group-edit.jsp" method="post" name="main">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>

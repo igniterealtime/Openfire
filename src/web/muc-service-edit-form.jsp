@@ -165,7 +165,7 @@
 
 <!-- BEGIN 'Service Name'-->
 <form action="muc-service-edit-form.jsp" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="save" value="true">
 <% if (!create) { %>
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">

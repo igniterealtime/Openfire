@@ -227,7 +227,7 @@
 <%  } %>
 
 <form action="muc-room-affiliations.jsp?add" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
 
 <fieldset>

@@ -89,6 +89,7 @@
 </p>
 
 <form action="muc-service-delete.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
 <fieldset>

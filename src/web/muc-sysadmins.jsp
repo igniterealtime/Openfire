@@ -176,7 +176,7 @@
 
 <!-- BEGIN 'Administrators' -->
 <form action="muc-sysadmins.jsp?add" method="post">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.admins.legend" />

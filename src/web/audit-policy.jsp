@@ -200,7 +200,7 @@
 
 <!-- BEGIN 'Set Message Audit Policy' -->
 <form action="audit-policy.jsp" name="f">
-    <input type="hidden" name="csrf" value="csrf">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="audit.policy.policytitle" />
 	</div>

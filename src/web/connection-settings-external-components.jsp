@@ -8,6 +8,8 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ModificationNotAllowedException" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="gnu.inet.encoding.StringprepException" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page errorPage="error.jsp" %>
@@ -109,8 +111,14 @@
     String subdomain = ParamUtils.getParameter( request, "subdomain" ); // shared with blacklist.
     if ( subdomain != null )
     {
-        // Remove the hostname if the user is not sending just the subdomain.
-        subdomain = subdomain.replace( "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "" );
+        subdomain = subdomain.trim();
+        try {
+            subdomain = JID.domainprep(subdomain);
+            // Remove the hostname if the user is not sending just the subdomain.
+            subdomain = subdomain.replace( "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "" );
+        } catch (Exception e) {
+            errors.put("subdomain", e.getMessage());
+        }
     }
     if ( componentAllowed && errors.isEmpty() )
     {
@@ -364,7 +372,8 @@
                         <td><c:out value="${component.subdomain}"/></td>
                         <td><c:out value="${component.secret}"/></td>
                         <td align="center" style="border-right:1px #ccc solid;">
-                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('connection-settings-external-components.jsp?deleteConf=${component.subdomain}'); } "
+                            <c:url var="deleteurl" value="connection-settings-external-components.jsp"><c:param name="deleteConf" value="${component.subdomain}"/></c:url>
+                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
                                title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                         </td>
                     </tr>
@@ -423,7 +432,8 @@
                         <td>${ status.index + 1}</td>
                         <td><c:out value="${component.subdomain}"/></td>
                         <td align="center" style="border-right:1px #ccc solid;">
-                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('connection-settings-external-components.jsp?deleteConf=${component.subdomain}'); } "
+                            <c:url var="deleteurl" value="connection-settings-external-components.jsp"><c:param name="deleteConf" value="${component.subdomain}"/></c:url>
+                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
                                title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                         </td>
                     </tr>

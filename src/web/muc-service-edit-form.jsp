@@ -24,6 +24,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="org.xmpp.packet.JID" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -66,6 +67,12 @@
         // do validation
         if (mucname == null || mucname.indexOf('.') >= 0 || mucname.length() < 1) {
             errors.put("mucname","mucname");
+        } else {
+            try {
+                mucname = JID.domainprep(mucname);
+            } catch (Exception e) {
+                errors.put("mucname", e.getMessage());
+            }
         }
         if (errors.size() == 0) {
             if (!create) {

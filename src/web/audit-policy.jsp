@@ -245,7 +245,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxTotalSize"
-							 value="<%= ((maxTotalSize != null) ? maxTotalSize : "") %>">
+							 value="<%= ((maxTotalSize != null) ? StringUtils.escapeForXML(maxTotalSize) : "") %>">
 
 						<%  if (errors.get("maxTotalSize") != null) { %>
 
@@ -263,7 +263,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxFileSize"
-							 value="<%= ((maxFileSize != null) ? maxFileSize : "") %>">
+							 value="<%= ((maxFileSize != null) ? StringUtils.escapeForXML(maxFileSize) : "") %>">
 
 						<%  if (errors.get("maxFileSize") != null) { %>
 
@@ -281,7 +281,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxDays"
-							 value="<%= ((maxDays != null) ? maxDays : "") %>">
+							 value="<%= ((maxDays != null) ? StringUtils.escapeForXML(maxDays) : "") %>">
 
 							<%  if (errors.get("maxDays") != null) { %>
 
@@ -299,7 +299,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="logTimeout"
-							 value="<%= ((logTimeout != null) ? logTimeout : "") %>">
+							 value="<%= ((logTimeout != null) ? StringUtils.escapeForXML(logTimeout) : "") %>">
 
 						<%  if (errors.get("logTimeout") != null) { %>
 

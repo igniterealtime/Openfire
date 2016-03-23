@@ -530,15 +530,16 @@ public interface MUCRoom extends Externalizable, Result {
 
     /**
      * Kicks a user from the room. If the user was in the room, the returned updated presence will
-     * be sent to the remaining occupants. 
-     * 
-     * @param fullJID The full JID of the kicked user  (cannot be <tt>null</tt>).
-     * @param actorJID The JID of the actor that initiated the kick (cannot be <tt>null</tt>).
-     * @param reason An optional reason why the user was kicked (can be <tt>null</tt>).
+     * be sent to the remaining occupants.
+     *
+     * @param fullJID       The full JID of the kicked user  (cannot be <tt>null</tt>).
+     * @param actorJID      The JID of the actor that initiated the kick (cannot be <tt>null</tt>).
+     * @param actorNickname The actor nickname.
+     * @param reason        An optional reason why the user was kicked (can be <tt>null</tt>).
      * @return the updated presence of the kicked user or null if the user was not in the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */
-    public Presence kickOccupant(JID fullJID, JID actorJID, String reason)
+    public Presence kickOccupant(JID fullJID, JID actorJID, String actorNickname, String reason)
             throws NotAllowedException;
 
     public IQOwnerHandler getIQOwnerHandler();

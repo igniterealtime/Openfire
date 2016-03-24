@@ -109,12 +109,14 @@ public abstract class RemoteSession implements Session {
 
     public long getNumClientPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumClientPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public long getNumServerPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumServerPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public String getCipherSuiteName() {
@@ -137,12 +139,14 @@ public abstract class RemoteSession implements Session {
 
     public boolean isClosed() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isClosed);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public boolean isSecure() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isSecure);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public String getHostAddress() throws UnknownHostException {
@@ -167,7 +171,8 @@ public abstract class RemoteSession implements Session {
 
     public boolean validate() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.validate);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     abstract RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation);

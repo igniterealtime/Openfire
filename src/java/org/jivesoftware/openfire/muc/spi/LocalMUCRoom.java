@@ -1831,7 +1831,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
             else {
                 newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
-            	newAffiliation = MUCRole.Affiliation.member;
+            	newAffiliation = MUCRole.Affiliation.none;
             }
             Log.info("New affiliation: " + newAffiliation);
             try {

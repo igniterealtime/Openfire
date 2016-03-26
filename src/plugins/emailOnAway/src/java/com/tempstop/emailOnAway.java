@@ -54,9 +54,9 @@ public class emailOnAway implements Plugin, PacketInterceptor {
         message.setTo(to);
         message.setFrom(from);
         message.setSubject("I'm away");
-        if (JiveGlobals.getBooleanProperty( "plugin.emailonaway.showemail", false ) ) { 
-        	message.setBody( "I'm currently away. Your message has been forwarded to my service email address (" + emailTo + ")." ); 
-        	} else { message.setBody( "I'm currently away. Your message has been forwarded to my service email address." ); }
+        if (JiveGlobals.getBooleanProperty("plugin.emailonaway.hideemail", true)) { 
+        	message.setBody( "I'm currently away. Your message has been forwarded to my email address." ); 
+        	} else { message.setBody( "I'm currently away. Your message has been forwarded to my email address (" + emailTo + ")." ); }
         return message;
     }
 

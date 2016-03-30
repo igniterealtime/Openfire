@@ -50,6 +50,18 @@
         response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (add) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            add = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a request to create a user:
     if (add) {
@@ -155,6 +167,7 @@
 <%  } %>
 
 <form name="f" action="user-roster-add.jsp" method="get">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 

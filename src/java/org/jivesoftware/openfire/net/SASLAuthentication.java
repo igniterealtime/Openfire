@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
 import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.Certificate;
@@ -471,48 +472,99 @@ public class SASLAuthentication {
      *
      * @return the list of supported SASL mechanisms by the server.
      */
-    public static Set<String> getSupportedMechanisms() {
-        Set<String> answer = new HashSet<>(mechanisms);
-        // Clean up not-available mechanisms
-        for (Iterator<String> it=answer.iterator(); it.hasNext();) {
-            String mech = it.next();
-            if (mech.equals("CRAM-MD5") || mech.equals("DIGEST-MD5")) {
-                // Check if the user provider in use supports passwords retrieval. Accessing
-                // to the users passwords will be required by the CallbackHandler
-                if (!AuthFactory.supportsPasswordRetrieval()) {
-                    it.remove();
-                }
+    public static Set<String> getSupportedMechanisms()
+    {
+        // List all mechanism names for which there's an implementation.
+        final Set<String> implementedMechanisms = getImplementedMechanisms();
+
+        // Start off with all mechanisms that we intend to support.
+        final Set<String> answer = new HashSet<>( mechanisms );
+
+        // Clean up not-available mechanisms.
+        for ( final Iterator<String> it = answer.iterator(); it.hasNext(); )
+        {
+            final String mechanism = it.next();
+
+            if ( !implementedMechanisms.contains( mechanism ) )
+            {
+                Log.trace( "Cannot support '{}' as there's no implementation available.", mechanism );
+                it.remove();
+                continue;
             }
-            else if (mech.equals("SCRAM-SHA-1")) {
-                if (!AuthFactory.supportsPasswordRetrieval() && !AuthFactory.supportsScram()) {
-                    it.remove();
-                }
-            }
-            else if (mech.equals("ANONYMOUS")) {
-                // Check anonymous is supported
-                if (!JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" )) {
-                    it.remove();
-                }
-            }
-            else if (mech.equals("JIVE-SHAREDSECRET")) {
-                // Check shared secret is supported
-                if (!JiveSharedSecretSaslServer.isSharedSecretAllowed()) {
-                    it.remove();
-                }
-            }
-            else if (mech.equals("GSSAPI")) {
-                final String gssapiConfig = JiveGlobals.getProperty("sasl.gssapi.config");
-                if (gssapiConfig != null) {
-                    System.setProperty("java.security.krb5.debug", JiveGlobals.getProperty("sasl.gssapi.debug", "false"));
-                    System.setProperty("java.security.auth.login.config", gssapiConfig);
-                    System.setProperty("javax.security.auth.useSubjectCredsOnly", JiveGlobals.getProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
-                }
-                else {
-                    it.remove();
-                }
+
+            switch ( mechanism )
+            {
+                case "CRAM-MD5": // intended fall-through
+                case "DIGEST-MD5":
+                    // Check if the user provider in use supports passwords retrieval. Access to the users passwords will be required by the CallbackHandler.
+                    if ( !AuthFactory.supportsPasswordRetrieval() )
+                    {
+                        Log.trace( "Cannot support '{}' as the AuthFactory that's in used does not support password retrieval.", mechanism );
+                        it.remove();
+                    }
+                    break;
+
+                case "SCRAM-SHA-1":
+                    if ( !AuthFactory.supportsPasswordRetrieval() && !AuthFactory.supportsScram() )
+                    {
+                        Log.trace( "Cannot support '{}' as the AuthFactory that's in used does not support password retrieval nor SCRAM.", mechanism );
+                        it.remove();
+                    }
+                    break;
+
+                case "ANONYMOUS":
+                    if ( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) )
+                    {
+                        Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
+                        it.remove();
+                    }
+                    break;
+
+                case "JIVE-SHAREDSECRET":
+                    if ( !JiveSharedSecretSaslServer.isSharedSecretAllowed() )
+                    {
+                        Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
+                        it.remove();
+                    }
+                    break;
+
+                case "GSSAPI":
+                    final String gssapiConfig = JiveGlobals.getProperty( "sasl.gssapi.config" );
+                    if ( gssapiConfig != null )
+                    {
+                        System.setProperty( "java.security.krb5.debug", JiveGlobals.getProperty( "sasl.gssapi.debug", "false" ) );
+                        System.setProperty( "java.security.auth.login.config", gssapiConfig );
+                        System.setProperty( "javax.security.auth.useSubjectCredsOnly", JiveGlobals.getProperty( "sasl.gssapi.useSubjectCredsOnly", "false" ) );
+                    }
+                    else
+                    {
+                        Log.trace( "Cannot support '{}' as the 'sasl.gssapi.config' property has not been defined.", mechanism );
+                        it.remove();
+                    }
+                    break;
             }
         }
         return answer;
+    }
+
+    /**
+     * Returns a collection of mechanism names for which the JVM has an implementation available.
+     * <p/>
+     * Note that this need not (and likely will not) correspond with the list of mechanisms that is offered to XMPP
+     * peer entities, which is provided by #getSupportedMechanisms.
+     *
+     * @return a collection of SASL mechanism names (never null, possibly empty)
+     */
+    public static Set<String> getImplementedMechanisms()
+    {
+        final Set<String> result = new HashSet<>();
+        final Enumeration<SaslServerFactory> saslServerFactories = Sasl.getSaslServerFactories();
+        while ( saslServerFactories.hasMoreElements() )
+        {
+            final SaslServerFactory saslServerFactory = saslServerFactories.nextElement();
+            Collections.addAll( result, saslServerFactory.getMechanismNames( null ) );
+        }
+        return result;
     }
 
     private static void initMechanisms()

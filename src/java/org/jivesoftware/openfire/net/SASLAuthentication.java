@@ -500,6 +500,17 @@ public class SASLAuthentication {
                     it.remove();
                 }
             }
+            else if (mech.equals("GSSAPI")) {
+                final String gssapiConfig = JiveGlobals.getProperty("sasl.gssapi.config");
+                if (gssapiConfig != null) {
+                    System.setProperty("java.security.krb5.debug", JiveGlobals.getProperty("sasl.gssapi.debug", "false"));
+                    System.setProperty("java.security.auth.login.config", gssapiConfig);
+                    System.setProperty("javax.security.auth.useSubjectCredsOnly", JiveGlobals.getProperty("sasl.gssapi.useSubjectCredsOnly", "false"));
+                }
+                else {
+                    it.remove();
+                }
+            }
         }
         return answer;
     }

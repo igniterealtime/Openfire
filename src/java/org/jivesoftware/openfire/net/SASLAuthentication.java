@@ -575,7 +575,7 @@ public class SASLAuthentication {
         JiveGlobals.migrateProperty("sasl.gssapi.config");
         JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
 
-        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET" );
+        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI" );
         final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
         while ( st.hasMoreTokens() )
         {

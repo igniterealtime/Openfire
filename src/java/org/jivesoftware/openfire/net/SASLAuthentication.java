@@ -35,9 +35,7 @@ import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +83,42 @@ public class SASLAuthentication {
         // Add (proprietary) Providers of SASL implementation to the Java security context.
         Security.addProvider( new org.jivesoftware.openfire.sasl.SaslProvider() );
 
+        // Convert XML based provider setup to Database based
+        JiveGlobals.migrateProperty("sasl.mechs");
+        JiveGlobals.migrateProperty("sasl.gssapi.debug");
+        JiveGlobals.migrateProperty("sasl.gssapi.config");
+        JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
+
         initMechanisms();
+
+        org.jivesoftware.util.PropertyEventDispatcher.addListener( new PropertyEventListener()
+        {
+            @Override
+            public void propertySet( String property, Map<String, Object> params )
+            {
+                if ("sasl.mechs".equals( property ) )
+                {
+                    initMechanisms();
+                }
+            }
+
+            @Override
+            public void propertyDeleted( String property, Map<String, Object> params )
+            {
+                if ("sasl.mechs".equals( property ) )
+                {
+                    initMechanisms();
+                }
+            }
+
+            @Override
+            public void xmlPropertySet( String property, Map<String, Object> params )
+            {}
+
+            @Override
+            public void xmlPropertyDeleted( String property, Map<String, Object> params )
+            {}
+        } );
     }
 
     public enum ElementType
@@ -569,24 +602,20 @@ public class SASLAuthentication {
 
     private static void initMechanisms()
     {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("sasl.mechs");
-        JiveGlobals.migrateProperty("sasl.gssapi.debug");
-        JiveGlobals.migrateProperty("sasl.gssapi.config");
-        JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
 
         final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI" );
         final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
+        mechanisms = new HashSet<>();
         while ( st.hasMoreTokens() )
         {
-            final String mech = st.nextToken().toUpperCase();
+            final String mechanism = st.nextToken().toUpperCase();
             try
             {
-                addSupportedMechanism( mech );
+                addSupportedMechanism( mechanism );
             }
             catch ( Exception ex )
             {
-                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", mech, ex );
+                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", mechanism, ex );
             }
         }
     }

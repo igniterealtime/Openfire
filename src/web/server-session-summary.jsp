@@ -21,6 +21,8 @@
                  org.jivesoftware.openfire.session.OutgoingServerSession,
                  org.jivesoftware.openfire.session.Session,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -41,6 +43,17 @@
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String hostname = ParamUtils.getParameter(request,"hostname");
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (close) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            close = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("server-session-summary", range);
     }

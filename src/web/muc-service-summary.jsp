@@ -200,7 +200,7 @@
             <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
         </td>
         <td width="33%">
-            <%= service.getDescription() %> &nbsp;
+            <%= StringUtils.escapeHTMLTags(service.getDescription()) %> &nbsp;
         </td>
         <td width="5%">
             <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>

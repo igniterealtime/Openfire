@@ -3,6 +3,8 @@
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 
@@ -14,7 +16,7 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <% // Get parameters:
-    final boolean save            = ParamUtils.getParameter(request, "save") != null;
+    boolean save            = ParamUtils.getParameter(request, "save") != null;
     final String privateKey       = ParamUtils.getParameter(request, "privateKey");
     final String passPhrase       = ParamUtils.getParameter(request, "passPhrase");
     final String certificate      = ParamUtils.getParameter(request, "certificate");
@@ -30,6 +32,18 @@
         errors.put( "connectionType", ex.getMessage() );
         connectionType = null;
     }
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (save) {
         if (privateKey == null || privateKey.trim().isEmpty() ) {
@@ -107,6 +121,7 @@
 
 <!-- BEGIN 'Import Private Key and Certificate' -->
 <form action="import-keystore-certificate.jsp?connectionType=${connectionType}" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.private-key.title"/></c:set>
     <admin:contentBox title="${title}">
@@ -117,7 +132,7 @@
                     <label for="passPhrase"><fmt:message key="ssl.import.certificate.keystore.pass-phrase" /></label>
                 </td>
                 <td width="99%">
-                    <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="${param.passPhrase}">
+                    <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="<c:out value="${param.passPhrase}"/>">
                 </td>
             </tr>
             <tr valign="top">

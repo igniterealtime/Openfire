@@ -2,6 +2,8 @@
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
@@ -14,12 +16,24 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%  webManager.init(request, response, session, application, out ); %>
 
-<%  final boolean save             = ParamUtils.getParameter(request, "save") != null;
+<%  boolean save             = ParamUtils.getParameter(request, "save") != null;
     final String alias             = ParamUtils.getParameter(request, "alias");
     final String certificate       = ParamUtils.getParameter(request, "certificate");
     final String storePurposeText  = ParamUtils.getParameter(request, "connectionType");
 
     final Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     ConnectionType connectionType;
     try

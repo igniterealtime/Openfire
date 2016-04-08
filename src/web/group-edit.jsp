@@ -30,6 +30,7 @@
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
@@ -71,6 +72,21 @@
     Group group = groupManager.getGroup(groupName);
     boolean success;
     StringBuffer errorBuf = new StringBuffer();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (add || delete || updateMember || update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            add = false;
+            delete = false;
+            update = false;
+            updateMember = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (cancel) {
         response.sendRedirect("group-summary.jsp");
@@ -325,6 +341,8 @@
 	<div class="jive-horizontalRule"></div>
 
 <form name="ff" action="group-edit.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
+
 <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>"/>
 
 
@@ -478,6 +496,7 @@
 		</p>
 
         <form action="group-edit.jsp" method="post" name="f">
+            <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
@@ -496,6 +515,7 @@
         <% } %>
 
         <form action="group-edit.jsp" method="post" name="main">
+    <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>

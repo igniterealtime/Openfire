@@ -45,8 +45,20 @@
     String password = ParamUtils.getParameter(request,"password");
     String passwordConfirm = ParamUtils.getParameter(request,"passwordConfirm");
     boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
     Map<String, String> errors = new HashMap<String, String>();
+    if (create) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            create = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("user-summary.jsp");
@@ -203,6 +215,7 @@
 <%  } %>
 
 <form name="f" action="user-create.jsp" method="get">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="user.create.new_user" />

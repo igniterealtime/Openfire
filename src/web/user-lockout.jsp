@@ -25,6 +25,7 @@
 <%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
@@ -50,6 +51,17 @@
     if (duration == -2) {
         duration = ParamUtils.getIntParameter(request,"duration_custom", -1);   
     }
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    if (lock || unlock) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            lock = false;
+            unlock = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
@@ -146,6 +158,7 @@
 
 <form action="user-lockout.jsp">
     <input type="hidden" name="username" value="${usernameHtmlEscaped}">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="submit" name="unlock" value="<fmt:message key="user.lockout.unlock" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
@@ -169,6 +182,7 @@
 </c:if>
 
 <form action="user-lockout.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
     <% if (LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
     <b><fmt:message key="user.lockout.time.startdelay" /></b><br />
     <input type="radio" name="startdelay" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.immediate" /><br />

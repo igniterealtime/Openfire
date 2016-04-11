@@ -90,7 +90,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	 * @throws UnsupportedOperationException
 	 */
     @Override
-    public Group createGroup(String name) {
+    public Group createGroup(String name) throws GroupAlreadyExistsException {
         throw new UnsupportedOperationException("Cannot create groups via read-only provider");
     }
 

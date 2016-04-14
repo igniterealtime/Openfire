@@ -28,20 +28,14 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/test/throttletest/src"/>
 	<classpathentry kind="lib" path="build/lib/ant/ant-contrib.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant/ant-jive-edition.jar"/>
 	<classpathentry kind="lib" path="build/lib/cglib-nodep.jar"/>
-	<classpathentry kind="lib" path="build/lib/commons-el.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/hsqldb.jar"/>
-	<classpathentry kind="lib" path="build/lib/dist/jdic.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/jtds.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/mail.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/mysql.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/postgres.jar"/>
-	<classpathentry kind="lib" path="build/lib/dist/servlet-api.jar"/>
 	<classpathentry kind="lib" path="build/lib/dist/slf4j-log4j12.jar"/>
 	<classpathentry kind="lib" path="build/lib/i4jruntime.jar"/>
-	<classpathentry kind="lib" path="build/lib/jasper-compiler.jar"/>
-	<classpathentry kind="lib" path="build/lib/jasper-runtime.jar"/>
 	<classpathentry kind="lib" path="build/lib/jmock-junit4.jar"/>
 	<classpathentry kind="lib" path="build/lib/jmock-legacy.jar"/>
 	<classpathentry kind="lib" path="build/lib/jmock.jar"/>
@@ -49,7 +43,6 @@
 	<classpathentry kind="lib" path="build/lib/merge/commons-codec.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/commons-httpclient.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/commons-lang.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/commons-logging.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/concurrentlinkedhashmap-lru-1.0_jdk5.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/dbutil.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/dom4j.jar"/>
@@ -65,8 +58,6 @@
 	<classpathentry kind="lib" path="build/lib/merge/jetty-webapp.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-xml.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jmdns.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/jsp-api.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/jstl.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jzlib.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/libidn.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/log4j.jar"/>
@@ -83,11 +74,9 @@
 	<classpathentry kind="lib" path="build/lib/merge/tinder.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="lib" path="build/lib/objenesis.jar"/>
-	<classpathentry kind="lib" path="build/lib/ant/qdox.jar"/>
 	<classpathentry kind="lib" path="build/lib/src/commons-lang-sources.jar"/>
 	<classpathentry kind="lib" path="build/lib/ant/xmltask.jar"/>
 	<classpathentry kind="lib" path="src/plugins/clientControl/lib/commons-fileupload-1.0.jar"/>
-	<classpathentry kind="lib" path="src/plugins/fastpath/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/lucene.jar"/>
 	<classpathentry kind="lib" path="src/plugins/fastpath/lib/xstream.jar"/>
 	<classpathentry kind="lib" path="src/plugins/gojara/lib/json.jar"/>
@@ -114,7 +103,6 @@
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/stcomm.jar"/>
 	<classpathentry kind="lib" path="src/plugins/kraken/lib/xmlrpc.jar"/>
 	<classpathentry kind="lib" path="src/plugins/jingleNodes/lib/jnsapi.jar"/>
-	<classpathentry kind="lib" path="src/plugins/monitoring/lib/dwr.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/itext.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/jcommon.jar"/>
 	<classpathentry kind="lib" path="src/plugins/monitoring/lib/jfreechart.jar"/>
@@ -124,7 +112,6 @@
 	<classpathentry kind="lib" path="src/plugins/registration/lib/recaptcha4j.jar"/>
 	<classpathentry kind="lib" path="src/plugins/sip/lib/JainSipApi1.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/sip/lib/nist-sip-1.2.jar"/>
-	<classpathentry kind="lib" path="src/plugins/userImportExport/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/userImportExport/lib/isorelax.jar"/>
 	<classpathentry kind="lib" path="src/plugins/userImportExport/lib/msv.jar"/>
 	<classpathentry kind="lib" path="src/plugins/userImportExport/lib/relaxngDatatype.jar"/>
@@ -133,7 +120,6 @@
 	<classpathentry kind="lib" path="src/test/throttletest/build/lib/smackx.jar"/>
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-fileupload.jar"/>
 	<classpathentry kind="lib" path="src/web/WEB-INF/lib/commons-io.jar"/>
-	<classpathentry kind="lib" path="src/web/WEB-INF/lib/dwr.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="src/plugins/stunserver/lib/jstun-0.6.1.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/jetty-jmx.jar"/>
@@ -146,11 +132,20 @@
 	<classpathentry kind="lib" path="build/lib/merge/spdy-core.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/spdy-http-common.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/spdy-http-server.jar"/>
-	<classpathentry kind="lib" path="build/lib/merge/spdy-http.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/spdy-server.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/javax-websocket-client-impl.jar"/>
 	<classpathentry kind="lib" path="build/lib/merge/javax-websocket-server-impl.jar"/>
 	<classpathentry kind="lib" path="src/plugins/callbackOnOffline/lib/javax.ws.rs-api-2.0.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/userservice/lib/jersey-bundle-1.18.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/servlet-api.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.apache.taglibs.taglibs-standard-impl.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.apache.taglibs.taglibs-standard-spec.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.mortbay.jasper.apache-el.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.mortbay.jasper.apache-jsp.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty-plus.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty-schemas.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.eclipse.jetty.apache-jsp.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jcl-over-slf4j.jar"/>
 	<classpathentry kind="output" path="work/classes"/>
 </classpath>

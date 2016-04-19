@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -333,9 +335,9 @@ public class RosterItem implements Cacheable, Externalizable {
      */
     public void setSubStatus(SubType subStatus) {
         // Optimization: Load user only if we need to set the nickname of the roster item
-        if ("".equals(nickname) && (subStatus == SUB_BOTH || subStatus == SUB_TO)) {
+        if (nickname == null && (subStatus == SUB_BOTH || subStatus == SUB_TO)) {
             try {
-                nickname = UserNameManager.getUserName(jid);
+            	nickname = UserNameManager.getUserName(jid);
             }
             catch (UserNotFoundException e) {
                 // Do nothing

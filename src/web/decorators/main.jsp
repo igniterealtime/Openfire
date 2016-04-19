@@ -92,7 +92,7 @@
 
     <div id="jive-header">
         <div id="jive-logo">
-            <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
+            <a href="/index.jsp"><img src="/images/hypercare_logo_small.png" alt="Openfire" width="179" height="53" /></a>
         </div>
         <div id="jive-userstatus">
             <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>

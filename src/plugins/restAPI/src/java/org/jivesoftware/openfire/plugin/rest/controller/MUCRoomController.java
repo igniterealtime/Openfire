@@ -12,6 +12,8 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
+import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
+import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
@@ -308,6 +310,36 @@ public class MUCRoomController {
 		participantEntities.setParticipants(participants);
 		return participantEntities;
 	}
+	
+	/**
+	 * Gets the room occupants.
+	 *
+	 * @param roomName
+	 *            the room name
+	 * @param serviceName
+	 *            the service name
+	 * @return the room occupants
+	 */
+	public OccupantEntities getRoomOccupants(String roomName, String serviceName) {
+		OccupantEntities occupantEntities = new OccupantEntities();
+		List<OccupantEntity> occupants = new ArrayList<OccupantEntity>();
+
+		Collection<MUCRole> serverOccupants = XMPPServer.getInstance().getMultiUserChatManager()
+				.getMultiUserChatService(serviceName).getChatRoom(roomName).getOccupants();
+
+		for (MUCRole role : serverOccupants) {
+			OccupantEntity occupantEntity = new OccupantEntity();
+			occupantEntity.setJid(role.getRoleAddress().toFullJID());
+			occupantEntity.setRole(role.getRole().name());
+			occupantEntity.setAffiliation(role.getAffiliation().name());
+
+			occupants.add(occupantEntity);
+		}
+
+		occupantEntities.setOccupants(occupants);
+		return occupantEntities;
+	}
+
 
 	/**
 	 * Convert to MUC room entity.

@@ -1360,6 +1360,11 @@ body.pdf{font-family:"DejaVu Sans"}body.pdf code,body.pdf pre{font-family:"DejaV
 <li><a href="#examples-17">Examples</a></li>
 </ul>
 </li>
+<li><a href="#retrieve-chat-room-occupants">Retrieve chat room occupants</a><ul>
+<li><a href="#possible-parameters-get-occupants">Possible parameters</a></li>
+<li><a href="#examples-get-occupants">Examples</a></li>
+</ul>
+</li>
 <li><a href="#create-a-chat-room">Create a chat room</a><ul>
 <li><a href="#possible-parameters-17">Possible parameters</a></li>
 <li><a href="#xml-examples-1">XML Examples</a></li>
@@ -3021,6 +3026,56 @@ Payload Example 1 (required parameters):</p>
   <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/room1/participants">http://example.org:9090/plugins/restapi/v1/chatrooms/room1/participants</a></p>
 </blockquote>
 
+
+
+<h2 id="retrieve-chat-room-occupants">Retrieve chat room occupants</h2>
+
+<p>Endpoint to get all occupants (all roles / affiliations) of a specified room.</p>
+
+<blockquote>
+  <p><strong>GET</strong> /chatrooms/{roomName}/occupants</p>
+</blockquote>
+
+<p><strong>Payload:</strong> none <br>
+<strong>Return value:</strong> Occupants</p>
+
+
+
+<h3 id="possible-parameters-get-occupants">Possible parameters</h3>
+
+<table>
+<thead>
+<tr>
+  <th>Parameter</th>
+  <th>Parameter Type</th>
+  <th>Description</th>
+  <th>Default value</th>
+</tr>
+</thead>
+<tbody><tr>
+  <td>roomname</td>
+  <td>@Path</td>
+  <td>Exact room name</td>
+  <td></td>
+</tr>
+<tr>
+  <td>servicename</td>
+  <td>@QueryParam</td>
+  <td>The name of the Group Chat Service</td>
+  <td>conference</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3 id="examples-get-occupants">Examples</h3>
+
+<blockquote>
+  <p><strong>Header:</strong> Authorization: Basic YWRtaW46MTIzNDU=</p>
+  
+  <p><strong>GET</strong> <a href="http://example.org:9090/plugins/restapi/v1/chatrooms/room1/participants">http://example.org:9090/plugins/restapi/v1/chatrooms/room1/occupants</a></p>
+</blockquote>
 
 
 <h2 id="create-a-chat-room">Create a chat room</h2>

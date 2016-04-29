@@ -28,10 +28,13 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
 
 import java.io.File;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.util.security.*;
@@ -46,6 +49,8 @@ import com.javamonitor.openfire.mbeans.DatabasePool;
 import com.javamonitor.openfire.mbeans.Openfire;
 import com.javamonitor.openfire.mbeans.PacketCounter;
 
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
 
 public class JmxWebPlugin implements Plugin  {
 
@@ -115,10 +120,19 @@ public class JmxWebPlugin implements Plugin  {
 			try {
 				Log.info( "["+ NAME + "] starting jolokia");
 				WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/jolokia");
+
+				final List<ContainerInitializer> initializers = new ArrayList<>();
+				initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+				context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+				context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context.setWelcomeFiles(new String[]{"index.html"});
 
 				Log.info( "["+ NAME + "] starting hawtio");
 				WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath() + "/hawtio", "/hawtio");
+				final List<ContainerInitializer> initializers2 = new ArrayList<>();
+				initializers2.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+				context2.setAttribute("org.eclipse.jetty.containerInitializers", initializers2);
+				context2.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context2.setWelcomeFiles(new String[]{"index.html"});
 
 				if (JiveGlobals.getBooleanProperty("xmpp.jmx.secure", true))

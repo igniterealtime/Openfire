@@ -189,6 +189,7 @@ public class UserManager implements IQResultListener {
                                                 + username + " Email: " + email);
         }
         User user = provider.createUser(username, password, name, email);
+        user.initializeUserProperties();
         userCache.put(username, user);
 
         // Fire event.
@@ -481,7 +482,7 @@ public class UserManager implements IQResultListener {
         JiveGlobals.migrateProperty("provider.user.className");
 
         String className = JiveGlobals.getProperty("provider.user.className",
-                "org.jivesoftware.openfire.user.DefaultUserProvider");
+                "org.jivesoftware.openfire.user.HypercareUserProvider");
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {
             try {
@@ -490,7 +491,7 @@ public class UserManager implements IQResultListener {
             }
             catch (Exception e) {
                 Log.error("Error loading user provider: " + className, e);
-                provider = new DefaultUserProvider();
+                provider = new HypercareUserProvider();
             }
         }
     }

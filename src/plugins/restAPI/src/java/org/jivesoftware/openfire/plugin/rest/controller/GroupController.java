@@ -13,6 +13,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.plugin.rest.entity.GroupEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
+import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
 
 /**
  * The Class GroupController.
@@ -65,7 +66,11 @@ public class GroupController {
 			throw new ServiceException("Could not find group", groupName, ExceptionType.GROUP_NOT_FOUND,
 					Response.Status.NOT_FOUND, e);
 		}
+
 		GroupEntity groupEntity = new GroupEntity(group.getName(), group.getDescription());
+		groupEntity.setAdmins(MUCRoomUtils.convertJIDsToStringList(group.getAdmins()));
+		groupEntity.setMembers(MUCRoomUtils.convertJIDsToStringList(group.getMembers()));
+
 		return groupEntity;
 	}
 

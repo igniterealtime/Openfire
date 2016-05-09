@@ -20,8 +20,6 @@
 package org.jivesoftware.openfire.container;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -31,7 +29,6 @@ import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
-import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;

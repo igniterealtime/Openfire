@@ -261,12 +261,15 @@ public class SASLAuthentication {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
 
+                    // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server.
+                    final String fqhn = JiveGlobals.getProperty( "xmpp.fqdn", XMPPServer.getInstance().getServerInfo().getHostname() );
+
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
 
-                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", session.getServerName(), props, new XMPPCallbackHandler() );
+                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", fqhn, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );

@@ -174,5 +174,6 @@
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/validation-api-1.1.0.Final.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/cmu_us_kal.jar"/>
 	<classpathentry kind="lib" path="src/plugins/rayo/lib/en_us.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty-annotations.jar"/>
 	<classpathentry kind="output" path="work/classes"/>
 </classpath>

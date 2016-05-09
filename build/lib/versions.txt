@@ -15,6 +15,7 @@ concurrentlinkedhashmap-lru         | concurrentlinkedhashmap-lru-1.0_jdk5      
 dbutil.jar                          | Jive Code, no release version.                               | GPL
 hsqldb.jar                          | 1.8.0.5                                                      | BSD (http://hsqldb.org/web/hsqlLicense.html)
 jcl-over-slf4j.jar                  | 1.7.7                                                        | http://www.slf4j.org/license.html
+jetty-annotations.jar               | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
 jetty-continuation.jar              | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
 jetty-http.jar                      | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0
 jetty-io.jar                        | Jetty 9.2.14.v20151106                                       | Apache 2.0, Eclipse 1.0

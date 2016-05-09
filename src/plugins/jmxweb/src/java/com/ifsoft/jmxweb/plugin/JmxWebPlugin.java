@@ -33,7 +33,8 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.apache.jasper.servlet.JasperInitializer;
+
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -122,7 +123,7 @@ public class JmxWebPlugin implements Plugin  {
 				WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/jolokia");
 
 				final List<ContainerInitializer> initializers = new ArrayList<>();
-				initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+				initializers.add(new ContainerInitializer(new JasperInitializer(), null));
 				context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
 				context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context.setWelcomeFiles(new String[]{"index.html"});
@@ -130,7 +131,7 @@ public class JmxWebPlugin implements Plugin  {
 				Log.info( "["+ NAME + "] starting hawtio");
 				WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath() + "/hawtio", "/hawtio");
 				final List<ContainerInitializer> initializers2 = new ArrayList<>();
-				initializers2.add(new ContainerInitializer(new JettyJasperInitializer(), null));
+				initializers2.add(new ContainerInitializer(new JasperInitializer(), null));
 				context2.setAttribute("org.eclipse.jetty.containerInitializers", initializers2);
 				context2.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context2.setWelcomeFiles(new String[]{"index.html"});

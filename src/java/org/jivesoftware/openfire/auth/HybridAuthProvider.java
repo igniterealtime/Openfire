@@ -39,6 +39,10 @@ import org.slf4j.LoggerFactory;
  *      <li>If the tertiary provider is defined, attempt authentication.
  * </ol>
  *
+ * This class related to, but is distinct from {@link MappedAuthProvider}. The Hybrid variant of the provider iterates
+ * over providers, operating on the first applicable instance. The Mapped variant, however, maps each user to exactly
+ * one provider.
+ *
  * To enable this provider, set the <tt>provider.auth.className</tt> system property to
  * <tt>org.jivesoftware.openfire.auth.HybridAuthProvider</tt>.
  *
@@ -77,7 +81,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HybridAuthProvider implements AuthProvider {
 
-	private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
+    private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
 
     private AuthProvider primaryProvider;
     private AuthProvider secondaryProvider;

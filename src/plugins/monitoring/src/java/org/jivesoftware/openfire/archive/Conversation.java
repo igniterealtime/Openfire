@@ -315,7 +315,7 @@ public class Conversation implements Externalizable {
 				JID toJID = new JID(rs.getString(3));
 				String toJIDResource = rs.getString(4);
 				if (toJIDResource != null && !"".equals(toJIDResource)) {
-					toJID = new JID(rs.getString(1) + "/" + toJIDResource);
+					toJID = new JID(rs.getString(3) + "/" + toJIDResource);
 				}
 				Date date = new Date(rs.getLong(5));
 				String body = DbConnectionManager.getLargeTextField(rs, 6);

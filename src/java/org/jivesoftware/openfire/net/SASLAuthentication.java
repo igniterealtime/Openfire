@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import com.sun.mail.smtp.DigestMD5;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -268,6 +269,7 @@ public class SASLAuthentication {
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
+                    props.put( "com.sun.security.sasl.digest.realm", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", fqhn, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )

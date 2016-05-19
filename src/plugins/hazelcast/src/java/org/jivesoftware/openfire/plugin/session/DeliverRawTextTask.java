@@ -20,8 +20,10 @@
 package org.jivesoftware.openfire.plugin.session;
 
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -39,7 +41,7 @@ import java.io.ObjectOutput;
 public class DeliverRawTextTask implements ClusterTask<Void> {
     private SessionType sessionType;
     private JID address;
-    private String streamID;
+    private StreamID streamID;
     private String text;
 
     public DeliverRawTextTask() {
@@ -66,7 +68,7 @@ public class DeliverRawTextTask implements ClusterTask<Void> {
         this.text = text;
     }
 
-    public DeliverRawTextTask(String streamID, String text) {
+    public DeliverRawTextTask(StreamID streamID, String text) {
         this.sessionType = SessionType.incomingServer;
         this.streamID = streamID;
         this.text = text;
@@ -89,7 +91,7 @@ public class DeliverRawTextTask implements ClusterTask<Void> {
         }
         ExternalizableUtil.getInstance().writeBoolean(out, streamID != null);
         if (streamID != null) {
-            ExternalizableUtil.getInstance().writeSafeUTF(out, streamID);
+            ExternalizableUtil.getInstance().writeSafeUTF( out, streamID.getID() );
         }
     }
 
@@ -100,7 +102,7 @@ public class DeliverRawTextTask implements ClusterTask<Void> {
             address = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
-            streamID = ExternalizableUtil.getInstance().readSafeUTF(in);
+            streamID = BasicStreamIDFactory.createStreamID( ExternalizableUtil.getInstance().readSafeUTF(in) );
         }
     }
 

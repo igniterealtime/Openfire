@@ -155,7 +155,7 @@ public class PEPService implements PubSubService, Cacheable {
             leafDefaultConfiguration.setNotifyDelete(true);
             leafDefaultConfiguration.setNotifyRetract(true);
             leafDefaultConfiguration.setPersistPublishedItems(false);
-            leafDefaultConfiguration.setMaxPublishedItems(-1);
+            leafDefaultConfiguration.setMaxPublishedItems(1);
             leafDefaultConfiguration.setPresenceBasedDelivery(false);
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);

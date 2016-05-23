@@ -89,11 +89,11 @@ class LocalSessionManager {
     /**
      * The sessions contained in this Map are server sessions originated by a remote server. These
      * sessions can only receive packets from the remote server but are not capable of sending
-     * packets to the remote server. Sessions will be added to this collecion only after they were
+     * packets to the remote server. Sessions will be added to this collection only after they were
      * authenticated.
      * Key: streamID, Value: the IncomingServerSession associated to the streamID.
      */
-    private final Map<String, LocalIncomingServerSession> incomingServerSessions =
+    private final Map<StreamID, LocalIncomingServerSession> incomingServerSessions =
             new ConcurrentHashMap<>();
 
 
@@ -109,7 +109,7 @@ class LocalSessionManager {
         return connnectionManagerSessions;
     }
 
-    public LocalIncomingServerSession getIncomingServerSession(String streamID) {
+    public LocalIncomingServerSession getIncomingServerSession(StreamID streamID) {
         return incomingServerSessions.get(streamID);
     }
 
@@ -117,11 +117,11 @@ class LocalSessionManager {
         return incomingServerSessions.values();
     }
 
-    public void addIncomingServerSessions(String streamID, LocalIncomingServerSession  session) {
+    public void addIncomingServerSessions(StreamID streamID, LocalIncomingServerSession  session) {
         incomingServerSessions.put(streamID, session);
     }
 
-    public void removeIncomingServerSessions(String streamID) {
+    public void removeIncomingServerSessions(StreamID streamID) {
         incomingServerSessions.remove(streamID);
     }
 

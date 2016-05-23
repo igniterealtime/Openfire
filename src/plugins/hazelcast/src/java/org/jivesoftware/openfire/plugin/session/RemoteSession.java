@@ -79,8 +79,7 @@ public abstract class RemoteSession implements Session {
         // Get it once and cache it since it never changes
         if (streamID == null) {
             ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getStreamID);
-            String id = (String) doSynchronousClusterTask(task);
-            streamID = new BasicStreamID(id);
+            streamID = (StreamID) doSynchronousClusterTask(task);
         }
         return streamID;
     }
@@ -109,12 +108,14 @@ public abstract class RemoteSession implements Session {
 
     public long getNumClientPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumClientPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public long getNumServerPackets() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getNumServerPackets);
-        return (Long) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
     public String getCipherSuiteName() {
@@ -137,12 +138,14 @@ public abstract class RemoteSession implements Session {
 
     public boolean isClosed() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isClosed);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public boolean isSecure() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isSecure);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     public String getHostAddress() throws UnknownHostException {
@@ -167,7 +170,8 @@ public abstract class RemoteSession implements Session {
 
     public boolean validate() {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.validate);
-        return (Boolean) doSynchronousClusterTask(task);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
     abstract RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation);
@@ -215,29 +219,5 @@ public abstract class RemoteSession implements Session {
     @Override
     public final Locale getLanguage() {
         return Locale.getDefault();
-    }
-
-    /**
-     * Simple implementation of the StreamID interface to hold the stream ID of
-     * the surrogated session.
-     */
-    protected static class BasicStreamID implements StreamID {
-        String id;
-
-        public BasicStreamID(String id) {
-            this.id = id;
-        }
-
-        public String getID() {
-            return id;
-        }
-
-        public String toString() {
-            return id;
-        }
-
-        public int hashCode() {
-            return id.hashCode();
-        }
     }
 }

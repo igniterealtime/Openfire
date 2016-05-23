@@ -25,12 +25,12 @@ public abstract class AbstractXepSupport {
 	protected final String namespace;
 	protected Collection<IQHandler> iqHandlers;
 
-	public AbstractXepSupport(XMPPServer server, String namespace, String iqDispatcherName) {
+	public AbstractXepSupport(XMPPServer server, String namespace,String iqDispatcherNamespace, String iqDispatcherName) {
 
 		this.server = server;
 		this.element2Handlers = Collections
 				.synchronizedMap(new HashMap<String, IQHandler>());
-		this.iqDispatcher = new AbstractIQHandler(iqDispatcherName, null, namespace) {
+		this.iqDispatcher = new AbstractIQHandler(iqDispatcherName, null, iqDispatcherNamespace) {
 			public IQ handleIQ(IQ packet) throws UnauthorizedException {
 				if (!MonitoringPlugin.getInstance().isEnabled()) {
 					return error(packet,

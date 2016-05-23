@@ -1,5 +1,7 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.openfire.spi.*" %>
 <%@ page import="java.util.*" %>
@@ -12,9 +14,21 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 <%
-    final boolean update = request.getParameter( "update" ) != null;
+    boolean update = request.getParameter( "update" ) != null;
 
     final Map<String, String> errors = new HashMap<>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     pageContext.setAttribute( "errors", errors );
 
     ConnectionType connectionType = null;
@@ -281,6 +295,7 @@
 </p>
 
 <form action="connection-settings-advanced.jsp?connectionType=${connectionType}&connectionMode=${connectionMode}" onsubmit="selectAllOptions('cipherSuitesEnabled')" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="update" value="true" />
 
     <fmt:message key="connection.advanced.settings.tcp.boxtitle" var="tcpboxtitle"/>

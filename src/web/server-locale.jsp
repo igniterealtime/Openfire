@@ -20,6 +20,8 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils"
 %>
 <%@ page import="java.util.HashMap"%>
@@ -40,6 +42,18 @@
 
     // TODO: We're not displaying this error ever.
     Map<String,String> errors = new HashMap<String,String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         // Set the timezeone
         try {
@@ -90,6 +104,7 @@
 
 <!-- BEGIN locale settings -->
 <form action="server-locale.jsp" method="post" name="sform">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="locale.system.set" />
 	</div>

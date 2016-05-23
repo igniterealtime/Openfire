@@ -43,16 +43,6 @@ public class CrowdAuthProvider implements AuthProvider {
 		}
 	}
 
-	@Override
-	public boolean isPlainSupported() {
-		return true;
-	}
-
-	@Override
-	public boolean isDigestSupported() {
-		return false;
-	}
-
     /**
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
@@ -94,11 +84,6 @@ public class CrowdAuthProvider implements AuthProvider {
 		} catch (RemoteException re) {
 			throw new UnauthorizedException();
 		}
-	}
-
-	@Override
-	public void authenticate(String username, String token, String digest) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-		throw new UnsupportedOperationException("XMPP digest authentication not supported by this version of authentication provider");
 	}
 
 	@Override

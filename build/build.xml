@@ -256,7 +256,27 @@
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
 
-    <!-- init ================================================================================== -->
+	<!-- git.revision ========================================================= 
+	     http://stackoverflow.com/questions/2974106
+	-->
+	<available file=".git" type="dir" property="git.present"/>
+
+	<target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
+	    <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+	        <arg value="rev-parse"/>
+	        <arg value="--short"/>
+	        <arg value="HEAD"/>
+	    </exec>
+	    <condition property="repository.version" value="${git.revision}" else="unknown">
+	        <and>
+	            <isset property="git.revision"/>
+	            <length string="${git.revision}" trim="yes" length="0" when="greater"/>
+	        </and>
+	    </condition>
+		<echo message="repository.version set to '${repository.version}'" />
+	</target>
+
+	<!-- init ================================================================================== -->
     <target name="init">
 
         <!-- Check for min build requirements -->
@@ -1171,61 +1191,88 @@
 
     </target>
     
-    <!-- installer.rpm ========================================================================= -->
+    <!-- installer.rpm ======================================================== 
+         Build RPM artifiacts, set rpmbuild.arch to build non-x64, for example:
+           $ ant installer.rpm -Drpmbuild.arch=noarch
+           $ ant installer.rpm -Drpmbuild.arch=i686         
+    -->
     <property name="bundle.jre" value="true" />
     <property name="target.work.subdir" value="rpm" />
     <property name="target.rpm" value="${work.dir}/${target.work.subdir}" />
     <property name="rpm.spec.file" value="${basedir}/build/rpm/openfire.spec"/>
+	<property name="rpmbuild.arch" value="x86_64" />
     <tstamp>
         <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
     </tstamp>
-    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
+    <tstamp>
+        <format property="rpm.builddate2" pattern="yyyyMMdd" locale="en"/>
+    </tstamp>
+    <target name="installer.rpm" depends="init, dist.init, git.revision"
+    	    description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
+    	<!-- create empty dirs to allow rpmbuild to do its thing -->
         <mkdir dir="${target.rpm}/SPECS" />
         <mkdir dir="${target.rpm}/SOURCES" />
         <mkdir dir="${target.rpm}/BUILD" />
         <mkdir dir="${target.rpm}/SRPMS" />
         <mkdir dir="${target.rpm}/RPMS" />
 
-        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+        <!-- Setup the RPM versioning correctly, so one can update from 
+             a alpha,beta,rc build to GA 
+             For General Releases we get x.y.z-1
+             For Alpha builds we get     x.y.z-0.1.{YYYYMMDD}alpha
+             For Beta/RC builds we get   x.y.z-0.2.(beta|rc)
+        -->
+        <property name="rpmbuild.version"
+                  value="${version.major}.${version.minor}.${version.revision}"/>
         <if>
-            <equals arg1="${bundle.jre}" arg2="true"/>
+            <equals arg1="${version.extra}" arg2=""/>
             <then>
+                <property name="rpmbuild.release"
+                          value="1"/>
+            </then>
+        <elseif>
+	        <equals arg1="${version.extra}" arg2="alpha"/>
+            <then>
+	        	<property name="rpmbuild.release"
+                          value="0.1.${rpm.builddate2}${version.extra}"/>
+ 			</then>
+		</elseif>
+        <else>
+            <property name="rpmbuild.release"
+                      value="0.2.${version.extra}"/>        	
+        </else>
+        </if>
+        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+		<!-- Save the user from themself, if noarch is the target arch, ignore 
+		     copying the JRE as well -->
+    	<if>
+			<and>
+    		<equals arg1="${bundle.jre}" arg2="true"/>
+			<not>
+				<equals arg1="${rpmbuild.arch}" arg2="noarch" />
+			</not>
+			</and>
+			<then>
                 <!-- Include bundled jre -->
                 <copy todir="${target.rpm}/SOURCES" file="${jre.bundle.location}" />
             </then>
         </if>
-        <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+        <copy todir="${target.rpm}/SOURCES/" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
 
 
-        <if>
-            <equals arg1="${bundle.jre}" arg2="true"/>
-            <then>
-	      <rpm specFile="openfire.spec"
-		  topDir="${target.rpm}"
-		  command="-ba --target i386 --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-		  failOnError="true"
-		  />
+	    <rpm specFile="openfire.spec"
+		     topDir="${target.rpm}"
+		     command="-ba --target ${rpmbuild.arch} --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${rpmbuild.version}' --define 'OPENFIRE_RELEASE ${rpmbuild.release}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_REPOVERSION ${repository.version}' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+		     failOnError="true"
+		 />
 
+    	  <!-- copy the rpmbuild result into the release directory! -->
 	      <copy todir="${release.dest.dir}" >
 		  <fileset dir="${target.rpm}/SRPMS" />
-		  <fileset dir="${target.rpm}/RPMS/i386" />
+		  <fileset dir="${target.rpm}/RPMS/${rpmbuild.arch}" />
 	      </copy>
-	    </then>
-            <else>
-	      <rpm specFile="openfire.spec"
-		  topDir="${target.rpm}"
-		  command="-ba --target noarch --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-		  failOnError="true"
-		  />
-
-	      <copy todir="${release.dest.dir}" >
-		  <fileset dir="${target.rpm}/SRPMS" />
-		  <fileset dir="${target.rpm}/RPMS/noarch" />
-	      </copy>
-	    </else>
-        </if>
     </target>
 
     <!-- plugins =============================================================================== -->

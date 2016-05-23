@@ -36,6 +36,17 @@
     boolean test = request.getParameter("test") != null;
     boolean debug = ParamUtils.getBooleanParameter(request, "debug");
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Handle a test request
     if (test) {
         response.sendRedirect("system-emailtest.jsp");

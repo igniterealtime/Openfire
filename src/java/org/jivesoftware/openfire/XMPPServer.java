@@ -504,7 +504,6 @@ public class XMPPServer {
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());
-        loadModule(IQAuthHandler.class.getName());
         loadModule(IQPingHandler.class.getName());
         loadModule(IQPrivateHandler.class.getName());
         loadModule(IQRegisterHandler.class.getName());
@@ -1062,17 +1061,6 @@ public class XMPPServer {
         return (IQRegisterHandler) modules.get(IQRegisterHandler.class);
     }
 
-    /**
-     * Returns the <code>IQAuthHandler</code> registered with this server. The
-     * <code>IQAuthHandler</code> was registered with the server as a module while starting up
-     * the server.
-     *
-     * @return the <code>IQAuthHandler</code> registered with this server.
-     */
-    public IQAuthHandler getIQAuthHandler() {
-        return (IQAuthHandler) modules.get(IQAuthHandler.class);
-    }
-    
     /**
      * Returns the <code>IQPEPHandler</code> registered with this server. The
      * <code>IQPEPHandler</code> was registered with the server as a module while starting up

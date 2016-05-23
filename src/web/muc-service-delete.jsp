@@ -34,6 +34,17 @@
     boolean delete = request.getParameter("delete") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
     String reason = ParamUtils.getParameter(request,"reason");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
@@ -78,6 +89,7 @@
 </p>
 
 <form action="muc-service-delete.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
 <fieldset>

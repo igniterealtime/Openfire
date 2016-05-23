@@ -20,6 +20,7 @@
 package org.jivesoftware.openfire.plugin.session;
 
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
@@ -37,9 +38,9 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
     private String localDomain;
     private long usingServerDialback = -1;
 
-    public RemoteIncomingServerSession(byte[] nodeID, String streamID) {
+    public RemoteIncomingServerSession(byte[] nodeID, StreamID streamID) {
         super(nodeID, null);
-        this.streamID = new BasicStreamID(streamID);
+        this.streamID = streamID;
     }
 
     public boolean isUsingServerDialback() {
@@ -62,7 +63,7 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
         // Content is stored in a clustered cache so that even in the case of the node hosting
         // the sessions is lost we can still have access to this info to be able to perform
         // proper clean up logic {@link ClusterListener#cleanupNode(NodeCacheKey)
-        return SessionManager.getInstance().getValidatedDomains(streamID.getID());
+        return SessionManager.getInstance().getValidatedDomains(streamID);
     }
 
     public String getLocalDomain() {
@@ -74,14 +75,14 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
-        return new IncomingServerSessionTask(operation, streamID.getID());
+        return new IncomingServerSessionTask(operation, streamID);
     }
 
     ClusterTask getDeliverRawTextTask(String text) {
-        return new DeliverRawTextTask(streamID.getID(), text);
+        return new DeliverRawTextTask(streamID, text);
     }
 
     ClusterTask getProcessPacketTask(Packet packet) {
-        return new ProcessPacketTask(streamID.getID(), packet);
+        return new ProcessPacketTask(streamID, packet);
     }
 }

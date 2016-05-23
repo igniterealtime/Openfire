@@ -41,7 +41,7 @@ public class KeystoreTestUtils
     private static final Provider PROVIDER = new BouncyCastleProvider();
     private static final Object BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     private static final Object END_CERT = "-----END CERTIFICATE-----";
-    
+
     static
     {
         // Add the BC provider to the list of security providers
@@ -83,7 +83,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -112,7 +112,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -142,7 +142,7 @@ public class KeystoreTestUtils
     {
         int length = 4;
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         // Root certificate (representing the CA) is self-signed.
         KeyPair subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -164,9 +164,9 @@ public class KeystoreTestUtils
 
     private static X509Certificate generateTestCertificate( final boolean isValid, final KeyPair issuerKeyPair, final KeyPair subjectKeyPair, int indexAwayFromEndEntity) throws Exception
     {
-        // Issuer and Subject
-        final X500Name subject = new X500Name( "CN=MyName" + subjectKeyPair.getPublic().hashCode() );
-        final X500Name issuer  = new X500Name( "CN=MyName" + issuerKeyPair.getPublic().hashCode() );
+        // Issuer and Subject.
+        final X500Name subject = new X500Name( "CN=" + Base64.encodeBytes( subjectKeyPair.getPublic().getEncoded(), Base64.URL_SAFE ) );
+        final X500Name issuer  = new X500Name( "CN=" + Base64.encodeBytes( issuerKeyPair.getPublic().getEncoded(), Base64.URL_SAFE ) );
 
         // Validity
         final Date notBefore;
@@ -313,7 +313,7 @@ public class KeystoreTestUtils
     private static X509Certificate generateTestCertificate( final boolean isValid, final boolean isSelfSigned, int indexAwayFromEndEntity ) throws Exception
     {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 1024 );
+        keyPairGenerator.initialize( 512 );
 
         final KeyPair subjectKeyPair;
         final KeyPair issuerKeyPair;

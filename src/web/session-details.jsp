@@ -26,6 +26,7 @@
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.text.NumberFormat,
                  java.util.Collection"
     errorPage="error.jsp"
@@ -41,7 +42,15 @@
 <% // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
 
-    // Handle a "go back" click:
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    // ATTN: No check here, because no actions.
+
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+   // Handle a "go back" click:
     if (request.getParameter("back") != null) {
         response.sendRedirect("session-summary.jsp");
         return;
@@ -71,8 +80,10 @@
 
     // Handle a "message" click:
     if (request.getParameter("message") != null) {
-        response.sendRedirect("user-message.jsp?username=" + URLEncoder.encode(user.getUsername(), "UTF-8"));
-        return;
+        if (csrfCookie != null && csrfParam != null && csrfCookie.getValue().equals(csrfParam)) {
+            response.sendRedirect("user-message.jsp?username=" + URLEncoder.encode(user.getUsername(), "UTF-8"));
+            return;
+        }
     }
 
     // See if there are multiple sessions for this user:

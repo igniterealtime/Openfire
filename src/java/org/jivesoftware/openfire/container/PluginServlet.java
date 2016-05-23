@@ -74,7 +74,7 @@ public class PluginServlet extends HttpServlet {
 
 	private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
 
-    private static Map<String, GenericServlet> servlets;
+    private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
@@ -179,7 +179,7 @@ public class PluginServlet extends HttpServlet {
                 if (instance instanceof GenericServlet) {
                     // Initialize the servlet then add it to the map..
                     ((GenericServlet)instance).init(servletConfig);
-                    servlets.put(pluginName + url, (GenericServlet)instance);
+                    servlets.put((pluginName + url).toLowerCase(), (GenericServlet)instance);
                 }
                 else {
                     Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
@@ -217,11 +217,11 @@ public class PluginServlet extends HttpServlet {
                 Element nameElement = (Element)names.get(i);
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
-                GenericServlet servlet = servlets.get(pluginName + url);
+                GenericServlet servlet = servlets.get((pluginName + url).toLowerCase());
                 if (servlet != null) {
                     servlet.destroy();
                 }
-                servlets.remove(pluginName + url);
+                servlets.remove((pluginName + url).toLowerCase());
                 servlet = null;
             }
         }
@@ -251,7 +251,7 @@ public class PluginServlet extends HttpServlet {
 			throw new ServletException("Servlet is missing");
 		}
 		String pluginServletUrl = pluginName + relativeUrl;
-		servlets.put(pluginName + relativeUrl, servlet);
+		servlets.put((pluginName + relativeUrl).toLowerCase(), servlet);
 		return PLUGINS_WEBROOT + pluginServletUrl;
 		
 	}
@@ -271,7 +271,7 @@ public class PluginServlet extends HttpServlet {
 			throw new ServletException("Servlet URL is missing");
 		}
 		String fullUrl = pluginName + url;
-		GenericServlet servlet = servlets.remove(fullUrl);
+		GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
 		return servlet;
 	}
     
@@ -291,7 +291,7 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
-        GenericServlet servlet = servlets.get(jspURL);
+        GenericServlet servlet = servlets.get(jspURL.toLowerCase());
         if (servlet != null) {
             servlet.service(request, response);
         }

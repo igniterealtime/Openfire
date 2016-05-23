@@ -15,8 +15,6 @@ import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.EmailService;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
@@ -56,7 +54,9 @@ public class emailOnAway implements Plugin, PacketInterceptor {
         message.setTo(to);
         message.setFrom(from);
         message.setSubject("I'm away");
-        message.setBody("I'm currently away.  Your message has been forwarded to my service email address ("+emailTo+").");
+        if (JiveGlobals.getBooleanProperty("plugin.emailonaway.showemail", true)) { 
+        	message.setBody("I'm currently away. Your message has been forwarded to my email address  (" + emailTo + ")."); 
+        	} else { message.setBody("I'm currently away. Your message has been forwarded to my email address."); }
         return message;
     }
 

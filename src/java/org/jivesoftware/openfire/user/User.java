@@ -82,8 +82,6 @@ public class User implements Cacheable, Externalizable, Result {
     private static final String NAME_VISIBLE_PROPERTY = "name.visible";
     // The name of the email visible property
     private static final String EMAIL_VISIBLE_PROPERTY = "email.visible";
-    // The hard-coded list of properties to initialize with every new user
-    private static final String[] USER_PROPERTIES = {"title", "organization", "phonenumber", "department", "team"};
 
     private String username;
     private String salt;
@@ -92,7 +90,6 @@ public class User implements Cacheable, Externalizable, Result {
     private int iterations;
     private String name;
     private String email;
-    private String title;
     private Date creationDate;
     private Date modificationDate;
 
@@ -130,34 +127,6 @@ public class User implements Cacheable, Externalizable, Result {
         return propertyValue;
     }
 
-    /**
-     * Goes through the list of user properties and sets them all based on the given array.
-     * The order of the elements in the argument array must match the order of
-     * user properties given in USER_PROPERTIES. This method is an optimization to reduce
-     * the work that has to be done by the user-edit-form page on the admin console and to 
-     * allow the list of user properties to be easily modified in the future.
-     *
-     * @param propertyValues the list of values for the properties to set
-     * @return true if all properties set, false if an exception was thrown
-     */
-    public boolean setProperties(String[] propertyValues) {
-    	if (propertyValues.length != USER_PROPERTIES.length) {
-    		return false;
-    	}
-    	for (int i = 0; i < USER_PROPERTIES.length; i++) {
-    		updateProperty(USER_PROPERTIES[i], propertyValues[i]);
-        }
-        return true;
-    }
-    
-    /** Expose USER_PROPERTIES to allow for access without modification
-     * 
-     * @return the list of user properties
-     */
-    public String[] getPropertyList() {
-    	return USER_PROPERTIES;
-    }
-    
     /**
      * Constructor added for Externalizable. Do not use this constructor.
      */
@@ -369,76 +338,6 @@ public class User implements Cacheable, Externalizable, Result {
      */
     public void setEmailVisible(boolean visible) {
         getProperties().put(EMAIL_VISIBLE_PROPERTY, String.valueOf(visible));
-    }
-    
-    /**
-     * This method initializes all user properties whenever a new user is created.
-     * Currently, the list of user properties is hard coded in this file, but
-     * we should eventually store it in a separate file and allow the admin console
-     * to modify it.
-     *
-     * @param username the username of the new user
-     */
-    public void initializeUserProperties() {
-    	for (String propName : USER_PROPERTIES) {
-    		insertProperty(propName, "");
-    	}
-    }
-    
-    public void insertProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, propValue);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    public void updateProperty(String propName, String propValue) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, propValue);
-            pstmt.setString(2, propName);
-            pstmt.setString(3, username);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    public void deleteProperty(String propName) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, username);
-            pstmt.setString(2, propName);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
     }
 
     public Date getCreationDate() {
@@ -672,6 +571,62 @@ public class User implements Cacheable, Externalizable, Result {
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+    private void insertProperty(String propName, String propValue) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(INSERT_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, propName);
+            pstmt.setString(3, propValue);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    private void updateProperty(String propName, String propValue) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_PROPERTY);
+            pstmt.setString(1, propValue);
+            pstmt.setString(2, propName);
+            pstmt.setString(3, username);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    private void deleteProperty(String propName) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, propName);
+            pstmt.executeUpdate();
+        }
+        catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

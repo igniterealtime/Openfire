@@ -43,19 +43,14 @@
     boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
     Map<String, String> errors = new HashMap<String, String>();
 
-    // Load the user object
-    User user = webManager.getUserManager().getUser(username);
-    String[] userProperties = user.getPropertyList();
-    String[] propValues = new String[userProperties.length];
-    for (int i = 0; i < userProperties.length; i++) {
-        propValues[i] = ParamUtils.getParameter(request, userProperties[i]);
-    }
-
     // Handle a cancel
     if (request.getParameter("cancel") != null) {
         response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
+
+    // Load the user object
+    User user = webManager.getUserManager().getUser(username);
 
     // Handle a save
     if (save) {
@@ -75,7 +70,6 @@
         if (errors.size() == 0) {
             user.setEmail(email);
             user.setName(name);
-            user.setProperties(propValues);
 
             if (!AdminManager.getAdminProvider().isReadOnly()) {
                 boolean isCurrentAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
@@ -182,20 +176,6 @@
                  value="<%= ((user.getEmail()!=null) ? StringUtils.escapeForXML(user.getEmail()) : "") %>">
             </td>
         </tr>
-
-        <% for(int i = 0; i < userProperties.length; i++) {
-            String propResource = "user.edit.property." + userProperties[i]; %>
-            <tr>
-                <td class="c1">
-                    <fmt:message key="<%=propResource%>" />:
-                </td>
-                <td>
-                    <input type="text" size="30" maxlength="150" name="<%=userProperties[i]%>"
-                    value="<%= StringUtils.escapeForXML(user.getPropertyValue(username, userProperties[i])) %>">
-                </td>
-            </tr>
-        <% } %>
-
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
         <tr>
             <td class="c1">

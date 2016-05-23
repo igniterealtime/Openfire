@@ -46,7 +46,6 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -188,8 +187,7 @@ public class Roster implements Cacheable, Externalizable {
                 // optimization to reduce objects in memory and avoid loading users in memory
                 // to get their nicknames that will never be shown
                 if (item.getSubStatus() != RosterItem.SUB_FROM) {
-                	String contactUserName = UserNameManager.getUserName(jid);
-                    item.setNickname(UserManager.getInstance().getUser(contactUserName).getName());
+                    item.setNickname(UserNameManager.getUserName(jid));
                     rosterItems.put(item.getJid().toBareJID(), item);
                 } else {
                     // Cache information about shared contacts with subscription status FROM
@@ -783,9 +781,7 @@ public class Roster implements Cacheable, Externalizable {
         } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-//                String nickname = UserNameManager.getUserName(addedUser);
-            	String contactUserName = UserNameManager.getUserName(addedUser);
-            	String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+                String nickname = UserNameManager.getUserName(addedUser);
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -889,9 +885,7 @@ public class Roster implements Cacheable, Externalizable {
         } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-//                String nickname = UserNameManager.getUserName(addedUser);
-            	String contactUserName = UserNameManager.getUserName(addedUser);
-            	String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+                String nickname = UserNameManager.getUserName(addedUser);
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);

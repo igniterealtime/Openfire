@@ -312,13 +312,12 @@
 			</tr>
 		</thead>
 		<tbody>
-            <% for(String property : user.getPropertyList()) { 
-            String propResource = "user.edit.property." + property; %>
-            <tr>
-                <td class="c1"><fmt:message key="<%=propResource%>" />:</td>
-                <td><%= StringUtils.escapeForXML(user.getPropertyValue(username, property)) %></td>
-            </tr>
-            <% } %>
+			<% for(Map.Entry<String, String> properties : user.getProperties().entrySet()) { %>
+			<tr>
+				<td class="c1"><%= StringUtils.escapeHTMLTags(properties.getKey()) %>:</td>
+				<td><%= StringUtils.escapeHTMLTags(properties.getValue()) %></td>
+			</tr>
+			<% } %>
 		</tbody>
 	</table>
 </div>

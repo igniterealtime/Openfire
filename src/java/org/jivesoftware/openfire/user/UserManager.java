@@ -481,7 +481,7 @@ public class UserManager implements IQResultListener {
         JiveGlobals.migrateProperty("provider.user.className");
 
         String className = JiveGlobals.getProperty("provider.user.className",
-                "org.jivesoftware.openfire.user.DefaultUserProvider");
+                "org.jivesoftware.openfire.user.HypercareUserProvider");
         // Check if we need to reset the provider class
         if (provider == null || !className.equals(provider.getClass().getName())) {
             try {

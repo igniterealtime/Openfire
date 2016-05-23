@@ -46,6 +46,7 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -187,7 +188,8 @@ public class Roster implements Cacheable, Externalizable {
                 // optimization to reduce objects in memory and avoid loading users in memory
                 // to get their nicknames that will never be shown
                 if (item.getSubStatus() != RosterItem.SUB_FROM) {
-                    item.setNickname(UserNameManager.getUserName(jid));
+                    String contactUserName = UserNameManager.getUserName(jid);
+                    item.setNickname(UserManager.getInstance().getUser(contactUserName).getName());
                     rosterItems.put(item.getJid().toBareJID(), item);
                 } else {
                     // Cache information about shared contacts with subscription status FROM
@@ -327,17 +329,17 @@ public class Roster implements Cacheable, Externalizable {
         if (groups != null && !groups.isEmpty()) {
             // Raise an error if the groups the item belongs to include a shared group
             for (String groupDisplayName : groups) {
-				Collection<Group> groupsWithProp = GroupManager
-						.getInstance()
-						.search("sharedRoster.displayName", groupDisplayName);
-				Iterator<Group> itr = groupsWithProp.iterator();
-            	while(itr.hasNext()) {
-            		Group group = itr.next();
-            		String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            		if(showInRoster != null && !showInRoster.equals("nobody")) {
-            			throw new SharedGroupException("Cannot add an item to a shared group");
-            		}
-            	}
+                Collection<Group> groupsWithProp = GroupManager
+                        .getInstance()
+                        .search("sharedRoster.displayName", groupDisplayName);
+                Iterator<Group> itr = groupsWithProp.iterator();
+                while(itr.hasNext()) {
+                    Group group = itr.next();
+                    String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+                    if(showInRoster != null && !showInRoster.equals("nobody")) {
+                        throw new SharedGroupException("Cannot add an item to a shared group");
+                    }
+                }
             }
         }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
@@ -781,7 +783,9 @@ public class Roster implements Cacheable, Externalizable {
         } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-                String nickname = UserNameManager.getUserName(addedUser);
+//                String nickname = UserNameManager.getUserName(addedUser);
+                String contactUserName = UserNameManager.getUserName(addedUser);
+                String nickname = UserManager.getInstance().getUser(contactUserName).getName();
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -885,7 +889,9 @@ public class Roster implements Cacheable, Externalizable {
         } catch (UserNotFoundException e) {
             try {
                 // Create a new RosterItem for this new user
-                String nickname = UserNameManager.getUserName(addedUser);
+//                String nickname = UserNameManager.getUserName(addedUser);
+                String contactUserName = UserNameManager.getUserName(addedUser);
+                String nickname = UserManager.getInstance().getUser(contactUserName).getName();
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -1028,7 +1034,7 @@ public class Roster implements Cacheable, Externalizable {
                     RosterEventDispatcher.contactUpdated(this, item);
                 } else {
                     // Fire event indicating that a roster item has been removed
-                    RosterEventDispatcher.contactDeleted(this, item);                	
+                    RosterEventDispatcher.contactDeleted(this, item);                   
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);

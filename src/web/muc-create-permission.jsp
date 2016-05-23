@@ -52,19 +52,6 @@
         return;
     }
 
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (save || add || delete) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            save = false;
-            add = false;
-            delete = false;
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     // Get muc server
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
@@ -205,7 +192,6 @@
 
 <!-- BEGIN 'Permission Policy' -->
 <form action="muc-create-permission.jsp?save" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.policy" />
@@ -245,7 +231,6 @@
 <%  if (mucService.isRoomCreationRestricted()) { %>
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.create.permission.allowed_users" />
@@ -303,7 +288,7 @@
 						  <%= jidDisplay %></a>
 						</td>
 						<td width="1%" align="center">
-							<a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+							<a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
 							 title="<fmt:message key="muc.create.permission.click_title" />"
 							 onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
 							 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

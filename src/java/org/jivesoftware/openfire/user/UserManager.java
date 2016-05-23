@@ -107,9 +107,7 @@ public class UserManager implements IQResultListener {
 
             @Override
             public void propertyDeleted(String property, Map params) {
-                if ("provider.user.className".equals(property)) {
-                    initProvider();
-                }
+                //Ignore
             }
 
             @Override

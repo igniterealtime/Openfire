@@ -56,7 +56,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
 
     public void run() {
         if (operation == Operation.getStreamID) {
-            result = getSession().getStreamID();
+            result = getSession().getStreamID().getID();
         }
         else if (operation == Operation.getServerName) {
             result = getSession().getServerName();

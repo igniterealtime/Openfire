@@ -1,9 +1,6 @@
 package org.jivesoftware.openfire.plugin.rest.entity;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -11,7 +8,7 @@ import javax.xml.bind.annotation.XmlType;
  * The Class GroupEntity.
  */
 @XmlRootElement(name = "group")
-@XmlType(propOrder = { "name", "description", "admins", "members" })
+@XmlType(propOrder = { "name", "description" })
 public class GroupEntity {
 
 	/** The name. */
@@ -19,12 +16,6 @@ public class GroupEntity {
 
 	/** The description. */
 	private String description;
-
-	/** The admins. */
-	private List<String> admins;
-
-	/** The members. */
-	private List<String> members;
 
 	/**
 	 * Instantiates a new group entity.
@@ -83,46 +74,6 @@ public class GroupEntity {
 	 */
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	/**
-	 * Gets the admins.
-	 *
-	 * @return the admins
-	 */
-	@XmlElementWrapper(name = "admins")
-	@XmlElement(name = "admin")
-	public List<String> getAdmins() {
-		return admins;
-	}
-
-	/**
-	 * Gets the members.
-	 *
-	 * @return the members
-	 */
-	@XmlElementWrapper(name = "members")
-	@XmlElement(name = "member")
-	public List<String> getMembers() {
-		return members;
-	}
-
-	/**
-	 * Sets the admins.
-	 *
-	 * @param admins the new admins
-	 */
-	public void setAdmins(List<String> admins) {
-		this.admins = admins;
-	}
-
-	/**
-	 * Sets the members.
-	 *
-	 * @param members the new members
-	 */
-	public void setMembers(List<String> members) {
-		this.members = members;
 	}
 
 }

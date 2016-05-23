@@ -883,9 +883,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication
-            if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
-                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
-            }
+            sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
             // Advertise that the server supports In-Band Registration
             if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
                 sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");

@@ -26,13 +26,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionPacketRouter;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -79,16 +76,15 @@ public class MultiplexerPacketHandler {
             }
             else if (iq.getType() == IQ.Type.set) {
                 Element child = iq.getChildElement();
-                String streamIDValue = child.attributeValue("id");
-                if (streamIDValue == null) {
+                String streamID = child.attributeValue("id");
+                if (streamID == null) {
                     // No stream ID was included so return a bad_request error
                     Element extraError = DocumentHelper.createElement(QName.get(
                             "id-required", "http://jabber.org/protocol/connectionmanager#errors"));
                     sendErrorPacket(iq, PacketError.Condition.bad_request, extraError);
                 }
                 else if ("session".equals(child.getName())) {
-                    StreamID streamID = BasicStreamIDFactory.createStreamID( streamIDValue );
-                    Element create = child.element( "create" );
+                    Element create = child.element("create");
                     if (create != null) {
                         // Get the InetAddress of the client
                         Element hostElement = create.element("host");
@@ -171,7 +167,7 @@ public class MultiplexerPacketHandler {
      * @param route the route packet.
      */
     public void route(Route route) {
-        StreamID streamID = route.getStreamID();
+        String streamID = route.getStreamID();
         if (streamID == null) {
             // No stream ID was included so return a bad_request error
             Element extraError = DocumentHelper.createElement(QName.get(

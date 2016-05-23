@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.handler;
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +41,6 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
-import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
@@ -74,9 +74,11 @@ import org.xmpp.packet.StreamError;
  *
  * @author Iain Shigeoka
  */
-public class IQAuthHandler extends IQHandler {
+public class IQAuthHandler extends IQHandler implements IQAuthInfo {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQAuthHandler.class);
+
+    private boolean anonymousAllowed;
 
     private Element probeResponse;
     private IQHandlerInfo info;
@@ -95,11 +97,14 @@ public class IQAuthHandler extends IQHandler {
 
         probeResponse = DocumentHelper.createElement(QName.get("query", "jabber:iq:auth"));
         probeResponse.addElement("username");
-        if (AuthFactory.supportsPasswordRetrieval()) {
+        if (AuthFactory.isPlainSupported()) {
             probeResponse.addElement("password");
+        }
+        if (AuthFactory.isDigestSupported()) {
             probeResponse.addElement("digest");
         }
         probeResponse.addElement("resource");
+        anonymousAllowed = JiveGlobals.getBooleanProperty("xmpp.auth.anonymous");
     }
 
     @Override
@@ -249,12 +254,12 @@ public class IQAuthHandler extends IQHandler {
         username = username.toLowerCase();
         // Verify that supplied username and password are correct (i.e. user authentication was successful)
         AuthToken token = null;
-        if ( AuthFactory.supportsPasswordRetrieval() ) {
-            if ( password != null) {
-                token = AuthFactory.authenticate( username, password );
-            } else if ( digest != null) {
-                token = authenticate(username, session.getStreamID().toString(), digest );
-            }
+        if (password != null && AuthFactory.isPlainSupported()) {
+            token = AuthFactory.authenticate(username, password);
+        }
+        else if (digest != null && AuthFactory.isDigestSupported()) {
+            token = AuthFactory.authenticate(username, session.getStreamID().toString(),
+                    digest);
         }
         if (token == null) {
             throw new UnauthorizedException();
@@ -323,7 +328,7 @@ public class IQAuthHandler extends IQHandler {
 
     private IQ anonymousLogin(LocalClientSession session, IQ packet) {
         IQ response = IQ.createResultIQ(packet);
-        if (JiveGlobals.getBooleanProperty("xmpp.auth.anonymous")) {
+        if (anonymousAllowed) {
             // Verify that client can connect from his IP address
             boolean forbidAccess = !LocalClientSession.isAllowedAnonymous( session.getConnection() );
             if (forbidAccess) {
@@ -348,6 +353,17 @@ public class IQAuthHandler extends IQHandler {
     }
 
     @Override
+    public boolean isAnonymousAllowed() {
+        return anonymousAllowed;
+    }
+
+    @Override
+    public void setAllowAnonymous(boolean isAnonymous) throws UnauthorizedException {
+        anonymousAllowed = isAnonymous;
+        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonymousAllowed));
+    }
+
+    @Override
 	public void initialize(XMPPServer server) {
         super.initialize(server);
         userManager = server.getUserManager();
@@ -360,54 +376,4 @@ public class IQAuthHandler extends IQHandler {
 	public IQHandlerInfo getInfo() {
         return info;
     }
-
-    /**
-     * Authenticates a user with a username, token, and digest and returns an AuthToken.
-     * The digest should be generated using the {@link AuthFactory#createDigest(String, String)} method.
-     * If the username and digest do not match the record of any user in the system, the
-     * method throws an UnauthorizedException.
-     *
-     * @param username the username.
-     * @param token the token that was used with plain-text password to generate the digest.
-     * @param digest the digest generated from plain-text password and unique token.
-     * @return an AuthToken token if the username and digest are correct for the user's
-     *      password and given token.
-     * @throws UnauthorizedException if the username and password do not match any
-     *      existing user or the account is locked out.
-     */
-    public static AuthToken authenticate(String username, String token, String digest)
-            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-        if (username == null || token == null || digest == null) {
-            throw new UnauthorizedException();
-        }
-        if ( LockOutManager.getInstance().isAccountDisabled(username)) {
-            LockOutManager.getInstance().recordFailedLogin(username);
-            throw new UnauthorizedException();
-        }
-        username = username.trim().toLowerCase();
-        if (username.contains("@")) {
-            // Check that the specified domain matches the server's domain
-            int index = username.indexOf("@");
-            String domain = username.substring(index + 1);
-            if (domain.equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                username = username.substring(0, index);
-            } else {
-                // Unknown domain. Return authentication failed.
-                throw new UnauthorizedException();
-            }
-        }
-        try {
-            String password = AuthFactory.getPassword( username );
-            String anticipatedDigest = AuthFactory.createDigest(token, password);
-            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-                throw new UnauthorizedException();
-            }
-        }
-        catch (UserNotFoundException unfe) {
-            throw new UnauthorizedException();
-        }
-        // Got this far, so the user must be authorized.
-        return new AuthToken(username);
-    }
-
 }

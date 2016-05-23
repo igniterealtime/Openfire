@@ -18,16 +18,14 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.handler.IQAuthHandler,
                  org.jivesoftware.openfire.handler.IQRegisterHandler,
                  org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.CookieUtils,
-                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.regex.Pattern" %>
 <%@ page import="java.util.*" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -53,22 +51,12 @@
     String blockedIPs = request.getParameter("blockedIPs");
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (save) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            save = false;
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
+    IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
-        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonLogin));
+        authHandler.setAllowAnonymous(anonLogin);
 
         // Build a Map with the allowed IP addresses
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
@@ -112,7 +100,7 @@
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" );
+    anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
     Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();
@@ -151,7 +139,6 @@
 </p>
 
 <form action="reg-settings.jsp">
-    <input type="hidden" name="csrf" value="${csrf}">
 
 <% if (save) { %>
 

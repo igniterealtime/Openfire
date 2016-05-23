@@ -22,17 +22,22 @@ package org.jivesoftware.openfire;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -40,6 +45,11 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
@@ -60,13 +70,18 @@ import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.forms.DataForm;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -130,7 +145,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * Cache (unlimited, never expire) that holds incoming sessions of remote servers.
      * Key: stream ID that identifies the socket/session, Value: nodeID
      */
-    private Cache<StreamID, byte[]> incomingServerSessionsCache;
+    private Cache<String, byte[]> incomingServerSessionsCache;
     /**
      * Cache (unlimited, never expire) that holds list of incoming sessions
      * originated from the same remote server (domain/subdomain). For instance, jabber.org
@@ -138,7 +153,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * jivesoftware.com and the other socket to conference.jivesoftware.com).
      * Key: remote hostname (domain/subdomain), Value: list of stream IDs that identify each socket.
      */
-    private Cache<String, List<StreamID>> hostnameSessionsCache;
+    private Cache<String, List<String>> hostnameSessionsCache;
 
     /**
      * Cache (unlimited, never expire) that holds domains, subdomains and virtual
@@ -152,7 +167,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * will have access to this clustered cache even in the case of this node going
      * down.
      */
-    private Cache<StreamID, Set<String>> validatedDomainsCache;
+    private Cache<String, Set<String>> validatedDomainsCache;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
@@ -450,7 +465,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      */
     public void registerIncomingServerSession(String hostname, LocalIncomingServerSession session) {
         // Keep local track of the incoming server session connected to this JVM
-        StreamID streamID = session.getStreamID();
+        String streamID = session.getStreamID().getID();
         localSessionManager.addIncomingServerSessions(streamID, session);
         // Keep track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
@@ -458,7 +473,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
-            List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+            List<String> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs == null) {
                 streamIDs = new ArrayList<>();
             }
@@ -493,7 +508,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      */
     public void unregisterIncomingServerSession(String hostname, IncomingServerSession session) {
         // Remove local track of the incoming server session connected to this JVM
-        StreamID streamID = session.getStreamID();
+        String streamID = session.getStreamID().getID();
         localSessionManager.removeIncomingServerSessions(streamID);
         // Remove track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.remove(streamID);
@@ -502,7 +517,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
             lock.lock();
-            List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+            List<String> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs != null) {
                 streamIDs.remove(streamID);
                 if (streamIDs.isEmpty()) {
@@ -548,7 +563,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @param streamID id that uniquely identifies the session.
      * @return domains, subdomains and virtual hosts that where validated.
      */
-    public Collection<String> getValidatedDomains(StreamID streamID) {
+    public Collection<String> getValidatedDomains(String streamID) {
         Lock lock = CacheFactory.getLock(streamID, validatedDomainsCache);
         try {
             lock.lock();
@@ -835,7 +850,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @param streamID the stream ID that identifies the incoming server session hosted by this JVM.
      * @return the incoming server session hosted by this JVM or null if none was found.
      */
-    public LocalIncomingServerSession getIncomingServerSession(StreamID streamID) {
+    public LocalIncomingServerSession getIncomingServerSession(String streamID) {
         return localSessionManager.getIncomingServerSession(streamID);
     }
 
@@ -848,7 +863,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
      * @return the sessions that were originated by a remote server.
      */
     public List<IncomingServerSession> getIncomingServerSessions(String hostname) {
-        List<StreamID> streamIDs;
+        List<String> streamIDs;
         // Get list of sockets/sessions coming from the remote hostname
         Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
         try {
@@ -865,7 +880,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
         else {
             // Collect the sessions associated to the found stream IDs
             List<IncomingServerSession> sessions = new ArrayList<>();
-            for (StreamID streamID : streamIDs) {
+            for (String streamID : streamIDs) {
                 // Search in local hosted sessions
                 IncomingServerSession session = localSessionManager.getIncomingServerSession(streamID);
                 RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -1593,14 +1608,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener/
 
         // Add incoming server sessions hosted locally to the cache (using new nodeID)
         for (LocalIncomingServerSession session : localSessionManager.getIncomingServerSessions()) {
-            StreamID streamID = session.getStreamID();
+            String streamID = session.getStreamID().getID();
             incomingServerSessionsCache.put(streamID, server.getNodeID().toByteArray());
             for (String hostname : session.getValidatedDomains()) {
                 // Update list of sockets/sessions coming from the same remote hostname
                 Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
                 try {
                     lock.lock();
-                    List<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
+                    List<String> streamIDs = hostnameSessionsCache.get(hostname);
                     if (streamIDs == null) {
                         streamIDs = new ArrayList<>();
                     }

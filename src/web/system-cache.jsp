@@ -1,7 +1,6 @@
 <%@ page import="org.jivesoftware.util.cache.Cache"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%--
   -	$RCSfile$
@@ -109,17 +108,6 @@
     // Get the list of existing caches
     Cache[] caches = webManager.getCaches();
 
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (doClearCache) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            doClearCache = false;
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     // Clear one or multiple caches if requested.
     if (doClearCache) {
         for (int cacheID : cacheIDs) {
@@ -164,7 +152,6 @@
 %>
 
 <form action="system-cache.jsp" method="post" name="cacheForm">
-        <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

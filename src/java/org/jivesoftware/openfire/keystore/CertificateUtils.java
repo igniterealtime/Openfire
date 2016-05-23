@@ -1,8 +1,5 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.security.Principal;
 import java.security.cert.*;
 import java.util.*;
@@ -14,8 +11,6 @@ import java.util.*;
  */
 public class CertificateUtils
 {
-    private static final Logger Log = LoggerFactory.getLogger( CertificateUtils.class );
-
     /**
      * Returns all valid certificates from the provided input, where validity references the notBefore and notAfter
      * dates of each certificate.
@@ -228,8 +223,7 @@ public class CertificateUtils
      * part of the same chain (or chain segment). Each certificate in the chain is expected to have issued another
      * certificate from the chain, except for one. That one certificate is returned.
      *
-     * When ordering the chain fails (for example, when the collection of certificates do not belong to one linear list)
-     * the first certificate from the chain is returned.
+     * This method will throw an exception when no valid chain was provided.
      *
      * @param chain The chain (possibly incomplete or unordered, but not null, empty or malformed).
      * @return The end entity certificate (never null).
@@ -237,20 +231,12 @@ public class CertificateUtils
      */
     public static X509Certificate identifyEndEntityCertificate( Collection<X509Certificate> chain ) throws CertificateException
     {
-        if ( chain.isEmpty() )
-        {
+        final List<X509Certificate> ordered = order( chain );
+        if (ordered.isEmpty()) {
             throw new CertificateException();
         }
 
-        try
-        {
-            return order( chain ).get( 0 );
-        }
-        catch ( CertificateException ex )
-        {
-            Log.warn( "Unable to order the provided chain. As a fallback, the end entity certificate is assumed to be the first certificate of the input.", ex );
-            return chain.iterator().next();
-        }
+        return ordered.get( 0 );
     }
 
     /**

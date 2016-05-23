@@ -28,9 +28,6 @@
 <%@ page import="java.util.Comparator" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
-<%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="java.util.Date"%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -42,17 +39,6 @@
 <%
     boolean downloadRequested = request.getParameter("download") != null;
     String url = request.getParameter("url");
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (downloadRequested) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            downloadRequested = false;
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
 
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     List<AvailablePlugin> plugins = updateManager.getNotInstalledPlugins();

@@ -8,10 +8,6 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ModificationNotAllowedException" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="gnu.inet.encoding.StringprepException" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page errorPage="error.jsp" %>
@@ -30,29 +26,8 @@
     final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
 
     final Map<String, String> errors = new HashMap<>();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    boolean update = request.getParameter( "update" ) != null;
-    boolean permissionUpdate = request.getParameter( "permissionUpdate" ) != null;
-    String configToDelete = ParamUtils.getParameter( request, "deleteConf" );
-    boolean componentAllowed = request.getParameter( "componentAllowed" ) != null;
-    boolean componentBlocked = request.getParameter( "componentBlocked" ) != null;
-
-    if (update || permissionUpdate || configToDelete != null || componentAllowed || componentBlocked) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            update = false;
-            permissionUpdate = false;
-            configToDelete = null;
-            componentAllowed = false;
-            componentBlocked = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
-
+    final boolean update = request.getParameter( "update" ) != null;
 
     if ( update && errors.isEmpty() )
     {
@@ -80,6 +55,7 @@
     }
 
     // Process Permission update configuration change.
+    final boolean permissionUpdate = request.getParameter( "permissionUpdate" ) != null;
 
     if ( permissionUpdate && errors.isEmpty() )
     {
@@ -109,6 +85,7 @@
     }
 
     // Process removal of a blacklist or whitelist item.
+    final String configToDelete = ParamUtils.getParameter( request, "deleteConf" );
 
     if ( configToDelete != null && !configToDelete.trim().isEmpty() && errors.isEmpty() )
     {
@@ -128,17 +105,12 @@
     }
 
     // Process addition to whitelist.
+    final boolean componentAllowed = request.getParameter( "componentAllowed" ) != null;
     String subdomain = ParamUtils.getParameter( request, "subdomain" ); // shared with blacklist.
     if ( subdomain != null )
     {
-        subdomain = subdomain.trim();
-        try {
-            subdomain = JID.domainprep(subdomain);
-            // Remove the hostname if the user is not sending just the subdomain.
-            subdomain = subdomain.replace( "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "" );
-        } catch (Exception e) {
-            errors.put("subdomain", e.getMessage());
-        }
+        // Remove the hostname if the user is not sending just the subdomain.
+        subdomain = subdomain.replace( "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "" );
     }
     if ( componentAllowed && errors.isEmpty() )
     {
@@ -175,6 +147,7 @@
     }
 
     // Process addition to blacklist.
+    final boolean componentBlocked = request.getParameter( "componentBlocked" ) != null;
 
     if ( componentBlocked && errors.isEmpty() )
     {
@@ -286,7 +259,6 @@
 </p>
 
 <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
 
     <fmt:message key="component.settings.plaintext.boxtitle" var="plaintextboxtitle"/>
     <admin:contentBox title="${plaintextboxtitle}">
@@ -335,7 +307,6 @@
 <fmt:message key="component.settings.allowed" var="allowedTitle" />
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="0" border="0" width="100%" >
             <tr valign="top">
                 <td colspan="2">
@@ -393,11 +364,7 @@
                         <td><c:out value="${component.subdomain}"/></td>
                         <td><c:out value="${component.secret}"/></td>
                         <td align="center" style="border-right:1px #ccc solid;">
-                            <c:url var="deleteurl" value="connection-settings-external-components.jsp">
-                                <c:param name="deleteConf" value="${component.subdomain}"/>
-                                <c:param name="csrf" value="${csrf}"/>
-                            </c:url>
-                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
+                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('connection-settings-external-components.jsp?deleteConf=${component.subdomain}'); } "
                                title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                         </td>
                     </tr>
@@ -409,7 +376,6 @@
     <br/>
 
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td nowrap width="1%">
@@ -457,11 +423,7 @@
                         <td>${ status.index + 1}</td>
                         <td><c:out value="${component.subdomain}"/></td>
                         <td align="center" style="border-right:1px #ccc solid;">
-                            <c:url var="deleteurl" value="connection-settings-external-components.jsp">
-                                <c:param name="deleteConf" value="${component.subdomain}"/>
-                                <c:param name="csrf" value="${csrf}"/>
-                            </c:url>
-                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
+                            <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('connection-settings-external-components.jsp?deleteConf=${component.subdomain}'); } "
                                title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                         </td>
                     </tr>
@@ -473,7 +435,6 @@
     <br/>
 
     <form action="connection-settings-external-components.jsp" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="1" border="0">
             <tr>
                 <td nowrap width="1%">

@@ -33,17 +33,6 @@
 <%  // Get parameters //
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (delete) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            delete = false;
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
 
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
@@ -104,7 +93,6 @@
 </p>
 
 <form action="muc-room-delete.jsp">
-    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 
 <fieldset>

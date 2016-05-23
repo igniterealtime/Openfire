@@ -24,7 +24,6 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.update.UpdateManager,
                  java.util.HashMap,
@@ -55,18 +54,6 @@
 
     // Update the session kick policy if requested
     Map<String, String> errors = new HashMap<String, String>();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (update) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            update = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
 
         // Validate params
@@ -143,7 +130,6 @@ else if (updateSucess) { %>
 
 <!-- BEGIN manage updates settings -->
 <form action="manage-updates.jsp" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
 	<!--<div class="jive-contentBoxHeader">
 
 	</div>-->

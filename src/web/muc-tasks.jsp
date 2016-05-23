@@ -51,19 +51,6 @@
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     Map<String, String> errors = new HashMap<String, String>();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (kickSettings || logSettings) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            kickSettings = false;
-            logSettings = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     // Handle an update of the kicking task settings
     if (kickSettings) {
         if (!kickEnabled) {
@@ -200,7 +187,6 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.user_setting" />
@@ -242,7 +228,6 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.conversation.logging" />

@@ -20,7 +20,6 @@
 package org.jivesoftware.openfire.plugin.session;
 
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
@@ -38,9 +37,9 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
     private String localDomain;
     private long usingServerDialback = -1;
 
-    public RemoteIncomingServerSession(byte[] nodeID, StreamID streamID) {
+    public RemoteIncomingServerSession(byte[] nodeID, String streamID) {
         super(nodeID, null);
-        this.streamID = streamID;
+        this.streamID = new BasicStreamID(streamID);
     }
 
     public boolean isUsingServerDialback() {
@@ -63,7 +62,7 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
         // Content is stored in a clustered cache so that even in the case of the node hosting
         // the sessions is lost we can still have access to this info to be able to perform
         // proper clean up logic {@link ClusterListener#cleanupNode(NodeCacheKey)
-        return SessionManager.getInstance().getValidatedDomains(streamID);
+        return SessionManager.getInstance().getValidatedDomains(streamID.getID());
     }
 
     public String getLocalDomain() {
@@ -75,14 +74,14 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
     }
 
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
-        return new IncomingServerSessionTask(operation, streamID);
+        return new IncomingServerSessionTask(operation, streamID.getID());
     }
 
     ClusterTask getDeliverRawTextTask(String text) {
-        return new DeliverRawTextTask(streamID, text);
+        return new DeliverRawTextTask(streamID.getID(), text);
     }
 
     ClusterTask getProcessPacketTask(Packet packet) {
-        return new ProcessPacketTask(streamID, packet);
+        return new ProcessPacketTask(streamID.getID(), packet);
     }
 }

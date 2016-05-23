@@ -17,7 +17,6 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.audit.AuditManager,
                  org.jivesoftware.openfire.user.UserNotFoundException,
@@ -61,18 +60,6 @@
     AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
 
     Map<String,String> errors = new HashMap<String,String>();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (update) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            update = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         auditManager.setEnabled(auditEnabled);
         auditManager.setAuditMessage(auditMessages);
@@ -200,7 +187,6 @@
 
 <!-- BEGIN 'Set Message Audit Policy' -->
 <form action="audit-policy.jsp" name="f">
-    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="audit.policy.policytitle" />
 	</div>
@@ -259,7 +245,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxTotalSize"
-							 value="<%= ((maxTotalSize != null) ? StringUtils.escapeForXML(maxTotalSize) : "") %>">
+							 value="<%= ((maxTotalSize != null) ? maxTotalSize : "") %>">
 
 						<%  if (errors.get("maxTotalSize") != null) { %>
 
@@ -277,7 +263,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxFileSize"
-							 value="<%= ((maxFileSize != null) ? StringUtils.escapeForXML(maxFileSize) : "") %>">
+							 value="<%= ((maxFileSize != null) ? maxFileSize : "") %>">
 
 						<%  if (errors.get("maxFileSize") != null) { %>
 
@@ -295,7 +281,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="maxDays"
-							 value="<%= ((maxDays != null) ? StringUtils.escapeForXML(maxDays) : "") %>">
+							 value="<%= ((maxDays != null) ? maxDays : "") %>">
 
 							<%  if (errors.get("maxDays") != null) { %>
 
@@ -313,7 +299,7 @@
 						</td>
 						<td width="99%">
 							<input type="text" size="15" maxlength="50" name="logTimeout"
-							 value="<%= ((logTimeout != null) ? StringUtils.escapeForXML(logTimeout) : "") %>">
+							 value="<%= ((logTimeout != null) ? logTimeout : "") %>">
 
 						<%  if (errors.get("logTimeout") != null) { %>
 

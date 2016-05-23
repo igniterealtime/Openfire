@@ -26,7 +26,6 @@
                  org.jivesoftware.openfire.group.GroupJID,
                  org.jivesoftware.openfire.group.GroupManager,
                  org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.StringUtils,
                  org.xmpp.packet.IQ"
     errorPage="error.jsp"
@@ -67,18 +66,6 @@
     }
 
     Map<String,String> errors = new HashMap<String,String>();
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (add) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            add = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
     // Handle an add
     if (add) {
         // do validation
@@ -227,7 +214,6 @@
 <%  } %>
 
 <form action="muc-room-affiliations.jsp?add" method="post">
-    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="roomJID" value="<%= roomJID.toBareJID() %>">
 
 <fieldset>
@@ -296,7 +282,7 @@
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=owner&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=owner"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -335,7 +321,7 @@
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=admin&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=admin"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -376,7 +362,7 @@
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a><%= StringUtils.escapeHTMLTags(nickname) %>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=member&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=member"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
@@ -415,7 +401,7 @@
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td width="1%" align="center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=outcast&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString()) %>&delete=true&affiliation=outcast"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

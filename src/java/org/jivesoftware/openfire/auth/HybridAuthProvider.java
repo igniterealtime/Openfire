@@ -106,6 +106,13 @@ public class HybridAuthProvider implements AuthProvider {
         try {
             Class c = ClassUtils.forName(primaryClass);
             primaryProvider = (AuthProvider)c.newInstance();
+            // All providers must support plain auth.
+            if (!primaryProvider.isPlainSupported()) {
+                Log.error("Provider " + primaryClass + " must support plain authentication. " +
+                        "Authentication disabled.");
+                primaryProvider = null;
+                return;
+            }
             Log.debug("Primary auth provider: " + primaryClass);
         }
         catch (Exception e) {
@@ -120,6 +127,14 @@ public class HybridAuthProvider implements AuthProvider {
             try {
                 Class c = ClassUtils.forName(secondaryClass);
                 secondaryProvider = (AuthProvider)c.newInstance();
+                // All providers must support plain auth.
+                if (!secondaryProvider.isPlainSupported()) {
+                    Log.error("Provider " + secondaryClass + " must support plain authentication. " +
+                            "Authentication disabled.");
+                    primaryProvider = null;
+                    secondaryProvider = null;
+                    return;
+                }
                 Log.debug("Secondary auth provider: " + secondaryClass);
             }
             catch (Exception e) {
@@ -133,6 +148,15 @@ public class HybridAuthProvider implements AuthProvider {
             try {
                 Class c = ClassUtils.forName(tertiaryClass);
                 tertiaryProvider = (AuthProvider)c.newInstance();
+                // All providers must support plain auth.
+                if (!tertiaryProvider.isPlainSupported()) {
+                    Log.error("Provider " + tertiaryClass + " must support plain authentication. " +
+                            "Authentication disabled.");
+                    primaryProvider = null;
+                    secondaryProvider = null;
+                    tertiaryProvider = null;
+                    return;
+                }
                 Log.debug("Tertiary auth provider: " + tertiaryClass);
             }
             catch (Exception e) {
@@ -162,6 +186,16 @@ public class HybridAuthProvider implements AuthProvider {
                 tertiaryOverrides.add(user.trim().toLowerCase());
             }
         }
+    }
+
+    @Override
+    public boolean isPlainSupported() {
+        return true;
+    }
+
+    @Override
+    public boolean isDigestSupported() {
+        return false;
     }
 
     @Override
@@ -202,6 +236,13 @@ public class HybridAuthProvider implements AuthProvider {
                 throw ue;
             }
         }
+    }
+
+    @Override
+    public void authenticate(String username, String token, String digest)
+            throws UnauthorizedException
+    {
+        throw new UnauthorizedException("Digest authentication not supported.");
     }
 
     @Override

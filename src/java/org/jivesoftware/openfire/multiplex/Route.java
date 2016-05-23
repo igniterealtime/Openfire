@@ -21,8 +21,6 @@
 package org.jivesoftware.openfire.multiplex;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.xmpp.packet.Packet;
 
 import java.util.Iterator;
@@ -42,10 +40,10 @@ public class Route extends Packet {
      * @param streamID the stream ID that identifies the connection that is actually sending
      *                 the wrapped stanza.
      */
-    public Route(StreamID streamID) {
+    public Route(String streamID) {
         this.element = docFactory.createDocument().addElement("route");
         // Set the stream ID that identifies the target session
-        element.addAttribute("streamid", streamID.getID());
+        element.addAttribute("streamid", streamID);
     }
 
      /**
@@ -106,12 +104,8 @@ public class Route extends Packet {
      * @return the stream ID that identifies the connection that is actually sending
      *         the wrapped stanza.
      */
-    public StreamID getStreamID() {
-        final String value = element.attributeValue( "streamid" );
-        if (value == null) {
-            return null;
-        }
-        return BasicStreamIDFactory.createStreamID( value );
+    public String getStreamID() {
+        return element.attributeValue("streamid");
     }
 
     /**

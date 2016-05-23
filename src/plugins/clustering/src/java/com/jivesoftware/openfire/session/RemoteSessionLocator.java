@@ -19,7 +19,6 @@
 
 package com.jivesoftware.openfire.session;
 
-import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.session.*;
 import org.xmpp.packet.JID;
 
@@ -44,7 +43,7 @@ public class RemoteSessionLocator implements org.jivesoftware.openfire.session.R
         return new RemoteConnectionMultiplexerSession(nodeID, address);
     }
 
-    public IncomingServerSession getIncomingServerSession(byte[] nodeID, StreamID streamID) {
+    public IncomingServerSession getIncomingServerSession(byte[] nodeID, String streamID) {
         return new RemoteIncomingServerSession(nodeID, streamID);
     }
 

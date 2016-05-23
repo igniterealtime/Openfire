@@ -767,6 +767,7 @@ public class ConnectionListener
      *
      * @return An (ordered) set of protocols, never null but possibly empty.
      */
+    // TODO add setter!
     public Set<String> getEncryptionProtocols()
     {
         final Set<String> result = new LinkedHashSet<>();
@@ -780,14 +781,6 @@ public class ConnectionListener
         } else {
             result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
         }
-
-        // OF-1118: Do not return protocols that are not supported by the implementation.
-        try {
-            result.retainAll( EncryptionArtifactFactory.getSupportedProtocols() );
-        } catch ( Exception ex ) {
-            Log.error( "An error occurred while obtaining the supported encryption protocols.", ex );
-        }
-
         return result;
     }
 
@@ -887,14 +880,6 @@ public class ConnectionListener
         } else {
             result.addAll( Arrays.asList( csv.split( "\\s*,\\s*" ) ) );
         }
-
-        // OF-1118: Do not return cipher suites that are not supported by the implementation.
-        try {
-            result.retainAll( EncryptionArtifactFactory.getSupportedCipherSuites() );
-        } catch ( Exception ex ) {
-            Log.warn( "An error occurred while obtaining the supported encryption cipher suites.", ex );
-        }
-
         return result;
     }
 

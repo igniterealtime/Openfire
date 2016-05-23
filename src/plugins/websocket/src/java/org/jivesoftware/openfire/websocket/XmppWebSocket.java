@@ -298,9 +298,7 @@ public class XmppWebSocket {
         if (saslStatus == null) {
 	        // Include available SASL Mechanisms
 	        sb.append(SASLAuthentication.getSASLMechanisms(xmppSession));
-	        if (XMPPServer.getInstance().getIQRouter().supports("jabber:iq:auth")) {
-	            sb.append("<auth xmlns='http://jabber.org/features/iq-auth'/>");
-	        }
+	        sb.append("<auth xmlns='http://jabber.org/features/iq-auth'/>");
         } else if (saslStatus.equals(Status.authenticated)) {
             // Include Stream features
             sb.append(String.format("<bind xmlns='%s'/>", "urn:ietf:params:xml:ns:xmpp-bind"));

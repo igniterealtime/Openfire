@@ -270,7 +270,7 @@
             <fmt:message key="user.properties.registered" />:
         </td>
         <td>
-            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
+            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
     </tr>
     <tr>

@@ -347,7 +347,7 @@ public class IQAdminHandler {
                                 if (MUCRole.Role.moderator != senderRole.getRole()) {
                                     throw new ForbiddenException();
                                 }
-                                presences.add(room.kickOccupant(jid, senderRole.getUserAddress(), senderRole.getNickname(),
+                                presences.add(room.kickOccupant(jid, senderRole.getUserAddress(),
                                         item.elementTextTrim("reason")));
                             }
                         } else {

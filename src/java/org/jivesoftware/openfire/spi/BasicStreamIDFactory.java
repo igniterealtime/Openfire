@@ -20,12 +20,8 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.StreamIDFactory;
-import org.jivesoftware.util.cache.CacheSizes;
-import org.jivesoftware.util.cache.Cacheable;
-import org.jivesoftware.util.cache.CannotCalculateSizeException;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -53,18 +49,15 @@ public class BasicStreamIDFactory implements StreamIDFactory {
         return new BasicStreamID(new BigInteger( MAX_STRING_SIZE * 5, random ).toString( 36 ));
     }
 
-    public static StreamID createStreamID(String name) {
+    public StreamID createStreamID(String name) {
         return new BasicStreamID(name);
     }
 
-    private static class BasicStreamID implements StreamID, Cacheable {
+    private class BasicStreamID implements StreamID {
         String id;
 
         public BasicStreamID(String id) {
-            if ( id == null || id.isEmpty() ) {
-                throw new IllegalArgumentException( "Argument 'id' cannot be null." );
-            }
-            this.id = StringEscapeUtils.escapeXml( id );
+            this.id = id;
         }
 
         @Override
@@ -80,24 +73,6 @@ public class BasicStreamIDFactory implements StreamIDFactory {
         @Override
 		public int hashCode() {
             return id.hashCode();
-        }
-
-        @Override
-        public boolean equals( Object o )
-        {
-            if ( this == o ) return true;
-            if ( o == null || getClass() != o.getClass() ) return false;
-            return id.equals( ((BasicStreamID) o).id );
-        }
-
-        @Override
-        public int getCachedSize() throws CannotCalculateSizeException
-        {
-            // Approximate the size of the object in bytes by calculating the size of each field.
-            int size = 0;
-            size += CacheSizes.sizeOfObject();   // overhead of object
-            size += CacheSizes.sizeOfString(id); // id
-            return size;
         }
     }
 }

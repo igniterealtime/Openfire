@@ -22,10 +22,8 @@ package com.jivesoftware.openfire.session;
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -43,7 +41,7 @@ import java.io.ObjectOutput;
 public class ProcessPacketTask implements ClusterTask<Void> {
     private SessionType sessionType;
     private JID address;
-    private StreamID streamID;
+    private String streamID;
     private Packet packet;
 
     public ProcessPacketTask() {
@@ -70,7 +68,7 @@ public class ProcessPacketTask implements ClusterTask<Void> {
         this.packet = packet;
     }
 
-    protected ProcessPacketTask(StreamID streamID, Packet packet) {
+    protected ProcessPacketTask(String streamID, Packet packet) {
         this.sessionType = SessionType.incomingServer;
         this.streamID = streamID;
         this.packet = packet;
@@ -91,7 +89,7 @@ public class ProcessPacketTask implements ClusterTask<Void> {
         }
         ExternalizableUtil.getInstance().writeBoolean(out, streamID != null);
         if (streamID != null) {
-            ExternalizableUtil.getInstance().writeSafeUTF( out, streamID.getID() );
+            ExternalizableUtil.getInstance().writeSafeUTF(out, streamID);
         }
         ExternalizableUtil.getInstance().writeInt(out, sessionType.ordinal());
         if (packet instanceof IQ) {
@@ -109,7 +107,7 @@ public class ProcessPacketTask implements ClusterTask<Void> {
             address = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         }
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
-            streamID = BasicStreamIDFactory.createStreamID( ExternalizableUtil.getInstance().readSafeUTF(in) );
+            streamID = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
         sessionType = SessionType.values()[ExternalizableUtil.getInstance().readInt(in)];
         int packetType = ExternalizableUtil.getInstance().readInt(in);

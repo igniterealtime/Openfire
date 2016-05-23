@@ -86,21 +86,7 @@
 
     Map<String, String> errors = new HashMap<String, String>();
 
-    Boolean login = ParamUtils.getBooleanParameter(request, "login");
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (login) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            login = false;
-            errors.put("csrf", "CSRF Failure!");
-        }
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
-
-    if (login) {
+    if (ParamUtils.getBooleanParameter(request, "login")) {
         String loginUsername = username;
         if (loginUsername != null) {
             loginUsername = JID.escapeNode(loginUsername);
@@ -196,7 +182,6 @@
 <%  } catch (Exception e) { Log.error(e); } } %>
 
 <input type="hidden" name="login" value="true">
-<input type="hidden" name="csrf" value="${csrf}">
 
 <div align="center">
     <!-- BEGIN login box -->

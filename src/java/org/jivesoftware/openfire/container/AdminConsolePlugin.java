@@ -91,6 +91,9 @@ public class AdminConsolePlugin implements Plugin {
      */
     public AdminConsolePlugin() {
         contexts = new ContextHandlerCollection();
+        
+        // JSP 2.0 uses commons-logging, so also override that implementation.
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
     /**

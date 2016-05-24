@@ -389,12 +389,12 @@ public class IdentityStore extends CertificateStore
         {
             case "RSA":
                 keySize = JiveGlobals.getIntProperty( "cert.rsa.keysize", 2048 );
-                signAlgorithm = "SHA256WITHRSAENCRYPTION";
+                signAlgorithm = "SHA1WITHRSAENCRYPTION";
                 break;
 
             case "DSA":
                 keySize = JiveGlobals.getIntProperty( "cert.dsa.keysize", 1024 );
-                signAlgorithm = "SHA256withDSA";
+                signAlgorithm = "SHA1withDSA";
                 break;
 
             default:

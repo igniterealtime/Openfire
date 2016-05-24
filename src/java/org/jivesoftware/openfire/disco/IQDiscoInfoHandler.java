@@ -78,6 +78,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     private List<Element> anonymousUserIdentities = new ArrayList<>();
     private List<Element> registeredUserIdentities = new ArrayList<>();
+    private List<String> userFeatures = new ArrayList<>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -92,6 +93,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         userIdentity.addAttribute("category", "account");
         userIdentity.addAttribute("type", "registered");
         registeredUserIdentities.add(userIdentity);
+        userFeatures.add(NAMESPACE_DISCO_INFO);
     }
 
     @Override
@@ -426,7 +428,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getIdentities(name, node, senderJID);
                 }
-                if (name != null && name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                if (name == null) {
                     // Answer identity of the server
                     synchronized (identities) {
                         if (identities.isEmpty()) {
@@ -465,8 +467,14 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     return serverNodeProviders.get(node).getFeatures(name, node, senderJID);
                 }
-                // Answer features of the server
-                return new HashSet<>(serverFeatures.keySet()).iterator();
+                if (name == null) {
+                    // Answer features of the server
+                    return new HashSet<>(serverFeatures.keySet()).iterator();
+                }
+                else {
+                    // Answer features of the user
+                    return userFeatures.iterator();
+                }
             }
 
             @Override

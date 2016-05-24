@@ -24,8 +24,6 @@ import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.CacheSizes;

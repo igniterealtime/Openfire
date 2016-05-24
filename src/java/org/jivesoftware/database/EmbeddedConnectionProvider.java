@@ -50,6 +50,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
     private String proxoolURL;
 
     public EmbeddedConnectionProvider() {
+        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
     @Override

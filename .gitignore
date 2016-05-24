@@ -20,3 +20,5 @@ out/
 # Ignore Netbeans project files
 nbproject/
 nbbuild/
+
+src/java/org/jivesoftware/openfire/http/HttpBindManager.java

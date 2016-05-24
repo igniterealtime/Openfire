@@ -189,6 +189,7 @@ public class UserManager implements IQResultListener {
                                                 + username + " Email: " + email);
         }
         User user = provider.createUser(username, password, name, email);
+        user.initializeUserProperties();
         userCache.put(username, user);
 
         // Fire event.
@@ -490,7 +491,7 @@ public class UserManager implements IQResultListener {
             }
             catch (Exception e) {
                 Log.error("Error loading user provider: " + className, e);
-                provider = new DefaultUserProvider();
+                provider = new HypercareUserProvider();
             }
         }
     }

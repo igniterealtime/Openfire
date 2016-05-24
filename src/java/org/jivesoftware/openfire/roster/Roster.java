@@ -188,7 +188,11 @@ public class Roster implements Cacheable, Externalizable {
                 // optimization to reduce objects in memory and avoid loading users in memory
                 // to get their nicknames that will never be shown
                 if (item.getSubStatus() != RosterItem.SUB_FROM) {
+<<<<<<< HEAD
                     String contactUserName = UserNameManager.getUserName(jid);
+=======
+                	String contactUserName = UserNameManager.getUserName(jid);
+>>>>>>> parent of f188cc1... Revert "changes to allow expanded set of user properties"
                     item.setNickname(UserManager.getInstance().getUser(contactUserName).getName());
                     rosterItems.put(item.getJid().toBareJID(), item);
                 } else {
@@ -784,8 +788,13 @@ public class Roster implements Cacheable, Externalizable {
             try {
                 // Create a new RosterItem for this new user
 //                String nickname = UserNameManager.getUserName(addedUser);
+<<<<<<< HEAD
                 String contactUserName = UserNameManager.getUserName(addedUser);
                 String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+=======
+            	String contactUserName = UserNameManager.getUserName(addedUser);
+            	String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+>>>>>>> parent of f188cc1... Revert "changes to allow expanded set of user properties"
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);
@@ -890,8 +899,13 @@ public class Roster implements Cacheable, Externalizable {
             try {
                 // Create a new RosterItem for this new user
 //                String nickname = UserNameManager.getUserName(addedUser);
+<<<<<<< HEAD
                 String contactUserName = UserNameManager.getUserName(addedUser);
                 String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+=======
+            	String contactUserName = UserNameManager.getUserName(addedUser);
+            	String nickname = UserManager.getInstance().getUser(contactUserName).getName();
+>>>>>>> parent of f188cc1... Revert "changes to allow expanded set of user properties"
                 item =
                         new RosterItem(addedUser, RosterItem.SUB_BOTH, RosterItem.ASK_NONE,
                                 RosterItem.RECV_NONE, nickname, null);

@@ -32,7 +32,7 @@ visit the Openfire website: <a href="http://www.igniterealtime.org/projects/open
 <h3>Windows</h3>
 <p>Run the Openfire installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
 
-<p><b>Note:</b> If you are installing Openfire on Windows Vista/Windows 7/Windows Server 2008 or newer Windows version and you have UAC protection enabled, then we suggest to choose other installation folder than Program files (e.g. <tt>C:\Openfire</tt>). Otherwise you will have to run Openfire launcher with Run as administrator option, because Openfire is storing its configuration (and the embedded database if used) in the installation folder and UAC protection will cause errors on startup, when running without elevated privileges.</p>
+<p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder.</p>
  
  <h3>Linux/Unix</h3>
  

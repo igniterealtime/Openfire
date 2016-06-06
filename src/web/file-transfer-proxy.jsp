@@ -17,6 +17,8 @@
   - limitations under the License.
 --%>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
@@ -35,6 +37,18 @@
     boolean isUpdated = request.getParameter("update") != null;
     boolean isProxyEnabled = ParamUtils.getBooleanParameter(request, "proxyEnabled");
     int port = ParamUtils.getIntParameter(request, "port", 0);
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (isUpdated) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            isUpdated = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (isUpdated) {
         if (isProxyEnabled) {
@@ -114,6 +128,7 @@ else { %>
 
 <!-- BEGIN 'Proxy Service' -->
 <form action="file-transfer-proxy.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="filetransferproxy.settings.enabled.legend"/>
 	</div>

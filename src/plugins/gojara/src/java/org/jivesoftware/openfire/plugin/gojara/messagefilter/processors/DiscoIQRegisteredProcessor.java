@@ -5,6 +5,7 @@ import java.util.TimerTask;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
@@ -86,8 +87,7 @@ public class DiscoIQRegisteredProcessor extends AbstractRemoteRosterProcessor {
 		askComponent.setTo(to);
 		askComponent.setFrom(from);
 		askComponent.setType(IQ.Type.get);
-		Element query = new DefaultElement("query");
-		query.addNamespace("", "jabber:iq:register");
+		Element query = new DefaultElement( QName.get( "query", "jabber:iq:register" ) );
 		askComponent.setChildElement(query);
 
 		// Remove the package intercepter in 1sec

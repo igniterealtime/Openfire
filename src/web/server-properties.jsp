@@ -72,6 +72,21 @@
         return;
     }
 
+    Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (encrypt || save || delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            encrypt = false;
+            save = false;
+            delete = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (delete) {
         if (propName != null) {
             JiveGlobals.deleteProperty(propName);
@@ -82,7 +97,6 @@
         }
     }
 
-    Map<String, String> errors = new HashMap<String, String>();
     if (save) {
         if (propName == null || "".equals(propName.trim()) || propName.startsWith("\"")) {
             errors.put("propName","");
@@ -254,6 +268,7 @@ function dodelete(propName) {
 </script>
 
 <form action="server-properties.jsp" method="post" name="propform">
+<input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="edit" value="">
 <input type="hidden" name="encrypt" value="">
 <input type="hidden" name="del" value="">
@@ -346,6 +361,7 @@ function dodelete(propName) {
 
 <a name="edit"></a>
 <form action="server-properties.jsp" method="post" name="editform">
+<input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

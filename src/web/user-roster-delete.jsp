@@ -42,6 +42,17 @@
     pageContext.setAttribute( "usernameUrlEncoded", usernameUrlEncoded);
     pageContext.setAttribute( "jid", jid);
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (delete) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            delete = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("user-roster.jsp?username=" + usernameUrlEncoded);
@@ -79,6 +90,7 @@
     </p>
 
     <form action="user-roster-delete.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="username" value="${usernameUrlEncoded}">
     <input type="hidden" name="jid" value="${jid}">
     <input type="submit" name="delete" value="<fmt:message key="user.roster.delete.delete" />">

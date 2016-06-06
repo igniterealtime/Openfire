@@ -116,7 +116,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
         // together with any possible requested node.
         DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
-                XMPPServer.getInstance().getServerInfo().getXMPPDomain() : packet.getTo().getDomain());
+                packet.getFrom().getNode() : packet.getTo().getNode() != null ? packet.getTo().getNode() : packet.getTo().getDomain());
         if (itemsProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();

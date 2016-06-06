@@ -6,8 +6,8 @@
     <name>Email on Away</name>
     <description>Messages sent to alternate location when recipient is away</description>
     <author>Nick Mossie</author>
-    <version>1.0</version>
-    <date>12/15/2005</date>
+    <version>1.0.3</version>
+    <date>04/10/2016</date>
     <minServerVersion>2.3.0</minServerVersion>
 
 </plugin>

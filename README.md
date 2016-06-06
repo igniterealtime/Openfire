@@ -26,6 +26,7 @@ Please search for your issues in the bug tracker before reporting.
 Resources
 ---------
 
+- Documentation: http://www.igniterealtime.org/projects/openfire/documentation.jsp
 - Bug Tracker: http://issues.igniterealtime.org/browse/OF
 - Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
 

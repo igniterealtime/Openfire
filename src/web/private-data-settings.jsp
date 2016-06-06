@@ -39,6 +39,17 @@
 <%  // Get parameters:
     boolean update = request.getParameter("update") != null;
     boolean privateEnabled = ParamUtils.getBooleanParameter(request,"privateEnabled");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Get an audit manager:
     PrivateStorage privateStorage = webManager.getPrivateStore();
@@ -72,6 +83,7 @@
 
 <!-- BEGIN 'Set Private Data Policy' -->
 <form action="private-data-settings.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="private.data.settings.policy" />
 	</div>

@@ -44,8 +44,6 @@ public class ClusteringPlugin implements Plugin {
     private static final String COHERENCE_CACHE_CONFIG = "coherence-cache-config";
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        System.out.println("Starting Clustering Plugin");
-
         // Check if we Enterprise is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {

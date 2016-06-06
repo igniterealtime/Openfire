@@ -38,12 +38,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.RemoteConnectionFailedException;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -264,7 +259,7 @@ public class ServerDialback {
                 if (authenticateDomain(socketReader, localDomain, remoteDomain, id)) {
                     log.debug( "Successfully authenticated the connection with dialback." );
                     // Domain was validated so create a new OutgoingServerSession
-                    StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                    StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                     LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, socketReader, streamID);
                     connection.init(session);
                     // Set the hostname as the address of the session
@@ -547,7 +542,7 @@ public class ServerDialback {
                     log.debug( "Verifying dialback key..." );
                     try
                     {
-                        result = verifyKey( key, streamID.toString(), recipient, remoteDomain, socket, false );
+                        result = verifyKey( key, streamID, recipient, remoteDomain, socket, false );
                     }
                     catch (SSLHandshakeException e)
                     {
@@ -564,7 +559,7 @@ public class ServerDialback {
                         socket.connect( oldAddress, RemoteServerManager.getSocketTimeout() );
                         log.debug( "Successfully re-opened socket! Try to validate dialback key again (without TLS this time)..." );
 
-                        result = verifyKey( key, streamID.toString(), recipient, remoteDomain, socket, true );
+                        result = verifyKey( key, streamID, recipient, remoteDomain, socket, true );
                     }
 
                     switch(result) {
@@ -617,7 +612,7 @@ public class ServerDialback {
         return host_unknown;
     }
 
-    private VerifyResult sendVerifyKey(String key, String streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket, boolean skipTLS) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private VerifyResult sendVerifyKey(String key, StreamID streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket, boolean skipTLS) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
         VerifyResult result = VerifyResult.error;
@@ -692,7 +687,7 @@ public class ServerDialback {
             sb.append("<db:verify");
             sb.append(" from=\"").append(recipient).append("\"");
             sb.append(" to=\"").append(remoteDomain).append("\"");
-            sb.append(" id=\"").append(streamID).append("\">");
+            sb.append(" id=\"").append(streamID.getID()).append("\">");
             sb.append(key);
             sb.append("</db:verify>");
             writer.write(sb.toString());
@@ -701,7 +696,7 @@ public class ServerDialback {
             try {
                 Element doc = reader.parseDocument().getRootElement();
                 if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
-                    if (!streamID.equals(doc.attributeValue("id"))) {
+                    if (doc.attributeValue("id") == null || !streamID.equals(BasicStreamIDFactory.createStreamID( doc.attributeValue("id") ))) {
                         // Include the invalid-id stream error condition in the response
                         writer.write(new StreamError(StreamError.Condition.invalid_id).toXML());
                         writer.flush();
@@ -766,7 +761,7 @@ public class ServerDialback {
     /**
      * Verifies the key with the Authoritative Server.
      */
-    private VerifyResult verifyKey(String key, String streamID, String recipient, String remoteDomain, Socket socket, boolean skipTLS ) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
+    private VerifyResult verifyKey(String key, StreamID streamID, String recipient, String remoteDomain, Socket socket, boolean skipTLS ) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
 
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
 
@@ -832,9 +827,9 @@ public class ServerDialback {
         String verifyFROM = doc.attributeValue("from");
         String verifyTO = doc.attributeValue("to");
         String key = doc.getTextTrim();
-        String id = doc.attributeValue("id");
+        StreamID streamID = BasicStreamIDFactory.createStreamID( doc.attributeValue("id") );
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Authoritative Server: Verify key sent by RS: " + verifyFROM + " (id " + id+ ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Authoritative Server: Verify key sent by RS: " + verifyFROM + " (id " + streamID+ ")]" );
 
         log.debug( "Verifying key... ");
 
@@ -846,7 +841,7 @@ public class ServerDialback {
 
         // Verify the received key
         // Created the expected key based on the received ID value and the shared secret
-        String expectedKey = AuthFactory.createDigest(id, getSecretkey());
+        String expectedKey = AuthFactory.createDigest(streamID.getID(), getSecretkey());
         boolean verified = expectedKey.equals(key);
 
         // Send the result of the key verification
@@ -856,7 +851,7 @@ public class ServerDialback {
         sb.append(" to=\"").append(verifyFROM).append("\"");
         sb.append(" type=\"");
         sb.append(verified ? "valid" : "invalid");
-        sb.append("\" id=\"").append(id).append("\"/>");
+        sb.append("\" id=\"").append(streamID.getID()).append("\"/>");
         connection.deliverRawText(sb.toString());
         log.debug("Verification successful! Key was: " + (verified ? "VALID" : "INVALID"));
         return verified;

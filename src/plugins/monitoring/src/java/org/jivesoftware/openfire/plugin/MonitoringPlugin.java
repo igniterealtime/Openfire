@@ -162,8 +162,6 @@ public class MonitoringPlugin implements Plugin {
 		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
 		xep0313Support.start();
 
-		System.out.println("Starting Monitoring Plugin");
-
 		// Check if we Enterprise is installed and stop loading this plugin if
 		// found
 		File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");

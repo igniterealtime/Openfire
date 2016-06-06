@@ -9,10 +9,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.TimeZone;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -76,8 +73,6 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			}
 		}
 
-		sendAcknowledgementResult(packet, session);
-
 		final QueryRequest queryRequest = new QueryRequest(packet.getChildElement(), archiveJid);
 		Collection<ArchivedMessage> archivedMessages = retrieveMessages(queryRequest);
 
@@ -86,6 +81,8 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		}
 
 		sendFinalMessage(session, queryRequest);
+
+		sendAcknowledgementResult(packet, session);
 
 		return null;
 	}
@@ -177,6 +174,7 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			final QueryRequest queryRequest) {
 
 		Message finalMessage = new Message();
+		finalMessage.setTo(session.getAddress());
 		Element fin = finalMessage.addChildElement("fin", NAMESPACE);
 		if(queryRequest.getQueryid() != null) {
 			fin.addAttribute("queryid", queryRequest.getQueryid());
@@ -226,6 +224,12 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		Document stanza;
 		try {
 			stanza = DocumentHelper.parseText(archivedMessage.getStanza());
+			if ( stanza.getRootElement().getNamespaceURI() == null || stanza.getRootElement().getNamespaceURI().isEmpty() )
+			{
+				// OF-1132: If no 'xmlns' is set for the stanza then as per XML namespacing rules it would inherit the
+				// 'urn:xmpp:forward:0' namespace, which is wrong (see XEP-0297).
+				stanza.getRootElement().setQName( QName.get( stanza.getRootElement().getName(), "jabber:client") );
+			}
 			forwarded.add(stanza.getRootElement());
 		} catch (DocumentException e) {
 			Log.error("Failed to parse message stanza.", e);

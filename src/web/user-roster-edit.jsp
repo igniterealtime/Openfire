@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
@@ -54,6 +55,17 @@
 
     // Load the roster item from the user's roster.
     RosterItem item = roster.getRosterItem(new JID(jid));
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a roster item delete:
     if (save) {
@@ -91,6 +103,7 @@
 </p>
 
 <form action="user-roster-edit.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">

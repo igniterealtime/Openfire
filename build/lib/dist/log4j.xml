@@ -79,6 +79,9 @@
 	<logger name="org.jivesoftware.openfire.container.PluginManager">
 		<appender-ref ref="console"/>
 	</logger>
+	<logger name="org.jivesoftware.openfire.container.PluginMonitor">
+		<appender-ref ref="console"/>
+	</logger>
 
 	<!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
 	<logger name="org.eclipse.jetty">

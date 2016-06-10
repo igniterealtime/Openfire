@@ -85,14 +85,7 @@
     }
 
     if (csrf_check && deletePlugin != null) {
-        File pluginDir = pluginManager.getPluginDirectory(pluginManager.getPlugin(deletePlugin));
-        File pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".jar");
-        // Also try the .war extension.
-        if (!pluginJar.exists()) {
-            pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".war");
-        }
-        pluginJar.delete();
-        pluginManager.unloadPlugin(pluginDir.getName());
+        pluginManager.deletePlugin( deletePlugin );
         // Log the event
         webManager.logEvent("deleted plugin "+deletePlugin, null);
         response.sendRedirect("plugin-admin.jsp?deletesuccess=true");

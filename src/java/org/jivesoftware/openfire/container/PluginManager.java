@@ -27,6 +27,7 @@ import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
@@ -55,7 +56,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PluginManager
 {
-
     private static final Logger Log = LoggerFactory.getLogger( PluginManager.class );
 
     private final Path pluginDirectory;
@@ -67,6 +67,7 @@ public class PluginManager
     private final Map<Plugin, String> childPluginMap = new HashMap<>();
     private final Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<>();
     private final Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<>();
+    private final Map<String, Integer> failureToLoadCount = new HashMap<>();
 
     private final PluginMonitor pluginMonitor;
     private boolean executed = false;
@@ -118,6 +119,7 @@ public class PluginManager
         classloaders.clear();
         pluginDevelopment.clear();
         childPluginMap.clear();
+        failureToLoadCount.clear();
     }
 
     /**
@@ -247,13 +249,19 @@ public class PluginManager
      *
      * @param pluginDir the plugin directory.
      */
-    void loadPlugin( Path pluginDir )
+    boolean loadPlugin( Path pluginDir )
     {
         // Only load the admin plugin during setup mode.
         final String pluginName = pluginDir.getFileName().toString();
         if ( XMPPServer.getInstance().isSetupMode() && !( pluginName.equals( "admin" ) ) )
         {
-            return;
+            return false;
+        }
+
+        if ( failureToLoadCount.containsKey( pluginName ) && failureToLoadCount.get( pluginName ) > JiveGlobals.getIntProperty( "plugins.loading.retries", 5 ) )
+        {
+            Log.debug( "The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", pluginName );
+            return false;
         }
 
         Log.debug( "Loading plugin '{}'...", pluginName );
@@ -263,7 +271,8 @@ public class PluginManager
             if ( !Files.exists( pluginConfig ) )
             {
                 Log.warn( "Plugin '{}' could not be loaded: no plugin.xml file found.", pluginName );
-                return;
+                failureToLoadCount.put( pluginName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                return false;
             }
 
             final SAXReader saxReader = new SAXReader();
@@ -279,7 +288,8 @@ public class PluginManager
                 if ( requiredVersion.isNewerThan( currentVersion ) )
                 {
                     Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", pluginName, requiredVersion, currentVersion );
-                    return;
+                    failureToLoadCount.put( pluginName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    return false;
                 }
             }
 
@@ -314,7 +324,12 @@ public class PluginManager
                 if ( parentPlugin == null )
                 {
                     Log.info( "Unable to load plugin '{}': parent plugin '{}' has not been loaded.", pluginName, parentPluginNode.getTextTrim() );
-                    return;
+                    Integer count = failureToLoadCount.get( pluginName );
+                    if ( count == null ) {
+                        count = 0;
+                    }
+                    failureToLoadCount.put( pluginName, ++count );
+                    return false;
                 }
                 pluginLoader = classloaders.get( parentPlugin );
             }
@@ -446,10 +461,17 @@ public class PluginManager
             }
             firePluginCreatedEvent( pluginName, plugin );
             Log.info( "Successfully loaded plugin '{}'.", pluginName );
+            return true;
         }
         catch ( Throwable e )
         {
             Log.error( "An exception occurred while loading plugin '{}':", pluginName, e );
+            Integer count = failureToLoadCount.get( pluginName );
+            if ( count == null ) {
+                count = 0;
+            }
+            failureToLoadCount.put( pluginName, ++count );
+            return false;
         }
     }
 
@@ -575,6 +597,8 @@ public class PluginManager
     public void unloadPlugin( String pluginName )
     {
         Log.debug( "Unloading plugin '{}'...", pluginName );
+
+        failureToLoadCount.remove( pluginName );
 
         Plugin plugin = plugins.get( pluginName );
         if ( plugin != null )

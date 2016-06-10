@@ -265,8 +265,10 @@ public class PluginMonitor
                                         final String pluginName = PluginMetadataHelper.getCanonicalName( path );
                                         if ( pluginManager.getPlugin( pluginName ) == null )
                                         {
-                                            pluginManager.loadPlugin( path );
-                                            loaded++;
+                                            if ( pluginManager.loadPlugin( path ) )
+                                            {
+                                                loaded++;
+                                            }
                                         }
                                     }
 

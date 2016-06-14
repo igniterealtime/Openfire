@@ -222,6 +222,7 @@ CREATE TABLE ofMucRoom (
   useReservedNick     INT           NOT NULL,
   canChangeNick       INT           NOT NULL,
   canRegister         INT           NOT NULL,
+  allowpm             INT           NULL,
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX ofMucRoom_roomid_idx on ofMucRoom(roomID);

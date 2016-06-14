@@ -208,6 +208,7 @@ CREATE TABLE ofMucRoom (
   useReservedNick     TINYINT       NOT NULL,
   canChangeNick       TINYINT       NOT NULL,
   canRegister         TINYINT       NOT NULL,
+  allowpm             TINYINT       NULL,
   PRIMARY KEY (serviceID,name),
   INDEX ofMucRoom_roomid_idx (roomID),
   INDEX ofMucRoom_serviceid_idx (serviceID)
@@ -365,7 +366,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 22);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 23);
 
 # Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

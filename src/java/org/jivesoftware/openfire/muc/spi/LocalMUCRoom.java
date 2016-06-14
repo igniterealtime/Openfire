@@ -269,6 +269,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private boolean canAnyoneDiscoverJID;
 
     /**
+     * The minimal role of persons that are allowed to send private messages in the room.
+     */
+    private String canSendPrivateMessage;
+
+    /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
@@ -1061,7 +1066,18 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException {
+        switch (senderRole.getRole()) { // intended fall-through
+            case none:
+                throw new ForbiddenException();
+            default:
+            case visitor:
+                if (canSendPrivateMessage.equals( "participants" )) throw new ForbiddenException();
+            case participant:
+                if (canSendPrivateMessage.equals( "moderators" )) throw new ForbiddenException();
+            case moderator:
+                if (canSendPrivateMessage.equals( "none" )) throw new ForbiddenException();
+        }
         String resource = packet.getTo().getResource();
         List<MUCRole> occupants = occupantsByNickname.get(resource.toLowerCase());
         if (occupants == null || occupants.size() == 0) {
@@ -2329,6 +2345,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         this.canAnyoneDiscoverJID = canAnyoneDiscoverJID;
     }
 
+    @Override
+    public String canSendPrivateMessage() {
+        return canSendPrivateMessage == null ? "anyone" : canSendPrivateMessage;
+    }
+
+    @Override
+    public void setCanSendPrivateMessage(String role) {
+        if ( role == null ) {
+            role = "(null)";
+        }
+
+        switch( role.toLowerCase() ) {
+            case "none":
+            case "moderators":
+            case "participants":
+            case "anyone":
+                this.canSendPrivateMessage = role.toLowerCase();
+                break;
+            default:
+                Log.warn( "Illegal value for muc#roomconfig_allowpm: '{}'. Defaulting to 'anyone'", role.toLowerCase() );
+                this.canSendPrivateMessage = "anyone";
+        }
+    }
     @Override
     public boolean canOccupantsChangeSubject() {
         return canOccupantsChangeSubject;

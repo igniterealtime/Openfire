@@ -63,7 +63,7 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
-        "canChangeNick, canRegister FROM ofMucRoom WHERE serviceID=? AND name=?";
+        "canChangeNick, canRegister, allowpm FROM ofMucRoom WHERE serviceID=? AND name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
@@ -75,7 +75,7 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "useReservedNick, canChangeNick, canRegister " +
+        "useReservedNick, canChangeNick, canRegister, allowpm " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
@@ -93,13 +93,13 @@ public class MUCPersistenceManager {
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
-        "useReservedNick=?, canChangeNick=?, canRegister=? WHERE roomID=?";
+        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=? WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
         "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
-        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister) VALUES (?,?,?,?,?,?,?,?,?," +
-            "?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm) VALUES (?,?,?,?,?,?,?,?,?," +
+            "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -222,6 +222,14 @@ public class MUCPersistenceManager {
             room.setLoginRestrictedToNickname(rs.getInt(19) == 1);
             room.setChangeNickname(rs.getInt(20) == 1);
             room.setRegistrationEnabled(rs.getInt(21) == 1);
+            switch (rs.getInt(22)) // null returns 0.
+            {
+                default:
+                case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
+                case 1: room.setCanSendPrivateMessage( "participants" ); break;
+                case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
+                case 3: room.setCanSendPrivateMessage( "none"         ); break;
+            }
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -342,7 +350,15 @@ public class MUCPersistenceManager {
                 pstmt.setInt(14, (room.isLoginRestrictedToNickname() ? 1 : 0));
                 pstmt.setInt(15, (room.canChangeNickname() ? 1 : 0));
                 pstmt.setInt(16, (room.isRegistrationEnabled() ? 1 : 0));
-                pstmt.setLong(17, room.getID());
+                switch (room.canSendPrivateMessage())
+                {
+                    default:
+                    case "anyone":       pstmt.setInt(17, 0); break;
+                    case "participants": pstmt.setInt(17, 1); break;
+                    case "moderators":   pstmt.setInt(17, 2); break;
+                    case "none":         pstmt.setInt(17, 3); break;
+                }
+                pstmt.setLong(18, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -376,6 +392,14 @@ public class MUCPersistenceManager {
                 pstmt.setInt(21, (room.isLoginRestrictedToNickname() ? 1 : 0));
                 pstmt.setInt(22, (room.canChangeNickname() ? 1 : 0));
                 pstmt.setInt(23, (room.isRegistrationEnabled() ? 1 : 0));
+                switch (room.canSendPrivateMessage())
+                {
+                    default:
+                    case "anyone":       pstmt.setInt(24, 0); break;
+                    case "participants": pstmt.setInt(24, 1); break;
+                    case "moderators":   pstmt.setInt(24, 2); break;
+                    case "none":         pstmt.setInt(24, 3); break;
+                }
                 pstmt.executeUpdate();
             }
         }
@@ -521,6 +545,14 @@ public class MUCPersistenceManager {
                     room.setLoginRestrictedToNickname(resultSet.getInt(20) == 1);
                     room.setChangeNickname(resultSet.getInt(21) == 1);
                     room.setRegistrationEnabled(resultSet.getInt(22) == 1);
+                    switch (resultSet.getInt(23)) // null returns 0.
+                    {
+                        default:
+                        case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
+                        case 1: room.setCanSendPrivateMessage( "participants" ); break;
+                        case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
+                        case 3: room.setCanSendPrivateMessage( "none"         ); break;
+                    }
                     room.setPersistent(true);
                     rooms.put(room.getID(), room);
                 } catch (SQLException e) {

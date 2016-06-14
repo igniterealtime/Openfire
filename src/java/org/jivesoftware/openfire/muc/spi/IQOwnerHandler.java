@@ -349,6 +349,12 @@ public class IQOwnerHandler {
             room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue)));
         }
 
+        field = completedForm.getField("muc#roomconfig_allowpm");
+        if (field != null) {
+            final String value = field.getFirstValue();
+            room.setCanSendPrivateMessage(value);
+        }
+
         field = completedForm.getField("muc#roomconfig_enablelogging");
         if (field != null) {
             final String value = field.getFirstValue();
@@ -485,6 +491,10 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_whois");
             field.clearValues();
             field.addValue((room.canAnyoneDiscoverJID() ? "anyone" : "moderators"));
+
+            field = configurationForm.getField("muc#roomconfig_allowpm");
+            field.clearValues();
+            field.addValue((room.canSendPrivateMessage() ));
 
             field = configurationForm.getField("muc#roomconfig_enablelogging");
             field.clearValues();
@@ -633,6 +643,15 @@ public class IQOwnerHandler {
         		Type.list_single);
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
+
+        final FormField allowpm = configurationForm.addField(
+                "muc#roomconfig_allowpm",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowpm"),
+                Type.list_single);
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participants");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "none");
 
         configurationForm.addField("muc#roomconfig_enablelogging",
         		LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"),

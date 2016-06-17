@@ -104,7 +104,7 @@
     <property name="copy.dbscripts" value="true"/>
     <property name="overwrite" value="true"/>
 
-    <property name="installer.install4j.home" value="/home/j2ee-bamboo/install4j.5.1.11"/>
+    <property name="installer.install4j.home" value="/home/bamboo/install4j.6.0.4"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}"/>
     <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>

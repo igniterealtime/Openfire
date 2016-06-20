@@ -49,9 +49,11 @@ import com.javamonitor.openfire.mbeans.CoreThreadPool;
 import com.javamonitor.openfire.mbeans.DatabasePool;
 import com.javamonitor.openfire.mbeans.Openfire;
 import com.javamonitor.openfire.mbeans.PacketCounter;
+import com.ifsoft.jmxweb.plugin.EmailScheduler;
 
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
+
 
 public class JmxWebPlugin implements Plugin  {
 
@@ -68,6 +70,7 @@ public class JmxWebPlugin implements Plugin  {
     private CoreThreadPool client = null;
     private final static String OBJECTNAME_DATABASEPOOL = NAMEBASE + "type=databasepool";
     private DatabasePool database = null;
+    private EmailScheduler emailScheduler = null;
 
 
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
@@ -77,7 +80,6 @@ public class JmxWebPlugin implements Plugin  {
             openfire = new Openfire();
             openfire.start();
             JmxHelper.register(openfire, OBJECTNAME_OPENFIRE);
-
             Log.info( "["+ NAME + "] .. started openfire server detector.");
         } catch (Exception e) {
             Log.debug("cannot start openfire server detector: "  + e.getMessage(), e);
@@ -153,6 +155,15 @@ public class JmxWebPlugin implements Plugin  {
 		catch (Exception e) {
 			Log.error("Error initializing JmxWeb Plugin", e);
 		}
+
+		if (JiveGlobals.getBooleanProperty("jmxweb.email.monitoring", true))
+		{
+			Log.info( "["+ NAME + "] starting email monitoring");
+			emailScheduler = new EmailScheduler();
+			emailScheduler.startMonitoring();
+			Log.info( "["+ NAME + "] started monitoring");
+		}
+
 	}
 
 	public void destroyPlugin() {
@@ -178,6 +189,10 @@ public class JmxWebPlugin implements Plugin  {
             JmxHelper.unregister(OBJECTNAME_OPENFIRE);
         }
 
+		if (emailScheduler != null)
+		{
+			emailScheduler.stopMonitoring();
+		}
         Log.info("["+ NAME + "]  plugin fully destroyed.");
 	}
 

@@ -47,8 +47,6 @@ public class EmailScheduler implements Job {
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         Log.info( "Email Monitoring Running");
         try {
-            /*EmailService.getInstance().sendMessage(user.getName(), user.getEmail(), "Openfire",
-                    "no_reply@" + violationNotificationFrom.getDomain(), subject, body, null);*/
             EmailSenderUtility emailSenderUtility = new EmailSenderUtility();
             emailSenderUtility.sendEmail();
         }

@@ -14,7 +14,6 @@ import org.jivesoftware.openfire.XMPPServer;
 
 public class HttpClient {
     private static Logger Log = LoggerFactory.getLogger("JmxWebPlugin:HttpClient");
-    // http://localhost:7070/jolokia/read/java.lang:type=Memory/HeapMemoryUsage
     StringBuilder resultString = new StringBuilder("");
     String line="";
     public String getMemoryData(){

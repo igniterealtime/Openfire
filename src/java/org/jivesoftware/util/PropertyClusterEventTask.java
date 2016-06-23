@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class PropertyClusterEventTask implements ClusterTask {
+public class PropertyClusterEventTask implements ClusterTask<Void> {
     private Type event;
     private String key;
     private String value;
@@ -53,10 +53,12 @@ public class PropertyClusterEventTask implements ClusterTask {
         return task;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         if (Type.put == event) {
             JiveProperties.getInstance().localPut(key, value);
@@ -66,6 +68,7 @@ public class PropertyClusterEventTask implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeInt(out, event.ordinal());
         ExternalizableUtil.getInstance().writeSafeUTF(out, key);
@@ -75,6 +78,7 @@ public class PropertyClusterEventTask implements ClusterTask {
         }
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         event = Type.values()[ExternalizableUtil.getInstance().readInt(in)];
         key = ExternalizableUtil.getInstance().readSafeUTF(in);

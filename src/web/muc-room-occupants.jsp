@@ -21,6 +21,7 @@
                  org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.net.URLEncoder,
                  java.text.DateFormat"
     errorPage="error.jsp"
@@ -29,8 +30,8 @@
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException" %>
 <%@ page import="org.xmpp.packet.JID" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out); %>
 
@@ -39,6 +40,17 @@
     String nickName = ParamUtils.getParameter(request,"nickName");
     String kick = ParamUtils.getParameter(request,"kick");
     String roomName = roomJID.getNode();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (kick != null) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            kick = null;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Load the room object
     MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
@@ -53,7 +65,7 @@
         MUCRole role = room.getOccupant(nickName);
         if (role != null) {
             try {
-                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), "");
+                room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, "");
                 // Log the event
                 webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect
@@ -162,7 +174,7 @@
             <td><%= StringUtils.escapeHTMLTags(role.getNickname().toString()) %></td>
             <td><%= StringUtils.escapeHTMLTags(role.getRole().toString()) %></td>
             <td><%= StringUtils.escapeHTMLTags(role.getAffiliation().toString()) %></td>
-            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
+            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1&csrf=${csrf}" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
         </tr>
         <% } %>
     </tbody>

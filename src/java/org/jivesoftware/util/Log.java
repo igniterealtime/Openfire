@@ -53,16 +53,20 @@ public class Log {
 	static {
     	PropertyEventDispatcher.addListener(new PropertyEventListener() {
     		
+			@Override
 			public void propertySet(String property, Map<String, Object> params) {
 				enableDebugLog(property, Boolean.parseBoolean(params.get("value").toString()));
 			}
 			
+			@Override
 			public void propertyDeleted(String property, Map<String, Object> params) {
 				enableDebugLog(property, false);
 			}
 			
 			// ignore these events
+			@Override
 			public void xmlPropertySet(String property, Map<String, Object> params) { }
+			@Override
 			public void xmlPropertyDeleted(String property, Map<String, Object> params) { }
 			
 			private void enableDebugLog(String property, boolean enabled) {
@@ -326,7 +330,7 @@ public class Log {
     }
 
     private static String getMarkMessage(String username) {
-        final List<String> args = new ArrayList<String>();
+        final List<String> args = new ArrayList<>();
         args.add(username);
         args.add(JiveGlobals.formatDateTime(new java.util.Date()));
         return LocaleUtils.getLocalizedString("log.marker_inserted_by", args);

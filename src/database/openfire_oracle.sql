@@ -3,6 +3,10 @@
 
 CREATE TABLE ofUser (
   username              VARCHAR2(64)     NOT NULL,
+  storedKey             VARCHAR(32),
+  serverKey             VARCHAR(32),
+  salt                  VARCHAR(32),
+  iterations            INTEGER,
   plainPassword         VARCHAR2(32),
   encryptedPassword     VARCHAR2(255),
   name                  VARCHAR2(100),
@@ -212,6 +216,7 @@ CREATE TABLE ofMucRoom(
   useReservedNick     INTEGER       NOT NULL,
   canChangeNick       INTEGER       NOT NULL,
   canRegister         INTEGER       NOT NULL,
+  allowpm             INTEGER       NULL,
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
@@ -369,7 +374,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 21);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 23);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

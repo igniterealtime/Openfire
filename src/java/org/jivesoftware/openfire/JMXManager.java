@@ -108,10 +108,11 @@ public class JMXManager {
 		setContainer(new MBeanContainer(ManagementFactory.getPlatformMBeanServer()));
 		int jmxPort = JMXManager.getPort();
 		String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
-		Map<String, Object> env = new HashMap<String, Object>();
+		Map<String, Object> env = new HashMap<>();
 		if (JMXManager.isSecure()) {
     		env.put("jmx.remote.authenticator", new JMXAuthenticator() {
-    			public Subject authenticate(Object credentials) {
+				@Override
+				public Subject authenticate(Object credentials) {
     	            if (!(credentials instanceof String[])) {
     	                if (credentials == null) {
     	                    throw new SecurityException("Credentials required");
@@ -122,8 +123,8 @@ public class JMXManager {
     	            if (aCredentials.length < 2) {
     	                throw new SecurityException("Credentials should have at least two elements");
     	            }
-    	            String username = (String) aCredentials[0];
-    	            String password = (String) aCredentials[1];
+    	            String username = aCredentials[0];
+    	            String password = aCredentials[1];
 
     	            try {
     	            	AuthFactory.authenticate(username, password);

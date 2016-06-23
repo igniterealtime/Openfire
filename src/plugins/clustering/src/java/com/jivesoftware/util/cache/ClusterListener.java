@@ -24,16 +24,14 @@ import com.tangosol.util.MapEvent;
 import com.tangosol.util.MapListener;
 import com.tangosol.util.UID;
 import com.tangosol.util.filter.MapEventFilter;
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.handler.DirectedPresence;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.Log;
@@ -408,7 +406,8 @@ public class ClusterListener implements MemberListener {
 
         Set<String> incomingSessions = lookupJIDList(key, incomingServerSessionsCache.getName());
         if (!incomingSessions.isEmpty()) {
-            for (String streamID : new ArrayList<String>(incomingSessions)) {
+            for (String streamIDValue : new ArrayList<>(incomingSessions)) {
+                StreamID streamID = BasicStreamIDFactory.createStreamID( streamIDValue );
                 IncomingServerSession session = sessionLocator.getIncomingServerSession(key.toByteArray(), streamID);
                 // Remove all the hostnames that were registered for this server session
                 for (String hostname : session.getValidatedDomains()) {

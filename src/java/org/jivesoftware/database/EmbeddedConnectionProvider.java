@@ -21,14 +21,14 @@
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.DriverManager;
 import java.util.Properties;
 
@@ -42,19 +42,22 @@ import java.util.Properties;
  */
 public class EmbeddedConnectionProvider implements ConnectionProvider {
 
+    private static final Logger Log = LoggerFactory.getLogger(EmbeddedConnectionProvider.class);
+
     private Properties settings;
     private String serverURL;
     private String driver = "org.hsqldb.jdbcDriver";
     private String proxoolURL;
 
     public EmbeddedConnectionProvider() {
-        System.setProperty("org.apache.commons.logging.LogFactory", "org.jivesoftware.util.log.util.CommonsLogFactory");
     }
 
+    @Override
     public boolean isPooled() {
         return true;
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         try {
             Class.forName("org.logicalcobwebs.proxool.ProxoolDriver");
@@ -65,6 +68,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         }
     }
 
+    @Override
     public void start() {
         File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator + "embedded-db");
         // If the database doesn't exist, create it.
@@ -87,6 +91,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         settings.setProperty("password", "");
     }
 
+    @Override
     public void restart() {
         // Kill off pool.
         destroy();
@@ -94,6 +99,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         start();
     }
 
+    @Override
     public void destroy() {
         // Shutdown the database.
         Connection con = null;

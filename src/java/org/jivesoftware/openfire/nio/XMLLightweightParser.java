@@ -99,7 +99,7 @@ class XMLLightweightParser {
     // Object conteining the head tag
     protected StringBuilder head = new StringBuilder(5);
     // List with all finished messages found.
-    protected List<String> msgs = new ArrayList<String>();
+    protected List<String> msgs = new ArrayList<>();
     private int depth = 0;
 
     protected boolean insideChildrenTag = false;
@@ -113,8 +113,8 @@ class XMLLightweightParser {
         PropertyEventDispatcher.addListener(new PropertyListener());
     }
 
-    public XMLLightweightParser(String charset) {
-        encoder = Charset.forName(charset).newDecoder()
+    public XMLLightweightParser(Charset charset) {
+        encoder = charset.newDecoder()
 			.onMalformedInput(CodingErrorAction.REPLACE)
 			.onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
@@ -353,7 +353,7 @@ class XMLLightweightParser {
             } else if (status == XMLLightweightParser.HEAD) {
                 if (ch == ' ' || ch == '>') {
                     // Append > to head to allow searching </tag>
-                    head.append(">");
+                    head.append('>');
                     if(ch == '>')
                         status = XMLLightweightParser.OUTSIDE;
                     else
@@ -451,6 +451,7 @@ class XMLLightweightParser {
 	}
 	
     private static class PropertyListener implements PropertyEventListener {
+        @Override
         public void propertySet(String property, Map<String, Object> params) {
             if (MAX_PROPERTY_NAME.equals(property)) {
                 String value = (String) params.get("value");
@@ -460,6 +461,7 @@ class XMLLightweightParser {
             }
         }
 
+        @Override
         public void propertyDeleted(String property, Map<String, Object> params) {
             if (MAX_PROPERTY_NAME.equals(property)) {
                 // Use default value when none was specified
@@ -467,10 +469,12 @@ class XMLLightweightParser {
             }
         }
 
+        @Override
         public void xmlPropertySet(String property, Map<String, Object> params) {
             // Do nothing
         }
 
+        @Override
         public void xmlPropertyDeleted(String property, Map<String, Object> params) {
             // Do nothing
         }

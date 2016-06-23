@@ -69,37 +69,17 @@ public class PluginIconServlet extends HttpServlet {
                 else {
                     response.setContentType("image/gif");
                 }
-                InputStream in = null;
-                OutputStream ost = null;
-                try {
-                    in = new FileInputStream(icon);
-                    ost = response.getOutputStream();
-
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = in.read(buf)) >= 0) {
-                        ost.write(buf, 0, len);
+                try (InputStream in = new FileInputStream(icon)) {
+                    try (OutputStream ost = response.getOutputStream()) {
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = in.read(buf)) >= 0) {
+                            ost.write(buf, 0, len);
+                        }
+                        ost.flush();
                     }
-                    ost.flush();
-                }
-                catch (IOException ioe) {
-
-                }
-                finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        }
-                        catch (Exception e) {
-                        }
-                    }
-                    if (ost != null) {
-                        try {
-                            ost.close();
-                        }
-                        catch (Exception e) {
-                        }
-                    }
+                } catch (IOException ioe) {
+                    throw new ServletException(ioe);
                 }
             }
         }

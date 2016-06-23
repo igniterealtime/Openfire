@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DbConnectionManager {
 
-	private static final Logger Log = LoggerFactory.getLogger(DbConnectionManager.class);
+    private static final Logger Log = LoggerFactory.getLogger(DbConnectionManager.class);
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -74,10 +74,40 @@ public class DbConnectionManager {
     /** True if the database supports the Statement.setFetchSize()) method. */
     static boolean pstmt_fetchSizeSupported = true;
 
+    private static final String SETTING_DATABASE_MAX_RETRIES = "database.maxRetries";
+    private static final String SETTING_DATABASE_RETRY_DELAY = "database.retryDelay";
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 
     private static SchemaManager schemaManager = new SchemaManager();
+
+    /**
+     * Ensures that the connection provider exists and is set
+     */
+    private static void ensureConnectionProvider() {
+        if (connectionProvider != null) return;
+        
+        synchronized (providerLock) {
+            if (connectionProvider != null) return;
+            
+            // Attempt to load the connection provider classname as a Jive property.
+            String className = JiveGlobals.getXMLProperty("connectionProvider.className");
+            if (className != null) {
+                // Attempt to load the class.
+                try {
+                    Class conClass = ClassUtils.forName(className);
+                    setConnectionProvider((ConnectionProvider)conClass.newInstance());
+                } catch (Exception e) {
+                    Log.warn("Failed to create the " +
+                            "connection provider specified by connection" +
+                            "Provider.className. Using the default pool.", e);
+                    setConnectionProvider(new DefaultConnectionProvider());
+                }
+            } else {
+                setConnectionProvider(new DefaultConnectionProvider());
+            }
+        }
+    }
 
     /**
      * Returns a database connection from the currently active connection
@@ -88,41 +118,15 @@ public class DbConnectionManager {
      * @throws SQLException if a SQL exception occurs or no connection was found.
      */
     public static Connection getConnection() throws SQLException {
-        if (connectionProvider == null) {
-            synchronized (providerLock) {
-                if (connectionProvider == null) {
-                    // Attempt to load the connection provider classname as
-                    // a Jive property.
-                    String className = JiveGlobals.getXMLProperty("connectionProvider.className");
-                    if (className != null) {
-                        // Attempt to load the class.
-                        try {
-                            Class conClass = ClassUtils.forName(className);
-                            setConnectionProvider((ConnectionProvider)conClass.newInstance());
-                        }
-                        catch (Exception e) {
-                            Log.warn("Failed to create the " +
-                                    "connection provider specified by connection" +
-                                    "Provider.className. Using the default pool.", e);
-                            setConnectionProvider(new DefaultConnectionProvider());
-                        }
-                    }
-                    else {
-                        setConnectionProvider(new DefaultConnectionProvider());
-                    }
-                }
-            }
-        }
+        ensureConnectionProvider();
 
-        // TODO: May want to make these settings configurable
-        Integer retryCnt = 0;
-        Integer retryMax = 10;
-        Integer retryWait = 250; // milliseconds
-        Connection con = null;
+        Integer currentRetryCount = 0;
+        Integer maxRetries = JiveGlobals.getXMLProperty(SETTING_DATABASE_MAX_RETRIES, 10);
+        Integer retryWait = JiveGlobals.getXMLProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
         SQLException lastException = null;
         do {
             try {
-            	con = connectionProvider.getConnection();
+                Connection con = connectionProvider.getConnection();
                 if (con != null) {
                     // Got one, lets hand it off.
                     // Usually profiling is not enabled. So we return a normal 
@@ -130,28 +134,28 @@ public class DbConnectionManager {
                     // connection with a profiled connection.
                     if (!profilingEnabled) {
                         return con;
-                    }
-                    else {
+                    } else {
                         return new ProfiledConnection(con); 
                     }
                 }
             } catch (SQLException e) {
-            	// TODO distinguish recoverable from non-recoverable exceptions.
-            	lastException = e;
-            	Log.info("Unable to get a connection from the database pool " +
-            			"(attempt "+retryCnt+" out of "+retryMax+").", e);
-			}
+                // TODO distinguish recoverable from non-recoverable exceptions.
+                lastException = e;
+                Log.info("Unable to get a connection from the database pool " +
+                        "(attempt " + currentRetryCount + " out of " + maxRetries + ").", e);
+            }
+            
             try {
                 Thread.sleep(retryWait);
+            } catch (Exception e) {
+                // Ignored, the thread was interrupted while waiting, so no need to log either
             }
-            catch (Exception e) {
-                // Ignored
-            }
-            retryCnt++;
-        } while (retryCnt <= retryMax);
+            currentRetryCount++;
+        } while (currentRetryCount <= maxRetries);
+        
         throw new SQLException("ConnectionManager.getConnection() " +
-                "failed to obtain a connection after " + retryCnt +" retries. " +
-                "The exception from the last attempt is as follows: "+lastException);
+                "failed to obtain a connection after " + currentRetryCount + " retries. " +
+                "The exception from the last attempt is as follows: " + lastException);
     }
 
     /**
@@ -456,25 +460,6 @@ public class DbConnectionManager {
     }
 
     /**
-     * Creates a scroll insensitive Statement if the JDBC driver supports it, or a normal
-     * Statement otherwise.
-     *
-     * @param con the database connection.
-     * @return a Statement
-     * @throws SQLException if an error occurs.
-     */
-    @Deprecated
-    public static Statement createScrollableStatement(Connection con) throws SQLException {
-        if (isScrollResultsSupported()) {
-            return con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                    ResultSet.CONCUR_READ_ONLY);
-        }
-        else {
-            return con.createStatement();
-        }
-    }
-
-    /**
      * Creates a scroll insensitive PreparedStatement if the JDBC driver supports it, or a normal
      * PreparedStatement otherwise.
      *
@@ -662,10 +647,8 @@ public class DbConnectionManager {
      */
     public static String getLargeTextField(ResultSet rs, int columnIndex) throws SQLException {
         if (isStreamTextRequired()) {
-            Reader bodyReader = null;
-            String value = null;
-            try {
-                bodyReader = rs.getCharacterStream(columnIndex);
+            String value;
+            try (Reader bodyReader = rs.getCharacterStream(columnIndex)) {
                 if (bodyReader == null) {
                     return null;
                 }
@@ -681,16 +664,6 @@ public class DbConnectionManager {
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
                 throw new SQLException("Failed to load text field");
-            }
-            finally {
-                try {
-                    if (bodyReader != null) {
-                        bodyReader.close();
-                    }
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
             }
             return value;
         }
@@ -992,9 +965,5 @@ public class DbConnectionManager {
         interbase,
 
         unknown;
-    }
-
-    private DbConnectionManager() {
-        // Not instantiable.
     }
 }

@@ -10,7 +10,7 @@
                  java.util.Calendar,
                  java.util.Date"%>
 
- <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+ <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
  <%--
    - This page is meant to be included in other pages. It assumes 4 variables:
@@ -120,7 +120,7 @@
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
-        <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true"
+        <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>

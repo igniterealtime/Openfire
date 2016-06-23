@@ -99,6 +99,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return null;
     }
 
+    @Override
     public boolean acceptIncomingFileTransferRequest(FileTransfer transfer)
             throws FileTransferRejectedException
     {
@@ -113,6 +114,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
         return false;
     }
 
+    @Override
     public void registerProxyTransfer(String transferDigest, ProxyTransfer proxyTransfer)
             throws UnauthorizedException
     {
@@ -210,6 +212,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
      * Interceptor to grab and validate file transfer meta information.
      */
     private class MetaFileTransferInterceptor implements PacketInterceptor {
+        @Override
         public void interceptPacket(Packet packet, Session session, boolean incoming,
                                     boolean processed)
                 throws PacketRejectedException

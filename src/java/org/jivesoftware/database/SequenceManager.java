@@ -66,7 +66,7 @@ public class SequenceManager {
             "UPDATE ofID SET id=? WHERE idType=? AND id=?";
 
     // Statically startup a sequence manager for each of the sequence counters.
-    private static Map<Integer, SequenceManager> managers = new ConcurrentHashMap<Integer, SequenceManager>();
+    private static Map<Integer, SequenceManager> managers = new ConcurrentHashMap<>();
 
     static {
         new SequenceManager(JiveConstants.ROSTER, 5);

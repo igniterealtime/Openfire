@@ -34,6 +34,7 @@ public class LocaleFilter implements Filter {
 
     private ServletContext context;
 
+    @Override
     public void init(FilterConfig config) throws ServletException {
         this.context = config.getServletContext();
     }
@@ -41,6 +42,7 @@ public class LocaleFilter implements Filter {
     /**
      * Ssets the locale context-wide based on a call to {@link JiveGlobals#getLocale()}.
      */
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         final String pathInfo = ((HttpServletRequest)request).getPathInfo();
@@ -77,6 +79,7 @@ public class LocaleFilter implements Filter {
     /**
      * Does nothing
      */
+    @Override
     public void destroy() {
     }
 }

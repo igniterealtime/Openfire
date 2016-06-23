@@ -525,20 +525,22 @@ public interface MUCRoom extends Externalizable, Result {
      * @param packet The packet to send.
      * @param senderRole the role of the user that is trying to send a public message.
      * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
+     * @throws ForbiddenException If a user of this role is not permitted to send private messages in this room.
      */
-    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException;
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException;
 
     /**
      * Kicks a user from the room. If the user was in the room, the returned updated presence will
-     * be sent to the remaining occupants. 
-     * 
-     * @param fullJID The full JID of the kicked user  (cannot be <tt>null</tt>).
-     * @param actorJID The JID of the actor that initiated the kick (cannot be <tt>null</tt>).
-     * @param reason An optional reason why the user was kicked (can be <tt>null</tt>).
+     * be sent to the remaining occupants.
+     *
+     * @param fullJID       The full JID of the kicked user  (cannot be <tt>null</tt>).
+     * @param actorJID      The JID of the actor that initiated the kick (cannot be <tt>null</tt>).
+     * @param actorNickname The actor nickname.
+     * @param reason        An optional reason why the user was kicked (can be <tt>null</tt>).
      * @return the updated presence of the kicked user or null if the user was not in the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      */
-    public Presence kickOccupant(JID fullJID, JID actorJID, String reason)
+    public Presence kickOccupant(JID fullJID, JID actorJID, String actorNickname, String reason)
             throws NotAllowedException;
 
     public IQOwnerHandler getIQOwnerHandler();
@@ -619,6 +621,22 @@ public interface MUCRoom extends Externalizable, Result {
      *        JID of every occupant.
      */
     public void setCanAnyoneDiscoverJID(boolean canAnyoneDiscoverJID);
+
+    /**
+     * Returns the minimal role of persons that are allowed to send private messages in the room. The returned value is
+     * any one of: "anyone", "moderators", "participants", "none".
+     *
+     * @return The minimal role of persons that are allowed to send private messages in the room (never null).
+     */
+    public String canSendPrivateMessage();
+
+    /**
+     * Sets the minimal role of persons that are allowed to send private messages in the room. The provided value is
+     * any one of: "anyone", "moderators", "participants", "none". If another value is set, "anyone" is used instead.
+     *
+     * @role The minimal role of persons that are allowed to send private messages in the room (never null).
+     */
+    public void setCanSendPrivateMessage(String role);
 
     /**
      * Returns true if participants are allowed to change the room's subject.

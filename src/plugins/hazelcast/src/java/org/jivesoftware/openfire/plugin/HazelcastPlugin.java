@@ -56,8 +56,6 @@ public class HazelcastPlugin extends TimerTask implements Plugin {
 
 	@Override
 	public void run() {
-        System.out.println("Starting Hazelcast Clustering Plugin");
-
         // Check if another cluster is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {

@@ -20,8 +20,8 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -106,16 +105,19 @@ public class LdapManager {
         // makes it easier to perform LdapManager testing.
         Map<String, String> properties = new Map<String, String>() {
 
+            @Override
             public String get(Object key) {
                 return JiveGlobals.getProperty((String)key);
             }
 
+            @Override
             public String put(String key, String value) {
                 JiveGlobals.setProperty(key, value);
                 // Always return null since XMLProperties doesn't support the normal semantics.
                 return null;
             }
 
+            @Override
             public String remove(Object key) {
                 JiveGlobals.deleteProperty((String)key);
                 // Always return null since XMLProperties doesn't support the normal semantics.
@@ -123,36 +125,45 @@ public class LdapManager {
             }
 
 
+            @Override
             public int size() {
                 return 0;
             }
 
+            @Override
             public boolean isEmpty() {
                 return false;
             }
 
+            @Override
             public boolean containsKey(Object key) {
                 return false;
             }
 
+            @Override
             public boolean containsValue(Object value) {
                 return false;
             }
 
+            @Override
             public void putAll(Map<? extends String, ? extends String> t) {
             }
 
+            @Override
             public void clear() {
             }
 
+            @Override
             public Set<String> keySet() {
                 return null;
             }
 
+            @Override
             public Collection<String> values() {
                 return null;
             }
 
+            @Override
             public Set<Entry<String, String>> entrySet() {
                 return null;
             }
@@ -161,7 +172,7 @@ public class LdapManager {
     }
 
 
-    private Collection<String> hosts = new ArrayList<String>();
+    private Collection<String> hosts = new ArrayList<>();
     private int port;
     private int connTimeout = -1;
     private int readTimeout = -1;
@@ -489,12 +500,13 @@ public class LdapManager {
         }
 
         // Set up the environment for creating the initial context
-        Hashtable<String, Object> env = new Hashtable<String, Object>();
+        Hashtable<String, Object> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
         env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
 
         // SSL
         if (sslEnabled) {
+            env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
 
@@ -533,7 +545,15 @@ public class LdapManager {
         } else {
             env.put("com.sun.jndi.ldap.connect.pool", "false");
         }
+        if (connTimeout > 0) {
+            env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
+        } else {
+            env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+        }
 
+        if (readTimeout > 0) {
+            env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
+        }
         if (followReferrals) {
             env.put(Context.REFERRAL, "follow");
         }
@@ -565,7 +585,7 @@ public class LdapManager {
                get details of the negotiated TLS session: cipher suite,
                peer certificate, etc. */
             try {
-                SSLSession session = tls.negotiate();
+                SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                 context.setTlsResponse(tls);
                 context.setSslSession(session);
@@ -625,10 +645,11 @@ public class LdapManager {
         JiveInitialLdapContext ctx = null;
         try {
             // See if the user authenticates.
-            Hashtable<String, Object> env = new Hashtable<String, Object>();
+            Hashtable<String, Object> env = new Hashtable<>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(Context.PROVIDER_URL, getProviderURL(baseDN));
             if (sslEnabled) {
+                env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                 env.put(Context.SECURITY_PROTOCOL, "ssl");
             }
 
@@ -644,14 +665,14 @@ public class LdapManager {
                 }
             }
 
-            // Set only on non SSL since SSL connections break with a timeout.
-            if (!sslEnabled) {
-                if (connTimeout > 0) {
+
+
+            if (connTimeout > 0) {
                     env.put("com.sun.jndi.ldap.connect.timeout", String.valueOf(connTimeout));
                 } else {
                     env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                 }
-            }
+
             if (readTimeout > 0) {
                 env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
@@ -684,7 +705,7 @@ public class LdapManager {
                    get details of the negotiated TLS session: cipher suite,
                    peer certificate, etc. */
                 try {
-                    SSLSession session = tls.negotiate();
+                    SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                     ctx.setTlsResponse(tls);
                     ctx.setSslSession(session);
@@ -728,11 +749,12 @@ public class LdapManager {
                 }
                 try {
                     // See if the user authenticates.
-                    Hashtable<String, Object> env = new Hashtable<String, Object>();
+                    Hashtable<String, Object> env = new Hashtable<>();
                     // Use a custom initial context factory if specified. Otherwise, use the default.
                     env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
                     env.put(Context.PROVIDER_URL, getProviderURL(alternateBaseDN));
                     if (sslEnabled) {
+                        env.put("java.naming.ldap.factory.socket", "org.jivesoftware.util.SimpleSSLSocketFactory");
                         env.put(Context.SECURITY_PROTOCOL, "ssl");
                     }
 
@@ -743,11 +765,9 @@ public class LdapManager {
                         env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
-                    // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a timemout.
-                    if (!sslEnabled) {
+
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
-                    }
+
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
                     }
@@ -776,7 +796,7 @@ public class LdapManager {
                            get details of the negotiated TLS session: cipher suite,
                            peer certificate, etc. */
                         try {
-                            SSLSession session = tls.negotiate();
+                            SSLSession session = tls.negotiate(new org.jivesoftware.util.SimpleSSLSocketFactory());
 
                             ctx.setTlsResponse(tls);
                             ctx.setSslSession(session);
@@ -1191,11 +1211,11 @@ public class LdapManager {
             // Create a correctly-encoded ldap URL for the PROVIDER_URL
             ldapURL.append("ldap://");
             ldapURL.append(host);
-            ldapURL.append(":");
+            ldapURL.append(':');
             ldapURL.append(port);
-            ldapURL.append("/");
+            ldapURL.append('/');
             ldapURL.append(baseDN);
-            ldapURL.append(" ");
+            ldapURL.append(' ');
         }
         return ldapURL.toString();
     }
@@ -1224,7 +1244,7 @@ public class LdapManager {
         this.hosts = hosts;
         StringBuilder hostProperty = new StringBuilder();
         for (String host : hosts) {
-            hostProperty.append(host).append(",");
+            hostProperty.append(host).append(',');
         }
         if (!hosts.isEmpty()) {
             // Remove the last comma
@@ -1604,11 +1624,11 @@ public class LdapManager {
     public String getSearchFilter() {
         StringBuilder filter = new StringBuilder();
         if (searchFilter == null) {
-            filter.append("(").append(usernameField).append("={0})");
+            filter.append('(').append(usernameField).append("={0})");
         }
         else {
             filter.append("(&(").append(usernameField).append("={0})");
-            filter.append(searchFilter).append(")");
+            filter.append(searchFilter).append(')');
         }
         return filter.toString();
     }
@@ -1784,11 +1804,11 @@ public class LdapManager {
     public String getGroupSearchFilter() {
         StringBuilder groupFilter = new StringBuilder();
         if (groupSearchFilter == null) {
-            groupFilter.append("(").append(groupNameField).append("={0})");
+            groupFilter.append('(').append(groupNameField).append("={0})");
         }
         else {
             groupFilter.append("(&(").append(groupNameField).append("={0})");
-            groupFilter.append(groupSearchFilter).append(")");
+            groupFilter.append(groupSearchFilter).append(')');
         }
         return groupFilter.toString();
     }
@@ -1860,7 +1880,7 @@ public class LdapManager {
      * @return A simple list of strings (that should be sorted) of the results.
      */
     public List<String> retrieveList(String attribute, String searchFilter, int startIndex, int numResults, String suffixToTrim, boolean escapeJIDs) {
-        List<String> results = new ArrayList<String>();
+        List<String> results = new ArrayList<>();
         int pageSize = -1;
         String pageSizeStr = properties.get("ldap.pagedResultsSize");
         if (pageSizeStr != null)
@@ -1883,7 +1903,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (!clientSideSort) {
                 // Server side sort on username field.
                 baseTmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -1957,7 +1977,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (!clientSideSort) {
                     // Server side sort on username field.
                     tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2014,7 +2034,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (!clientSideSort) {
                         // Server side sort on username field.
                         tmpRequestControls.add(new SortControl(new String[]{attribute}, Control.NONCRITICAL));
@@ -2095,7 +2115,7 @@ public class LdapManager {
             ctx = getContext(baseDN);
 
             // Set up request controls, if appropriate.
-            List<Control> baseTmpRequestControls = new ArrayList<Control>();
+            List<Control> baseTmpRequestControls = new ArrayList<>();
             if (pageSize > 0) {
                 // Server side paging.
                 baseTmpRequestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
@@ -2136,7 +2156,7 @@ public class LdapManager {
                 // Close the enumeration.
                 answer.close();
                 // Re-activate paged results; affects nothing if no paging support
-                List<Control> tmpRequestControls = new ArrayList<Control>();
+                List<Control> tmpRequestControls = new ArrayList<>();
                 if (pageSize > 0) {
                     // Server side paging.
                     tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
@@ -2173,7 +2193,7 @@ public class LdapManager {
                     // Close the enumeration.
                     answer.close();
                     // Re-activate paged results; affects nothing if no paging support
-                    List<Control> tmpRequestControls = new ArrayList<Control>();
+                    List<Control> tmpRequestControls = new ArrayList<>();
                     if (pageSize > 0) {
                         // Server side paging.
                         tmpRequestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
@@ -2208,7 +2228,7 @@ public class LdapManager {
      * Escapes any special chars (RFC 4515) from a string representing
      * a search filter assertion value.
      *
-     * @param input The input string.
+     * @param value The input string.
      *
      * @return A assertion value string ready for insertion into a 
      *         search filter string.
@@ -2239,16 +2259,11 @@ public class LdapManager {
                     }
                     else if (c >= 0x080) { 
                         // higher-order 2, 3 and 4-byte UTF-8 chars
-                        try {
-                            byte[] utf8bytes = String.valueOf(c).getBytes("UTF8");
-                            for (byte b: utf8bytes)
-                            {
-                            	result.append(String.format("\\%02x", b));
-                            }
-                        } catch (UnsupportedEncodingException e) {
-                            // ignore
+                        byte[] utf8bytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
+                        for (byte b : utf8bytes) {
+                            result.append(String.format("\\%02x", b));
                         }
-            		}
+                    }
                 }
             }
             return result.toString();

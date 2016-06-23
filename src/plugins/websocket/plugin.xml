@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Plugin configuration for the WebSocket plugin.
+-->
+<plugin>
+    <class>org.jivesoftware.openfire.websocket.WebSocketPlugin</class>
+    <name>Openfire WebSocket</name>
+    <description>Provides WebSocket support for Openfire.</description>
+    <author>Tom Evans</author>
+    <version>1.1.4</version>
+    <date>03/03/2016</date>
+    <url>https://tools.ietf.org/html/rfc7395</url>
+    <minServerVersion>4.1.0 Alpha</minServerVersion>
+</plugin>

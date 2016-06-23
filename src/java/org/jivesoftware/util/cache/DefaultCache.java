@@ -125,12 +125,13 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         // Our primary data structure is a HashMap. The default capacity of 11
         // is too small in almost all cases, so we set it bigger.
-        map = new HashMap<K, CacheObject<V>>(103);
+        map = new HashMap<>(103);
 
-        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
-        ageList = new org.jivesoftware.util.LinkedList<K>();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<>();
+        ageList = new org.jivesoftware.util.LinkedList<>();
     }
 
+    @Override
     public synchronized V put(K key, V value) {
         // Delete an old entry if it exists.
         V answer = remove(key);
@@ -150,7 +151,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return value;
         }
         cacheSize += objectSize;
-        DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<V>(value, objectSize);
+        DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<>(value, objectSize);
         map.put(key, cacheObject);
         // Make an entry into the cache order list.
         LinkedListNode<K> lastAccessedNode = lastAccessedList.addFirst(key);
@@ -171,6 +172,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return answer;
     }
 
+    @Override
     public synchronized V get(Object key) {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -196,6 +198,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return cacheObject.object;
     }
 
+    @Override
     public synchronized V remove(Object key) {
         DefaultCache.CacheObject<V> cacheObject = map.get(key);
         // If the object is not in cache, stop trying to remove it.
@@ -215,6 +218,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return cacheObject.object;
     }
 
+    @Override
     public synchronized void clear() {
         Object[] keys = map.keySet().toArray();
         for (int i = 0; i < keys.length; i++) {
@@ -224,15 +228,16 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // Now, reset all containers.
         map.clear();
         lastAccessedList.clear();
-        lastAccessedList = new org.jivesoftware.util.LinkedList<K>();
+        lastAccessedList = new org.jivesoftware.util.LinkedList<>();
         ageList.clear();
-        ageList = new org.jivesoftware.util.LinkedList<K>();
+        ageList = new org.jivesoftware.util.LinkedList<>();
 
         cacheSize = 0;
         cacheHits = 0;
         cacheMisses = 0;
     }
 
+    @Override
     public int size() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -241,6 +246,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return map.size();
     }
 
+    @Override
     public boolean isEmpty() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -249,6 +255,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return map.isEmpty();
     }
 
+    @Override
     public Collection<V> values() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -263,17 +270,20 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         private Collection<DefaultCache.CacheObject<V>> cachedObjects;
 
         private CacheObjectCollection(Collection<DefaultCache.CacheObject<V>> cachedObjects) {
-            this.cachedObjects = new ArrayList<CacheObject<V>>(cachedObjects);
+            this.cachedObjects = new ArrayList<>(cachedObjects);
         }
 
+        @Override
         public int size() {
             return cachedObjects.size();
         }
 
+        @Override
         public boolean isEmpty() {
             return size() == 0;
         }
 
+        @Override
         public boolean contains(Object o) {
             Iterator<V> it = iterator();
             while (it.hasNext()) {
@@ -284,14 +294,17 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return false;
         }
 
+        @Override
         public Iterator<V> iterator() {
             return new Iterator<V>() {
                 private final Iterator<DefaultCache.CacheObject<V>> it = cachedObjects.iterator();
 
+                @Override
                 public boolean hasNext() {
                     return it.hasNext();
                 }
 
+                @Override
                 public V next() {
                     if(it.hasNext()) {
                         DefaultCache.CacheObject<V> object = it.next();
@@ -306,12 +319,14 @@ public class DefaultCache<K, V> implements Cache<K, V> {
                     }
                 }
 
+                @Override
                 public void remove() {
                     throw new UnsupportedOperationException();
                 }
             };
         }
 
+        @Override
         public Object[] toArray() {
             Object[] array = new Object[size()];
             Iterator it = iterator();
@@ -322,6 +337,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return array;
         }
 
+        @Override
         public <V>V[] toArray(V[] a) {
             Iterator<V> it = (Iterator<V>) iterator();
             int i = 0;
@@ -331,6 +347,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return a;
         }
 
+        @Override
         public boolean containsAll(Collection<?> c) {
             Iterator it = c.iterator();
             while(it.hasNext()) {
@@ -341,31 +358,38 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             return true;
         }
 
+        @Override
         public boolean add(V o) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public boolean remove(Object o) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public boolean addAll(Collection<? extends V> coll) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public boolean removeAll(Collection<?> coll) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public boolean retainAll(Collection<?> coll) {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public void clear() {
             throw new UnsupportedOperationException();
         }
     }
 
+    @Override
     public boolean containsKey(Object key) {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -374,6 +398,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return map.containsKey(key);
     }
 
+    @Override
     public void putAll(Map<? extends K, ? extends V> map) {
         for (Iterator<? extends K> i = map.keySet().iterator(); i.hasNext();) {
             K key = i.next();
@@ -382,6 +407,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         }
     }
 
+    @Override
     public boolean containsValue(Object value) {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -410,6 +436,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         return false;
     }
 
+    @Override
     public Set<Entry<K, V>> entrySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -417,7 +444,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         // TODO Make this work right
 
         synchronized (this) {
-            final Map<K, V> result = new HashMap<K, V>();
+            final Map<K, V> result = new HashMap<>();
             for (final Entry<K, DefaultCache.CacheObject<V>> entry : map.entrySet()) {
                 result.put(entry.getKey(), entry.getValue().object);
             }
@@ -425,12 +452,13 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         }
     }
 
+    @Override
     public Set<K> keySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
         synchronized (this) {
-            return new HashSet<K>(map.keySet());
+            return new HashSet<>(map.keySet());
         }
     }
 
@@ -440,6 +468,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the name of this cache.
      */
+    @Override
     public String getName() {
         return name;
     }
@@ -449,6 +478,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @param name the name of this cache.
      */
+    @Override
     public void setName(String name) {
         this.name = name;
     }
@@ -463,6 +493,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the number of cache hits.
      */
+    @Override
     public long getCacheHits() {
         return cacheHits;
     }
@@ -477,6 +508,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the number of cache hits.
      */
+    @Override
     public long getCacheMisses() {
         return cacheMisses;
     }
@@ -489,6 +521,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the size of the cache contents in bytes.
      */
+    @Override
     public int getCacheSize() {
         return cacheSize;
     }
@@ -500,6 +533,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the maximum size of the cache (-1 indicates unlimited max size).
      */
+    @Override
     public long getMaxCacheSize() {
         return maxCacheSize;
     }
@@ -511,6 +545,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @param maxCacheSize the maximum size of this cache (-1 indicates unlimited max size).
      */
+    @Override
     public void setMaxCacheSize(int maxCacheSize) {
         this.maxCacheSize = maxCacheSize;
         CacheFactory.setMaxSizeProperty(name, maxCacheSize);
@@ -527,6 +562,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @return the maximum number of milleseconds before objects are expired.
      */
+    @Override
     public long getMaxLifetime() {
         return maxLifetime;
     }
@@ -539,6 +575,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
      *
      * @param maxLifetime the maximum number of milleseconds before objects are expired.
      */
+    @Override
     public void setMaxLifetime(long maxLifetime) {
         this.maxLifetime = maxLifetime;
         CacheFactory.setMaxLifetimeProperty(name, maxLifetime);

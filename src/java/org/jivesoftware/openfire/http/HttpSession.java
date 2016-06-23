@@ -21,7 +21,6 @@ package org.jivesoftware.openfire.http;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
@@ -33,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -46,6 +46,7 @@ import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
@@ -105,7 +106,7 @@ public class HttpSession extends LocalClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private Set<SessionListener> listeners = new CopyOnWriteArraySet<SessionListener>();
+    private Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
@@ -119,20 +120,21 @@ public class HttpSession extends LocalClientSession {
     private int minorVersion = -1;
     private X509Certificate[] sslCertificates;
 
-    private final Queue<Collection<Element>> packetsToSend = new LinkedList<Collection<Element>>();
+    private final Queue<Collection<Element>> packetsToSend = new LinkedList<>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
     private SessionPacketRouter router;
 
     private static final Comparator<HttpConnection> connectionComparator
             = new Comparator<HttpConnection>() {
+        @Override
         public int compare(HttpConnection o1, HttpConnection o2) {
             return (int) (o1.getRequestId() - o2.getRequestId());
         }
     };
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName, InetAddress address,
-                       StreamID streamID, long rid, HttpConnection connection) {
-        super(serverName, new HttpVirtualConnection(address), streamID);
+                       StreamID streamID, long rid, HttpConnection connection, Locale language) {
+        super(serverName, new HttpVirtualConnection(address), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
         this.lastRequestID = rid;
@@ -146,7 +148,7 @@ public class HttpSession extends LocalClientSession {
      * @return the stream features which are available for this session.
      */
     public Collection<Element> getAvailableStreamFeaturesElements() {
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
 
         if (getAuthToken() == null) {
 	        Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
@@ -247,24 +249,6 @@ public class HttpSession extends LocalClientSession {
      */
     public int getHold() {
         return hold;
-    }
-
-    /**
-     * Sets the language this session is using.
-     *
-     * @param language the language this session is using.
-     */
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    /**
-     * Returns the language this session is using.
-     *
-     * @return the language this session is using.
-     */
-    public String getLanguage() {
-        return language;
     }
 
     /**
@@ -654,11 +638,6 @@ public class HttpSession extends LocalClientSession {
                 try {
                     router.route(packet);
                 }
-                catch (UnsupportedEncodingException e) {
-                    Log.error(
-                            "Client provided unsupported encoding type in auth request",
-                            e);
-                }
                 catch (UnknownStanzaException e) {
                     Log.error("Client provided unknown packet type", e);
                 }
@@ -671,6 +650,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the X509Certificate associated with this session.
      */
+    @Override
     public X509Certificate[] getPeerCertificates() {
         return sslCertificates;
     }
@@ -966,6 +946,7 @@ public class HttpSession extends LocalClientSession {
         deliver(new Deliverable(text));
     }
 
+    @Override
     public void deliver(Packet stanza) {
         deliver(new Deliverable(Arrays.asList(stanza)));
     }
@@ -1077,6 +1058,7 @@ public class HttpSession extends LocalClientSession {
         }
         // use a separate thread to schedule backup delivery
    		TaskEngine.getInstance().submit(new Runnable() {
+			@Override
 			public void run() {
 		        for (Packet packet : packets) {
     	            try {
@@ -1092,17 +1074,15 @@ public class HttpSession extends LocalClientSession {
 
     protected String createEmptyBody(boolean terminate)
     {
-        final Element body = DocumentHelper.createElement("body");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
         return body.asXML();
     }
 
     private String createSessionRestartResponse()
     {
-        final Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
 
         final Element features = response.addElement("stream:features");
@@ -1120,6 +1100,7 @@ public class HttpSession extends LocalClientSession {
     public static class HttpVirtualConnection extends VirtualConnection {
 
         private InetAddress address;
+        private ConnectionConfiguration configuration;
 
         public HttpVirtualConnection(InetAddress address) {
             this.address = address;
@@ -1130,28 +1111,39 @@ public class HttpSession extends LocalClientSession {
             ((HttpSession) session).closeSession();
         }
 
+        @Override
         public byte[] getAddress() throws UnknownHostException {
             return address.getAddress();
         }
 
+        @Override
         public String getHostAddress() throws UnknownHostException {
             return address.getHostAddress();
         }
 
+        @Override
         public String getHostName() throws UnknownHostException {
             return address.getHostName();
         }
 
+        @Override
         public void systemShutdown() {
             close();
         }
 
+        @Override
         public void deliver(Packet packet) throws UnauthorizedException {
             ((HttpSession) session).deliver(packet);
         }
 
+        @Override
         public void deliverRawText(String text) {
             ((HttpSession) session).deliver(text);
+        }
+
+        @Override
+        public ConnectionConfiguration getConfiguration() {
+            return session.getConnection().getConfiguration();
         }
 
         @Override
@@ -1160,7 +1152,7 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Deliverable {
+    static class Deliverable {
         private final String text;
         private final Collection<String> packets;
 
@@ -1171,21 +1163,20 @@ public class HttpSession extends LocalClientSession {
 
         public Deliverable(Collection<Packet> elements) {
             this.text = null;
-            this.packets = new ArrayList<String>();
+            this.packets = new ArrayList<>();
             for (Packet packet : elements) {
-                // Rewrite packet namespace according XEP-0206
-                if (packet instanceof Presence) {
-                    this.packets.add("<presence xmlns=\"jabber:client\"" + packet.toXML().substring(9));
-                }
-                else if (packet instanceof IQ) {
-                    this.packets.add("<iq xmlns=\"jabber:client\"" + packet.toXML().substring(3));
-                }
-                else if (packet instanceof Message) {
-                    this.packets.add("<message xmlns=\"jabber:client\"" + packet.toXML().substring(8));
-                }
-                else {
-                    this.packets.add(packet.toXML());
-                }
+                // Append packet namespace according XEP-0206 if needed
+            	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
+            		// use string-based operation here to avoid cascading xmlns wonkery
+            		StringBuilder packetXml = new StringBuilder(packet.toXML());
+                    final int noslash = packetXml.indexOf( ">" );
+                    final int slash = packetXml.indexOf( "/>" );
+                    final int insertAt = ( noslash - 1 == slash ? slash : noslash );
+            		packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
+            		this.packets.add(packetXml.toString());
+            	} else {
+            		this.packets.add(packet.toXML());
+            	}
             }
         }
 
@@ -1208,7 +1199,7 @@ public class HttpSession extends LocalClientSession {
                 // No packets here (should be just raw XML like <stream> so return nothing
                 return null;
             }
-            List<Packet> answer = new ArrayList<Packet>();
+            List<Packet> answer = new ArrayList<>();
             for (String packetXML : packets) {
                 try {
                     Packet packet = null;
@@ -1252,7 +1243,7 @@ public class HttpSession extends LocalClientSession {
         }
 
         public Collection<Packet> getPackets() {
-            List<Packet> packets = new ArrayList<Packet>();
+            List<Packet> packets = new ArrayList<>();
             synchronized (deliverables) {
 	            for (Deliverable deliverable : deliverables) {
 	                if (deliverable.packets != null) {
@@ -1275,6 +1266,7 @@ public class HttpSession extends LocalClientSession {
             this.session = session;
         }
 
+        @Override
         public void run() {
             session.sendPendingPackets();
         }

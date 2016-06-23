@@ -217,7 +217,7 @@ public class IQOwnerHandler {
         // Get the new list of admins
         field = completedForm.getField("muc#roomconfig_roomadmins");
         boolean adminsSent = field != null;
-        List<JID> admins = new ArrayList<JID>();
+        List<JID> admins = new ArrayList<>();
         if (field != null) {
         	for (String value : field.getValues()) {
         		// XEP-0045: "Affiliations are granted, revoked, and 
@@ -232,7 +232,7 @@ public class IQOwnerHandler {
         // Get the new list of owners
         field = completedForm.getField("muc#roomconfig_roomowners");
         boolean ownersSent = field != null;
-        List<JID> owners = new ArrayList<JID>(); 
+        List<JID> owners = new ArrayList<>();
         if (field != null) {
         	for(String value : field.getValues()) {
         		// XEP-0045: "Affiliations are granted, revoked, and 
@@ -250,7 +250,7 @@ public class IQOwnerHandler {
         }
 
         // Keep a registry of the updated presences
-        List<Presence> presences = new ArrayList<Presence>(admins.size() + owners.size());
+        List<Presence> presences = new ArrayList<>(admins.size() + owners.size());
 
         field = completedForm.getField("muc#roomconfig_roomname");
         if (field != null) {
@@ -279,7 +279,7 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_presencebroadcast");
         if (field != null) {
-            values = new ArrayList<String>(field.getValues());
+            values = new ArrayList<>(field.getValues());
             room.setRolesToBroadcastPresence(values);
         }
 
@@ -349,6 +349,12 @@ public class IQOwnerHandler {
             room.setCanAnyoneDiscoverJID(("anyone".equals(booleanValue)));
         }
 
+        field = completedForm.getField("muc#roomconfig_allowpm");
+        if (field != null) {
+            final String value = field.getFirstValue();
+            room.setCanSendPrivateMessage(value);
+        }
+
         field = completedForm.getField("muc#roomconfig_enablelogging");
         if (field != null) {
             final String value = field.getFirstValue();
@@ -392,7 +398,7 @@ public class IQOwnerHandler {
         if (ownersSent) {
             // Change the affiliation to "member" for the current owners that won't be neither
             // owner nor admin (if the form included the owners field)
-            List<JID> ownersToRemove = new ArrayList<JID>(room.owners);
+            List<JID> ownersToRemove = new ArrayList<>(room.owners);
             ownersToRemove.removeAll(admins);
             ownersToRemove.removeAll(owners);
             for (JID jid : ownersToRemove) {
@@ -406,7 +412,7 @@ public class IQOwnerHandler {
         if (adminsSent) {
             // Change the affiliation to "member" for the current admins that won't be neither
             // owner nor admin (if the form included the admins field)
-            List<JID> adminsToRemove = new ArrayList<JID>(room.admins);
+            List<JID> adminsToRemove = new ArrayList<>(room.admins);
             adminsToRemove.removeAll(admins);
             adminsToRemove.removeAll(owners);
             for (JID jid : adminsToRemove) {
@@ -486,6 +492,10 @@ public class IQOwnerHandler {
             field.clearValues();
             field.addValue((room.canAnyoneDiscoverJID() ? "anyone" : "moderators"));
 
+            field = configurationForm.getField("muc#roomconfig_allowpm");
+            field.clearValues();
+            field.addValue((room.canSendPrivateMessage() ));
+
             field = configurationForm.getField("muc#roomconfig_enablelogging");
             field.clearValues();
             field.addValue((room.isLogEnabled() ? "1" : "0"));
@@ -555,7 +565,7 @@ public class IQOwnerHandler {
 
         configurationForm = new DataForm(DataForm.Type.form);
         configurationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.conf.title"));
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add(room.getName());
         configurationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.conf.instruction", params));
 
@@ -633,6 +643,15 @@ public class IQOwnerHandler {
         		Type.list_single);
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
         whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
+
+        final FormField allowpm = configurationForm.addField(
+                "muc#roomconfig_allowpm",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowpm"),
+                Type.list_single);
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participants");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "none");
 
         configurationForm.addField("muc#roomconfig_enablelogging",
         		LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"),

@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.plugin;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.plugin.spark.SparkManager;
-import org.jivesoftware.openfire.plugin.spark.BookmarkInterceptor;
 import org.jivesoftware.openfire.plugin.spark.TaskEngine;
 import org.jivesoftware.openfire.plugin.spark.manager.SparkVersionManager;
 import org.jivesoftware.openfire.plugin.spark.manager.FileTransferFilterManager;
@@ -36,7 +35,6 @@ import java.io.FileFilter;
 public class ClientControlPlugin implements Plugin {
 
     private SparkManager sparkManager;
-    private BookmarkInterceptor bookmarkInterceptor;
     private SparkVersionManager sparkVersionManager;
     private FileTransferFilterManager fileTransferFilterManager;
     private TaskEngine taskEngine;
@@ -50,8 +48,6 @@ public class ClientControlPlugin implements Plugin {
     // Plugin Interface
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        System.out.println("Starting Client Control Plugin");
-
         // Check if we Enterprise is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {
@@ -69,10 +65,7 @@ public class ClientControlPlugin implements Plugin {
         taskEngine = TaskEngine.getInstance();
         sparkManager = new SparkManager(taskEngine);
         sparkManager.start();
-        // Create and start the bookmark interceptor, which adds server-managed bookmarks when
-        // a user requests their bookmark list.
-        bookmarkInterceptor = new BookmarkInterceptor();
-        bookmarkInterceptor.start();
+
         // Create and start the Spark version manager
         sparkVersionManager = new SparkVersionManager();
         sparkVersionManager.start();
@@ -91,11 +84,6 @@ public class ClientControlPlugin implements Plugin {
             sparkManager.stop();
             sparkManager.shutdown();
             sparkManager = null;
-        }
-
-        if (bookmarkInterceptor != null) {
-            bookmarkInterceptor.stop();
-            bookmarkInterceptor = null;
         }
 
         if (sparkVersionManager != null) {

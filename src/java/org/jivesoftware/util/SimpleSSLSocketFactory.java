@@ -20,6 +20,14 @@
 
 package org.jivesoftware.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -30,14 +38,8 @@ import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import java.util.Comparator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * SSLSocketFactory that accepts any certificate chain and also accepts expired
@@ -45,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Matt Tucker
  */
-public class SimpleSSLSocketFactory extends SSLSocketFactory {
+public class SimpleSSLSocketFactory extends SSLSocketFactory implements Comparator<Object> {
 
 	private static final Logger Log = LoggerFactory.getLogger(SimpleSSLSocketFactory.class);
 
@@ -54,17 +56,13 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
     public SimpleSSLSocketFactory() {
 
         try {
-            String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-            SSLContext sslcontent = SSLContext.getInstance(algorithm);
-            sslcontent.init(null, // KeyManager not required
+            final SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            sslContext.init(null, // KeyManager not required
                             new TrustManager[] { new DummyTrustManager() },
                             new java.security.SecureRandom());
-            factory = sslcontent.getSocketFactory();
+            factory = sslContext.getSocketFactory();
         }
-        catch (NoSuchAlgorithmException e) {
-            Log.error(e.getMessage(), e);
-        }
-        catch (KeyManagementException e) {
+        catch (NoSuchAlgorithmException | KeyManagementException e) {
             Log.error(e.getMessage(), e);
         }
     }
@@ -123,6 +121,11 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
         return factory.getSupportedCipherSuites();
     }
 
+    //Workaround for ssl pooling when using a custom ssl factory
+    @Override
+    public int compare(Object o1, Object o2) {
+        return o1.toString().compareTo(o2.toString());
+    }
     private static class DummyTrustManager implements X509TrustManager {
 
         public boolean isClientTrusted(X509Certificate[] cert) {
@@ -142,16 +145,19 @@ public class SimpleSSLSocketFactory extends SSLSocketFactory {
             }
         }
 
+        @Override
         public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates,
                 String s) throws CertificateException
         {
         }
 
+        @Override
         public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates,
                 String s) throws CertificateException
         {
         }
 
+        @Override
         public X509Certificate[] getAcceptedIssuers() {
             return new X509Certificate[0];
         }

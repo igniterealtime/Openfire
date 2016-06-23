@@ -79,10 +79,12 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
         dataSourceName = JiveGlobals.getXMLProperty("database.JNDIProvider.name");
     }
 
+    @Override
     public boolean isPooled() {
         return true;
     }
 
+    @Override
     public void start() {
         if (dataSourceName == null || dataSourceName.equals("")) {
             Log.error("No name specified for DataSource. JNDI lookup will fail", new Throwable());
@@ -110,15 +112,18 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
         }
     }
 
+    @Override
     public void restart() {
         destroy();
         start();
     }
 
+    @Override
     public void destroy() {
 
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         if (dataSource == null) {
             throw new SQLException("DataSource has not been initialized.");

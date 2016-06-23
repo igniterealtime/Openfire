@@ -66,11 +66,13 @@ public class MINAStatCollector {
     private final IoServiceListener serviceListener = new IoServiceListener()
     {
 
+        @Override
         public void sessionCreated( IoSession session )
         {
             addSession( session );
         }
 
+        @Override
         public void sessionDestroyed( IoSession session )
         {
             removeSession( session );
@@ -122,7 +124,7 @@ public class MINAStatCollector {
 
             // add all current sessions
 
-            polledSessions = new ConcurrentLinkedQueue<IoSession>();
+            polledSessions = new ConcurrentLinkedQueue<>();
 
             Map<Long, IoSession> sessions = service.getManagedSessions();
             if (sessions != null) {

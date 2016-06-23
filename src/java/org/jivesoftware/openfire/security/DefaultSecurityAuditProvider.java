@@ -63,6 +63,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider logs events into a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#logEvent(String, String, String)
      */
+    @Override
     public void logEvent(String username, String summary, String details) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -90,8 +91,9 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider retrieves events from a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEvents(String, Integer, Integer, java.util.Date, java.util.Date)
      */
+    @Override
     public List<SecurityAuditEvent> getEvents(String username, Integer skipEvents, Integer numEvents, Date startTime, Date endTime) {
-        List<SecurityAuditEvent> events = new ArrayList<SecurityAuditEvent>();
+        List<SecurityAuditEvent> events = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -172,6 +174,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider retrieves events from a ofSecurityAuditLog table in the database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEvent(Integer)
      */
+    @Override
     public SecurityAuditEvent getEvent(Integer msgID) throws EventNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -207,6 +210,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider counts the number of entries in the ofSecurityAuditLog table.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getEventCount()
      */
+    @Override
     public Integer getEventCount() {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -233,6 +237,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider writes logs into a local Openfire database.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#isWriteOnly()
      */
+    @Override
     public boolean isWriteOnly() {
         return false;
     }
@@ -241,6 +246,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider uses Openfire's own audit log viewer.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#getAuditURL()
      */
+    @Override
     public String getAuditURL() {
         return null;
     }
@@ -249,6 +255,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider logs user events.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockUserEvents()
      */
+    @Override
     public boolean blockUserEvents() {
         return false;
     }
@@ -257,6 +264,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
      * The default provider logs group events.
      * @see org.jivesoftware.openfire.security.SecurityAuditProvider#blockGroupEvents()
      */
+    @Override
     public boolean blockGroupEvents() {
         return false;
     }

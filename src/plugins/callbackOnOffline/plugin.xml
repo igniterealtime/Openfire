@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>com.fotsum.CallbackOnOffline</class>
+
+    <name>CallbackOnOffline</name>
+    <description>Url is called when recipient is offline</description>
+    <author>Pavel Goski</author>
+    <version>1.0</version>
+    <date>08/16/2015</date>
+    <minServerVersion>2.3.0</minServerVersion>
+
+</plugin>

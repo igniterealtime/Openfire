@@ -58,7 +58,7 @@ Client Control Plugin Readme
 
 <p>
 The client control plugin allows to specify which XMPP clients are allowed to connect to the server; which
-client features are enabled; manage groupchat and URL bookmarks and control which Spark version should be
+client features are enabled and control which Spark version should be
 used by clients.
 </p>
 
@@ -78,37 +78,6 @@ copy the new clientControl.jar file over the existing file.
 <p><i>Note: Installations using the spark manager plugin will need to uninstall the plugin before installing
 this new plugin.
 </i></p>
-
-<h2>Upgrading from Enterprise</h2>
-
-<p>
-If you are upgrading from the Enterprise plugin, and wish to keep your old
-bookmarks, you will need to manually run some database scripts to
-perform the migration.  Note, if you don't care about your previous
-bookmarks, you don't have to worry about these steps.
-</p>
-
-<p>
-First, you will need to shut down your Openfire server and remove the
-enterprise plugin.  To do this, perform the following steps:
-<ol>
-<li>Shut down your Openfire server</li>
-<li>Remove the <b>enterprise.jar</b> file and the <b>enterprise</b> directory from the plugins directory in your Openfire install root</li>
-<li>Install this plugin, <b>clientControl.jar</b> by copying it into the plugins directory.</li>
-<li>At this point, you will need to start up Openfire and let it extract and install the <b>clientControl</b> plugin.  You can watch for this to occur by looking under the Plugins tab in the Openfire admin console.  Once it appears in the list, continue to the next step.</li>
-<li>Shut the server back down again.</li>
-<li>Go into your plugins/clientControl/database directory.  There you will see
-some scripts prefixed with <b>import_</b>.  Log into your database, switch
-to the Openfire's database as you configured during setup (you can find
-this information in conf/openfire.xml if you don't remember it), and run
-the script that matches the database you are using.  Note that the embedded
-database is hsqldb and you can use the script in bin/extra from the Openfire
-install root (bin/extra/embedded-db-viewer.sh or
-bin/extra/embedded-db-viewer.bat, depending on whether you are using Windows)
-to access your embedded database.</li>
-<li>Once the script has completed, you can start Openfire back up and all of your settings should be the way they were when you were running the Enterprise plugin.</li>
-</ol>
-</p>
 
 </body>
 </html>

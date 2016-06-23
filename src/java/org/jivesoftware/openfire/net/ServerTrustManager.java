@@ -54,22 +54,21 @@ public class ServerTrustManager implements X509TrustManager {
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-    /**
-     * Holds the domain of the remote server we are trying to connect
-     */
-    private String server;
-    /**
-     * Holds the LocalIncomingServerSession that is part of the TLS negotiation.
-     */
-    private Connection connection;
 
-    public ServerTrustManager(String server, KeyStore trustTrust, Connection connection) {
-        super();
-        this.server = server;
-        this.trustStore = trustTrust;
-        this.connection = connection;
+    /**
+     * @deprecated Use ServerTrustManager(KeyStore trustStore) instead (there's no functional difference).
+     */
+    @Deprecated
+    public ServerTrustManager(String server, KeyStore trustStore, Connection connection) {
+        this(trustStore);
     }
 
+    public ServerTrustManager(KeyStore trustTrust) {
+        super();
+        this.trustStore = trustTrust;
+    }
+
+    @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates,
             String string) {
         // Do not validate the certificate at this point. The certificate is going to be used
@@ -96,11 +95,13 @@ public class ServerTrustManager implements X509TrustManager {
      * @param string the key exchange algorithm used.
      * @throws CertificateException if the certificate chain is not trusted by this TrustManager.
      */
+    @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String string)
             throws CertificateException {
         // Do nothing here. As before, the certificate will be validated when the remote server authenticates.
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
         if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
             // Answer an empty list since we accept any issuer

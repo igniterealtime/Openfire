@@ -45,7 +45,7 @@ abstract class Channel implements Runnable {
     protected DatagramPacket packet;
     protected boolean enabled = true;
 
-    List<DatagramListener> listeners = new ArrayList<DatagramListener>();
+    List<DatagramListener> listeners = new ArrayList<>();
 
     protected InetAddress host;
     protected int port;
@@ -132,6 +132,7 @@ abstract class Channel implements Runnable {
     /**
      * Thread override method
      */
+    @Override
     public void run() {
         try {
             while (enabled) {

@@ -28,10 +28,14 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
 
 import java.io.File;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.jasper.servlet.JasperInitializer;
+
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.util.security.*;
@@ -46,6 +50,8 @@ import com.javamonitor.openfire.mbeans.DatabasePool;
 import com.javamonitor.openfire.mbeans.Openfire;
 import com.javamonitor.openfire.mbeans.PacketCounter;
 
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
 
 public class JmxWebPlugin implements Plugin  {
 
@@ -115,10 +121,19 @@ public class JmxWebPlugin implements Plugin  {
 			try {
 				Log.info( "["+ NAME + "] starting jolokia");
 				WebAppContext context = new WebAppContext(contexts, pluginDirectory.getPath(), "/jolokia");
+
+				final List<ContainerInitializer> initializers = new ArrayList<>();
+				initializers.add(new ContainerInitializer(new JasperInitializer(), null));
+				context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+				context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context.setWelcomeFiles(new String[]{"index.html"});
 
 				Log.info( "["+ NAME + "] starting hawtio");
 				WebAppContext context2 = new WebAppContext(contexts, pluginDirectory.getPath() + "/hawtio", "/hawtio");
+				final List<ContainerInitializer> initializers2 = new ArrayList<>();
+				initializers2.add(new ContainerInitializer(new JasperInitializer(), null));
+				context2.setAttribute("org.eclipse.jetty.containerInitializers", initializers2);
+				context2.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 				context2.setWelcomeFiles(new String[]{"index.html"});
 
 				if (JiveGlobals.getBooleanProperty("xmpp.jmx.secure", true))
@@ -143,17 +158,25 @@ public class JmxWebPlugin implements Plugin  {
 	public void destroyPlugin() {
 		Log.info( "["+ NAME + "] destroy " + NAME + " plugin resources");
 
-        database.stop();
-        JmxHelper.unregister(OBJECTNAME_DATABASEPOOL);
+        if (database != null) {
+            database.stop();
+            JmxHelper.unregister(OBJECTNAME_DATABASEPOOL);
+        }
 
-        client.stop();
-        JmxHelper.unregister(OBJECTNAME_CORE_CLIENT_THREADPOOL);
+        if (client != null) {
+            client.stop();
+            JmxHelper.unregister(OBJECTNAME_CORE_CLIENT_THREADPOOL);
+        }
 
-        packetCounter.stop();
-        JmxHelper.unregister(OBJECTNAME_PACKET_COUNTER);
+        if (packetCounter != null) {
+            packetCounter.stop();
+            JmxHelper.unregister(OBJECTNAME_PACKET_COUNTER);
+        }
 
-        openfire.stop();
-        JmxHelper.unregister(OBJECTNAME_OPENFIRE);
+        if (openfire != null) {
+            openfire.stop();
+            JmxHelper.unregister(OBJECTNAME_OPENFIRE);
+        }
 
         Log.info("["+ NAME + "]  plugin fully destroyed.");
 	}

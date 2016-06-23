@@ -24,6 +24,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Blowfish;
@@ -68,20 +69,24 @@ public class AuthFactory {
 
         // Detect when a new auth provider class is set 
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.auth.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -143,27 +148,6 @@ public class AuthFactory {
     }
 
     /**
-     * Returns true if the currently installed {@link AuthProvider} supports authentication
-     * using plain-text passwords according to JEP-0078. Plain-text authentication is
-     * not secure and should generally only be used over a TLS/SSL connection.
-     *
-     * @return true if plain text password authentication is supported.
-     */
-    public static boolean isPlainSupported() {
-        return authProvider.isPlainSupported();
-    }
-
-    /**
-     * Returns true if the currently installed {@link AuthProvider} supports
-     * digest authentication according to JEP-0078.
-     *
-     * @return true if digest authentication is supported.
-     */
-    public static boolean isDigestSupported() {
-        return authProvider.isDigestSupported();
-    }
-
-    /**
      * Returns the user's password. This method will throw an UnsupportedOperationException
      * if this operation is not supported by the backend user store.
      *
@@ -211,30 +195,6 @@ public class AuthFactory {
             throw new UnauthorizedException();
         }
         authProvider.authenticate(username, password);
-        return new AuthToken(username);
-    }
-
-    /**
-     * Authenticates a user with a username, token, and digest and returns an AuthToken.
-     * The digest should be generated using the {@link #createDigest(String, String)} method.
-     * If the username and digest do not match the record of any user in the system, the
-     * method throws an UnauthorizedException.
-     *
-     * @param username the username.
-     * @param token the token that was used with plain-text password to generate the digest.
-     * @param digest the digest generated from plain-text password and unique token.
-     * @return an AuthToken token if the username and digest are correct for the user's
-     *      password and given token.
-     * @throws UnauthorizedException if the username and password do not match any
-     *      existing user or the account is locked out.
-     */
-    public static AuthToken authenticate(String username, String token, String digest)
-            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-        if (LockOutManager.getInstance().isAccountDisabled(username)) {
-            LockOutManager.getInstance().recordFailedLogin(username);
-            throw new UnauthorizedException();
-        }
-        authProvider.authenticate(username, token, digest);
         return new AuthToken(username);
     }
 
@@ -327,5 +287,10 @@ public class AuthFactory {
             Log.error(e.getMessage(), e);
         }
         return cipher;
+    }
+
+    public static boolean supportsScram() {
+        // TODO Auto-generated method stub
+        return authProvider.isScramSupported();
     }
 }

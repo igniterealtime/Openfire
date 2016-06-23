@@ -35,7 +35,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class RoomAvailableEvent implements ClusterTask {
+public class RoomAvailableEvent implements ClusterTask<Void> {
     private LocalMUCRoom room;
 
     public RoomAvailableEvent() {
@@ -45,19 +45,23 @@ public class RoomAvailableEvent implements ClusterTask {
         this.room = room;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         MultiUserChatService mucService = room.getMUCService();
         mucService.chatRoomAdded(room);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         room.writeExternal(out);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         room = new LocalMUCRoom();
         room.readExternal(in);

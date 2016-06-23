@@ -59,7 +59,7 @@ public class DefaultVCardProvider implements VCardProvider {
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
 
     public DefaultVCardProvider() {
@@ -72,6 +72,7 @@ public class DefaultVCardProvider implements VCardProvider {
         }
     }
 
+    @Override
     public Element loadVCard(String username) {
         synchronized (username.intern()) {
             Connection con = null;
@@ -105,6 +106,7 @@ public class DefaultVCardProvider implements VCardProvider {
         }
     }
 
+    @Override
     public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
         if (loadVCard(username) != null) {
             // The user already has a vCard
@@ -129,6 +131,7 @@ public class DefaultVCardProvider implements VCardProvider {
         return vCardElement;
     }
 
+    @Override
     public Element updateVCard(String username, Element vCardElement) throws NotFoundException {
         if (loadVCard(username) == null) {
             // The user already has a vCard
@@ -152,6 +155,7 @@ public class DefaultVCardProvider implements VCardProvider {
         return vCardElement;
     }
 
+    @Override
     public void deleteVCard(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -169,6 +173,7 @@ public class DefaultVCardProvider implements VCardProvider {
         }
     }
 
+    @Override
     public boolean isReadOnly() {
         return false;
     }

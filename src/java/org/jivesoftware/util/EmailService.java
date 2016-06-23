@@ -479,6 +479,7 @@ public class EmailService {
             this.messages = messages;
         }
 
+        @Override
         public void run() {
             try {
                 sendMessages();
@@ -504,11 +505,8 @@ public class EmailService {
                         transport.sendMessage(message,
                             message.getRecipients(MimeMessage.RecipientType.TO));
                     }
-                    catch (AddressException ae) {
+                    catch (AddressException | SendFailedException ae) {
                         Log.error(ae.getMessage(), ae);
-                    }
-                    catch (SendFailedException sfe) {
-                        Log.error(sfe.getMessage(), sfe);
                     }
                 }
             }

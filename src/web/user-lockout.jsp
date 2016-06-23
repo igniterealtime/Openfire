@@ -25,13 +25,14 @@
 <%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Date" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -41,6 +42,7 @@
     boolean unlock = request.getParameter("unlock") != null;
     boolean lock = request.getParameter("lock") != null;
     String username = ParamUtils.getParameter(request,"username");
+    String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
     Integer startdelay = ParamUtils.getIntParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
     Integer duration = ParamUtils.getIntParameter(request,"duration",-1); // -1 is infinite, -2 custom
     if (startdelay == -2) {
@@ -49,10 +51,21 @@
     if (duration == -2) {
         duration = ParamUtils.getIntParameter(request,"duration_custom", -1);   
     }
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    if (lock || unlock) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            lock = false;
+            unlock = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-properties.jsp?username=" + usernameUrlEncoded);
         return;
     }
 
@@ -93,7 +106,7 @@
             }
         }
         // Done, so redirect
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&locksuccess=1");
+        response.sendRedirect("user-properties.jsp?username=" + usernameUrlEncoded + "&locksuccess=1");
         return;
     }
 
@@ -106,17 +119,19 @@
             webManager.logEvent("unlocked user "+username, null);
         }
         // Done, so redirect
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&unlocksuccess=1");
+        response.sendRedirect("user-properties.jsp?username=" + usernameUrlEncoded + "&unlocksuccess=1");
         return;
     }
 
+    pageContext.setAttribute( "usernameHtmlEscaped", StringUtils.escapeHTMLTags(JID.unescapeNode(username)) );
+    pageContext.setAttribute( "usernameUrlEncoded", usernameUrlEncoded );
 %>
 
 <html>
     <head>
         <title><fmt:message key="user.lockout.title"/></title>
         <meta name="subPageID" content="user-lockout"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="username=${usernameUrlEncoded}"/>
     </head>
     <body>
 
@@ -134,7 +149,7 @@
 
 <p>
 <fmt:message key="user.lockout.locked">
-    <fmt:param value="<%= "<b><a href='user-properties.jsp?username="+URLEncoder.encode(username, "UTF-8")+"'>"+StringUtils.escapeHTMLTags(JID.unescapeNode(username))+"</a></b>" %>"/>
+    <fmt:param value="<b><a href=\"user-properties.jsp?username=${usernameUrlEncoded}\">${usernameHtmlEscaped}</a></b>"/>
 </fmt:message>
 <% if (flag.getStartTime() != null) { %><fmt:message key="user.lockout.locked2"><fmt:param value="<%= flag.getStartTime().toString() %>"/></fmt:message> <% } %>
 <% if (flag.getStartTime() != null && flag.getEndTime() != null) { %> <fmt:message key="user.lockout.lockedand" /> <% } %> 
@@ -142,7 +157,8 @@
 </p>
 
 <form action="user-lockout.jsp">
-    <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
+    <input type="hidden" name="username" value="${usernameHtmlEscaped}">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="submit" name="unlock" value="<fmt:message key="user.lockout.unlock" />">
     <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
@@ -155,7 +171,7 @@
 
 <p>
 <fmt:message key="user.lockout.info" />
-<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(username, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(username)) %></a></b>
+<b><a href="user-properties.jsp?username=${usernameUrlEncoded}">${usernameHtmlEscaped}</a></b>
 <fmt:message key="user.lockout.info1" />
 </p>
 
@@ -166,6 +182,7 @@
 </c:if>
 
 <form action="user-lockout.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
     <% if (LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
     <b><fmt:message key="user.lockout.time.startdelay" /></b><br />
     <input type="radio" name="startdelay" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.immediate" /><br />

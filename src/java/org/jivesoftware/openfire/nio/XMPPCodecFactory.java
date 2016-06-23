@@ -39,10 +39,12 @@ public class XMPPCodecFactory implements ProtocolCodecFactory {
         decoder = new XMPPDecoder();
     }
 
+    @Override
     public ProtocolEncoder getEncoder(IoSession session) throws Exception {
         return encoder;
     }
 
+    @Override
     public ProtocolDecoder getDecoder(IoSession session) throws Exception {
         return decoder;
     }

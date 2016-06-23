@@ -15,6 +15,7 @@
 package org.jivesoftware.util;
 
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -31,7 +32,7 @@ public class Blowfish implements Encryptor {
 	private static final Logger Log = LoggerFactory.getLogger(Blowfish.class);
 
     private BlowfishCBC m_bfish;
-    private static Random m_rndGen = new Random();
+    private static Random m_rndGen = new SecureRandom();
     private static final String DEFAULT_KEY = "Blowfish-CBC";
 
     /**
@@ -52,9 +53,7 @@ public class Blowfish implements Encryptor {
     }
 
     /**
-     * Encrypts a string (treated in UNICODE) using the
-     * standard Java random generator, which isn't that
-     * great for creating IVs
+     * Encrypts a string (treated in UNICODE).
      *
      * @param sPlainText string to encrypt
      * @return encrypted string in binhex format

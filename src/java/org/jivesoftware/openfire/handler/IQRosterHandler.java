@@ -22,7 +22,7 @@ package org.jivesoftware.openfire.handler;
 
 import gnu.inet.encoding.IDNAException;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -245,7 +245,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @return An error if the specification is violated or null if everything is fine.
      */
     private static PacketError checkGroups(Iterable<String> groups) {
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         for (String group : groups) {
             if (!set.add(group)) {
                 // Duplicate group found.
@@ -345,8 +345,6 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
     @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("jabber:iq:roster");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:roster").iterator();
     }
 }

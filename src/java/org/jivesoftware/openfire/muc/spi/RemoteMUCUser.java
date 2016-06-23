@@ -50,10 +50,12 @@ public class RemoteMUCUser implements MUCUser {
         this.room = room;
     }
 
+    @Override
     public JID getAddress() {
         return realjid;
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (packet instanceof IQ) {
             throw new UnsupportedOperationException("Cannot process IQ packets of remote users: " + packet);

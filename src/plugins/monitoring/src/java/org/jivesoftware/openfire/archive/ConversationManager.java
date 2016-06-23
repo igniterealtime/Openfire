@@ -79,14 +79,14 @@ import org.xmpp.packet.Message;
  *
  * @author Matt Tucker
  */
-public class ConversationManager implements Startable, ComponentEventListener {
+public class ConversationManager implements Startable, ComponentEventListener{
 
 	private static final Logger Log = LoggerFactory.getLogger(ConversationManager.class);
 
 	private static final String UPDATE_CONVERSATION = "UPDATE ofConversation SET lastActivity=?, messageCount=? WHERE conversationID=?";
 	private static final String UPDATE_PARTICIPANT = "UPDATE ofConParticipant SET leftDate=? WHERE conversationID=? AND bareJID=? AND jidResource=? AND joinedDate=?";
 	private static final String INSERT_MESSAGE = "INSERT INTO ofMessageArchive(messageID, conversationID, fromJID, fromJIDResource, toJID, toJIDResource, sentDate, body, stanza) "
-			+ "VALUES ((SELECT COUNT(*) FROM ofMessageArchive),?,?,?,?,?,?,?,?)";
+			+ "VALUES (?,?,?,?,?,?,?,?,?)";
 	private static final String CONVERSATION_COUNT = "SELECT COUNT(*) FROM ofConversation";
 	private static final String MESSAGE_COUNT = "SELECT COUNT(*) FROM ofMessageArchive";
 	private static final String DELETE_CONVERSATION_1 = "DELETE FROM ofMessageArchive WHERE conversationID=?";
@@ -95,6 +95,7 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 	private static final int DEFAULT_IDLE_TIME = 10;
 	private static final int DEFAULT_MAX_TIME = 60;
+	public static final int DEFAULT_MAX_TIME_DEBUG = 30;
 
 	public static final int DEFAULT_MAX_RETRIEVABLE = 0;
 	private static final int DEFAULT_MAX_AGE = 0;
@@ -191,6 +192,11 @@ public class ConversationManager implements Startable, ComponentEventListener {
 		};
 		taskEngine.scheduleAtFixedRate(archiveTask, JiveConstants.MINUTE, JiveConstants.MINUTE);
 
+		if (JiveGlobals.getProperty("conversation.maxTimeDebug") != null) {
+			Log.info("Monitoring plugin max time value deleted. Must be left over from stalled userCreation plugin run.");
+			JiveGlobals.deleteProperty("conversation.maxTimeDebug");
+		}
+		
 		// Schedule a task to do conversation cleanup.
 		cleanupTask = new TimerTask() {
 			@Override
@@ -980,16 +986,20 @@ public class ConversationManager implements Startable, ComponentEventListener {
 
 					pstmt = con.prepareStatement(INSERT_MESSAGE);
 					ArchivedMessage message;
+					
+					int msgCount = getArchivedMessageCount();
+					
 					int count = 0;
 					while ((message = messageQueue.poll()) != null) {
-						pstmt.setLong(1, message.getConversationID());
-						pstmt.setString(2, message.getFromJID().toBareJID());
-						pstmt.setString(3, message.getFromJID().getResource());
-						pstmt.setString(4, message.getToJID().toBareJID());
-						pstmt.setString(5, message.getToJID().getResource());
-						pstmt.setLong(6, message.getSentDate().getTime());
-						DbConnectionManager.setLargeTextField(pstmt, 7, message.getBody());
-						DbConnectionManager.setLargeTextField(pstmt, 8, message.getStanza());
+						pstmt.setInt(1, ++msgCount);
+						pstmt.setLong(2, message.getConversationID());
+						pstmt.setString(3, message.getFromJID().toBareJID());
+						pstmt.setString(4, message.getFromJID().getResource());
+						pstmt.setString(5, message.getToJID().toBareJID());
+						pstmt.setString(6, message.getToJID().getResource());
+						pstmt.setLong(7, message.getSentDate().getTime());
+						DbConnectionManager.setLargeTextField(pstmt, 8, message.getBody());
+						DbConnectionManager.setLargeTextField(pstmt, 9, message.getStanza());
 						if (DbConnectionManager.isBatchUpdatesSupported()) {
 							pstmt.addBatch();
 						} else {
@@ -1119,8 +1129,17 @@ public class ConversationManager implements Startable, ComponentEventListener {
 					Log.error(e.getMessage(), e);
 					maxAge = DEFAULT_MAX_AGE * JiveConstants.DAY;
 				}
+			} else if (property.equals("conversation.maxTimeDebug")) {
+				String value = (String) params.get("value");
+				try {
+					Log.info("Monitoring plugin max time overridden (as used by userCreation plugin)");
+					maxTime = Integer.parseInt(value);
+				} catch (Exception e) {
+					Log.error(e.getMessage(), e);
+					Log.info("Monitoring plugin max time reset back to " + DEFAULT_MAX_TIME + " minutes");
+					maxTime = DEFAULT_MAX_TIME * JiveConstants.MINUTE;
+				}
 			}
-
 		}
 
 		public void propertyDeleted(String property, Map<String, Object> params) {
@@ -1140,8 +1159,10 @@ public class ConversationManager implements Startable, ComponentEventListener {
 				maxAge = DEFAULT_MAX_AGE * JiveConstants.DAY;
 			} else if (property.equals("conversation.maxRetrievable")) {
 				maxRetrievable = DEFAULT_MAX_RETRIEVABLE * JiveConstants.DAY;
+			}  else if (property.equals("conversation.maxTimeDebug")) {
+				Log.info("Monitoring plugin max time reset back to " + DEFAULT_MAX_TIME + " minutes");
+				maxTime = DEFAULT_MAX_TIME * JiveConstants.MINUTE;
 			}
-
 		}
 
 		public void xmlPropertySet(String property, Map<String, Object> params) {

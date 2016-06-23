@@ -61,31 +61,25 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         this.startDate = startDate;
     }
 
+    @Override
     public Version getVersion() {
         return ver;
     }
 
-    @Deprecated
-    public String getName() {
-        return getXMPPDomain();
-    }
-
-    @Deprecated
-    public void setName(String serverName) {
-        setXMPPDomain(serverName);
-    }
-
+    @Override
     public String getHostname()
 	{
 		return hostname;
 	}
 
-	public String getXMPPDomain()
+	@Override
+    public String getXMPPDomain()
 	{
 		return xmppDomain;
 	}
 
-	public void setXMPPDomain(String domainName)
+	@Override
+    public void setXMPPDomain(String domainName)
 	{
         this.xmppDomain = domainName;
         if (domainName == null) { 
@@ -96,16 +90,18 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
         }
     }
 
+    @Override
     public Date getLastStarted() {
         return startDate;
     }
 
+    @Override
     public Collection<ServerPort> getServerPorts() {
         if (connectionManager == null) {
         	connectionManager = XMPPServer.getInstance().getConnectionManager();
         }
-        return (Collection<ServerPort>) (connectionManager == null ?
-        		Collections.emptyList() :
-        		connectionManager.getPorts());
+        return connectionManager == null ?
+        		Collections.<ServerPort>emptyList() :
+        		connectionManager.getPorts();
     }
 }

@@ -74,12 +74,12 @@ public class PluginServlet extends HttpServlet {
 
 	private static final Logger Log = LoggerFactory.getLogger(PluginServlet.class);
 
-    private static Map<String, GenericServlet> servlets;
+    private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
     static {
-        servlets = new ConcurrentHashMap<String, GenericServlet>();
+        servlets = new ConcurrentHashMap<>();
     }
 	
 	public static final String PLUGINS_WEBROOT = "/plugins/";
@@ -114,6 +114,8 @@ public class PluginServlet extends HttpServlet {
                 else {
                     handleOtherRequest(pathInfo, response);
                 }
+                // Do not allow framing; OF-997
+                response.addHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "deny"));
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
@@ -153,8 +155,8 @@ public class PluginServlet extends HttpServlet {
             }
             Document doc = saxReader.read(webXML);
             // Find all <servlet> entries to discover name to class mapping.
-            List classes = doc.selectNodes("//servlet");
-            Map<String, Class> classMap = new HashMap<String, Class>();
+            List classes = doc.getRootElement().elements("servlet");
+            Map<String, Class> classMap = new HashMap<>();
             for (int i = 0; i < classes.size(); i++) {
                 Element servletElement = (Element)classes.get(i);
                 String name = servletElement.element("servlet-name").getTextTrim();
@@ -162,7 +164,7 @@ public class PluginServlet extends HttpServlet {
                 classMap.put(name, manager.loadClass(plugin, className));
             }
             // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
+            List names = doc.getRootElement().elements("servlet-mapping");
             for (int i = 0; i < names.size(); i++) {
                 Element nameElement = (Element)names.get(i);
                 String name = nameElement.element("servlet-name").getTextTrim();
@@ -177,7 +179,7 @@ public class PluginServlet extends HttpServlet {
                 if (instance instanceof GenericServlet) {
                     // Initialize the servlet then add it to the map..
                     ((GenericServlet)instance).init(servletConfig);
-                    servlets.put(pluginName + url, (GenericServlet)instance);
+                    servlets.put((pluginName + url).toLowerCase(), (GenericServlet)instance);
                 }
                 else {
                     Log.warn("Could not load " + (pluginName + url) + ": not a servlet.");
@@ -209,17 +211,17 @@ public class PluginServlet extends HttpServlet {
             saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
                 false);
             Document doc = saxReader.read(webXML);
-            // Find all <servelt-mapping> entries to discover name to URL mapping.
-            List names = doc.selectNodes("//servlet-mapping");
+            // Find all <servlet-mapping> entries to discover name to URL mapping.
+            List names = doc.getRootElement().elements("servlet-mapping");
             for (int i = 0; i < names.size(); i++) {
                 Element nameElement = (Element)names.get(i);
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
-                GenericServlet servlet = servlets.get(pluginName + url);
+                GenericServlet servlet = servlets.get((pluginName + url).toLowerCase());
                 if (servlet != null) {
                     servlet.destroy();
                 }
-                servlets.remove(pluginName + url);
+                servlets.remove((pluginName + url).toLowerCase());
                 servlet = null;
             }
         }
@@ -249,7 +251,7 @@ public class PluginServlet extends HttpServlet {
 			throw new ServletException("Servlet is missing");
 		}
 		String pluginServletUrl = pluginName + relativeUrl;
-		servlets.put(pluginName + relativeUrl, servlet);
+		servlets.put((pluginName + relativeUrl).toLowerCase(), servlet);
 		return PLUGINS_WEBROOT + pluginServletUrl;
 		
 	}
@@ -269,7 +271,7 @@ public class PluginServlet extends HttpServlet {
 			throw new ServletException("Servlet URL is missing");
 		}
 		String fullUrl = pluginName + url;
-		GenericServlet servlet = servlets.remove(fullUrl);
+		GenericServlet servlet = servlets.remove(fullUrl.toLowerCase());
 		return servlet;
 	}
     
@@ -289,7 +291,7 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
 
-        GenericServlet servlet = servlets.get(jspURL);
+        GenericServlet servlet = servlets.get(jspURL.toLowerCase());
         if (servlet != null) {
             servlet.service(request, response);
         }
@@ -405,34 +407,18 @@ public class PluginServlet extends HttpServlet {
             // response.setHeader("Content-disposition", "filename=\"" + file + "\";");
             response.setContentType(contentType);
             // Write out the resource to the user.
-            InputStream in = null;
-            ServletOutputStream out = null;
-            try {
-                in = new BufferedInputStream(new FileInputStream(file));
-                out = response.getOutputStream();
+            try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+                try (ServletOutputStream out = response.getOutputStream()) {
 
-                // Set the size of the file.
-                response.setContentLength((int)file.length());
+                    // Set the size of the file.
+                    response.setContentLength((int) file.length());
 
-                // Use a 1K buffer.
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) != -1) {
-                    out.write(buf, 0, len);
-                }
-            }
-            finally {
-                try {
-                    in.close();
-                }
-                catch (Exception ignored) {
-                    // Ignore.
-                }
-                try {
-                    out.close();
-                }
-                catch (Exception ignored) {
-                    // Ignore.
+                    // Use a 1K buffer.
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = in.read(buf)) != -1) {
+                        out.write(buf, 0, len);
+                    }
                 }
             }
         }
@@ -506,23 +492,17 @@ public class PluginServlet extends HttpServlet {
             jspc.setCompile(true);
 
             jspc.setClassPath(getClasspathForPlugin(plugin));
+            jspc.execute();
+
             try {
-                jspc.execute();
-
-                try {
-                    Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
-                        relativeDir + filename).newInstance();
-                    HttpServlet servlet = (HttpServlet)servletInstance;
-                    servlet.init(servletConfig);
-                    servlet.service(request, response);
-                    return true;
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-
+                Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
+                    relativeDir + filename).newInstance();
+                HttpServlet servlet = (HttpServlet)servletInstance;
+                servlet.init(servletConfig);
+                servlet.service(request, response);
+                return true;
             }
-            catch (JasperException e) {
+            catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
         }
@@ -547,7 +527,7 @@ public class PluginServlet extends HttpServlet {
         for (URL url : pluginClassloader.getURLs()) {
             File file = new File(url.getFile());
 
-            classpath.append(file.getAbsolutePath()).append(";");
+            classpath.append(file.getAbsolutePath()).append(';');
         }
 
         // Load all jars from lib
@@ -568,7 +548,7 @@ public class PluginServlet extends HttpServlet {
         classpath.append(openfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
 
         if (pluginEnv.getClassesDir() != null) {
-            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
+            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(';');
         }
         return classpath.toString();
     }

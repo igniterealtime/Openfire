@@ -16,7 +16,7 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
  * @author Robin Collier
  * 
  */
-public abstract class NodeChangeTask implements ClusterTask
+public abstract class NodeChangeTask implements ClusterTask<Void>
 {
 	private String nodeId;
 	transient private Node node;
@@ -37,11 +37,13 @@ public abstract class NodeChangeTask implements ClusterTask
 		nodeId = node.getNodeID();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 		ExternalizableUtil.getInstance().writeSafeUTF(out, nodeId);
 	}
 
+	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);

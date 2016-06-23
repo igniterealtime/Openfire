@@ -25,12 +25,13 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <%  webManager.init(request, response, session, application, out); %>
@@ -45,6 +46,19 @@
     String description = ParamUtils.getParameter(request, "description", true);
     
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (create || edit) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            create = false;
+            edit = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a cancel
     if (cancel) {
@@ -187,6 +201,7 @@
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
    <% if (groupName != null) { %>
     <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>" id="existingName">

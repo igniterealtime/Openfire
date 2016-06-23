@@ -29,6 +29,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.AuthorizationManager;
@@ -56,6 +57,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
     public XMPPCallbackHandler() {
     }
 
+    @Override
     public void handle(final Callback[] callbacks)
             throws IOException, UnsupportedCallbackException {
 
@@ -65,11 +67,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
         for (Callback callback : callbacks) {
             if (callback instanceof RealmCallback) {
-                realm = ((RealmCallback) callback).getText();
-                if (realm == null) {
-                    realm = ((RealmCallback) callback).getDefaultText();
-                }
-                //Log.debug("XMPPCallbackHandler: RealmCallback: " + realm);
+                ((RealmCallback) callback).setText( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
             }
             else if (callback instanceof NameCallback) {
                 name = ((NameCallback) callback).getName();
@@ -87,11 +85,8 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
                     //Log.debug("XMPPCallbackHandler: PasswordCallback");
                 }
-                catch (UserNotFoundException e) {
+                catch (UserNotFoundException | UnsupportedOperationException e) {
                     throw new IOException(e.toString());
-                }
-                catch (UnsupportedOperationException uoe) {
-                    throw new IOException(uoe.toString());
                 }
 
             }

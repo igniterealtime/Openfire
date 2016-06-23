@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class PluginFilter implements Filter {
 
-    private static List<SimpleFilter> pluginFilters = new CopyOnWriteArrayList<SimpleFilter>();
+    private static List<SimpleFilter> pluginFilters = new CopyOnWriteArrayList<>();
 
     /**
      * Adds a filter to the list of filters that will be run on every request.
@@ -58,9 +58,11 @@ public class PluginFilter implements Filter {
         pluginFilters.remove(filter);
     }
 
+    @Override
     public void init(FilterConfig filterConfig) throws ServletException {
     }
 
+    @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
             FilterChain filterChain) throws IOException, ServletException
     {
@@ -79,6 +81,7 @@ public class PluginFilter implements Filter {
         }
     }
 
+    @Override
     public void destroy() {
         // If the destroy method is being called, the Openfire instance is being shutdown.
         // Therefore, clear out the list of plugin filters.

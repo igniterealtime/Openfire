@@ -25,8 +25,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.xmpp.packet.*;
 
-import java.io.UnsupportedEncodingException;
-
 /**
  * Handles the routing of packets to a particular session. It will invoke all of the appropriate
  * interceptors, before and after having the server process the message.
@@ -35,7 +33,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class SessionPacketRouter implements PacketRouter {
 
-    private LocalClientSession session;
+    protected LocalClientSession session;
     private PacketRouter router;
     private boolean skipJIDValidation = false;
 
@@ -60,7 +58,7 @@ public class SessionPacketRouter implements PacketRouter {
     }
 
     public void route(Element wrappedElement)
-            throws UnsupportedEncodingException, UnknownStanzaException {
+            throws UnknownStanzaException {
         String tag = wrappedElement.getName();
         if ("auth".equals(tag) || "response".equals(tag)) {
             SASLAuthentication.handle(session, wrappedElement);
@@ -89,6 +87,7 @@ public class SessionPacketRouter implements PacketRouter {
         }
     }
 
+    @Override
     public void route(Packet packet) {
         // Security: Don't allow users to send packets on behalf of other users
         packet.setFrom(session.getAddress());
@@ -103,18 +102,21 @@ public class SessionPacketRouter implements PacketRouter {
         }
     }
 
+    @Override
     public void route(IQ packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
+    @Override
     public void route(Message packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);
         session.incrementClientPacketCount();
     }
 
+    @Override
     public void route(Presence packet) {
         packet.setFrom(session.getAddress());
         router.route(packet);

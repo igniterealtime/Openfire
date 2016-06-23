@@ -15,6 +15,8 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.container.Plugin,
                  org.jivesoftware.openfire.container.PluginManager,
@@ -35,8 +37,8 @@
 <%@ page import="org.apache.commons.fileupload.FileItem" %>
 <%@ page import="org.apache.commons.fileupload.FileUploadException" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -50,12 +52,22 @@
     boolean uploadPlugin = request.getParameter("uploadplugin") != null;
     String url = request.getParameter("url");
     Boolean uploadEnabled = JiveGlobals.getBooleanProperty("plugins.upload.enabled", true);
+    boolean csrf_check = true;
 
     final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
     List<Plugin> plugins = new ArrayList<Plugin>(pluginManager.getPlugins());
 
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        csrf_check = false;
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (plugins != null) {
         Collections.sort(plugins, new Comparator<Plugin>() {
@@ -65,14 +77,14 @@
         });
     }
 
-    if (downloadRequested) {
+    if (csrf_check && downloadRequested) {
         // Download and install new version of plugin
         updateManager.downloadPlugin(url);
         // Log the event
         webManager.logEvent("downloaded plugin from "+url, null);
     }
 
-    if (deletePlugin != null) {
+    if (csrf_check && deletePlugin != null) {
         File pluginDir = pluginManager.getPluginDirectory(pluginManager.getPlugin(deletePlugin));
         File pluginJar = new File(pluginDir.getParent(), pluginDir.getName() + ".jar");
         // Also try the .war extension.
@@ -87,7 +99,7 @@
         return;
     }
 
-    if (reloadPlugin != null) {
+    if (csrf_check && reloadPlugin != null) {
         for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
             if (reloadPlugin.equals(pluginDir.getName())) {
@@ -100,7 +112,7 @@
         }
     }
 
-    if (uploadEnabled && uploadPlugin) {
+    if (csrf_check && uploadEnabled && uploadPlugin) {
         Boolean installed = false;
 
         // Create a factory for disk-based file items
@@ -557,7 +569,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
                 ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
     </td>
     <td width="1%" align="center" valign="top" class="<%= update != null ? "update-right" : "line-bottom-border"%>">
-        <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?deleteplugin=<%= dirName %>'); } "
+        <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?csrf=${csrf}&deleteplugin=<%= dirName %>'); } "
            title="<fmt:message key="global.click_delete" />"
                 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" />"></a>
     </td>
@@ -570,7 +582,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
     String updateURL = update.getURL();
     if (updateURL.endsWith(".jar") || updateURL.endsWith(".zip") || updateURL.endsWith(".war")) {
         // Change it so that the server downloads and installs the new version of the plugin
-        updateURL = "plugin-admin.jsp?download=true&url=" + updateURL;
+        updateURL = "plugin-admin.jsp?csrf=" + csrfParam + "download=true&url=" + updateURL;
     }
 %>
 <tr id="<%= update.hashCode() %>-row">
@@ -632,7 +644,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
 <div>
     <h3><fmt:message key="plugin.admin.upload_plugin" /></h3>
     <p><fmt:message key="plugin.admin.upload_plugin.info" /></p>
-    <form action="plugin-admin.jsp?uploadplugin" enctype="multipart/form-data" method="post">
+    <form action="plugin-admin.jsp?uploadplugin&amp;csrf=${csrf}" enctype="multipart/form-data" method="post">
         <input type="file" name="uploadfile" />
         <input type="submit" value="<fmt:message key="plugin.admin.upload_plugin" />" />
     </form>

@@ -24,14 +24,18 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * A ConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
@@ -43,15 +47,10 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
 
 	private static final Logger Log = LoggerFactory.getLogger(ConnectionHandler.class);
 
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
-     */
-    static final String CHARSET = "UTF-8";
     static final String XML_PARSER = "XML-PARSER";
     protected static final String HANDLER = "HANDLER";
     protected static final String CONNECTION = "CONNECTION";
 
-    protected String serverName;
     private static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
             {
                @Override
@@ -77,14 +76,19 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         }
     }
 
-    protected ConnectionHandler(String serverName) {
-        this.serverName = serverName;
+    /**
+     * The configuration for new connections.
+     */
+    protected final ConnectionConfiguration configuration;
+
+    protected ConnectionHandler( ConnectionConfiguration configuration ) {
+        this.configuration = configuration;
     }
 
     @Override
 	public void sessionOpened(IoSession session) throws Exception {
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        final XMLLightweightParser parser = new XMLLightweightParser(CHARSET);
+        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
         session.setAttribute(XML_PARSER, parser);
         // Create a new NIOConnection for the new session
         final NIOConnection connection = createNIOConnection(session);

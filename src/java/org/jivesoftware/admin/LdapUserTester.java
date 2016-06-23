@@ -20,9 +20,10 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.Base64;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.naming.NamingEnumeration;
@@ -41,6 +42,8 @@ import java.util.*;
  * @author Gaston Dombiak
  */
 public class LdapUserTester {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapUserTester.class);
 
     /**
      * Constants to access user properties
@@ -88,7 +91,7 @@ public class LdapUserTester {
      * @throws NamingException if something goes wrong....
      */
     public List<String> getSample(int maxSample) throws NamingException {
-        List<String> usernames = new ArrayList<String>();
+        List<String> usernames = new ArrayList<>();
         LdapContext ctx = null;
 
         try {
@@ -150,7 +153,7 @@ public class LdapUserTester {
      * @return a list of attributes and their LDAP values found in LDAP for the specified username.
      */
     public Map<String, String> getAttributes(String username) {
-        Map<String, String> userAttributes = new HashMap<String, String>();
+        Map<String, String> userAttributes = new HashMap<>();
         // Un-escape username.
         username = JID.unescapeNode(username);
         DirContext ctx = null;
@@ -158,7 +161,7 @@ public class LdapUserTester {
             String userDN = manager.findUserDN(username);
             // Build list of attributes to load from LDAP
             Map<String, PropertyMapping> ldapMappings = getLdapAttributes();
-            Set<String> fields = new HashSet<String>();
+            Set<String> fields = new HashSet<>();
             for (PropertyMapping mapping : ldapMappings.values()) {
                 fields.addAll(mapping.getFields());
             }
@@ -205,7 +208,7 @@ public class LdapUserTester {
     }
 
     private Map<String, PropertyMapping> getLdapAttributes() {
-        Map<String, PropertyMapping> map = new HashMap<String, PropertyMapping>();
+        Map<String, PropertyMapping> map = new HashMap<>();
 
         if (profile.getName() != null && profile.getName().trim().length() > 0) {
             map.put(NAME, new PropertyMapping(profile.getName()));
@@ -297,7 +300,7 @@ public class LdapUserTester {
         /**
          * LDAP fields that compose the user property
          */
-        private Collection<String> fields = new ArrayList<String>();
+        private Collection<String> fields = new ArrayList<>();
 
 
         public PropertyMapping(String displayFormat) {

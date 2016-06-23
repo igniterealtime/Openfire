@@ -51,23 +51,23 @@ public final class MUCRoomHistory {
     }
 
     public void addMessage(Message packet) {
+    	boolean isSubjectChangeRequest = isSubjectChangeRequest(packet);
+    	JID fromJID = packet.getFrom();
         // Don't keep messages whose sender is the room itself (thus address without resource)
         // unless the message is changing the room's subject
-        if ((packet.getFrom() == null || packet.getFrom().toString().length() == 0 ||
-                packet.getFrom().equals(room.getRole().getRoleAddress())) &&
-                packet.getSubject() == null) {
+        if (!isSubjectChangeRequest &&
+        	(fromJID == null || fromJID.toString().length() == 0 ||
+        	 fromJID.equals(room.getRole().getRoleAddress()))) {
             return;
         }
-        // Do not store messages is strategy is none and message is not changing the room subject
-        if (!historyStrategy.isHistoryEnabled()) {
-            if (packet.getSubject() == null || packet.getSubject().trim().length() == 0) {
-                return;
-            }
+        // Do not store regular messages if there is no message strategy (keep subject change requests)
+        if (!isSubjectChangeRequest && !historyStrategy.isHistoryEnabled()) {
+            return;
         }
 
-        // Ignore messages with no subject AND no body
-        if ((packet.getSubject() == null || "".equals(packet.getSubject().trim())) &&
-                (packet.getBody() == null || "".equals(packet.getBody().trim()))) {
+        // Ignore empty messages (no subject AND no body)
+        if (!isSubjectChangeRequest &&
+            (packet.getBody() == null || packet.getBody().trim().length() == 0)) {
             return;
         }
 
@@ -80,7 +80,7 @@ public final class MUCRoomHistory {
             // TODO Make this update in a separate thread
             for (Iterator<Message> it = getMessageHistory(); it.hasNext();) {
                 Message message = it.next();
-                Element delayElement = message.getChildElement("x", "jabber:x:delay");
+                Element delayElement = message.getChildElement("delay", "urn:xmpp:delay");
                 if (room.canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute
                     try {
@@ -101,16 +101,13 @@ public final class MUCRoomHistory {
 
         // Add the delay information to the message
         Element delayInformation = packetToAdd.addChildElement("delay", "urn:xmpp:delay");
-        Element delayInformationOld = packetToAdd.addChildElement("x", "jabber:x:delay");
         Date current = new Date();
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(current));
-        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(current));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             try {
                 MUCRole role = room.getOccupant(packet.getFrom().getResource());
                 delayInformation.addAttribute("from", role.getUserAddress().toString());
-                delayInformationOld.addAttribute("from", role.getUserAddress().toString());
             }
             catch (UserNotFoundException e) {
                 // Ignore.
@@ -119,7 +116,6 @@ public final class MUCRoomHistory {
         else {
             // Set the Room JID as the "from" attribute
             delayInformation.addAttribute("from", packet.getFrom().toString());
-            delayInformationOld.addAttribute("from", packet.getFrom().toString());
         }
         historyStrategy.addMessage(packetToAdd);
     }
@@ -170,18 +166,14 @@ public final class MUCRoomHistory {
 
         // Add the delay information to the message
         Element delayInformation = message.addChildElement("delay", "urn:xmpp:delay");
-        Element delayInformationOld = message.addChildElement("x", "jabber:x:delay");
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(sentDate));
-        delayInformationOld.addAttribute("stamp", XMPPDateTimeFormat.formatOld(sentDate));
         if (room.canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             delayInformation.addAttribute("from", senderJID);
-            delayInformationOld.addAttribute("from", senderJID);
         }
         else {
             // Set the Room JID as the "from" attribute
             delayInformation.addAttribute("from", room.getRole().getRoleAddress().toString());
-            delayInformationOld.addAttribute("from", room.getRole().getRoleAddress().toString());
         }
         historyStrategy.addMessage(message);
     }
@@ -205,5 +197,14 @@ public final class MUCRoomHistory {
      */
     public Message getChangedSubject() {
         return historyStrategy.getChangedSubject();
+    }
+
+    /**
+     * Returns true if the given message qualifies as a subject change request, per XEP-0045.
+     * 
+     * @return true if the given packet is a subject change request
+     */
+    public boolean isSubjectChangeRequest(Message message) {
+        return historyStrategy.isSubjectChangeRequest(message);
     }
 }

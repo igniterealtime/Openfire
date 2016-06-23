@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Daniel Henninger
  */
-public class ServiceUpdatedEvent implements ClusterTask {
+public class ServiceUpdatedEvent implements ClusterTask<Void> {
 	
 	private static final Logger Log = LoggerFactory.getLogger(ServiceUpdatedEvent.class);
 
@@ -53,10 +53,12 @@ public class ServiceUpdatedEvent implements ClusterTask {
         this.subdomain = subdomain;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
         if (service != null) {
@@ -74,10 +76,12 @@ public class ServiceUpdatedEvent implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

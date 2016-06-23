@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.clearspace.ClearspaceManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
@@ -84,6 +83,7 @@ public class GroupManager {
         initProvider();
 
         GroupEventDispatcher.addListener(new GroupEventListener() {
+            @Override
             public void groupCreated(Group group, Map params) {
 
                 // Adds default properties if they don't exists, since the creator of
@@ -110,6 +110,7 @@ public class GroupManager {
                 evictCachedPaginatedGroupNames();
             }
 
+            @Override
             public void groupDeleting(Group group, Map params) {
                 // Since the group could be deleted by the provider, remove it possible again
                 groupCache.remove(group.getName());
@@ -127,6 +128,7 @@ public class GroupManager {
                 evictCachedPaginatedGroupNames();
             }
 
+            @Override
             public void groupModified(Group group, Map params) {
                 String type = (String)params.get("type");
                 // If shared group settings changed, expire the cache.
@@ -164,6 +166,7 @@ public class GroupManager {
                 groupCache.put(group.getName(), group);
             }
 
+            @Override
             public void memberAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -176,6 +179,7 @@ public class GroupManager {
                 }
             }
 
+            @Override
             public void memberRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -188,6 +192,7 @@ public class GroupManager {
                 }
             }
 
+            @Override
             public void adminAdded(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -200,6 +205,7 @@ public class GroupManager {
                 }
             }
 
+            @Override
             public void adminRemoved(Group group, Map params) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object
@@ -215,14 +221,17 @@ public class GroupManager {
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {
+            @Override
             public void userCreated(User user, Map<String, Object> params) {
                 // ignore
             }
 
+            @Override
             public void userDeleting(User user, Map<String, Object> params) {
                 deleteUser(user);
             }
 
+            @Override
             public void userModified(User user, Map<String, Object> params) {
                 // ignore
             }
@@ -230,20 +239,24 @@ public class GroupManager {
 
         // Detect when a new auth provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.group.className".equals(property)) {
                     initProvider();
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -300,7 +313,7 @@ public class GroupManager {
     /**
      * Returns the corresponding group if the given JID represents a group. 
      *
-     * @param groupJID The JID for the group to retrieve
+     * @param jid The JID for the group to retrieve
      * @return The group corresponding to the JID, or null if the JID does not represent a group
      * @throws GroupNotFoundException if the JID represents a group that does not exist
      */
@@ -597,16 +610,6 @@ public class GroupManager {
         return provider.isReadOnly();
     }
 
-    /**
-     * Returns true if properties of groups are read only.
-     * They are read only if Clearspace is the group provider.
-     *
-     * @return true if properties of groups are read only.
-     */
-    public boolean isPropertyReadOnly() {
-        return ClearspaceManager.isEnabled();
-    }
-    
     /**
      * Returns true if searching for groups is supported.
      *

@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.http;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -34,6 +35,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -69,7 +71,7 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<XMPPPacketReader>();
+    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
 
     public HttpBindServlet() {
     }
@@ -218,11 +220,8 @@ public class HttpBindServlet extends HttpServlet {
                 Log.info(new Date() + ": HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + rootNode.asXML());
             }
         }
-        catch (UnauthorizedException e) {
+        catch (UnauthorizedException | HttpBindException e) {
             // Server wasn't initialized yet.
-            sendLegacyError(context, BoshBindingError.internalServerError, "Server has not finished initialization." );
-        }
-        catch (HttpBindException e) {
             sendLegacyError(context, BoshBindingError.internalServerError, "Server has not finished initialization." );
         }
     }
@@ -295,13 +294,14 @@ public class HttpBindServlet extends HttpServlet {
             System.out.println(new Date() + ": HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
-        final byte[] byteContent = content.getBytes("UTF-8");
+        final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
+        // BOSH communication should not use Chunked encoding.
+        // This is prevented by explicitly setting the Content-Length header.
+        response.setContentLength(byteContent.length);
+
         if (async) {
             response.getOutputStream().setWriteListener(new WriteListenerImpl(context, byteContent));
         } else {
-            // BOSH communication should not use Chunked encoding.
-            // This is prevented by explicitly setting the Content-Length header.
-            context.getResponse().setContentLength(byteContent.length);
             context.getResponse().getOutputStream().write(byteContent);
             context.getResponse().getOutputStream().flush();
             context.complete();
@@ -349,8 +349,7 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     protected static String createErrorBody(String type, String condition) {
-        final Element body = DocumentHelper.createElement("body");
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         body.addAttribute("type", type);
         body.addAttribute("condition", condition);
         return body.asXML();
@@ -397,7 +396,7 @@ public class HttpBindServlet extends HttpServlet {
     class ReadListenerImpl implements ReadListener {
 
         private final AsyncContext context;
-        private final StringBuilder buffer = new StringBuilder(512);
+        private final ByteArrayOutputStream outStream = new ByteArrayOutputStream(1024);
         private final String remoteAddress;
 
         ReadListenerImpl(AsyncContext context) {
@@ -414,14 +413,14 @@ public class HttpBindServlet extends HttpServlet {
             byte b[] = new byte[1024];
             int length;
             while (inputStream.isReady() && (length = inputStream.read(b)) != -1) {
-                buffer.append(new String(b, 0, length));
+                outStream.write(b, 0, length);
             }
         }
 
         @Override
         public void onAllDataRead() throws IOException {
             Log.trace("All data has been read from [" + remoteAddress + "]");
-            processContent(context, buffer.toString());
+            processContent(context, outStream.toString(StandardCharsets.UTF_8.name()));
         }
 
         @Override
@@ -435,11 +434,12 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    static class WriteListenerImpl implements WriteListener {
+    private static class WriteListenerImpl implements WriteListener {
 
         private final AsyncContext context;
         private final byte[] data;
         private final String remoteAddress;
+        private volatile boolean written;
 
         public WriteListenerImpl(AsyncContext context, byte[] data) {
             this.context = context;
@@ -449,14 +449,22 @@ public class HttpBindServlet extends HttpServlet {
 
         @Override
         public void onWritePossible() throws IOException {
+            // This method may be invoked multiple times and by different threads, e.g. when writing large byte arrays.
             Log.trace("Data can be written to [" + remoteAddress + "]");
-
-            // BOSH communication should not use Chunked encoding.
-            // This is prevented by explicitly setting the Content-Length header.
-            context.getResponse().setContentLength(data.length);
-
-            context.getResponse().getOutputStream().write(data);
-            context.complete();
+            ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
+            while (servletOutputStream.isReady()) {
+                // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
+                // Otherwise WritePendingException is thrown.
+                if (!written) {
+                    written = true;
+                    servletOutputStream.write(data);
+                    // After this write isReady() may return false, indicating the write is not finished.
+                    // In this case onWritePossible() is invoked again as soon as the isReady() == true again,
+                    // in which case we would only complete the request.
+                } else {
+                    context.complete();
+                }
+            }
         }
 
         @Override

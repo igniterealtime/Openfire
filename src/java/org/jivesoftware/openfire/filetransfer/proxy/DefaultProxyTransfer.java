@@ -57,59 +57,73 @@ public class DefaultProxyTransfer implements ProxyTransfer {
     public DefaultProxyTransfer() { }
 
 
+    @Override
     public String getInitiator() {
         return initiator;
     }
 
+    @Override
     public void setInitiator(String initiator) {
         this.initiator = initiator;
     }
 
+    @Override
     public InputStream getInputStream() {
         return inputStream;
     }
 
+    @Override
     public void setInputStream(InputStream initiatorInputStream) {
         this.inputStream = initiatorInputStream;
     }
 
+    @Override
     public OutputStream getOutputStream() {
         return outputStream;
     }
 
+    @Override
     public void setOutputStream(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
+    @Override
     public String getTarget() {
         return target;
     }
 
+    @Override
     public void setTarget(String target) {
         this.target = target;
     }
 
+    @Override
     public String getTransferDigest() {
         return transferDigest;
     }
 
+    @Override
     public void setTransferDigest(String transferDigest) {
         this.transferDigest = transferDigest;
     }
 
+    @Override
     public String getSessionID() {
         return streamID;
     }
 
+    @Override
     public void setSessionID(String streamID) {
         this.streamID = streamID;
     }
 
 
+    @Override
     public boolean isActivatable() {
         return ((inputStream != null) && (outputStream != null));
     }
 
+    @Override
     public synchronized void setTransferFuture(Future<?> future) {
         if(this.future != null) {
             throw new IllegalStateException("Transfer is already in progress, or has completed.");
@@ -117,55 +131,38 @@ public class DefaultProxyTransfer implements ProxyTransfer {
         this.future = future;
     }
 
+    @Override
     public long getAmountTransferred() {
         return amountWritten;
     }
 
+    @Override
     public void doTransfer() throws IOException {
         if (!isActivatable()) {
             throw new IOException("Transfer missing party");
         }
-        InputStream in = null;
-        OutputStream out = null;
 
-        try {
-            in = getInputStream();
-            out = new ProxyOutputStream(getOutputStream());
+        try (InputStream in = getInputStream()) {
+            try (OutputStream out = new ProxyOutputStream(getOutputStream())) {
 
-            final byte[] b = new byte[BUFFER_SIZE];
-            int count = 0;
-            amountWritten = 0;
+                final byte[] b = new byte[BUFFER_SIZE];
+                int count = 0;
+                amountWritten = 0;
 
-            do {
-                // write to the output stream
-                out.write(b, 0, count);
+                do {
+                    // write to the output stream
+                    out.write(b, 0, count);
 
-                amountWritten += count;
+                    amountWritten += count;
 
-                // read more bytes from the input stream
-                count = in.read(b);
-            } while (count >= 0);
-        }
-        finally {
-            if (in != null) {
-                try {
-                    in.close();
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
+                    // read more bytes from the input stream
+                    count = in.read(b);
+                } while (count >= 0);
             }
         }
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.

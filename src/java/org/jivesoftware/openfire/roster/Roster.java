@@ -78,12 +78,12 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Roster item cache - table: key jabberid string; value roster item.
      */
-    protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<String, RosterItem>();
+    protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<>();
     /**
      * Contacts with subscription FROM that only exist due to shared groups
      * key: jabberid string; value: groups why the implicit roster item exists (aka invisibleSharedGroups).
      */
-    protected ConcurrentHashMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<String, Set<String>>();
+    protected ConcurrentHashMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<>();
 
     private RosterItemProvider rosterItemProvider;
     private String username;
@@ -150,7 +150,7 @@ public class Roster implements Cacheable, Externalizable {
             JID jid = entry.getKey();
             List<Group> groups = entry.getValue();
             try {
-                Collection<Group> itemGroups = new ArrayList<Group>();
+                Collection<Group> itemGroups = new ArrayList<>();
                 String nickname = "";
                 RosterItem item = new RosterItem(jid, RosterItem.SUB_TO, RosterItem.ASK_NONE,
                         RosterItem.RECV_NONE, nickname, null);
@@ -159,8 +159,6 @@ public class Roster implements Cacheable, Externalizable {
                     if (group.isUser(jid)) {
                         item.addSharedGroup(group);
                         itemGroups.add(group);
-                        item.setNickname(UserNameManager.getUserName(jid));
-                        broadcast(item, true);
                     } else {
                         item.addInvisibleSharedGroup(group);
                     }
@@ -310,7 +308,7 @@ public class Roster implements Cacheable, Externalizable {
      */
     public void createRosterItem(org.xmpp.packet.Roster.Item item)
             throws UserAlreadyExistsException, SharedGroupException {
-        provideRosterItem(item.getJID(), item.getName(), new ArrayList<String>(item.getGroups()), true, true);
+        provideRosterItem(item.getJID(), item.getName(), new ArrayList<>(item.getGroups()), true, true);
     }
 
     /**
@@ -422,7 +420,7 @@ public class Roster implements Cacheable, Externalizable {
         // broadcast roster update
         // Do not push items with a state of "None + Pending In"
         if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
             broadcast(item, true);
         }
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
@@ -430,6 +428,18 @@ public class Roster implements Cacheable, Externalizable {
         }*/
         // Fire event indicating that a roster item has been updated
         RosterEventDispatcher.contactUpdated(this, item);
+    }
+
+    /**
+     * Returns true if roster item represents a rejected subscription request.
+     *
+     * @param item The roster item.
+     * @return True, if the roster item represents a rejected subscription request.
+     */
+    private static boolean isSubscriptionRejected(RosterItem item) {
+        return item.getSubStatus() == RosterItem.SUB_NONE &&
+                item.getRecvStatus() == RosterItem.RECV_NONE &&
+                item.getAskStatus() == RosterItem.AskType.NONE;
     }
 
     /**
@@ -538,7 +548,7 @@ public class Roster implements Cacheable, Externalizable {
             org.xmpp.packet.Roster.Subscription sub = org.xmpp.packet.Roster.Subscription.valueOf(item.getSubStatus()
                     .getName());
             // Set the groups to broadcast (include personal and shared groups)
-            List<String> groups = new ArrayList<String>(item.getGroups());
+            List<String> groups = new ArrayList<>(item.getGroups());
             if (groups.contains(null)) {
                 Log.warn("A group is null in roster item: " + item.getJid() + " of user: " +
                         getUsername());
@@ -555,7 +565,7 @@ public class Roster implements Cacheable, Externalizable {
             }
             // Do not push items with a state of "None + Pending In"
             if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
             }
         }
@@ -563,10 +573,10 @@ public class Roster implements Cacheable, Externalizable {
     }
 
     private org.xmpp.packet.Roster.Ask getAskStatus(RosterItem.AskType askType) {
-        if (askType == null || "".equals(askType.getName())) {
+        if (askType == null || askType == RosterItem.AskType.NONE) {
             return null;
         }
-        return org.xmpp.packet.Roster.Ask.valueOf(askType.getName());
+        return org.xmpp.packet.Roster.Ask.valueOf(askType.name().toLowerCase());
     }
 
     /**
@@ -653,7 +663,7 @@ public class Roster implements Cacheable, Externalizable {
     private Map<JID, List<Group>> getSharedUsers(Collection<Group> sharedGroups) {
         // Get the users to process from the shared groups. Users that belong to different groups
         // will have one entry in the map associated with all the groups
-        Map<JID, List<Group>> sharedGroupUsers = new HashMap<JID, List<Group>>();
+        Map<JID, List<Group>> sharedGroupUsers = new HashMap<>();
         for (Group group : sharedGroups) {
             // Get all the users that should be in this roster
             Collection<JID> users = rosterManager.getSharedUsersForRoster(group, this);
@@ -666,7 +676,7 @@ public class Roster implements Cacheable, Externalizable {
                 if (!isRosterItem && !userJID.equals(jid)) {
                     List<Group> groups = sharedGroupUsers.get(jid);
                     if (groups == null) {
-                        groups = new ArrayList<Group>();
+                        groups = new ArrayList<>();
                         sharedGroupUsers.put(jid, groups);
                     }
                     groups.add(group);
@@ -701,7 +711,7 @@ public class Roster implements Cacheable, Externalizable {
             return;
         }
         // Set the groups to broadcast (include personal and shared groups)
-        List<String> groups = new ArrayList<String>(item.getGroups());
+        List<String> groups = new ArrayList<>(item.getGroups());
         for (Group sharedGroup : item.getSharedGroups()) {
             String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
             if (displayName != null) {
@@ -727,6 +737,7 @@ public class Roster implements Cacheable, Externalizable {
         }
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of the content of each field, if that content is likely to be eligable for
@@ -792,7 +803,7 @@ public class Roster implements Cacheable, Externalizable {
 
         // Update the subscription of the item **based on the item groups**
         Collection<Group> userGroups = GroupManager.getInstance().getGroups(getUserJID());
-        Collection<Group> sharedGroups = new ArrayList<Group>();
+        Collection<Group> sharedGroups = new ArrayList<>();
         sharedGroups.addAll(item.getSharedGroups());
         // Add the new group to the list of groups to check
         sharedGroups.add(group);
@@ -1000,7 +1011,7 @@ public class Roster implements Cacheable, Externalizable {
                 if (item.isOnlyShared()) {
                     Collection<Group> userGroups =
                             GroupManager.getInstance().getGroups(getUserJID());
-                    Collection<Group> sharedGroups = new ArrayList<Group>();
+                    Collection<Group> sharedGroups = new ArrayList<>();
                     sharedGroups.addAll(item.getSharedGroups());
                     // Set subscription type to BOTH if the roster user belongs to a shared group
                     // that is mutually visible with a shared group of the new roster item
@@ -1013,6 +1024,11 @@ public class Roster implements Cacheable, Externalizable {
                     } else {
                         item.setSubStatus(RosterItem.SUB_TO);
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);                	
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
@@ -1074,6 +1090,11 @@ public class Roster implements Cacheable, Externalizable {
                             }
                         }
                     }
+                    // Fire event indicating that a roster item has been updated
+                    RosterEventDispatcher.contactUpdated(this, item);
+                } else {
+                    // Fire event indicating that a roster item has been removed
+                    RosterEventDispatcher.contactDeleted(this, item);
                 }
                 // Brodcast to all the user resources of the updated roster item
                 broadcast(item, false);
@@ -1113,12 +1134,14 @@ public class Roster implements Cacheable, Externalizable {
         return XMPPServer.getInstance().createJID(getUsername(), null, true);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, username);
         ExternalizableUtil.getInstance().writeExternalizableMap(out, rosterItems);
         ExternalizableUtil.getInstance().writeStringsMap(out, implicitFrom);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         presenceManager = XMPPServer.getInstance().getPresenceManager();
         rosterManager = XMPPServer.getInstance().getRosterManager();

@@ -20,6 +20,7 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.session.IoSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
@@ -34,18 +35,18 @@ import org.jivesoftware.openfire.net.StanzaHandler;
  */
 public class MultiplexerConnectionHandler extends ConnectionHandler {
 
-    public MultiplexerConnectionHandler(String serverName) {
-        super(serverName);
+    public MultiplexerConnectionHandler(ConnectionConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
 	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, new MultiplexerPacketDeliverer());
+        return new NIOConnection(session, new MultiplexerPacketDeliverer(), configuration );
     }
 
     @Override
 	StanzaHandler createStanzaHandler(NIOConnection connection) {
-        return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
+        return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override

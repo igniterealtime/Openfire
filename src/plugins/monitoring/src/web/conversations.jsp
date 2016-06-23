@@ -10,8 +10,8 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     // Get handle on the Monitoring plugin
@@ -131,7 +131,7 @@ function updateConversations(data) {
 <!-- <a href="#" onclick="conversationUpdater(); return false;">click me</a> -->
 <p>
     <fmt:message key="archive.conversations" />
-    <span id="activeConversations"><%= conversationManager.getConversationCount() %></span
+    <span id="activeConversations"><%= conversationManager.getConversationCount() %></span>
 </p>
 
 <%
@@ -169,15 +169,16 @@ function updateConversations(data) {
             <% if (conversation.getRoom() == null) { %>
                 <% for (JID jid : participants) { %>
                     <% if (server.isLocal(jid) && userManager.isRegisteredUser(jid.getNode())) { %>
-                        <a href="/user-properties.jsp?username=<%= jid.getNode() %>"><%= jid %></a><br />
+                        <a title='User Link' href="/user-properties.jsp?username=<%= jid.getNode() %>"><%= StringUtils.escapeHTMLTags(jid.toBareJID()) %></a><br />
                     <% } else { %>
-                        <%= jid.toBareJID() %><br/>
+                        <%= StringUtils.escapeHTMLTags(jid.toBareJID()) %><br/>
                     <% } %>
                 <% } %>
-            <% } else { %>
+            <% } else {
+                pageContext.setAttribute( "roomBareJID", URLEncoder.encode(conversation.getRoom().toBareJID(), "UTF-8") ); %>
                 <fmt:message key="archive.group_conversation">
-                    <fmt:param value="<%= "<a href='../../muc-room-occupants.jsp?roomJID=" + URLEncoder.encode(conversation.getRoom().toBareJID(), "UTF-8") + "'>" %>" />
-                    <fmt:param value="<%= "</a>" %>" />
+                    <fmt:param value="<a href=\"../../muc-room-occupants.jsp?roomJID=${roomBareJID}\">" />
+                    <fmt:param value="</a>" />
                 </fmt:message>
             <% } %>
         </td>

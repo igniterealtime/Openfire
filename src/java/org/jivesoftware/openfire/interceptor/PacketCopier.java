@@ -62,7 +62,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     private final static PacketCopier instance = new PacketCopier();
 
 
-    private Map<String, Subscription> subscribers = new ConcurrentHashMap<String, Subscription>();
+    private Map<String, Subscription> subscribers = new ConcurrentHashMap<>();
     private String serverName;
     private RoutingTable routingTable;
 
@@ -74,7 +74,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private BlockingQueue<InterceptedPacket> packetQueue = new LinkedBlockingQueue<InterceptedPacket>(10000);
+    private BlockingQueue<InterceptedPacket> packetQueue = new LinkedBlockingQueue<>(10000);
 
     /**
      * Returns unique instance of this class.
@@ -127,6 +127,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         subscribers.remove(componentJID.toString());
     }
 
+    @Override
     public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed)
             throws PacketRejectedException {
         // Queue intercepted packet only if there are subscribers interested
@@ -151,21 +152,24 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         }
     }
 
+    @Override
     public void componentInfoReceived(IQ iq) {
         //Ignore
     }
 
+    @Override
     public void componentRegistered(JID componentJID) {
         //Ignore
     }
 
+    @Override
     public void componentUnregistered(JID componentJID) {
         //Remove component from the list of subscribers (if subscribed)
         removeSubscriber(componentJID);
     }
 
     private void processPackets() {
-        List<InterceptedPacket> packets = new ArrayList<InterceptedPacket>(packetQueue.size());
+        List<InterceptedPacket> packets = new ArrayList<>(packetQueue.size());
         packetQueue.drainTo(packets);
         for (InterceptedPacket interceptedPacket : packets) {
             for (Map.Entry<String, Subscription> entry : subscribers.entrySet()) {
@@ -196,7 +200,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                                 "http://jabber.org/protocol/packet#event");
                         childElement.addAttribute("incoming", subscription.isIncoming() ? "true" : "false");
                         childElement.addAttribute("processed", subscription.isProcessed() ? "true" : "false");
-                        childElement.addAttribute("date", XMPPDateTimeFormat.formatOld(interceptedPacket.getCreationDate()));
+                        childElement.addAttribute("date", XMPPDateTimeFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
                         routingTable.routePacket(message.getTo(), message, true);

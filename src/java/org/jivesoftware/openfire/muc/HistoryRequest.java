@@ -155,7 +155,7 @@ public class HistoryRequest {
             int accumulatedChars = 0;
             int accumulatedStanzas = 0;
             Element delayInformation;
-            LinkedList<Message> historyToSend = new LinkedList<Message>();
+            LinkedList<Message> historyToSend = new LinkedList<>();
             ListIterator<Message> iterator = roomHistory.getReverseMessageHistory();
             while (iterator.hasPrevious()) {
                 Message message = iterator.previous();
@@ -178,7 +178,7 @@ public class HistoryRequest {
                 }
 
                 if (getSeconds() > -1 || getSince() != null) {
-                    delayInformation = message.getChildElement("x", "jabber:x:delay");
+                    delayInformation = message.getChildElement("delay", "urn:xmpp:delay");
                     try {
                         // Get the date when the historic message was sent
                         Date delayedDate = xmppDateTime.parseString(delayInformation.attributeValue("stamp"));

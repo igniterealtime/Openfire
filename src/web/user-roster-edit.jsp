@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
@@ -29,8 +30,8 @@
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="java.util.Collection" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -54,6 +55,17 @@
 
     // Load the roster item from the user's roster.
     RosterItem item = roster.getRosterItem(new JID(jid));
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a roster item delete:
     if (save) {
@@ -91,6 +103,7 @@
 </p>
 
 <form action="user-roster-edit.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
@@ -115,7 +128,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="nickname"
-                 value="<%= StringUtils.escapeForXML(item.getNickname()) %>">
+                 value="<%= item.getNickname() == null || item.getNickname().isEmpty() ? "" : StringUtils.escapeForXML(item.getNickname()) %>">
             </td>
         </tr>
         <tr>

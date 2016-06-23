@@ -52,7 +52,7 @@ class LocalRoutingTable {
 	
 	private static final Logger Log = LoggerFactory.getLogger(LocalRoutingTable.class);
 
-    Map<String, RoutableChannelHandler> routes = new ConcurrentHashMap<String, RoutableChannelHandler>();
+    Map<String, RoutableChannelHandler> routes = new ConcurrentHashMap<>();
 
     /**
      * Adds a route of a local {@link RoutableChannelHandler}
@@ -81,7 +81,7 @@ class LocalRoutingTable {
      * @return the client sessions that are connected to this JVM.
      */
     Collection<LocalClientSession> getClientRoutes() {
-        List<LocalClientSession> sessions = new ArrayList<LocalClientSession>();
+        List<LocalClientSession> sessions = new ArrayList<>();
         for (RoutableChannelHandler route : routes.values()) {
             if (route instanceof LocalClientSession) {
                 sessions.add((LocalClientSession) route);
@@ -96,7 +96,7 @@ class LocalRoutingTable {
      * @return the outgoing server sessions that are connected to this JVM.
      */
     Collection<LocalOutgoingServerSession> getServerRoutes() {
-        List<LocalOutgoingServerSession> sessions = new ArrayList<LocalOutgoingServerSession>();
+        List<LocalOutgoingServerSession> sessions = new ArrayList<>();
         for (RoutableChannelHandler route : routes.values()) {
             if (route instanceof LocalOutgoingServerSession) {
                 sessions.add((LocalOutgoingServerSession) route);
@@ -111,7 +111,7 @@ class LocalRoutingTable {
      * @return the external component sessions that are connected to this JVM.
      */
     Collection<RoutableChannelHandler> getComponentRoute() {
-        List<RoutableChannelHandler> sessions = new ArrayList<RoutableChannelHandler>();
+        List<RoutableChannelHandler> sessions = new ArrayList<>();
         for (RoutableChannelHandler route : routes.values()) {
             if (!(route instanceof LocalOutgoingServerSession || route instanceof LocalClientSession)) {
                 sessions.add(route);

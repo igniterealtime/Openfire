@@ -23,6 +23,7 @@ import org.apache.mina.core.session.IoSession;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ComponentStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 
 /**
@@ -32,18 +33,19 @@ import org.jivesoftware.util.JiveGlobals;
  * @author Gaston Dombiak
  */
 public class ComponentConnectionHandler extends ConnectionHandler {
-    public ComponentConnectionHandler(String serverName) {
-        super(serverName);
+
+    public ComponentConnectionHandler(ConnectionConfiguration configuration) {
+        super(configuration);
     }
 
     @Override
 	NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer());
+        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer(), configuration );
     }
 
     @Override
 	StanzaHandler createStanzaHandler(NIOConnection connection) {
-        return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), serverName, connection);
+        return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override

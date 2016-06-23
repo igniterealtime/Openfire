@@ -23,6 +23,7 @@ package org.jivesoftware.openfire.auth;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +63,11 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
 	private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
 
     private Vector<String> approvedRealms;
+    private boolean proxyAuth;
 
     public DefaultAuthorizationPolicy() {
-        approvedRealms = new Vector<String>();
+        approvedRealms = new Vector<>();
+        proxyAuth = false;
         
         String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {
@@ -73,6 +76,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
                 approvedRealms.add(st.nextToken());
             }
         }
+        proxyAuth = JiveGlobals.getBooleanProperty("sasl.proxyAuth", false);
     }
 
     /**
@@ -82,6 +86,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      * @param authenID The authenticated ID (principal) requesting the username.
      * @return true if the authenticated ID is authorized to the requested user.
      */
+    @Override
     public boolean authorize(String username, String authenID) {
         boolean authorized = false;
 
@@ -100,18 +105,20 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             authenRealm = authenID.substring((authenID.lastIndexOf("@")+1));
         }
 
-        if(!userUser.equals(authenUser)) {
-            //for this policy the user portion of both must match, so lets short circut here if we can
-            if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
-                if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+        if (!proxyAuth || !AdminManager.getInstance().isUserAdmin(authenUser, true)) {
+            if(!userUser.equals(authenUser)) {
+                //for this policy the user portion of both must match, so lets short circut here if we can
+                if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
+                    if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
+                        if (Log.isDebugEnabled()) {
+                            Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+                        }
+                        return false;
                     }
+                } else {
+                    Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
                     return false;
                 }
-            } else {
-                Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
-                return false;
             }
         }
         Log.debug("DefaultAuthorizationPolicy: Checking authenID realm");
@@ -175,6 +182,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "Default Policy";
     }
@@ -184,6 +192,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Different clients perform authentication differently, so this policy "+ 
                "will authorize any principal to a requested user that match specific "+

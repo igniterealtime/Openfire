@@ -71,7 +71,7 @@ import org.xmpp.packet.Presence;
  */
 public class LocalMUCUser implements MUCUser {
 
-	private static final Logger Log = LoggerFactory.getLogger(LocalMUCUser.class);
+    private static final Logger Log = LoggerFactory.getLogger(LocalMUCUser.class);
 
     /** The chat server this user belongs to. */
     private MultiUserChatService server;
@@ -80,7 +80,7 @@ public class LocalMUCUser implements MUCUser {
     private JID realjid;
 
     /** Table: key roomName.toLowerCase(); value LocalMUCRole. */
-    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<String, LocalMUCRole>();
+    private Map<String, LocalMUCRole> roles = new ConcurrentHashMap<>();
 
     /** Deliver packets to users. */
     private PacketRouter router;
@@ -182,10 +182,12 @@ public class LocalMUCUser implements MUCUser {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress() {
         return realjid;
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         if (packet instanceof IQ) {
             process((IQ)packet);
@@ -269,9 +271,7 @@ public class LocalMUCUser implements MUCUser {
                 }
                 else {
                     try {
-                        if (packet.getSubject() != null && packet.getSubject().trim().length() > 0 &&
-                                Message.Type.groupchat == packet.getType() &&
-                                (packet.getBody() == null || packet.getBody().trim().length() == 0)) {
+                        if (role.getChatRoom().getRoomHistory().isSubjectChangeRequest(packet)) {
                             // An occupant is trying to change the room's subject
                             role.getChatRoom().changeSubject(packet, role);
 
@@ -309,7 +309,7 @@ public class LocalMUCUser implements MUCUser {
                                     // message invitation. These extensions will be sent to the
                                     // invitees.
                                     @SuppressWarnings("unchecked")
-                                    List<Element> extensions = new ArrayList<Element>(packet
+                                    List<Element> extensions = new ArrayList<>(packet
                                             .getElement().elements());
                                     extensions.remove(userInfo);
                                     
@@ -394,7 +394,7 @@ public class LocalMUCUser implements MUCUser {
                         // User is sending an IQ result packet to another room occupant
                         role.getChatRoom().sendPrivatePacket(packet, role);
                     }
-                    catch (NotFoundException e) {
+                    catch (NotFoundException | ForbiddenException e) {
                         // Do nothing. No error will be sent to the sender of the IQ result packet
                     }
                 }
@@ -460,9 +460,12 @@ public class LocalMUCUser implements MUCUser {
         String group = recipient.getNode();
         if (group != null) {
             MUCRole role = roles.get(group);
-            if (role == null) {
-                // If we're not already in a room, we either are joining it or it's not
+            Element mucInfo = packet.getChildElement("x",
+                    "http://jabber.org/protocol/muc");
+            if (role == null || mucInfo != null) {
+                // If we're not already in a room (role == null), we either are joining it or it's not
                 // properly addressed and we drop it silently
+                // Alternative is that mucInfo is not null, in which case the client thinks it isn't in the room, so we should join anyway.
                 if (recipient.getResource() != null
                         && recipient.getResource().trim().length() > 0) {
                     if (packet.isAvailable()) {
@@ -470,8 +473,6 @@ public class LocalMUCUser implements MUCUser {
                             // Get or create the room
                             MUCRoom room = server.getChatRoom(group, packet.getFrom());
                             // User must support MUC in order to create a room
-                            Element mucInfo = packet.getChildElement("x",
-                                    "http://jabber.org/protocol/muc");
                             HistoryRequest historyRequest = null;
                             String password = null;
                             // Check for password & requested history if client supports MUC
@@ -499,7 +500,7 @@ public class LocalMUCUser implements MUCUser {
                         catch (ServiceUnavailableException e) {
                             sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
-                        catch (UserAlreadyExistsException e) {
+                        catch (UserAlreadyExistsException | ConflictException e) {
                             sendErrorPacket(packet, PacketError.Condition.conflict);
                         }
                         catch (RoomLockedException e) {
@@ -511,11 +512,7 @@ public class LocalMUCUser implements MUCUser {
                         }
                         catch (RegistrationRequiredException e) {
                             sendErrorPacket(packet, PacketError.Condition.registration_required);
-                        }
-                        catch (ConflictException e) {
-                            sendErrorPacket(packet, PacketError.Condition.conflict);
-                        }
-                        catch (NotAcceptableException e) {
+                        } catch (NotAcceptableException e) {
                             sendErrorPacket(packet, PacketError.Condition.not_acceptable);
                         }
                         catch (NotAllowedException e) {

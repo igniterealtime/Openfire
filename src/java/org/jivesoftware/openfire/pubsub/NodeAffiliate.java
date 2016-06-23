@@ -105,7 +105,7 @@ public class NodeAffiliate {
                     //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
-                    if (getNode().getNodeID().indexOf("@") >= 0) {
+                    if (getNode().getNodeID().contains("@")) {
                         items.addAttribute("node", publishedItem.getNodeID());                        
                     }
 
@@ -131,7 +131,7 @@ public class NodeAffiliate {
         }
         else {
             // Filter affiliate subscriptions and only use approved and configured ones
-            List<NodeSubscription> affectedSubscriptions = new ArrayList<NodeSubscription>();
+            List<NodeSubscription> affectedSubscriptions = new ArrayList<>();
             for (NodeSubscription subscription : getSubscriptions()) {
                 if (subscription.canSendPublicationEvent(leafNode, null)) {
                     affectedSubscriptions.add(subscription);
@@ -208,11 +208,11 @@ public class NodeAffiliate {
             List<NodeSubscription> notifySubscriptions) {
         if (node.isMultipleSubscriptionsEnabled()) {
             // Group subscriptions with the same subscriber JID
-            Map<JID, Collection<String>> groupedSubs = new HashMap<JID, Collection<String>>();
+            Map<JID, Collection<String>> groupedSubs = new HashMap<>();
             for (NodeSubscription subscription : notifySubscriptions) {
                 Collection<String> subIDs = groupedSubs.get(subscription.getJID());
                 if (subIDs == null) {
-                    subIDs = new ArrayList<String>();
+                    subIDs = new ArrayList<>();
                     groupedSubs.put(subscription.getJID(), subIDs);
                 }
                 subIDs.add(subscription.getID());
@@ -228,7 +228,7 @@ public class NodeAffiliate {
         else {
             // Affiliate should have at most one subscription per unique JID
             if (!notifySubscriptions.isEmpty()) {
-            	List<JID> subs = new ArrayList<JID>();
+            	List<JID> subs = new ArrayList<>();
             	for(NodeSubscription subscription: notifySubscriptions) {
             		JID sub = subscription.getJID();
             		if (!subs.contains(sub)) {
@@ -244,7 +244,7 @@ public class NodeAffiliate {
             LeafNode leafNode, List<PublishedItem> publishedItems) {
         // Identify which subscriptions can receive each item
         Map<PublishedItem, List<NodeSubscription>> subsByItem =
-                new HashMap<PublishedItem, List<NodeSubscription>>();
+                new HashMap<>();
 
         // Filter affiliate subscriptions and only use approved and configured ones
         Collection<NodeSubscription> subscriptions = getSubscriptions();
@@ -253,7 +253,7 @@ public class NodeAffiliate {
                 if (subscription.canSendPublicationEvent(leafNode, publishedItem)) {
                     List<NodeSubscription> nodeSubscriptions = subsByItem.get(publishedItem);
                     if (nodeSubscriptions == null) {
-                        nodeSubscriptions = new ArrayList<NodeSubscription>();
+                        nodeSubscriptions = new ArrayList<>();
                         subsByItem.put(publishedItem, nodeSubscriptions);
                     }
                     nodeSubscriptions.add(subscription);
@@ -263,12 +263,12 @@ public class NodeAffiliate {
 
         // Identify which items should be sent together to the same subscriptions
         Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs =
-                new HashMap<List<NodeSubscription>, List<PublishedItem>>();
+                new HashMap<>();
         List<PublishedItem> affectedSubscriptions;
         for (PublishedItem publishedItem : subsByItem.keySet()) {
             affectedSubscriptions = itemsBySubs.get(subsByItem.get(publishedItem));
             if (affectedSubscriptions == null) {
-            	List<PublishedItem> items = new ArrayList<PublishedItem>(publishedItems.size());
+            	List<PublishedItem> items = new ArrayList<>(publishedItems.size());
             	items.add(publishedItem);
                 itemsBySubs.put(subsByItem.get(publishedItem), items);
             }

@@ -10,9 +10,12 @@ import org.jivesoftware.openfire.plugin.rest.entity.UserEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.UserProperty;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.packet.JID;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class UserUtils.
  */
@@ -89,6 +92,9 @@ public class UserUtils {
 	public static JID checkAndGetJID(String jid) {
 		if(isValidBareJid(jid)) {
 			return new JID(jid);
+		} else if (isValidGroupName(jid)) {
+			GroupJID gjid = new GroupJID(jid);
+			return gjid.asBareJID();
 		} else {
 			return XMPPServer.getInstance().createJID(jid, null);
 		}
@@ -105,6 +111,20 @@ public class UserUtils {
 		if (index == -1) {
 			return false;
 		} else if (jid.indexOf('@', index + 1) != -1) {
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * Checks if this group exists.
+	 *
+	 * @param groupname The groupname as a string
+	 * @return true, if the groupname exists
+	 */
+	public static boolean isValidGroupName(String groupname) {
+		try {
+			Group g = GroupManager.getInstance().getGroup(groupname);
+		} catch(GroupNotFoundException e) {
 			return false;
 		}
 		return true;

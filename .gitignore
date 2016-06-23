@@ -1,5 +1,6 @@
 target/
 work/
+*.class
 
 # Ignore Intellij Idea project files
 *.iml
@@ -15,3 +16,8 @@ out/
 
 # Ignore MacOSX files
 .DS_Store
+
+# Ignore Netbeans project files
+nbproject/
+nbbuild/
+/bin/

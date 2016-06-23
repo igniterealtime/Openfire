@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class RoomInfo implements Externalizable {
     private LocalMUCRoom room;
-    private List<OccupantAddedEvent> occupants = new ArrayList<OccupantAddedEvent>();
+    private List<OccupantAddedEvent> occupants = new ArrayList<>();
 
 
     /**
@@ -67,11 +67,13 @@ public class RoomInfo implements Externalizable {
         return occupants;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, room);
         ExternalizableUtil.getInstance().writeExternalizableCollection(out, occupants);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         room = (LocalMUCRoom) ExternalizableUtil.getInstance().readSerializable(in);
         ExternalizableUtil.getInstance().readExternalizableCollection(in, occupants, getClass().getClassLoader());

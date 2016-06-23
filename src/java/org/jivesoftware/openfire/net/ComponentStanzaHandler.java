@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
@@ -51,8 +52,13 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(ComponentStanzaHandler.class);
 
+    public ComponentStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public ComponentStanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        super(router, serverName, connection);
+        super(router, connection);
     }
 
     @Override
@@ -98,7 +104,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
                     try {
                         // Get the requested subdomain
                         String subdomain = extraDomain;
-                        int index = extraDomain.indexOf(serverName);
+                        int index = extraDomain.indexOf( XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
                         if (index > -1) {
                             subdomain = extraDomain.substring(0, index -1);
                         }
@@ -186,8 +192,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
     @Override
 	void startTLS() throws Exception {
-        // TODO Finish implementation. We need to get the name of the CM if we want to validate certificates of the CM that requested TLS
-        connection.startTLS(false, "IMPLEMENT_ME", Connection.ClientAuth.disabled);
+        connection.startTLS(false);
     }
 
     @Override

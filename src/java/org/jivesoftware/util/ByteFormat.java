@@ -37,14 +37,14 @@ public class ByteFormat extends Format {
      * Formats a long which represent a number of bytes.
      */
     public String format(long bytes) {
-        return format(new Long(bytes));
+        return super.format(bytes);
     }
 
     /**
      * Formats a long which represent a number of kilobytes.
      */
     public String formatKB(long kilobytes) {
-        return format(new Long(kilobytes * 1024));
+        return format(kilobytes * 1024);
     }
 
     /**
@@ -58,7 +58,7 @@ public class ByteFormat extends Format {
     @Override
 	public StringBuffer format(Object obj, StringBuffer buf, FieldPosition pos) {
         if (obj instanceof Long) {
-            long numBytes = ((Long)obj).longValue();
+            long numBytes = (Long) obj;
             if (numBytes < 1024 * 1024) {
                 DecimalFormat formatter = new DecimalFormat("#,##0.0");
                 buf.append(formatter.format((double)numBytes / 1024.0)).append(" K");

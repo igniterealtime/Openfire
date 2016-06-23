@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Gaston Dombiak
  */
-public abstract class RemoteSessionTask implements ClusterTask {
+public abstract class RemoteSessionTask implements ClusterTask<Object> {
     protected Object result;
     protected Operation operation;
 
@@ -56,7 +56,7 @@ public abstract class RemoteSessionTask implements ClusterTask {
 
     public void run() {
         if (operation == Operation.getStreamID) {
-            result = getSession().getStreamID().getID();
+            result = getSession().getStreamID();
         }
         else if (operation == Operation.getServerName) {
             result = getSession().getServerName();

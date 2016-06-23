@@ -79,7 +79,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
         princSearchFilter = JiveGlobals.getProperty("ldap.princSearchFilter");
         StringBuilder filter = new StringBuilder();
         if(princSearchFilter == null) {
-            filter.append("(").append(princField).append("={0})");
+            filter.append('(').append(princField).append("={0})");
         } else {
             filter.append("(&(").append(princField).append("={0})(");
             filter.append(princSearchFilter).append("))");
@@ -87,6 +87,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
         princSearchFilter = filter.toString();
     }
 
+    @Override
     public String map(String principal) {
         String username = principal;
         DirContext ctx = null;
@@ -140,6 +141,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "LDAP Authorization Mapping";
     }
@@ -149,6 +151,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Provider for authorization using LDAP. Returns the principals default username using the attribute specified in ldap.princField.";
     }

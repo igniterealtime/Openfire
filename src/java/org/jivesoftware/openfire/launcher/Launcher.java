@@ -20,18 +20,26 @@
 
 package org.jivesoftware.openfire.launcher;
 
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedOutputStream;
@@ -43,6 +51,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.net.URL;
 
 import javax.swing.BorderFactory;
@@ -51,21 +60,18 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.jdesktop.jdic.tray.SystemTray;
-import org.jdesktop.jdic.tray.TrayIcon;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -95,11 +101,11 @@ public class Launcher {
     /**
      * Creates a new Launcher object.
      */
-    public Launcher() {
+    public Launcher() throws AWTException {
         // Initialize the SystemTray now (to avoid a bug!)
         SystemTray tray = null;
         try {
-            tray = SystemTray.getDefaultSystemTray();
+            tray = SystemTray.getSystemTray();
         }
         catch (Throwable e) {
             // Log to System error instead of standard error log.
@@ -190,27 +196,27 @@ public class Launcher {
         mainPanel.add(toolbar, BorderLayout.SOUTH);
 
         // create the main menu of the system tray icon
-        JPopupMenu menu = new JPopupMenu(appName + " Menu");
+        PopupMenu menu = new PopupMenu(appName + " Menu");
 
-        final JMenuItem showMenuItem = new JMenuItem("Hide");
+        final MenuItem showMenuItem = new MenuItem("Hide");
         showMenuItem.setActionCommand("Hide/Show");
         menu.add(showMenuItem);
 
-        final JMenuItem startMenuItem = new JMenuItem("Start");
+        final MenuItem startMenuItem = new MenuItem("Start");
         startMenuItem.setActionCommand("Start");
         menu.add(startMenuItem);
 
-        final JMenuItem stopMenuItem = new JMenuItem("Stop");
+        final MenuItem stopMenuItem = new MenuItem("Stop");
         stopMenuItem.setActionCommand("Stop");
         menu.add(stopMenuItem);
 
-        final JMenuItem browserMenuItem = new JMenuItem("Launch Admin");
+        final MenuItem browserMenuItem = new MenuItem("Launch Admin");
         browserMenuItem.setActionCommand("Launch Admin");
         menu.add(browserMenuItem);
 
         menu.addSeparator();
 
-        final JMenuItem quitMenuItem = new JMenuItem("Quit");
+        final MenuItem quitMenuItem = new MenuItem("Quit");
         quitMenuItem.setActionCommand("Quit");
         menu.add(quitMenuItem);
 
@@ -220,6 +226,7 @@ public class Launcher {
         stopMenuItem.setEnabled(false);
 
         ActionListener actionListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if ("Start".equals(e.getActionCommand())) {
                     frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -234,7 +241,7 @@ public class Launcher {
 
                     // Change to the "on" icon.
                     frame.setIconImage(onIcon.getImage());
-                    trayIcon.setIcon(onIcon);
+                    trayIcon.setImage(onIcon.getImage());
 
                     // Start a thread to enable the admin button after 8 seconds.
                     Thread thread = new Thread() {
@@ -261,7 +268,7 @@ public class Launcher {
                     stopApplication();
                     // Change to the "off" button.
                     frame.setIconImage(offIcon.getImage());
-                    trayIcon.setIcon(offIcon);
+                    trayIcon.setImage(offIcon.getImage());
                     // Adjust buttons and menu items.
                     frame.setCursor(Cursor.getDefaultCursor());
                     browserButton.setEnabled(false);
@@ -273,24 +280,12 @@ public class Launcher {
                 }
                 else if ("Launch Admin".equals(e.getActionCommand())) {
                     launchBrowser();
-                }
-                else if ("Quit".equals(e.getActionCommand())) {
+                } else if ("Quit".equals(e.getActionCommand())) {
                     stopApplication();
                     System.exit(0);
                 }
                 else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
-                    // Hide/Unhide the window if the user clicked in the system tray icon or
-                    // selected the menu option
-                    if (frame.isVisible()) {
-                        frame.setVisible(false);
-                        frame.setState(Frame.ICONIFIED);
-                        showMenuItem.setText("Show");
-                    }
-                    else {
-                        frame.setVisible(true);
-                        frame.setState(Frame.NORMAL);
-                        showMenuItem.setText("Hide");
-                    }
+                    toggleVisibility(showMenuItem);
                 }
             }
         };
@@ -309,12 +304,40 @@ public class Launcher {
         showMenuItem.addActionListener(actionListener);
 
         // Set the system tray icon with the menu
-        trayIcon = new TrayIcon(offIcon, appName, menu);
-        trayIcon.setIconAutoSize(true);
+        trayIcon = new TrayIcon(offIcon.getImage(), appName, menu);
+        trayIcon.setImageAutoSize(true);
         trayIcon.addActionListener(actionListener);
+        trayIcon.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Left click
+                if (e.getButton() == 1) {
+                    toggleVisibility(showMenuItem);
+                }
+            }
 
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
         if (tray != null) {
-            tray.addTrayIcon(trayIcon);
+            tray.add(trayIcon);
         }
 
         frame.addWindowListener(new WindowAdapter() {
@@ -328,7 +351,7 @@ public class Launcher {
 			public void windowIconified(WindowEvent e) {
                 // Make the window disappear when minimized
                 frame.setVisible(false);
-                showMenuItem.setText("Show");
+                showMenuItem.setLabel("Show");
             }
         });
 
@@ -387,8 +410,21 @@ public class Launcher {
     /**
      * Creates a new GUI launcher instance.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws AWTException {
         new Launcher();
+    }
+
+    private void toggleVisibility(MenuItem showMenuItem) {
+        // Hide/Unhide the window if the user clicked in the system tray icon or
+        // selected the menu option
+        if (frame.isVisible()) {
+            frame.setVisible(false);
+            showMenuItem.setLabel("Show");
+        } else {
+            frame.setVisible(true);
+            frame.setState(Frame.NORMAL);
+            showMenuItem.setLabel("Hide");
+        }
     }
 
     private synchronized void startApplication() {
@@ -423,13 +459,12 @@ public class Launcher {
             }
 
             final SimpleAttributeSet styles = new SimpleAttributeSet();
-            SwingWorker inputWorker = new SwingWorker() {
+            SwingWorker<String, Void> inputWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+				public String doInBackground() {
                     if (openfired != null) {
-                        try {
-                            // Get the input stream and read from it
-                            InputStream in = openfired.getInputStream();
+                        // Get the input stream and read from it
+                        try (InputStream in = openfired.getInputStream()) {
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -441,7 +476,6 @@ public class Launcher {
                                     // Ignore.
                                 }
                             }
-                            in.close();
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -450,16 +484,15 @@ public class Launcher {
                     return "ok";
                 }
             };
-            inputWorker.start();
+            inputWorker.execute();
 
 
-            SwingWorker errorWorker = new SwingWorker() {
+            SwingWorker<String, Void> errorWorker = new SwingWorker<String, Void>() {
                 @Override
-				public Object construct() {
+				public String doInBackground() {
                     if (openfired != null) {
-                        try {
-                            // Get the input stream and read from it
-                            InputStream in = openfired.getErrorStream();
+                        // Get the input stream and read from it
+                        try (InputStream in = openfired.getErrorStream()) {
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -470,7 +503,6 @@ public class Launcher {
                                     // Ignore.
                                 }
                             }
-                            in.close();
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -479,7 +511,7 @@ public class Launcher {
                     return "ok";
                 }
             };
-            errorWorker.start();
+            errorWorker.execute();
 
             if (freshStart) {
                 try {
@@ -505,12 +537,13 @@ public class Launcher {
             try {
             	// attempt to perform a graceful shutdown by sending
             	// an "exit" command to the process (via stdin)
-            	Writer out = new OutputStreamWriter(
-            			new BufferedOutputStream(openfired.getOutputStream()));
-            	out.write("exit\n");
-            	out.close();
-            	final Thread waiting = Thread.currentThread();
+                try (Writer out = new OutputStreamWriter(
+                        new BufferedOutputStream(openfired.getOutputStream()))) {
+                    out.write("exit\n");
+                }
+                final Thread waiting = Thread.currentThread();
             	Thread waiter = new Thread() {
+            		@Override
             		public void run() {
                         try {
                         	// wait for the openfire server to stop
@@ -521,7 +554,7 @@ public class Launcher {
             		}
             	};
             	waiter.start();
-            	try { 
+            	try {
             		// wait for a maximum of ten seconds
             		Thread.sleep(10000);
             		waiter.interrupt();
@@ -557,10 +590,9 @@ public class Launcher {
                 securePort = securePortElement.getTextContent();
             }
             if ("-1".equals(port)) {
-                BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
-            }
-            else {
-                BrowserLauncher.openURL("http://127.0.0.1:" + port + "/index.html");
+                Desktop.getDesktop().browse(URI.create("https://127.0.0.1:" + securePort + "/index.html"));
+            } else {
+                Desktop.getDesktop().browse(URI.create("http://127.0.0.1:" + port + "/index.html"));
             }
         }
         catch (Exception e) {
@@ -581,9 +613,9 @@ public class Launcher {
         dialog.pack();
         dialog.setSize(225, 55);
 
-        final SwingWorker installerThread = new SwingWorker() {
+        final SwingWorker<File, Void> installerThread = new SwingWorker<File, Void>() {
             @Override
-			public Object construct() {
+			public File doInBackground() {
                 File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
@@ -607,43 +639,23 @@ public class Launcher {
             }
 
             @Override
-			public void finished() {
+			public void done() {
                 dialog.setVisible(false);
             }
         };
 
         // Start installation
-        installerThread.start();
+        installerThread.execute();
 
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
 
     private static void copy(URL src, File dst) throws IOException {
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-            in = src.openStream();
-            out = new FileOutputStream(dst);
-            dst.mkdirs();
-            copy(in, out);
-        }
-        finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
-            }
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
+        try (InputStream in = src.openStream()) {
+            try (OutputStream out = new FileOutputStream(dst)) {
+                dst.mkdirs();
+                copy(in, out);
             }
         }
     }

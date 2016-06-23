@@ -48,7 +48,7 @@ public abstract class ResultSet<E extends Result> extends AbstractCollection<E> 
 	/**
 	 * A list of field names that are valid in jabber:iq:search
 	 */
-	private final static Collection<String> validRequestFields = new ArrayList<String>();
+	private final static Collection<String> validRequestFields = new ArrayList<>();
 	static {
 		validRequestFields.add("max"); // required
 		validRequestFields.add("before");
@@ -451,6 +451,7 @@ public abstract class ResultSet<E extends Result> extends AbstractCollection<E> 
 		 * 
 		 * @see java.util.Iterator#hasNext()
 		 */
+		@Override
 		public boolean hasNext() {
 			return cursor != size();
 		}
@@ -460,6 +461,7 @@ public abstract class ResultSet<E extends Result> extends AbstractCollection<E> 
 		 * 
 		 * @see java.util.Iterator#next()
 		 */
+		@Override
 		public E next() {
 			return get(cursor++);
 		}
@@ -469,6 +471,7 @@ public abstract class ResultSet<E extends Result> extends AbstractCollection<E> 
 		 * 
 		 * @see java.util.Iterator#remove()
 		 */
+		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}

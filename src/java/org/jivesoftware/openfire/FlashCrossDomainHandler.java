@@ -53,6 +53,7 @@ public class FlashCrossDomainHandler extends BasicModule {
     @Override
 	public void start() {
         Thread thread = new Thread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     startServer();
@@ -155,7 +156,7 @@ public class FlashCrossDomainHandler extends BasicModule {
      * @return the string read from the reader.
      */
     protected String read(BufferedReader in) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         int codePoint;
         boolean stopReading = false;
         int invalidCodePoints = 0;

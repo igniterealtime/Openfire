@@ -21,7 +21,7 @@
 package org.jivesoftware.openfire.pep;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -265,22 +265,22 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * Implements ServerIdentitiesProvider and UserIdentitiesProvider, adding
      * the PEP identity to the respective disco#info results.
      */
+    @Override
     public Iterator<Element> getIdentities() {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "pubsub");
         identity.addAttribute("type", "pep");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
     /**
      * Implements ServerFeaturesProvider to include all supported XEP-0060 features
      * in the server's disco#info result (as per section 4 of XEP-0163).
      */
+    @Override
     public Iterator<String> getFeatures() {
         Iterator<String> it = XMPPServer.getInstance().getPubSubModule().getFeatures(null, null, null);
-        ArrayList<String> features = new ArrayList<String>();
+        ArrayList<String> features = new ArrayList<>();
         while (it.hasNext()) {
             features.add(it.next());
         }
@@ -519,8 +519,9 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * Implements UserItemsProvider, adding PEP related items to a disco#items
      * result.
      */
+    @Override
     public Iterator<Element> getUserItems(String name, JID senderJID) {
-        ArrayList<Element> items = new ArrayList<Element>();
+        ArrayList<Element> items = new ArrayList<>();
 
         String recipientJID = XMPPServer.getInstance().createJID(name, null, true).toBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
@@ -549,6 +550,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         return items.iterator();
     }
 
+    @Override
     public void subscribedToPresence(JID subscriberJID, JID authorizerJID) {
         final PEPService pepService = pepServiceManager.getPEPService(authorizerJID.toBareJID());
         if (pepService != null) {
@@ -571,10 +573,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         }
     }
 
+    @Override
     public void unsubscribedToPresence(JID unsubscriberJID, JID recipientJID) {
         cancelSubscriptionToPEPService(unsubscriberJID, recipientJID);
     }
 
+    @Override
     public void availableSession(ClientSession session, Presence presence) {
         // Do nothing if server is not enabled
         if (!isEnabled()) {
@@ -590,6 +594,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         executor.submit(task);
     }
 
+    @Override
     public void contactDeleted(Roster roster, RosterItem item) {
         JID rosterOwner = XMPPServer.getInstance().createJID(roster.getUsername(), null);
         JID deletedContact = item.getJid();
@@ -597,6 +602,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         cancelSubscriptionToPEPService(deletedContact, rosterOwner);
     }
 
+    @Override
     public void userDeleting(User user, Map<String, Object> params) {
         final JID bareJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         final PEPService pepService = pepServiceManager.getPEPService(bareJID.toString());
@@ -612,35 +618,43 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     /**
      *  The following functions are unimplemented required interface methods.
      */
+    @Override
     public void unavailableSession(ClientSession session, Presence presence) {
         // Do nothing
     }
 
+    @Override
     public void presenceChanged(ClientSession session, Presence presence) {
         // Do nothing
     }
 
+    @Override
     public boolean addingContact(Roster roster, RosterItem item, boolean persistent) {
         // Do nothing
         return true;
     }
 
+    @Override
     public void contactAdded(Roster roster, RosterItem item) {
         // Do nothing
     }
 
+    @Override
     public void contactUpdated(Roster roster, RosterItem item) {
         // Do nothing
     }
 
+    @Override
     public void rosterLoaded(Roster roster) {
         // Do nothing
     }
 
+    @Override
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing
     }
 
+    @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing
     }
@@ -652,6 +666,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     		this.availableSessionJID = availableSessionJID;
     	}
     	
+        @Override
         public void run() {
             // Send the last published items for the contacts on availableSessionJID's roster.
             try {

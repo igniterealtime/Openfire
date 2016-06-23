@@ -54,6 +54,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void addMember(String groupName, JID user, boolean administrator)
     {
         throw new UnsupportedOperationException("Cannot add members to read-only groups");
@@ -62,6 +63,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void updateMember(String groupName, JID user, boolean administrator)
     {
         throw new UnsupportedOperationException("Cannot update members for read-only groups");
@@ -70,6 +72,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void deleteMember(String groupName, JID user)
     {
         throw new UnsupportedOperationException("Cannot remove members from read-only groups");
@@ -78,6 +81,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     /**
      * Always true for a read-only provider
      */
+    @Override
     public boolean isReadOnly() {
         return true;
     }
@@ -85,13 +89,15 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
-    public Group createGroup(String name) {
+    @Override
+    public Group createGroup(String name) throws GroupAlreadyExistsException {
         throw new UnsupportedOperationException("Cannot create groups via read-only provider");
     }
 
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void deleteGroup(String name) {
         throw new UnsupportedOperationException("Cannot remove groups via read-only provider");
     }
@@ -99,6 +105,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException {
         throw new UnsupportedOperationException("Cannot modify read-only groups");
     }
@@ -106,6 +113,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 	/**
 	 * @throws UnsupportedOperationException
 	 */
+    @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {
         throw new UnsupportedOperationException("Cannot modify read-only groups");
     }
@@ -116,6 +124,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * Returns true if the provider supports group search capability. This implementation
      * always returns false.
      */
+    @Override
     public boolean isSearchSupported() {
         return false;
     }
@@ -124,6 +133,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * Returns a collection of group search results. This implementation
      * returns an empty collection.
      */
+    @Override
     public Collection<String> search(String query) {
     	return Collections.emptyList();
     }
@@ -132,6 +142,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * Returns a collection of group search results. This implementation
      * returns an empty collection.
      */
+    @Override
     public Collection<String> search(String query, int startIndex, int numResults) {
     	return Collections.emptyList();
     }
@@ -143,8 +154,9 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      *
      * @return the name of the groups that are shared groups.
      */
+    @Override
     public Collection<String> getSharedGroupNames() {
-        Collection<String> groupNames = new HashSet<String>();
+        Collection<String> groupNames = new HashSet<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -165,8 +177,9 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getSharedGroupNames(JID user) {
-    	Set<String> answer = new HashSet<String>();
+    	Set<String> answer = new HashSet<>();
     	Collection<String> userGroups = getGroupNames(user);
     	answer.addAll(userGroups);
     	for (String userGroup : userGroups) {
@@ -176,8 +189,9 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         return answer;
     }
 
+	@Override
 	public Collection<String> getVisibleGroupNames(String userGroup) {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -199,8 +213,9 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 		return groupNames;
 	}
     
+	@Override
 	public Collection<String> search(String key, String value) {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -223,8 +238,9 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 		return groupNames;
 	}
 
+	@Override
 	public Collection<String> getPublicSharedGroupNames() {
-		Set<String> groupNames = new HashSet<String>();
+		Set<String> groupNames = new HashSet<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -245,6 +261,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         return groupNames;
 	}
 
+    @Override
     public boolean isSharingSupported() {
         return true;
     }
@@ -256,11 +273,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * @param group The target group
      * @return The properties for the given group
      */
+    @Override
     public PersistableMap<String,String> loadProperties(Group group) {
     	// custom map implementation persists group property changes
     	// whenever one of the standard mutator methods are called
     	String name = group.getName();
-    	PersistableMap<String,String> result = new DefaultGroupPropertyMap<String,String>(group);
+    	PersistableMap<String,String> result = new DefaultGroupPropertyMap<>(group);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

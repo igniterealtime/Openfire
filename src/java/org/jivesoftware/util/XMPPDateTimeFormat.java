@@ -68,12 +68,9 @@ public class XMPPDateTimeFormat {
 
     private static final FastDateFormat FAST_FORMAT = FastDateFormat.getInstance(
             XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
-    private static final FastDateFormat FAST_FORMAT_OLD = FastDateFormat.getInstance(
-            XMPP_DELAY_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
 
     private final DateFormat dateTimeFormat = new SimpleDateFormat(XMPP_DATETIME_FORMAT_WO_TIMEZONE + 'Z');
     private final DateFormat dateTimeFormatWoMillies = new SimpleDateFormat(XMPP_DATETIME_FORMAT_WO_MILLIS_WO_TIMEZONE + 'Z');
-    private final DateFormat dateTimeFormatOld = new SimpleDateFormat(XMPP_DELAY_DATETIME_FORMAT);
 
     /**
      * Create a new thread-safe instance of this utility class
@@ -82,7 +79,6 @@ public class XMPPDateTimeFormat {
         TimeZone utc = TimeZone.getTimeZone("UTC");
         dateTimeFormat.setTimeZone(utc);
         dateTimeFormatWoMillies.setTimeZone(utc);
-        dateTimeFormatOld.setTimeZone(utc);
     }
 
     /**
@@ -129,29 +125,8 @@ public class XMPPDateTimeFormat {
                     return dateTimeFormat.parse(rfc822Date);
                 }
             }
-        } else {
-            // at last try with the legacy format
-            synchronized (dateTimeFormatOld) {
-                return dateTimeFormatOld.parse(dateString);
-            }
         }
-    }
-
-    /**
-     * Tries to convert a given string to a Date object.
-     * This method only supports the legacy XMPP time format: CCYYMMDDThh:mm:ss
-     * 
-     * This method either returns a Date instance as result or it will return null or throw a ParseException
-     * in case the String couldn't be parsed.
-     * 
-     * @param dateStr
-     * @return the parsed date or null if the String could not be parsed
-     * @throws ParseException
-     */
-    public Date parseOldDate(String dateStr) throws ParseException {
-        synchronized (dateTimeFormatOld) {
-            return dateTimeFormatOld.parse(dateStr);
-        }
+        throw new ParseException("Date String could not be parsed", 0);
     }
 
     /**
@@ -165,17 +140,5 @@ public class XMPPDateTimeFormat {
      */
     public static String format(Date date) {
         return FAST_FORMAT.format(date);
-    }
-    
-    /**
-     * Formats a Date object to String as defined in legacy XMPP protocols (e.g. XEP-0090)
-     * 
-     * CCYYMMDDThh:mm:ss
-     * 
-     * @param date
-     * @return String
-     */
-    public static String formatOld(Date date) {
-        return FAST_FORMAT_OLD.format(date);
     }
 }

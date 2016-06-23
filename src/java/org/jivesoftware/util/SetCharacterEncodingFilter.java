@@ -31,10 +31,12 @@ import java.io.IOException;
  */
 public class SetCharacterEncodingFilter implements Filter {
 
+    @Override
     public void init(FilterConfig filterConfig) throws ServletException {
 
     }
 
+    @Override
     public void destroy() {
         
     }
@@ -42,6 +44,7 @@ public class SetCharacterEncodingFilter implements Filter {
     /**
      * Sets the character encoding to be used for any content passing out of this filter.
      */
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException
     {

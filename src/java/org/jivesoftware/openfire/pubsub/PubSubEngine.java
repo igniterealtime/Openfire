@@ -20,17 +20,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -53,8 +42,17 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
-import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.packet.Presence;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A PubSubEngine is responsible for handling packets sent to a pub-sub service.
@@ -256,7 +254,7 @@ public class PubSubEngine {
                 synchronized (subscriber.toBareJID().intern()) {
                     fullPresences = service.getBarePresences().get(subscriber.toBareJID());
                     if (fullPresences == null) {
-                        fullPresences = new ConcurrentHashMap<String, String>();
+                        fullPresences = new ConcurrentHashMap<>();
                         service.getBarePresences().put(subscriber.toBareJID(), fullPresences);
                     }
                 }
@@ -390,7 +388,7 @@ public class PubSubEngine {
             sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
             return;
         }
-        List<Element> items = new ArrayList<Element>();
+        List<Element> items = new ArrayList<>();
         List entries;
         Element payload;
         while (itemElements.hasNext()) {
@@ -468,7 +466,7 @@ public class PubSubEngine {
             return;
         }
 
-        List<PublishedItem> items = new ArrayList<PublishedItem>();
+        List<PublishedItem> items = new ArrayList<>();
         while (itemElements.hasNext()) {
             Element itemElement = (Element) itemElements.next();
             String itemID = itemElement.attributeValue("id");
@@ -895,7 +893,7 @@ public class PubSubEngine {
         Element subscriptionsElement = childElement.element("subscriptions");
         
         String nodeID = subscriptionsElement.attributeValue("node");
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        Collection<NodeSubscription> subscriptions = new ArrayList<>();
         
         if (nodeID == null)
         {
@@ -937,7 +935,7 @@ public class PubSubEngine {
         // TODO Assuming that owner is the bare JID (as defined in the JEP). This can be replaced with an explicit owner specified in the packet
         JID owner = iq.getFrom().asBareJID();
         // Collect affiliations of owner for all nodes at the service
-        Collection<NodeAffiliate> affiliations = new ArrayList<NodeAffiliate>();
+        Collection<NodeAffiliate> affiliations = new ArrayList<>();
         for (Node node : service.getNodes()) {
             NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
             if (nodeAffiliate != null) {
@@ -1065,16 +1063,16 @@ public class PubSubEngine {
         }
         if (max_items != null) {
             // Get the N most recent published items
-            items = new ArrayList<PublishedItem>(leafNode.getPublishedItems(recentItems));
+            items = new ArrayList<>(leafNode.getPublishedItems(recentItems));
         }
         else {
             List requestedItems = itemsElement.elements("item");
             if (requestedItems.isEmpty()) {
                 // Get all the active items that were published to the node
-                items = new ArrayList<PublishedItem>(leafNode.getPublishedItems());
+                items = new ArrayList<>(leafNode.getPublishedItems());
             }
             else {
-                items = new ArrayList<PublishedItem>();
+                items = new ArrayList<>();
                 // Indicate that payload should be included (if exists) no matter
                 // the node configuration
                 forceToIncludePayload = true;
@@ -1152,7 +1150,7 @@ public class PubSubEngine {
      * @param iq
      * @param childElement
      * @param createElement
-     * @return
+     * @return {@link CreateNodeResponse}
      */
     private CreateNodeResponse createNodeHelper(PubSubService service, IQ iq, Element childElement, Element createElement) {
         // Get sender of the IQ packet
@@ -1580,7 +1578,7 @@ public class PubSubEngine {
         }
 
         IQ reply = IQ.createResultIQ(iq);
-        Collection<JID> invalidAffiliates = new ArrayList<JID>();
+        Collection<JID> invalidAffiliates = new ArrayList<>();
 
         // Process modifications or creations of affiliations
         for (Iterator it = entitiesElement.elementIterator("affiliation"); it.hasNext();) {
@@ -1769,10 +1767,12 @@ public class PubSubEngine {
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
+                @Override
                 public void serverStarted() {
                     probePresences(service);
                 }
 
+                @Override
                 public void serverStopping() {
                 }
             });
@@ -1780,7 +1780,7 @@ public class PubSubEngine {
     }
 
     private void probePresences(final PubSubService service) {
-        Set<JID> affiliates = new HashSet<JID>();
+        Set<JID> affiliates = new HashSet<>();
         for (Node node : service.getNodes()) {
             affiliates.addAll(node.getPresenceBasedSubscribers());
         }
@@ -1841,7 +1841,7 @@ public class PubSubEngine {
                 return Collections.emptyList();
             }
             // User is connected at specified resource so answer list with presence show value
-            return Arrays.asList(show);
+            return Collections.singletonList(show);
         }
     }
 

@@ -44,7 +44,7 @@ public class SessionData {
      * Map that keeps the association of variables and values obtained in each stage.
      * Note: Key=stage number, Value=Map with key=variable name and value=variable values.
      */
-    private Map<Integer, Map<String, List<String>>> stagesData = new HashMap<Integer, Map<String, List<String>>>();
+    private Map<Integer, Map<String, List<String>>> stagesData = new HashMap<>();
 
     /**
      * Keeps the default execution action to follow if the command requester does not include
@@ -52,14 +52,14 @@ public class SessionData {
      */
     private AdHocCommand.Action executeAction;
 
-    private List<AdHocCommand.Action> allowedActions = new ArrayList<AdHocCommand.Action>();
+    private List<AdHocCommand.Action> allowedActions = new ArrayList<>();
 
     /**
      * Indicates the current stage where the requester is located. Stages are numbered from 0.
      */
     private int stage;
 
-    protected SessionData(String sessionid, JID owner) {
+    public SessionData(String sessionid, JID owner) {
         this.id = sessionid;
         this.creationStamp = System.currentTimeMillis();
         this.stage = -1;
@@ -98,7 +98,7 @@ public class SessionData {
      */
     protected void setAllowedActions(List<AdHocCommand.Action> allowedActions) {
         if (allowedActions == null) {
-            allowedActions = new ArrayList<AdHocCommand.Action>();
+            allowedActions = new ArrayList<>();
         }
         this.allowedActions = allowedActions;
     }
@@ -129,7 +129,7 @@ public class SessionData {
      * @return a Map with all the variables and values obtained during all the command stages.
      */
     public Map<String, List<String>> getData() {
-        Map<String, List<String>> data = new HashMap<String, List<String>>();
+        Map<String, List<String>> data = new HashMap<>();
         for (Map<String, List<String>> stageData : stagesData.values()) {
             data.putAll(stageData);
         }

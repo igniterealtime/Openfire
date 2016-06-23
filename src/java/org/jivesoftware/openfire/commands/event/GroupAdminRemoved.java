@@ -32,6 +32,7 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class GroupAdminRemoved extends AdHocCommand {
             String admin = get(data, "admin", 0);
 
             // Adds the admin
-            params = new HashMap<String, Object>();
+            params = new HashMap<>();
             params.put("admin", admin);
         }
         catch (NullPointerException npe) {
@@ -140,7 +141,7 @@ public class GroupAdminRemoved extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

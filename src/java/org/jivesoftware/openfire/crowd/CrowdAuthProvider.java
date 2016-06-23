@@ -43,14 +43,6 @@ public class CrowdAuthProvider implements AuthProvider {
 		}
 	}
 
-	public boolean isPlainSupported() {
-		return true;
-	}
-
-	public boolean isDigestSupported() {
-		return false;
-	}
-
     /**
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
@@ -65,6 +57,7 @@ public class CrowdAuthProvider implements AuthProvider {
      * @throws ConnectionException it there is a problem connecting to user and group sytem
      * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
+	@Override
 	public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
 		if (manager == null) {
 			throw new ConnectionException("Unable to connect to Crowd");
@@ -93,20 +86,25 @@ public class CrowdAuthProvider implements AuthProvider {
 		}
 	}
 
-	public void authenticate(String username, String token, String digest) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-		throw new UnsupportedOperationException("XMPP digest authentication not supported by this version of authentication provider");
-	}
-
+	@Override
 	public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Retrieve password not supported by this version of authentication provider");
 	}
 
+	@Override
 	public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Setting password not implemented by this version of authentication provider");
 	}
 
+	@Override
 	public boolean supportsPasswordRetrieval() {
 		return false;
 	}
+
+    @Override
+    public boolean isScramSupported() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
 }

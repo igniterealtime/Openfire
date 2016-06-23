@@ -25,15 +25,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.fastpath.util.TaskEngine;
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.FastDateFormat;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.XMPPDateTimeFormat;
@@ -84,7 +85,7 @@ public class WorkgroupPresence {
      * to susbcribe to the workgroup presence. The temporary subscription will be removed
      * when an unavailable presence is sent to the workgroup.
      */
-    private final Set<JID> listeners = new ConcurrentHashSet<JID>();
+    private final Set<JID> listeners = Collections.newSetFromMap(new ConcurrentHashMap<JID, Boolean>());
 
     /**
      * Holds the bare JID address of all the users that subscribed to the presence of the

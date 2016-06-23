@@ -8,7 +8,7 @@
 <!--
     Build Requirements:
 
-        * Ant 1.6 or 1.7 (including optional tasks)
+        * Ant 1.7.1 or higher (including optional tasks)
         * JDK 1.7 or higher
         * jUnit in your Ant or Java classpath
 -->
@@ -23,8 +23,8 @@
     <!-- GLOBAL PROPERTIES                                                                       -->
     <!-- ======================================================================================= -->
 
-    <property name="version.major" value="3"/>
-    <property name="version.minor" value="11"/>
+    <property name="version.major" value="4"/>
+    <property name="version.minor" value="1"/>
     <property name="version.revision" value="0"/>
     <property name="version.extra" value="alpha"/>    <!-- For 'beta' or 'alpha' -->
 
@@ -64,13 +64,14 @@
     <property name="jar.dest.dir" value="${work.dir}/lib"/>
     <property name="resources.dir" value="${src.dir}/resources"/>
 
-    <property name="overlay.dir"   value="${basedir}/custom"/>
-    <property name="overlay.src.dir"   value="${overlay.dir}/source"/>
-    <property name="overlay.web.dir"   value="${overlay.dir}/webapp"/>
-    <property name="overlay.lib.dir"   value="${overlay.dir}/lib"/>
-    <property name="overlay.conf.dir"   value="${overlay.dir}/conf"/>
-    <property name="overlay.properties.file"   value="overlay.properties"/>
-    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>    
+    <property name="overlay.dir" value="${basedir}/custom"/>
+    <property name="overlay.src.dir" value="${overlay.dir}/source"/>
+    <property name="overlay.web.dir" value="${overlay.dir}/webapp"/>
+    <property name="overlay.lib.dir" value="${overlay.dir}/lib"/>
+    <property name="overlay.conf.dir" value="${overlay.dir}/conf"/>
+    <property name="overlay.i18n.dir" value="${overlay.dir}/i18n"/>
+    <property name="overlay.resources.dir" value="${overlay.dir}/resources"/>
+    <property name="overlay.compile.dir" value="${work.dir}/overlay/classes"/>
 
     <property name="javadoc.src.dir" value="${src.dir}/javadoc"/>
     <property name="javadoc.dest.dir" value="${work.dir}/javadoc"/>
@@ -82,6 +83,7 @@
 
     <property name="test.dest.dir" value="${work.dir}/test"/>
     <property name="test.classes.dest.dir" value="${test.dest.dir}/classes"/>
+    <property name="test.resources.dest.dir" value="${test.dest.dir}/resources"/>
     <property name="test.results.dest.dir" value="${test.dest.dir}/results"/>
 
     <property name="plugin.src.dir" value="${src.dir}/plugins"/>
@@ -90,6 +92,7 @@
     <property name="plugin.dev.dest.dir" value="${work.dir}/plugins-dev"/>
     <property name="plugin.dest.dir" value="${work.dir}/plugins"/>
     <property name="nonrelease.plugin.dir" value="${basedir}/plugins-tmp"/>
+    <property name="halt.on.plugin.error" value="true"/>
     <property name="webapp.dest.dir" value="${work.dir}/webapp"/>
 
     <property name="release.dest.dir" value="${target.dir}/release"/>
@@ -101,7 +104,7 @@
     <property name="copy.dbscripts" value="true"/>
     <property name="overwrite" value="true"/>
 
-    <property name="installer.install4j.home" value="/home/j2ee-bamboo/install4j.5.1.11"/>
+    <property name="installer.install4j.home" value="/home/bamboo/install4j.6.0.4"/>
     <property name="installer.src" value="${basedir}/build/installer"/>
     <property name="installer.dest.dir" value="${release.dest.dir}"/>
     <property name="installer.install4j.srcfile" value="${installer.src}/openfire.install4j"/>
@@ -121,19 +124,80 @@
     <!-- For auto-running and debugging -->
     <property name="debug" value="false"/>
 
-    <!-- ======================================================================================= -->
-    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
-    <!-- ======================================================================================= -->
-
     <path id="ant.dependencies">
         <fileset dir="${lib.ant.dir}" includes="*.jar" />
         <fileset dir="${ant.home}/lib" includes="ant.jar" />
     </path>
-    
+
+    <!-- Reference DTDs and XSDs on the classpath, to prevent them from being looked up online. -->
+    <xmlcatalog id="dtds">
+        <!-- Provided on the classpath (by Jetty/Jasper) -->
+        <entity publicId="http://java.sun.com/xml/ns/j2ee" location="javax/servlet/jsp/resources/jsp_2_0.xsd"/>
+        <entity publicId="http://java.sun.com/xml/ns/javaee" location="javax/servlet/jsp/resources/jsp_2_1.xsd"/>
+        <entity publicId="http://java.sun.com/xml/ns/javaee" location="javax/servlet/jsp/resources/jsp_2_2.xsd"/>
+        <entity publicId="http://xmlns.jcp.org/xml/ns/javaee" location="javax/servlet/jsp/resources/jsp_2_3.xsd"/>
+        <entity publicId="http://java.sun.com/JSP/Page" location="javax/servlet/jsp/resources/jspxml_2_0.xsd"/>
+        <entity publicId="http://java.sun.com/xml/ns/j2ee" location="javax/servlet/jsp/resources/web-jsptaglibrary_2_0.xsd"/>
+        <entity publicId="http://java.sun.com/xml/ns/javaee" location="javax/servlet/jsp/resources/web-jsptaglibrary_2_1.xsd"/>
+        <dtd publicId="http://java.sun.com/JSP/Page" location="javax/servlet/jsp/resources/jspxml_2_0.dtd"/>
+        <dtd publicId="-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN" location="javax/servlet/jsp/resources/web-jsptaglibrary_1_2.dtd"/>
+
+        <!-- Provided in the lib folder -->
+        <dtd publicId="-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" location="${lib.ant.dir}/web-app_2_3.dtd"/>
+    </xmlcatalog>
+
+    <!-- ======================================================================================= -->
+    <!-- GLOBAL TASKDEFs                                                                         -->
+    <!-- ======================================================================================= -->
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="propertymerge" classname="org.jugbb.ant.propertymerge.PropertyMergeTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+        <classpath refid="ant.dependencies" />
+    </taskdef>
+
+    <!-- ======================================================================================= -->
+    <!-- PATHs / PATTERNSETs / FILTERSETs                                                        -->
+    <!-- ======================================================================================= -->
+
+    <available type="dir"  file="${overlay.dir}"                property="overlay.dir.found"/>
+    <available type="dir"  file="${overlay.src.dir}"            property="overlay.src.dir.found"/>
+    <available type="dir"  file="${overlay.web.dir}"            property="overlay.web.dir.found"/>
+    <available type="dir"  file="${overlay.lib.dir}"            property="overlay.lib.dir.found"/>
+    <available type="dir"  file="${overlay.conf.dir}"           property="overlay.conf.dir.found"/>
+    <available type="dir"  file="${overlay.i18n.dir}"           property="overlay.i18n.dir.found"/>
+    <available type="dir"  file="${overlay.resources.dir}"      property="overlay.resources.dir.found"/>
+
+    <!-- When overlay is used the content of "lib.merge.dir" needs to be combined with the content of "overlay.lib.dir"
+         Here, "libs.to.merge" is created which will always refer to the correct combination. "libs.to.merge" should be
+         used instead of "lib.merge.dir" and/or "overlay.lib.dir" from this point onwards.
+      -->
+    <if>
+        <equals arg1="${overlay.lib.dir.found}" arg2="true"/>
+        <then>
+            <path id="libs.to.merge">
+                <fileset dir="${lib.merge.dir}"   includes="**/*.jar"/>
+                <fileset dir="${overlay.lib.dir}" includes="**/*.jar"/>
+            </path>
+        </then>
+        <else>
+            <path id="libs.to.merge">
+                <fileset dir="${lib.merge.dir}"   includes="**/*.jar"/>
+            </path>
+        </else>
+    </if>
+
     <path id="javadoc.dependencies">
         <fileset dir="${lib.build.dir}" includes="*.jar" excludes="junit.jar"/>
-        <fileset dir="${lib.merge.dir}" includes="*.jar"/>
-        <fileset dir="${lib.dist.dir}" includes="servlet-api.jar, servlet-api-schemas.jar, mail.jar, jdic.jar"/>
+        <path refid="libs.to.merge" />
+        <fileset dir="${lib.dist.dir}" includes="mail.jar, jdic.jar"/>
         <fileset dir="${lib.dist.dir}" includes="bcpg-jdk15on.jar, bcpkix-jdk15on.jar, bcprov-jdk15on.jar"/>
     </path>
 
@@ -148,13 +212,9 @@
         <fileset dir="${lib.web.dir}" includes="*.jar"/>
     </path>
 
-    <path id="custom.dependencies">
-        <fileset dir="${overlay.lib.dir}" includes="*.jar"/>
-    </path>
-
     <path id="test.dependencies">
         <path refid="compile.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="${jar.name}"/>
         <fileset dir="${lib.build.dir}" includes="junit.jar"/>
         <fileset dir="${lib.build.dir}" includes="hamcrest-core.jar"/>
         <fileset dir="${lib.dist.dir}" includes="slf4j-log4j12.jar"/>
@@ -163,7 +223,7 @@
 
     <path id="plugin.dependencies">
         <path refid="javadoc.dependencies"/>
-        <fileset dir="${jar.dest.dir}" includes="openfire.jar"/>
+        <fileset dir="${jar.dest.dir}" includes="${jar.name}"/>
     </path>
 
     <patternset id="compile.sources">
@@ -172,6 +232,7 @@
 
     <patternset id="test.sources">
         <include name="**/*Test.java"/>
+        <exclude name="**/CheckChainTrustedTest.java" if="skipResourceIntensiveTests"/>
     </patternset>
 
     <patternset id="web.sources">
@@ -187,40 +248,42 @@
         <include name="**/*.js"/>
     </patternset>
 
-	<presetdef name="of.javac">
-		<javac encoding="utf8" source="${javac.source}" target="${javac.target}"/>
-	</presetdef>
-    <!-- ======================================================================================= -->
-    <!-- GLOBAL TASKDEFs                                                                         -->
-    <!-- ======================================================================================= -->
-
-    <taskdef resource="net/sf/antcontrib/antlib.xml">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
-        <classpath refid="ant.dependencies" />
-    </taskdef>
-    <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
-        <classpath refid="ant.dependencies" />
-    </typedef>
+    <presetdef name="of.javac">
+        <javac encoding="utf8" source="${javac.source}" target="${javac.target}" includeAntRuntime="no" debug="on"/>
+    </presetdef>
 
     <!-- ======================================================================================= -->
     <!-- TARGETs                                                                                 -->
     <!-- ======================================================================================= -->
 
-    <!-- init ================================================================================== -->
+	<!-- git.revision ========================================================= 
+	     http://stackoverflow.com/questions/2974106
+	-->
+	<available file=".git" type="dir" property="git.present"/>
+
+	<target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
+	    <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+	        <arg value="rev-parse"/>
+	        <arg value="--short"/>
+	        <arg value="HEAD"/>
+	    </exec>
+	    <condition property="repository.version" value="${git.revision}" else="unknown">
+	        <and>
+	            <isset property="git.revision"/>
+	            <length string="${git.revision}" trim="yes" length="0" when="greater"/>
+	        </and>
+	    </condition>
+		<echo message="repository.version set to '${repository.version}'" />
+	</target>
+
+	<!-- init ================================================================================== -->
     <target name="init">
 
         <!-- Check for min build requirements -->
 
         <condition property="ant.not.ok" value="true">
             <not>
-                <or>
-                    <contains string="${ant.version}" substring="1.6"/>
-                    <contains string="${ant.version}" substring="1.7"/>
-                    <contains string="${ant.version}" substring="1.8"/>
-                    <contains string="${ant.version}" substring="1.9"/>
-                </or>
+                <antversion atleast="1.7.1"/>
             </not>
         </condition>
         <condition property="java.not.ok" value="true">
@@ -228,11 +291,12 @@
                 <or>
                     <contains string="${ant.java.version}" substring="1.7"/>
                     <contains string="${ant.java.version}" substring="1.8"/>
+                    <contains string="${ant.java.version}" substring="1.9"/>
                 </or>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x or 1.7.x to build Openfire"/>
-        <fail if="java.not.ok" message="Must use JDK 1.7.x or higher to build Openfire"/>
+        <fail if="ant.not.ok" message="Must use Ant 1.7.1 or higher to build Openfire"/>
+        <fail if="java.not.ok" message="Must use JDK 1.7 or higher to build Openfire"/>
 
         <tstamp/>
         <tstamp>
@@ -243,7 +307,6 @@
         </tstamp>
 
         <mkdir dir="${work.dir}"/>
-        <mkdir dir="${overlay.compile.dir}"/>
 
         <!-- Setup the full version property correctly -->
         <if>
@@ -265,76 +328,88 @@
 
     <!-- compile =============================================================================== -->
     <target name="compile" depends="init" description="Compiles Openfire app code">
+
         <mkdir dir="${compile.dir}"/>
-        <of.javac
-                destdir="${compile.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                >
+        <of.javac destdir="${compile.dir}">
             <src path="${src.java.dir}"/>
             <patternset refid="compile.sources"/>
-            <classpath>
-                <path refid="compile.dependencies"/>
-            </classpath>
+            <classpath refid="compile.dependencies"/>
         </of.javac>
 
-        <available file="${overlay.lib.dir}" type="dir" property="overlay.lib.found"/>
+        <!-- The Ant 'javac' tasks does not allow one to use more than one source directory and simultaneously exclude
+             duplicates from one. As a work-around, the overlay-sources are compiled in a second iteration, overwriting
+             any compiled files from the first iteration.
+        -->
         <if>
-            <equals arg1="${overlay.lib.found}" arg2="true"/>
-            <then>
-                <mkdir dir="${jar.dest.dir}"/>
-                <copy todir="${jar.dest.dir}" overwrite="true">
-                    <fileset dir="${overlay.lib.dir}" includes="*.*"/>
-                </copy>
-            </then>
-            <else><echo>No custom lib here </echo></else>
-        </if>
-
-        <available file="${overlay.src.dir}" type="dir" property="overlay.source.found"/>
-        <if>
-            <equals arg1="${overlay.source.found}" arg2="true"/>
+            <equals arg1="${overlay.src.dir.found}" arg2="true"/>
             <then>
                 <mkdir dir="${overlay.compile.dir}"/>
-                <of.javac
-                        destdir="${overlay.compile.dir}"
-                        includeAntRuntime="no"
-                        debug="on"
-                        >
+                <of.javac destdir="${overlay.compile.dir}">
                     <src path="${overlay.src.dir}"/>
                     <patternset refid="compile.sources"/>
                     <classpath>
-                        <path refid="custom.dependencies"/>
-                        <path refid="compile.dependencies"/>
                         <path location="${compile.dir}"/>
+                        <path refid="compile.dependencies"/>
                     </classpath>
                 </of.javac>
 
+                <!-- By copying/overwriting overlays directly into compile.dir, all tasks executed after this one need
+                     not consider both compile.dir and overlay.compile.dir (which simplifies further tasks considerably).
+                -->
+                <copy todir="${compile.dir}" overwrite="true">
+                    <fileset dir="${overlay.compile.dir}"/>
+                </copy>
             </then>
-            <else><echo>Nothing to compile from custom here </echo></else>
         </if>
     </target>
 
     <!-- i18n ================================================================================== -->
     <!-- Note, this is a "private" target - no need to call it externally -->
     <target name="-i18n">
-        <!-- Auto generates a default base i18n file -->
+
         <mkdir dir="${target.i18n.dir}"/>
-        <copy file="${src.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
+
+        <if>
+            <equals arg1="${overlay.i18n.dir.found}" arg2="true"/>
+            <then>
+                <!-- Overlay files exist for i18n: append/override the files that ship with Openfire. -->
+                <foreach target="-i18n-overlay" param="i18n-propertyfile">
+                    <path>
+                        <fileset dir="${src.i18n.dir}">
+                            <include name="${i18n.basename}*.properties"/>
+                        </fileset>
+                    </path>
+                </foreach>
+            </then>
+            <else>
+                <!-- No overlay for i18n: simply copy all files. -->
+                <copy todir="${target.i18n.dir}">
+                    <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+                </copy>
+            </else>
+        </if>
+
+        <!-- Auto generates a default base i18n file -->
+        <copy file="${target.i18n.dir}/${i18n.basename}_${i18n.default.locale}.properties"
               tofile="${target.i18n.dir}/${i18n.basename}.properties"/>
 
-        <!-- if title override file exists, overwrite all i18n files -->
-        <available file="${overlay.dir}/${overlay.properties.file}" type="file" property="overlay.props.found"/>
-        <if>
-                <equals arg1="${overlay.props.found}" arg2="true"/>
-                <then>
-                  <echo>Found overlay file: ${overlay.dir}/${overlay.properties.file}</echo>
-		          <property file="${overlay.dir}/${overlay.properties.file}"/>
-                    <replace dir="${target.i18n.dir}">
-                        <replacefilter token="title = Wildfire" value="title=${title}"/>
-                        <replacefilter token="short.title = Wildfire" value="short.title=${short.title}"/>
-                    </replace>
+    </target>
 
-                </then>
+    <!-- Note, this is a "private" target - no need to call it externally -->
+    <target name="-i18n-overlay">
+        <basename property="filename" file="${i18n-propertyfile}"/>
+        <if>
+            <available file="${overlay.i18n.dir}/${filename}"/>
+            <then>
+                <propertymerge
+                        inputpropertyfile="${src.i18n.dir}/${filename}"
+                        mergepropertyfile="${overlay.i18n.dir}/${filename}"
+                        outputpropertyfile="${target.i18n.dir}/${filename}"
+                        ignoreMissingMergeFile="true" />
+            </then>
+            <else>
+                <copy file="${src.i18n.dir}/${filename}" tofile="${target.i18n.dir}/${filename}"/>
+            </else>
         </if>
     </target>
 
@@ -352,6 +427,7 @@
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
                 <xmltask source="${plugin.src.dir}/@{plugin}/plugin.xml" dest="${plugin.src.dir}/@{plugin}/plugins2.xml">
+                    <xmlcatalog refid="dtds"/>
                     <insert path="/plugin/minOpenfireVersion[last()]"  position="after">
                         <![CDATA[
                           <development>
@@ -380,17 +456,15 @@
         <mkdir dir="${jar.dest.dir}"/>
         <!-- Make main Openfire jar -->
         <jar jarfile="${jar.dest.dir}/${jar.name}" index="true" duplicate="preserve">
-            <fileset dir="${compile.dir}" includes="**/*.class"
-                     excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class">
-                <!-- don't include files that have an overlay counterpart -->
-                 <present present="srconly" targetdir="${overlay.compile.dir}"/>
-            </fileset>
-            <!-- now include overlay files -->
-            <fileset dir="${overlay.compile.dir}" includes="**/*.class"/>                      
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${compile.dir}" includes="**/*.class" excludes="org/jivesoftware/openfire/starter/ServerStarter*.class,org/jivesoftware/openfire/launcher/*.class"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
+            <fileset dir="${overlay.resources.dir}/jar" includes="**" erroronmissingdir="false"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
-            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <archives>
+                <zips>
+                    <path refid="libs.to.merge"/>
+                </zips>
+            </archives>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
             </manifest>
@@ -416,9 +490,14 @@
             <fileset dir="${lib.dist.dir}" includes="*.*"/>
         </copy>
 
-        <!-- Copy in tag library support -->
+        <!-- Copy in JSP support -->
         <copy todir="${jar.dest.dir}">
-            <fileset dir="${lib.build.dir}" includes="commons-el.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.apache.taglibs.taglibs-standard-impl.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.apache.taglibs.taglibs-standard-spec.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.eclipse.jetty.apache-jsp.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.eclipse.jetty.orbit.org.eclipse.jdt.core.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.mortbay.jasper.apache-el.jar"/>
+            <fileset dir="${lib.build.dir}" includes="org.mortbay.jasper.apache-jsp.jar"/>
         </copy>
 
         <!-- Copy in jasper runtime jar -->
@@ -516,28 +595,30 @@
 
         <antcall target="-jspc-impl"/>
     </target>
-    
+
     <target name="-jspc-impl" unless="no.jspc">
 
-        <!-- we're forced to create a temp dir to properly overwrite sources from overlay directory -->
+        <!-- In a different approach to 'overlay' as compared with the 'compile' task, this task first creates a new
+             directory that combines of the original files, overwritten by the 'overlay' files before processing
+             occurs. This approach is simpler, but requires quite some disk operations (and is therefor not used in the
+             'compile' task).
+        -->
         <mkdir dir="${jspc.jsp.src.dir}"/>
 
         <copy todir="${jspc.jsp.src.dir}">
-            <fileset dir="${web.dir}"/>
+            <fileset dir="${web.dir}" includes="**/*"/>
         </copy>
-        <!-- copy overlay -->
 
-        <available file="${overlay.web.dir}" type="dir" property="overlay.webdir.found"/>
         <if>
-            <equals arg1="${overlay.webdir.found}" arg2="true"/>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
             <then>
                 <copy todir="${jspc.jsp.src.dir}" overwrite="true">
-                    <fileset dir="${overlay.web.dir}"/>
+                    <fileset dir="${overlay.web.dir}" includes="**/*"/>
                 </copy>
             </then>
         </if>
 
-
+        <!-- Generate .java files from the .jsp files. -->
         <java classname="org.apache.jasper.JspC" fork="true">
             <classpath>
                 <pathelement location="${java.home}/../lib/tools.jar"/>
@@ -550,13 +631,9 @@
             <arg line="-webinc '${jspc.dest.dir}/web.partial.xml'"/>
         </java>
 
-        <!-- Compile java source -->
-        <of.javac
-                destdir="${jspc.classes.dest.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                includes="org/jivesoftware/openfire/admin/**/*.java"
-                >
+        <!-- Compile the .java files-->
+        <of.javac destdir="${jspc.classes.dest.dir}">
+            <include name="org/jivesoftware/openfire/admin/**/*.java"/>
             <src path="${jspc.java.dest.dir}"/>
             <classpath>
                 <pathelement path="${compile.dir}"/>
@@ -574,19 +651,40 @@
             </filterset>
         </copy>
 
-        <!-- Copy over Sitemesh files. -->
-        <copy file="${web.dir}/WEB-INF/decorators.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/decorators.xml"
-              overwrite="true">
+        <!-- When there is a web.xml in the overlay use that. -->
+        <if>
+            <available file="${overlay.web.dir}/WEB-INF/web.xml" />
+            <then>
+                <copy file="${overlay.web.dir}/WEB-INF/web.xml"
+                      toFile="${webapp.dest.dir}/WEB-INF/web.xml"
+                      overwrite="true">
+                    <filterset begintoken="&lt;!--@@" endtoken="@@--&gt;">
+                        <filter token="JSPC-SERVLETS" value="${servlet-xml}"/>
+                    </filterset>
+                </copy>
+            </then>
+        </if>
+
+        <!-- Copy over other WEB-INF files. -->
+        <copy todir="${webapp.dest.dir}/WEB-INF" overwrite="true">
+            <fileset dir="${web.dir}/WEB-INF">
+                <include name="**/*"/>
+                <exclude name="web.xml"/>
+            </fileset>
         </copy>
-        <copy file="${web.dir}/WEB-INF/sitemesh.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/sitemesh.xml"
-              overwrite="true">
-        </copy>
-        <copy file="${web.dir}/WEB-INF/dwr.xml"
-              toFile="${webapp.dest.dir}/WEB-INF/dwr.xml"
-              overwrite="true">
-        </copy>
+
+        <!-- When there are WEB-INF overlay files, use those. -->
+        <if>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
+            <then>
+                <copy todir="${webapp.dest.dir}/WEB-INF" overwrite="true">
+                    <fileset dir="${overlay.web.dir}/WEB-INF">
+                        <include name="**/*"/>
+                        <exclude name="web.xml"/>
+                    </fileset>
+                </copy>
+            </then>
+        </if>
 
         <!-- Create a jar of compiled servlets -->
         <jar jarfile="${jspc.dest.dir}/${jspc.jar.name}">
@@ -599,11 +697,7 @@
     <target name="test" depends="openfire" description="Compiles and runs test cases">
         <!-- Compile all test code -->
         <mkdir dir="${test.classes.dest.dir}"/>
-        <of.javac
-                destdir="${test.classes.dest.dir}"
-                includeAntRuntime="no"
-                debug="on"
-                >
+        <of.javac destdir="${test.classes.dest.dir}">
             <src path="${src.test.java.dir}"/>
             <patternset refid="test.sources"/>
             <classpath>
@@ -619,7 +713,7 @@
 
         <!-- Run jUnit -->
         <mkdir dir="${test.results.dest.dir}"/>
-        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}">
+        <junit printsummary="yes" haltonfailure="yes" fork="yes" dir="${test.dest.dir}" includeantruntime="false">
 	    <sysproperty key="openfireHome" value="${target.openfireHome}"/>
 
             <!-- We must add our own classes to the classpath for testing -->
@@ -627,6 +721,7 @@
                 <path refid="test.dependencies"/>
                 <pathelement path="${test.dest.dir}"/>
                 <pathelement path="${test.classes.dest.dir}"/>
+                <pathelement path="${test.resources.dest.dir}"/>
             </classpath>
 
             <formatter type="xml"/>
@@ -652,12 +747,11 @@
             <fileset dir="${src.dir}" includes="conf/**/*.*"></fileset>
         </copy>
 
-        <available file="${overlay.conf.dir}" type="dir" property="overlay.conf.found"/>
         <if>
-            <equals arg1="${overlay.conf.found}" arg2="true"/>
+            <equals arg1="${overlay.conf.dir.found}" arg2="true"/>
             <then>
                 <copy todir="${target.openfireHome}" overwrite="true">
-                    <fileset dir="${overlay.dir}" includes="conf/**/*.*"/>
+                    <fileset dir="${overlay.conf.dir}" includes="**/*"/>
                 </copy>
             </then>
             <else><echo>No custom config here </echo></else>
@@ -683,7 +777,12 @@
 
         <!-- Copy native authentication files -->
         <copy todir="${target.openfireHome}/resources">
-            <fileset dir="${src.dir}/resources">
+            <fileset dir="${resources.dir}">
+                <include name="nativeAuth/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${target.openfireHome}/resources">
+            <fileset dir="${overlay.resources.dir}" erroronmissingdir="false">
                 <include name="nativeAuth/**"/>
             </fileset>
         </copy>
@@ -760,6 +859,22 @@
                 <exclude name="**/*.jspf"/>
             </fileset>
         </copy>
+
+        <!-- Copy admin plugin overlay resources -->
+        <if>
+            <equals arg1="${overlay.web.dir.found}" arg2="true"/>
+            <then>
+                <copy todir="${plugin.dest.dir}/admin/webapp" overwrite="true">
+                    <!-- All web resources minus jsp's and jspf's - those are precompiled -->
+                    <fileset dir="${overlay.web.dir}">
+                        <patternset refid="web.sources"/>
+                        <exclude name="**/*.jsp"/>
+                        <exclude name="**/*.jspf"/>
+                    </fileset>
+                </copy>
+            </then>
+        </if>
+
         <!-- Copy other admin WEB-INF stuff -->
         <copy todir="${plugin.dest.dir}/admin/webapp">
             <fileset dir="${webapp.dest.dir}"/>
@@ -852,7 +967,6 @@
         <copy todir="${release.src.out.dir}/src">
             <fileset dir="${src.dir}">
                 <include name="**/*.java" />
-                <srcinc />
             </fileset>
             <filterset>
                 <filter token="DATE" value="${builddate}"/>
@@ -873,7 +987,6 @@
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.src.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
         </copy>
         <!-- Copy build -->
         <copy todir="${release.src.out.dir}/build">
@@ -959,7 +1072,6 @@
         <!-- Copy the i18n files to the resources dir. This way they won't be in the jar only -->
         <copy todir="${release.out.dir}/resources/i18n">
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
-            <fileset dir="${src.i18n.dir}" includes="*.properties"/>
         </copy>
 
         <!-- Package the release -->
@@ -1079,144 +1191,94 @@
 
     </target>
     
-    <!-- installer.rpm ========================================================================= -->
+    <!-- installer.rpm ======================================================== 
+         Build RPM artifiacts, set rpmbuild.arch to build non-x64, for example:
+           $ ant installer.rpm -Drpmbuild.arch=noarch
+           $ ant installer.rpm -Drpmbuild.arch=i686         
+    -->
     <property name="bundle.jre" value="true" />
     <property name="target.work.subdir" value="rpm" />
     <property name="target.rpm" value="${work.dir}/${target.work.subdir}" />
     <property name="rpm.spec.file" value="${basedir}/build/rpm/openfire.spec"/>
+	<property name="rpmbuild.arch" value="x86_64" />
     <tstamp>
         <format property="rpm.builddate" pattern="EEE MMM dd yyyy" locale="en"/>
     </tstamp>
-    <target name="installer.rpm" depends="init, dist.init" description="Builds a rpm of openfire.">
+    <tstamp>
+        <format property="rpm.builddate2" pattern="yyyyMMdd" locale="en"/>
+    </tstamp>
+    <target name="installer.rpm" depends="init, dist.init, git.revision"
+    	    description="Builds a rpm of openfire.">
         <antcall target="dist.src"/>
 
+    	<!-- create empty dirs to allow rpmbuild to do its thing -->
         <mkdir dir="${target.rpm}/SPECS" />
         <mkdir dir="${target.rpm}/SOURCES" />
         <mkdir dir="${target.rpm}/BUILD" />
         <mkdir dir="${target.rpm}/SRPMS" />
         <mkdir dir="${target.rpm}/RPMS" />
 
-        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+        <!-- Setup the RPM versioning correctly, so one can update from 
+             a alpha,beta,rc build to GA 
+             For General Releases we get x.y.z-1
+             For Alpha builds we get     x.y.z-0.1.{YYYYMMDD}alpha
+             For Beta/RC builds we get   x.y.z-0.2.(beta|rc)
+        -->
+        <property name="rpmbuild.version"
+                  value="${version.major}.${version.minor}.${version.revision}"/>
         <if>
-            <equals arg1="${bundle.jre}" arg2="true"/>
+            <equals arg1="${version.extra}" arg2=""/>
             <then>
+                <property name="rpmbuild.release"
+                          value="1"/>
+            </then>
+        <elseif>
+	        <equals arg1="${version.extra}" arg2="alpha"/>
+            <then>
+	        	<property name="rpmbuild.release"
+                          value="0.1.${rpm.builddate2}${version.extra}"/>
+ 			</then>
+		</elseif>
+        <else>
+            <property name="rpmbuild.release"
+                      value="0.2.${version.extra}"/>        	
+        </else>
+        </if>
+        <copy tofile="${target.rpm}/SPECS/openfire.spec" file="${rpm.spec.file}" />
+		<!-- Save the user from themself, if noarch is the target arch, ignore 
+		     copying the JRE as well -->
+    	<if>
+			<and>
+    		<equals arg1="${bundle.jre}" arg2="true"/>
+			<not>
+				<equals arg1="${rpmbuild.arch}" arg2="noarch" />
+			</not>
+			</and>
+			<then>
                 <!-- Include bundled jre -->
                 <copy todir="${target.rpm}/SOURCES" file="${jre.bundle.location}" />
             </then>
         </if>
-        <copy todir="${target.rpm}/SOURCES" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
+        <copy todir="${target.rpm}/SOURCES/" file="${release.dest.dir}/${release.fullname.src}.tar.gz" />
 
 
-        <if>
-            <equals arg1="${bundle.jre}" arg2="true"/>
-            <then>
-	      <rpm specFile="openfire.spec"
-		  topDir="${target.rpm}"
-		  command="-ba --target i386 --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-		  failOnError="true"
-		  />
+	    <rpm specFile="openfire.spec"
+		     topDir="${target.rpm}"
+		     command="-ba --target ${rpmbuild.arch} --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${rpmbuild.version}' --define 'OPENFIRE_RELEASE ${rpmbuild.release}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_REPOVERSION ${repository.version}' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+		     failOnError="true"
+		 />
 
+    	  <!-- copy the rpmbuild result into the release directory! -->
 	      <copy todir="${release.dest.dir}" >
 		  <fileset dir="${target.rpm}/SRPMS" />
-		  <fileset dir="${target.rpm}/RPMS/i386" />
+		  <fileset dir="${target.rpm}/RPMS/${rpmbuild.arch}" />
 	      </copy>
-	    </then>
-            <else>
-	      <rpm specFile="openfire.spec"
-		  topDir="${target.rpm}"
-		  command="-ba --target noarch --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
-		  failOnError="true"
-		  />
-
-	      <copy todir="${release.dest.dir}" >
-		  <fileset dir="${target.rpm}/SRPMS" />
-		  <fileset dir="${target.rpm}/RPMS/noarch" />
-	      </copy>
-	    </else>
-        </if>
-    </target>
-
-    <!-- installer.solaris ========================================================================= -->
-    <target name="installer.solaris" depends="init, dist.init, dist.bin" description="Builds a solaris pkg of openfire.">
-        <property name="target.solaris" value="${work.dir}/solaris" />
-        <property name="target.solaris.root" value="${target.solaris}/root" />
-<!--        <property name="target.solaris.pkg" value="${target.solaris}/pkg" /> -->
-        <property name="target.solaris.pkg" value="/var/spool/pkg" />
-        <property name="solaris.pkg.name" value="JSopenfire"/>
-        <property name="solaris.pkg.filename" value="${solaris.pkg.name}-${version}-ALL.pkg"/>
-        <tstamp>
-            <format property="solaris.builddate" pattern="yyyymmdd" locale="en"/>
-        </tstamp>
-
-        <antcall target="dist.bin">
-            <!-- Don't need package for installer build -->
-            <param name="no.package" value="true"/>
-        </antcall>
-
-        <mkdir dir="${target.solaris.root}" />
-        <mkdir dir="${target.solaris.root}/opt" />
-<!--        <mkdir dir="${target.solaris.pkg}" /> -->
-        <mkdir dir="${target.solaris.root}/opt/openfire/resources/solaris" />
-
-        <copy todir="${target.solaris.root}/opt/openfire">
-            <fileset dir="${release.out.dir}"/>
-        </copy>
-
-	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfirectl" />
-	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/openfire.sh" />
-	<chmod perm="0755" file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.sh" />
-
-	<delete file="${target.solaris.root}/opt/openfire/bin/openfire.bat" />
-	<delete file="${target.solaris.root}/opt/openfire/bin/openfire-dev.bat" />
-	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfire-launchd-wrapper.sh" />
-	<delete file="${target.solaris.root}/opt/openfire/bin/extra/openfired" />
-	<delete dir="${target.solaris.root}/opt/openfire/bin/extra/redhat" />
-	<delete file="${target.solaris.root}/opt/openfire/bin/extra/redhat-postinstall.sh" />
-	<delete file="${target.solaris.root}/opt/openfire/bin/extra/embedded-db-viewer.bat" />
-
-        <copy tofile="${target.solaris.root}/pkginfo" file="${basedir}/build/pkg/pkginfo" />
-        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/openfire.xml" file="${basedir}/build/solaris/openfire.xml" />
-        <copy tofile="${target.solaris.root}/opt/openfire/resources/solaris/modules.xml" file="${basedir}/src/conf/modules.xml" />
-        <copy tofile="${target.solaris.root}/checkinstall" file="${basedir}/build/solaris/checkinstall" />
-        <copy tofile="${target.solaris.root}/postinstall" file="${basedir}/build/solaris/postinstall" />
-        <copy tofile="${target.solaris.root}/preremove" file="${basedir}/build/solaris/preremove" />
-
-        <copy tofile="${target.solaris.root}/Prototype" file="${basedir}/build/pkg/Prototype.template" overwrite="true"/>
-        <exec executable="/usr/bin/pkgproto" output="${target.solaris.root}/Prototype" append="true" failonerror="true">
-            <arg value="${target.solaris.root}/opt/openfire=/opt/openfire"/>
-        </exec>
-
-        <replaceregexp file="${target.solaris.root}/Prototype" match="(.* .* .* .*) .* .*" replace="\1 daemon daemon" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/openfire.xml=.* .* .* .*)" replace="e \1" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/conf/modules.xml=.* .* .* .*)" replace="e \1" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/keystore=.* .* .* .*)" replace="e \1" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/truststore=.* .* .* .*)" replace="e \1" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/resources/security/client.truststore=.* .* .* .*)" replace="e \1" byline="true"/>
-        <replaceregexp file="${target.solaris.root}/Prototype" match=".* (.* /opt/openfire/bin/embedded-db.rc=.* .* .* .*)" replace="e \1" byline="true"/>
-
-        <exec executable="/usr/bin/pkgmk" dir="${target.solaris.root}" failonerror="true">
-            <arg value="-o"/>
-<!--            <arg value="-d ${target.solaris.pkg}"/> this doesn't work as advertised -->
-            <arg value="-v ${version}"/>
-            <arg value="-p ${solaris.builddate}"/>
-        </exec>
-
-        <touch file="${release.dest.dir}/${solaris.pkg.filename}"/>
-
-        <exec executable="/usr/bin/pkgtrans" failonerror="true">
-            <arg value="-s"/>
-            <arg value="${target.solaris.pkg}"/>
-            <arg value="${release.dest.dir}/${solaris.pkg.filename}"/>
-            <arg value="${solaris.pkg.name}"/>
-        </exec>
-
-        <gzip src="${release.dest.dir}/${solaris.pkg.filename}" destfile="${release.dest.dir}/${solaris.pkg.filename}.gz"/>
-
-        <delete dir="${target.solaris.pkg}/${solaris.pkg.name}"/>
     </target>
 
     <!-- plugins =============================================================================== -->
     <target name="plugins" description="Builds all plugins" depends="anttasks">
+        <antcall target="clean-plugins"/>
+
         <tstamp>
             <format property="buildJavaDate" pattern="MMM dd, yyyy"/>
         </tstamp>
@@ -1229,61 +1291,25 @@
 
         <mkdir dir="${plugin.dest.dir}"/>
 
-        <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. -->
-        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml"
-                    except="admin"/>
+        <!-- Get a list of subdirs of the main plugins dir. This tells us which plugins to make. Exclude the
+             admin plugin (which is created by a different Ant task) as well as the clustering plugin (which
+             requires non-free JAR-files to be added to its library path, which most users won't do). -->
+        <subdirinfo dir="${plugin.src.dir}" property="dirlist" ifexists="plugin.xml" except="admin,clustering"/>
 
-        <antcall target="-plugins-impl-dev"/>
         <antcall target="-plugins-impl"/>
 
         <!-- Update/create target/openfire directory -->
         <antcall target="openfireHome"/>
-
     </target>
-    <target name="-plugins-impl" if="dirlist">
 
-        <!-- For each plugin in the main src dir, call the 'buildplugin' macro -->
+    <target name="-plugins-impl" if="dirlist">
         <for list="${dirlist}" param="plugin" trim="true">
             <sequential>
-                <if>
-                    <equals arg1="@{plugin}" arg2="clustering"/>
-                    <then>
-                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
-                    </then>
-                    <else>
-                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
-                    </else>
-                </if>
+                <buildplugin plugin="@{plugin}" pluginsrc="${plugin.src.dir}"/>
             </sequential>
         </for>
-
     </target>
-    <target name="-plugins-impl-dev" if="plugin.dev.dir" depends="anttasks">
 
-        <!-- Get a list of plugins in the optional dev dir -->
-        <subdirinfo dir="${plugin.dev.dir}" property="dirlist2" ifexists="plugin.xml"/>
-
-        <antcall target="-plugin-impl-dev-build"/>
-
-    </target>
-    <target name="-plugin-impl-dev-build" if="dirlist2">
-
-        <!-- For each list of plugins in the dev dir call the 'buildplugin' macro -->
-        <for list="${dirlist2}" param="plugin" trim="true">
-            <sequential>
-                <if>
-                    <equals arg1="@{plugin}" arg2="clustering"/>
-                    <then>
-                        <echo message="bypassing clustering plugin, build via single plugin target if needed"/>
-                    </then>
-                    <else>
-                        <buildplugin plugin="@{plugin}" pluginsrc="${plugin.dev.dir}"/>
-                    </else>
-                </if>
-            </sequential>
-        </for>
-
-    </target>
     <target name="plugin" description="build one plugin">
         <mkdir dir="${plugin.dest.dir}"/>
 
@@ -1295,6 +1321,40 @@
         <!-- Update/create target/openfire directory -->
         <antcall target="openfireHome"/>
     </target>
+
+    <macrodef name="buildparentplugin">
+        <attribute name="plugin"/>
+        <attribute name="pluginsrc"/>
+        <attribute name="pluginlib" default="${plugin.dev.dest.dir}/@{plugin}/work/lib" />
+        <attribute name="parentPlug"/>
+        <sequential>
+            <echo message="Read XML properties of @{pluginsrc}/@{parentPlug}/plugin.xml"/>
+            <xmlproperty file="@{pluginsrc}/@{parentPlug}/plugin.xml" prefix="@{parentPlug}" keepRoot="false"/>
+            <if>
+                <isset property="@{parentPlug}.parentPlugin"/>
+                <then>
+                    <echo message="Compile parent of parent plugin ${@{parentPlug}.parentPlugin}"/>
+                    <buildparentplugin parentPlug="${@{parentPlug}.parentPlugin}" plugin="@{plugin}" pluginsrc="@{pluginsrc}" pluginlib="@{pluginlib}"/>
+                </then>
+            </if>
+            <echo message="Compile parent plugin @{parentPlug}"/>
+            <javac
+                    destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
+                    includeAntRuntime="no"
+                    debug="on"
+                    source="${javac.source}"
+                    target="${javac.target}"
+                    >
+                <src path="@{pluginsrc}/@{parentPlug}/src/java"/>
+                <classpath>
+                    <path refid="plugin.dependencies"/>
+                    <!-- Jars used by the plugin to compile with -->
+                    <fileset dir="@{pluginsrc}/@{parentPlug}" includes="lib/*.jar"/>
+                </classpath>
+            </javac>
+        </sequential>
+
+    </macrodef>
 
     <!-- buildplugin (MACRO) =================================================================== -->
     <macrodef name="buildplugin">
@@ -1309,20 +1369,25 @@
                 <mkdir dir="${plugin.dev.dest.dir}"/>
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}"/>
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target"/>
+                <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
+
+                <xmlproperty file="${plugin.src.dir}/@{plugin}/plugin.xml" prefix="@{plugin}" keeproot="false"/>
+                <if>
+                    <isset property="@{plugin}.parentPlugin"/>
+                    <then>
+                        <echo>Parent plugin found: ${@{plugin}.parentPlugin}</echo>
+                        <buildparentplugin parentPlug="${@{plugin}.parentPlugin}" plugin="@{plugin}" pluginsrc="@{pluginsrc}" pluginlib="@{pluginlib}"/>
+                    </then>
+                </if>
+
+                <path id="plugin.classpath.source">
+                    <path refid="plugin.dependencies"/>
+                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
+                </path>
 
                 <!-- Compile plugin source code -->
-                <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
-                <of.javac
-                        destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes"
-                        includeAntRuntime="no"
-                        debug="on"
-                        >
+                <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/classes" classpathref="plugin.classpath.source">
                     <src path="@{pluginsrc}/@{plugin}/src/java"/>
-                    <classpath>
-                        <path refid="plugin.dependencies"/>
-                        <!-- Jars used by the plugin to compile with -->
-                        <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                    </classpath>
                 </of.javac>
 
                 <mkdir dir="${plugin.dev.dest.dir}/@{plugin}/target/lib" />
@@ -1334,11 +1399,7 @@
 
                 <!-- copy the source we want to compile -->
                 <copy todir="@{pluginlib}/source">
-                    <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" >
-                        <not>
-                            <srcinc />
-                        </not>
-                    </fileset>
+                    <fileset dir="@{pluginsrc}/@{plugin}/src/java" includes="**/*.java" />
                     <filterset>
                         <filter token="DATE" value="${buildJavaDate}"/>
                     </filterset>
@@ -1350,23 +1411,13 @@
                         <mapper type="merge" to="@{pluginlib}/@{plugin}-lib.jar"/>
                     </uptodate></not>
                     <then>
-                        <of.javac
-                            destdir="@{pluginlib}/classes"
-                            includeAntRuntime="no"
-                            debug="on"
-                            includes="**/*.java"
-                        >
+                        <of.javac destdir="@{pluginlib}/classes">
                             <src path="@{pluginlib}/source"/>
                             <classpath>
                                 <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/classes"/>
-                                <path>
-                                    <path refid="plugin.dependencies"/>
-                                    <!-- Jars used by the plugin to compile with -->
-                                    <fileset dir="@{pluginsrc}/@{plugin}" includes="lib/*.jar"/>
-                                </path>
+                                <path refid="plugin.classpath.source"/>
                             </classpath>
                         </of.javac>
-
 
                         <jar jarfile="${plugin.dev.dest.dir}/@{plugin}/target/lib/@{plugin}-lib.jar">
                             <fileset dir="@{pluginlib}/classes" />
@@ -1381,7 +1432,6 @@
                     </fileset>
                 </jar>
 
-                <!-- Clean-up our source files for the "srcinc" files -->
                 <delete dir="@{pluginlib}/classes" />
                 <delete dir="@{pluginlib}/source" />
 
@@ -1462,26 +1512,20 @@
                             </fileset>
                         </copy>
 
-                        <!-- Declare the jspc task with our plugin's classpath -->
-                        <taskdef classname="org.apache.jasper.JspC" name="jasper2" loaderref="jasperB">
+                        <!-- JSP to Java -->
+                        <java classname="org.apache.jasper.JspC" fork="true">
                             <classpath>
                                 <pathelement location="${java.home}/../lib/tools.jar"/>
-                                <pathelement
-                                        location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
-                                <path refid="jspc.dependencies"/>
                                 <fileset dir="${plugin.dev.dest.dir}/@{plugin}/target" includes="lib/*.jar"/>
+                                <pathelement location="${plugin.dev.dest.dir}/@{plugin}/target/lib/plugin-@{plugin}.jar"/>
                                 <pathelement path="${compile.dir}"/>
+                                <path refid="jspc.dependencies"/>
                             </classpath>
-                        </taskdef>
-
-                        <!-- JSP to Java -->
-                        <jasper2
-                                validateXml="false"
-                                uriroot="${plugin.dev.dest.dir}/@{plugin}/target/web"
-                                outputDir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"
-                                package="org.jivesoftware.openfire.plugin.@{plugin}"
-                                webXml="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
-                                />
+                            <arg line="-uriroot '${plugin.dev.dest.dir}/@{plugin}/target/web'"/>
+                            <arg line="-d '${plugin.dev.dest.dir}/@{plugin}/target/jspc/java'"/>
+                            <arg line="-p org.jivesoftware.openfire.plugin.@{plugin}"/>
+                            <arg line="-webxml '${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml'"/>
+                        </java>
 
                         <!-- Use xmltask to merge the generated web.xml file and a developer one (if any) -->
                         <available property="plugin.@{plugin}.webxml.available"
@@ -1496,12 +1540,14 @@
                                 <!-- Copy the servlet and servlet-mapping elements from the original web.xml to a temp buffer.
                                      Note: The original web.xml can only contain one servlet and servlet-mapping -->
                                 <xmltask source="@{pluginsrc}/@{plugin}/src/web/WEB-INF/web.xml">
+                                    <xmlcatalog refid="dtds"/>
                                     <copy path="//web-app/servlet[last()]" buffer="foobar"/>
                                     <copy path="//web-app/servlet-mapping[last()]" buffer="foobar2"/>
                                 </xmltask>
                                 <!-- Add the copied servlet and servlet-mapping elements to the generated web.xml -->
                                 <xmltask source="${plugin.dev.dest.dir}/@{plugin}/target/jspc/web.xml"
                                          dest="${plugin.dev.dest.dir}/@{plugin}/target/web/WEB-INF/web.xml">
+                                    <xmlcatalog refid="dtds"/>
                                     <insert path="/web-app/servlet[last()]" buffer="foobar"
                                             position="after"/>
                                     <insert path="/web-app/servlet-mapping[last()]" buffer="foobar2"
@@ -1517,11 +1563,7 @@
                         </if>
 
                         <!-- Compile java classes -->
-                        <of.javac
-                                destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes"
-                                includeAntRuntime="no"
-                                debug="on"
-                                >
+                        <of.javac destdir="${plugin.dev.dest.dir}/@{plugin}/target/jspc/classes">
                             <src path="${plugin.dev.dest.dir}/@{plugin}/target/jspc/java"/>
                             <classpath>
                                 <path refid="jspc.dependencies"/>
@@ -1576,7 +1618,11 @@
                     <property name="exception" refid="exception_ref" />
                     <property name="message" value="Error building plugin: @{plugin}. Exception:${line.separator}${exception}" />
                     <echo message="${message}" />
-                    <fail if="halt.on.plugin.error" message="${message}" />
+                    <fail message="${message}">
+                        <condition>
+                            <istrue value="${halt.on.plugin.error}"/>
+                        </condition>
+                    </fail>
                 </catch>
             </trycatch>
         </sequential>
@@ -1589,10 +1635,7 @@
         <mkdir dir="${anttools.target.dir}"/>
         <mkdir dir="${anttools.target.dir}/classes"/>
 
-        <of.javac
-                destdir="${anttools.target.dir}/classes"
-                debug="on"
-                >
+        <of.javac destdir="${anttools.target.dir}/classes" includeAntRuntime="yes">
             <src path="${anttools.src.dir}"/>
             <patternset refid="compile.sources"/>
             <classpath>
@@ -1626,26 +1669,26 @@
         </if>
     </target>
 
-    <!-- clean-jspc ============================================================================ -->
-    <!-- Cleans all JSPC output -->
-    <target name="clean-jspc">
+    <target name="clean-jspc" description="Cleans up all JSPC output">
         <delete dir="${jspc.dest.dir}"/>
     </target>
 
-    <!-- clean-test ============================================================================ -->
-    <!-- Cleans all compiled test classes -->
-    <target name="clean-test">
+    <target name="clean-test" description="Cleans up all compiled test classes">
         <delete dir="${test.classes.dest.dir}"/>
     </target>
 
-    <!-- clean-plugins ========================================================================= -->
-    <!-- Cleans all generated plugins -->
-    <target name="clean-plugins">
+    <target name="clean-plugins" description="Cleans up all generated plugins">
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${plugin.dest.dir}" excludes="admin/**/*.*"/>
         </delete>
-        <!--<delete dir="${plugin.dest.dir}"/> -->
         <delete dir="${plugin.dev.dest.dir}"/>
+    </target>
+
+    <target name="clean-plugin" description="Cleans up one generated plugin">
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${plugin.dest.dir}/${plugin}.jar" excludes="admin/**/*.*"/>
+        </delete>
+        <delete dir="${plugin.dev.dest.dir}/${plugin}" failonerror="false"/>
     </target>
 
     <!-- Mac installer ========================================================================= -->

@@ -22,9 +22,9 @@ package org.jivesoftware.openfire.commands.admin.user;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -35,7 +35,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -92,17 +92,7 @@ public class AuthenticateUser extends AdHocCommand {
         try {
         	AuthFactory.authenticate(user.getUsername(), password);
         }
-        catch (UnauthorizedException e) {
-            // Auth failed
-            note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
-            return;
-        } catch (ConnectionException e) {
-            // Auth failed
-            note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
-            return;
-        } catch (InternalUnauthenticatedException e) {
+        catch (UnauthorizedException | ConnectionException | InternalUnauthenticatedException e) {
             // Auth failed
             note.addAttribute("type", "error");
             note.setText("Authentication failed.");
@@ -142,7 +132,7 @@ public class AuthenticateUser extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

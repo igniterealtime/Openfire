@@ -23,7 +23,7 @@ package org.jivesoftware.openfire.handler;
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -469,9 +469,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("jabber:iq:register");
-        return features.iterator();
+        return Collections.singleton("jabber:iq:register").iterator();
     }
 }

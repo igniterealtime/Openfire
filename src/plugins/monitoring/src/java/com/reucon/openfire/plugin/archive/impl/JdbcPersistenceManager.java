@@ -45,17 +45,28 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	// "SELECT messageId,time,direction,type,subject,body "
 	// + "FROM archiveMessages WHERE conversationId = ? ORDER BY time";
 
-	public static final String SELECT_CONVERSATIONS = "SELECT DISTINCT " + "ofConversation.conversationID, " + "ofConversation.room, "
-			+ "ofConversation.isExternal, " + "ofConversation.startDate, " + "ofConversation.lastActivity, " + "ofConversation.messageCount, "
-			+ "ofConParticipant.joinedDate, " + "ofConParticipant.leftDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource, "
-			+ "ofConParticipant.nickname, "
-			+ "ofConParticipant.bareJID as fromJID, "
-      			+ "ofMessageArchive.toJID "
+ 	public static final String SELECT_CONVERSATIONS = "SELECT "
+            + "ofConversation.conversationID, " + " ofConversation.room, " + "ofConversation.isExternal, "+ "ofConversation.lastActivity, "
+            + "ofConversation.messageCount, " + "ofConversation.startDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource,"
+            + "ofConParticipant.nickname, " + "ofConParticipant.bareJID AS fromJID, " + "ofMessageArchive.toJID, "
+            + "min(ofConParticipant.joinedDate) AS startDate, " + "max(ofConParticipant.leftDate) as leftDate "
 			+ "FROM ofConversation "
 			+ "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
-			+ "INNER JOIN (SELECT conversationID, toJID FROM ofMessageArchive "
-			+ "union all "
-			+ "SELECT conversationID, fromJID as toJID FROM ofMessageArchive) ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID";
+            + "INNER JOIN (SELECT conversationID, toJID FROM ofMessageArchive union all SELECT conversationID, fromJID as toJID FROM ofMessageArchive) ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID ";
+
+    	public static final String SELECT_CONVERSATIONS_GROUP_BY = " GROUP BY ofConversation.conversationID, ofConversation.room, ofConversation.isExternal, ofConversation.lastActivity, ofConversation.messageCount, ofConversation.startDate, ofConParticipant.bareJID, ofConParticipant.jidResource, ofConParticipant.nickname, ofConParticipant.bareJID, ofMessageArchive.toJID";
+
+	// public static final String SELECT_CONVERSATIONS = "SELECT DISTINCT " + "ofConversation.conversationID, " + "ofConversation.room, "
+	// 		+ "ofConversation.isExternal, " + "ofConversation.startDate, " + "ofConversation.lastActivity, " + "ofConversation.messageCount, "
+	// 		+ "ofConParticipant.joinedDate, " + "ofConParticipant.leftDate, " + "ofConParticipant.bareJID, " + "ofConParticipant.jidResource, "
+	// 		+ "ofConParticipant.nickname, "
+	// 		+ "ofConParticipant.bareJID as fromJID, "
+      	// 		+ "ofMessageArchive.toJID "
+	// 		+ "FROM ofConversation "
+	// 		+ "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
+	// 		+ "INNER JOIN (SELECT conversationID, toJID FROM ofMessageArchive "
+	// 		+ "union all "
+	// 		+ "SELECT conversationID, fromJID as toJID FROM ofMessageArchive) ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID";
 
 	// public static final String SELECT_CONVERSATIONS =
 	// "SELECT c.conversationId,c.startTime,c.endTime,c.ownerJid,c.ownerResource,c.withJid,c.withResource,"
@@ -84,7 +95,6 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 	public static final String CONVERSATION_WITH_JID = "ofMessageArchive.toJID";
 	// public static final String CONVERSATION_WITH_JID = "c.withJid";
-
 	public static final String MESSAGE_ID = "ofMessageArchive.messageID";
 
 	public static final String MESSAGE_SENT_DATE = "ofMessageArchive.sentDate";
@@ -115,7 +125,6 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 	// public static final String SELECT_PARTICIPANTS_BY_CONVERSATION =
 	// "SELECT participantId,startTime,endTime,jid FROM archiveParticipants WHERE conversationId =? ORDER BY startTime";
-
 	 public static final String SELECT_MESSAGES = "SELECT DISTINCT " + "ofMessageArchive.fromJID, "
 			+ "ofMessageArchive.toJID, " + "ofMessageArchive.sentDate, " + "ofMessageArchive.stanza, "
 			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
@@ -157,7 +166,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	public Date getAuditedStartDate(Date startDate) {
 		long maxRetrievable = JiveGlobals.getIntProperty("conversation.maxRetrievable", ConversationManager.DEFAULT_MAX_RETRIEVABLE)
 				* JiveConstants.DAY;
-		Date result = null;
+		Date result = startDate;
 		if (maxRetrievable > 0) {
 			Date now = new Date();
 			Date maxRetrievableDate = new Date(now.getTime() - maxRetrievable);
@@ -166,9 +175,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			} else if (startDate.before(maxRetrievableDate)) {
 				result = maxRetrievableDate;
 			}
-		}else{
-                        result = startDate;
-                }
+		}
 		return result;
 	}
 
@@ -231,6 +238,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		if (whereSB.length() != 0) {
 			querySB.append(" WHERE ").append(whereSB);
 		}
+		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 		if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
 			querySB.insert(0,"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY "+CONVERSATION_ID+") AS RowNum FROM ( ");
 			querySB.append(") ofConversation ) t2 WHERE RowNum");
@@ -615,6 +623,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			}
 		}
 		querySB.append(" )");
+		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 		querySB.append(" ORDER BY ").append(CONVERSATION_END_TIME);
 
 		Connection con = null;
@@ -672,6 +681,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 				querySB.append(CONVERSATION_START_TIME).append(" = ? ");
 			}
 		}
+		querySB.append(SELECT_CONVERSATIONS_GROUP_BY);
 
 		try {
 			con = DbConnectionManager.getConnection();
@@ -871,5 +881,4 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 		return false;
 	}
-
 }

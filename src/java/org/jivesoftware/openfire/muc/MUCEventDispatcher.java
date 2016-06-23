@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MUCEventDispatcher {
 
     private static Collection<MUCEventListener> listeners =
-            new ConcurrentLinkedQueue<MUCEventListener>();
+            new ConcurrentLinkedQueue<>();
 
     public static void addListener(MUCEventListener listener) {
         listeners.add(listener);

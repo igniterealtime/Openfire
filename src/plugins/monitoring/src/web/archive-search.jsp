@@ -13,8 +13,8 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%
     // Get handle on the Monitoring plugin
     MonitoringPlugin plugin = (MonitoringPlugin) XMPPServer.getInstance().getPluginManager().getPlugin(
@@ -514,14 +514,14 @@
         </tr>
         <tr>
             <td>
-                <input type="text" size="22" name="participant1" value="<%= participant1 != null ? participant1 :
+                <input type="text" size="22" name="participant1" value="<%= participant1 != null ? StringUtils.escapeForXML(participant1) :
                 LocaleUtils.getLocalizedString("archive.search.participants.any", "monitoring") %>" class="textfield"/>
             </td>
 
         </tr>
         <tr>
             <td>
-                <input type="text" size="22" name="participant2" value="<%= participant2 != null ? participant2 : anyText %>" class="textfield"/>
+                <input type="text" size="22" name="participant2" value="<%= participant2 != null ? StringUtils.escapeForXML(participant2) : anyText %>" class="textfield"/>
             </td>
 
         </tr>
@@ -546,7 +546,7 @@
             <td><fmt:message key="archive.search.daterange.start" /></td>
             <td>
                 <input type="text" id="startDate" name="startDate" size="13"
-                       value="<%= startDate != null ? startDate :
+                       value="<%= startDate != null ? StringUtils.escapeForXML(startDate) :
                        LocaleUtils.getLocalizedString("archive.search.daterange.any", "monitoring")%>" class="textfield"/><br/>
                 <span class="jive-description"><fmt:message key="archive.search.daterange.format" /></span>
             </td>
@@ -558,7 +558,7 @@
             <td><fmt:message key="archive.search.daterange.end" /></td>
             <td>
                 <input type="text" id="endDate" name="endDate" size="13"
-                       value="<%= endDate != null ? endDate :
+                       value="<%= endDate != null ? StringUtils.escapeForXML(endDate) :
                        LocaleUtils.getLocalizedString("archive.search.daterange.any", "monitoring") %>" class="textfield"/><br/>
                 <span class="jive-description"><fmt:message key="archive.search.daterange.format" /></span>
             </td>
@@ -586,7 +586,7 @@
         <tr>
             <td>
                 <% if(isArchiveEnabled){%>
-                <input type="text" name="keywords" size="35" class="keyword-field" value="<%= query != null ? query : ""%>"/>
+                <input type="text" name="keywords" size="35" class="keyword-field" value="<%= query != null ? StringUtils.escapeForXML(query) : ""%>"/>
                 <% } else { %>
                     <fmt:message key="archive.search.keywords.disabled">
                         <fmt:param value="<a href='archiving-settings.jsp'>" />

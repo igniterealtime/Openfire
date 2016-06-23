@@ -119,6 +119,7 @@ public class HttpClientWithTimeoutFeedFetcher extends AbstractFeedFetcher {
 	/**
 	 * @see com.sun.syndication.fetcher.FeedFetcher#retrieveFeed(java.net.URL)
 	 */
+	@Override
 	public SyndFeed retrieveFeed(URL feedUrl) throws IllegalArgumentException, IOException, FeedException, FetcherException {
 		if (feedUrl == null) {
 			throw new IllegalArgumentException("null is not a valid URL");

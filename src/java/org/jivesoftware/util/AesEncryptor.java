@@ -1,6 +1,6 @@
 package org.jivesoftware.util;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.Security;
 
@@ -60,9 +60,7 @@ public class AesEncryptor implements Encryptor {
 	public String encrypt(String value)
 	{
 		if (value == null) { return null; }
-		byte [] bytes = null;
-		try { bytes = value.getBytes("UTF-8"); }
-		catch (UnsupportedEncodingException uee) { bytes = value.getBytes(); }
+		byte [] bytes = value.getBytes(StandardCharsets.UTF_8);
 		return Base64.encodeBytes( cipher(bytes, getKey(), Cipher.ENCRYPT_MODE) );
 	}
 
@@ -75,10 +73,7 @@ public class AesEncryptor implements Encryptor {
 		if (value == null) { return null; }
 		byte [] bytes = cipher(Base64.decode(value), getKey(), Cipher.DECRYPT_MODE);
 		if (bytes == null) { return null; }
-		String result = null;
-		try { result = new String(bytes,"UTF-8"); }
-		catch (UnsupportedEncodingException uee) { result = new String(bytes); }
-		return result;
+		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -144,9 +139,7 @@ public class AesEncryptor implements Encryptor {
 			cipherKey = null; 
 			return;
 		}
-		byte [] bytes = null;
-		try { bytes = key.getBytes("UTF-8"); }
-		catch (UnsupportedEncodingException uee) { bytes = key.getBytes(); }
+		byte [] bytes = key.getBytes(StandardCharsets.UTF_8);
 		setKey(editKey(bytes));
 	}
 

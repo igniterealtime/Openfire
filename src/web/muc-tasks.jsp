@@ -24,8 +24,8 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -51,6 +51,19 @@
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (kickSettings || logSettings) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            kickSettings = false;
+            logSettings = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Handle an update of the kicking task settings
     if (kickSettings) {
         if (!kickEnabled) {
@@ -187,6 +200,7 @@
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?kickSettings" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.user_setting" />
@@ -228,6 +242,7 @@
 
 <!-- BEGIN 'Conversation Logging' -->
 <form action="muc-tasks.jsp?logSettings" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="muc.tasks.conversation.logging" />

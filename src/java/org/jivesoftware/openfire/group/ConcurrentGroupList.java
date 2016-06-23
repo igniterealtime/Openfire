@@ -16,13 +16,14 @@ import org.xmpp.packet.JID;
  */
 public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements GroupAwareList<T> {
 
-	private static final long serialVersionUID = -8884698048047935327L;
-	
+	private static final long serialVersionUID = 7735849143650412115L;
+
 	// This set is used to optimize group operations within this list.
 	// We only populate this set when it's needed to dereference the
 	// groups in the base list, but once it exists we keep it in sync
 	// via the various add/remove operations.
-	private transient Set<Group> groupsInList;
+	// NOTE: added volatile keyword for double-check idiom (lazy instantiation)
+	private volatile transient Set<String> knownGroupNamesInList;
 	
 	public ConcurrentGroupList() {
 		super();
@@ -61,20 +62,41 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 	 * @return A Set containing the groups in the list
 	 */
 	@Override
-	public synchronized Set<Group> getGroups() {
-		if (groupsInList == null) {
-			groupsInList = new HashSet<Group>();
-			// add all the groups into the group set
-			Iterator<T> iterator = iterator();
-			while (iterator.hasNext()) {
-				T listItem = iterator.next();
-				Group group = Group.resolveFrom(listItem);
-				if (group != null) {
-					groupsInList.add(group);
-				};
+	public Set<Group> getGroups() {
+		Set<Group> result = new HashSet<>();
+		for (String groupName : getKnownGroupNamesInList()) {
+			result.add(Group.resolveFrom(groupName));
+		}
+		return result;
+	}
+	
+	/**
+	 * Accessor uses the  "double-check idiom" (j2se 5.0+) for proper lazy instantiation.
+	 * Additionally, the set is not cached until there is at least one group in the list.
+	 * 
+	 * @return the known group names among the items in the list
+	 */
+	private Set<String> getKnownGroupNamesInList() {
+		Set<String> result = knownGroupNamesInList;
+		if (result == null) {
+			synchronized(this) {
+				result = knownGroupNamesInList;
+				if (result == null) {
+					result = new HashSet<>();
+					// add all the groups into the group set
+					Iterator<T> iterator = iterator();
+					while (iterator.hasNext()) {
+						T listItem = iterator.next();
+						Group group = Group.resolveFrom(listItem);
+						if (group != null) {
+							result.add(group.getName());
+						};
+					}
+					knownGroupNamesInList = result.isEmpty() ? null : result;
+				}
 			}
 		}
-		return groupsInList;
+		return result;
 	}
 
 	/**
@@ -88,14 +110,17 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 	private synchronized boolean syncGroups(Object item, boolean addOrRemove) {
 		boolean result = false;
 		// only sync if the group list has been instantiated
-		if (groupsInList != null) {
+		if (knownGroupNamesInList != null) {
 			Group group = Group.resolveFrom(item);
 			if (group != null) {
 				result = true;
 				if (addOrRemove == ADD) {
-					groupsInList.add(group);
+					knownGroupNamesInList.add(group.getName());
 				} else if (addOrRemove == REMOVE) {
-					groupsInList.remove(group);
+					knownGroupNamesInList.remove(group.getName());
+					if (knownGroupNamesInList.isEmpty()) {
+						knownGroupNamesInList = null;
+					}
 				}
 			}
 		}
@@ -155,7 +180,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 		if (changed) {
 			// drop the transient set, will be rebuilt when/if needed
 			synchronized(this) {
-				groupsInList = null;
+				knownGroupNamesInList = null;
 			}
 		}
 		return changed;
@@ -167,7 +192,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 		if (changed) {
 			// drop the transient set, will be rebuilt when/if needed
 			synchronized(this) {
-				groupsInList = null;
+				knownGroupNamesInList = null;
 			}
 		}
 		return changed;
@@ -179,7 +204,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 		if (added > 0) {
 			// drop the transient set, will be rebuilt when/if needed
 			synchronized(this) {
-				groupsInList = null;
+				knownGroupNamesInList = null;
 			}
 		}
 		return added;
@@ -189,7 +214,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 	public void clear() {
 		super.clear();
 		synchronized(this) {
-			groupsInList = null;
+			knownGroupNamesInList = null;
 		}
 	}
 
@@ -199,7 +224,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 		if (changed) {
 			// drop the transient set, will be rebuilt when/if needed
 			synchronized(this) {
-				groupsInList = null;
+				knownGroupNamesInList = null;
 			}
 		}
 		return changed;
@@ -211,7 +236,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
 		if (changed) {
 			// drop the transient set, will be rebuilt when/if needed
 			synchronized(this) {
-				groupsInList = null;
+				knownGroupNamesInList = null;
 			}
 		}
 		return changed;

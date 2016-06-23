@@ -18,8 +18,8 @@
   - limitations under the License.
 --%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%@ page import="org.jivesoftware.database.DbConnectionManager"
     errorPage="error.jsp"
@@ -31,6 +31,8 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.Arrays" %>
@@ -60,6 +62,17 @@
     boolean clusteringEnabled = ParamUtils.getBooleanParameter(request, "clusteringEnabled");
     boolean updateSucess = false;
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         if (!clusteringEnabled) {
             ClusterManager.setClusteringEnabled(false);
@@ -187,6 +200,7 @@
 
 <!-- BEGIN 'Clustering Enabled' -->
 <form action="system-clustering.jsp" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="system.clustering.enabled.legend" />
 	</div>
@@ -233,8 +247,8 @@
         <fmt:message key="system.clustering.overview.info">
             <fmt:param value="<%= clusterNodesInfo.size() %>" />
             <fmt:param value="<%= maxClusterNodes %>" />
-            <fmt:param value="<%= "<span style='background-color:#ffc;'>" %>" />
-            <fmt:param value="<%= "</span>" %>" />
+            <fmt:param value="<span style='background-color:#ffc;'>" />
+            <fmt:param value="</span>" />
         </fmt:message>
     </p>
 
@@ -365,8 +379,8 @@
               <tr valign="middle" align="middle" class="local">
                   <td colspan=8>
                       <fmt:message key="system.clustering.starting">
-                          <fmt:param value="<%= "<a href='system-clustering.jsp'>" %>" />
-                          <fmt:param value="<%= "</a>" %>" />
+                          <fmt:param value="<a href=\"system-clustering.jsp\">"/>
+                          <fmt:param value="</a>"/>
                       </fmt:message>
                   </td>
               </tr>

@@ -111,6 +111,7 @@ public class FileTransfer implements Cacheable, Serializable {
         this.progress = progress;
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.

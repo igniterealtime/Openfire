@@ -22,6 +22,8 @@ package org.jivesoftware.openfire.http;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +40,10 @@ import java.io.*;
  * Combines and serves resources, such as javascript or css files.
  */
 public class ResourceServlet extends HttpServlet {
-//    private static String suffix = "";    // Set to "_src" to use source version
+
+    private static final Logger Log = LoggerFactory.getLogger(ResourceServlet.class);
+
+    //    private static String suffix = "";    // Set to "_src" to use source version
     private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;
@@ -60,7 +65,7 @@ public class ResourceServlet extends HttpServlet {
 
         if (!disableCompression) {
             if (request.getHeader("accept-encoding") != null &&
-                request.getHeader("accept-encoding").indexOf("gzip") != -1) {
+                    request.getHeader("accept-encoding").contains("gzip")) {
                 compress = true;
             }
             else if (request.getHeader("---------------") != null) {
@@ -88,8 +93,6 @@ public class ResourceServlet extends HttpServlet {
             response.setHeader("Expires", "1");
             compress = false;
         }
-        OutputStream out = null;
-        InputStream in = null;
 
         try {
             byte[] content;
@@ -109,23 +112,21 @@ public class ResourceServlet extends HttpServlet {
             }
 
             // Write the content out
-            in = new ByteArrayInputStream(content);
-            out = response.getOutputStream();
+            try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
+                try (OutputStream out = response.getOutputStream()) {
 
-            // Use a 128K buffer.
-            byte[] buf = new byte[128*1024];
-            int len;
-            while ((len=in.read(buf)) != -1) {
-                out.write(buf, 0, len);
+                    // Use a 128K buffer.
+                    byte[] buf = new byte[128 * 1024];
+                    int len;
+                    while ((len = in.read(buf)) != -1) {
+                        out.write(buf, 0, len);
+                    }
+                    out.flush();
+                }
             }
-            out.flush();
         }
         catch (IOException e) {
             Log.error(e.getMessage(), e);
-        }
-        finally {
-            try { if (in != null) { in.close(); } } catch (Exception ignored) { /* ignored */ }
-            try { if (out != null) { out.close(); } } catch (Exception ignored) { /* ignored */ }
         }
     }
 
@@ -137,24 +138,13 @@ public class ResourceServlet extends HttpServlet {
         }
         
         if (compress) {
-            ByteArrayOutputStream baos = null;
-            GZIPOutputStream gzos = null;
-            try {
-                baos = new ByteArrayOutputStream();
-                gzos = new GZIPOutputStream(baos);
-
-                gzos.write(writer.toString().getBytes());
-                gzos.finish();
-                gzos.flush();
-                gzos.close();
-
-                return baos.toByteArray();
-            }
-            finally {
-                try { if (gzos != null) { gzos.close(); } }
-                catch (Exception ignored) { /* ignored */ }
-                try { if (baos != null) { baos.close(); } }
-                catch (Exception ignored) { /* ignored */ }
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                try (GZIPOutputStream gzos = new GZIPOutputStream(baos)) {
+                    gzos.write(writer.toString().getBytes());
+                    gzos.finish();
+                    gzos.flush();
+                    return baos.toByteArray();
+                }
             }
         }
         else {
@@ -170,30 +160,20 @@ public class ResourceServlet extends HttpServlet {
 
     private static String getJavaScriptFile(String path) {
         StringBuilder sb = new StringBuilder();
-        InputStream in = null;
-        InputStreamReader isr = null;
-        BufferedReader br = null;
-        try {
-            in = getResourceAsStream(path);
+        try (InputStream in = getResourceAsStream(path)) {
             if (in == null) {
                 Log.error("Unable to find javascript file: '" + path + "' in classpath");
                 return "";
             }
 
-            isr = new InputStreamReader(in, "ISO-8859-1");
-            br = new BufferedReader(isr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line.trim()).append('\n');
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, "ISO-8859-1"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line.trim()).append('\n');
+                }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.error("Error loading JavaScript file: '" + path + "'.", e);
-        }
-        finally {
-            try { if (br != null) { br.close(); } } catch (Exception ignored) { /* ignored */ }
-            try { if (isr != null) { isr.close(); } } catch (Exception ignored) { /* ignored */ }
-            try { if (in != null) { in.close(); } } catch (Exception ignored) { /* ignored */ }
         }
 
         return sb.toString();

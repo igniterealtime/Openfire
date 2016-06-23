@@ -31,7 +31,7 @@ import java.util.Collection;
  *
  * @author Matt Tucker
  */
-public class GroupCollection extends AbstractCollection {
+public class GroupCollection extends AbstractCollection<Group> {
 
     private String[] elements;
 
@@ -50,7 +50,7 @@ public class GroupCollection extends AbstractCollection {
     }
 
     @Override
-	public Iterator iterator() {
+	public Iterator<Group> iterator() {
         return new GroupIterator();
     }
 
@@ -59,11 +59,12 @@ public class GroupCollection extends AbstractCollection {
         return elements.length;
     }
 
-    private class GroupIterator implements Iterator {
+    private class GroupIterator implements Iterator<Group> {
 
         private int currentIndex = -1;
-        private Object nextElement = null;
+        private Group nextElement = null;
 
+        @Override
         public boolean hasNext() {
             // If we are at the end of the list, there can't be any more elements
             // to iterate through.
@@ -81,8 +82,9 @@ public class GroupCollection extends AbstractCollection {
             return true;
         }
 
-        public Object next() throws java.util.NoSuchElementException {
-            Object element;
+        @Override
+        public Group next() throws java.util.NoSuchElementException {
+            Group element;
             if (nextElement != null) {
                 element = nextElement;
                 nextElement = null;
@@ -96,6 +98,7 @@ public class GroupCollection extends AbstractCollection {
             return element;
         }
 
+        @Override
         public void remove() throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }
@@ -105,10 +108,10 @@ public class GroupCollection extends AbstractCollection {
          *
          * @return the next available element.
          */
-        private Object getNextElement() {
+        private Group getNextElement() {
             while (currentIndex + 1 < elements.length) {
                 currentIndex++;
-                Object element = null;
+                Group element = null;
                 try {
                     element = GroupManager.getInstance().getGroup(elements[currentIndex]);
                 }

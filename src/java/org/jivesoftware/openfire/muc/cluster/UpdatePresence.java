@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class UpdatePresence extends MUCRoomTask {
+public class UpdatePresence extends MUCRoomTask<Void> {
     private Presence presence;
     private String nickname;
 
@@ -58,13 +58,16 @@ public class UpdatePresence extends MUCRoomTask {
         return nickname;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().presenceUpdated(UpdatePresence.this);
             }

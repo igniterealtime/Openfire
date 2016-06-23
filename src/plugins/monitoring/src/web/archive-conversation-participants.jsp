@@ -7,11 +7,12 @@
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.NotFoundException" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
     long conversationID = ParamUtils.getLongParameter(request, "conversationID", -1);
@@ -25,6 +26,7 @@
     ConversationManager conversationmanager = (ConversationManager) plugin.getModule(ConversationManager.class);
     List<String[]> values = new ArrayList<String[]>();
     JID room = null;
+    String roomName = "";
     try {
         Conversation conversation = conversationmanager.getConversation(conversationID);
         List<JID> participants = new ArrayList<JID>(conversation.getParticipants());
@@ -39,6 +41,9 @@
             }
         });
         room = conversation.getRoom();
+        if (room != null) {
+            roomName = room.getNode();
+        }
     }
     catch (NotFoundException e) {
         Log.error("Conversation not found: " + conversationID, e);
@@ -130,7 +135,7 @@
 		<h2><fmt:message key="archive.group_conversation.participants.title"/></h2>
 
 		<p><fmt:message key="archive.group_conversation.participants.description">
-                <fmt:param value="<%= room != null ? "<b>"+room.getNode()+"</b>" : "" %>" />
+                <fmt:param value="<%=roomName%>" />
             </fmt:message>
         </p>
 
@@ -179,14 +184,14 @@
             %>
             <tr>
                 
-                <td><%=nickname%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
+                <td><%=StringUtils.escapeHTMLTags(nickname)%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
 
                 <% if (it.hasNext()) {
                     participation = it.next();
                     nickname = participation[0];
                     participant = new  JID(participation[1]);
                 %>
-                <td><%=nickname%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
+                <td><%=StringUtils.escapeHTMLTags(nickname)%> <i>(<%= server.isLocal(participant) && userManager.isRegisteredUser(participant) ? "<a href='/user-properties.jsp?username=" + participant.getNode() + "'>" + participant.toBareJID() + "</a>" : participant.toBareJID() %>)</i></td>
                 <% } else { %>
                 <td>&nbsp;</td>
                 <% } %>

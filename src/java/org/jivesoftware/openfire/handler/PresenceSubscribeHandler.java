@@ -105,6 +105,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         super("Presence subscription handler");
     }
 
+    @Override
     public void process(Presence presence) throws PacketException {
     	if (presence == null) {
     		throw new IllegalArgumentException("Argument 'presence' cannot be null.");
@@ -209,8 +210,17 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                         // Send the presence of the local user to the remote user. The remote user
                         // subscribed to the presence of the local user and the local user accepted
                         JID prober = localServer.isLocal(recipientJID) ? recipientJID.asBareJID() : recipientJID;
-                        presenceManager.probePresence(prober, senderJID);
-                        PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
+                        if (presenceManager.canProbePresence(prober, senderJID.getNode())){
+                            presenceManager.probePresence(prober, senderJID);
+                            PresenceEventDispatcher.subscribedToPresence(recipientJID, senderJID);
+                        }
+                        else {
+                            Presence nonProbablePresence = new Presence();
+                            nonProbablePresence.setStatus("unavailable");
+                            nonProbablePresence.setFrom(senderJID);
+                            nonProbablePresence.setTo(recipientJID);
+                            presenceManager.handleProbe(nonProbablePresence);
+                        }
                     }
                 }
 
@@ -327,16 +337,16 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * </ul>
      */
     private static Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>> stateTable =
-            new Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>>();
+            new Hashtable<>();
 
     static {
         Hashtable<Presence.Type, Change> subrTable;
         Hashtable<Presence.Type, Change> subsTable;
         Hashtable<String,Map<Presence.Type, Change>> sr;
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_NONE, sr);
@@ -365,9 +375,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if item requested subscription and we're denying request
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, null, null));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_FROM, sr);
@@ -400,9 +410,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if owner requested subscription and item is denying request
         subrTable.put(Presence.Type.unsubscribed, new Change(null, null, RosterItem.ASK_NONE));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_TO, sr);
@@ -432,9 +442,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Setting subscription to none
         subrTable.put(Presence.Type.unsubscribed, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_NONE));
 
-        sr = new Hashtable<String,Map<Presence.Type, Change>>();
-        subrTable = new Hashtable<Presence.Type, Change>();
-        subsTable = new Hashtable<Presence.Type, Change>();
+        sr = new Hashtable<>();
+        subrTable = new Hashtable<>();
+        subsTable = new Hashtable<>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_BOTH, sr);

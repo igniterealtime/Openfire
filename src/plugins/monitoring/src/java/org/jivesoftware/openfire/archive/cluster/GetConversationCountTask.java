@@ -35,10 +35,10 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetConversationCountTask implements ClusterTask {
+public class GetConversationCountTask implements ClusterTask<Integer> {
     private int conversationCount;
 
-    public Object getResult() {
+    public Integer getResult() {
         return conversationCount;
     }
 

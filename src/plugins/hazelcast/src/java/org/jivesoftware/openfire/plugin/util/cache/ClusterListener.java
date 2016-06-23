@@ -29,10 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -42,6 +39,7 @@ import org.jivesoftware.openfire.plugin.util.cluster.HazelcastClusterNodeInfo;
 import org.jivesoftware.openfire.session.ClientSessionInfo;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.StringUtils;
@@ -347,7 +345,8 @@ public class ClusterListener implements MembershipListener, LifecycleListener {
 
         Set<String> incomingSessions = lookupJIDList(key, incomingServerSessionsCache.getName());
         if (!incomingSessions.isEmpty()) {
-            for (String streamID : new ArrayList<String>(incomingSessions)) {
+            for (String streamIDValue : new ArrayList<>(incomingSessions)) {
+                StreamID streamID = BasicStreamIDFactory.createStreamID( streamIDValue );
                 IncomingServerSession session = sessionLocator.getIncomingServerSession(key.toByteArray(), streamID);
                 // Remove all the hostnames that were registered for this server session
                 for (String hostname : session.getValidatedDomains()) {

@@ -33,6 +33,7 @@ public class ComponentCacheWrapper<K, V> extends CacheWrapper<K, V> {
         super(cache);
     }
 
+    @Override
     public void clear() {
         // no-op; we don't want to clear the components cache
     }

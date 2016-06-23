@@ -20,24 +20,19 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,81 +53,46 @@ public class TLSWrapper {
      */
     private boolean logging = false;
 
-    /*
-     * Enables the JSSE system debugging system property:
-     *
-     * -Djavax.net.debug=all
-     *
-     * This gives a lot of low-level information about operations underway, including specific
-     * handshake messages, and might be best examined after gaining some familiarity with this
-     * application.
-     */
-    private static boolean debug = false;
-
     private SSLEngine tlsEngine;
     private SSLEngineResult tlsEngineResult;
 
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer) {
+    /**
+     * @deprecated Use the other constructor.
+     */
+    @Deprecated
+    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
+    {
+        this(
+            connection.getConfiguration(),
+            clientMode
+        );
+    }
 
-        boolean c2sConnection = (remoteServer == null);
-        if (debug) {
-            System.setProperty("javax.net.debug", "all");
-        }
+    public TLSWrapper(ConnectionConfiguration configuration, boolean clientMode ) {
 
-        String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-
-        // Create/initialize the SSLContext with key material
-        try {
-            // First initialize the key and trust material.
-            KeyStore ksKeys = SSLConfig.getKeyStore();
-            String keypass = SSLConfig.getKeyPassword();
-
-            KeyStore ksTrust = (c2sConnection ? SSLConfig.getc2sTrustStore() : SSLConfig.gets2sTrustStore());
-            String trustpass = (c2sConnection ? SSLConfig.getc2sTrustPassword() : SSLConfig.gets2sTrustPassword());
-
-            // KeyManager's decide which key material to use.
-            KeyManager[] km = SSLJiveKeyManagerFactory.getKeyManagers(ksKeys, keypass);
-
-            // TrustManager's decide whether to allow connections.
-            TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
-            if (clientMode || needClientAuth) {
-                if (c2sConnection) {
-                    // Check if we can trust certificates presented by the client
-                    tm = new TrustManager[]{new ClientTrustManager(ksTrust)};
-                }
-                else {
-                    // Check if we can trust certificates presented by the server
-                    tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust, connection)};
-                }
+        try
+        {
+            final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
+            if ( clientMode )
+            {
+                tlsEngine = factory.createClientModeSSLEngine();
+            }
+            else
+            {
+                tlsEngine = factory .createServerModeSSLEngine();
             }
 
-            SSLContext tlsContext = SSLContext.getInstance(algorithm);
-
-            tlsContext.init(km, tm, null);
-
-            /*
-                * Configure the tlsEngine to act as a server in the SSL/TLS handshake. We're a server,
-                * so no need to use host/port variant.
-                *
-                * The first call for a server is a NEED_UNWRAP.
-                */
-            tlsEngine = tlsContext.createSSLEngine();
-            tlsEngine.setUseClientMode(clientMode);
-            SSLSession sslSession = tlsEngine.getSession();
+            final SSLSession sslSession = tlsEngine.getSession();
 
             netBuffSize = sslSession.getPacketBufferSize();
             appBuffSize = sslSession.getApplicationBufferSize();
-
-        } catch (KeyManagementException e) {
-            Log.error("TLSHandler startup problem.\n" + "  SSLContext initialisation failed.", e);
-        } catch (NoSuchAlgorithmException e) {
-            Log.error("TLSHandler startup problem.\n" + "  The " + algorithm + " does not exist", e);
-        } catch (IOException e) {
-            Log.error("TLSHandler startup problem.\n"
-                    + "  the KeyStore or TrustStore does not exist", e);
+        }
+        catch ( NoSuchAlgorithmException | KeyManagementException | KeyStoreException | UnrecoverableKeyException ex )
+        {
+            Log.error("TLSHandler startup problem. SSLContext initialisation failed.", ex );
         }
     }
 
@@ -176,7 +136,16 @@ public class TLSWrapper {
     public ByteBuffer unwrap(ByteBuffer net, ByteBuffer app) throws SSLException {
         ByteBuffer out = app;
         out = resizeApplicationBuffer(out);// guarantees enough room for unwrap
-        tlsEngineResult = tlsEngine.unwrap(net, out);
+        try {
+            tlsEngineResult = tlsEngine.unwrap( net, out );
+        } catch ( SSLException e ) {
+            if ( e.getMessage().startsWith( "Unsupported record version Unknown-" ) ) {
+                throw new SSLException( "We appear to have received plain text data where we expected encrypted data. A common cause for this is a peer sending us a plain-text error message when it shouldn't send a message, but close the socket instead).", e );
+            }
+            else {
+                throw e;
+            }
+        }
         log("server unwrap: ", tlsEngineResult);
         if (tlsEngineResult.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
             // If the result indicates that we have outstanding tasks to do, go
@@ -225,27 +194,22 @@ public class TLSWrapper {
      * @return the current TLSStatus
      */
     public TLSStatus getStatus() {
-        TLSStatus status = null;
         if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.BUFFER_UNDERFLOW) {
-            status = TLSStatus.UNDERFLOW;
+            return TLSStatus.UNDERFLOW;
         } else {
             if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.CLOSED) {
-                status = TLSStatus.CLOSED;
+                return TLSStatus.CLOSED;
             } else {
                 switch (tlsEngine.getHandshakeStatus()) {
                 case NEED_WRAP:
-                    status = TLSStatus.NEED_WRITE;
-                    break;
+                    return TLSStatus.NEED_WRITE;
                 case NEED_UNWRAP:
-                    status = TLSStatus.NEED_READ;
-                    break;
+                    return TLSStatus.NEED_READ;
                 default:
-                    status = TLSStatus.OK;
-                    break;
+                    return TLSStatus.OK;
                 }
             }
         }
-        return status;
     }
 
     private ByteBuffer resizeApplicationBuffer(ByteBuffer app) {

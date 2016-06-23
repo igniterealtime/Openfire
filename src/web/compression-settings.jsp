@@ -18,15 +18,17 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.Connection,
-                 org.jivesoftware.openfire.session.LocalClientSession,
-                 org.jivesoftware.util.JiveGlobals"
-    errorPage="error.jsp"
-%>
+<%@ page errorPage="error.jsp" %>
+<%@ page import="org.jivesoftware.openfire.Connection" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -42,13 +44,32 @@
     boolean clientEnabled = ParamUtils.getBooleanParameter(request, "clientEnabled");
     boolean serverEnabled = ParamUtils.getBooleanParameter(request, "serverEnabled");
 
+    final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (update) {
         // Update c2s compression policy
-        LocalClientSession.setCompressionPolicy(
-                clientEnabled ? Connection.CompressionPolicy.optional : Connection.CompressionPolicy.disabled);
+        final Connection.CompressionPolicy newClientPolicy = clientEnabled ? Connection.CompressionPolicy.optional : Connection.CompressionPolicy.disabled;
+        connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).setCompressionPolicy( newClientPolicy );
+        connectionManager.getListener( ConnectionType.SOCKET_C2S, true  ).setCompressionPolicy( newClientPolicy );
+        connectionManager.getListener( ConnectionType.BOSH_C2S,   false ).setCompressionPolicy( newClientPolicy );
+        connectionManager.getListener( ConnectionType.BOSH_C2S,   true  ).setCompressionPolicy( newClientPolicy );
+
         // Update s2s compression policy
-        JiveGlobals.setProperty("xmpp.server.compression.policy", serverEnabled ?
-                Connection.CompressionPolicy.optional.toString() : Connection.CompressionPolicy.disabled.toString());
+        final Connection.CompressionPolicy newServerPolicy = serverEnabled ? Connection.CompressionPolicy.optional : Connection.CompressionPolicy.disabled;
+        connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).setCompressionPolicy( newServerPolicy );
+
+        // TODO Add components, connection managers
         // Log the event
         webManager.logEvent("set compression policy", "c2s compression = "+clientEnabled+"\ns2s compression = "+serverEnabled);
 %>
@@ -67,8 +88,8 @@
     }
 
     // Set page vars
-    clientEnabled = Connection.CompressionPolicy.optional == LocalClientSession.getCompressionPolicy();
-    serverEnabled = Connection.CompressionPolicy.optional.toString().equals(JiveGlobals.getProperty("xmpp.server.compression.policy", Connection.CompressionPolicy.disabled.toString()));
+    clientEnabled = Connection.CompressionPolicy.optional.equals( connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).getCompressionPolicy() );
+        serverEnabled = Connection.CompressionPolicy.optional.equals( connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).getCompressionPolicy() );
 %>
 
 <p>
@@ -78,6 +99,7 @@
 
 <!-- BEGIN compression settings -->
 <form action="compression-settings.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
 

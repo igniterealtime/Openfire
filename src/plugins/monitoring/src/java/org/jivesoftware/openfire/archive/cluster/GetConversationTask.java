@@ -37,7 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetConversationTask implements ClusterTask {
+public class GetConversationTask implements ClusterTask<Conversation> {
     private long conversationID;
     private Conversation conversation;
 
@@ -48,7 +48,7 @@ public class GetConversationTask implements ClusterTask {
         this.conversationID = conversationID;
     }
 
-    public Object getResult() {
+    public Conversation getResult() {
         return conversation;
     }
 

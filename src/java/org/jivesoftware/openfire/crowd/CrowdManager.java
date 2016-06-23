@@ -173,7 +173,7 @@ public class CrowdManager {
 		
 		int maxResults = 100;
 		int startIndex = 0;
-		List<User> results = new ArrayList<User>();
+		List<User> results = new ArrayList<>();
 		StringBuilder request = new StringBuilder("search?entity-type=user&expand=user&restriction=active%3dtrue")
 			.append("&max-results=").append(maxResults)
 			.append("&start-index=");
@@ -227,7 +227,7 @@ public class CrowdManager {
 
 		int maxResults = 100;
 		int startIndex = 0;
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		StringBuilder request = new StringBuilder("search?entity-type=group&restriction=active%3dtrue")
 			.append("&max-results=").append(maxResults)
 			.append("&start-index=");
@@ -282,7 +282,7 @@ public class CrowdManager {
 		
 		int maxResults = 100;
 		int startIndex = 0;
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		StringBuilder request = new StringBuilder("user/group/nested?username=").append(urlEncode(username))
 			.append("&max-results=").append(maxResults)
 			.append("&start-index=");
@@ -366,7 +366,7 @@ public class CrowdManager {
 		
 		int maxResults = 100;
 		int startIndex = 0;
-		List<String> results = new ArrayList<String>();
+		List<String> results = new ArrayList<>();
 		StringBuilder request = new StringBuilder("group/user/nested?groupname=").append(urlEncode(groupName))
 			.append("&max-results=").append(maxResults)
 			.append("&start-index=");

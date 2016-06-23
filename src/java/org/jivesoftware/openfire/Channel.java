@@ -54,7 +54,7 @@ public class Channel<T extends Packet> {
 	private static final Logger Log = LoggerFactory.getLogger(Channel.class);
 
     private String name;
-    private ChannelHandler channelHandler;
+    private ChannelHandler<T> channelHandler;
 
     ThreadPoolExecutor executor;
 
@@ -68,7 +68,7 @@ public class Channel<T extends Packet> {
         this.name = name;
         this.channelHandler = channelHandler;
 
-        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue());
+        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     }
 
     /**
@@ -89,6 +89,7 @@ public class Channel<T extends Packet> {
      */
     public void add(final T packet) {
         Runnable r = new Runnable() {
+            @Override
             public void run() {
                 try {
                     channelHandler.process(packet);

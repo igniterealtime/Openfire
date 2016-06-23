@@ -108,15 +108,15 @@ public abstract class Node {
     /**
      * The roster group(s) allowed to subscribe and retrieve items.
      */
-    protected Collection<String> rosterGroupsAllowed = new ArrayList<String>();
+    protected Collection<String> rosterGroupsAllowed = new ArrayList<>();
     /**
      * List of multi-user chat rooms to specify for replyroom.
      */
-    protected Collection<JID> replyRooms = new ArrayList<JID>();
+    protected Collection<JID> replyRooms = new ArrayList<>();
     /**
      * List of JID(s) to specify for replyto.
      */
-    protected Collection<JID> replyTo = new ArrayList<JID>();
+    protected Collection<JID> replyTo = new ArrayList<>();
     /**
      * The type of payload data to be provided at the node. Usually specified by the
      * namespace of the payload (if any).
@@ -160,7 +160,7 @@ public abstract class Node {
     /**
      * The JIDs of those to contact with questions.
      */
-    protected Collection<JID> contacts = new ArrayList<JID>();
+    protected Collection<JID> contacts = new ArrayList<>();
     /**
      * The name of the node.
      */
@@ -173,14 +173,14 @@ public abstract class Node {
      * The JIDs of those who have an affiliation with this node. When subscriptionModel is
      * whitelist then this collection acts as the white list (unless user is an outcast)
      */
-    protected Collection<NodeAffiliate> affiliates = new CopyOnWriteArrayList<NodeAffiliate>();
+    protected Collection<NodeAffiliate> affiliates = new CopyOnWriteArrayList<>();
     /**
      * Map that contains the current subscriptions to the node. A user may have more than one
      * subscription. Each subscription is uniquely identified by its ID.
      * Key: Subscription ID, Value: the subscription.
      */
     protected Map<String, NodeSubscription> subscriptionsByID =
-            new ConcurrentHashMap<String, NodeSubscription>();
+            new ConcurrentHashMap<>();
     /**
      * Map that contains the current subscriptions to the node. This map should be used only
      * when node is not configured to allow multiple subscriptions. When multiple subscriptions
@@ -189,7 +189,7 @@ public abstract class Node {
      * Key: Subscriber full JID, Value: the subscription.
      */
     protected Map<String, NodeSubscription> subscriptionsByJID =
-            new ConcurrentHashMap<String, NodeSubscription>();
+            new ConcurrentHashMap<>();
 
     Node(PubSubService service, CollectionNode parent, String nodeID, JID creator) {
         this.service = service;
@@ -388,7 +388,7 @@ public abstract class Node {
      * @return the list of subscriptions owned by the specified user.
      */
     public Collection<NodeSubscription> getSubscriptions(JID owner) {
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        Collection<NodeSubscription> subscriptions = new ArrayList<>();
         for (NodeSubscription subscription : subscriptionsByID.values()) {
             if (owner.equals(subscription.getOwner())) {
                 subscriptions.add(subscription);
@@ -447,7 +447,7 @@ public abstract class Node {
      * @return a collection with the JID of the node owners.
      */
     public Collection<JID> getOwners() {
-        Collection<JID> jids = new ArrayList<JID>();
+        Collection<JID> jids = new ArrayList<>();
         for (NodeAffiliate affiliate : affiliates) {
             if (NodeAffiliate.Affiliation.owner == affiliate.getAffiliation()) {
                 jids.add(affiliate.getJID());
@@ -466,7 +466,7 @@ public abstract class Node {
      * @return a collection with the JID of the enitities with an affiliation of publishers.
      */
     public Collection<JID> getPublishers() {
-        Collection<JID> jids = new ArrayList<JID>();
+        Collection<JID> jids = new ArrayList<>();
         for (NodeAffiliate affiliate : affiliates) {
             if (NodeAffiliate.Affiliation.publisher == affiliate.getAffiliation()) {
                 jids.add(affiliate.getJID());
@@ -497,7 +497,7 @@ public abstract class Node {
             // Get the new list of owners
             FormField ownerField = completedForm.getField("pubsub#owner");
             boolean ownersSent = ownerField != null;
-            List<JID> owners = new ArrayList<JID>();
+            List<JID> owners = new ArrayList<>();
             if (ownersSent) {
                 for (String value : ownerField.getValues()) {
                     try {
@@ -580,14 +580,14 @@ public abstract class Node {
                 }
                 else if ("pubsub#roster_groups_allowed".equals(field.getVariable())) {
                     // Get the new list of roster group(s) allowed to subscribe and retrieve items
-                    rosterGroupsAllowed = new ArrayList<String>();
+                    rosterGroupsAllowed = new ArrayList<>();
                     for (String value : field.getValues()) {
                         addAllowedRosterGroup(value);
                     }
                 }
                 else if ("pubsub#contact".equals(field.getVariable())) {
                     // Get the new list of users that may be contacted with questions
-                    contacts = new ArrayList<JID>();
+                    contacts = new ArrayList<>();
                     for (String value : field.getValues()) {
                         try {
                             addContact(new JID(value));
@@ -617,7 +617,7 @@ public abstract class Node {
                 }
                 else if ("pubsub#replyroom".equals(field.getVariable())) {
                     // Get the new list of multi-user chat rooms to specify for replyroom
-                    replyRooms = new ArrayList<JID>();
+                    replyRooms = new ArrayList<>();
                     for (String value : field.getValues()) {
                         try {
                             addReplyRoom(new JID(value));
@@ -629,7 +629,7 @@ public abstract class Node {
                 }
                 else if ("pubsub#replyto".equals(field.getVariable())) {
                     // Get the new list of JID(s) to specify for replyto
-                    replyTo = new ArrayList<JID>();
+                    replyTo = new ArrayList<>();
                     for (String value : field.getValues()) {
                         try {
                             addReplyTo(new JID(value));
@@ -677,7 +677,7 @@ public abstract class Node {
             FormField publisherField = completedForm.getField("pubsub#publisher");
             if (publisherField != null) {
                 // New list of publishers was sent to update publishers of the node
-                List<JID> publishers = new ArrayList<JID>();
+                List<JID> publishers = new ArrayList<>();
                 for (String value : publisherField.getValues()) {
                     try {
                         publishers.add(new JID(value));
@@ -821,7 +821,7 @@ public abstract class Node {
     public DataForm getConfigurationForm() {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.conf.title"));
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add(getNodeID());
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.conf.instruction", params));
 
@@ -875,7 +875,7 @@ public abstract class Node {
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection"));
         }
 
-        if (!parent.isRootCollectionNode()) {
+        if (parent != null && !parent.isRootCollectionNode()) {
         	formField.addValue(parent.getNodeID());
         }
 
@@ -1291,7 +1291,7 @@ public abstract class Node {
      *         presence status.
      */
     Collection<JID> getPresenceBasedSubscribers() {
-        Collection<JID> affiliatesJID = new ArrayList<JID>();
+        Collection<JID> affiliatesJID = new ArrayList<>();
         if (presenceBasedDelivery) {
             // Add JID of all affiliates that are susbcribed to the node
             for (NodeAffiliate affiliate : affiliates) {
@@ -1526,7 +1526,7 @@ public abstract class Node {
      * @return the complete hierarchy of parents of this node.
      */
     public Collection<CollectionNode> getParents() {
-        Collection<CollectionNode> parents = new ArrayList<CollectionNode>();
+        Collection<CollectionNode> parents = new ArrayList<>();
         CollectionNode myParent = parent;
         while (myParent != null) {
             parents.add(myParent);
@@ -1987,7 +1987,7 @@ public abstract class Node {
      *        subscriptions status or configuration.
      */
     protected void broadcastNodeEvent(Message message, boolean includeAll) {
-        Collection<JID> jids = new ArrayList<JID>();
+        Collection<JID> jids = new ArrayList<>();
         for (NodeSubscription subscription : subscriptionsByID.values()) {
             if (includeAll || subscription.canSendNodeEvents()) {
                 jids.add(subscription.getJID());
@@ -2221,7 +2221,7 @@ public abstract class Node {
      */
     public Collection<NodeSubscription> getPendingSubscriptions() {
         if (accessModel.isAuthorizationRequired()) {
-            List<NodeSubscription> pendingSubscriptions = new ArrayList<NodeSubscription>();
+            List<NodeSubscription> pendingSubscriptions = new ArrayList<>();
             for (NodeSubscription subscription : subscriptionsByID.values()) {
                 if (subscription.isAuthorizationPending()) {
                     pendingSubscriptions.add(subscription);
@@ -2308,6 +2308,6 @@ public abstract class Node {
         /**
          * Dynamically specify a replyto of the item publisher.
          */
-        publisher
-    };
+        publisher;
+    }
 }

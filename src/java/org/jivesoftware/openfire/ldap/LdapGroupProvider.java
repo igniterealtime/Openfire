@@ -76,6 +76,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         standardAttributes[2] = manager.getGroupMemberField();
     }
 
+    @Override
     public Group getGroup(String groupName) throws GroupNotFoundException {
         LdapContext ctx = null;
         try {
@@ -103,6 +104,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public int getGroupCount() {
         if (manager.isDebugEnabled()) {
             Log.debug("LdapGroupProvider: Trying to get the number of groups in the system.");
@@ -119,10 +121,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         return this.groupCount;
     }
 
+    @Override
     public Collection<String> getGroupNames() {
         return getGroupNames(-1, -1);
     }
 
+    @Override
     public Collection<String> getGroupNames(int startIndex, int numResults) {
         return manager.retrieveList(
                 manager.getGroupNameField(),
@@ -133,6 +137,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         );
     }
 
+    @Override
     public Collection<String> getGroupNames(JID user) {
         // Get DN of specified user
         XMPPServer server = XMPPServer.getInstance();
@@ -161,11 +166,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     	return search(manager.getGroupMemberField(), username);
     }
 
+    @Override
     public Collection<String> search(String key, String value) {
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
-        filter.append("(").append(key).append("=").append(LdapManager.sanitizeSearchFilter(value));
+        filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value));
         filter.append("))");
         if (Log.isDebugEnabled()) {
             Log.debug("Trying to find group names using query: " + filter.toString());
@@ -180,10 +186,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         );
     }
 
+    @Override
     public Collection<String> search(String query) {
         return search(query, -1, -1);
     }
 
+    @Override
     public Collection<String> search(String query, int startIndex, int numResults) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
@@ -191,7 +199,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         StringBuilder filter = new StringBuilder();
         // Make the query be a wildcard search by default. So, if the user searches for
         // "Test", make the sanitized search be "Test*" instead.
-        filter.append("(").append(manager.getGroupNameField()).append("=")
+        filter.append('(').append(manager.getGroupNameField()).append('=')
         		.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         // Perform the LDAP query
         return manager.retrieveList(
@@ -203,6 +211,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         );
     }
 
+    @Override
     public boolean isSearchSupported() {
         return true;
     }
@@ -217,8 +226,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         Pattern pattern =
                 Pattern.compile("(?i)(^" + manager.getUsernameField() + "=)([^,]+)(.+)");
 
+        // We have to process Active Directory differently.
+        boolean isAD = manager.getUsernameField().equals("sAMAccountName");
+        String[] returningAttributes = isAD ? new String[] { "distinguishedName", manager.getUsernameField() } : new String[] { manager.getUsernameField() };
+        
         SearchControls searchControls = new SearchControls();
-        searchControls.setReturningAttributes(new String[] { manager.getUsernameField() });
+        searchControls.setReturningAttributes(returningAttributes);
         // See if recursive searching is enabled. Otherwise, only search one level.
         if (manager.isSubTreeSearch()) {
             searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -241,7 +254,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         catch (Exception e) {
             description = "";
         }
-        Set<JID> members = new TreeSet<JID>();
+        Set<JID> members = new TreeSet<>();
         Attribute memberField = a.get(manager.getGroupMemberField());
         if (memberField != null) {
             NamingEnumeration ne = memberField.getAll();
@@ -268,15 +281,31 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             StringBuilder userFilter = new StringBuilder();
                             userFilter.append("(&(");
                             userFilter.append(ldapName.get(ldapName.size() - 1));
-                            userFilter.append(")");
+                            userFilter.append(')');
                             userFilter.append(MessageFormat.format(manager.getSearchFilter(), "*"));
-                            userFilter.append(")");
+                            userFilter.append(')');
                             NamingEnumeration usrAnswer = ctx.search("",
                                     userFilter.toString(), searchControls);
                             if (usrAnswer != null && usrAnswer.hasMoreElements()) {
-                                Attribute usernameAttr = ((SearchResult)usrAnswer.next()).getAttributes().get(manager.getUsernameField());
-                                if (usernameAttr != null) {
-                                    username = (String)usernameAttr.get();
+                                SearchResult searchResult = null;
+                                // We may get multiple search results for the same user CN.
+                                // Iterate through the entire set to find a matching distinguished name.
+                                while(usrAnswer.hasMoreElements()) {
+                                    searchResult = (SearchResult) usrAnswer.nextElement();
+                                    Attributes attrs = searchResult.getAttributes();
+                                    if (isAD) {
+                                        Attribute userdnAttr = attrs.get("distinguishedName");
+                                        if (username.equals((String)userdnAttr.get())) {
+                                            // Exact match found, use it.
+                                            username = (String)attrs.get(manager.getUsernameField()).get();
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        // No iteration occurs here, which is probably a bug.
+                                        username = (String)attrs.get(manager.getUsernameField()).get();
+                                        break;
+                                    }
                                 }
                             }
                             // Close the enumeration.

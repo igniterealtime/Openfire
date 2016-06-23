@@ -54,8 +54,6 @@ public class FastpathPlugin implements Plugin, ClusterEventListener {
     private WorkgroupManager workgroupManager;
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        System.out.println("Starting Fastpath Server");
-
         // Check if we Enterprise is installed and stop loading this plugin if found
         File pluginDir = new File(JiveGlobals.getHomeDirectory(), "plugins");
         File[] jars = pluginDir.listFiles(new FileFilter() {

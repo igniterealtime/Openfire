@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -13,7 +14,6 @@ import java.util.Set;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.util.Immutable;
 import org.jivesoftware.util.PersistableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +65,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 	 * @param persist True if the changes should be persisted to the database
 	 * @return The original value or null if the property did not exist
 	 */
+	@Override
 	public V put(K key, V value, boolean persist) {
 		V originalValue = super.put(key, value);
 		// we only support persistence for <String, String>
@@ -113,7 +114,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 	@Override
 	public Collection<V> values() {
 		// custom class needed here to suppress value.remove()
-		return (Collection<V>) new Immutable.Collection<V>(super.values());
+		return Collections.unmodifiableCollection(super.values());
 	}
 
 	@Override
@@ -168,6 +169,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Iterator}
 		 */
+		@Override
 		public boolean hasNext() {
 			return delegate.hasNext();
 		}
@@ -175,6 +177,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Iterator}
 		 */
+		@Override
 		public K next() {
 			current = delegate.next();
 			return current;
@@ -184,6 +187,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 * Removes the property corresponding to the current key from
 		 * the underlying map. Also applies update to the database.
 		 */
+		@Override
 		public void remove() {
 			delegate.remove();
 			if (current instanceof String) {
@@ -211,6 +215,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Returns a custom iterator for the entries in the backing map
 		 */
+		@Override
 		public Iterator<Entry<K, V>> iterator() {
 			return new EntryIterator<Entry<K,V>>(delegate.iterator());
 		}
@@ -222,6 +227,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 * @param o A {@link Map.Entry} within this set
 		 * @return True if the set contained the given key
 		 */
+		@Override
 		public boolean remove(Object o) {
 			boolean propertyExists = delegate.remove(o);
 			if (propertyExists) {
@@ -234,6 +240,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 * Removes all the elements in the set, and applies the
 		 * corresponding update to the database.
 		 */
+		@Override
 		public void clear() {
 			delegate.clear();
 			deleteAllProperties();
@@ -245,6 +252,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public boolean removeAll(Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
@@ -252,6 +260,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public boolean retainAll(Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
@@ -261,6 +270,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public boolean add(Entry<K, V> o) {
 			return delegate.add(o);
 		}
@@ -268,6 +278,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public boolean addAll(Collection<? extends Entry<K, V>> c) {
 			return delegate.addAll(c);
 		}
@@ -277,6 +288,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public int size() {
 			return delegate.size();
 		}
@@ -284,6 +296,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public boolean isEmpty() {
 			return delegate.isEmpty();
 		}
@@ -291,6 +304,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public boolean contains(Object o) {
 			return delegate.contains(o);
 		}
@@ -298,6 +312,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public Object[] toArray() {
 			return delegate.toArray();
 		}
@@ -305,6 +320,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public <T> T[] toArray(T[] a) {
 			return delegate.toArray(a);
 		}
@@ -312,6 +328,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Set}
 		 */
+		@Override
 		public boolean containsAll(Collection<?> c) {
 			return delegate.containsAll(c);
 		}
@@ -350,6 +367,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Iterator}
 		 */
+		@Override
 		public boolean hasNext() {
 			return delegate.hasNext();
 		}
@@ -357,8 +375,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Iterator}
 		 */
+		@Override
 		public Entry<K,V> next() {
-			current = new EntryWrapper<E>(delegate.next());
+			current = new EntryWrapper<>(delegate.next());
 			return current;
 		}
 
@@ -366,6 +385,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 * Removes the property corresponding to the current key from
 		 * the underlying map. Also applies update to the database.
 		 */
+		@Override
 		public void remove() {
 			delegate.remove();
 			K key = current.getKey();
@@ -393,6 +413,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Map.Entry}
 		 */
+		@Override
 		public K getKey() {
 			return delegate.getKey();
 		}
@@ -400,6 +421,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		/**
 		 * Delegated to corresponding method in the backing {@link Map.Entry}
 		 */
+		@Override
 		public V getValue() {
 			return delegate.getValue();
 		}
@@ -413,6 +435,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 		 * @param value The new property value
 		 * @return The old value of the corresponding property
 		 */
+		@Override
 		public V setValue(V value) {
 			V oldValue = delegate.setValue(value);
 			K key = delegate.getKey();
@@ -454,7 +477,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyAdded");
         GroupEventDispatcher.dispatchEvent(group,
@@ -485,7 +508,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyModified");
         event.put("originalValue", originalValue);
@@ -514,7 +537,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", key);
         GroupEventDispatcher.dispatchEvent(group,
@@ -539,7 +562,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        Map<String, Object> event = new HashMap<String, Object>();
+        Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", "*");
         GroupEventDispatcher.dispatchEvent(group,

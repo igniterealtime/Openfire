@@ -29,7 +29,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,14 +83,14 @@ public class GetListGroupUsers extends AdHocCommand {
 
         // Add group members the result
         for (JID memberJID : group.getMembers()) {
-            Map<String,Object> fields = new HashMap<String,Object>();
+            Map<String,Object> fields = new HashMap<>();
             fields.put("jid", memberJID.toString());
             fields.put("admin", false);
             form.addItemFields(fields);
         }
         // Add group admins the result
         for (JID memberJID : group.getAdmins()) {
-            Map<String,Object> fields = new HashMap<String,Object>();
+            Map<String,Object> fields = new HashMap<>();
             fields.put("jid", memberJID.toString());
             fields.put("admin", true);
             form.addItemFields(fields);
@@ -110,7 +110,7 @@ public class GetListGroupUsers extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

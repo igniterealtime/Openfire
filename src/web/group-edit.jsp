@@ -30,6 +30,7 @@
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
@@ -37,8 +38,8 @@
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%  webManager.init(pageContext); %>
@@ -71,6 +72,21 @@
     Group group = groupManager.getGroup(groupName);
     boolean success;
     StringBuffer errorBuf = new StringBuffer();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (add || delete || updateMember || update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            add = false;
+            delete = false;
+            update = false;
+            updateMember = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (cancel) {
         response.sendRedirect("group-summary.jsp");
@@ -264,7 +280,7 @@
 </head>
 <body>
 
-<% if (webManager.getGroupManager().isReadOnly() && webManager.getGroupManager().isPropertyReadOnly()) { %>
+<% if (webManager.getGroupManager().isReadOnly()) { %>
 <div class="error">
     <fmt:message key="group.read_only"/>
 </div>
@@ -325,6 +341,8 @@
 	<div class="jive-horizontalRule"></div>
 
 <form name="ff" action="group-edit.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
+
 <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>"/>
 
 
@@ -354,16 +372,6 @@
 
 	</div>
 	<div class="jive-contentBox">
-            <% if (webManager.getGroupManager().isPropertyReadOnly()) { %>
-        <p>
-                <% if (enableRosterGroups) { %>
-            <fmt:message key="group.edit.share_status_enabled" />
-                <% } else { %>
-            <fmt:message key="group.edit.share_status_disabled" />
-                <% } %>
-        </p>
-
-            <% } else { %>
         <p>
             <fmt:message key="group.edit.share_content" />
         </p>
@@ -469,7 +477,6 @@
         </tr>
     </tbody>
     </table>
-            <% } %>
 	</div>
 	<!-- END contact list settings -->
 
@@ -489,6 +496,7 @@
 		</p>
 
         <form action="group-edit.jsp" method="post" name="f">
+            <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <input type="hidden" name="add" value="Add"/>
         <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
@@ -507,6 +515,7 @@
         <% } %>
 
         <form action="group-edit.jsp" method="post" name="main">
+    <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
         <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>

@@ -40,24 +40,26 @@ import java.util.List;
  *
  * @author Gaston Dombiak
  */
-public class GetNewMemberRoomsRequest implements ClusterTask {
+public class GetNewMemberRoomsRequest implements ClusterTask<List<RoomInfo>> {
     private List<RoomInfo> rooms;
 
     public GetNewMemberRoomsRequest() {
     }
 
-    public Object getResult() {
+    @Override
+    public List<RoomInfo> getResult() {
         return rooms;
     }
 
+    @Override
     public void run() {
-        rooms = new ArrayList<RoomInfo>();
+        rooms = new ArrayList<>();
         // Get all services that have local occupants and include them in the reply
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
             // Get rooms that have local occupants and include them in the reply
             for (MUCRoom room : mucService.getChatRooms()) {
                 LocalMUCRoom localRoom = (LocalMUCRoom) room;
-                Collection<MUCRole> localOccupants = new ArrayList<MUCRole>();
+                Collection<MUCRole> localOccupants = new ArrayList<>();
                 for (MUCRole occupant : room.getOccupants()) {
                     if (occupant.isLocal()) {
                         localOccupants.add(occupant);
@@ -70,10 +72,12 @@ public class GetNewMemberRoomsRequest implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Do nothing
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Do nothing
     }

@@ -99,6 +99,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     private static HazelcastInstance hazelcast = null;
     private static Cluster cluster = null;
     private ClusterListener clusterListener;
+    private String lifecycleListener;
+    private String membershipListener;
 
     /**
      * Keeps that running state. Initial state is stopped.
@@ -141,8 +143,8 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
 	            XMPPServer.getInstance().setNodeID(NodeID.getInstance(getClusterMemberID()));
 	            // CacheFactory is now using clustered caches. We can add our listeners.
 	            clusterListener = new ClusterListener(cluster);
-	            hazelcast.getLifecycleService().addLifecycleListener(clusterListener);
-	            cluster.addMembershipListener(clusterListener);
+	            lifecycleListener = hazelcast.getLifecycleService().addLifecycleListener(clusterListener);
+	            membershipListener = cluster.addMembershipListener(clusterListener);
 	            break;
 	        } catch (Exception e) {
 	            if (retry < CLUSTER_STARTUP_RETRY_COUNT) {
@@ -172,13 +174,20 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         // Stop the cluster
         Hazelcast.shutdownAll();
         cluster = null;
-        // Wait until the server has updated its internal state
-        while (!clusterListener.isDone()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
+        if (clusterListener != null) {
+	        // Wait until the server has updated its internal state
+	        while (!clusterListener.isDone()) {
+	            try {
+	                Thread.sleep(100);
+	            } catch (InterruptedException e) {
+	                // Ignore
+	            }
+	        }
+	        hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListener);
+	        cluster.removeMembershipListener(membershipListener);
+	        lifecycleListener = null;
+	        membershipListener = null;
+	        clusterListener = null;
         }
         // Reset the node ID
         XMPPServer.getInstance().setNodeID(null);
@@ -225,7 +234,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
     }
 
     public Collection<ClusterNodeInfo> getClusterNodesInfo() {
-    	return clusterListener.getClusterNodesInfo();
+    	return clusterListener == null ? Collections.EMPTY_LIST : clusterListener.getClusterNodesInfo();
     }
 
     public int getMaxClusterNodes() {
@@ -333,7 +342,7 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         		for (Future<Object> future : futures.values()) {
         			long start = System.nanoTime();
         			result.add(future.get(nanosLeft, TimeUnit.NANOSECONDS));
-        			nanosLeft = (System.nanoTime() - start);
+        			nanosLeft = nanosLeft - (System.nanoTime() - start);
         		}
         	} catch (TimeoutException te) {
         		logger.error("Failed to execute cluster task within " + MAX_CLUSTER_EXECUTION_TIME + " seconds", te);
@@ -470,17 +479,17 @@ public class ClusteredCacheFactory implements CacheFactoryStrategy {
         }
     }
 
-    private static class CallableTask<Object> implements Callable<Object>, Serializable {
-    	private ClusterTask task;
+    private static class CallableTask<V> implements Callable<V>, Serializable {
+    	private ClusterTask<V> task;
     	
-    	public CallableTask(ClusterTask task) {
+    	public CallableTask(ClusterTask<V> task) {
     		this.task = task;
     	}
 
-        public Object call() {
+        public V call() {
             task.run();
             logger.debug("CallableTask[" + task.getClass().getName() + "] result: " + task.getResult());
-            return (Object) task.getResult();
+            return task.getResult();
         }
     }
     

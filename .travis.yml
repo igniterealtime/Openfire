@@ -1,2 +1,12 @@
+sudo: false
 language: java
-script: ant -Dhalt.on.plugin.error=true -f build/build.xml openfire test plugins
+jdk:
+  - oraclejdk8
+env:
+  - ENVTARGET=compile
+  - ENVTARGET=test
+  - ENVTARGET=openfire
+  - ENVTARGET=plugins
+
+script: ant -Dhalt.on.plugin.error=true -f build/build.xml clean $ENVTARGET 
+

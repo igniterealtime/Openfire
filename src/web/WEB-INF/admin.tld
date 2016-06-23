@@ -1,19 +1,18 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-
-<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
-    "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
-
-<taglib>
-	<tlibversion>1.0</tlibversion>
-	<jspversion>1.1</jspversion>
-	<shortname>Tag Library for Openfire 2.0</shortname>
-	<uri>admin</uri>
-	<info>Tab Library for Openfire Admin Console</info>
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns="http://java.sun.com/xml/ns/javaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+            http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
+        version="2.1">
+    <tlib-version>1.2</tlib-version>
+    <short-name>Tag Library for Openfire</short-name>
+    <description>Tab Library for Openfire Admin Console</description>
+    <short-name>admin</short-name>
+    <uri>admin</uri>
 	<tag>
 		<name>tabs</name>
-		<tagclass>org.jivesoftware.admin.TabsTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-		<info />
+        <tag-class>org.jivesoftware.admin.TabsTag</tag-class>
+        <body-content>JSP</body-content>
         <attribute>
             <name>css</name>
             <required>false</required>
@@ -42,9 +41,8 @@
     </tag>
     <tag>
         <name>subnavbar</name>
-        <tagclass>org.jivesoftware.admin.SubnavTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-        <info />
+        <tag-class>org.jivesoftware.admin.SubnavTag</tag-class>
+        <body-content>JSP</body-content>
         <attribute>
             <name>css</name>
             <required>false</required>
@@ -68,9 +66,8 @@
     </tag>
     <tag>
 		<name>sidebar</name>
-		<tagclass>org.jivesoftware.admin.SidebarTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-		<info />
+        <tag-class>org.jivesoftware.admin.SidebarTag</tag-class>
+        <body-content>JSP</body-content>
         <attribute>
             <name>css</name>
             <required>false</required>
@@ -99,9 +96,8 @@
 	</tag>
 	<tag>
 		<name>subsidebar</name>
-		<tagclass>org.jivesoftware.admin.SubSidebarTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-		<info />
+        <tag-class>org.jivesoftware.admin.SubSidebarTag</tag-class>
+        <body-content>JSP</body-content>
         <attribute>
             <name>css</name>
             <required>false</required>
@@ -124,27 +120,27 @@
         </attribute>
 	</tag>
     <tag>
-        <name>infobox</name>
-        <tagclass>org.jivesoftware.admin.InfoboxTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-        <info />
-        <attribute>
-            <name>type</name>
-            <required>true</required>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
         <name>ASN1DER</name>
-        <tagclass>org.jivesoftware.admin.ASN1DERTag</tagclass>
-        <bodycontent>JSP</bodycontent>
-        <info />
+        <tag-class>org.jivesoftware.admin.ASN1DERTag</tag-class>
+        <body-content>JSP</body-content>
         <attribute>
             <name>value</name>
             <required>true</required>
             <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>
+    <tag-file>
+        <name>contentBox</name>
+        <path>/WEB-INF/tags/admin/contentBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infobox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>infoBox</name>
+        <path>/WEB-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
     <function>
         <name>replaceAll</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
@@ -154,5 +150,15 @@
         <name>split</name>
         <function-class>org.jivesoftware.admin.JSTLFunctions</function-class>
         <function-signature>java.lang.String[] split(java.lang.String, java.lang.String)</function-signature>
+    </function>
+    <function>
+        <name>serverIdentities</name>
+        <function-class>org.jivesoftware.util.CertificateManager</function-class>
+        <function-signature>java.util.List getServerIdentities(java.security.cert.X509Certificate)</function-signature>
+    </function>
+    <function>
+        <name>clientIdentities</name>
+        <function-class>org.jivesoftware.util.CertificateManager</function-class>
+        <function-signature>java.util.List getClientIdentities(java.security.cert.X509Certificate)</function-signature>
     </function>
 </taglib>

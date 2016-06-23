@@ -8,8 +8,8 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
 	// Redirect if we've already run setup:
@@ -23,8 +23,8 @@
     // Get parameters
     boolean isLDAP = "org.jivesoftware.openfire.ldap.LdapAuthProvider".equals(
             JiveGlobals.getProperty("provider.auth.className"));
-    boolean isCLEARSPACE = "org.jivesoftware.openfire.clearspace.ClearspaceAuthProvider".equals(
-            JiveGlobals.getProperty("provider.auth.className"));
+    boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+    boolean requestedScramOnly = (request.getParameter("scramOnly") != null);
     boolean next = request.getParameter("continue") != null;
     if (next) {
         // Figure out where to send the user.
@@ -49,6 +49,9 @@
                     org.jivesoftware.openfire.security.DefaultSecurityAuditProvider.class.getName()));
             xmppSettings.put("provider.admin.className", JiveGlobals.getXMLProperty("provider.admin.className",
                     org.jivesoftware.openfire.admin.DefaultAdminProvider.class.getName()));
+            if (requestedScramOnly) {
+                JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+            }
 
             // Redirect
             response.sendRedirect("setup-admin-settings.jsp");
@@ -56,10 +59,6 @@
         }
         else if ("ldap".equals(mode)) {
             response.sendRedirect("setup-ldap-server.jsp");
-            return;
-        }
-        else if ("clearspace".equals(mode)) {
-            response.sendRedirect("setup-clearspace-integration.jsp");
             return;
         }
     }
@@ -86,11 +85,20 @@
 <table cellpadding="3" cellspacing="2" border="0">
 <tr>
     <td align="center" valign="top">
-        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP && !isCLEARSPACE) { %>checked<% } %>>
+        <input type="radio" name="mode" value="default" id="rb01" <% if (!isLDAP) { %>checked<% } %>>
     </td>
     <td>
         <label for="rb01"><b><fmt:message key="setup.profile.default" /></b></label><br>
 	    <fmt:message key="setup.profile.default_description" />
+    </td>
+</tr>
+<tr>
+    <td align="center" valign="top">
+        <input type="checkbox" name="scramOnly" value="scramOnly" id="rb01-0" <% if (scramOnly) { %>checked<% } %>>
+    </td>
+    <td>
+        <label for="rb01-0"><b><fmt:message key="setup.profile.default.scramOnly" /></b></label><br>
+	    <fmt:message key="setup.profile.default.scramOnly_description" />
     </td>
 </tr>
 <tr>
@@ -100,15 +108,6 @@
     <td>
         <label for="rb02"><b><fmt:message key="setup.profile.ldap" /></b></label><br>
 	    <fmt:message key="setup.profile.ldap_description" />
-    </td>
-</tr>
-<tr>
-    <td align="center" valign="top">
-        <input type="radio" name="mode" value="clearspace" id="rb03" <% if (isCLEARSPACE) { %>checked<% } %>>
-    </td>
-    <td>
-        <label for="rb03"><b><fmt:message key="setup.profile.clearspace" /></b></label><br>
-        <fmt:message key="setup.profile.clearspace_description" />
     </td>
 </tr>
 </table>

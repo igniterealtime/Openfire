@@ -115,20 +115,17 @@ public class FlashCrossDomainServlet extends HttpServlet {
     private static String getContent(File file) {
 		final StringBuilder content = new StringBuilder();
 		if (file.canRead()) {
-			try {
-				final BufferedReader in = new BufferedReader(new FileReader(
-						file));
-				String str;
-				while ((str = in.readLine()) != null) {
-					content.append(str);
-					content.append('\n');
-				}
-				in.close();
-			} catch (IOException ex) {
-				Log.warn("Unexpected exception while trying to read file: " + file.getName(), ex);
-				return null;
-			}
-		}
+            try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+                String str;
+                while ((str = in.readLine()) != null) {
+                    content.append(str);
+                    content.append('\n');
+                }
+            } catch (IOException ex) {
+                Log.warn("Unexpected exception while trying to read file: " + file.getName(), ex);
+                return null;
+            }
+        }
 
 		return content.toString();
 	}
@@ -156,7 +153,7 @@ public class FlashCrossDomainServlet extends HttpServlet {
         }
         if(XMPPServer.getInstance().getConnectionManager().getClientSSLListenerPort() > 0) {
             if(multiple) {
-                builder.append(",");
+                builder.append(',');
             }
             builder.append(XMPPServer.getInstance().getConnectionManager().getClientSSLListenerPort());
             multiple = true;
@@ -166,14 +163,14 @@ public class FlashCrossDomainServlet extends HttpServlet {
             // ports for http-binding may not be strictly needed in here, but it doesn't hurt
             if(HttpBindManager.getInstance().getHttpBindUnsecurePort() > 0) {
                 if(multiple) {
-                    builder.append(",");
+                    builder.append(',');
                 }
                 builder.append(HttpBindManager.getInstance().getHttpBindUnsecurePort());
                 multiple = true;
             }
             if (HttpBindManager.getInstance().isHttpsBindActive()) {
                 if (multiple) {
-                    builder.append(",");
+                    builder.append(',');
                 }
                 builder.append(HttpBindManager.getInstance().getHttpBindSecurePort());
             }

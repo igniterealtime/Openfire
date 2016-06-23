@@ -8,6 +8,7 @@ import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.XMLFilterImpl;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -70,7 +71,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     private boolean inDTD;
 
     /** The namespaces used for the current element when consuming SAX events */
-    private Map namespacesMap;
+    private Map<String, String> namespacesMap;
 
     /**
      * what is the maximum allowed character code
@@ -91,7 +92,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     public XMLWriter() throws UnsupportedEncodingException {
         this.format = DEFAULT_FORMAT;
-        this.writer = new BufferedWriter( new OutputStreamWriter( System.out, "UTF-8" ) );
+        this.writer = new BufferedWriter( new OutputStreamWriter( System.out, StandardCharsets.UTF_8) );
         this.autoFlush = true;
 		namespaceStack.push(Namespace.NO_NAMESPACE);
     }
@@ -493,7 +494,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     @Override
 	public void startPrefixMapping(String prefix, String uri) throws SAXException {
         if ( namespacesMap == null ) {
-            namespacesMap = new HashMap();
+            namespacesMap = new HashMap<>();
         }
         namespacesMap.put(prefix, uri);
         super.startPrefixMapping(prefix, uri);
@@ -643,6 +644,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     // LexicalHandler interface
     //-------------------------------------------------------------------------
+    @Override
     public void startDTD(String name, String publicID, String systemID) throws SAXException {
         inDTD = true;
         try {
@@ -657,6 +659,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endDTD() throws SAXException {
         inDTD = false;
         if (lexicalHandler != null) {
@@ -664,6 +667,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void startCDATA() throws SAXException {
         try {
             writer.write( "<![CDATA[" );
@@ -677,6 +681,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endCDATA() throws SAXException {
         try {
             writer.write( "]]>" );
@@ -690,6 +695,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void startEntity(String name) throws SAXException {
         try {
             writeEntityRef(name);
@@ -703,12 +709,14 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         }
     }
 
+    @Override
     public void endEntity(String name) throws SAXException {
         if (lexicalHandler != null) {
             lexicalHandler.endEntity(name);
         }
     }
 
+    @Override
     public void comment(char[] ch, int start, int length) throws SAXException {
         if ( showCommentsInDTDs || ! inDTD ) {
             try {
@@ -809,7 +817,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      * If it does, then retain whitespace.
      */
     protected final boolean isElementSpacePreserved(Element element) {
-      final Attribute attr = (Attribute)element.attribute("space");
+      final Attribute attr = element.attribute("space");
       boolean preserveFound=preserve; //default to global state
       if (attr!=null) {
         if ("xml".equals(attr.getNamespacePrefix()) &&
@@ -851,7 +859,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                         if (buffer == null) {
                             buffer = new StringBuilder( lastTextNode.getText() );
                         }
-                      buffer.append( ((Text) node).getText() );
+                      buffer.append( node.getText() );
                     }
                 }
                 else {
@@ -1089,10 +1097,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
                 parent.setProperty(LEXICAL_HANDLER_NAMES[i], this);
                 break;
             }
-            catch (SAXNotRecognizedException ex) {
-                // ignore
-            }
-            catch (SAXNotSupportedException ex) {
+            catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
                 // ignore
             }
         }

@@ -80,6 +80,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     private XMPPServer server = XMPPServer.getInstance();
 
+    @Override
     public Group createGroup(String name) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -101,6 +102,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return new Group(name, "", members, administrators);
     }
 
+    @Override
     public Group getGroup(String name) throws GroupNotFoundException {
         String description = null;
 
@@ -129,6 +131,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return new Group(name, description, members, administrators);
     }
 
+    @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -148,6 +151,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException
     {
         Connection con = null;
@@ -182,6 +186,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public void deleteGroup(String groupName) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -215,6 +220,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public int getGroupCount() {
         int count = 0;
         Connection con = null;
@@ -237,8 +243,9 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return count;
     }
 
+    @Override
     public Collection<String> getGroupNames() {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -258,8 +265,9 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(int startIndex, int numResults) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -283,8 +291,9 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public Collection<String> getGroupNames(JID user) {
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -306,6 +315,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public void addMember(String groupName, JID user, boolean administrator) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -325,6 +335,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public void updateMember(String groupName, JID user, boolean administrator) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -344,6 +355,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public void deleteMember(String groupName, JID user) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -362,14 +374,17 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
     }
 
+    @Override
     public boolean isReadOnly() {
         return false;
     }
 
+    @Override
     public Collection<String> search(String query) {
         return search(query, 0, Integer.MAX_VALUE);
     }
 
+    @Override
     public Collection<String> search(String query, int startIndex, int numResults) {
         if (query == null || "".equals(query)) {
             return Collections.emptyList();
@@ -383,7 +398,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -420,16 +435,18 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return groupNames;
     }
 
+    @Override
     public boolean isSearchSupported() {
         return true;
     }
 
+    @Override
     public boolean isSharingSupported() {
         return true;
     }
 
     private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
-        List<JID> members = new ArrayList<JID>();
+        List<JID> members = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

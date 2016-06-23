@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @author Gaston Dombiak
  */
-public class GetBasicStatistics implements ClusterTask {
+public class GetBasicStatistics implements ClusterTask<Map<String, Object>> {
     public static final String NODE = "node";
     public static final String CLIENT = "client";
     public static final String INCOMING = "incoming";
@@ -47,13 +47,15 @@ public class GetBasicStatistics implements ClusterTask {
 
     private Map<String, Object> values;
 
-    public Object getResult() {
+    @Override
+    public Map<String, Object> getResult() {
         return values;
     }
 
+    @Override
     public void run() {
         SessionManager manager = SessionManager.getInstance();
-        values = new HashMap<String, Object>();
+        values = new HashMap<>();
         values.put(NODE, CacheFactory.getClusterMemberID());
         // Collect number of authenticated users
         values.put(CLIENT, manager.getUserSessionsCount(true));
@@ -71,10 +73,12 @@ public class GetBasicStatistics implements ClusterTask {
         values.put(MEMORY_MAX, maxMemory);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         // Ignore
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         // Ignore
     }

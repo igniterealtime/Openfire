@@ -56,9 +56,9 @@ public class InterceptorManager {
 
     private XMPPServer server = XMPPServer.getInstance();
     private List<PacketInterceptor> globalInterceptors =
-            new CopyOnWriteArrayList<PacketInterceptor>();
+            new CopyOnWriteArrayList<>();
     private Map<String, List<PacketInterceptor>> usersInterceptors =
-            new ConcurrentHashMap<String, List<PacketInterceptor>>();
+            new ConcurrentHashMap<>();
 
     /**
      * Returns a singleton instance of InterceptorManager.
@@ -162,7 +162,7 @@ public class InterceptorManager {
     public void addUserInterceptor(String username, int index, PacketInterceptor interceptor) {
         List<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
         if (userInterceptors == null) {
-            userInterceptors = new CopyOnWriteArrayList<PacketInterceptor>();
+            userInterceptors = new CopyOnWriteArrayList<>();
             usersInterceptors.put(username, userInterceptors);
         }
         else {

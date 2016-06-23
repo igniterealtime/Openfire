@@ -30,11 +30,13 @@ import java.util.List;
  * regarding the port while hiding implementation details.
  *
  * @author Iain Shigeoka
+ * @deprecated
  */
+@Deprecated
 public class ServerPort {
 
     private int port;
-    private List<String> names = new ArrayList<String>(1);
+    private List<String> names = new ArrayList<>(1);
     private String address;
     private boolean secure;
     private String algorithm;

@@ -98,7 +98,7 @@ public interface PresenceManager {
      * Returns true if the the prober is allowed to see the presence of the probee.
      *
      * @param prober the user that is trying to probe the presence of another user.
-     * @param probee the username of the uset that is being probed.
+     * @param probee the username of the user that is being probed.
      * @return true if the the prober is allowed to see the presence of the probee.
      * @throws UserNotFoundException If the probee does not exist in the local server or the prober
      *         is not present in the roster of the probee.

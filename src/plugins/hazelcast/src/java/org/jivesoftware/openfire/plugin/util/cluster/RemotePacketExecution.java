@@ -40,7 +40,7 @@ import org.xmpp.packet.Presence;
  *
  * @author Gaston Dombiak
  */
-public class RemotePacketExecution implements ClusterTask {
+public class RemotePacketExecution implements ClusterTask<Void> {
 
     private JID recipient;
     private Packet packet;
@@ -53,7 +53,7 @@ public class RemotePacketExecution implements ClusterTask {
         this.packet = packet;
     }
 
-    public Object getResult() {
+    public Void getResult() {
         return null;
     }
 

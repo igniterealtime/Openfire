@@ -19,6 +19,7 @@ public class ModifySubscriptionTask extends SubscriptionTask
 		super(subscription);
 	}
 
+	@Override
 	public void run()
 	{
 		log.debug("[TASK] Modify subscription : {}", toString());

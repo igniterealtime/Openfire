@@ -31,7 +31,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +105,7 @@ public class UserModified extends AdHocCommand {
         }
 
         // Creates event params.
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
 
         // Gets the value of the change if it exist
         String value;
@@ -194,7 +194,7 @@ public class UserModified extends AdHocCommand {
 
     @Override
 	protected List<Action> getActions(SessionData data) {
-        return Arrays.asList(Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

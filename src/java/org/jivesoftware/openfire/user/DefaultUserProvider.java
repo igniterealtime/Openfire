@@ -62,14 +62,14 @@ public class DefaultUserProvider implements UserProvider {
 	private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
-            "SELECT name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
+            "SELECT salt, serverKey, storedKey, iterations, name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
     private static final String USER_COUNT =
             "SELECT count(*) FROM ofUser";
     private static final String ALL_USERS =
             "SELECT username FROM ofUser ORDER BY username";
     private static final String INSERT_USER =
-            "INSERT INTO ofUser (username,plainPassword,encryptedPassword,name,email,creationDate,modificationDate) " +
-            "VALUES (?,?,?,?,?,?,?)";
+            "INSERT INTO ofUser (username,name,email,creationDate,modificationDate) " +
+            "VALUES (?,?,?,?,?)";
     private static final String DELETE_USER_FLAGS =
             "DELETE FROM ofUserFlag WHERE username=?";
     private static final String DELETE_USER_PROPS =
@@ -85,7 +85,8 @@ public class DefaultUserProvider implements UserProvider {
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE ofUser SET modificationDate=? WHERE username=?";
     private static final boolean IS_READ_ONLY = false;
-
+    
+    @Override
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -104,12 +105,21 @@ public class DefaultUserProvider implements UserProvider {
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
-            String name = rs.getString(1);
-            String email = rs.getString(2);
-            Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-            Date modificationDate = new Date(Long.parseLong(rs.getString(4).trim()));
+            String salt = rs.getString(1);
+            String serverKey = rs.getString(2);
+            String storedKey = rs.getString(3);
+            int iterations = rs.getInt(4);
+            String name = rs.getString(5);
+            String email = rs.getString(6);
+            Date creationDate = new Date(Long.parseLong(rs.getString(7).trim()));
+            Date modificationDate = new Date(Long.parseLong(rs.getString(8).trim()));
 
-            return new User(username, name, email, creationDate, modificationDate);
+            User user = new User(username, name, email, creationDate, modificationDate);
+            user.setSalt(salt);
+            user.setServerKey(serverKey);
+            user.setStoredKey(storedKey);
+            user.setIterations(iterations);
+            return user;
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);
@@ -119,6 +129,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
@@ -129,22 +140,6 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
-
-            // Determine if the password should be stored as plain text or encrypted.
-            boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
-            String encryptedPassword = null;
-            if (!usePlainPassword) {
-                try {
-                    encryptedPassword = AuthFactory.encryptPassword(password);
-                    // Set password to null so that it's inserted that way.
-                    password = null;
-                }
-                catch (UnsupportedOperationException uoe) {
-                    // Encrypting the password may have failed if in setup mode. Therefore,
-                    // use the plain password.
-                }
-            }
-
             Date now = new Date();
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -152,44 +147,39 @@ public class DefaultUserProvider implements UserProvider {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(INSERT_USER);
                 pstmt.setString(1, username);
-                if (password == null) {
+                if (name == null || name.matches("\\s*")) {
                     pstmt.setNull(2, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(2, password);
+                    pstmt.setString(2, name);
                 }
-                if (encryptedPassword == null) {
+                if (email == null || email.matches("\\s*")) {
                     pstmt.setNull(3, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(3, encryptedPassword);
+                    pstmt.setString(3, email);
                 }
-                if (name == null || name.matches("\\s*")) {
-                    pstmt.setNull(4, Types.VARCHAR);
-                }
-                else {
-                    pstmt.setString(4, name);
-                }
-                if (email == null || email.matches("\\s*")) {
-                    pstmt.setNull(5, Types.VARCHAR);
-                }
-                else {
-                    pstmt.setString(5, email);
-                }
-                pstmt.setString(6, StringUtils.dateToMillis(now));
-                pstmt.setString(7, StringUtils.dateToMillis(now));
+                pstmt.setString(4, StringUtils.dateToMillis(now));
+                pstmt.setString(5, StringUtils.dateToMillis(now));
                 pstmt.execute();
             }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            catch (SQLException e) {
+                throw new RuntimeException(e);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
             }
+            try {
+                AuthFactory.setPassword(username, password);
+            } catch(Exception e) {
+                Log.error("User pasword not set", e);
+            }
+            
             return new User(username, name, email, now, now);
         }
     }
 
+    @Override
     public void deleteUser(String username) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -222,6 +212,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public int getUserCount() {
         int count = 0;
         Connection con = null;
@@ -244,17 +235,19 @@ public class DefaultUserProvider implements UserProvider {
         return count;
     }
 
+    @Override
     public Collection<User> getUsers() {
         Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public Collection<String> getUsernames() {
         return getUsernames(0, Integer.MAX_VALUE);
     }
 
     private Collection<String> getUsernames(int startIndex, int numResults) {
-        List<String> usernames = new ArrayList<String>(500);
+        List<String> usernames = new ArrayList<>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -296,11 +289,13 @@ public class DefaultUserProvider implements UserProvider {
         return usernames;
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public void setName(String username, String name) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -324,6 +319,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setEmail(String username, String email) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -347,6 +343,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -365,6 +362,7 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -383,14 +381,17 @@ public class DefaultUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
         return findUsers(fields, query, 0, Integer.MAX_VALUE);
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
@@ -412,7 +413,7 @@ public class DefaultUserProvider implements UserProvider {
             query = query.substring(0, query.length()-1);
         }
 
-        List<String> usernames = new ArrayList<String>(50);
+        List<String> usernames = new ArrayList<>(50);
         Connection con = null;
         PreparedStatement pstmt = null;
         int queries=0;
@@ -484,14 +485,17 @@ public class DefaultUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return IS_READ_ONLY;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }
@@ -513,10 +517,10 @@ public class DefaultUserProvider implements UserProvider {
                 sb.delete(0, sb.length());
                 count = 0;
             }
-            sb.append(element).append(",");
+            sb.append(element).append(',');
             count++;
         }
-        sb.append(".");
+        sb.append('.');
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 }

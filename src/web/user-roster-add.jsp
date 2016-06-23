@@ -29,8 +29,8 @@
 <%@ page import="org.jivesoftware.openfire.user.UserAlreadyExistsException" %>
 <%@ page import="org.jivesoftware.openfire.SharedGroupException" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -50,6 +50,18 @@
         response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
         return;
     }
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (add) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            add = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Handle a request to create a user:
     if (add) {
@@ -155,6 +167,7 @@
 <%  } %>
 
 <form name="f" action="user-roster-add.jsp" method="get">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
 
@@ -173,8 +186,7 @@
 		</tr>
 		<tr>
 			<td width="1%" nowrap>
-				<label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label>
-			</td>
+				<label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label></td>
 			<td width="99%">
 				<input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? StringUtils.escapeForXML(nickname) : "") %>"
 				 id="nicknametf">

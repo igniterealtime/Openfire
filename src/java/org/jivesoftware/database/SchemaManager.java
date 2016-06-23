@@ -68,14 +68,7 @@ public class SchemaManager {
     /**
      * Current Openfire database schema version.
      */
-    private static final int DATABASE_VERSION = 21;
-
-    /**
-     * Creates a new Schema manager.
-     */
-    SchemaManager() {
-
-    }
+    private static final int DATABASE_VERSION = 23;
 
     /**
      * Checks the Openfire database schema to ensure that it's installed and up to date.
@@ -235,25 +228,17 @@ public class SchemaManager {
             // Resource will be like "/database/openfire_hsqldb.sql"
             String resourceName = schemaKey + "_" +
                     DbConnectionManager.getDatabaseType() + ".sql";
-            InputStream resource = resourceLoader.loadResource(resourceName);
-            if (resource == null) {
-                return false;
-            }
-            try {
+
+            try (InputStream resource = resourceLoader.loadResource(resourceName)) {
+                if (resource == null) {
+                    return false;
+                }
                 // For plugins, we will automatically convert jiveVersion to ofVersion
                 executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
                 return false;
-            }
-            finally {
-                try {
-                    resource.close();
-                }
-                catch (Exception e) {
-                    // Ignore.
-                }
             }
             Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
@@ -281,34 +266,23 @@ public class SchemaManager {
 
             // Run all upgrade scripts until we're up to the latest schema.
             for (int i = currentVersion + 1; i <= requiredVersion; i++) {
-                InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey);
-                
-                // apply the 'database-patches-done-in-java'
-				try {
-					if (i == 21 && schemaKey.equals("openfire")) {
-						OF33.executeFix(con);
-					}
-				} catch (Exception e) {
-					Log.error(e.getMessage(), e);
-					return false;
-				}
-                if (resource == null) {
-                    continue;
-                }
-                try {
+                try (InputStream resource = getUpgradeResource(resourceLoader, i, schemaKey)) {
+                    // apply the 'database-patches-done-in-java'
+                    try {
+                        if (i == 21 && schemaKey.equals("openfire")) {
+                            OF33.executeFix(con);
+                        }
+                    } catch (Exception e) {
+                        Log.error(e.getMessage(), e);
+                        return false;
+                    }
+                    if (resource == null) {
+                        continue;
+                    }
                     executeSQLScript(con, resource, !schemaKey.equals("openfire") && !schemaKey.equals("wildfire"));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     Log.error(e.getMessage(), e);
                     return false;
-                }
-                finally {
-                    try {
-                        resource.close();
-                    }
-                    catch (Exception e) {
-                        // Ignore.
-                    }
                 }
             }
             Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
@@ -371,9 +345,7 @@ public class SchemaManager {
     private static void executeSQLScript(Connection con, InputStream resource, Boolean autoreplace) throws IOException,
             SQLException
     {
-        BufferedReader in = null;
-        try {
-            in = new BufferedReader(new InputStreamReader(resource));
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(resource))) {
             boolean done = false;
             while (!done) {
                 StringBuilder command = new StringBuilder();
@@ -385,7 +357,7 @@ public class SchemaManager {
                     }
                     // Ignore comments and blank lines.
                     if (isSQLCommandPart(line)) {
-                        command.append(" ").append(line);
+                        command.append(' ').append(line);
                     }
                     if (line.trim().endsWith(";")) {
                         break;
@@ -415,16 +387,6 @@ public class SchemaManager {
                     finally {
                         DbConnectionManager.closeStatement(pstmt);
                     }
-                }
-            }
-        }
-        finally {
-            if (in != null) {
-                try {
-                    in.close();
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
                 }
             }
         }

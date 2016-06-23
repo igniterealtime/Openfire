@@ -20,6 +20,8 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.LocaleUtils,
                  org.jivesoftware.util.Log,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils"
 %>
 <%@ page import="java.util.HashMap"%>
@@ -27,8 +29,8 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.util.TimeZone"%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -40,6 +42,18 @@
 
     // TODO: We're not displaying this error ever.
     Map<String,String> errors = new HashMap<String,String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         // Set the timezeone
         try {
@@ -90,6 +104,7 @@
 
 <!-- BEGIN locale settings -->
 <form action="server-locale.jsp" method="post" name="sform">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div class="jive-contentBoxHeader">
 		<fmt:message key="locale.system.set" />
 	</div>
@@ -178,41 +193,50 @@
             </tr>
             <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                    <input type="radio" name="localeCode" value="pt_PT" <%= ("pt_PT".equals(locale.toString()) ? "checked" : "") %>
                      id="loc08" />
                 </td>
                 <td colspan="2">
-                    <label for="loc08">Portugu&ecirc;s Brasileiro (pt_BR)</label>
+                    <label for="loc08">Portugu&ecirc;s Portugal (pt_PT)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="pt_BR" <%= ("pt_BR".equals(locale.toString()) ? "checked" : "") %>
+                     id="loc09" />
+                </td>
+                <td colspan="2">
+                    <label for="loc09">Portugu&ecirc;s Brasileiro (pt_BR)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="ru_RU" <%= ("ru_RU".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc09" />
+                     id="loc10" />
                 </td>
                 <td colspan="2">
-                    <label for="loc09">&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439; (ru_RU)</label>
+                    <label for="loc10">&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439; (ru_RU)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="sk" <%= ("sk".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc10" />
+                     id="loc11" />
                 </td>
                 <td colspan="2">
-                    <label for="loc10">Sloven&#269;ina (sk)</label>
+                    <label for="loc11">Sloven&#269;ina (sk)</label>
                 </td>
             </tr>
             <tr>
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %>
-                     id="loc11" />
+                     id="loc12" />
                 </td>
                 <td>
                     <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" alt="" /></a>
                 </td>
                 <td>
-                    <label for="loc11">Simplified Chinese (zh_CN)</label>
+                    <label for="loc12">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

@@ -41,17 +41,19 @@ import java.util.Enumeration;
  *
  * @author Gaston Dombiak
  */
-public class GetAdminConsoleInfoTask implements ClusterTask {
+public class GetAdminConsoleInfoTask implements ClusterTask<GetAdminConsoleInfoTask> {
     private String bindInterface;
     private int adminPort;
     private int adminSecurePort;
     private String adminSecret;
 
 
-    public Object getResult() {
+    @Override
+    public GetAdminConsoleInfoTask getResult() {
         return this;
     }
 
+    @Override
     public void run() {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         AdminConsolePlugin adminConsolePlugin = ((AdminConsolePlugin) pluginManager.getPlugin("admin"));
@@ -110,6 +112,7 @@ public class GetAdminConsoleInfoTask implements ClusterTask {
         return adminSecret;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeInt(out, adminPort);
         ExternalizableUtil.getInstance().writeInt(out, adminSecurePort);
@@ -120,6 +123,7 @@ public class GetAdminConsoleInfoTask implements ClusterTask {
         ExternalizableUtil.getInstance().writeSafeUTF(out, adminSecret);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         adminPort = ExternalizableUtil.getInstance().readInt(in);
         adminSecurePort = ExternalizableUtil.getInstance().readInt(in);

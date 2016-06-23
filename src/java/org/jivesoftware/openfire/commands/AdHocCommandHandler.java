@@ -31,10 +31,6 @@ import org.jivesoftware.openfire.commands.admin.user.DeleteUser;
 import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
 import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
 import org.jivesoftware.openfire.commands.admin.user.UserProperties;
-import org.jivesoftware.openfire.commands.clearspace.ChangeSharedSecret;
-import org.jivesoftware.openfire.commands.clearspace.GenerateNonce;
-import org.jivesoftware.openfire.commands.clearspace.SystemAdminAdded;
-import org.jivesoftware.openfire.commands.clearspace.SystemAdminRemoved;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.handler.IQHandler;
@@ -95,29 +91,30 @@ public class AdHocCommandHandler extends IQHandler
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add(NAMESPACE);
-        return features.iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
         identity.addAttribute("type", NAMESPACE.equals(node) ? "command-list" : "command-node");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE, "jabber:x:data").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         if (NAMESPACE.equals(node)) {
             return true;
@@ -129,8 +126,9 @@ public class AdHocCommandHandler extends IQHandler
         }
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         if (!NAMESPACE.equals(node)) {
             answer = Collections.emptyList();
         }
@@ -221,7 +219,6 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new PacketsNotification());
         addCommand(new GetServerStats());
         addCommand(new HttpBindStatus());
-        addCommand(new ChangeSharedSecret());
         addCommand(new UserCreated());
         addCommand(new UserModified());
         addCommand(new UserDeleting());
@@ -236,9 +233,6 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new VCardDeleting());
         addCommand(new VCardModified());
         addCommand(new GetAdminConsoleInfo());
-        addCommand(new GenerateNonce());
-        addCommand(new SystemAdminAdded());
-        addCommand(new SystemAdminRemoved());
     }
 
     private void startCommand(AdHocCommand command) {

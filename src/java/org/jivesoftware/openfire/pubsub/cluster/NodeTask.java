@@ -12,7 +12,7 @@ import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
-public abstract class NodeTask implements ClusterTask
+public abstract class NodeTask implements ClusterTask<Void>
 {
 
 	protected String nodeId;
@@ -52,17 +52,20 @@ public abstract class NodeTask implements ClusterTask
 		}
 	}
 
-	public Object getResult()
+	@Override
+	public Void getResult()
 	{
 		return null;
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput out) throws IOException
 	{
 		ExternalizableUtil.getInstance().writeSafeUTF(out, nodeId);
 		ExternalizableUtil.getInstance().writeSafeUTF(out, serviceId);
 	}
 
+	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 	{
 		nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);

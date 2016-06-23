@@ -19,6 +19,8 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.JMXManager,
@@ -27,8 +29,8 @@
 %>
 <%@ page import="java.util.Map" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
@@ -76,6 +78,18 @@
     XMPPServer server = webManager.getXMPPServer();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         if (serverName == null) {
             errors.put("serverName", "");
@@ -206,6 +220,7 @@
 <%  } %>
 
 <form action="server-props.jsp" name="editform" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">

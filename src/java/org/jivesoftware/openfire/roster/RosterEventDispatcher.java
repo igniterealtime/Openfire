@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class RosterEventDispatcher {
 
     private static List<RosterEventListener> listeners =
-            new CopyOnWriteArrayList<RosterEventListener>();
+            new CopyOnWriteArrayList<>();
 
     /**
      * Registers a listener to receive events.

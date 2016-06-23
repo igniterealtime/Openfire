@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class MUCServicePropertyClusterEventTask implements ClusterTask {
+public class MUCServicePropertyClusterEventTask implements ClusterTask<Void> {
     private Type event;
     private String service;
     private String key;
@@ -57,10 +57,12 @@ public class MUCServicePropertyClusterEventTask implements ClusterTask {
         return task;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         if (Type.put == event) {
             MUCPersistenceManager.setLocalProperty(service, key, value);
@@ -70,6 +72,7 @@ public class MUCServicePropertyClusterEventTask implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeInt(out, event.ordinal());
         ExternalizableUtil.getInstance().writeSafeUTF(out, service);
@@ -80,6 +83,7 @@ public class MUCServicePropertyClusterEventTask implements ClusterTask {
         }
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         event = Type.values()[ExternalizableUtil.getInstance().readInt(in)];
         service = ExternalizableUtil.getInstance().readSafeUTF(in);

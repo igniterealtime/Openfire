@@ -27,7 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class implements the <tt>Set</tt> interface, backed by a ConcurrentHashMap instance.
  *
  * @author Matt Tucker
+ * @deprecated Use {@code Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>())} instead.
  */
+@Deprecated
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
         java.io.Serializable
 {
@@ -42,7 +44,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      * default initial capacity (16) and load factor (0.75).
      */
     public ConcurrentHashSet() {
-	    map = new ConcurrentHashMap<E,Object>();
+	    map = new ConcurrentHashMap<>();
     }
 
     /**
@@ -55,7 +57,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      * @throws NullPointerException   if the specified collection is null.
      */
     public ConcurrentHashSet(Collection<? extends E> c) {
-	    map = new ConcurrentHashMap<E,Object>(Math.max((int) (c.size()/.75f) + 1, 16));
+	    map = new ConcurrentHashMap<>(Math.max((int) (c.size()/.75f) + 1, 16));
 	    addAll(c);
     }
 
@@ -69,7 +71,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      *      than zero, or if the load factor is nonpositive.
      */
     public ConcurrentHashSet(int initialCapacity, float loadFactor) {
-	    map = new ConcurrentHashMap<E,Object>(initialCapacity, loadFactor, 16);
+	    map = new ConcurrentHashMap<>(initialCapacity, loadFactor, 16);
     }
 
     /**
@@ -82,7 +84,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
      *             than zero.
      */
     public ConcurrentHashSet(int initialCapacity) {
-	    map = new ConcurrentHashMap<E,Object>(initialCapacity);
+	    map = new ConcurrentHashMap<>(initialCapacity);
     }
 
     @Override
@@ -152,7 +154,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, Clon
     {
 	    s.defaultReadObject();
 
-        map = new ConcurrentHashMap<E, Object>();
+        map = new ConcurrentHashMap<>();
 
         // Read in size
         int size = s.readInt();

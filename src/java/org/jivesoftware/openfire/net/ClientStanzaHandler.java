@@ -45,8 +45,13 @@ import org.xmpp.packet.Presence;
  */
 public class ClientStanzaHandler extends StanzaHandler {
 
+    public ClientStanzaHandler(PacketRouter router, Connection connection) {
+        super(router, connection);
+    }
+
+    @Deprecated
     public ClientStanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        super(router, serverName, connection);
+        super(router, connection);
     }
 
     /**
@@ -110,12 +115,6 @@ public class ClientStanzaHandler extends StanzaHandler {
 
     @Override
 	void startTLS() throws Exception {
-        Connection.ClientAuth policy;
-        try {
-            policy = Connection.ClientAuth.valueOf(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY, "disabled"));
-        } catch (IllegalArgumentException e) {
-            policy = Connection.ClientAuth.disabled;
-        }
-        connection.startTLS(false, null, policy);
+        connection.startTLS(false);
     }
 }

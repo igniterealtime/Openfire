@@ -109,7 +109,7 @@ class RegisterProcessing {
             // }
             /*
             * else{ SipURI uri = (SipURI) address.getURI();
-            * scheduleReRegistration(uri.getHost(), uri.getPort(),
+            * scheduleReRegistration(uri.getHost(), uri.getServerPort(),
             * uri.getTransportParam(), expires); }
             */
             sipManCallback.fireRegistered(address.toString());

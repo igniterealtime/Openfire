@@ -22,13 +22,15 @@
                  org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.StringUtils,
                  java.util.Collection"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Date" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%!
     static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
@@ -68,6 +70,17 @@
     // Get the session count
     int sessionCount = sessionManager.getUserSessionsCount(false);
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (close) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            close = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     // Close a connection if requested
     if (close) {
         JID address = new JID(jid);

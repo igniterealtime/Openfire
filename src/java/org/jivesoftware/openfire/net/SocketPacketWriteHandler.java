@@ -51,6 +51,7 @@ public class SocketPacketWriteHandler implements ChannelHandler {
         this.server = XMPPServer.getInstance();
     }
 
+     @Override
      public void process(Packet packet) throws UnauthorizedException, PacketException {
         try {
             JID recipient = packet.getTo();

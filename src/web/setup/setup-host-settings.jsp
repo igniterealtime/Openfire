@@ -13,8 +13,8 @@
 %>
 <%@ page import="java.net.UnknownHostException" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
 	// Redirect if we've already run setup:
@@ -29,7 +29,7 @@
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
-    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", true);
+    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", false);
     String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
     String encryptionKey = ParamUtils.getParameter(request, "encryptionKey");
 

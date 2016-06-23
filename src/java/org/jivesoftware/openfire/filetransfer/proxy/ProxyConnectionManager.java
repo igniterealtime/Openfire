@@ -41,6 +41,7 @@ import org.jivesoftware.openfire.stats.i18nStatistic;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class ProxyConnectionManager {
 
     private static final String proxyTransferRate = "proxyTransferRate";
 
-    private Map<String, ProxyTransfer> connectionMap;
+    private Cache<String, ProxyTransfer> connectionMap;
 
     private final Object connectionLock = new Object();
 
@@ -99,6 +100,7 @@ public class ProxyConnectionManager {
         }
         reset();
         socketProcess = executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     serverSocket = new ServerSocket(port, -1, bindInterface);
@@ -122,6 +124,7 @@ public class ProxyConnectionManager {
                         }
                     }
                     executor.submit(new Runnable() {
+                        @Override
                         public void run() {
                             try {
                                 processConnection(socket);
@@ -300,6 +303,7 @@ public class ProxyConnectionManager {
         transfer.setTarget(target.toString());
         transfer.setSessionID(sid);
         transfer.setTransferFuture(executor.submit(new Runnable() {
+            @Override
             public void run() {
                 try {
                     transferManager.fireFileTransferStart( transfer.getSessionID(), true );
@@ -374,10 +378,12 @@ public class ProxyConnectionManager {
             super("filetransferproxy.transfered", Statistic.Type.rate);
         }
 
+        @Override
         public double sample() {
             return (ProxyOutputStream.amountTransferred.getAndSet(0) / 1000d);
         }
 
+        @Override
         public boolean isPartialSample() {
             return true;
         }

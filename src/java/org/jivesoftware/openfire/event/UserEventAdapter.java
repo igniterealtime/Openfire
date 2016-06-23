@@ -28,12 +28,15 @@ import java.util.Map;
  * The methods in this class are empty. This class exists as convenience for creating listener objects.
  */
 public class UserEventAdapter implements UserEventListener  {
+    @Override
     public void userCreated(User user, Map params) {
     }
 
+    @Override
     public void userDeleting(User user, Map params) {
     }
 
+    @Override
     public void userModified(User user, Map params) {
     }
 }

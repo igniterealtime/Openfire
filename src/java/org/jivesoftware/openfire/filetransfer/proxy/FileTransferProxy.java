@@ -24,8 +24,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.dom4j.DocumentHelper;
@@ -301,55 +301,58 @@ public class FileTransferProxy extends BasicModule
         return proxyServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
+    @Override
     public JID getAddress() {
         return new JID(null, getServiceDomain(), null);
     }
 
+    @Override
     public Iterator<DiscoServerItem> getItems() {
-        List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
         if(!isEnabled()) {
-            return items.iterator();
+            return Collections.emptyIterator();
         }
 
         final DiscoServerItem item = new DiscoServerItem(new JID(
 			getServiceDomain()), "Socks 5 Bytestreams Proxy", null, null, this,
 			this);
-		items.add(item);
         
-        return items.iterator();
+        return Collections.singleton(item).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        List<Element> identities = new ArrayList<Element>();
         // Answer the identity of the proxy
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "proxy");
         identity.addAttribute("name", "SOCKS5 Bytestreams Service");
         identity.addAttribute("type", "bytestreams");
 
-        identities.add(identity);
-
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(FileTransferManager.NAMESPACE_BYTESTREAMS,
                 "http://jabber.org/protocol/disco#info").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
         return new ArrayList<DiscoItem>().iterator();
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Check if the packet is a disco request or a packet with namespace iq:register
         if (packet instanceof IQ) {
@@ -366,6 +369,7 @@ public class FileTransferProxy extends BasicModule
     }
 
     private class FileTransferPropertyListener implements PropertyEventListener {
+        @Override
         public void propertySet(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 Object value = params.get("value");
@@ -375,15 +379,18 @@ public class FileTransferProxy extends BasicModule
             }
         }
 
+        @Override
         public void propertyDeleted(String property, Map params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 setEnabled(DEFAULT_IS_PROXY_ENABLED);
             }
         }
 
+        @Override
         public void xmlPropertySet(String property, Map params) {
         }
 
+        @Override
         public void xmlPropertyDeleted(String property, Map params) {
         }
     }

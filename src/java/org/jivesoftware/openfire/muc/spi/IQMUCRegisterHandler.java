@@ -29,6 +29,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.muc.ConflictException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.ElementUtil;
@@ -126,8 +127,11 @@ class IQMUCRegisterHandler {
             reply.setError(PacketError.Condition.item_not_found);
             return reply;
         }
-        else if (!room.isRegistrationEnabled()) {
-            // The room does not accept users to register
+        else if (!room.isRegistrationEnabled() ||
+                 (packet.getFrom() != null && 
+                  MUCRole.Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
+            // The room does not accept users to register or
+            // the user is an outcast and is not allowed to register
             reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.not_allowed);
@@ -165,7 +169,7 @@ class IQMUCRegisterHandler {
         else if (IQ.Type.set ==  packet.getType()) {
             try {
                 // Keep a registry of the updated presences
-                List<Presence> presences = new ArrayList<Presence>();
+                List<Presence> presences = new ArrayList<>();
 
                 reply = IQ.createResultIQ(packet);
                 Element iq = packet.getChildElement();

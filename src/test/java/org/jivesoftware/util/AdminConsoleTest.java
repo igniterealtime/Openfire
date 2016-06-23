@@ -8,11 +8,9 @@
 
 package org.jivesoftware.util;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.dom4j.Element;
 import org.jivesoftware.admin.AdminConsole;
@@ -32,7 +30,7 @@ public class AdminConsoleTest {
         Class c = AdminConsole.class;
         Method init = c.getDeclaredMethod("load", (Class[])null);
         init.setAccessible(true);
-        init.invoke((Object)null, (Object[])null);
+        init.invoke(null, (Object[])null);
     }
 
     @Test
@@ -47,11 +45,9 @@ public class AdminConsoleTest {
     @Test
     public void testModifyGlobalProps() throws Exception {
         // Add a new stream to the AdminConsole:
-        String filename = TestUtils.prepareFilename(
-                "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-01.xml");
-        InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel("test1", in);
-        in.close();
+        try (InputStream in = getClass().getResourceAsStream("/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-01.xml")) {
+            AdminConsole.addModel("test1", in);
+        }
         String name = AdminConsole.getAppName();
         assertEquals("Foo Bar", name);
         String img = AdminConsole.getLogoImage();
@@ -61,11 +57,9 @@ public class AdminConsoleTest {
     @Test
     public void testNewTabs() throws Exception {
         // Add a new stream to the AdminConsole:
-        String filename = TestUtils.prepareFilename(
-                "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml");
-        InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel("test2", in);
-        in.close();
+        try (InputStream in = getClass().getResourceAsStream("/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml")) {
+            AdminConsole.addModel("test2", in);
+        }
         Collection tabs = AdminConsole.getModel().selectNodes("//tab");
         assertNotNull(tabs);
         assertTrue(tabs.size() > 0);
@@ -86,11 +80,9 @@ public class AdminConsoleTest {
     @Test
     public void testTabOverwrite() throws Exception {
         // Add a new stream to the AdminConsole:
-        String filename = TestUtils.prepareFilename(
-                "./resources/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-03.xml");
-        InputStream in = new FileInputStream(filename);
-        AdminConsole.addModel("test3", in);
-        in.close();
+        try (InputStream in = getClass().getResourceAsStream("/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-03.xml")) {
+            AdminConsole.addModel("test3", in);
+        }
         boolean found = false;
         for (Object o : AdminConsole.getModel().selectNodes("//tab")) {
             Element tab = (Element) o;

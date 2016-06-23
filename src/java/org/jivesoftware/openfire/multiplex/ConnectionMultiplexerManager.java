@@ -72,13 +72,13 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * Map that keeps track of connection managers and hosted connections.
      * Key: stream ID; Value: Domain of connection manager hosting connection
      */
-    private Map<String, String> streamIDs = new ConcurrentHashMap<String, String>();
+    private Map<StreamID, String> streamIDs = new ConcurrentHashMap<>();
     /**
      * Map that keeps track of connection managers and hosted sessions.
      * Key: Domain of connection manager; Value: Map with Key: stream ID; Value: Client session
      */
-    private Map<String, Map<String, LocalClientSession>> sessionsByManager =
-            new ConcurrentHashMap<String, Map<String, LocalClientSession>>();
+    private Map<String, Map<StreamID, LocalClientSession>> sessionsByManager =
+            new ConcurrentHashMap<>();
 
     private SessionManager sessionManager;
 
@@ -144,7 +144,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @param hostAddress the textual representation of the address of the client or null if using old CM.
      * @return true if a session was created or false if the client should disconnect.
      */
-    public boolean createClientSession(String connectionManagerDomain, String streamID, String hostName, String hostAddress) {
+    public boolean createClientSession(String connectionManagerDomain, StreamID streamID, String hostName, String hostAddress) {
         Connection connection = new ClientSessionConnection(connectionManagerDomain, hostName, hostAddress);
         // Check if client is allowed to connect from the specified IP address. Ignore the checking if connection
         // manager is old version and is not passing client's address
@@ -156,16 +156,16 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         }
         if (address == null || LocalClientSession.isAllowed(connection)) {
             LocalClientSession session =
-                    SessionManager.getInstance().createClientSession(connection, new BasicStreamID(streamID));
+                    SessionManager.getInstance().createClientSession(connection, streamID);
             // Register that this streamID belongs to the specified connection manager
             streamIDs.put(streamID, connectionManagerDomain);
             // Register which sessions are being hosted by the speicifed connection manager
-            Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+            Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
             if (sessions == null) {
                 synchronized (connectionManagerDomain.intern()) {
                     sessions = sessionsByManager.get(connectionManagerDomain);
                     if (sessions == null) {
-                        sessions = new ConcurrentHashMap<String, LocalClientSession>();
+                        sessions = new ConcurrentHashMap<>();
                         sessionsByManager.put(connectionManagerDomain, sessions);
                     }
                 }
@@ -183,8 +183,8 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      *        of the session.
      * @param streamID the stream ID created by the connection manager for the session.
      */
-    public void closeClientSession(String connectionManagerDomain, String streamID) {
-        Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+    public void closeClientSession(String connectionManagerDomain, StreamID streamID) {
+        Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
         if (sessions != null) {
             Session session = sessions.remove(streamID);
             if (session != null) {
@@ -203,12 +203,12 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
     public void multiplexerAvailable(String connectionManagerName) {
         // Add a new entry in the list of available managers. Here is where we are going to store
         // which clients were connected through which connection manager
-        Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerName);
+        Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerName);
         if (sessions == null) {
             synchronized (connectionManagerName.intern()) {
                 sessions = sessionsByManager.get(connectionManagerName);
                 if (sessions == null) {
-                    sessions = new ConcurrentHashMap<String, LocalClientSession>();
+                    sessions = new ConcurrentHashMap<>();
                     sessionsByManager.put(connectionManagerName, sessions);
                 }
             }
@@ -223,9 +223,9 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      */
     public void multiplexerUnavailable(String connectionManagerName) {
         // Remove the connection manager and the hosted sessions
-        Map<String, LocalClientSession> sessions = sessionsByManager.remove(connectionManagerName);
+        Map<StreamID, LocalClientSession> sessions = sessionsByManager.remove(connectionManagerName);
         if (sessions != null) {
-            for (String streamID : sessions.keySet()) {
+            for (StreamID streamID : sessions.keySet()) {
                 // Remove inverse track of connection manager hosting streamIDs
                 streamIDs.remove(streamID);
                 // Close the session
@@ -243,8 +243,8 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @param streamID the stream ID created by the connection manager for the session.
      * @return the ClientSession with the specified stream ID.
      */
-    public LocalClientSession getClientSession(String connectionManagerDomain, String streamID) {
-        Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+    public LocalClientSession getClientSession(String connectionManagerDomain, StreamID streamID) {
+        Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
         if (sessions != null) {
             return sessions.get(streamID);
         }
@@ -261,7 +261,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @param streamID if provided, the same connection will always be used for a given streamID
      * @return a session to the specified connection manager domain or null if none was found.
      */
-    public ConnectionMultiplexerSession getMultiplexerSession(String connectionManagerDomain,String streamID) {
+    public ConnectionMultiplexerSession getMultiplexerSession(String connectionManagerDomain,StreamID streamID) {
         List<ConnectionMultiplexerSession> sessions =
                 sessionManager.getConnectionMultiplexerSessions(connectionManagerDomain);
         if (sessions.isEmpty()) {
@@ -309,7 +309,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * @return the number of connected clients to a specific connection manager.
      */
     public int getNumConnectedClients(String managerName) {
-        Map<String, LocalClientSession> clients = sessionsByManager.get(managerName);
+        Map<StreamID, LocalClientSession> clients = sessionsByManager.get(managerName);
         if (clients == null) {
             return 0;
         }
@@ -318,62 +318,41 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
         }
     }
 
+    @Override
     public void anonymousSessionCreated(Session session) {
         // Do nothing.
     }
 
+    @Override
     public void anonymousSessionDestroyed(Session session) {
         removeSession(session);
     }
 
+    @Override
     public void sessionCreated(Session session) {
         // Do nothing.
     }
 
+    @Override
     public void sessionDestroyed(Session session) {
         removeSession(session);
     }
 
+    @Override
     public void resourceBound(Session session) {
     	// Do nothing.
     }
 
     private void removeSession(Session session) {
         // Remove trace indicating that a connection manager is hosting a connection
-        String streamID = session.getStreamID().getID();
+        StreamID streamID = session.getStreamID();
         String connectionManagerDomain = streamIDs.remove(streamID);
         // Remove trace indicating that a connection manager is hosting a session
         if (connectionManagerDomain != null) {
-            Map<String, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
+            Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
             if (sessions != null) {
                 sessions.remove(streamID);
             }
-        }
-    }
-
-    /**
-     * Simple implementation of the StreamID interface to hold the stream ID assigned by
-     * the Connection Manager to the Session.
-     */
-    private class BasicStreamID implements StreamID {
-        String id;
-
-        public BasicStreamID(String id) {
-            this.id = id;
-        }
-
-        public String getID() {
-            return id;
-        }
-
-        @Override
-		public String toString() {
-            return id;
-        }
-
-        @Override
-		public int hashCode() {
-            return id.hashCode();
         }
     }
 }

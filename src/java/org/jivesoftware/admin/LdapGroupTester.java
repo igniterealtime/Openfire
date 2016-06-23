@@ -20,8 +20,9 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.Log;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
@@ -42,6 +43,8 @@ import java.util.Collection;
  */
 public class LdapGroupTester {
 
+    private static final Logger Log = LoggerFactory.getLogger(LdapGroupTester.class);
+
     private LdapManager manager;
 
     public LdapGroupTester(LdapManager manager) {
@@ -57,7 +60,7 @@ public class LdapGroupTester {
      * @return fist N groups found in the LDAP.
      */
     public Collection<Group> getGroups(int maxGroups) {
-        Collection<Group> groups = new ArrayList<Group>();
+        Collection<Group> groups = new ArrayList<>();
         LdapContext ctx = null;
         try {
             ctx = manager.getContext();

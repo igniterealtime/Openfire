@@ -80,10 +80,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         UserItemsProvider {
 
     public static final String NAMESPACE_DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
-    private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
-    private Map<String, Element> localServerItems = new HashMap<String, Element>();
+    private Map<String,DiscoItemsProvider> entities = new HashMap<>();
+    private Map<String, Element> localServerItems = new HashMap<>();
     private Cache<String, ClusteredServerItem> serverItems;
-    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<String, DiscoItemsProvider>();
+    private Map<String, DiscoItemsProvider> serverNodeProviders = new ConcurrentHashMap<>();
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
 
@@ -116,7 +116,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // DiscoItemsProvider responsibility to provide the items associated with the JID's name  
         // together with any possible requested node.
         DiscoItemsProvider itemsProvider = getProvider(packet.getTo() == null ?
-                XMPPServer.getInstance().getServerInfo().getXMPPDomain() : packet.getTo().getDomain());
+                packet.getFrom().getNode() : packet.getTo().getNode() != null ? packet.getTo().getNode() : packet.getTo().getDomain());
         if (itemsProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
@@ -153,11 +153,11 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 					
 					// Calculate which results to include.
 					final List<DiscoItem> rsmResults;
-					final List<DiscoItem> allItems = new ArrayList<DiscoItem>();
+					final List<DiscoItem> allItems = new ArrayList<>();
 					while (itemsItr.hasNext()) {
 						allItems.add(itemsItr.next());
 					}
-					final ResultSet<DiscoItem> rs = new ResultSetImpl<DiscoItem>(
+					final ResultSet<DiscoItem> rs = new ResultSetImpl<>(
 							allItems);
 					try {
 						rsmResults = rs.applyRSMDirectives(rsmElement);
@@ -412,28 +412,29 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
+    @Override
     public Iterator<String> getFeatures() {
-        List<String> features = new ArrayList<String>();
-        features.add("http://jabber.org/protocol/disco#items");
-        // TODO Comment out this line when publishing of client items is implemented
-        //features.add("http://jabber.org/protocol/disco#publish");
-        return features.iterator();
+        return Collections.singleton(NAMESPACE_DISCO_ITEMS).iterator();
     }
 
+    @Override
     public void joinedCluster() {
         restoreCacheContent();
     }
 
+    @Override
     public void joinedCluster(byte[] nodeID) {
         // Do nothing
     }
 
+    @Override
     public void leftCluster() {
         if (!XMPPServer.getInstance().isShuttingDown()) {
             restoreCacheContent();
         }
     }
 
+    @Override
     public void leftCluster(byte[] nodeID) {
         if (ClusterManager.isSeniorClusterMember()) {
             NodeID leftNode = NodeID.getInstance(nodeID);
@@ -460,6 +461,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
+    @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
@@ -489,6 +491,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private DiscoItemsProvider getServerItemsProvider() {
         return new DiscoItemsProvider() {
+            @Override
             public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
                 if (node != null) {
                     // Check if there is a provider for the requested node
@@ -498,7 +501,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     return null;
                 }
                 if (name == null) {
-                    List<DiscoItem> answer = new ArrayList<DiscoItem>();
+                    List<DiscoItem> answer = new ArrayList<>();
                     for (ClusteredServerItem item : serverItems.values()) {
                         answer.add(new DiscoItem(item.element));
                     }
@@ -512,7 +515,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                         // If we didn't find any UserItemsProviders, then answer a not found error
                         return null;
                     }
-                    List<DiscoItem> answer = new ArrayList<DiscoItem>();
+                    List<DiscoItem> answer = new ArrayList<>();
                     for (UserItemsProvider itemsProvider : itemsProviders) {
                         // Check if we have items associated with the requested name
                         Iterator<Element> itemsItr = itemsProvider.getUserItems(name, senderJID);
@@ -537,24 +540,27 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     private static class ClusteredServerItem implements Externalizable {
         private Element element;
-        private Set<NodeID> nodes = new HashSet<NodeID>();
+        private Set<NodeID> nodes = new HashSet<>();
 
         public ClusteredServerItem() {
         }
 
+        @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) element);
             ExternalizableUtil.getInstance().writeExternalizableCollection(out, nodes);
         }
 
+        @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             element = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             ExternalizableUtil.getInstance().readExternalizableCollection(in, nodes, getClass().getClassLoader());
         }
     }
 
+    @Override
     public Iterator<Element> getUserItems(String name, JID senderJID) {
-        List<Element> answer = new ArrayList<Element>();
+        List<Element> answer = new ArrayList<>();
         try {
             User user = UserManager.getInstance().getUser(name);
             RosterItem item = user.getRoster().getRosterItem(senderJID);

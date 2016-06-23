@@ -47,16 +47,20 @@ public class ClusterManager {
 	private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
 
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
-    private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<ClusterEventListener>();
-    private static BlockingQueue<Event> events = new LinkedBlockingQueue<Event>(10000);
+    private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<>();
+    private static BlockingQueue<Event> events = new LinkedBlockingQueue<>(10000);
     private static Thread dispatcher;
 
     static {
         // Listen for clustering property changes (e.g. enabled/disabled)
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
+			@Override
 			public void propertySet(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void propertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void xmlPropertyDeleted(String property, Map<String, Object> params) { /* ignore */ }
+			@Override
 			public void xmlPropertySet(String property, Map<String, Object> params) {
 		        if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
 		            if (Boolean.parseBoolean((String) params.get("value"))) {

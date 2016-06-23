@@ -8,7 +8,6 @@
                  org.jivesoftware.openfire.admin.AdminManager"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.clearspace.ClearspaceManager"%>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.xmpp.packet.JID" %>
@@ -20,8 +19,8 @@
 <%@ page import="java.net.URL" %>
 <%@ page import="java.lang.StringBuilder" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
@@ -87,7 +86,21 @@
 
     Map<String, String> errors = new HashMap<String, String>();
 
-    if (ParamUtils.getBooleanParameter(request, "login")) {
+    Boolean login = ParamUtils.getBooleanParameter(request, "login");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (login) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            login = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    if (login) {
         String loginUsername = username;
         if (loginUsername != null) {
             loginUsername = JID.escapeNode(loginUsername);
@@ -95,15 +108,6 @@
         try {
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
-                    authToken = new AuthToken(loginUsername);
-                }
-                else if ("clearspace".equals(nodeID) && ClearspaceManager.isEnabled()) {
-                    ClearspaceManager csmanager = ClearspaceManager.getInstance();
-                    String sharedSecret = csmanager.getSharedSecret();
-                    if (nonce == null || sharedSecret == null || !csmanager.isValidNonce(nonce) ||
-                            !StringUtils.hash(loginUsername + ":" + sharedSecret + ":" + nonce).equals(secret)) {
-                        throw new UnauthorizedException("SSO failed. Invalid secret was provided");
-                    }
                     authToken = new AuthToken(loginUsername);
                 }
                 else {
@@ -134,39 +138,11 @@
         }
         catch (ConnectionException ue) {
             Log.debug(ue);
-            if (ClearspaceManager.isEnabled()) {
-                if (session.getAttribute("prelogin.setup.error.firstTime.connection") != null) {
-                    session.removeAttribute("prelogin.setup.error.firstTime.connection");
-                    session.setAttribute("prelogin.setup.error", "prelogin.setup.error.clearspace.connection");
-                    session.setAttribute("prelogin.setup.sidebar", "true");
-                    session.setAttribute("prelogin.setup.sidebar.title", "prelogin.setup.sidebar.title.clearspace");
-                    session.setAttribute("prelogin.setup.sidebar.link", "clearspace-integration-prelogin.jsp");
-                    response.sendRedirect(go("setup/clearspace-integration-prelogin.jsp"));
-                } else {
-                   session.setAttribute("prelogin.setup.error.firstTime.connection", true);
-                   errors.put("connection", LocaleUtils.getLocalizedString("login.failed.connection.clearspace"));
-                }
-            } else {
-                errors.put("connection", LocaleUtils.getLocalizedString("login.failed.connection"));
-            }
+            errors.put("connection", LocaleUtils.getLocalizedString("login.failed.connection"));
         }
         catch (InternalUnauthenticatedException ue) {
             Log.debug(ue);
-            if (ClearspaceManager.isEnabled()) {
-                if (session.getAttribute("prelogin.setup.error.firstTime.sharedsecret") != null) {
-                    session.removeAttribute("prelogin.setup.error.firstTime.sharedsecret");
-                    session.setAttribute("prelogin.setup.error", "prelogin.setup.error.clearspace.sharedsecret");
-                    session.setAttribute("prelogin.setup.sidebar", "true");
-                    session.setAttribute("prelogin.setup.sidebar.title", "prelogin.setup.sidebar.title.clearspace");
-                    session.setAttribute("prelogin.setup.sidebar.link", "clearspace-integration-prelogin.jsp");
-                    response.sendRedirect(go("setup/clearspace-integration-prelogin.jsp"));
-                } else {
-                   session.setAttribute("prelogin.setup.error.firstTime.sharedsecret", true); 
-                   errors.put("authentication", LocaleUtils.getLocalizedString("login.failed.authentication.clearspace"));
-                }
-            } else {
-                errors.put("authentication", LocaleUtils.getLocalizedString("login.failed.authentication"));
-            }
+            errors.put("authentication", LocaleUtils.getLocalizedString("login.failed.authentication"));
         }
         catch (UnauthorizedException ue) {
             Log.debug(ue);
@@ -220,6 +196,7 @@
 <%  } catch (Exception e) { Log.error(e); } } %>
 
 <input type="hidden" name="login" value="true">
+<input type="hidden" name="csrf" value="${csrf}">
 
 <div align="center">
     <!-- BEGIN login box -->

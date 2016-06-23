@@ -114,9 +114,7 @@ public class MediaProxyService extends BasicModule
                 echo = new Echo(echoPort);
                 Thread t = new Thread(echo);
                 t.start();
-            } catch (UnknownHostException e) {
-                // Ignore
-            } catch (SocketException e) {
+            } catch (UnknownHostException | SocketException e) {
                 // Ignore
             }
 
@@ -145,11 +143,13 @@ public class MediaProxyService extends BasicModule
         return serviceName;
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // A proxy server has no items
         return new ArrayList<DiscoItem>().iterator();
     }
 
+    @Override
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Check if user is allowed to send packet to this service
         if (packet instanceof IQ) {
@@ -311,13 +311,15 @@ public class MediaProxyService extends BasicModule
         return serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     }
 
+    @Override
     public JID getAddress() {
         return new JID(null, getServiceDomain(), null);
     }
 
+    @Override
     public Iterator<DiscoServerItem> getItems()
 	{
-		List<DiscoServerItem> items = new ArrayList<DiscoServerItem>();
+		List<DiscoServerItem> items = new ArrayList<>();
 		if (!isEnabled())
 		{
 			return items.iterator();
@@ -329,8 +331,9 @@ public class MediaProxyService extends BasicModule
 		return items.iterator();
 	}
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        List<Element> identities = new ArrayList<Element>();
+        List<Element> identities = new ArrayList<>();
         // Answer the identity of the proxy
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "proxy");
@@ -342,15 +345,18 @@ public class MediaProxyService extends BasicModule
         return identities.iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE,
                 "http://jabber.org/protocol/disco#info").iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         return null;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return true;
     }

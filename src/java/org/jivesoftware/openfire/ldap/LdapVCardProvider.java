@@ -172,7 +172,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     private Map<String, String> getLdapAttributes(String username) {
         // Un-escape username
         username = JID.unescapeNode(username);
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         DirContext ctx = null;
         try {
@@ -226,6 +226,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @param username User we are loading the vcard for.
      * @return The loaded vcard element, or null if none found.
      */
+    @Override
     public Element loadVCard(String username) {
         // Un-escape username.
         username = JID.unescapeNode(username);
@@ -314,6 +315,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @param vCardElement vCard element containing the new vcard.
      * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
      */
+    @Override
     public Element createVCard(String username, Element vCardElement)
             throws UnsupportedOperationException, AlreadyExistsException {
         throw new UnsupportedOperationException("LdapVCardProvider: VCard changes not allowed.");
@@ -326,6 +328,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @param vCardElement vCard element containing the new vcard.
      * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
      */
+    @Override
     public Element updateVCard(String username, Element vCardElement) throws UnsupportedOperationException {
         if (dbStorageEnabled && defaultProvider != null) {
             if (isValidVCardChange(username, vCardElement)) {
@@ -356,6 +359,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * @param username User that deketed their vcard.
      * @throws UnsupportedOperationException If an invalid field is changed or we are in readonly mode.
      */
+    @Override
     public void deleteVCard(String username) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("LdapVCardProvider: Attempted to delete vcard in read-only mode.");
     }
@@ -430,10 +434,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     }
 
 
+    @Override
     public boolean isReadOnly() {
         return !dbStorageEnabled;
     }
 
+    @Override
     public void propertySet(String property, Map params) {
         if ("ldap.override.avatar".equals(property)) {
             dbStorageEnabled = Boolean.parseBoolean((String)params.get("value"));
@@ -445,16 +451,19 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         }
     }
 
+    @Override
     public void propertyDeleted(String property, Map params) {
         if ("ldap.override.avatar".equals(property)) {
             dbStorageEnabled = false;
         }
     }
 
+    @Override
     public void xmlPropertySet(String property, Map params) {
         //Ignore
     }
 
+    @Override
     public void xmlPropertyDeleted(String property, Map params) {
         //Ignore
     }
@@ -474,7 +483,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         private String[] attributes;
 
         public VCardTemplate(Document document) {
-            Set<String> set = new HashSet<String>();
+            Set<String> set = new HashSet<>();
             this.document = document;
             treeWalk(this.document.getRootElement(), set);
             attributes = set.toArray(new String[set.size()]);

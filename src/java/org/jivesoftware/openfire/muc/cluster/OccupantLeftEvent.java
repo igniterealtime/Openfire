@@ -35,7 +35,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class OccupantLeftEvent extends MUCRoomTask {
+public class OccupantLeftEvent extends MUCRoomTask<Void> {
     private MUCRole role;
     private String nickname;
 
@@ -59,13 +59,16 @@ public class OccupantLeftEvent extends MUCRoomTask {
         return role;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().leaveRoom(OccupantLeftEvent.this);
             }

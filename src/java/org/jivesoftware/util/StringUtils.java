@@ -19,10 +19,18 @@
 
 package org.jivesoftware.util;
 
-import java.io.UnsupportedEncodingException;
+import org.apache.commons.codec.binary.Base32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.xml.bind.DatatypeConverter;
 import java.net.IDN;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.BreakIterator;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -36,17 +44,10 @@ import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-
-import org.apache.commons.codec.binary.Base32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Utility class to perform common String manipulation algorithms.
  */
-public class StringUtils {
+public final class StringUtils {
 
 	private static final Logger Log = LoggerFactory.getLogger(StringUtils.class);
 
@@ -70,32 +71,11 @@ public class StringUtils {
      * @param oldString the String that should be replaced by newString.
      * @param newString the String that will replace all instances of oldString.
      * @return a String will all instances of oldString replaced by newString.
+     * @deprecated Use {@link String#replaceAll(String, String)}}
      */
+    @Deprecated
     public static String replace(String string, String oldString, String newString) {
-        if (string == null) {
-            return null;
-        }
-        int i = 0;
-        // Make sure that oldString appears at least once before doing any processing.
-        if ((i = string.indexOf(oldString, i)) >= 0) {
-            // Use char []'s, as they are more efficient to deal with.
-            char[] string2 = string.toCharArray();
-            char[] newString2 = newString.toCharArray();
-            int oLength = oldString.length();
-            StringBuilder buf = new StringBuilder(string2.length);
-            buf.append(string2, 0, i).append(newString2);
-            i += oLength;
-            int j = i;
-            // Replace all remaining instances of oldString with newString.
-            while ((i = string.indexOf(oldString, i)) > 0) {
-                buf.append(string2, j, i - j).append(newString2);
-                i += oLength;
-                j = i;
-            }
-            buf.append(string2, j, string2.length - j);
-            return buf.toString();
-        }
-        return string;
+        return replace(string, oldString, newString, new int[1]);
     }
 
     /**
@@ -109,29 +89,7 @@ public class StringUtils {
      */
     public static String replaceIgnoreCase(String line, String oldString,
                                                  String newString) {
-        if (line == null) {
-            return null;
-        }
-        String lcLine = line.toLowerCase();
-        String lcOldString = oldString.toLowerCase();
-        int i = 0;
-        if ((i = lcLine.indexOf(lcOldString, i)) >= 0) {
-            char[] line2 = line.toCharArray();
-            char[] newString2 = newString.toCharArray();
-            int oLength = oldString.length();
-            StringBuilder buf = new StringBuilder(line2.length);
-            buf.append(line2, 0, i).append(newString2);
-            i += oLength;
-            int j = i;
-            while ((i = lcLine.indexOf(lcOldString, i)) > 0) {
-                buf.append(line2, j, i - j).append(newString2);
-                i += oLength;
-                j = i;
-            }
-            buf.append(line2, j, line2.length - j);
-            return buf.toString();
-        }
-        return line;
+        return replaceIgnoreCase(line, oldString, newString, new int[1]);
     }
 
     /**
@@ -147,34 +105,8 @@ public class StringUtils {
      * @return a String will all instances of oldString replaced by newString
      */
     public static String replaceIgnoreCase(String line, String oldString,
-            String newString, int[] count)
-    {
-        if (line == null) {
-            return null;
-        }
-        String lcLine = line.toLowerCase();
-        String lcOldString = oldString.toLowerCase();
-        int i = 0;
-        if ((i = lcLine.indexOf(lcOldString, i)) >= 0) {
-            int counter = 1;
-            char[] line2 = line.toCharArray();
-            char[] newString2 = newString.toCharArray();
-            int oLength = oldString.length();
-            StringBuilder buf = new StringBuilder(line2.length);
-            buf.append(line2, 0, i).append(newString2);
-            i += oLength;
-            int j = i;
-            while ((i = lcLine.indexOf(lcOldString, i)) > 0) {
-                counter++;
-                buf.append(line2, j, i - j).append(newString2);
-                i += oLength;
-                j = i;
-            }
-            buf.append(line2, j, line2.length - j);
-            count[0] = counter;
-            return buf.toString();
-        }
-        return line;
+            String newString, int[] count) {
+        return replace(line, oldString, newString, true, count);
     }
 
     /**
@@ -187,13 +119,19 @@ public class StringUtils {
      * @return a String will all instances of oldString replaced by newString.
      */
     public static String replace(String line, String oldString,
-            String newString, int[] count)
-    {
+            String newString, int[] count) {
+        return replace(line, oldString, newString, false, count);
+    }
+
+    private static String replace(String line, String oldString,
+                                 String newString, boolean ignoreCase, int[] count) {
         if (line == null) {
             return null;
         }
+        String lcLine = ignoreCase ? line.toLowerCase() : line;
+        String lcOldString = ignoreCase ? oldString.toLowerCase() : oldString;
         int i = 0;
-        if ((i = line.indexOf(oldString, i)) >= 0) {
+        if ((i = lcLine.indexOf(lcOldString, i)) >= 0) {
             int counter = 1;
             char[] line2 = line.toCharArray();
             char[] newString2 = newString.toCharArray();
@@ -202,7 +140,7 @@ public class StringUtils {
             buf.append(line2, 0, i).append(newString2);
             i += oLength;
             int j = i;
-            while ((i = line.indexOf(oldString, i)) > 0) {
+            while ((i = lcLine.indexOf(lcOldString, i)) > 0) {
                 counter++;
                 buf.append(line2, j, i - j).append(newString2);
                 i += oLength;
@@ -331,7 +269,7 @@ public class StringUtils {
      * Used by the hash method.
      */
     private static Map<String, MessageDigest> digests =
-            new ConcurrentHashMap<String, MessageDigest>();
+            new ConcurrentHashMap<>();
 
     /**
      * Hashes a String using the Md5 algorithm and returns the result as a
@@ -387,13 +325,7 @@ public class StringUtils {
      * @return a hashed version of the passed-in String
      */
     public static String hash(String data, String algorithm) {
-        try {
-            return hash(data.getBytes("UTF-8"), algorithm);
-        }
-        catch (UnsupportedEncodingException e) {
-            Log.error(e.getMessage(), e);
-        }
-        return data;
+        return hash(data.getBytes(StandardCharsets.UTF_8), algorithm);
     }
 
     /**
@@ -444,25 +376,12 @@ public class StringUtils {
     /**
      * Turns an array of bytes into a String representing each byte as an
      * unsigned hex number.
-     * <p>
-     * Method by Santeri Paavolainen, Helsinki Finland 1996<br>
-     * (c) Santeri Paavolainen, Helsinki Finland 1996<br>
-     * Distributed under LGPL.</p>
      *
      * @param bytes an array of bytes to convert to a hex-string
      * @return generated hex string
      */
     public static String encodeHex(byte[] bytes) {
-        StringBuilder buf = new StringBuilder(bytes.length * 2);
-        int i;
-
-        for (i = 0; i < bytes.length; i++) {
-            if (((int)bytes[i] & 0xff) < 0x10) {
-                buf.append("0");
-            }
-            buf.append(Long.toString((int)bytes[i] & 0xff, 16));
-        }
-        return buf.toString();
+        return DatatypeConverter.printHexBinary(bytes).toLowerCase();
     }
 
     /**
@@ -473,63 +392,7 @@ public class StringUtils {
      * @return a byte array representing the hex String[
      */
     public static byte[] decodeHex(String hex) {
-        char[] chars = hex.toCharArray();
-        byte[] bytes = new byte[chars.length / 2];
-        int byteCount = 0;
-        for (int i = 0; i < chars.length; i += 2) {
-            int newByte = 0x00;
-            newByte |= hexCharToByte(chars[i]);
-            newByte <<= 4;
-            newByte |= hexCharToByte(chars[i + 1]);
-            bytes[byteCount] = (byte)newByte;
-            byteCount++;
-        }
-        return bytes;
-    }
-
-    /**
-     * Returns the the byte value of a hexadecmical char (0-f). It's assumed
-     * that the hexidecimal chars are lower case as appropriate.
-     *
-     * @param ch a hexedicmal character (0-f)
-     * @return the byte value of the character (0x00-0x0F)
-     */
-    private static byte hexCharToByte(char ch) {
-        switch (ch) {
-            case '0':
-                return 0x00;
-            case '1':
-                return 0x01;
-            case '2':
-                return 0x02;
-            case '3':
-                return 0x03;
-            case '4':
-                return 0x04;
-            case '5':
-                return 0x05;
-            case '6':
-                return 0x06;
-            case '7':
-                return 0x07;
-            case '8':
-                return 0x08;
-            case '9':
-                return 0x09;
-            case 'a':
-                return 0x0A;
-            case 'b':
-                return 0x0B;
-            case 'c':
-                return 0x0C;
-            case 'd':
-                return 0x0D;
-            case 'e':
-                return 0x0E;
-            case 'f':
-                return 0x0F;
-        }
-        return 0x00;
+        return DatatypeConverter.parseHexBinary(hex);
     }
 
     /**
@@ -539,13 +402,7 @@ public class StringUtils {
      * @return a base64 encoded String.
      */
     public static String encodeBase64(String data) {
-        byte[] bytes = null;
-        try {
-            bytes = data.getBytes("UTF-8");
-        }
-        catch (UnsupportedEncodingException uee) {
-            Log.error(uee.getMessage(), uee);
-        }
+        byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
         return encodeBase64(bytes);
     }
 
@@ -580,13 +437,7 @@ public class StringUtils {
      * @return a base32 encoded String.
      */
     public static String encodeBase32(String data) {
-        byte[] bytes = null;
-        try {
-            bytes = data == null ? null : data.getBytes("UTF-8");
-        }
-        catch (UnsupportedEncodingException uee) {
-            Log.error(uee.getMessage(), uee);
-        }
+        byte[] bytes = data == null ? null : data.getBytes(StandardCharsets.UTF_8);
         return encodeBase32(bytes);
     }
 
@@ -640,7 +491,7 @@ public class StringUtils {
             return new String[0];
         }
 
-        List<String> wordList = new ArrayList<String>();
+        List<String> wordList = new ArrayList<>();
         BreakIterator boundary = BreakIterator.getWordInstance();
         boundary.setText(text);
         int start = 0;
@@ -665,11 +516,9 @@ public class StringUtils {
     }
 
     /**
-     * Pseudo-random number generator object for use with randomString().
-     * The Random class is not considered to be cryptographically secure, so
-     * only use these random Strings for low to medium security applications.
+     * A cryptographically strong random number generator object for use with randomString().
      */
-    private static Random randGen = new Random();
+    private static Random randGen = new SecureRandom();
 
     /**
      * Array of numbers and letters of mixed case. Numbers appear in the list
@@ -682,10 +531,8 @@ public class StringUtils {
 
     /**
      * Returns a random String of numbers and letters (lower and upper case)
-     * of the specified length. The method uses the Random class that is
-     * built-in to Java which is suitable for low to medium grade security uses.
-     * This means that the output is only pseudo random, i.e., each number is
-     * mathematically generated so is not truly random.
+     * of the specified length. The method uses a cryptographically strong
+     * random number generator as provided by {@link SecureRandom}
      * <p>
      * The specified length must be at least one. If not, the method will return
      * null.</p>
@@ -1010,7 +857,7 @@ public class StringUtils {
         else if (delta < JiveConstants.HOUR) {
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins==1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         }
@@ -1019,10 +866,10 @@ public class StringUtils {
             delta -= hours * JiveConstants.HOUR;
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(hours).append(" ");
+            sb.append(hours).append(' ');
             sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
             sb.append(", ");
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         } else {
@@ -1032,13 +879,13 @@ public class StringUtils {
             delta -= hours * JiveConstants.HOUR;
             long mins = delta / JiveConstants.MINUTE;
             StringBuilder sb = new StringBuilder();
-            sb.append(days).append(" ");
+            sb.append(days).append(' ');
             sb.append((days == 1) ? LocaleUtils.getLocalizedString("global.day") : LocaleUtils.getLocalizedString("global.days"));
             sb.append(", ");
-            sb.append(hours).append(" ");
+            sb.append(hours).append(' ');
             sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
             sb.append(", ");
-            sb.append(mins).append(" ");
+            sb.append(mins).append(' ');
             sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
             return sb.toString();
         }
@@ -1070,13 +917,13 @@ public class StringUtils {
         diff = diff % MS_IN_A_SECOND;
         //long numMilliseconds = diff;
 
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (numHours > 0) {
-            buf.append(numHours + " " + HOURS + ", ");
+            buf.append(numHours).append(' ').append(HOURS).append(", ");
         }
 
         if (numMinutes > 0) {
-            buf.append(numMinutes + " " + MINUTES);
+            buf.append(numMinutes).append(' ').append(MINUTES);
         }
 
         //buf.append(numSeconds + " " + SECONDS);
@@ -1118,7 +965,7 @@ public class StringUtils {
         if (string == null || string.trim().length() == 0) {
             return Collections.emptyList();
         }
-        Collection<String> collection = new ArrayList<String>();
+        Collection<String> collection = new ArrayList<>();
         StringTokenizer tokens = new StringTokenizer(string, ",");
         while (tokens.hasMoreTokens()) {
             collection.add(tokens.nextToken().trim());
@@ -1239,35 +1086,26 @@ public class StringUtils {
 	}
 	
 	/**
-	 * Returns the UTF-8 bytes for the given String, suppressing
-	 * UnsupportedEncodingException (in lieu of log message)
+	 * Returns the UTF-8 bytes for the given String.
 	 * 
 	 * @param input The source string
 	 * @return The UTF-8 encoding for the given string
+     * @deprecated Use {@code input.getBytes(StandardCharsets.UTF_8)}
 	 */
+    @Deprecated
 	public static byte[] getBytes(String input) {
-		try {
-			return input.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException uee) {
-			Log.warn("Unable to encode string using UTF-8: " + input);
-			return input.getBytes(); // default encoding
-		}
+        return input.getBytes(StandardCharsets.UTF_8);
 	}
 	
 	/**
-	 * Returns the UTF-8 String for the given byte array, suppressing
-	 * UnsupportedEncodingException (in lieu of log message)
+	 * Returns the UTF-8 String for the given byte array.
 	 * 
 	 * @param input The source byte array
 	 * @return The UTF-8 encoded String for the given byte array
+     * @deprecated Use {@code new String(input, StandardCharsets.UTF_8)}
 	 */
+    @Deprecated
 	public static String getString(byte[] input) {
-		try {
-			return new String(input, "UTF-8");
-		} catch (UnsupportedEncodingException uee) {
-			String result = new String(input); // default encoding
-			Log.warn("Unable to decode byte array using UTF-8: " + result);
-			return result;
-		}
+        return new String(input, StandardCharsets.UTF_8);
 	}
 }

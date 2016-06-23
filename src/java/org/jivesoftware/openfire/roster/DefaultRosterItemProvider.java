@@ -82,6 +82,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
 	 */
+	@Override
 	public RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException
     {
@@ -116,6 +117,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
 	 */
+	@Override
 	public void updateItem(String username, RosterItem item) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -151,6 +153,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#deleteItem(java.lang.String, long)
 	 */
+	@Override
 	public void deleteItem(String username, long rosterItemID) {
         // Only try to remove the user if they exist in the roster already:
         Connection con = null;
@@ -182,8 +185,9 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getUsernames(java.lang.String)
 	 */
+	@Override
 	public Iterator<String> getUsernames(String jid) {
-        List<String> answer = new ArrayList<String>();
+        List<String> answer = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -208,6 +212,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItemCount(java.lang.String)
 	 */
+	@Override
 	public int getItemCount(String username) {
         int count = 0;
         Connection con = null;
@@ -234,9 +239,10 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     /* (non-Javadoc)
 	 * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItems(java.lang.String)
 	 */
+	@Override
 	public Iterator<RosterItem> getItems(String username) {
-        LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();
-        Map<Long, RosterItem> itemsByID = new HashMap<Long, RosterItem>();
+        LinkedList<RosterItem> itemList = new LinkedList<>();
+        Map<Long, RosterItem> itemsByID = new HashMap<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

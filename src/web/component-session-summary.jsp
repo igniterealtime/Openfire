@@ -32,8 +32,8 @@
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.Date"%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%!
     final int DEFAULT_RANGE = 15;
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
@@ -144,8 +144,8 @@
 
 <p>
 <fmt:message key="component.session.summary.info">
-    <fmt:param value="<%= "<a href='external-components-settings.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href=\"connection-settings-external-components.jsp\">" />
+    <fmt:param value="</a>" />
 </fmt:message>
 </p>
 
@@ -155,6 +155,7 @@
     <tr>
         <th>&nbsp;</th>
         <th nowrap><fmt:message key="component.session.label.domain" /></th>
+        <th>&nbsp;</th>
         <th nowrap><fmt:message key="component.session.label.name" /></th>
         <th nowrap><fmt:message key="component.session.label.category" /></th>
         <th nowrap><fmt:message key="component.session.label.type" /></th>
@@ -187,13 +188,24 @@
         <td width="43%" nowrap>
             <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
         </td>
-        <td align="center" width="15%" nowrap>
+        <td width="1%">
+            <%  if (componentSession.isSecure()) {
+                if (componentSession.getPeerCertificates() != null && componentSession.getPeerCertificates().length > 0) { %>
+            <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+            <%      } else { %>
+            <img src="images/lock.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+            <%      }
+            } else { %>
+            <img src="images/blank.gif" width="1" height="1" alt="">
+            <%     } %>
+        </td>
+        <td width="15%" nowrap>
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="10%" nowrap>
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="10%" nowrap>
             <table border="0">
             <tr valign="center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
@@ -213,11 +225,6 @@
                 <td><img src="images/irc.gif" width="16" height="16" border="0" alt="IRC"></td>
              <% }
                }
-               else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
-                if ("clearspace".equals(componentSession.getExternalComponent().getType().toLowerCase())) { %>
-                <td><img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace"></td> 
-             <% }
-               }
             %>
             <td><%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %></td>
             </tr></table>
@@ -235,10 +242,10 @@
             boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
-        <td align="center" width="10%" nowrap>
+        <td width="9%" nowrap>
             <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
         </td>
-        <td align="center" width="10%" nowrap>
+        <td width="9%" nowrap>
             <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
         </td>
 

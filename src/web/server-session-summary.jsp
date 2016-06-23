@@ -21,12 +21,14 @@
                  org.jivesoftware.openfire.session.OutgoingServerSession,
                  org.jivesoftware.openfire.session.Session,
                  org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.util.*"
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%!
     final int DEFAULT_RANGE = 15;
     final int[] RANGE_PRESETS = {15, 25, 50, 75, 100};
@@ -41,6 +43,17 @@
     boolean close = ParamUtils.getBooleanParameter(request,"close");
     String hostname = ParamUtils.getParameter(request,"hostname");
 
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (close) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            close = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("server-session-summary", range);
     }
@@ -147,8 +160,8 @@
 
 <p>
 <fmt:message key="server.session.summary.info">
-    <fmt:param value="<%= "<a href='server2server-settings.jsp'>" %>" />
-    <fmt:param value="<%= "</a>" %>" />
+    <fmt:param value="<a href=\"connection-settings-socket-s2s.jsp\">" />
+    <fmt:param value="</a>" />
 </fmt:message>
 </p>
 

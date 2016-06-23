@@ -43,18 +43,21 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     /**
      * Keep track of the locks that are currently being used.
      */
-    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<Object, LockAndCount>();
+    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<>();
 
     public DefaultLocalCacheStrategy() {
     }
 
+    @Override
     public boolean startCluster() {
         return false;
     }
 
+    @Override
     public void stopCluster() {
     }
 
+    @Override
     public Cache createCache(String name) {
         // Get cache configuration from system properties or default (hardcoded) values
         long maxSize = CacheFactory.getMaxCacheSize(name);
@@ -63,56 +66,70 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return new DefaultCache(name, maxSize, lifetime);
     }
 
+    @Override
     public void destroyCache(Cache cache) {
         cache.clear();
     }
 
+    @Override
     public boolean isSeniorClusterMember() {
         return true;
     }
 
+    @Override
     public Collection<ClusterNodeInfo> getClusterNodesInfo() {
         return Collections.emptyList();
     }
 
+    @Override
     public int getMaxClusterNodes() {
         return 0;
     }
 
+    @Override
     public byte[] getSeniorClusterMemberID() {
         return null;
     }
 
+    @Override
     public byte[] getClusterMemberID() {
         return new byte[0];
     }
 
+    @Override
     public long getClusterTime() {
     	return System.currentTimeMillis();
     }
 
+    @Override
     public void doClusterTask(final ClusterTask task) {
     }
 
+    @Override
     public void doClusterTask(ClusterTask task, byte[] nodeID) {
         throw new IllegalStateException("Cluster service is not available");
     }
 
+    @Override
     public Collection<Object> doSynchronousClusterTask(ClusterTask task, boolean includeLocalMember) {
         return Collections.emptyList();
     }
 
+    @Override
     public Object doSynchronousClusterTask(ClusterTask task, byte[] nodeID) {
         throw new IllegalStateException("Cluster service is not available");
     }
 
+    @Override
     public void updateCacheStats(Map<String, Cache> caches) {
     }
 
+	@Override
 	public String getPluginName() {
 		return "local";
 	}
 
+    @Override
     public Lock getLock(Object key, Cache cache) {
         Object lockKey = key;
         if (key instanceof String) {
@@ -174,26 +191,32 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 			this.key = key;
 		}
 
+		@Override
 		public void lock(){
 			acquireLock(key);
 		}
 
+		@Override
 		public void	unlock() {
 			releaseLock(key);
 		}
 
+        @Override
         public void	lockInterruptibly(){
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public Condition newCondition(){
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public boolean 	tryLock() {
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public boolean 	tryLock(long time, TimeUnit unit) {
 			throw new UnsupportedOperationException();
 		}
@@ -209,6 +232,7 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
     }
 
+	@Override
 	public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
 		// not clustered
 		return null;

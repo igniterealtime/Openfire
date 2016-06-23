@@ -68,7 +68,7 @@ public class PrivacyListProvider {
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /**
      * Stores the total number of privacy lists.
@@ -106,7 +106,7 @@ public class PrivacyListProvider {
             return Collections.emptyMap();
         }
 
-        Map<String, Boolean> names = new HashMap<String, Boolean>();
+        Map<String, Boolean> names = new HashMap<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;

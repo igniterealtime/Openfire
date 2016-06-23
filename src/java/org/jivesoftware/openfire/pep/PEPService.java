@@ -37,7 +37,6 @@ import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.DefaultNodeConfiguration;
-import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PendingSubscriptionsCommand;
@@ -84,7 +83,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * Nodes managed by this service, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    private Map<String, Node> nodes = new ConcurrentHashMap<>();
 
     /**
      * The packet router for the server.
@@ -115,7 +114,7 @@ public class PEPService implements PubSubService, Cacheable {
      * the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<String, Map<String, String>>();
+    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<>();
 
     /**
      * Manager that keeps the list of ad-hoc commands and processing command
@@ -200,35 +199,43 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
+    @Override
     public void addNode(Node node) {
         nodes.put(node.getNodeID(), node);
     }
 
+    @Override
     public void removeNode(String nodeID) {
         nodes.remove(nodeID);
     }
 
+    @Override
     public Node getNode(String nodeID) {
         return nodes.get(nodeID);
     }
 
+    @Override
     public Collection<Node> getNodes() {
         return nodes.values();
     }
 
+    @Override
     public CollectionNode getRootCollectionNode() {
         return rootCollectionNode;
     }
 
+    @Override
     public JID getAddress() {
         return new JID(serviceOwnerJID);
     }
 
+    @Override
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
         return serviceOwnerJID;
     }
 
+    @Override
     public DefaultNodeConfiguration getDefaultNodeConfiguration(boolean leafType) {
         if (leafType) {
             return leafDefaultConfiguration;
@@ -236,10 +243,12 @@ public class PEPService implements PubSubService, Cacheable {
         return collectionDefaultConfiguration;
     }
 
+    @Override
     public Collection<String> getShowPresences(JID subscriber) {
         return PubSubEngine.getShowPresences(this, subscriber);
     }
 
+    @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
         if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
@@ -270,18 +279,22 @@ public class PEPService implements PubSubService, Cacheable {
         return false;
     }
 
+    @Override
     public boolean isCollectionNodesSupported() {
         return true;
     }
 
+    @Override
     public boolean isInstantNodeSupported() {
         return true;
     }
 
+    @Override
     public boolean isMultipleSubscriptionsEnabled() {
         return false;
     }
 
+    @Override
     public boolean isServiceAdmin(JID user) {
         // Here we consider a 'service admin' to be the user that this PEPService
         // is associated with.
@@ -297,36 +310,41 @@ public class PEPService implements PubSubService, Cacheable {
         return nodeCreationRestricted;
     }
 
+    @Override
     public void presenceSubscriptionNotRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionNotRequired(this, node, user);
     }
 
+    @Override
     public void presenceSubscriptionRequired(Node node, JID user) {
         PubSubEngine.presenceSubscriptionRequired(this, node, user);
     }
 
+    @Override
     public void send(Packet packet) {
         router.route(packet);
     }
 
+    @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
         message.setFrom(getAddress());
         for (JID jid : jids) {
             message.setTo(jid);
-            message.setID(node.getNodeID() + "__" + jid.toBareJID() + "__" + StringUtils.randomString(5));
+            message.setID(StringUtils.randomString(8));
             router.route(message);
         }
     }
 
+    @Override
     public void sendNotification(Node node, Message message, JID recipientJID) {
         message.setTo(recipientJID);
         message.setFrom(getAddress());
-        message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
+        message.setID(StringUtils.randomString(8));
 
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
-        Set<JID> recipientFullJIDs = new HashSet<JID>();
+        Set<JID> recipientFullJIDs = new HashSet<>();
         if (XMPPServer.getInstance().isLocal(recipientJID)) {
             if (recipientJID.getResource() == null) {
                 for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
@@ -481,7 +499,7 @@ public class PEPService implements PubSubService, Cacheable {
             Element items = event.addElement("items");
             items.addAttribute("node", leafLastPublishedItem.getNodeID());
             Element item = items.addElement("item");
-            if (((LeafNode) leafLastPublishedItem.getNode()).isItemRequired()) {
+            if (leafLastPublishedItem.getNode().isItemRequired()) {
                 item.addAttribute("id", leafLastPublishedItem.getID());
             }
             if (leafLastPublishedItem.getNode().isPayloadDelivered() && leafLastPublishedItem.getPayload() != null) {
@@ -498,14 +516,17 @@ public class PEPService implements PubSubService, Cacheable {
         }
     }
 
+    @Override
     public Map<String, Map<String, String>> getBarePresences() {
         return barePresences;
     }
 
+    @Override
     public AdHocCommandManager getManager() {
         return adHocCommandManager;
     }
 
+	@Override
 	public int getCachedSize() {
 		// Rather arbitrary. Don't use this for size-based eviction policies!
 		return 600;

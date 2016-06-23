@@ -428,7 +428,7 @@ public class XMPPPacketReader {
                 }
                 default:
                 {
-                    ;
+
                 }
             }
         }

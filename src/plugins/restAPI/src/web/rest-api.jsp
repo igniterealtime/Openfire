@@ -1,11 +1,13 @@
 <%@ page
 	import="java.util.*,
-                 org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.util.*,org.jivesoftware.openfire.plugin.rest.RESTServicePlugin"
+                org.jivesoftware.openfire.XMPPServer,
+                org.jivesoftware.util.*,org.jivesoftware.openfire.plugin.rest.RESTServicePlugin,
+				org.jivesoftware.openfire.container.Plugin,
+                org.jivesoftware.openfire.container.PluginManager"
 	errorPage="error.jsp"%>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
@@ -20,20 +22,45 @@
 	boolean success = request.getParameter("success") != null;
 	String secret = ParamUtils.getParameter(request, "secret");
 	boolean enabled = ParamUtils.getBooleanParameter(request, "enabled");
-	boolean httpBasicAuth = ParamUtils.getBooleanParameter(request, "authtype");
+	String httpAuth = ParamUtils.getParameter(request, "authtype");
 	String allowedIPs = ParamUtils.getParameter(request, "allowedIPs");
-
+	String customAuthFilterClassName = ParamUtils.getParameter(request, "customAuthFilterClassName");
+	
+	String loadingStatus = null;
+	
+	final PluginManager pluginManager = admin.getXMPPServer().getPluginManager();
+	
 	RESTServicePlugin plugin = (RESTServicePlugin) XMPPServer.getInstance().getPluginManager()
 			.getPlugin("restapi");
 
 	// Handle a save
 	Map errors = new HashMap();
 	if (save) {
+		if("custom".equals(httpAuth)) {
+			loadingStatus = plugin.loadAuthenticationFilter(customAuthFilterClassName);
+		}
+		if (loadingStatus != null) {
+            errors.put("loadingStatus", loadingStatus);
+		}
+		
 		if (errors.size() == 0) {
+			
+			boolean is2Reload = "custom".equals(httpAuth) || "custom".equals(plugin.getHttpAuth());
 			plugin.setEnabled(enabled);
 			plugin.setSecret(secret);
-			plugin.setHttpBasicAuth(httpBasicAuth);
+			plugin.setHttpAuth(httpAuth);
 			plugin.setAllowedIPs(StringUtils.stringToCollection(allowedIPs));
+			plugin.setCustomAuthFiIterClassName(customAuthFilterClassName);
+			
+			if(is2Reload) {
+				String pluginName  = pluginManager.getName(plugin);
+				String pluginDir = pluginManager.getPluginDirectory(plugin).getName();
+				pluginManager.unloadPlugin(pluginDir);
+            
+				// Log the event
+				admin.logEvent("reloaded plugin "+ pluginName, null);
+				response.sendRedirect("/plugin-admin.jsp?reloadsuccess=true");
+            }
 			response.sendRedirect("rest-api.jsp?success=true");
 			return;
 		}
@@ -41,8 +68,9 @@
 
 	secret = plugin.getSecret();
 	enabled = plugin.isEnabled();
-	httpBasicAuth = plugin.isHttpBasicAuth();
+	httpAuth = plugin.getHttpAuth();
 	allowedIPs = StringUtils.collectionToString(plugin.getAllowedIPs());
+	customAuthFilterClassName = plugin.getCustomAuthFilterClassName();
 %>
 
 <html>
@@ -75,7 +103,25 @@
 	<%
 		}
 	%>
-
+	
+	<%  
+		if (errors.get("loadingStatus") != null) { 
+	%>
+	<div class="jive-error">
+		<table cellpadding="0" cellspacing="0" border="0">
+			<tbody>
+				<tr>
+					<td class="jive-icon"><img src="images/error-16x16.gif"
+						width="16" height="16" border="0"></td>
+					<td class="jive-icon-label"><%= loadingStatus %></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<br>
+	<%
+		}
+	%>
 	<form action="rest-api.jsp?save" method="post">
 
 		<fieldset>
@@ -101,13 +147,13 @@
 					<br>
 					<br>
 
-					<input type="radio" name="authtype" value="true"
-						id="http_basic_auth" <%=((httpBasicAuth) ? "checked" : "")%>>
+					<input type="radio" name="authtype" value="basic"
+						id="http_basic_auth" <%=("basic".equals(httpAuth) ? "checked" : "")%>>
 					<label for="http_basic_auth">HTTP basic auth - REST API
 						authentication with Openfire admin account.</label>
 					<br>
-					<input type="radio" name="authtype" value="false"
-						id="secretKeyAuth" <%=((!httpBasicAuth) ? "checked" : "")%>>
+					<input type="radio" name="authtype" value="secret"
+						id="secretKeyAuth" <%=("secret".equals(httpAuth) ? "checked" : "")%>>
 					<label for="secretKeyAuth">Secret key auth - REST API
 						authentication over specified secret key.</label>
 					<br>
@@ -115,6 +161,17 @@
 						key:</label>
 					<input type="text" name="secret" value="<%=secret%>"
 						id="text_secret">
+					<br>
+					<input type="radio" name="authtype" value="custom"
+						id="customFilterAuth" <%=("custom".equals(httpAuth) ? "checked" : "")%>>
+					<label for="secretKeyAuth">Custom authentication filter classname - REST API
+						authentication delegates to a custom filter implemented in some other plugin.
+					</label>
+					<div style="margin-left: 20px; margin-top: 5px;"><strong>Note: changing back and forth from custom authentication filter forces the REST API plugin reloading</strong></div>
+					<label style="padding-left: 25px" for="text_secret">Filter 
+						classname:</label>
+					<input type="text" name="customAuthFilterClassName" value="<%= customAuthFilterClassName %>"
+						id="custom_auth_filter_class_name" style="width:70%;padding:4px;">
 					<br>
 					<br>
 

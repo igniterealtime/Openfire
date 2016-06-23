@@ -8,9 +8,12 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
+import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntities;
+import org.jivesoftware.openfire.plugin.rest.entity.OccupantEntity;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
@@ -20,9 +23,14 @@ import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.group.ConcurrentGroupList;
+import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
 import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.util.AlreadyExistsException;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 /**
@@ -52,7 +60,7 @@ public class MUCRoomController {
 	 *            the room search
 	 * @return the chat rooms
 	 */
-	public MUCRoomEntities getChatRooms(String serviceName, String channelType, String roomSearch) {
+	public MUCRoomEntities getChatRooms(String serviceName, String channelType, String roomSearch, boolean expand) {
 		List<MUCRoom> rooms = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRooms();
 
@@ -66,9 +74,9 @@ public class MUCRoomController {
 			}
 
 			if (channelType.equals(MUCChannelType.ALL)) {
-				mucRoomEntities.add(convertToMUCRoomEntity(chatRoom));
+				mucRoomEntities.add(convertToMUCRoomEntity(chatRoom, expand));
 			} else if (channelType.equals(MUCChannelType.PUBLIC) && chatRoom.isPublicRoom()) {
-				mucRoomEntities.add(convertToMUCRoomEntity(chatRoom));
+				mucRoomEntities.add(convertToMUCRoomEntity(chatRoom, expand));
 			}
 		}
 
@@ -86,7 +94,7 @@ public class MUCRoomController {
 	 * @throws ServiceException
 	 *             the service exception
 	 */
-	public MUCRoomEntity getChatRoom(String roomName, String serviceName) throws ServiceException {
+	public MUCRoomEntity getChatRoom(String roomName, String serviceName, boolean expand) throws ServiceException {
 		MUCRoom chatRoom = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(roomName);
 
@@ -94,7 +102,7 @@ public class MUCRoomController {
 			throw new ServiceException("Could not find the chat room", roomName, ExceptionType.ROOM_NOT_FOUND, Response.Status.NOT_FOUND);
 		}
 
-		MUCRoomEntity mucRoomEntity = convertToMUCRoomEntity(chatRoom);
+		MUCRoomEntity mucRoomEntity = convertToMUCRoomEntity(chatRoom, expand);
 		return mucRoomEntity;
 	}
 
@@ -236,6 +244,11 @@ public class MUCRoomController {
 		room.setMaxUsers(mucRoomEntity.getMaxUsers());
 		room.setMembersOnly(mucRoomEntity.isMembersOnly());
 		room.setModerated(mucRoomEntity.isModerated());
+		
+		// Fire RoomUpdateEvent if cluster is started
+		if (ClusterManager.isClusteringStarted()) {
+		  CacheFactory.doClusterTask(new RoomUpdatedEvent((LocalMUCRoom) room));
+		}
 
 		// Set broadcast presence roles
 		if (mucRoomEntity.getBroadcastPresenceRoles() != null) {
@@ -297,6 +310,36 @@ public class MUCRoomController {
 		participantEntities.setParticipants(participants);
 		return participantEntities;
 	}
+	
+	/**
+	 * Gets the room occupants.
+	 *
+	 * @param roomName
+	 *            the room name
+	 * @param serviceName
+	 *            the service name
+	 * @return the room occupants
+	 */
+	public OccupantEntities getRoomOccupants(String roomName, String serviceName) {
+		OccupantEntities occupantEntities = new OccupantEntities();
+		List<OccupantEntity> occupants = new ArrayList<OccupantEntity>();
+
+		Collection<MUCRole> serverOccupants = XMPPServer.getInstance().getMultiUserChatManager()
+				.getMultiUserChatService(serviceName).getChatRoom(roomName).getOccupants();
+
+		for (MUCRole role : serverOccupants) {
+			OccupantEntity occupantEntity = new OccupantEntity();
+			occupantEntity.setJid(role.getRoleAddress().toFullJID());
+			occupantEntity.setRole(role.getRole().name());
+			occupantEntity.setAffiliation(role.getAffiliation().name());
+
+			occupants.add(occupantEntity);
+		}
+
+		occupantEntities.setOccupants(occupants);
+		return occupantEntities;
+	}
+
 
 	/**
 	 * Convert to MUC room entity.
@@ -305,7 +348,7 @@ public class MUCRoomController {
 	 *            the room
 	 * @return the MUC room entity
 	 */
-	public MUCRoomEntity convertToMUCRoomEntity(MUCRoom room) {
+	public MUCRoomEntity convertToMUCRoomEntity(MUCRoom room, boolean expand) {
 		MUCRoomEntity mucRoomEntity = new MUCRoomEntity(room.getNaturalLanguageName(), room.getName(),
 				room.getDescription());
 
@@ -325,10 +368,35 @@ public class MUCRoomController {
 		mucRoomEntity.setMembersOnly(room.isMembersOnly());
 		mucRoomEntity.setModerated(room.isModerated());
 
-		mucRoomEntity.setOwners(MUCRoomUtils.convertJIDsToStringList(room.getOwners()));
-		mucRoomEntity.setAdmins(MUCRoomUtils.convertJIDsToStringList(room.getAdmins()));
-		mucRoomEntity.setMembers(MUCRoomUtils.convertJIDsToStringList(room.getMembers()));
-		mucRoomEntity.setOutcasts(MUCRoomUtils.convertJIDsToStringList(room.getOutcasts()));
+		ConcurrentGroupList<JID> owners = new ConcurrentGroupList<JID>(room.getOwners());
+		ConcurrentGroupList<JID> admins = new ConcurrentGroupList<JID>(room.getAdmins());
+		ConcurrentGroupList<JID> members = new ConcurrentGroupList<JID>(room.getMembers());
+		ConcurrentGroupList<JID> outcasts = new ConcurrentGroupList<JID>(room.getOutcasts());
+
+		if (expand) {
+			for(Group ownerGroup : owners.getGroups()) {
+				owners.addAllAbsent(ownerGroup.getAll());
+			}
+			for(Group adminGroup : admins.getGroups()) {
+				admins.addAllAbsent(adminGroup.getAll());
+			}
+			for(Group memberGroup : members.getGroups()) {
+				members.addAllAbsent(memberGroup.getAll());
+			}
+			for(Group outcastGroup : outcasts.getGroups()) {
+				outcasts.addAllAbsent(outcastGroup.getAll());
+			}
+		}
+
+		mucRoomEntity.setOwners(MUCRoomUtils.convertJIDsToStringList(owners));
+		mucRoomEntity.setAdmins(MUCRoomUtils.convertJIDsToStringList(admins));
+		mucRoomEntity.setMembers(MUCRoomUtils.convertJIDsToStringList(members));
+		mucRoomEntity.setOutcasts(MUCRoomUtils.convertJIDsToStringList(outcasts));
+
+		mucRoomEntity.setOwnerGroups(MUCRoomUtils.convertGroupsToStringList(owners.getGroups()));
+		mucRoomEntity.setAdminGroups(MUCRoomUtils.convertGroupsToStringList(admins.getGroups()));
+		mucRoomEntity.setMemberGroups(MUCRoomUtils.convertGroupsToStringList(members.getGroups()));
+		mucRoomEntity.setOutcastGroups(MUCRoomUtils.convertGroupsToStringList(outcasts.getGroups()));
 
 		mucRoomEntity.setBroadcastPresenceRoles(room.getRolesToBroadcastPresence());
 

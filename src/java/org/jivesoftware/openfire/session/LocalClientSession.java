@@ -21,10 +21,7 @@
 package org.jivesoftware.openfire.session;
 
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -34,10 +31,10 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -65,14 +62,20 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
 
     /**
-     * Keep the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server.<p>
+     * Keep the list of IP address that are allowed to connect to the server.
      *
-     * Note: Key = IP address or IP range; Value = empty string. A hash map is being used for
-     * performance reasons.
+     * If the list is  empty then anyone is allowed to connect to the server, unless the IP is on the blacklist (which
+     * always takes precedence over the whitelist).
+     *
+     * Note: the values in this list can be hostnames, IP addresses or IP ranges (with wildcards).
      */
-    private static Map<String,String> allowedIPs = new HashMap<String,String>();
-    private static Map<String,String> allowedAnonymIPs = new HashMap<String,String>();
+    private static Set<String> allowedIPs = new HashSet<>();
+    private static Set<String> allowedAnonymIPs = new HashSet<>();
+
+    /**
+     * Similar to {@link #allowedIPs}, but used for blacklisting rather than whitelisting.
+     */
+    private static Set<String> blockedIPs = new HashSet<>();
 
     private boolean messageCarbonsEnabled;
 
@@ -121,14 +124,19 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         StringTokenizer tokens = new StringTokenizer(allowed, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
-            allowedIPs.put(address, "");
+            allowedIPs.add( address );
         }
         String allowedAnonym = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED, "");
         tokens = new StringTokenizer(allowedAnonym, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
-            allowedAnonymIPs.put(address, "");
-
+            allowedAnonymIPs.add(address);
+        }
+        String blocked = JiveGlobals.getProperty(ConnectionSettings.Client.LOGIN_BLOCKED, "");
+        tokens = new StringTokenizer(blocked, ", ");
+        while (tokens.hasMoreTokens()) {
+            String address = tokens.nextToken().trim();
+            blockedIPs.add( address );
         }
     }
 
@@ -138,22 +146,72 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
      * non-anonymous users.
      *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
      * @return the list of IP address that are allowed to connect to the server.
+     * @deprecated Use #getWhitelistedIPs instead.
      */
-    public static Map<String, String> getAllowedIPs() {
-        return allowedIPs;
+    @Deprecated
+    public static Map<String, String> getAllowedIPs()
+    {
+        final Map<String, String> result = new HashMap<>();
+        for ( String item : allowedIPs )
+        {
+            result.put( item, null );
+        }
+        return result;
     }
 
+    /**
+     * Returns the list of IP address that are allowed to connect to the server. If the list is empty then anyone is
+     * allowed to connect to the server except for anonymous users that are subject to
+     * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
+     *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
+     * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getWhitelistedIPs() { return allowedIPs; }
 
     /**
      * Returns the list of IP address that are allowed to connect to the server for anonymous
      * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
      *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
      * @return the list of IP address that are allowed to connect to the server.
+     * @deprecated Use #getWhitelistedAnonymousIPs instead.
      */
-    public static Map<String, String> getAllowedAnonymIPs() {
+    public static Map<String, String> getAllowedAnonymIPs()
+    {
+        final Map<String, String> result = new HashMap<>();
+        for ( String item : allowedAnonymIPs )
+        {
+            result.put( item, null );
+        }
+        return result;
+    }
+
+    /**
+     * Returns the list of IP address that are allowed to connect to the server for anonymous users. If the list is
+     * empty then anonymous will be only restricted by {@link #getWhitelistedIPs()}.
+     *
+     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
+     *
+     * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getWhitelistedAnonymousIPs() {
         return allowedAnonymIPs;
     }
+
+    /**
+     * Returns the list of IP address that are disallowed to connect to the server. If the list is empty then anyone is
+     * allowed to connect to the server, subject to whitelisting. This list is used for both anonymous and
+     * non-anonymous users.
+     *
+     * @return the collection of IP address that are not allowed to connect to the server. Never null, possibly empty.
+     */
+    public static Set<String> getBlacklistedIPs() { return blockedIPs; }
 
     /**
      * Returns a newly created session between the server and a client. The session will
@@ -185,30 +243,27 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                     "admin.error.bad-namespace"));
         }
 
-        if (!allowedIPs.isEmpty()) {
+        if (!isAllowed(connection))
+        {
+            // Client cannot connect from this IP address so end the stream and TCP connection.
             String hostAddress = "Unknown";
-            // The server is using a whitelist so check that the IP address of the client
-            // is authorized to connect to the server
             try {
-               hostAddress = connection.getHostAddress();
+                hostAddress = connection.getHostAddress();
             } catch (UnknownHostException e) {
                 // Do nothing
             }
-            if (!isAllowed(connection)) {
-                // Client cannot connect from this IP address so end the stream and
-                // TCP connection
-                Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
-                // Include the not-authorized error in the response
-                StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                connection.deliverRawText(error.toXML());
-                // Close the underlying connection
-                connection.close();
-                return null;
-            }
+
+            Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
+            // Include the not-authorized error in the response
+            StreamError error = new StreamError(StreamError.Condition.not_authorized);
+            connection.deliverRawText(error.toXML());
+            // Close the underlying connection
+            connection.close();
+            return null;
         }
 
         // Default language is English ("en").
-        String language = "en";
+        Locale language = Locale.forLanguageTag("en");
         // Default to a version of "0.0". Clients written before the XMPP 1.0 spec may
         // not report a version in which case "0.0" should be assumed (per rfc3920
         // section 4.4.1).
@@ -216,7 +271,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         int minorVersion = 0;
         for (int i = 0; i < xpp.getAttributeCount(); i++) {
             if ("lang".equals(xpp.getAttributeName(i))) {
-                language = xpp.getAttributeValue(i);
+                language = Locale.forLanguageTag(xpp.getAttributeValue(i));
             }
             if ("version".equals(xpp.getAttributeName(i))) {
                 try {
@@ -245,20 +300,19 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
         }
 
-        // Store language and version information in the connection.
-        connection.setLanaguage(language);
         connection.setXMPPVersion(majorVersion, minorVersion);
+        final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();
 
         // Indicate the TLS policy to use for this connection
         if (!connection.isSecure()) {
             boolean hasCertificates = false;
             try {
-                hasCertificates = SSLConfig.getKeyStore().size() > 0;
+                hasCertificates = connectionConfiguration.getIdentityStore().getAllCertificates().size() > 0;
             }
             catch (Exception e) {
                 Log.error(e.getMessage(), e);
             }
-            Connection.TLSPolicy tlsPolicy = getTLSPolicy();
+            Connection.TLSPolicy tlsPolicy = connectionConfiguration.getTlsPolicy();
             if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
                 Log.error("Client session rejected. TLS is required but no certificates " +
                         "were created.");
@@ -272,10 +326,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy(getCompressionPolicy());
+        connection.setCompressionPolicy( connectionConfiguration.getCompressionPolicy() );
 
         // Create a ClientSession for this user.
-        LocalClientSession session = SessionManager.getInstance().createClientSession(connection);
+        LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
 
         // Build the start packet response
         StringBuilder sb = new StringBuilder(200);
@@ -293,11 +347,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         sb.append("\" id=\"");
         sb.append(session.getStreamID().toString());
         sb.append("\" xml:lang=\"");
-        sb.append(language);
+        sb.append(language.toLanguageTag());
         // Don't include version info if the version is 0.0.
         if (majorVersion != 0) {
             sb.append("\" version=\"");
-            sb.append(majorVersion).append(".").append(minorVersion);
+            sb.append(majorVersion).append('.').append(minorVersion);
         }
         sb.append("\">");
         connection.deliverRawText(sb.toString());
@@ -331,30 +385,55 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         return session;
     }
 
-    public static boolean isAllowed(Connection connection) {
-        if (!allowedIPs.isEmpty()) {
-            // The server is using a whitelist so check that the IP address of the client
-            // is authorized to connect to the server
-            boolean forbidAccess = false;
-            try {
-                if (!allowedIPs.containsKey(connection.getHostAddress())) {
-                    byte[] address = connection.getAddress();
-                    String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." +
-                            (address[2] & 0xff) +
-                            ".*";
-                    String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-                    String range3 = (address[0] & 0xff) + ".*.*.*";
-                    if (!allowedIPs.containsKey(range1) && !allowedIPs.containsKey(range2) &&
-                            !allowedIPs.containsKey(range3)) {
-                        forbidAccess = true;
-                    }
-                }
-            } catch (UnknownHostException e) {
-                forbidAccess = true;
+    public static boolean isAllowed( Connection connection )
+    {
+        try
+        {
+            final String hostAddress = connection.getHostAddress();
+            final byte[] address = connection.getAddress();
+
+            // Blacklist takes precedence over whitelist.
+            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+                return false;
             }
-            return !forbidAccess;
+
+            // When there's a whitelist (not empty), you must be on it to be allowed.
+            return allowedIPs.isEmpty() || allowedIPs.contains( hostAddress ) || isAddressInRange( address, allowedIPs );
         }
-        return true;
+        catch ( UnknownHostException e )
+        {
+            return false;
+        }
+    }
+
+    public static boolean isAllowedAnonymous( Connection connection )
+    {
+        try
+        {
+            final String hostAddress = connection.getHostAddress();
+            final byte[] address = connection.getAddress();
+
+            // Blacklist takes precedence over whitelist.
+            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+                return false;
+            }
+
+            // When there's a whitelist (not empty), you must be on it to be allowed.
+            return allowedAnonymIPs.isEmpty() || allowedAnonymIPs.contains( hostAddress ) || isAddressInRange( address, allowedAnonymIPs );
+        }
+        catch ( UnknownHostException e )
+        {
+            return false;
+        }
+    }
+
+    // TODO Add IPv6 support
+    public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
+        final String range0 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + "." + (address[3] & 0xff);
+        final String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
+        final String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
+        final String range3 = (address[0] & 0xff) + ".*.*.*";
+        return ranges.contains(range0) || ranges.contains(range1) || ranges.contains(range2) || ranges.contains(range3);
     }
 
     /**
@@ -364,8 +443,26 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * non-anonymous users.
      *
      * @param allowed the list of IP address that are allowed to connect to the server.
+     * @deprecated Use setWhitelistedIPs instead.
      */
+    @Deprecated
     public static void setAllowedIPs(Map<String, String> allowed) {
+        setWhitelistedIPs( allowed.keySet() );
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server. If the list is empty then anyone not on
+     * {@link #getBlacklistedIPs()} is  allowed to connect to the server except for anonymous users that are subject to
+     * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
+     *
+     * Note that blacklisting takes precedence over whitelisting: if an address is matched by both, access is denied.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
+     */
+    public static void setWhitelistedIPs(Set<String> allowed) {
+        if (allowed == null) {
+            throw new NullPointerException();
+        }
         allowedIPs = allowed;
         if (allowedIPs.isEmpty()) {
             JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ALLOWED);
@@ -373,7 +470,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // Iterate through the elements in the map.
             StringBuilder buf = new StringBuilder();
-            Iterator<String> iter = allowedIPs.keySet().iterator();
+            Iterator<String> iter = allowedIPs.iterator();
             if (iter.hasNext()) {
                 buf.append(iter.next());
             }
@@ -389,8 +486,23 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
      *
      * @param allowed the list of IP address that are allowed to connect to the server.
+     * @deprecated use #setWhitelistedAnonymousIPs instead.
      */
+    @Deprecated
     public static void setAllowedAnonymIPs(Map<String, String> allowed) {
+        setWhitelistedAnonymousIPs( allowed.keySet() );
+    }
+
+    /**
+     * Sets the list of IP address that are allowed to connect to the server for anonymous users. If the list is empty
+     * then anonymous will be only restricted by {@link #getBlacklistedIPs()} and {@link #getWhitelistedIPs()}.
+     *
+     * @param allowed the list of IP address that are allowed to connect to the server. Can be empty, but not null.
+     */
+    public static void setWhitelistedAnonymousIPs(Set<String> allowed) {
+        if (allowed == null) {
+            throw new NullPointerException();
+        }
         allowedAnonymIPs = allowed;
         if (allowedAnonymIPs.isEmpty()) {
             JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_ANONYM_ALLOWED);
@@ -398,7 +510,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // Iterate through the elements in the map.
             StringBuilder buf = new StringBuilder();
-            Iterator<String> iter = allowedAnonymIPs.keySet().iterator();
+            Iterator<String> iter = allowedAnonymIPs.iterator();
             if (iter.hasNext()) {
                 buf.append(iter.next());
             }
@@ -410,66 +522,31 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
-     * Returns whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
+     * Sets the list of IP address that are not allowed to connect to the server. This list is used for both anonymous
+     * and non-anonymous users, and always takes precedence over a whitelist.
      *
-     * @return whether TLS is mandatory, optional or is disabled.
+     * @param blocked the list of IP address that are not allowed to connect to the server. Can be empty, but not null.
      */
-    public static SocketConnection.TLSPolicy getTLSPolicy() {
-        // Set the TLS policy stored as a system property
-        String policyName = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_POLICY, Connection.TLSPolicy.optional.toString());
-        SocketConnection.TLSPolicy tlsPolicy;
-        try {
-            tlsPolicy = Connection.TLSPolicy.valueOf(policyName);
-        } catch (IllegalArgumentException e) {
-            Log.error("Error parsing xmpp.client.tls.policy: " + policyName, e);
-            tlsPolicy = Connection.TLSPolicy.optional;
+    public static void setBlacklistedIPs(Set<String> blocked) {
+        if (blocked == null) {
+            throw new NullPointerException();
         }
-        return tlsPolicy;
-    }
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled for clients. When TLS is
-     * mandatory clients are required to secure their connections or otherwise their connections
-     * will be closed. On the other hand, when TLS is disabled clients are not allowed to secure
-     * their connections using TLS. Their connections will be closed if they try to secure the
-     * connection. in this last case.
-     *
-     * @param policy whether TLS is mandatory, optional or is disabled.
-     */
-    public static void setTLSPolicy(SocketConnection.TLSPolicy policy) {
-        JiveGlobals.setProperty(ConnectionSettings.Client.TLS_POLICY, policy.toString());
-    }
-
-    /**
-     * Returns whether compression is optional or is disabled for clients.
-     *
-     * @return whether compression is optional or is disabled.
-     */
-    public static SocketConnection.CompressionPolicy getCompressionPolicy() {
-        // Set the Compression policy stored as a system property
-        String policyName = JiveGlobals
-                .getProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, Connection.CompressionPolicy.optional.toString());
-        SocketConnection.CompressionPolicy compressionPolicy;
-        try {
-            compressionPolicy = Connection.CompressionPolicy.valueOf(policyName);
-        } catch (IllegalArgumentException e) {
-            Log.error("Error parsing xmpp.client.compression.policy: " + policyName, e);
-            compressionPolicy = Connection.CompressionPolicy.optional;
+        blockedIPs = blocked;
+        if (blockedIPs.isEmpty()) {
+            JiveGlobals.deleteProperty(ConnectionSettings.Client.LOGIN_BLOCKED);
         }
-        return compressionPolicy;
-    }
-
-    /**
-     * Sets whether compression is optional or is disabled for clients.
-     *
-     * @param policy whether compression is optional or is disabled.
-     */
-    public static void setCompressionPolicy(SocketConnection.CompressionPolicy policy) {
-        JiveGlobals.setProperty(ConnectionSettings.Client.COMPRESSION_SETTINGS, policy.toString());
+        else {
+            // Iterate through the elements in the map.
+            StringBuilder buf = new StringBuilder();
+            Iterator<String> iter = blocked.iterator();
+            if (iter.hasNext()) {
+                buf.append(iter.next());
+            }
+            while (iter.hasNext()) {
+                buf.append(", ").append(iter.next());
+            }
+            JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_BLOCKED, buf.toString());
+        }
     }
 
     /**
@@ -478,6 +555,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return the Privacy list that overrides the default privacy list.
      */
+    @Override
     public PrivacyList getActiveList() {
         if (activeList != null) {
             try {
@@ -495,6 +573,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param activeList the Privacy list that overrides the default privacy list.
      */
+    @Override
     public void setActiveList(PrivacyList activeList) {
         this.activeList = activeList != null ? activeList.getName() : null;
         if (ClusterManager.isClusteringStarted()) {
@@ -510,6 +589,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return the default Privacy list used for the session's user.
      */
+    @Override
     public PrivacyList getDefaultList() {
         if (defaultList != null) {
             try {
@@ -527,6 +607,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param defaultList the default Privacy list used for the session's user.
      */
+    @Override
     public void setDefaultList(PrivacyList defaultList) {
         // Do nothing if nothing has changed
         if ((this.defaultList == null && defaultList == null) ||
@@ -548,8 +629,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param connection The connection we are proxying.
      * @param streamID unique identifier of this session.
      */
-    public LocalClientSession(String serverName, Connection connection, StreamID streamID) {
-        super(serverName, connection, streamID);
+    public LocalClientSession(String serverName, Connection connection, StreamID streamID, Locale language) {
+        super(serverName, connection, streamID, language);
         // Set an unavailable initial presence
         presence = new Presence();
         presence.setType(Presence.Type.unavailable);
@@ -563,6 +644,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @throws org.jivesoftware.openfire.user.UserNotFoundException if a user is not associated with a session
      *      (the session has not authenticated yet)
      */
+    @Override
     public String getUsername() throws UserNotFoundException {
         if (authToken == null) {
             throw new UserNotFoundException();
@@ -628,6 +710,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         return authToken;
     }
 
+    @Override
     public boolean isAnonymousUser() {
         return authToken == null || authToken.isAnonymous();
     }
@@ -642,6 +725,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return True if the session has already been initializsed
      */
+    @Override
     public boolean isInitialized() {
         return initialized;
     }
@@ -652,6 +736,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param isInit True if the session has been initialized
      * @see #isInitialized
      */
+    @Override
     public void setInitialized(boolean isInit) {
         initialized = isInit;
     }
@@ -676,6 +761,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *         becomes online.
      * @see <a href="http://www.xmpp.org/extensions/xep-0160.html">XEP-0160: Best Practices for Handling Offline Messages</a>
      */
+    @Override
     public boolean canFloodOfflineMessages() {
         // XEP-0160: When the recipient next sends non-negative available presence to the server, the server delivers the message to the resource that has sent that presence.
         if(offlineFloodStopped || presence.getPriority() < 0) {
@@ -700,6 +786,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return true if the user requested to not receive offline messages when sending
      *         an available presence.
      */
+    @Override
     public boolean isOfflineFloodStopped() {
         return offlineFloodStopped;
     }
@@ -728,6 +815,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @return The presence of this session or null if not authenticated
      */
+    @Override
     public Presence getPresence() {
         return presence;
     }
@@ -737,6 +825,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      *
      * @param presence The presence for the session
      */
+    @Override
     public void setPresence(Presence presence) {
         Presence oldPresence = this.presence;
         this.presence = presence;
@@ -794,17 +883,25 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication
-            sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
+                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+            }
             // Advertise that the server supports In-Band Registration
             if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
                 sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
             }
         }
         else {
-            // If the session has been authenticated then offer resource binding
+            // If the session has been authenticated then offer resource binding,
             // and session establishment
             sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
             sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"><optional/></session>");
+
+            // Offer XEP-0198 stream management capabilities if enabled.
+            if(JiveGlobals.getBooleanProperty(StreamManager.SM_ACTIVE, true)) {
+            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
+            	sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+            }
         }
         return sb.toString();
     }
@@ -812,6 +909,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     /**
      * Increments the conflict by one.
      */
+    @Override
     public int incrementConflictCount() {
         conflictCount++;
         return conflictCount;
@@ -854,7 +952,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
 	public void deliver(Packet packet) throws UnauthorizedException {
+
         conn.deliver(packet);
+        streamManager.sentStanza(packet);
     }
 
     @Override

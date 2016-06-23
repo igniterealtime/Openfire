@@ -18,6 +18,7 @@ public class CancelSubscriptionTask extends SubscriptionTask
 		super(subscription);
 	}
 
+	@Override
 	public void run()
 	{
 		log.debug("[TASK] Cancel Subscription : {}", toString());

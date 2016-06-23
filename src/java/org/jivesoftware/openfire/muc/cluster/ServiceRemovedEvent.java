@@ -34,7 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class ServiceRemovedEvent implements ClusterTask {
+public class ServiceRemovedEvent implements ClusterTask<Void> {
     private String subdomain;
 
     public ServiceRemovedEvent() {
@@ -44,18 +44,22 @@ public class ServiceRemovedEvent implements ClusterTask {
         this.subdomain = subdomain;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         XMPPServer.getInstance().getMultiUserChatManager().unregisterMultiUserChatService(subdomain);
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
     }

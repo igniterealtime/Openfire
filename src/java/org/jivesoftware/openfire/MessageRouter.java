@@ -38,6 +38,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -244,22 +245,36 @@ public class MessageRouter extends BasicModule {
      * Notification message indicating that a packet has failed to be routed to the recipient.
      *
      * @param recipient address of the entity that failed to receive the packet.
-     * @param packet Message packet that failed to be sent to the recipient.
+     * @param packet    Message packet that failed to be sent to the recipient.
      */
-    public void routingFailed(JID recipient, Packet packet) {
-        // If message was sent to an unavailable full JID of a user then retry using the bare JID
-        if (serverName.equals(recipient.getDomain()) && recipient.getResource() != null &&
-                userManager.isRegisteredUser(recipient.getNode())) {
-            Message msg = (Message)packet;
-            if (msg.getType().equals(Message.Type.chat)) {
-                routingTable.routePacket(recipient.asBareJID(), packet, false);
-            } else {
-                // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
-                messageStrategy.storeOffline((Message) packet);
+    public void routingFailed( JID recipient, Packet packet )
+    {
+        log.debug( "Message sent to unreachable address: " + packet.toXML() );
+        final Message msg = (Message) packet;
+        boolean storeOffline = true;
+
+
+        if ( msg.getType().equals( Message.Type.chat ) && serverName.equals( recipient.getDomain() ) && recipient.getResource() != null ) {
+            // Find an existing AVAILABLE session with non-negative priority.
+            for (JID address : routingTable.getRoutes(recipient.asBareJID(), packet.getFrom())) {
+                ClientSession session = routingTable.getClientRoute(address);
+                if (session != null && session.isInitialized()) {
+                    if (session.getPresence().getPriority() >= 1) {
+                        storeOffline = false;
+                    }
+                }
             }
-        } else {
-            // Just store the message offline
-            messageStrategy.storeOffline((Message) packet);
+        }
+
+        if ( !storeOffline )
+        {
+            // If message was sent to an unavailable full JID of a user then retry using the bare JID.
+            routingTable.routePacket( recipient.asBareJID(), packet, false );
+        }
+        else
+        {
+            // Delegate to offline message strategy, which will either bounce or ignore the message depending on user settings.
+            messageStrategy.storeOffline( (Message) packet );
         }
     }
 }

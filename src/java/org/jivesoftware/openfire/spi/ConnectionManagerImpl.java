@@ -21,131 +21,243 @@
 package org.jivesoftware.openfire.spi;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
+import java.util.*;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.buffer.SimpleBufferAllocator;
-import org.apache.mina.core.service.IoService;
-import org.apache.mina.core.service.IoServiceListener;
-import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.executor.ExecutorFilter;
-import org.apache.mina.filter.ssl.SslFilter;
-import org.apache.mina.integration.jmx.IoServiceMBean;
-import org.apache.mina.integration.jmx.IoSessionMBean;
-import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.JMXManager;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.ServerPort;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
-import org.jivesoftware.openfire.net.SSLConfig;
-import org.jivesoftware.openfire.net.ServerSocketReader;
-import org.jivesoftware.openfire.net.SocketAcceptThread;
-import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.openfire.net.SocketReader;
-import org.jivesoftware.openfire.net.SocketSendingTracker;
-import org.jivesoftware.openfire.net.StalledSessionsFilter;
-import org.jivesoftware.openfire.nio.ClientConnectionHandler;
-import org.jivesoftware.openfire.nio.ComponentConnectionHandler;
-import org.jivesoftware.openfire.nio.MultiplexerConnectionHandler;
-import org.jivesoftware.openfire.nio.XMPPCodecFactory;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener {
-
-	private static final int MB = 1024 * 1024;
-
+public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener
+{
     public static final String EXECUTOR_FILTER_NAME = "threadModel";
     public static final String TLS_FILTER_NAME = "tls";
     public static final String COMPRESSION_FILTER_NAME = "compression";
     public static final String XMPP_CODEC_FILTER_NAME = "xmpp";
     public static final String CAPACITY_FILTER_NAME = "outCap";
 
-    private static final String CLIENT_SOCKET_ACCEPTOR_NAME = "client";
-    private static final String CLIENT_SSL_SOCKET_ACCEPTOR_NAME = "client_ssl";
-    private static final String COMPONENT_SOCKET_ACCEPTOR_NAME = "component";
-    private static final String MULTIPLEXER_SOCKET_ACCEPTOR_NAME = "multiplexer";
-
     private static final Logger Log = LoggerFactory.getLogger(ConnectionManagerImpl.class);
 
-    private NioSocketAcceptor socketAcceptor;
-    private NioSocketAcceptor sslSocketAcceptor;
-    private NioSocketAcceptor componentAcceptor;
-    private SocketAcceptThread serverSocketThread;
-    private NioSocketAcceptor multiplexerSocketAcceptor;
-    private ArrayList<ServerPort> ports;
+    private final ConnectionListener clientListener;
+    private final ConnectionListener clientSslListener;
+    private final ConnectionListener boshListener;
+    private final ConnectionListener boshSslListener;
+    private final ConnectionListener serverListener;
+    private final ConnectionListener componentListener;
+    private final ConnectionListener componentSslListener;
+    private final ConnectionListener connectionManagerListener; // Also known as 'multiplexer'
+    private final ConnectionListener connectionManagerSslListener; // Also known as 'multiplexer'
+    private final ConnectionListener webAdminListener;
+    private final ConnectionListener webAdminSslListener;
 
-    private SessionManager sessionManager;
-    private PacketDeliverer deliverer;
-    private PacketRouter router;
-    private RoutingTable routingTable;
-    private String serverName;
-    private String localIPAddress = null;
-
-    // Used to know if the sockets have been started
-    private boolean isSocketStarted = false;
-
-    public ConnectionManagerImpl() {
+    /**
+     * Instantiates a new connection manager.
+     */
+    public ConnectionManagerImpl() throws IOException
+    {
         super("Connection Manager");
-        ports = new ArrayList<ServerPort>(4);
-    }
 
-    private synchronized void createListeners() {
-        if (isSocketStarted || sessionManager == null || deliverer == null || router == null || serverName == null) {
-            return;
+        InetAddress bindAddress = null;
+        try
+        {
+            bindAddress = getListenAddress();
         }
-        // Create the port listener for s2s communication
-        createServerListener(localIPAddress);
-        // Create the port listener for Connections Multiplexers
-        createConnectionManagerListener();
-        // Create the port listener for external components
-        createComponentListener();
-        // Create the port listener for clients
-        createClientListeners();
-        // Create the port listener for secured clients
-        createClientSSLListeners();
-    }
-
-    private synchronized void startListeners() {
-        if (isSocketStarted || sessionManager == null || deliverer == null || router == null || serverName == null) {
-            return;
+        catch ( UnknownHostException e )
+        {
+            Log.warn( "Unable to resolve bind address: ", e );
         }
 
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+
+        // client-to-server
+        clientListener = new ConnectionListener(
+                ConnectionType.SOCKET_C2S,
+                ConnectionSettings.Client.PORT,
+                DEFAULT_PORT,
+                ConnectionSettings.Client.SOCKET_ACTIVE,
+                ConnectionSettings.Client.MAX_THREADS,
+                ConnectionSettings.Client.MAX_READ_BUFFER,
+                ConnectionSettings.Client.TLS_POLICY,
+                ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS
+        );
+        clientSslListener = new ConnectionListener(
+                ConnectionType.SOCKET_C2S,
+                ConnectionSettings.Client.OLD_SSLPORT,
+                DEFAULT_SSL_PORT,
+                ConnectionSettings.Client.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Client.MAX_THREADS_SSL,
+                ConnectionSettings.Client.MAX_READ_BUFFER_SSL,
+                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS
+        );
+        // BOSH / HTTP-bind
+        boshListener = new ConnectionListener(
+                ConnectionType.BOSH_C2S,
+                HttpBindManager.HTTP_BIND_PORT,
+                HttpBindManager.HTTP_BIND_PORT_DEFAULT,
+                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS,
+                null,
+                Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use boshSslListener instead.
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS // Existing code re-used the generic client compression property. Should we have a BOSH-specific one?
+        );
+        boshSslListener = new ConnectionListener(
+                ConnectionType.BOSH_C2S,
+                HttpBindManager.HTTP_BIND_SECURE_PORT,
+                HttpBindManager.HTTP_BIND_SECURE_PORT_DEFAULT,
+                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS,
+                null,
+                Connection.TLSPolicy.legacyMode.name(),
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),
+                ConnectionSettings.Client.COMPRESSION_SETTINGS // Existing code re-used the generic client compression property. Should we have a BOSH-specific one?
+        );
+        // server-to-server (federation)
+        serverListener = new ConnectionListener(
+                ConnectionType.SOCKET_S2S,
+                ConnectionSettings.Server.PORT,
+                DEFAULT_SERVER_PORT,
+                ConnectionSettings.Server.SOCKET_ACTIVE,
+                "xmpp.server.processing.threads",
+                null,
+                ConnectionSettings.Server.TLS_POLICY,
+                ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.SOCKET_S2S ),
+                ConnectionSettings.Server.COMPRESSION_SETTINGS
+        );
+        // external components (XEP 0114)
+        componentListener = new ConnectionListener(
+                ConnectionType.COMPONENT,
+                ConnectionSettings.Component.PORT,
+                DEFAULT_COMPONENT_PORT,
+                ConnectionSettings.Component.SOCKET_ACTIVE,
+                ConnectionSettings.Component.MAX_THREADS,
+                null,
+                ConnectionSettings.Component.TLS_POLICY,
+                ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT ),
+                ConnectionSettings.Component.COMPRESSION_SETTINGS
+        );
+        componentSslListener = new ConnectionListener(
+                ConnectionType.COMPONENT,
+                ConnectionSettings.Component.OLD_SSLPORT,
+                DEFAULT_COMPONENT_SSL_PORT,
+                ConnectionSettings.Component.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Component.MAX_THREADS_SSL,
+                null,
+                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.COMPONENT ),
+                ConnectionSettings.Component.COMPRESSION_SETTINGS
+        );
+
+        // Multiplexers (our propertietary connection manager implementation)
+        connectionManagerListener = new ConnectionListener(
+                ConnectionType.CONNECTION_MANAGER,
+                ConnectionSettings.Multiplex.PORT,
+                DEFAULT_MULTIPLEX_PORT,
+                ConnectionSettings.Multiplex.SOCKET_ACTIVE,
+                ConnectionSettings.Multiplex.MAX_THREADS,
+                null,
+                ConnectionSettings.Multiplex.TLS_POLICY,
+                ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                ConnectionSettings.Multiplex.COMPRESSION_SETTINGS
+        );
+        connectionManagerSslListener = new ConnectionListener(
+                ConnectionType.CONNECTION_MANAGER,
+                ConnectionSettings.Multiplex.OLD_SSLPORT,
+                DEFAULT_MULTIPLEX_SSL_PORT,
+                ConnectionSettings.Multiplex.ENABLE_OLD_SSLPORT,
+                ConnectionSettings.Multiplex.MAX_THREADS_SSL,
+                null,
+                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
+                ConnectionSettings.Multiplex.COMPRESSION_SETTINGS
+        );
+
+        // Admin console (the Openfire web-admin) // TODO these use the XML properties instead of normal properties!
+        webAdminListener = new ConnectionListener(
+                ConnectionType.WEBADMIN,
+                "adminConsole.port",
+                9090,
+                null,
+                "adminConsole.serverThreads",
+                null,
+                Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use webAdminSslListener instead.
+                null,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
+                null // Should we have compression on the admin console?
+        );
+
+        webAdminSslListener = new ConnectionListener(
+                ConnectionType.WEBADMIN,
+                "adminConsole.securePort",
+                9091,
+                null,
+                "adminConsole.serverThreads",
+                null,
+                Connection.TLSPolicy.legacyMode.name(),
+                null,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
+                null // Should we have compression on the admin console?
+        );
+
+    }
+
+    /**
+     * Starts all listeners. This ensures that all those that are enabled will start accept connections.
+     */
+    private synchronized void startListeners()
+    {
         // Check if plugins have been loaded
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
         if (!pluginManager.isExecuted()) {
@@ -160,652 +272,262 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             return;
         }
 
-        isSocketStarted = true;
-
-        // Setup port info
-        try {
-            localIPAddress = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e) {
-            if (localIPAddress == null) {
-                localIPAddress = "Unknown";
+        for ( final ConnectionListener listener : getListeners() )
+        {
+            try
+            {
+                listener.start();
+            }
+            catch ( RuntimeException ex )
+            {
+                Log.error( "An exception occurred while starting listener " + listener, ex );
             }
         }
-        // Start the port listener for s2s communication
-        startServerListener();
-        // Start the port listener for Connections Multiplexers
-        startConnectionManagerListener(localIPAddress);
-        // Start the port listener for external components
-        startComponentListener();
-        // Start the port listener for clients
-        startClientListeners(localIPAddress);
-        // Start the port listener for secured clients
-        startClientSSLListeners(localIPAddress);
-        // Start the HTTP client listener
-        startHTTPBindListeners();
-    }
 
-    private void createServerListener(String localIPAddress) {
-        // Start servers socket unless it's been disabled.
-        if (isServerListenerEnabled()) {
-            int port = getServerListenerPort();
-            try {
-                serverSocketThread = new SocketAcceptThread(this, new ServerPort(port, serverName,
-                        localIPAddress, false, null, ServerPort.Type.server));
-                ports.add(serverSocketThread.getServerPort());
-                serverSocketThread.setDaemon(true);
-                serverSocketThread.setPriority(Thread.MAX_PRIORITY);
-            }
-            catch (Exception e) {
-                System.err.println("Error creating server listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-            }
+        // Start the HTTP client listener.
+        try
+        {
+            HttpBindManager.getInstance().start();
+        }
+        catch ( RuntimeException ex )
+        {
+            Log.error( "An exception occurred while starting HTTP Bind listener ", ex );
         }
     }
 
-    private void startServerListener() {
-        // Start servers socket unless it's been disabled.
-        if (isServerListenerEnabled()) {
-            int port = getServerListenerPort();
-            try {
-                serverSocketThread.start();
-
-                List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(serverSocketThread.getPort()));
-                Log.info(LocaleUtils.getLocalizedString("startup.server", params));
+    /**
+     * Stops all listeners. This ensures no listener will accept new connections.
+     */
+    private synchronized void stopListeners()
+    {
+        for ( final ConnectionListener listener : getListeners() )
+        {
+            // TODO determine by purpose exactly what needs and what need not be restarted.
+            try
+            {
+                listener.stop();
             }
-            catch (Exception e) {
-                System.err.println("Error starting server listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
+            catch ( RuntimeException ex )
+            {
+                Log.error( "An exception occurred while stopping listener " + listener, ex );
             }
         }
-    }
 
-    private void stopServerListener() {
-        if (serverSocketThread != null) {
-            serverSocketThread.shutdown();
-            ports.remove(serverSocketThread.getServerPort());
-            serverSocketThread = null;
+        // Stop the HTTP client listener.
+        try
+        {
+            HttpBindManager.getInstance().stop();
+        }
+        catch ( RuntimeException ex )
+        {
+            Log.error( "An exception occurred while stopping HTTP Bind listener ", ex );
         }
     }
 
-    private void createConnectionManagerListener() {
-        // Start multiplexers socket unless it's been disabled.
-        if (isConnectionManagerListenerEnabled()) {
-            // Create SocketAcceptor with correct number of processors
-            multiplexerSocketAcceptor = buildSocketAcceptor(MULTIPLEXER_SOCKET_ACCEPTOR_NAME);
-            // Customize Executor that will be used by processors to process incoming stanzas
-            int maxPoolSize = JiveGlobals.getIntProperty("xmpp.multiplex.processing.threads", 16);
-            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
-            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-            ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-            threadFactory = new DelegatingThreadFactory("Multiplexer-Thread-", threadFactory);
-            eventExecutor.setThreadFactory(threadFactory);
-            multiplexerSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
-            // Add the XMPP codec filter
-            multiplexerSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
-
+    /**
+     * Returns the specific network interface on which Openfire is configured to listen, or null when no such preference
+     * has been configured.
+     *
+     * @return A network interface or null.
+     * @throws UnknownHostException When the configured network name cannot be resolved.
+     */
+    public InetAddress getListenAddress() throws UnknownHostException
+    {
+        String interfaceName = JiveGlobals.getXMLProperty( "network.interface" );
+        InetAddress bindInterface = null;
+        if (interfaceName != null) {
+            if (interfaceName.trim().length() > 0) {
+                bindInterface = InetAddress.getByName(interfaceName);
+            }
         }
+        return bindInterface;
     }
 
-    private void startConnectionManagerListener(String localIPAddress) {
-        // Start multiplexers socket unless it's been disabled.
-        if (isConnectionManagerListenerEnabled()) {
-            int port = getConnectionManagerListenerPort();
+    /**
+     * Returns all connection listeners.
+     *
+     * @return All connection listeners (never null).
+     */
+    public Set<ConnectionListener> getListeners() {
+        final Set<ConnectionListener> listeners = new LinkedHashSet<>();
+        listeners.add( clientListener );
+        listeners.add( clientSslListener );
+        listeners.add( boshListener );
+        listeners.add( boshSslListener );
+        listeners.add( serverListener );
+        listeners.add( componentListener );
+        listeners.add( componentSslListener );
+        listeners.add( connectionManagerListener );
+        listeners.add( connectionManagerSslListener );
+        listeners.add( webAdminListener );
+        listeners.add( webAdminSslListener );
+        return listeners;
+    }
 
-            try {
-                // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-                InetAddress bindInterface = null;
-                if (interfaceName != null) {
-                    if (interfaceName.trim().length() > 0) {
-                        bindInterface = InetAddress.getByName(interfaceName);
-                    }
+    /**
+     * Returns a connection listener.
+     *
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return The connection listener (never null).
+     */
+    public ConnectionListener getListener( ConnectionType type, boolean startInSslMode )
+    {
+        switch ( type )
+        {
+            case SOCKET_C2S:
+                if (startInSslMode) {
+                    return clientSslListener;
+                } else {
+                    return clientListener;
                 }
-                // Start accepting connections
-                multiplexerSocketAcceptor.setHandler(new MultiplexerConnectionHandler(serverName));
-                multiplexerSocketAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
-                ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.connectionManager));
-
-                List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(port));
-                Log.info(LocaleUtils.getLocalizedString("startup.multiplexer", params));
-            }
-            catch (Exception e) {
-                System.err.println("Error starting multiplexer listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-            }
-        }
-    }
-
-    private void stopConnectionManagerListener() {
-        if (multiplexerSocketAcceptor != null) {
-            multiplexerSocketAcceptor.unbind();
-            for (ServerPort port : ports) {
-                if (port.isConnectionManagerPort()) {
-                    ports.remove(port);
-                    break;
+            case BOSH_C2S:
+                if (startInSslMode) {
+                    return boshSslListener;
+                } else {
+                    return boshListener;
                 }
-            }
-            multiplexerSocketAcceptor = null;
-        }
-    }
+            case SOCKET_S2S:
+                return serverListener; // there's no legacy-mode server listener.
 
-    private void createComponentListener() {
-        // Start components socket unless it's been disabled.
-        if (isComponentListenerEnabled() && componentAcceptor == null) {
-            // Create SocketAcceptor with correct number of processors
-            componentAcceptor = buildSocketAcceptor(COMPONENT_SOCKET_ACCEPTOR_NAME);
-            int maxPoolSize = JiveGlobals.getIntProperty("xmpp.component.processing.threads", 16);
-            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
-            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-            ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-            threadFactory = new DelegatingThreadFactory("Component-Thread-", threadFactory);
-            eventExecutor.setThreadFactory(threadFactory);
-            componentAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
-            // Add the XMPP codec filter
-            componentAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
-        }
-    }
-
-    private void startComponentListener() {
-        // Start components socket unless it's been disabled.
-        if (isComponentListenerEnabled() && componentAcceptor != null &&
-                componentAcceptor.getManagedSessionCount() == 0) {
-            int port = getComponentListenerPort();
-            try {
-                // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-                InetAddress bindInterface = null;
-                if (interfaceName != null) {
-                    if (interfaceName.trim().length() > 0) {
-                        bindInterface = InetAddress.getByName(interfaceName);
-                    }
+            case COMPONENT:
+                if (startInSslMode) {
+                    return componentSslListener;
+                } else {
+                    return componentListener;
                 }
-                // Start accepting connections
-                componentAcceptor.setHandler(new ComponentConnectionHandler(serverName));
-                componentAcceptor.bind(new InetSocketAddress(bindInterface, port));
 
-                ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.component));
-
-                List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(port));
-                Log.info(LocaleUtils.getLocalizedString("startup.component", params));
-            }
-            catch (Exception e) {
-                System.err.println("Error starting component listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-            }
-        }
-    }
-
-    private void stopComponentListener() {
-        if (componentAcceptor != null) {
-            componentAcceptor.unbind();
-            for (ServerPort port : ports) {
-                if (port.isComponentPort()) {
-                    ports.remove(port);
-                    break;
+            case CONNECTION_MANAGER:
+                if (startInSslMode) {
+                    return connectionManagerSslListener;
+                } else {
+                    return connectionManagerListener;
                 }
-            }
-            componentAcceptor = null;
-        }
-    }
 
-    private void createClientListeners() {
-        // Start clients plain socket unless it's been disabled.
-        if (isClientListenerEnabled()) {
-            // Create SocketAcceptor with correct number of processors
-            socketAcceptor = buildSocketAcceptor(CLIENT_SOCKET_ACCEPTOR_NAME);
-            // Customize Executor that will be used by processors to process incoming stanzas
-            int maxPoolSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 16);
-            ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
-            ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-            ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-            threadFactory = new DelegatingThreadFactory("C2S-Thread-", threadFactory);
-            eventExecutor.setThreadFactory(threadFactory);
-
-            // Add the XMPP codec filter
-            socketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
-            socketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
-            // Kill sessions whose outgoing queues keep growing and fail to send traffic
-            socketAcceptor.getFilterChain().addAfter(XMPP_CODEC_FILTER_NAME, CAPACITY_FILTER_NAME, new StalledSessionsFilter());
-            // Throttle sessions who send data too fast
-            int maxBufferSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_READ_BUFFER, 10 * MB);
-            socketAcceptor.getSessionConfig().setMaxReadBufferSize(maxBufferSize);
-	        Log.debug("Throttling read buffer for connections from socketAcceptor={} to max={} bytes",
-	                  socketAcceptor, maxBufferSize);
-        }
-    }
-
-    private void startClientListeners(String localIPAddress) {
-        // Start clients plain socket unless it's been disabled.
-        if (isClientListenerEnabled()) {
-            int port = getClientListenerPort();
-            try {
-                // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-                InetAddress bindInterface = null;
-                if (interfaceName != null) {
-                    if (interfaceName.trim().length() > 0) {
-                        bindInterface = InetAddress.getByName(interfaceName);
-                    }
+            case WEBADMIN:
+                if (startInSslMode) {
+                    return webAdminSslListener;
+                } else {
+                    return webAdminListener;
                 }
-                // Start accepting connections
-                socketAcceptor.setHandler(new ClientConnectionHandler(serverName));
-                socketAcceptor.bind(new InetSocketAddress(bindInterface, port));
-
-                ports.add(new ServerPort(port, serverName, localIPAddress, false, null, ServerPort.Type.client));
-
-                List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(port));
-                Log.info(LocaleUtils.getLocalizedString("startup.plain", params));
-            }
-            catch (Exception e) {
-                System.err.println("Error starting XMPP listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.socket-setup"), e);
-            }
+            default:
+                throw new IllegalStateException( "Unknown connection type: "+ type );
         }
     }
 
-    private void stopClientListeners() {
-        if (socketAcceptor != null) {
-            socketAcceptor.unbind();
-            for (ServerPort port : ports) {
-                if (port.isClientPort() && !port.isSecure()) {
-                    ports.remove(port);
-                    break;
-                }
-            }
-            socketAcceptor = null;
+    /**
+     * Returns al connection listeners for the provided type.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @return The connection listener (never null).
+     */
+    public Set<ConnectionListener> getListeners( ConnectionType type )
+    {
+        final Set<ConnectionListener> result = new HashSet<>();
+        switch ( type )
+        {
+            case SOCKET_C2S:
+                result.add( clientListener );
+                result.add( clientSslListener );
+                break;
+            case BOSH_C2S:
+                result.add( boshListener );
+                result.add( boshSslListener );
+
+            case SOCKET_S2S:
+                result.add( serverListener ); // there's no legacy-mode server listener.
+                break;
+
+            case COMPONENT:
+                result.add( componentListener );
+                result.add( componentSslListener );
+                break;
+
+            case CONNECTION_MANAGER:
+                result.add( connectionManagerListener );
+                result.add( connectionManagerSslListener );
+                break;
+            case WEBADMIN:
+                result.add( webAdminListener );
+                result.add( webAdminSslListener );
+
+            default:
+                throw new IllegalStateException( "Unknown connection type: "+ type );
         }
+
+        return result;
     }
 
-    private void createClientSSLListeners() {
-        // Start clients SSL unless it's been disabled.
-        if (isClientSSLListenerEnabled()) {
-            int port = getClientSSLListenerPort();
-            String algorithm = JiveGlobals.getProperty(ConnectionSettings.Client.TLS_ALGORITHM, "TLS");
-            try {
-                // Customize Executor that will be used by processors to process incoming stanzas
-                int maxPoolSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS_SSL, 16);
-                ExecutorFilter executorFilter = new ExecutorFilter(getCorePoolSize(maxPoolSize), maxPoolSize, 60, TimeUnit.SECONDS);
-                ThreadPoolExecutor eventExecutor = (ThreadPoolExecutor)executorFilter.getExecutor();
-                ThreadFactory threadFactory = eventExecutor.getThreadFactory();
-                threadFactory = new DelegatingThreadFactory("LegacySSL-Thread-", threadFactory);
-                eventExecutor.setThreadFactory(threadFactory);
-                
-                // Create SocketAcceptor with correct number of processors
-                sslSocketAcceptor = buildSocketAcceptor(CLIENT_SSL_SOCKET_ACCEPTOR_NAME);
-                sslSocketAcceptor.getFilterChain().addFirst(EXECUTOR_FILTER_NAME, executorFilter);
-
-                // Add the XMPP codec filter
-                sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, XMPP_CODEC_FILTER_NAME, new ProtocolCodecFilter(new XMPPCodecFactory()));
-                // Kill sessions whose outgoing queues keep growing and fail to send traffic
-                sslSocketAcceptor.getFilterChain().addAfter(XMPP_CODEC_FILTER_NAME, CAPACITY_FILTER_NAME, new StalledSessionsFilter());
-                
-				// Throttle sessions who send data too fast
-				int maxBufferSize = JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_READ_BUFFER_SSL, 10 * MB);
-				sslSocketAcceptor.getSessionConfig().setMaxReadBufferSize(maxBufferSize);
-		        Log.debug("Throttling read buffer for connections from sslSocketAcceptor={} to max={} bytes",
-		                  sslSocketAcceptor, maxBufferSize);
-
-                // Add the SSL filter now since sockets are "borned" encrypted in the old ssl method
-                SSLContext sslContext = SSLContext.getInstance(algorithm);
-                KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                keyFactory.init(SSLConfig.getKeyStore(), SSLConfig.getKeyPassword().toCharArray());
-                TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustFactory.init(SSLConfig.getc2sTrustStore());
-
-                sslContext.init(keyFactory.getKeyManagers(),
-                        trustFactory.getTrustManagers(),
-                        new java.security.SecureRandom());
-
-                SslFilter sslFilter = new SslFilter(sslContext);
-                if (JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("needed")) {
-                    sslFilter.setNeedClientAuth(true);
-                }
-                else if(JiveGlobals.getProperty(ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,"disabled").equals("wanted")) {
-                    sslFilter.setWantClientAuth(true);
-                }
-                sslSocketAcceptor.getFilterChain().addAfter(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, sslFilter);
-
-            }
-            catch (Exception e) {
-                System.err.println("Error starting SSL XMPP listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
-            }
-        }
+    /**
+     * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
+     * indeed active)
+     *
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return true if configuration allows this listener to be enabled, otherwise false.
+     */
+    public boolean isEnabled( ConnectionType type, boolean startInSslMode )
+    {
+        return getListener( type, startInSslMode ).isEnabled();
     }
 
-    private void startClientSSLListeners(String localIPAddress) {
-        // Start clients SSL unless it's been disabled.
-        if (isClientSSLListenerEnabled()) {
-            int port = getClientSSLListenerPort();
-            try {
-                // Listen on a specific network interface if it has been set.
-                String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-                InetAddress bindInterface = null;
-                if (interfaceName != null) {
-                    if (interfaceName.trim().length() > 0) {
-                        bindInterface = InetAddress.getByName(interfaceName);
-                    }
-                }
-                // Start accepting connections
-                sslSocketAcceptor.setHandler(new ClientConnectionHandler(serverName));
-                sslSocketAcceptor.bind(new InetSocketAddress(bindInterface, port));
-
-                ports.add(new ServerPort(port, serverName, localIPAddress, true, null, ServerPort.Type.client));
-
-                List<String> params = new ArrayList<String>();
-                params.add(Integer.toString(port));
-                Log.info(LocaleUtils.getLocalizedString("startup.ssl", params));
-            }
-            catch (Exception e) {
-                System.err.println("Error starting SSL XMPP listener on port " + port + ": " +
-                        e.getMessage());
-                Log.error(LocaleUtils.getLocalizedString("admin.error.ssl"), e);
-            }
-        }
+    /**
+     * Enables or disables a connection listener. Does nothing if the particular listener is already in the requested
+     * state.
+     *
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param enabled true if the listener is to be enabled, otherwise false.
+     */
+    public void enable( ConnectionType type, boolean startInSslMode, boolean enabled )
+    {
+        getListener( type, startInSslMode ).enable( enabled );
     }
 
-    private void stopClientSSLListeners() {
-        if (sslSocketAcceptor != null) {
-            sslSocketAcceptor.unbind();
-            for (ServerPort port : ports) {
-                if (port.isClientPort() && port.isSecure()) {
-                    ports.remove(port);
-                    break;
-                }
-            }
-            sslSocketAcceptor = null;
-        }
+    /**
+     * Retrieves the configured TCP port on which a listener accepts connections.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return a port number.
+     */
+    public int getPort( ConnectionType type, boolean startInSslMode )
+    {
+        return getListener( type, startInSslMode ).getPort();
     }
 
-    private void restartClientSSLListeners() {
-        if (!isSocketStarted) {
-            return;
-        }
-        // Setup port info
-        try {
-            localIPAddress = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e) {
-            if (localIPAddress == null) {
-                localIPAddress = "Unknown";
-            }
-        }
-        stopClientSSLListeners();
-        createClientSSLListeners();
-        startClientSSLListeners(localIPAddress);
+    /**
+     * Sets the TCP port on which a listener accepts connections.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param port a port number.
+     */
+    public void setPort( ConnectionType type, boolean startInSslMode, int port )
+    {
+        getListener( type, startInSslMode ).setPort( port );
     }
 
-    public Collection<ServerPort> getPorts() {
-        return ports;
-    }
-
-    public SocketReader createSocketReader(Socket sock, boolean isSecure, ServerPort serverPort,
-            boolean useBlockingMode) throws IOException {
-        if (serverPort.isServerPort()) {
-            SocketConnection conn = new SocketConnection(deliverer, sock, isSecure);
-            return new ServerSocketReader(router, routingTable, serverName, sock, conn,
-                    useBlockingMode);
-        }
-        return null;
-    }
-
-    private void startHTTPBindListeners() {
-        HttpBindManager.getInstance().start();
-    }
-
-    @Override
-	public void initialize(XMPPServer server) {
-        super.initialize(server);
-        serverName = server.getServerInfo().getXMPPDomain();
-        router = server.getPacketRouter();
-        routingTable = server.getRoutingTable();
-        deliverer = server.getPacketDeliverer();
-        sessionManager = server.getSessionManager();
-        // Check if we need to configure MINA to use Direct or Heap Buffers
-        // Note: It has been reported that heap buffers are 50% faster than direct buffers
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.heapBuffer", true)) {
-            IoBuffer.setUseDirectBuffer(false);
-            IoBuffer.setAllocator(new SimpleBufferAllocator());
-        }
-    }
-
-    public void enableClientListener(boolean enabled) {
-        if (enabled == isClientListenerEnabled()) {
-            // Ignore new setting
-            return;
-        }
-        if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Client.SOCKET_ACTIVE, "true");
-            // Start the port listener for clients
-            createClientListeners();
-            startClientListeners(localIPAddress);
-        }
-        else {
-            JiveGlobals.setProperty(ConnectionSettings.Client.SOCKET_ACTIVE, "false");
-            // Stop the port listener for clients
-            stopClientListeners();
-        }
-    }
-
-    public boolean isClientListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.SOCKET_ACTIVE, true);
-    }
-
-    public void enableClientSSLListener(boolean enabled) {
-        if (enabled == isClientSSLListenerEnabled()) {
-            // Ignore new setting
-            return;
-        }
-        if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, "true");
-            // Start the port listener for secured clients
-            createClientSSLListeners();
-            startClientSSLListeners(localIPAddress);
-        }
-        else {
-            JiveGlobals.setProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, "false");
-            // Stop the port listener for secured clients
-            stopClientSSLListeners();
-        }
-    }
-
-    public boolean isClientSSLListenerEnabled() {
-        try {
-            return JiveGlobals.getBooleanProperty(ConnectionSettings.Client.ENABLE_OLD_SSLPORT, false) && SSLConfig.getKeyStore().size() > 0;
-        } catch (KeyStoreException e) {
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public void enableComponentListener(boolean enabled) {
-        if (enabled == isComponentListenerEnabled()) {
-            // Ignore new setting
-            return;
-        }
-        if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Component.SOCKET_ACTIVE, "true");
-            // Start the port listener for external components
-            createComponentListener();
-            startComponentListener();
-        }
-        else {
-            JiveGlobals.setProperty(ConnectionSettings.Component.SOCKET_ACTIVE, "false");
-            // Stop the port listener for external components
-            stopComponentListener();
-        }
-    }
-
-    public boolean isComponentListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Component.SOCKET_ACTIVE, false);
-    }
-
-    public void enableServerListener(boolean enabled) {
-        if (enabled == isServerListenerEnabled()) {
-            // Ignore new setting
-            return;
-        }
-        if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Server.SOCKET_ACTIVE, "true");
-            // Start the port listener for s2s communication
-            createServerListener(localIPAddress);
-            startServerListener();
-        }
-        else {
-            JiveGlobals.setProperty(ConnectionSettings.Server.SOCKET_ACTIVE, "false");
-            // Stop the port listener for s2s communication
-            stopServerListener();
-        }
-    }
-
-    public boolean isServerListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true);
-    }
-
-    public void enableConnectionManagerListener(boolean enabled) {
-        if (enabled == isConnectionManagerListenerEnabled()) {
-            // Ignore new setting
-            return;
-        }
-        if (enabled) {
-            JiveGlobals.setProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, "true");
-            // Start the port listener for s2s communication
-            createConnectionManagerListener();
-            startConnectionManagerListener(localIPAddress);
-        }
-        else {
-            JiveGlobals.setProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, "false");
-            // Stop the port listener for s2s communication
-            stopConnectionManagerListener();
-        }
-    }
-
-    public boolean isConnectionManagerListenerEnabled() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Multiplex.SOCKET_ACTIVE, false);
-    }
-
-    public void setClientListenerPort(int port) {
-        if (port == getClientListenerPort()) {
-            // Ignore new setting
-            return;
-        }
-        JiveGlobals.setProperty(ConnectionSettings.Client.PORT, String.valueOf(port));
-        // Stop the port listener for clients
-        stopClientListeners();
-        if (isClientListenerEnabled()) {
-            // Start the port listener for clients
-            createClientListeners();
-            startClientListeners(localIPAddress);
-        }
-    }
-
-    public NioSocketAcceptor getSocketAcceptor() {
-        return socketAcceptor;
-    }
-
-    public int getClientListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.PORT, DEFAULT_PORT);
-    }
-
-    public NioSocketAcceptor getSSLSocketAcceptor() {
-        return sslSocketAcceptor;
-    }
-
-    public void setClientSSLListenerPort(int port) {
-        if (port == getClientSSLListenerPort()) {
-            // Ignore new setting
-            return;
-        }
-        JiveGlobals.setProperty(ConnectionSettings.Client.OLD_SSLPORT, String.valueOf(port));
-        // Stop the port listener for secured clients
-        stopClientSSLListeners();
-        if (isClientSSLListenerEnabled()) {
-            // Start the port listener for secured clients
-            createClientSSLListeners();
-            startClientSSLListeners(localIPAddress);
-        }
-    }
-
-    public int getClientSSLListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Client.OLD_SSLPORT, DEFAULT_SSL_PORT);
-    }
-
-    public void setComponentListenerPort(int port) {
-        if (port == getComponentListenerPort()) {
-            // Ignore new setting
-            return;
-        }
-        JiveGlobals.setProperty(ConnectionSettings.Component.PORT, String.valueOf(port));
-        // Stop the port listener for external components
-        stopComponentListener();
-        if (isComponentListenerEnabled()) {
-            // Start the port listener for external components
-            createComponentListener();
-            startComponentListener();
-        }
-    }
-
-    public NioSocketAcceptor getComponentAcceptor() {
-        return componentAcceptor;
-    }
-
-    public int getComponentListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Component.PORT, DEFAULT_COMPONENT_PORT);
-    }
-
-    public void setServerListenerPort(int port) {
-        if (port == getServerListenerPort()) {
-            // Ignore new setting
-            return;
-        }
-        JiveGlobals.setProperty(ConnectionSettings.Server.PORT, String.valueOf(port));
-        // Stop the port listener for s2s communication
-        stopServerListener();
-        if (isServerListenerEnabled()) {
-            // Start the port listener for s2s communication
-            createServerListener(localIPAddress);
-            startServerListener();
-        }
-    }
-
-    public int getServerListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Server.PORT, DEFAULT_SERVER_PORT);
-    }
-
-    public NioSocketAcceptor getMultiplexerSocketAcceptor() {
-        return multiplexerSocketAcceptor;
-    }
-
-    public void setConnectionManagerListenerPort(int port) {
-        if (port == getConnectionManagerListenerPort()) {
-            // Ignore new setting
-            return;
-        }
-        JiveGlobals.setProperty(ConnectionSettings.Multiplex.PORT, String.valueOf(port));
-        // Stop the port listener for connection managers
-        stopConnectionManagerListener();
-        if (isConnectionManagerListenerEnabled()) {
-            // Start the port listener for connection managers
-            createConnectionManagerListener();
-            startConnectionManagerListener(localIPAddress);
-        }
-    }
-
-    public int getConnectionManagerListenerPort() {
-        return JiveGlobals.getIntProperty(ConnectionSettings.Multiplex.PORT, DEFAULT_MULTIPLEX_PORT);
+    // TODO see if we can avoid exposing MINA internals.
+    public NioSocketAcceptor getSocketAcceptor( ConnectionType type, boolean startInSslMode )
+    {
+        return getListener( type, startInSslMode ).getSocketAcceptor();
     }
 
     // #####################################################################
@@ -813,15 +535,51 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // #####################################################################
 
     public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
-        restartClientSSLListeners();
+        // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
+        for ( final ConnectionListener listener : getListeners() )
+        {
+            // TODO determine by purpose exactly what needs and what need not be restarted.
+            try
+            {
+                listener.restart();
+            }
+            catch ( RuntimeException ex )
+            {
+                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
+            }
+        }
     }
 
     public void certificateDeleted(KeyStore keyStore, String alias) {
-        restartClientSSLListeners();
+        // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
+        for ( final ConnectionListener listener : getListeners() )
+        {
+            // TODO determine by purpose exactly what needs and what need not be restarted.
+            try
+            {
+                listener.restart();
+            }
+            catch ( RuntimeException ex )
+            {
+                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
+            }
+        }
     }
 
     public void certificateSigned(KeyStore keyStore, String alias, List<X509Certificate> certificates) {
-        restartClientSSLListeners();
+        // Note that all non-SSL listeners can be using TLS - these also need to be restarted.
+        for ( final ConnectionListener listener : getListeners() )
+        {
+            // TODO determine by purpose exactly what needs and what need not be restarted.
+            try
+            {
+                listener.restart();
+            }
+            catch ( RuntimeException ex )
+            {
+                Log.error( "An exception occurred while restarting listener " + listener + ". The reason for restart was a certificate store change.", ex );
+            }
+        }
     }
 
     // #####################################################################
@@ -848,100 +606,33 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     private void processPropertyValueChange( String property, Map<String, Object> params ) {
-        Log.debug( "Processing property value change for '"+property +"'." );
+        Log.debug( "Processing property value change for '"+property +"'. Params: " + params );
 
+        // TODO there are more properties on which a restart is required (and this also applies to other listeners)!
         if ("xmpp.client.cert.policy".equalsIgnoreCase( property )) {
-            restartClientSSLListeners();
+            clientSslListener.restart();
         }
     }
-
-    private NioSocketAcceptor buildSocketAcceptor(String name) {
-        NioSocketAcceptor socketAcceptor;
-        // Create SocketAcceptor with correct number of processors
-        int processorCount = JiveGlobals.getIntProperty("xmpp.processor.count", Runtime.getRuntime().availableProcessors());
-        socketAcceptor = new NioSocketAcceptor(processorCount);
-        // Set that it will be possible to bind a socket if there is a connection in the timeout state
-        socketAcceptor.setReuseAddress(true);
-        // Set the listen backlog (queue) length. Default is 50.
-        socketAcceptor.setBacklog(JiveGlobals.getIntProperty("xmpp.socket.backlog", 50));
-
-        // Set default (low level) settings for new socket connections
-        SocketSessionConfig socketSessionConfig = socketAcceptor.getSessionConfig();
-        //socketSessionConfig.setKeepAlive();
-        int receiveBuffer = JiveGlobals.getIntProperty("xmpp.socket.buffer.receive", -1);
-        if (receiveBuffer > 0 ) {
-            socketSessionConfig.setReceiveBufferSize(receiveBuffer);
-        }
-        int sendBuffer = JiveGlobals.getIntProperty("xmpp.socket.buffer.send", -1);
-        if (sendBuffer > 0 ) {
-            socketSessionConfig.setSendBufferSize(sendBuffer);
-        }
-        int linger = JiveGlobals.getIntProperty("xmpp.socket.linger", -1);
-        if (linger > 0 ) {
-            socketSessionConfig.setSoLinger(linger);
-        }
-        socketSessionConfig.setTcpNoDelay(
-                JiveGlobals.getBooleanProperty("xmpp.socket.tcp-nodelay", socketSessionConfig.isTcpNoDelay()));
-        if (JMXManager.isEnabled()) {
-        	configureJMX(socketAcceptor, name);
-        }
-        return socketAcceptor;
-    }
-
-    private void configureJMX(NioSocketAcceptor acceptor, String suffix) {
-        final String prefix = IoServiceMBean.class.getPackage().getName();
-        // monitor the IoService
-        try {
-            IoServiceMBean mbean = new IoServiceMBean(acceptor);
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
-            ObjectName name = new ObjectName(prefix + ":type=SocketAcceptor,name=" + suffix);
-            mbs.registerMBean( mbean, name );
-//        	mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
-    	} catch (JMException ex) {
-    		Log.warn("Failed to register MINA acceptor mbean (JMX): " + ex);
-    	}
-    	// optionally register IoSession mbeans (one per session)
-    	if (JiveGlobals.getBooleanProperty("xmpp.socket.jmx.sessions", false)) {
-	    	acceptor.addListener(new IoServiceListener() {
-	    	    public void sessionCreated(IoSession session) {
-	    	        try {
-                        IoSessionMBean mbean = new IoSessionMBean(session);
-	    	            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();  
-	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
-	    	            					session.getRemoteAddress().toString().replace(':', '/'));
-	    	            mbs.registerMBean(mbean, name);
-	    	        } catch(JMException ex) {
-	    	            Log.warn("Failed to register MINA session mbean (JMX): " + ex);
-	    	        }      
-	    	    }
-	    	    public void sessionDestroyed(IoSession session) {
-	    	        try {
-	    	            ObjectName name = new ObjectName(prefix + ":type=IoSession,name=" + 
-	    	            					session.getRemoteAddress().toString().replace(':', '/'));
-	    	            ManagementFactory.getPlatformMBeanServer().unregisterMBean(name);
-	    	        } catch(JMException ex) {
-	    	            Log.warn("Failed to unregister MINA session mbean (JMX): " + ex);
-	    	        }      
-	    	    }
-                public void serviceActivated(IoService service) throws Exception { }
-                public void serviceDeactivated(IoService service) throws Exception { }
-                public void serviceIdle(IoService service, IdleStatus idleStatus) throws Exception { }
-	    	});
-    	}
-    }
-    
-	private int getCorePoolSize(int maxPoolSize) {
-		return (maxPoolSize/4)+1;
-	}
 
 	// #####################################################################
     // Module management
     // #####################################################################
 
     @Override
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+
+        // Check if we need to configure MINA to use Direct or Heap Buffers
+        // Note: It has been reported that heap buffers are 50% faster than direct buffers
+        if (JiveGlobals.getBooleanProperty("xmpp.socket.heapBuffer", true)) {
+            IoBuffer.setUseDirectBuffer(false);
+            IoBuffer.setAllocator(new SimpleBufferAllocator());
+        }
+    }
+
+    @Override
 	public void start() {
         super.start();
-        createListeners();
         startListeners();
         SocketSendingTracker.getInstance().start();
         CertificateManager.addListener(this);
@@ -949,35 +640,259 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
     @Override
 	public void stop() {
-        super.stop();
-        stopClientListeners();
-        stopClientSSLListeners();
-        stopComponentListener();
-        stopConnectionManagerListener();
-        stopServerListener();
-        HttpBindManager.getInstance().stop();
-        SocketSendingTracker.getInstance().shutdown();
         CertificateManager.removeListener(this);
-        serverName = null;
+        SocketSendingTracker.getInstance().shutdown();
+        stopListeners();
+        super.stop();
     }
 
-    private static class DelegatingThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadId;
-        private final ThreadFactory originalThreadFactory;
-        private String threadNamePrefix;
+    // #####################################################################
+    // Deprecated delegation methods to individual listeners (as dictated by legacy API design).
+    // #####################################################################
 
-        public DelegatingThreadFactory(String threadNamePrefix, ThreadFactory originalThreadFactory) {
-            this.originalThreadFactory = originalThreadFactory;
-            threadId = new AtomicInteger(0);
-            this.threadNamePrefix = threadNamePrefix;
-        }
+    // Client
+    @Deprecated
+    public void enableClientListener( boolean enabled )
+    {
+        enable( ConnectionType.SOCKET_C2S, false, enabled);
+    }
 
-        public Thread newThread(Runnable runnable)
+    @Deprecated
+    public boolean isClientListenerEnabled()
+    {
+        return isEnabled( ConnectionType.SOCKET_C2S, false );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.SOCKET_C2S, false );
+    }
+
+    @Deprecated
+    public void setClientListenerPort( int port )
+    {
+        setPort( ConnectionType.SOCKET_C2S, false, port );
+    }
+
+    @Deprecated
+    public int getClientListenerPort()
+    {
+        return getPort( ConnectionType.SOCKET_C2S, false );
+    }
+
+    // Client in legacy mode
+    @Deprecated
+    public void enableClientSSLListener( boolean enabled )
+    {
+        enable( ConnectionType.SOCKET_C2S, true, enabled );
+    }
+
+    @Deprecated
+    public boolean isClientSSLListenerEnabled()
+    {
+        return isEnabled( ConnectionType.SOCKET_C2S, true );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getSSLSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.SOCKET_C2S, true );
+    }
+
+    @Deprecated
+    public void setClientSSLListenerPort( int port )
+    {
+        setPort( ConnectionType.SOCKET_C2S, true, port );
+    }
+
+    @Deprecated
+    public int getClientSSLListenerPort()
+    {
+        return getPort( ConnectionType.SOCKET_C2S, true );
+    }
+
+    // Component
+    @Deprecated
+    public void enableComponentListener( boolean enabled )
+    {
+        enable( ConnectionType.COMPONENT, false, enabled );
+    }
+
+    @Deprecated
+    public boolean isComponentListenerEnabled()
+    {
+        return isEnabled( ConnectionType.COMPONENT, false );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getComponentAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.COMPONENT, false );
+    }
+
+    @Deprecated
+    public void setComponentListenerPort( int port )
+    {
+        setPort( ConnectionType.COMPONENT, false, port );
+    }
+
+    @Deprecated
+    public int getComponentListenerPort()
+    {
+        return getPort( ConnectionType.COMPONENT, false );
+    }
+
+    // Component in legacy mode
+    @Deprecated
+    public void enableComponentSslListener( boolean enabled )
+    {
+        enable( ConnectionType.COMPONENT, true, enabled );
+    }
+
+    @Deprecated
+    public boolean isComponentSslListenerEnabled()
+    {
+        return isEnabled( ConnectionType.COMPONENT, true );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getComponentSslAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.COMPONENT, true);
+    }
+
+    @Deprecated
+    public void setComponentSslListenerPort( int port )
+    {
+        setPort( ConnectionType.COMPONENT, true, port );
+    }
+
+    @Deprecated
+    public int getComponentSslListenerPort()
+    {
+        return getPort( ConnectionType.COMPONENT, true );
+    }
+
+    // Server
+    @Deprecated
+    public void enableServerListener( boolean enabled )
+    {
+        enable( ConnectionType.SOCKET_S2S, false, enabled );
+    }
+
+    @Deprecated
+    public boolean isServerListenerEnabled()
+    {
+        return isEnabled( ConnectionType.SOCKET_S2S, false );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getServerListenerSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.SOCKET_S2S, false );
+    }
+
+    @Deprecated
+    public void setServerListenerPort( int port )
+    {
+        setPort( ConnectionType.SOCKET_S2S, false, port );
+    }
+
+    @Deprecated
+    public int getServerListenerPort()
+    {
+        return getPort( ConnectionType.SOCKET_S2S, false );
+    }
+
+    // Connection Manager
+    @Deprecated
+    public void enableConnectionManagerListener( boolean enabled )
+    {
+        enable( ConnectionType.CONNECTION_MANAGER, false, enabled );
+    }
+
+    @Deprecated
+    public boolean isConnectionManagerListenerEnabled()
+    {
+        return isEnabled( ConnectionType.CONNECTION_MANAGER, false );
+    }
+
+    /**
+     * @deprecated Replaced by #getConnectionManagerSocketAcceptor
+     */
+    @Deprecated
+    public NioSocketAcceptor getMultiplexerSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, false );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getConnectionManagerSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, false );
+    }
+
+    @Deprecated
+    public void setConnectionManagerListenerPort( int port )
+    {
+        setPort( ConnectionType.CONNECTION_MANAGER, false, port );
+    }
+
+    @Deprecated
+    public int getConnectionManagerListenerPort()
+    {
+        return getPort( ConnectionType.CONNECTION_MANAGER, false );
+    }
+
+    // Connection Manager in legacy mode
+    @Deprecated
+    public void enableConnectionManagerSslListener( boolean enabled )
+    {
+        enable( ConnectionType.CONNECTION_MANAGER, true, enabled );
+    }
+
+    @Deprecated
+    public boolean isConnectionManagerSslListenerEnabled()
+    {
+        return isEnabled( ConnectionType.CONNECTION_MANAGER, true );
+    }
+
+    @Deprecated
+    public NioSocketAcceptor getConnectionManagerSslSocketAcceptor()
+    {
+        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, true );
+    }
+
+    @Deprecated
+    public void setConnectionManagerSslListenerPort( int port )
+    {
+        setPort( ConnectionType.CONNECTION_MANAGER, true, port );
+    }
+
+    @Deprecated
+    public int getConnectionManagerSslListenerPort()
+    {
+        return getPort( ConnectionType.CONNECTION_MANAGER, true );
+    }
+
+    // #####################################################################
+    // Other deprecated implementations.
+    // #####################################################################
+
+    /**
+     * @deprecated use #getListeners
+     */
+    @Deprecated
+    public Collection<ServerPort> getPorts() {
+        final Set<ServerPort> result = new LinkedHashSet<>();
+        for ( ConnectionListener listener : getListeners() )
         {
-            Thread t = originalThreadFactory.newThread(runnable);
-            t.setName(threadNamePrefix + threadId.incrementAndGet());
-            t.setDaemon(true);
-            return t;
+            if (listener.getServerPort() != null)
+            {
+                result.add( listener.getServerPort() );
+            }
         }
+        return result;
     }
 }

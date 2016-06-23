@@ -17,8 +17,8 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <%
 	// Redirect if we've already run setup:
@@ -69,6 +69,11 @@
     Map<String, String> errors = new HashMap<String, String>();
     if (doContinue) {
         if (password == null) {
+            errors.put("password", "password");
+        }
+        try {
+            AuthFactory.authenticate("admin", "admin");
+        } catch (Exception e) {
             errors.put("password", "password");
         }
         if (email == null) {
@@ -170,7 +175,7 @@
         }
     }
 
-    // This handles the case of reverting back to default settings from LDAP/Clearspace. Will
+    // This handles the case of reverting back to default settings from LDAP. Will
     // add admin to the authorizedJIDs list if the authorizedJIDs list contains
     // entries.
     if (!ldap && !doTest) {
@@ -248,14 +253,15 @@ function checkClick() {
 <%
     // If the current password is "admin", don't show the text box for them to type
     // the current password. This makes setup simpler for first-time users.
-    String currentPass = null;
+    boolean defaultPassword = false;
     try {
-        currentPass = AuthFactory.getPassword("admin");
+        AuthFactory.authenticate("admin", "admin");
+        defaultPassword = true;
     }
     catch (Exception e) {
         // Ignore.
     }
-    if ("admin".equals(currentPass)) {
+    if (defaultPassword) {
 %>
 <input type="hidden" name="password" value="admin">
 <%

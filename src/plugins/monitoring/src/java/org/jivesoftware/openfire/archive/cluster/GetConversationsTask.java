@@ -37,10 +37,10 @@ import java.util.Collection;
  *
  * @author Gaston Dombiak
  */
-public class GetConversationsTask implements ClusterTask {
+public class GetConversationsTask implements ClusterTask<Collection<Conversation>> {
     private Collection<Conversation> conversations;
 
-    public Object getResult() {
+    public Collection<Conversation> getResult() {
         return conversations;
     }
 

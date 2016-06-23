@@ -32,21 +32,21 @@ visit the Openfire website: <a href="http://www.igniterealtime.org/projects/open
 <h3>Windows</h3>
 <p>Run the Openfire installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
 
-<p><b>Note:</b> If you are installing Openfire on Windows Vista/Windows 7/Windows Server 2008 or newer Windows version and you have UAC protection enabled, then we suggest to choose other installation folder than Program files (e.g. <tt>C:\Openfire</tt>). Otherwise you will have to run Openfire launcher with Run as administrator option, because Openfire is storing its configuration (and the embedded database if used) in the installation folder and UAC protection will cause errors on startup, when running without elevated privileges.</p>
+<p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder.</p>
  
  <h3>Linux/Unix</h3>
  
  Choose either the RPM or tar.gz build. If using the RPM, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
 
- <p><tt>rpm -ivh openfire_3_0_0.rpm</tt></p>
+ <p><tt>rpm -ivh openfire_X_Y_Z.rpm</tt></p>
 
  
  If using the .tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
 
- <p><tt>tar -xzvf openfire_3_0_0.tar.gz<br>
+ <p><tt>tar -xzvf openfire_X_Y_Z.tar.gz<br>
  mv openfire /opt</tt></p>
 
- <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE 1.5.0 (Java 5) or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting http://java.sun.com.</p>
+ <p><b>Note:</b> the .tar.gz build does not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE 1.7.0 or later installed on your system. You can check your java version by typing "java -version" at the command line and (if necessary) upgrade your Java installation by visiting <a href="http://www.java.com">java.com</a>.</p>
 
   </ul>
 <h2>Setup Overview</h2>
@@ -94,7 +94,7 @@ configuration files.</li>
 
   <li>The <tt>bin</tt> directory contains the server executables. Depending
 on which distribution you installed, different executables will be available.</li>
-  <li>The <tt>jre</tt> directory contains a Java 5 runtime that is bundled with the Windows and RPM versions of Openfire.</li>
+  <li>The <tt>jre</tt> directory contains a Java runtime that is bundled with the Windows and RPM versions of Openfire.</li>
   <li>The <tt>lib</tt> directory contains libraries necessary for
 running Openfire.</li>
 
@@ -138,8 +138,7 @@ unless you changed the port during the setup.<br>
 
 <h2><a name="windows">Running Openfire in Windows</a></h2>
 
-<p>If you used the Openfire installer, a shortcut for starting the
-a graphical launcher is provided in your Start Menu. Otherwise, run openfire.exe in the <tt>bin/</tt> directory of your
+<p>If you used the Openfire installer, a shortcut for starting the graphical launcher is provided in your Start Menu. Otherwise, run openfire.exe in the <tt>bin/</tt> directory of your
 Openfire installation. A button on the on the launcher allows
 you to automatically open your web browser to the correct URL to finish 
 setting up the server: 
@@ -177,9 +176,10 @@ From a console window, you can run the following commands:
 <p>You can also use the Services tool in the Windows Control Panel to start and
 stop the service.</p>
 
-<p>Note: the graphical launcher is not compatible with the Windows service
-at this time. If you install the service, you should use service controls
+<p>Note: the graphical launcher is not compatible with the Windows service. If you install the service, you should use service controls
 as described above to control the server rather than the graphical launcher.</p>
+
+<p><b>Upgrading Note:</b> you should stop Openfire service before running the installer to upgrade to the newer version.</p>
 
 <h3>Custom Parameters</h3>
 
@@ -249,12 +249,16 @@ or directly inside the administration console.
 
 <h3>Installing Plugins</h3>
 
-If you download a plugin from inside the Openfire administration console, it will automatically
+<p>If you download a plugin from inside the Openfire administration console, it will automatically
 be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
 by copying the plugin file to the <tt>plugins/</tt> directory of your Openfire installation. A
 plugin monitor will automatically extract the plugin into a directory and install the plugin in Openfire.
 You may also use the "upload plugin" feature in the admin console (under the Plugins tab) to load
-a plugin from your local file system to the server.
+a plugin from your local file system to the server.</p>
+
+<p><strong>Note:</strong> For nearly all plugins, a restart of the Openfire
+server software is not required.  You should be able to install and remove
+plugins on-demand without impacting Openfire.</p>
 
 
 <h3>Managing Plugins</h3>

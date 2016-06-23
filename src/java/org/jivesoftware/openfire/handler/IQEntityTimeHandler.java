@@ -71,7 +71,7 @@ public final class IQEntityTimeHandler extends IQHandler implements ServerFeatur
      */
     String formatsTimeZone(TimeZone tz) {
         // package-private for test.
-        int seconds = Math.abs(tz.getRawOffset()) / 1000;
+        int seconds = Math.abs(tz.getOffset(System.currentTimeMillis())) / 1000;
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         return (tz.getRawOffset() < 0 ? "-" : "+") + String.format("%02d:%02d", hours, minutes);

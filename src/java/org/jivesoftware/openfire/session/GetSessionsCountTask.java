@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class GetSessionsCountTask implements ClusterTask {
+public class GetSessionsCountTask implements ClusterTask<Integer> {
     private Boolean authenticated;
     private Integer count;
 
@@ -44,10 +44,12 @@ public class GetSessionsCountTask implements ClusterTask {
         this.authenticated = authenticated;
     }
 
-    public Object getResult() {
+    @Override
+    public Integer getResult() {
         return count;
     }
 
+    @Override
     public void run() {
         if (authenticated) {
             // Get count of authenticated sessions
@@ -59,10 +61,12 @@ public class GetSessionsCountTask implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeBoolean(out, authenticated);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         authenticated = ExternalizableUtil.getInstance().readBoolean(in);
     }

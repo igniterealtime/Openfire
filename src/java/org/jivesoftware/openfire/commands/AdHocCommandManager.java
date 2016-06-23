@@ -50,17 +50,17 @@ public class AdHocCommandManager {
      * Map that holds the offered commands by this service. Note: Key=commandCode, Value=command.
      * commandCode matches the node attribute sent by command requesters.
      */
-    private Map<String, AdHocCommand> commands = new ConcurrentHashMap<String, AdHocCommand>();
+    private Map<String, AdHocCommand> commands = new ConcurrentHashMap<>();
     /**
      * Map that holds the number of command sessions of each requester.
      * Note: Key=requester full's JID, Value=number of sessions
      */
-    private Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<String, AtomicInteger>();
+    private Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
     /**
      * Map that holds the command sessions. Used mainly to quickly locate a SessionData.
      * Note: Key=sessionID, Value=SessionData
      */
-    private Map<String, SessionData> sessions = new ConcurrentHashMap<String, SessionData>();
+    private Map<String, SessionData> sessions = new ConcurrentHashMap<>();
 
     /**
      * Adds a new command to the list of supported ad-hoc commands by this server. The new
@@ -289,7 +289,7 @@ public class AdHocCommandManager {
         Element formElement = iqCommand.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
             // Generate a Map with the variable names and variables values
-            Map<String, List<String>> data = new HashMap<String, List<String>>();
+            Map<String, List<String>> data = new HashMap<>();
             DataForm dataForm = new DataForm(formElement);
             for (FormField field : dataForm.getFields()) {
                 data.put(field.getVariable(), field.getValues());

@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.IntEnum;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
@@ -55,94 +54,181 @@ import java.util.*;
  */
 public class RosterItem implements Cacheable, Externalizable {
 
-    public static class SubType extends IntEnum {
-        protected SubType(String name, int value) {
-            super(name, value);
-            register(this);
+    public enum SubType {
+
+        /**
+         * Indicates the roster item should be removed.
+         */
+        REMOVE(-1),
+        /**
+         * No subscription is established.
+         */
+        NONE(0),
+        /**
+         * The roster owner has a subscription to the roster item's presence.
+         */
+        TO(1),
+        /**
+         * The roster item has a subscription to the roster owner's presence.
+         */
+        FROM(2),
+        /**
+         * The roster item and owner have a mutual subscription.
+         */
+        BOTH(3);
+
+        private final int value;
+
+        SubType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public String getName() {
+            return name().toLowerCase();
         }
 
         public static SubType getTypeFromInt(int value) {
-            return (SubType)getEnumFromInt(SubType.class, value);
+            for (SubType subType : values()) {
+                if (subType.value == value) {
+                    return subType;
+                }
+            }
+            return null;
         }
     }
 
-    public static class AskType extends IntEnum {
-        protected AskType(String name, int value) {
-            super(name, value);
-            register(this);
+    public enum AskType {
+
+        /**
+         * The roster item has no pending subscription requests.
+         */
+        NONE(-1),
+        /**
+         * The roster item has been asked for permission to subscribe to their presence
+         * but no response has been received.
+         */
+        SUBSCRIBE(0),
+        /**
+         * The roster owner has asked to the roster item to unsubscribe from it's
+         * presence but has not received confirmation.
+         */
+        UNSUBSCRIBE(1);
+
+        private final int value;
+
+        AskType(int value) {
+            this.value = value;
+
+        }
+
+        public int getValue() {
+            return value;
         }
 
         public static AskType getTypeFromInt(int value) {
-            return (AskType)getEnumFromInt(AskType.class, value);
+            for (AskType askType : values()) {
+                if (askType.value == value) {
+                    return askType;
+                }
+            }
+            return null;
         }
     }
 
-    public static class RecvType extends IntEnum {
-        protected RecvType(String name, int value) {
-            super(name, value);
-            register(this);
+    public enum RecvType {
+
+        /**
+         * There are no subscriptions that have been received but not presented to the user.
+         */
+        NONE(-1),
+        /**
+         * The server has received a subscribe request, but has not forwarded it to the user.
+         */
+        SUBSCRIBE(1),
+        /**
+         * The server has received an unsubscribe request, but has not forwarded it to the user.
+         */
+        UNSUBSCRIBE(2);
+
+        private final int value;
+
+        RecvType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
         }
 
         public static RecvType getTypeFromInt(int value) {
-            return (RecvType)getEnumFromInt(RecvType.class, value);
+            for (RecvType recvType : values()) {
+                if (recvType.value == value) {
+                    return recvType;
+                }
+            }
+            return null;
         }
     }
 
     /**
      * <p>Indicates the roster item should be removed.</p>
      */
-    public static final SubType SUB_REMOVE = new SubType("remove", -1);
+    public static final SubType SUB_REMOVE = SubType.REMOVE;
     /**
      * <p>No subscription is established.</p>
      */
-    public static final SubType SUB_NONE = new SubType("none", 0);
+    public static final SubType SUB_NONE = SubType.NONE;
     /**
      * <p>The roster owner has a subscription to the roster item's presence.</p>
      */
-    public static final SubType SUB_TO = new SubType("to", 1);
+    public static final SubType SUB_TO = SubType.TO;
     /**
      * <p>The roster item has a subscription to the roster owner's presence.</p>
      */
-    public static final SubType SUB_FROM = new SubType("from", 2);
+    public static final SubType SUB_FROM = SubType.FROM;
     /**
      * <p>The roster item and owner have a mutual subscription.</p>
      */
-    public static final SubType SUB_BOTH = new SubType("both", 3);
+    public static final SubType SUB_BOTH = SubType.BOTH;
 
     /**
      * <p>The roster item has no pending subscription requests.</p>
      */
-    public static final AskType ASK_NONE = new AskType("", -1);
+    public static final AskType ASK_NONE = AskType.NONE;
     /**
      * <p>The roster item has been asked for permission to subscribe to their presence
      * but no response has been received.</p>
      */
-    public static final AskType ASK_SUBSCRIBE = new AskType("subscribe", 0);
+    public static final AskType ASK_SUBSCRIBE = AskType.SUBSCRIBE;
     /**
      * <p>The roster owner has asked to the roster item to unsubscribe from it's
      * presence but has not received confirmation.</p>
      */
-    public static final AskType ASK_UNSUBSCRIBE = new AskType("unsubscribe", 1);
+    public static final AskType ASK_UNSUBSCRIBE = AskType.UNSUBSCRIBE;
 
     /**
      * <p>There are no subscriptions that have been received but not presented to the user.</p>
      */
-    public static final RecvType RECV_NONE = new RecvType("", -1);
+    public static final RecvType RECV_NONE = RecvType.NONE;
     /**
      * <p>The server has received a subscribe request, but has not forwarded it to the user.</p>
      */
-    public static final RecvType RECV_SUBSCRIBE = new RecvType("sub", 1);
+    public static final RecvType RECV_SUBSCRIBE = RecvType.SUBSCRIBE;
     /**
      * <p>The server has received an unsubscribe request, but has not forwarded it to the user.</p>
      */
-    public static final RecvType RECV_UNSUBSCRIBE = new RecvType("unsub", 2);
+    public static final RecvType RECV_UNSUBSCRIBE = RecvType.UNSUBSCRIBE;
 
     protected RecvType recvStatus;
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<String> sharedGroups = new HashSet<String>();
-    protected Set<String> invisibleSharedGroups = new HashSet<String>();
+    protected Set<String> sharedGroups = new HashSet<>();
+    protected Set<String> invisibleSharedGroups = new HashSet<>();
     protected SubType subStatus;
     protected AskType askStatus;
     /**
@@ -179,7 +265,7 @@ public class RosterItem implements Cacheable, Externalizable {
         this.askStatus = askStatus;
         this.recvStatus = recvStatus;
         this.nickname = nickname;
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         if (groups != null) {
             for (String group : groups) {
                 this.groups.add(group);
@@ -198,7 +284,7 @@ public class RosterItem implements Cacheable, Externalizable {
                 getAskStatus(item),
                 RosterItem.RECV_NONE,
                 item.getName(),
-                new LinkedList<String>(item.getGroups()));
+                new LinkedList<>(item.getGroups()));
     }
 
     private static RosterItem.AskType getAskStatus(org.xmpp.packet.Roster.Item item) {
@@ -344,7 +430,7 @@ public class RosterItem implements Cacheable, Externalizable {
      */
     public void setGroups(List<String> groups) throws SharedGroupException {
         if (groups == null) {
-            this.groups = new LinkedList<String>();
+            this.groups = new LinkedList<>();
         }
         else {
             // Raise an error if the user is trying to remove the item from a shared group
@@ -389,7 +475,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(sharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(sharedGroups.size());
         for (String groupName : sharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -409,7 +495,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getInvisibleSharedGroups() {
-        Collection<Group> groups = new ArrayList<Group>(invisibleSharedGroups.size());
+        Collection<Group> groups = new ArrayList<>(invisibleSharedGroups.size());
         for (String groupName : invisibleSharedGroups) {
             try {
                 groups.add(GroupManager.getInstance().getGroup(groupName));
@@ -513,7 +599,7 @@ public class RosterItem implements Cacheable, Externalizable {
      * @throws org.jivesoftware.openfire.SharedGroupException if trying to remove shared group.
      */
     public void setAsCopyOf(org.xmpp.packet.Roster.Item item) throws SharedGroupException {
-        setGroups(new LinkedList<String>(item.getGroups()));
+        setGroups(new LinkedList<>(item.getGroups()));
         setNickname(item.getName());
     }
 
@@ -522,6 +608,7 @@ public class RosterItem implements Cacheable, Externalizable {
 	 * 
 	 * @see org.jivesoftware.util.cache.Cacheable#getCachedSize()
 	 */
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         int size = jid.toBareJID().length();
         size += CacheSizes.sizeOfString(nickname);
@@ -535,6 +622,7 @@ public class RosterItem implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, jid);
         ExternalizableUtil.getInstance().writeBoolean(out, nickname != null);
@@ -550,12 +638,13 @@ public class RosterItem implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeLong(out, rosterID);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         jid = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             nickname = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        this.groups = new LinkedList<String>();
+        this.groups = new LinkedList<>();
         ExternalizableUtil.getInstance().readStrings(in, groups);
         ExternalizableUtil.getInstance().readStrings(in, sharedGroups);
         ExternalizableUtil.getInstance().readStrings(in, invisibleSharedGroups);

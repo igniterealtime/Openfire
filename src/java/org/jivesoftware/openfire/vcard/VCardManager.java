@@ -20,7 +20,7 @@
 
 package org.jivesoftware.openfire.vcard;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -82,16 +82,19 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
         // Keeps the cache updated in case the vCard action was not performed by VCardManager
         VCardEventDispatcher.addListener(new VCardListener() {
+            @Override
             public void vCardCreated(String username, Element vCard) {
                 // Since the vCard could be created by the provider, add it to the cache.
                 vcardCache.put(username, vCard);
             }
 
+            @Override
             public void vCardUpdated(String username, Element vCard) {
                 // Since the vCard could be updated by the provider, update it to the cache.
                 vcardCache.put(username, vCard);
             }
 
+            @Override
             public void vCardDeleted(String username, Element vCard) {
                 // Since the vCard could be delated by the provider, remove it to the cache.
                 vcardCache.remove(username);
@@ -275,20 +278,24 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
 
         // Detect when a new vcard provider class is set
         PropertyEventListener propListener = new PropertyEventListener() {
+            @Override
             public void propertySet(String property, Map params) {
                 if ("provider.vcard.className".equals(property)) {
                     initialize(XMPPServer.getInstance());
                 }
             }
 
+            @Override
             public void propertyDeleted(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertySet(String property, Map params) {
                 //Ignore
             }
 
+            @Override
             public void xmlPropertyDeleted(String property, Map params) {
                 //Ignore
             }
@@ -309,10 +316,9 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
         vcardCache.clear();
     }
 
+    @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add("vcard-temp");
-        return features.iterator();
+        return Collections.singleton("vcard-temp").iterator();
     }
 
     private class EventHandler extends UserEventAdapter {

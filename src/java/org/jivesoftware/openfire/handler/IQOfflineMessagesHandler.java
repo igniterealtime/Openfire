@@ -20,13 +20,6 @@
 
 package org.jivesoftware.openfire.handler;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -51,6 +44,13 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implements JEP-0013: Flexible Offline Message Retrieval. Allows users to request number of
@@ -140,25 +140,25 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return info;
     }
 
+    @Override
     public Iterator<String> getFeatures() {
-        ArrayList<String> features = new ArrayList<String>();
-        features.add(NAMESPACE);
-        return features.iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
-        ArrayList<Element> identities = new ArrayList<Element>();
         Element identity = DocumentHelper.createElement("identity");
         identity.addAttribute("category", "automation");
         identity.addAttribute("type", "message-list");
-        identities.add(identity);
-        return identities.iterator();
+        return Collections.singleton(identity).iterator();
     }
 
+    @Override
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
-        return Arrays.asList(NAMESPACE).iterator();
+        return Collections.singleton(NAMESPACE).iterator();
     }
 
+    @Override
     public DataForm getExtendedInfo(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
@@ -177,14 +177,16 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return dataForm;
     }
 
+    @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
         return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
 
+    @Override
     public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
         // Mark that offline messages shouldn't be sent when the user becomes available
         stopOfflineFlooding(senderJID);
-        List<DiscoItem> answer = new ArrayList<DiscoItem>();
+        List<DiscoItem> answer = new ArrayList<>();
         for (OfflineMessage offlineMessage : messageStore.getMessages(senderJID.getNode(), false)) {
             answer.add(new DiscoItem(senderJID.asBareJID(), offlineMessage.getFrom().toString(),
                     XMPPDateTimeFormat.format(offlineMessage.getCreationDate()), null));

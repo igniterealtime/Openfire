@@ -9,11 +9,11 @@
 	<description>ProtoXEP-xxxx: Remote Roster Management support
 	</description>
 	<author>Holger Bergunde / Daniel Henninger / Axel-F. Brand</author>
-	<version>2.1.5</version>
-	<date>10/21/2013</date>
+	<version>2.2.0</version>
+	<date>10/12/2015</date>
 	<databaseKey>gojara</databaseKey>
 	<databaseVersion>1</databaseVersion>
-	<minServerVersion>3.7.0</minServerVersion>
+	<minServerVersion>4.0.0</minServerVersion>
 
 	<!-- Admin console entries -->
 

@@ -52,7 +52,7 @@ public class LocaleUtils {
 	private static final Logger Log = LoggerFactory.getLogger(LocaleUtils.class);
 
     private static final Map<Locale, String[][]> timeZoneLists =
-            new ConcurrentHashMap<Locale, String[][]>();
+            new ConcurrentHashMap<>();
 
     // The basename to use for looking up the appropriate resource bundles
     // TODO - extract this out into a test that grabs the resource name from JiveGlobals
@@ -173,7 +173,7 @@ public class LocaleUtils {
     };
 
     // A mapping from the supported timezone ids to friendly english names.
-    private static final Map<String, String> nameMap = new HashMap<String, String>();
+    private static final Map<String, String> nameMap = new HashMap<>();
 
     static {
         nameMap.put(timeZoneIds[0], "International Date Line West");
@@ -300,14 +300,14 @@ public class LocaleUtils {
      */
     public static String getTimeZoneName(String zoneID, Locale locale) {
         TimeZone zone = TimeZone.getTimeZone(zoneID);
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         // Add in the GMT part to the name. First, figure out the offset.
         int offset = zone.getRawOffset();
         if (zone.inDaylightTime(new Date()) && zone.useDaylightTime()) {
             offset += (int)JiveConstants.HOUR;
         }
 
-        buf.append("(");
+        buf.append('(');
         if (offset < 0) {
             buf.append("GMT-");
         }
@@ -317,9 +317,9 @@ public class LocaleUtils {
         offset = Math.abs(offset);
         int hours = offset / (int)JiveConstants.HOUR;
         int minutes = (offset % (int)JiveConstants.HOUR) / (int)JiveConstants.MINUTE;
-        buf.append(hours).append(":");
+        buf.append(hours).append(':');
         if (minutes < 10) {
-            buf.append("0").append(minutes);
+            buf.append('0').append(minutes);
         }
         else {
             buf.append(minutes);
@@ -407,7 +407,7 @@ public class LocaleUtils {
      *      inserted into the pattern at the appropriate places.
      * @return the localized string.
      */
-    public static String getLocalizedString(String key, List arguments) {
+    public static String getLocalizedString(String key, List<?> arguments) {
         Locale locale = JiveGlobals.getLocale();
 
         ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
@@ -470,7 +470,7 @@ public class LocaleUtils {
 	 *            used if the requested locale is not available)
 	 * @return the localized string.
 	 */
-    public static String getLocalizedString(String key, String pluginName, List arguments, Locale locale, boolean fallback) {
+    public static String getLocalizedString(String key, String pluginName, List<?> arguments, Locale locale, boolean fallback) {
         if (pluginName == null) {
             return getLocalizedString(key, arguments);
         }

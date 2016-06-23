@@ -21,6 +21,8 @@
 package org.jivesoftware.openfire.audit.spi;
 
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.Auditor;
@@ -37,14 +39,14 @@ import java.util.*;
 /**
  * Implementation of the AuditManager interface.
  */
-public class AuditManagerImpl extends BasicModule implements AuditManager {
+public class AuditManagerImpl extends BasicModule implements AuditManager, PropertyEventListener {
 
     private boolean enabled;
     private boolean auditMessage;
     private boolean auditPresence;
     private boolean auditIQ;
     private boolean auditXPath;
-    private List xpath = new LinkedList();
+    private List<String> xpath = new LinkedList<>();
     private AuditorImpl auditor = null;
     /**
      * Max size in bytes that all audit log files may have. When the limit is reached
@@ -63,7 +65,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
     private int maxDays;
     private int logTimeout;
     private String logDir;
-    private Collection<String> ignoreList = new ArrayList<String>();
+    private Collection<String> ignoreList = new ArrayList<>();
     private static final int MAX_TOTAL_SIZE = 1000;
     private static final int MAX_FILE_SIZE = 10;
     private static final int MAX_DAYS = -1;
@@ -74,22 +76,19 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         super("Audit Manager");
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
+    @Override
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         JiveGlobals.setProperty("xmpp.audit.active", enabled ? "true" : "false");
-        // Add or remove the auditor interceptor depending on the enabled status
-        if (enabled) {
-            InterceptorManager.getInstance().addInterceptor(interceptor);
-        }
-        else {
-            InterceptorManager.getInstance().removeInterceptor(interceptor);
-        }
+        processEnabled(enabled);
     }
 
+    @Override
     public Auditor getAuditor() {
         if (auditor == null) {
             throw new IllegalStateException("Must initialize audit manager first");
@@ -97,103 +96,117 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         return auditor;
     }
 
+    @Override
     public int getMaxTotalSize() {
         return maxTotalSize;
     }
 
+    @Override
     public void setMaxTotalSize(int size) {
         maxTotalSize = size;
         auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
         JiveGlobals.setProperty("xmpp.audit.totalsize", Integer.toString(size));
     }
 
+    @Override
     public int getMaxFileSize() {
         return maxFileSize;
     }
 
+    @Override
     public void setMaxFileSize(int size) {
         maxFileSize = size;
         auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
         JiveGlobals.setProperty("xmpp.audit.filesize", Integer.toString(size));
     }
 
+    @Override
     public int getMaxDays() {
         return maxDays;
     }
 
+    @Override
     public void setMaxDays(int count) {
-        if (count < -1) {
-            count = -1;
-        }
-        if (count == 0) {
-            count = 1;
-        }
-        maxDays = count;
+        maxDays = validateMaxDays(count);
         auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
         JiveGlobals.setProperty("xmpp.audit.days", Integer.toString(count));
     }
 
+    @Override
     public int getLogTimeout() {
         return logTimeout;
     }
 
+    @Override
     public void setLogTimeout(int logTimeout) {
         this.logTimeout = logTimeout;
         auditor.setLogTimeout(logTimeout);
         JiveGlobals.setProperty("xmpp.audit.logtimeout", Integer.toString(logTimeout));
     }
 
+    @Override
     public String getLogDir() {
         return logDir;
     }
 
+    @Override
     public void setLogDir(String logDir) {
         this.logDir = logDir;
         auditor.setLogDir(logDir);
         JiveGlobals.setProperty("xmpp.audit.logdir", logDir);
     }
 
+    @Override
     public boolean isAuditMessage() {
         return auditMessage;
     }
 
+    @Override
     public void setAuditMessage(boolean auditMessage) {
         this.auditMessage = auditMessage;
         JiveGlobals.setProperty("xmpp.audit.message", auditMessage ? "true" : "false");
     }
 
+    @Override
     public boolean isAuditPresence() {
         return auditPresence;
     }
 
+    @Override
     public void setAuditPresence(boolean auditPresence) {
         this.auditPresence = auditPresence;
         JiveGlobals.setProperty("xmpp.audit.presence", auditPresence ? "true" : "false");
     }
 
+    @Override
     public boolean isAuditIQ() {
         return auditIQ;
     }
 
+    @Override
     public void setAuditIQ(boolean auditIQ) {
         this.auditIQ = auditIQ;
         JiveGlobals.setProperty("xmpp.audit.iq", Boolean.toString(auditIQ));
     }
 
+    @Override
     public boolean isAuditXPath() {
         return auditXPath;
     }
 
+    @Override
     public void setAuditXPath(boolean auditXPath) {
         this.auditXPath = auditXPath;
         JiveGlobals.setProperty("xmpp.audit.xpath", Boolean.toString(auditXPath));
     }
 
+    @Override
     public void addXPath(String xpathExpression) {
         xpath.add(xpathExpression);
         saveXPath();
     }
 
+    @Override
     public void removeXPath(String xpathExpression) {
         xpath.remove(xpathExpression);
         saveXPath();
@@ -205,10 +218,12 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         //filters = (String[]) xpath.toArray(filters); 
     }
 
+    @Override
     public Iterator getXPathFilters() {
         return xpath.iterator();
     }
 
+    @Override
     public void setIgnoreList(Collection<String> usernames) {
         if (ignoreList.equals(usernames)) {
             return;
@@ -221,12 +236,13 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
                 ignoreString.append(username);
             }
             else {
-                ignoreString.append(",").append(username);
+                ignoreString.append(',').append(username);
             }
         }
         JiveGlobals.setProperty("xmpp.audit.ignore", ignoreString.toString());
     }
 
+    @Override
     public Collection<String> getIgnoreList() {
         return Collections.unmodifiableCollection(ignoreList);
     }
@@ -254,13 +270,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
         logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
                 File.separator + "logs");
-        String ignoreString = JiveGlobals.getProperty("xmpp.audit.ignore", "");
-        // Decode the ignore list
-        StringTokenizer tokenizer = new StringTokenizer(ignoreString, ", ");
-        while (tokenizer.hasMoreTokens()) {
-            String username = tokenizer.nextToken();
-            ignoreList.add(username);
-        }
+		processIgnoreString(JiveGlobals.getProperty("xmpp.audit.ignore", ""));
 
         auditor = new AuditorImpl(this);
         auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
@@ -268,11 +278,39 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         auditor.setLogTimeout(logTimeout);
 
         interceptor = new AuditorInterceptor();
-        if (enabled) {
-            InterceptorManager.getInstance().addInterceptor(interceptor);
-        }
+		processEnabled(enabled);
+		PropertyEventDispatcher.addListener(this);
     }
 
+	private void processIgnoreString(String ignoreString) {
+		ignoreList.clear();
+		// Decode the ignore list
+		StringTokenizer tokenizer = new StringTokenizer(ignoreString, ",");
+		while (tokenizer.hasMoreTokens()) {
+			String username = tokenizer.nextToken().trim();
+			ignoreList.add(username);
+		}
+	}
+	
+	private void processEnabled(boolean enabled) {
+		// Add or remove the auditor interceptor depending on the enabled status
+		if (enabled) {
+			InterceptorManager.getInstance().addInterceptor(interceptor);
+		} else {
+			InterceptorManager.getInstance().removeInterceptor(interceptor);
+		}
+	}
+
+	private int validateMaxDays(int count) {
+		if (count < -1) {
+			count = -1;
+		}
+		if (count == 0) {
+			count = 1;
+		}
+		return count;
+	}
+    
     @Override
 	public void stop() {
         if (auditor != null) {
@@ -280,8 +318,82 @@ public class AuditManagerImpl extends BasicModule implements AuditManager {
         }
     }
 
+	@Override
+	public void propertySet(String property, Map<String, Object> params) {
+		String value = (String) params.get("value");
+		switch (property) {
+			case "xmpp.audit.active":
+				enabled = Boolean.parseBoolean(value);
+				processEnabled(enabled);
+				break;
+			case "xmpp.audit.message":
+				auditMessage = Boolean.parseBoolean(value);
+				break;
+			case "xmpp.audit.presence":
+				auditPresence = Boolean.parseBoolean(value);
+				break;
+			case "xmpp.audit.iq":
+				auditIQ = Boolean.parseBoolean(value);
+				break;
+			case "xmpp.audit.xpath":
+				auditXPath = Boolean.parseBoolean(value);
+				break;
+			case "xmpp.audit.totalsize":
+				maxTotalSize = parseIntegerOrDefault(value, MAX_TOTAL_SIZE);
+				auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+				break;
+			case "xmpp.audit.filesize":
+				maxFileSize = parseIntegerOrDefault(value, MAX_FILE_SIZE);
+				auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+				break;
+			case "xmpp.audit.days":
+				maxDays = validateMaxDays(parseIntegerOrDefault(value, MAX_DAYS));
+				auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+				break;
+			case "xmpp.audit.logtimeout":
+				logTimeout = parseIntegerOrDefault(value, DEFAULT_LOG_TIMEOUT);
+				auditor.setLogTimeout(logTimeout);
+				break;
+			case "xmpp.audit.logdir":
+				File d = null;
+				if (value != null && !"".equals(value.trim())) {
+					d = new File(value);
+				}
+				logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d
+						.isDirectory()) ? JiveGlobals.getHomeDirectory()
+						+ File.separator + "logs" : value;
+				auditor.setLogDir(logDir);
+				break;
+			case "xmpp.audit.ignore":
+				processIgnoreString(value);
+				break;
+		}
+	}
+
+	private int parseIntegerOrDefault(String intValue, int defaultValue) {
+		try {
+			return Integer.parseInt(intValue);
+		} catch (NumberFormatException nfe) {
+			return defaultValue;
+		}
+	}
+	
+	@Override
+	public void propertyDeleted(String property, Map<String, Object> params) {
+		propertySet(property, Collections.<String, Object>emptyMap());
+	}
+
+	@Override
+	public void xmlPropertySet(String property, Map<String, Object> params) {
+	}
+
+	@Override
+	public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+	}    
+    
     private class AuditorInterceptor implements PacketInterceptor {
 
+        @Override
         public void interceptPacket(Packet packet, Session session, boolean read, boolean processed) {
             if (!processed) {
                 // Ignore packets sent or received by users that are present in the ignore list

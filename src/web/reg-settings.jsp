@@ -18,20 +18,19 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
-                 org.jivesoftware.openfire.handler.IQAuthHandler,
                  org.jivesoftware.openfire.handler.IQRegisterHandler,
                  org.jivesoftware.openfire.session.LocalClientSession,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Iterator"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern" %>
+<%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -51,51 +50,72 @@
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     String allowedIPs = request.getParameter("allowedIPs");
     String allowedAnonymIPs = request.getParameter("allowedAnonymIPs");
+    String blockedIPs = request.getParameter("blockedIPs");
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
-    IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
-        authHandler.setAllowAnonymous(anonLogin);
+        JiveGlobals.setProperty("xmpp.auth.anonymous", Boolean.toString(anonLogin));
 
         // Build a Map with the allowed IP addresses
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Map<String, String> newMap = new HashMap<String, String>();
+        Set<String> allowedSet = new HashSet<String>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                newMap.put(address, "");
+                allowedSet.add( address );
             }
         }
         
 
-        Map<String, String> allowedAnonymMap = new HashMap<String, String>();
+        Set<String> allowedAnonymousSet = new HashSet<String>();
         StringTokenizer tokens1 = new StringTokenizer(allowedAnonymIPs, ", ");
         while (tokens1.hasMoreTokens()) {
             String address = tokens1.nextToken().trim();
             if (pattern.matcher(address).matches()) {
-                allowedAnonymMap.put(address, "");
+                allowedAnonymousSet.add( address );
             }
         }
-        LocalClientSession.setAllowedIPs(newMap);
-        LocalClientSession.setAllowedAnonymIPs(allowedAnonymMap);
+
+        Set<String> blockedSet = new HashSet<String>();
+        StringTokenizer tokens2 = new StringTokenizer(blockedIPs, ", ");
+        while (tokens2.hasMoreTokens()) {
+            String address = tokens2.nextToken().trim();
+            if (pattern.matcher(address).matches()) {
+                blockedSet.add( address );
+            }
+        }
+        LocalClientSession.setWhitelistedIPs( allowedSet );
+        LocalClientSession.setWhitelistedAnonymousIPs( allowedAnonymousSet );
+        LocalClientSession.setBlacklistedIPs( blockedSet );
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs);
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs);
     }
 
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = authHandler.isAnonymousAllowed();
+    anonLogin = JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" );
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }
@@ -105,7 +125,7 @@
     allowedIPs = buf.toString();
 
     StringBuilder buf1 = new StringBuilder();
-    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getAllowedAnonymIPs().keySet().iterator();
+    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedAnonymousIPs().iterator();
     if (iter1.hasNext()) {
         buf1.append(iter1.next());
     }
@@ -113,6 +133,17 @@
         buf1.append(", ").append(iter1.next());
     }
     allowedAnonymIPs = buf1.toString();
+
+    StringBuilder buf2 = new StringBuilder();
+    Iterator<String> iter2 = org.jivesoftware.openfire.session.LocalClientSession.getBlacklistedIPs().iterator();
+    if (iter2.hasNext()) {
+        buf2.append(iter2.next());
+    }
+    while (iter2.hasNext()) {
+        buf2.append(", ").append(iter2.next());
+    }
+    blockedIPs = buf2.toString();
+
 %>
 
 <p>
@@ -120,6 +151,7 @@
 </p>
 
 <form action="reg-settings.jsp">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <% if (save) { %>
 
@@ -234,6 +266,20 @@
 	<br>
 
 	<h4><fmt:message key="reg.settings.allowed_ips" /></h4>
+    <p>
+        <fmt:message key="reg.settings.allowed_ips_blocked_info" />
+    </p>
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <tbody>
+        <tr>
+            <td valign='top'><b><fmt:message key="reg.settings.ips_blocked" /></b></td>
+            <td>
+                <textarea name="blockedIPs" cols="40" rows="3" wrap="virtual"><%= ((blockedIPs != null) ? blockedIPs : "") %></textarea>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
 	<p>
     <fmt:message key="reg.settings.allowed_ips_info" />
     </p>

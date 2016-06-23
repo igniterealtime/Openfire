@@ -259,7 +259,9 @@ servers, some of which are detailed below:
             you
             enable SSL connections, the LDAP server port number most likely should be changed to
             636.</li>
-
+    <li>ldap.startTlsEnabled -- a value of "true" to enable StartTLS connections to your LDAP server. If
+            you enable StartTLS connections, the LDAP server port number most likely should be changed to
+            389.</li>
     <li>ldap.initialContextFactory -- the name of the class that should be used as an initial
         context
         factory. if this value is not specified, "com.sun.jndi.ldap.LdapCtxFactory" will be used

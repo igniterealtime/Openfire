@@ -22,11 +22,13 @@ package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.io.InputStream;
@@ -88,24 +90,31 @@ public class TLSStreamHandler {
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
+     * @deprecated Use the other constructor.
+     */
+    @Deprecated
+    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
+                            boolean needClientAuth) throws IOException
+    {
+        this(
+            socket,
+            connection.getConfiguration(),
+            clientMode
+        );
+    }
+
+    /**
      * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
      * to a remote server then <tt>clientMode</tt> will be <code>true</code> and
      * <tt>remoteServer</tt> is the server name of the remote server. Otherwise <tt>clientMode</tt>
      * will be <code>false</code> and  <tt>remoteServer</tt> null.
      *
-     * @param connection the connection to secure
      * @param socket the plain socket connection to secure
      * @param clientMode boolean indicating if this entity is a client or a server.
-     * @param remoteServer server name of the remote server we are connecting to or <tt>null</tt>
-     *        when not in client mode.
-     * @param needClientAuth boolean that indicates if client should authenticate during the TLS
-     *        negotiation. This option is only required when the client is a server since
-     *        EXTERNAL SASL is going to be used.
      * @throws java.io.IOException
      */
-    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
-                            boolean needClientAuth) throws IOException {
-        wrapper = new TLSWrapper(connection, clientMode, needClientAuth, remoteServer);
+    public TLSStreamHandler(Socket socket, ConnectionConfiguration configuration, boolean clientMode) throws IOException {
+        wrapper = new TLSWrapper(configuration, clientMode);
         tlsEngine = wrapper.getTlsEngine();
         reader = new TLSStreamReader(wrapper, socket);
         writer = new TLSStreamWriter(wrapper, socket);
@@ -138,7 +147,7 @@ public class TLSStreamHandler {
             initialHSStatus = HandshakeStatus.NEED_WRAP;
             tlsEngine.beginHandshake();
         }
-        else if (needClientAuth) {
+        else if (configuration.getClientAuth() == Connection.ClientAuth.needed) {
             // Only REQUIRE client authentication if we are fully verifying certificates
             if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
                     JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
@@ -164,7 +173,7 @@ public class TLSStreamHandler {
         return writer.getOutputStream();
     }
 
-    void start() throws IOException {
+    public void start() throws IOException {
         while (!initialHSComplete) {
             initialHSComplete = doHandshake(null);
         }
@@ -211,7 +220,16 @@ public class TLSStreamHandler {
 
         case NEED_UNWRAP:
             if (rbc.read(incomingNetBB) == -1) {
-                tlsEngine.closeInbound();
+                try {
+                    tlsEngine.closeInbound();
+                } catch (javax.net.ssl.SSLException ex) {
+                    // OF-1009 Process these as a 'normal' handshake rejection - it's the peer closing the connection abruptly.
+                    if ("Inbound closed before receiving peer's close_notify: possible truncation attack?".equals( ex.getMessage() ) ) {
+                        throw new SSLHandshakeException( "The peer closed the connection while performing a TLS handshake." );
+                    }
+                    throw ex;
+                }
+
                 return initialHSComplete;
             }
 

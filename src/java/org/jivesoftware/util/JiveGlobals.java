@@ -490,7 +490,7 @@ public class JiveGlobals {
         }
 
         String[] propNames = openfireProperties.getChildrenProperties(parent);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (String propName : propNames) {
             String value = getXMLProperty(parent + "." + propName);
             if (value != null) {
@@ -655,11 +655,11 @@ public class JiveGlobals {
     public static List<String> getPropertyNames(String parent) {
         if (properties == null) {
             if (isSetupMode()) {
-                return new ArrayList<String>();
+                return new ArrayList<>();
             }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList<String>(properties.getChildrenNames(parent));
+        return new ArrayList<>(properties.getChildrenNames(parent));
     }
 
     /**
@@ -675,13 +675,13 @@ public class JiveGlobals {
     public static List<String> getProperties(String parent) {
         if (properties == null) {
             if (isSetupMode()) {
-                return new ArrayList<String>();
+                return new ArrayList<>();
             }
             properties = JiveProperties.getInstance();
         }
 
         Collection<String> propertyNames = properties.getChildrenNames(parent);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (String propertyName : propertyNames) {
             String value = getProperty(propertyName);
             if (value != null) {
@@ -700,11 +700,11 @@ public class JiveGlobals {
     public static List<String> getPropertyNames() {
         if (properties == null) {
             if (isSetupMode()) {
-                return new ArrayList<String>();
+                return new ArrayList<>();
             }
             properties = JiveProperties.getInstance();
         }
-        return new ArrayList<String>(properties.getPropertyNames());
+        return new ArrayList<>(properties.getPropertyNames());
     }
 
     /**
@@ -1046,6 +1046,7 @@ public class JiveGlobals {
                 	securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
                     setupPropertyEncryption();
                     TaskEngine.getInstance().schedule(new TimerTask() {
+                    	@Override
                     	public void run() {
                             // Migrate all secure XML properties into the database automatically
                             for (String propertyName : securityProperties.getAllPropertyNames()) {
@@ -1114,7 +1115,7 @@ public class JiveGlobals {
     		}
     		
     		// load XML properties using the current key
-    		Map<String, String> openfireProps = new HashMap<String, String>();
+    		Map<String, String> openfireProps = new HashMap<>();
     		for (String xmlProp : openfireProperties.getAllPropertyNames()) {
     			if (isPropertyEncrypted(xmlProp)) {
     				openfireProps.put(xmlProp, openfireProperties.getProperty(xmlProp));
@@ -1130,7 +1131,7 @@ public class JiveGlobals {
     				openfireProperties.setProperty(propertyName, openfireProps.get(propertyName));
     			} else if (!resetProperty(propertyName)) {
     				Log.warn("Failed to reset encrypted property value for " + propertyName);
-    			};
+    			}
     		}
     		securityProperties.deleteProperty(ENCRYPTION_KEY_NEW);
     		securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);

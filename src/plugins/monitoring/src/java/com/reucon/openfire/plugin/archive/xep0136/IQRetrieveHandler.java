@@ -61,7 +61,10 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 				fromIndex = resultSet.getAfter().intValue() + 1;
 				toIndex = fromIndex + max;
 			} else if (resultSet.getBefore() != null) {
-				toIndex = resultSet.getBefore().intValue();
+				if (resultSet.getBefore()!=Long.MAX_VALUE)
+                    			toIndex = resultSet.getBefore().intValue();
+                		else
+                    			toIndex = conversation.getMessages().size();
 				fromIndex = toIndex - max;
 			}
 		}
@@ -72,16 +75,22 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 
 		final List<ArchivedMessage> messages = conversation.getMessages()
 				.subList(fromIndex, toIndex);
-		for (ArchivedMessage message : messages) {
-			addMessageElement(chatElement, conversation, message);
+		for (int i = 0; i < messages.size(); i++) {
+			if (i == 0) {
+				addMessageElement(chatElement, conversation, messages.get(i), null);
+			} else {
+				addMessageElement(chatElement, conversation, messages.get(i), messages.get(i - 1));
+			}
 		}
 
-		if (resultSet != null && messages.size() > 0) {
-			resultSet.setFirst((long) fromIndex);
-			resultSet.setFirstIndex(fromIndex);
-			resultSet.setLast((long) toIndex - 1);
-			resultSet.setCount(conversation.getMessages().size());
-			chatElement.add(resultSet.createResultElement());
+		if (resultSet != null) {
+			if (messages.size() > 0) {
+                		resultSet.setFirst((long) fromIndex);
+                		resultSet.setFirstIndex(fromIndex);
+                		resultSet.setLast((long) toIndex - 1);
+            		}
+            		resultSet.setCount(conversation.getMessages().size());
+            		chatElement.add(resultSet.createResultElement());
 		}
 
 		return reply;
@@ -93,11 +102,16 @@ public class IQRetrieveHandler extends AbstractIQHandler {
 	}
 
 	private Element addMessageElement(Element parentElement,
-			Conversation conversation, ArchivedMessage message) {
+			Conversation conversation, ArchivedMessage message, ArchivedMessage previousMessage) {
 		final Element messageElement;
+		
 		final long secs;
-
-		secs = (message.getTime().getTime() - conversation.getStart().getTime()) / 1000;
+		if (previousMessage == null) {
+			secs = (message.getTime().getTime() - conversation.getStart().getTime()) / 1000;
+		} else {
+			secs = (message.getTime().getTime() - previousMessage.getTime().getTime()) / 1000;
+		}
+		
 		messageElement = parentElement.addElement(message.getDirection()
 				.toString());
 		messageElement.addAttribute("secs", Long.toString(secs));

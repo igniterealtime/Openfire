@@ -23,11 +23,14 @@ import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
@@ -49,6 +52,11 @@ import java.io.StringReader;
 public abstract class StanzaHandler {
 
 	private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
+
+    /**
+     * A factory that generates random stream IDs
+     */
+    private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
 
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
@@ -77,10 +85,6 @@ public abstract class StanzaHandler {
      * Session associated with the socket reader.
      */
     protected LocalSession session;
-    /**
-     * Server name for which we are attending clients.
-     */
-    protected String serverName;
 
     /**
      * Router used to route incoming packets to the correct channels.
@@ -91,11 +95,15 @@ public abstract class StanzaHandler {
      * Creates a dedicated reader for a socket.
      *
      * @param router     the router for sending packets that were read.
-     * @param serverName the name of the server this socket is working for.
      * @param connection the connection being read.
      */
+    public StanzaHandler(PacketRouter router, Connection connection) {
+        this.router = router;
+        this.connection = connection;
+    }
+
+    @Deprecated
     public StanzaHandler(PacketRouter router, String serverName, Connection connection) {
-        this.serverName = serverName;
         this.router = router;
         this.connection = connection;
     }
@@ -142,7 +150,9 @@ public abstract class StanzaHandler {
 
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
-            session.close();
+            if (session != null) {
+                session.close();
+            }
             return;
         }
         // Ignore <?xml version="1.0"?> stanzas sent by clients
@@ -182,13 +192,15 @@ public abstract class StanzaHandler {
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
+        } else if (isStreamManagementStanza(doc)) {
+            session.getStreamManager().process( doc, session.getAddress() );
         }
         else {
             process(doc);
         }
     }
 
-    private void process(Element doc) throws UnauthorizedException {
+	private void process(Element doc) throws UnauthorizedException {
         if (doc == null) {
             return;
         }
@@ -250,7 +262,7 @@ public abstract class StanzaHandler {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence show for -" + packet.toXML(), e);
+                Log.debug("Invalid presence show for -" + packet.toXML(), e);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);
@@ -404,7 +416,7 @@ public abstract class StanzaHandler {
         }
         catch (Exception e) {
             Log.error("Error while negotiating TLS", e);
-            connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+            connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             connection.close();
             return false;
         }
@@ -536,6 +548,16 @@ public abstract class StanzaHandler {
         connection.deliverRawText(sb.toString());
     }
 
+	/**
+	 * Determines whether stanza's namespace matches XEP-0198 namespace
+	 * @param stanza Stanza to be checked
+	 * @return whether stanza's namespace matches XEP-0198 namespace
+	 */
+	private boolean isStreamManagementStanza(Element stanza) {
+		return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
+				StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
+	}
+
     private String geStreamHeader() {
         StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
@@ -550,13 +572,13 @@ public abstract class StanzaHandler {
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
         sb.append("\" from=\"");
-        sb.append(serverName);
+        sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
         sb.append("\" xml:lang=\"");
-        sb.append(connection.getLanguage());
+        sb.append(session.getLanguage().toLanguageTag());
         sb.append("\" version=\"");
-        sb.append(Session.MAJOR_VERSION).append(".").append(Session.MINOR_VERSION);
+        sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
     }
@@ -590,6 +612,8 @@ public abstract class StanzaHandler {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
+
+        final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
         // Check that the TO attribute of the stream header matches the server name or a valid
         // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
@@ -631,7 +655,7 @@ public abstract class StanzaHandler {
             // Append stream header
             sb.append("<stream:stream ");
             sb.append("from=\"").append(serverName).append("\" ");
-            sb.append("id=\"").append(StringUtils.randomString(5)).append("\" ");
+            sb.append("id=\"").append(STREAM_ID_FACTORY.createStreamID()).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
             sb.append("version=\"1.0\">");
@@ -650,7 +674,7 @@ public abstract class StanzaHandler {
             // have a TO attribute
             return false;
         }
-        if (serverName.equals(host)) {
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
             // requested host matched the server name
             return false;
         }

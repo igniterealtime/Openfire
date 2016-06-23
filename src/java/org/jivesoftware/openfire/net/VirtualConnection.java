@@ -23,12 +23,14 @@ package org.jivesoftware.openfire.net;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,95 +52,105 @@ public abstract class VirtualConnection implements Connection {
     protected LocalSession session;
 
     final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<ConnectionCloseListener, Object>();
+            new HashMap<>();
 
-    private boolean closed = false;
+   private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
-    public String getLanguage() {
-        // Information not available. Return any value. This is not actually used.
-        return null;
-    }
-
+    @Override
     public int getMajorXMPPVersion() {
         // Information not available. Return any value. This is not actually used.
         return 0;
     }
 
+    @Override
     public int getMinorXMPPVersion() {
         // Information not available. Return any value. This is not actually used.
         return 0;
     }
 
+    @Override
     public Certificate[] getLocalCertificates() {
         // Ignore
         return new Certificate[0];
     }
 
+    @Override
     public Certificate[] getPeerCertificates() {
         // Ignore
         return new Certificate[0];
     }
 
+    @Override
     public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
     }
 
+    @Override
     public boolean isUsingSelfSignedCertificate() {
         return false;
     }
 
+    @Override
     public boolean isClosed() {
-        if (session == null) {
-            return closed;
-        }
-        return session.getStatus() == Session.STATUS_CLOSED;
+    	return state.get() == State.CLOSED;
     }
 
+    @Override
     public Connection.CompressionPolicy getCompressionPolicy() {
         // Return null since compression is not used for virtual connections
         return null;
     }
 
+    @Override
     public Connection.TLSPolicy getTlsPolicy() {
         // Return null since TLS is not used for virtual connections
         return null;
     }
 
+    @Override
     public boolean isCompressed() {
         // Return false since compression is not used for virtual connections
         return false;
     }
 
+    @Override
     public boolean isFlashClient() {
         // Return false since flash clients is not used for virtual connections
         return false;
     }
 
+    @Override
     public void setFlashClient(boolean flashClient) {
         //Ignore
     }
 
+    @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
         //Ignore
     }
 
-    public void setLanaguage(String language) {
-        //Ignore
-    }
-
+    @Override
     public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
         //Ignore
     }
 
+    @Override
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         //Ignore
     }
 
+    @Override
     public PacketDeliverer getPacketDeliverer() {
         //Ignore
         return null;
     }
 
+    @Deprecated
+    @Override
     public void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception {
+        //Ignore
+    }
+
+    public void startTLS(boolean clientMode) throws Exception {
         //Ignore
     }
 
@@ -146,20 +158,24 @@ public abstract class VirtualConnection implements Connection {
         //Ignore
     }
 
+    @Override
     public void startCompression() {
         //Ignore
     }
 
+    @Override
     public boolean isSecure() {
         // Return false since TLS is not used for virtual connections
         return false;
     }
 
+    @Override
     public boolean validate() {
         // Return true since the virtual connection is valid until it no longer exists
         return true;
     }
 
+    @Override
     public void init(LocalSession session) {
         this.session = session;
     }
@@ -168,33 +184,26 @@ public abstract class VirtualConnection implements Connection {
      * Closes the session, the virtual connection and notifies listeners that the connection
      * has been closed.
      */
+    @Override
     public void close() {
-        close( false );
-    }
-
-    public void close(boolean peerIsKnownToBeDisconnected) {
-        boolean wasClosed = false;
-        synchronized (this) {
-            if (!isClosed()) {
-                try {
-                    if (session != null) {
-                        session.setStatus(Session.STATUS_CLOSED);
-                    }
-                    closeVirtualConnection();
-                }
-                catch (Exception e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.close")
-                            + "\n" + this.toString(), e);
-                }
-                closed = true;
-                wasClosed = true;
+    	if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+    		
+            if (session != null) {
+                session.setStatus(Session.STATUS_CLOSED);
             }
-        }
-        if (wasClosed) {
+            
+            try {
+                closeVirtualConnection();
+            } catch (Exception e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
+            }
+            
             notifyCloseListeners();
+            
         }
     }
 
+    @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);
@@ -204,6 +213,7 @@ public abstract class VirtualConnection implements Connection {
         }
     }
 
+    @Override
     public void removeCloseListener(ConnectionCloseListener listener) {
         listeners.remove(listener);
     }

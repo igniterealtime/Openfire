@@ -28,7 +28,12 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * Command that allows to update a given group.
@@ -122,7 +127,7 @@ public class UpdateGroup extends AdHocCommand {
             }
             String groupList = group.getProperties().get("sharedRoster.groupList");
             if (groupList != null) {
-                Collection<String> groups = new ArrayList<String>();
+                Collection<String> groups = new ArrayList<>();
                 StringTokenizer tokenizer = new StringTokenizer(groupList,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken().trim();
@@ -213,12 +218,12 @@ public class UpdateGroup extends AdHocCommand {
     @Override
 	protected List<Action> getActions(SessionData data) {
         if (data.getStage() == 0) {
-            return Arrays.asList(AdHocCommand.Action.next);
+            return Collections.singletonList(Action.next);
         }
         else if (data.getStage() == 1) {
             return Arrays.asList(AdHocCommand.Action.next, AdHocCommand.Action.prev, AdHocCommand.Action.complete);
         }
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

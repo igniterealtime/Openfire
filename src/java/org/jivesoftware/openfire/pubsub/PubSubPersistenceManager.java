@@ -73,6 +73,13 @@ public class PubSubPersistenceManager {
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
 			"ofPubsubItem.serviceID = ? AND nodeID = ?";
     
+    private static final String PURGE_FOR_SIZE_MYSQL =
+		"DELETE ofPubsubItem FROM ofPubsubItem LEFT JOIN " +
+			"(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
+			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
+			"ofPubsubItem.serviceID = ? AND nodeID = ?";
+
     private static final String PURGE_FOR_SIZE_POSTGRESQL = 
     		"DELETE from ofPubsubItem where id in " +
     		"(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
@@ -238,19 +245,19 @@ public class PubSubPersistenceManager {
     /**
      * Queue that holds the (wrapped) items that need to be added to the database.
      */
-    private static LinkedList<RetryWrapper> itemsToAdd = new LinkedList<RetryWrapper>();
+    private static LinkedList<RetryWrapper> itemsToAdd = new LinkedList<>();
 
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
-    private static LinkedList<PublishedItem> itemsToDelete = new LinkedList<PublishedItem>();
+    private static LinkedList<PublishedItem> itemsToDelete = new LinkedList<>();
 
     /**
      * Keeps reference to published items that haven't been persisted yet so they 
      * can be removed before being deleted. Note these items are wrapped via the 
      * RetryWrapper to allow multiple persistence attempts when needed.
      */
-    private static final HashMap<String, LinkedListNode<RetryWrapper>> itemsPending = new HashMap<String, LinkedListNode<RetryWrapper>>();
+    private static final HashMap<String, LinkedListNode<RetryWrapper>> itemsPending = new HashMap<>();
     
     /**
      * Cache name for recently accessed published items.
@@ -266,6 +273,7 @@ public class PubSubPersistenceManager {
     	try {
         	if (MAX_ITEMS_FLUSH > 0) {
         		TaskEngine.getInstance().schedule(new TimerTask() {
+        			@Override
         			public void run() { flushPendingItems(false); } // this member only
         		}, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
         	}
@@ -276,6 +284,7 @@ public class PubSubPersistenceManager {
     			purgeTimerDelay = purgeTimerDelay*2;
     		}
     		TaskEngine.getInstance().schedule(new TimerTask() {
+    			@Override
     			public void run() { purgeItems(); }
     		}, Math.abs(prng.nextLong())%purgeTimerDelay, purgeTimerDelay);
     		
@@ -565,7 +574,7 @@ public class PubSubPersistenceManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Map<String, Node> nodes = new HashMap<String, Node>();
+        Map<String, Node> nodes = new HashMap<>();
         try {
             con = DbConnectionManager.getConnection();
             // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
@@ -573,7 +582,7 @@ public class PubSubPersistenceManager {
             pstmt.setString(1, service.getServiceID());
             rs = pstmt.executeQuery();
             
-            Map<String, String> parentMappings = new HashMap<String, String>();
+            Map<String, String> parentMappings = new HashMap<>();
             
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
@@ -665,7 +674,7 @@ public class PubSubPersistenceManager {
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Map<String, Node> nodes = new HashMap<String, Node>();
+		Map<String, Node> nodes = new HashMap<>();
 		try
 		{
 			con = DbConnectionManager.getConnection();
@@ -675,7 +684,7 @@ public class PubSubPersistenceManager {
 			pstmt.setString(1, service.getServiceID());
 			pstmt.setString(2, nodeId);
 			rs = pstmt.executeQuery();
-			Map<String, String> parentMapping = new HashMap<String, String>();
+			Map<String, String> parentMapping = new HashMap<>();
 			
 			// Rebuild loaded non-leaf nodes
 			if (rs.next())
@@ -891,7 +900,7 @@ public class PubSubPersistenceManager {
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Map<String, Node> nodes = new HashMap<String, Node>();
+		Map<String, Node> nodes = new HashMap<>();
 		nodes.put(node.getNodeID(), node);
 
 		try
@@ -1171,6 +1180,7 @@ public class PubSubPersistenceManager {
         // skip the flush step if this is a retry attempt
 		if (firstPass && itemsPending.size() > MAX_ITEMS_FLUSH) {
 			TaskEngine.getInstance().submit(new Runnable() {
+				@Override
 				public void run() { flushPendingItems(false); }
 			});
 		}
@@ -1224,8 +1234,8 @@ public class PubSubPersistenceManager {
     		addList = itemsToAdd;
     		delList = itemsToDelete;
 
-    		itemsToAdd = new LinkedList<RetryWrapper>();
-    		itemsToDelete = new LinkedList<PublishedItem>();
+    		itemsToAdd = new LinkedList<>();
+    		itemsToDelete = new LinkedList<>();
     		
     		// Ensure pending items are available via the item read cache;
     		// this allows the item(s) to be fetched by other request threads
@@ -1587,7 +1597,7 @@ public class PubSubPersistenceManager {
         	max = Math.min(MAX_ROWS_FETCH, maxPublished);
 
         // We don't know how many items are in the db, so we will start with an allocation of 500
-		java.util.LinkedList<PublishedItem> results = new java.util.LinkedList<PublishedItem>();
+		java.util.LinkedList<PublishedItem> results = new java.util.LinkedList<>();
 		boolean descending = JiveGlobals.getBooleanProperty("xmpp.pubsub.order.descending", false);
 
 		try
@@ -1811,20 +1821,20 @@ public class PubSubPersistenceManager {
 	private static String encodeWithComma(Collection<String> strings) {
         StringBuilder sb = new StringBuilder(90);
         for (String group : strings) {
-            sb.append(group).append(",");
+            sb.append(group).append(',');
         }
         if (!strings.isEmpty()) {
             sb.setLength(sb.length()-1);
         }
         else {
             // Add a blank so an empty string is never replaced with NULL (oracle...arggg!!!)
-            sb.append(" ");
+            sb.append(' ');
         }
         return sb.toString();
     }
 
     private static Collection<String> decodeWithComma(String strings) {
-        Collection<String> decodedStrings = new ArrayList<String>();
+        Collection<String> decodedStrings = new ArrayList<>();
         StringTokenizer tokenizer = new StringTokenizer(strings.trim(), ",");
         while (tokenizer.hasMoreTokens()) {
             decodedStrings.add(tokenizer.nextToken());
@@ -1924,6 +1934,8 @@ public class PubSubPersistenceManager {
 		{
 		case postgresql:
 			return PURGE_FOR_SIZE_POSTGRESQL;
+		case mysql:
+			return PURGE_FOR_SIZE_MYSQL;
 		case hsqldb:
 			return PURGE_FOR_SIZE_HSQLDB;
 

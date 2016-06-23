@@ -54,7 +54,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	private static final ScheduledExecutorService crowdGroupSync = Executors.newSingleThreadScheduledExecutor();
 	private static final CrowdManager manager = CrowdManager.getInstance();
 
-	private static List<String> groups = new ArrayList<String>();
+	private static List<String> groups = new ArrayList<>();
 	
 	private final XMPPServer server = XMPPServer.getInstance();
 	
@@ -85,6 +85,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		groupCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
 	}
 
+	@Override
 	public Group getGroup(String name) throws GroupNotFoundException {
 		try {
 			Cache<String, org.jivesoftware.openfire.crowd.jaxb.Group> groupCache = CacheFactory.createLocalCache(GROUP_CACHE_NAME);
@@ -113,8 +114,8 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		
 		try {
 			List<String> users = manager.getGroupMembers(groupName);
-			Collection<JID> results = new ArrayList<JID>();
-			
+			Collection<JID> results = new ArrayList<>();
+
 			for (String username : users) {
 				results.add(server.createJID(username, null));
 			}
@@ -130,6 +131,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		return Collections.emptyList();
 	}
 	
+	@Override
 	public Collection<String> getGroupNames(JID user) {
 		Cache<JID, Collection<String>> userMembershipCache = CacheFactory.createCache(USER_MEMBERSHIP_CACHE_NAME);
 		Collection<String> groups = userMembershipCache.get(user);
@@ -149,6 +151,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		return Collections.emptyList();
 	}
 
+	@Override
 	public int getGroupCount() {
 		lock.readLock().lock();
 		try {
@@ -158,6 +161,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> getGroupNames() {
 		lock.readLock().lock();
 		try {
@@ -167,10 +171,11 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> getGroupNames(int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
-			Collection<String> results = new ArrayList<String>(numResults);
+			Collection<String> results = new ArrayList<>(numResults);
 			
 			for (int i = 0, j = startIndex; i < numResults && j < groups.size(); ++i, ++j) {
 				results.add(groups.get(j));
@@ -182,10 +187,11 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> search(String query) {
 		lock.readLock().lock();
 		try {
-			ArrayList<String> results = new ArrayList<String>();
+			ArrayList<String> results = new ArrayList<>();
 			
 			if (query != null && query.trim().length() > 0) {
 				
@@ -211,12 +217,13 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 		}
 	}
 
+	@Override
 	public Collection<String> search(String query, int startIndex, int numResults) {
 		lock.readLock().lock();
 		try {
 			ArrayList<String> foundGroups = (ArrayList<String>) search(query);
 			
-			Collection<String> results = new ArrayList<String>();
+			Collection<String> results = new ArrayList<>();
 			
 			for (int i = 0, j = startIndex; i < numResults && j < foundGroups.size(); ++i, ++j) {
 				results.add(foundGroups.get(j));
@@ -232,10 +239,12 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 	/**
 	 * Modifying group not implemented - read-only for now
 	 */
+	@Override
 	public boolean isReadOnly() {
 		return true;
 	}
 
+	@Override
 	public boolean isSearchSupported() {
 		return true;
 	}
@@ -257,6 +266,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 
 
 	static class GroupSynch implements Runnable {
+		@Override
 		public void run() {
 			LOG.info("running synch with crowd...");
 			CrowdManager manager = null;

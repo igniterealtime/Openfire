@@ -42,7 +42,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
     private Vector<String> approvedRealms;
 
     public DefaultAuthorizationMapping() {
-        approvedRealms = new Vector<String>();
+        approvedRealms = new Vector<>();
         
         String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
         if(realmList != null) {
@@ -59,6 +59,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
      * @param principal The autheticated principal requesting authorization.
      * @return The name of the default username to use.
      */
+    @Override
     public String map(String principal) {
         if(principal.contains("@")) {
             String realm = principal.substring(principal.lastIndexOf('@')+1);
@@ -97,6 +98,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "Default Mapping";
     }
@@ -106,6 +108,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Simply remove's the realm of the requesting principal if and only if "+
                "the realm matches the server's realm or the server's xmpp domain name. "+

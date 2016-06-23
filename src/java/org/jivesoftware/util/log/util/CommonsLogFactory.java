@@ -27,7 +27,10 @@ import org.slf4j.LoggerFactory;
 /**
  * A LogFactory implementation to override the default commons-logging behavior. All log
  * statements are written to the Openfire logs. Info level logging is sent to debug.
+ *
+ * @Deprecated Openfire uses SLF4J's 'jcl-over-slf4j' instead. See http://www.slf4j.org/legacy.html
  */
+@Deprecated
 public class CommonsLogFactory extends LogFactory {
 
 	private static final Logger Log = LoggerFactory.getLogger(CommonsLogFactory.class);
@@ -37,76 +40,94 @@ public class CommonsLogFactory extends LogFactory {
     public CommonsLogFactory() {
         log = new org.apache.commons.logging.Log() {
 
+            @Override
             public boolean isDebugEnabled() {
                 return Log.isDebugEnabled();
             }
 
+            @Override
             public boolean isErrorEnabled() {
                 return Log.isErrorEnabled();
             }
 
+            @Override
             public boolean isFatalEnabled() {
                 return Log.isErrorEnabled();
             }
 
+            @Override
             public boolean isInfoEnabled() {
                 return Log.isInfoEnabled();
             }
 
+            @Override
             public boolean isTraceEnabled() {
                 return Log.isDebugEnabled();
             }
 
+            @Override
             public boolean isWarnEnabled() {
                 return Log.isWarnEnabled();
             }
 
+            @Override
             public void trace(Object object) {
                 // Ignore.
             }
 
+            @Override
             public void trace(Object object, Throwable throwable) {
                 // Ignore.
             }
 
+            @Override
             public void debug(Object object) {
                 Log.debug(object.toString());
             }
 
+            @Override
             public void debug(Object object, Throwable throwable) {
                 Log.debug(object.toString(), throwable);
             }
 
+            @Override
             public void info(Object object) {
                 // Send info log messages to debug because they are generally not useful.
                 Log.debug(object.toString());
             }
 
+            @Override
             public void info(Object object, Throwable throwable) {
                 // Send info log messages to debug because they are generally not useful.
                 Log.debug(object.toString(), throwable);
             }
 
+            @Override
             public void warn(Object object) {
                 Log.warn(object.toString());
             }
 
+            @Override
             public void warn(Object object, Throwable throwable) {
                 Log.warn(object.toString(), throwable);
             }
 
+            @Override
             public void error(Object object) {
                 Log.error(object.toString());
             }
 
+            @Override
             public void error(Object object, Throwable throwable) {
                 Log.error(object.toString(), throwable);
             }
 
+            @Override
             public void fatal(Object object) {
                 Log.error(object.toString());
             }
 
+            @Override
             public void fatal(Object object, Throwable throwable) {
                 Log.error(object.toString(), throwable);
             }

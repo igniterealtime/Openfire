@@ -36,18 +36,21 @@ public class PrivacyListManager {
 
     private PrivacyListProvider provider = new PrivacyListProvider();
 
-    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<PrivacyListEventListener>();
+    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {
+            @Override
             public void privacyListCreated(PrivacyList list) {
                 // Do nothing
             }
 
+            @Override
             public void privacyListDeleting(String listName) {
                 // Do nothing
             }
 
+            @Override
             public void privacyListModified(PrivacyList list) {
                 // Set object again in cache. This is done so that other cluster nodes
                 // get refreshed with latest version of the object

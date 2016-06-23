@@ -39,6 +39,8 @@ import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.StringUtils;
 
+import org.jivesoftware.openfire.plugin.rest.service.JerseyWrapper;
+
 /**
  * The Class RESTServicePlugin.
  */
@@ -47,6 +49,8 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 	/** The Constant INSTANCE. */
 	public static final RESTServicePlugin INSTANCE = new RESTServicePlugin();
 
+	private static final String CUSTOM_AUTH_FILTER_PROPERTY_NAME = "plugin.restapi.customAuthFilter";
+	
 	/** The secret. */
 	private String secret;
 	
@@ -56,8 +60,12 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 	/** The enabled. */
 	private boolean enabled;
 	
-	/** The http basic auth. */
-	private boolean httpBasicAuth;
+	/** The http auth. */
+	private String httpAuth;
+	
+	/** The custom authentication filter */
+	private String customAuthFilterClassName;
+
 
 	/**
 	 * Gets the single instance of RESTServicePlugin.
@@ -78,12 +86,15 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 			secret = StringUtils.randomString(16);
 			setSecret(secret);
 		}
-
+		
+		// See if Custom authentication filter has been defined
+		customAuthFilterClassName = JiveGlobals.getProperty("plugin.restapi.customAuthFilter", "");
+		
 		// See if the service is enabled or not.
 		enabled = JiveGlobals.getBooleanProperty("plugin.restapi.enabled", false);
 
 		// See if the HTTP Basic Auth is enabled or not.
-		httpBasicAuth = JiveGlobals.getBooleanProperty("plugin.restapi.httpAuth.enabled", false);
+		httpAuth = JiveGlobals.getProperty("plugin.restapi.httpAuth", "basic");
 
 		// Get the list of IP addresses that can use this service. An empty list
 		// means that this filter is disabled.
@@ -181,6 +192,23 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 		}
 	}
 
+	
+	/**
+	 * Returns the loading status message.
+	 *
+	 * @return the loading status message.
+	 */
+	public String getLoadingStatusMessage() {
+		return JerseyWrapper.getLoadingStatusMessage();
+	}
+	
+	/**
+	 * Reloads the Jersey wrapper.
+	 */
+	public String loadAuthenticationFilter(String customAuthFilterClassName) {
+		return JerseyWrapper.tryLoadingAuthenticationFilter(customAuthFilterClassName);
+	}
+	
 	/**
 	 * Returns the secret key that only valid requests should know.
 	 *
@@ -201,6 +229,26 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 		this.secret = secret;
 	}
 
+	/**
+	 * Returns the custom authentication filter class name used in place of the basic ones to grant permission to use the Rest services.
+	 *
+	 * @return custom authentication filter class name .
+	 */
+	public String getCustomAuthFilterClassName() {
+		return customAuthFilterClassName;
+	}
+
+	/**
+	 * Sets the customAuthFIlterClassName used to grant permission to use the Rest services.
+	 *
+	 * @param customAuthFilterClassName
+	 *            custom authentication filter class name.
+	 */
+	public void setCustomAuthFiIterClassName(String customAuthFilterClassName) {
+		JiveGlobals.setProperty(CUSTOM_AUTH_FILTER_PROPERTY_NAME, customAuthFilterClassName);
+		this.customAuthFilterClassName = customAuthFilterClassName;
+	}
+	
 	/**
 	 * Gets the allowed i ps.
 	 *
@@ -243,22 +291,22 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 	}
 
 	/**
-	 * Checks if is http basic auth.
+	 * Gets the http authentication mechanism.
 	 *
-	 * @return true, if is http basic auth
+	 * @return the http authentication mechanism
 	 */
-	public boolean isHttpBasicAuth() {
-		return httpBasicAuth;
+	public String getHttpAuth() {
+		return httpAuth;
 	}
 
 	/**
-	 * Sets the http basic auth.
+	 * Sets the http auth.
 	 *
-	 * @param httpBasicAuth the new http basic auth
+	 * @param httpAuth the new http auth
 	 */
-	public void setHttpBasicAuth(boolean httpBasicAuth) {
-		this.httpBasicAuth = httpBasicAuth;
-		JiveGlobals.setProperty("plugin.restapi.httpAuth.enabled", httpBasicAuth ? "true" : "false");
+	public void setHttpAuth(String httpAuth) {
+		this.httpAuth = httpAuth;
+		JiveGlobals.setProperty("plugin.restapi.httpAuth", httpAuth);
 	}
 
 	/* (non-Javadoc)
@@ -271,8 +319,10 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 			this.enabled = Boolean.parseBoolean((String) params.get("value"));
 		} else if (property.equals("plugin.restapi.allowedIPs")) {
 			this.allowedIPs = StringUtils.stringToCollection((String) params.get("value"));
-		} else if (property.equals("plugin.restapi.httpAuth.enabled")) {
-			this.httpBasicAuth = Boolean.parseBoolean((String) params.get("value"));
+		} else if (property.equals("plugin.restapi.httpAuth")) {
+			this.httpAuth = (String) params.get("value");
+		} else if(property.equals(CUSTOM_AUTH_FILTER_PROPERTY_NAME)) {
+			this.customAuthFilterClassName = (String) params.get("value");
 		}
 	}
 
@@ -286,8 +336,10 @@ public class RESTServicePlugin implements Plugin, PropertyEventListener {
 			this.enabled = false;
 		} else if (property.equals("plugin.restapi.allowedIPs")) {
 			this.allowedIPs = Collections.emptyList();
-		} else if (property.equals("plugin.restapi.httpAuth.enabled")) {
-			this.httpBasicAuth = false;
+		} else if (property.equals("plugin.restapi.httpAuth")) {
+			this.httpAuth = "basic";
+		} else if(property.equals(CUSTOM_AUTH_FILTER_PROPERTY_NAME)) {
+			this.customAuthFilterClassName = null;
 		}
 	}
 

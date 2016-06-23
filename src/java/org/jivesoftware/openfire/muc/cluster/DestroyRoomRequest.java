@@ -35,7 +35,7 @@ import org.xmpp.packet.JID;
  *
  * @author Gaston Dombiak
  */
-public class DestroyRoomRequest extends MUCRoomTask {
+public class DestroyRoomRequest extends MUCRoomTask<Void> {
     private JID alternateJID; // Is allowed to be null!
     private String reason; // Is allowed to be null or empty!
 
@@ -54,13 +54,16 @@ public class DestroyRoomRequest extends MUCRoomTask {
         this.reason = reason;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().destroyRoom(DestroyRoomRequest.this);
             }

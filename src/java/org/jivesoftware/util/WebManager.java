@@ -249,30 +249,11 @@ public class WebManager extends WebBean {
      * Copies the contents at <CODE>src</CODE> to <CODE>dst</CODE>.
      */
     public static void copy(URL src, File dst) throws IOException {
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-            in = src.openStream();
-            out = new FileOutputStream(dst);
-            dst.mkdirs();
-            copy(in, out);
-        }
-        finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
-            }
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            }
-            catch (IOException e) {
-                // Ignore.
+
+        try (InputStream in = src.openStream()) {
+            try (OutputStream out = new FileOutputStream(dst)) {
+                dst.mkdirs();
+                copy(in, out);
             }
         }
     }
@@ -402,6 +383,7 @@ public class WebManager extends WebBean {
     public Cache[] getCaches() {
         Cache[] caches =CacheFactory.getAllCaches();
         Arrays.sort(caches, new Comparator<Cache>() {
+            @Override
             public int compare(Cache cache1, Cache cache2) {
                 return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
             }

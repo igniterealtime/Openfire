@@ -225,7 +225,7 @@ public class LeafNode extends Node {
      * @param itemElements list of dom4j elements that contain info about the published items.
      */
     public void publishItems(JID publisher, List<Element> itemElements) {
-        List<PublishedItem> newPublishedItems = new ArrayList<PublishedItem>();
+        List<PublishedItem> newPublishedItems = new ArrayList<>();
         if (isItemRequired()) {
             String itemID;
             Element payload;
@@ -258,7 +258,7 @@ public class LeafNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         // Broadcast event notification to subscribers and parent node subscribers
-        Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
+        Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
         for (CollectionNode parentNode : getParents()) {
             for (NodeSubscription subscription : parentNode.getSubscriptions()) {
@@ -296,7 +296,7 @@ public class LeafNode extends Node {
                     message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
             // Send notification that items have been deleted to subscribers and parent node
             // subscribers
-            Set<NodeAffiliate> affiliatesToNotify = new HashSet<NodeAffiliate>(affiliates);
+            Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
             // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
             for (CollectionNode parentNode : getParents()) {
                 for (NodeSubscription subscription : parentNode.getSubscriptions()) {

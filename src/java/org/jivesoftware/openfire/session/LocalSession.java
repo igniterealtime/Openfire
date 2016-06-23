@@ -20,10 +20,12 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.net.ssl.SSLSession;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -33,7 +35,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.net.TLSStreamHandler;
-import org.jivesoftware.openfire.spi.RoutingTableImpl;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +94,14 @@ public abstract class LocalSession implements Session {
 	 * Session temporary data. All data stored in this <code>Map</code> disapear when session
 	 * finishes.
 	 */
-	private final Map<String, Object> sessionData = new HashMap<String, Object>();
+	private final Map<String, Object> sessionData = new HashMap<>();
+
+    /**
+     * XEP-0198 Stream Manager
+     */
+    protected final StreamManager streamManager;
+
+    private final Locale language;
 
     /**
      * Creates a session with an underlying connection and permission protection.
@@ -100,8 +109,9 @@ public abstract class LocalSession implements Session {
      * @param serverName domain of the XMPP server where the new session belongs.
      * @param connection The connection we are proxying.
      * @param streamID unique identifier for this session.
+     * @param language The language to use for this session.
      */
-    public LocalSession(String serverName, Connection connection, StreamID streamID) {
+    public LocalSession(String serverName, Connection connection, StreamID streamID, Locale language) {
         if (connection == null) {
             throw new IllegalArgumentException("connection must not be null");
         }
@@ -111,6 +121,8 @@ public abstract class LocalSession implements Session {
         String id = streamID.getID();
         this.address = new JID(null, serverName, id, true);
         this.sessionManager = SessionManager.getInstance();
+        this.streamManager = new StreamManager(conn);
+        this.language = language;
     }
 
     /**
@@ -121,6 +133,7 @@ public abstract class LocalSession implements Session {
       *
       * @return the address of the packet handler.
       */
+    @Override
     public JID getAddress() {
         return address;
     }
@@ -151,6 +164,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The status code for this session
      */
+    @Override
     public int getStatus() {
         return status;
     }
@@ -172,6 +186,7 @@ public abstract class LocalSession implements Session {
      *
      * @return This session's assigned stream ID
      */
+    @Override
     public StreamID getStreamID() {
         return streamID;
     }
@@ -181,6 +196,7 @@ public abstract class LocalSession implements Session {
      *
      * @return the server name.
      */
+    @Override
     public String getServerName() {
         return serverName;
     }
@@ -190,6 +206,7 @@ public abstract class LocalSession implements Session {
      *
      * @return the session's creation date.
      */
+    @Override
     public Date getCreationDate() {
         return new Date(startDate);
     }
@@ -199,6 +216,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The last time the session received activity.
      */
+    @Override
     public Date getLastActiveDate() {
         return new Date(lastActiveDate);
     }
@@ -209,6 +227,7 @@ public abstract class LocalSession implements Session {
     public void incrementClientPacketCount() {
         clientPacketCount++;
         lastActiveDate = System.currentTimeMillis();
+        streamManager.incrementServerProcessedStanzas();
     }
 
     /**
@@ -224,6 +243,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The number of packets sent from the client to the server.
      */
+    @Override
     public long getNumClientPackets() {
         return clientPacketCount;
     }
@@ -233,6 +253,7 @@ public abstract class LocalSession implements Session {
      *
      * @return The number of packets sent from the server to the client.
      */
+    @Override
     public long getNumServerPackets() {
         return serverPacketCount;
     }
@@ -279,6 +300,15 @@ public abstract class LocalSession implements Session {
         }
     }
 
+    /**
+     * Get XEP-0198 Stream manager for session
+     * @return The StreamManager for the session.
+     */
+    public StreamManager getStreamManager() {
+    	return streamManager;
+    }
+
+    @Override
     public void process(Packet packet) {
         // Check that the requested packet can be processed
         if (canProcess(packet)) {
@@ -331,6 +361,7 @@ public abstract class LocalSession implements Session {
 
     abstract void deliver(Packet packet) throws UnauthorizedException;
 
+    @Override
     public void deliverRawText(String text) {
         conn.deliverRawText(text);
     }
@@ -343,30 +374,37 @@ public abstract class LocalSession implements Session {
      */
     public abstract String getAvailableStreamFeatures();
 
+    @Override
     public void close() {
         conn.close();
     }
 
+    @Override
     public boolean validate() {
         return conn.validate();
     }
 
+    @Override
     public boolean isSecure() {
         return conn.isSecure();
     }
 
+    @Override
     public Certificate[] getPeerCertificates() {
         return conn.getPeerCertificates();
     }
 
+    @Override
     public boolean isClosed() {
         return conn.isClosed();
     }
 
+    @Override
     public String getHostAddress() throws UnknownHostException {
         return conn.getHostAddress();
     }
 
+    @Override
     public String getHostName() throws UnknownHostException {
         return conn.getHostName();
     }
@@ -400,6 +438,7 @@ public abstract class LocalSession implements Session {
      * Returns a String representing the Cipher Suite Name, or "NONE".
      * @return String
      */
+    @Override
     public String getCipherSuiteName() {
         SocketConnection s = (SocketConnection)getConnection();
         if (s != null) {
@@ -412,5 +451,10 @@ public abstract class LocalSession implements Session {
             }
         }
         return "NONE";
+    }
+
+    @Override
+    public final Locale getLanguage() {
+        return language;
     }
 }

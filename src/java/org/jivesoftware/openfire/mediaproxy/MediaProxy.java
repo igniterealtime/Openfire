@@ -43,7 +43,7 @@ public class MediaProxy implements SessionListener {
 
 	private static final Logger Log = LoggerFactory.getLogger(MediaProxy.class);
 
-    final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<String, MediaProxySession>();
+    final private Map<String, MediaProxySession> sessions = new ConcurrentHashMap<>();
 
     private String ipAddress;
 
@@ -183,6 +183,7 @@ public class MediaProxy implements SessionListener {
      *
      * @param session the session that stopped
      */
+    @Override
     public void sessionClosed(MediaProxySession session) {
         sessions.remove(session.getSID());
         if (Log.isDebugEnabled()) {

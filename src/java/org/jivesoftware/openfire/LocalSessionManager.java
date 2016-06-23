@@ -68,13 +68,13 @@ class LocalSessionManager {
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map
      * will hold client sessions.
      */
-    private Map<String, LocalClientSession> preAuthenticatedSessions = new ConcurrentHashMap<String, LocalClientSession>();
+    private Map<String, LocalClientSession> preAuthenticatedSessions = new ConcurrentHashMap<>();
 
     /**
      * The sessions contained in this List are component sessions. For each connected component
      * this Map will keep the component's session.
      */
-    private List<LocalComponentSession> componentsSessions = new CopyOnWriteArrayList<LocalComponentSession>();
+    private List<LocalComponentSession> componentsSessions = new CopyOnWriteArrayList<>();
 
     /**
      * Map of connection multiplexer sessions grouped by connection managers. Each connection
@@ -84,17 +84,17 @@ class LocalSessionManager {
      * will become unavailable.
      */
     private Map<String, LocalConnectionMultiplexerSession> connnectionManagerSessions =
-            new ConcurrentHashMap<String, LocalConnectionMultiplexerSession>();
+            new ConcurrentHashMap<>();
 
     /**
      * The sessions contained in this Map are server sessions originated by a remote server. These
      * sessions can only receive packets from the remote server but are not capable of sending
-     * packets to the remote server. Sessions will be added to this collecion only after they were
+     * packets to the remote server. Sessions will be added to this collection only after they were
      * authenticated.
      * Key: streamID, Value: the IncomingServerSession associated to the streamID.
      */
-    private final Map<String, LocalIncomingServerSession> incomingServerSessions =
-            new ConcurrentHashMap<String, LocalIncomingServerSession>();
+    private final Map<StreamID, LocalIncomingServerSession> incomingServerSessions =
+            new ConcurrentHashMap<>();
 
 
     public Map<String, LocalClientSession> getPreAuthenticatedSessions() {
@@ -109,7 +109,7 @@ class LocalSessionManager {
         return connnectionManagerSessions;
     }
 
-    public LocalIncomingServerSession getIncomingServerSession(String streamID) {
+    public LocalIncomingServerSession getIncomingServerSession(StreamID streamID) {
         return incomingServerSessions.get(streamID);
     }
 
@@ -117,11 +117,11 @@ class LocalSessionManager {
         return incomingServerSessions.values();
     }
 
-    public void addIncomingServerSessions(String streamID, LocalIncomingServerSession  session) {
+    public void addIncomingServerSessions(StreamID streamID, LocalIncomingServerSession  session) {
         incomingServerSessions.put(streamID, session);
     }
 
-    public void removeIncomingServerSessions(String streamID) {
+    public void removeIncomingServerSessions(StreamID streamID) {
         incomingServerSessions.remove(streamID);
     }
 
@@ -134,7 +134,7 @@ class LocalSessionManager {
     public void stop() {
         try {
             // Send the close stream header to all connected connections
-            Set<LocalSession> sessions = new HashSet<LocalSession>();
+            Set<LocalSession> sessions = new HashSet<>();
             sessions.addAll(preAuthenticatedSessions.values());
             sessions.addAll(componentsSessions);
             for (LocalIncomingServerSession incomingSession : incomingServerSessions.values()) {

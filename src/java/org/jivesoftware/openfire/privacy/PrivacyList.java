@@ -92,7 +92,7 @@ public class PrivacyList implements Cacheable, Externalizable {
     private JID userJID;
     private String name;
     private boolean isDefault;
-    private List<PrivacyItem> items = new ArrayList<PrivacyItem>();
+    private List<PrivacyItem> items = new ArrayList<>();
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -215,7 +215,7 @@ public class PrivacyList implements Cacheable, Externalizable {
      */
     private void updateList(Element listElement, boolean notify) {
         // Reset the list of items of this list
-        items = new ArrayList<PrivacyItem>();
+        items = new ArrayList<>();
 
         List<Element> itemsElements = listElement.elements("item");
         for (Element itemElement : itemsElements) {
@@ -248,6 +248,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         return null;
     }
 
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -278,6 +279,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, userJID);
         ExternalizableUtil.getInstance().writeSafeUTF(out, name);
@@ -285,6 +287,7 @@ public class PrivacyList implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeSafeUTF(out, asElement().asXML());
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         userJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         name = ExternalizableUtil.getInstance().readSafeUTF(in);

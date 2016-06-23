@@ -24,8 +24,8 @@
     errorPage="error.jsp"
 %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -57,6 +57,18 @@
     HistoryStrategy historyStrat = muc.getHistoryStrategy();
 
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         if (policy != ALL && policy != NONE && policy != NUMBER) {
             errors.put("general", "Please choose a valid chat history policy.");
@@ -116,6 +128,7 @@
 </p>
 
 <form action="chatroom-history-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
 <fieldset>
     <legend><fmt:message key="chatroom.history.settings.policy" /></legend>

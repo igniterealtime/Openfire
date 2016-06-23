@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class RoomUpdatedEvent extends MUCRoomTask {
+public class RoomUpdatedEvent extends MUCRoomTask<Void> {
     private LocalMUCRoom room;
 
     public RoomUpdatedEvent() {
@@ -44,13 +44,16 @@ public class RoomUpdatedEvent extends MUCRoomTask {
         this.room = room;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().updateConfiguration(room);
             }

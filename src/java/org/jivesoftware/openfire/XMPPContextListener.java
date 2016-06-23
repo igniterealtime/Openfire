@@ -33,6 +33,7 @@ public class XMPPContextListener implements ServletContextListener {
 
     protected String XMPP_KEY = "XMPP_SERVER";
 
+    @Override
     public void contextInitialized(ServletContextEvent event) {
         if (XMPPServer.getInstance() != null) {
             // Running in standalone mode so do nothing
@@ -42,6 +43,7 @@ public class XMPPContextListener implements ServletContextListener {
         event.getServletContext().setAttribute(XMPP_KEY, server);
     }
 
+    @Override
     public void contextDestroyed(ServletContextEvent event) {
         XMPPServer server = (XMPPServer) event.getServletContext().getAttribute(XMPP_KEY);
         if (null != server) {

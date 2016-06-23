@@ -54,7 +54,7 @@ public class PublishedItem implements Serializable {
     /**
      * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
      */
-    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<SAXReader>(POOL_SIZE);
+    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     private static final long serialVersionUID = 7012925993623144574L;
     
@@ -308,6 +308,6 @@ public class PublishedItem implements Serializable {
      */
     public static String getItemKey(String nodeId, String itemId) {
     	return new StringBuilder(nodeId)
-    		.append(":").append(itemId).toString();
+    		.append(':').append(itemId).toString();
     }
 }

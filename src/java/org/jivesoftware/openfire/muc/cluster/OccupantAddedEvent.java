@@ -39,7 +39,7 @@ import java.io.ObjectOutput;
  *
  * @author Gaston Dombiak
  */
-public class OccupantAddedEvent extends MUCRoomTask {
+public class OccupantAddedEvent extends MUCRoomTask<Void> {
     private Presence presence;
     private int role;
     private int affiliation;
@@ -69,7 +69,7 @@ public class OccupantAddedEvent extends MUCRoomTask {
     }
 
     public String getNickname() {
-        return presence.getTo().getResource().trim();
+        return presence.getFrom().getResource().trim();
     }
 
     public MUCRole.Role getRole() {
@@ -118,13 +118,16 @@ public class OccupantAddedEvent extends MUCRoomTask {
         return sendPresence;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // Execute the operation considering that we may still be joining the cluster
         execute(new Runnable() {
+            @Override
             public void run() {
                 getRoom().occupantAdded(OccupantAddedEvent.this);
             }

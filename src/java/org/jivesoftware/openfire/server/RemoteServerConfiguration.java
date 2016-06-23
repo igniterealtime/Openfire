@@ -67,6 +67,7 @@ public class RemoteServerConfiguration implements Cacheable, Externalizable {
         this.remotePort = remotePort;
     }
 
+    @Override
     public int getCachedSize() {
         // Approximate the size of the object in bytes by calculating the size
         // of each field.
@@ -77,6 +78,7 @@ public class RemoteServerConfiguration implements Cacheable, Externalizable {
         return size;
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, domain);
         ExternalizableUtil.getInstance().writeBoolean(out, permission != null);
@@ -86,6 +88,7 @@ public class RemoteServerConfiguration implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeInt(out, remotePort);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         domain = ExternalizableUtil.getInstance().readSafeUTF(in);
         if (ExternalizableUtil.getInstance().readBoolean(in)) {

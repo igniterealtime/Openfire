@@ -26,8 +26,8 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 
 <%!  // Global vars and methods:
 
@@ -58,6 +58,18 @@
     HistoryStrategy historyStrat = mucService.getHistoryStrategy();
 
     Map<String,String> errors = new HashMap<String,String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (update) {
         if (policy != ALL && policy != NONE && policy != NUMBER) {
             errors.put("general", "Please choose a valid chat history policy.");
@@ -135,6 +147,7 @@
 
 <!-- BEGIN 'History Settings' -->
 <form action="muc-history-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
     <div class="jive-contentBoxHeader">
 		<fmt:message key="groupchat.history.settings.legend" />

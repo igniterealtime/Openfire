@@ -49,7 +49,7 @@ public class XmppResultSet
 						catch (NumberFormatException e)
 						{
 							if (setElement.elementText("before").isEmpty()) {
-								this.before = Long.valueOf(9223372036854775807L);
+								this.before = Long.MAX_VALUE;
 							}
 						}
             catch (Exception e)

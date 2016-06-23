@@ -75,7 +75,7 @@ public class POP3AuthProvider implements AuthProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(POP3AuthProvider.class);
 
-    private Cache authCache = null;
+    private Cache<String, String> authCache = null;
     private String host = null;
     private String domain = null;
     private int port = -1;
@@ -130,6 +130,7 @@ public class POP3AuthProvider implements AuthProvider {
         }
     }
 
+    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null) {
             throw new UnauthorizedException();
@@ -150,7 +151,7 @@ public class POP3AuthProvider implements AuthProvider {
 
             // If cache is enabled, see if the auth is in cache.
             if (authCache != null && authCache.containsKey(username)) {
-                String hash = (String)authCache.get(username);
+                String hash = authCache.get(username);
                 if (StringUtils.hash(password).equals(hash)) {
                     return;
                 }
@@ -218,31 +219,25 @@ public class POP3AuthProvider implements AuthProvider {
         }
     }
 
-    public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
-        throw new UnauthorizedException("Digest authentication not supported.");
-    }
-
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    public boolean isDigestSupported() {
-        return false;
-    }
-
+    @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
     }
 
+     @Override
      public void setPassword(String username, String password) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean supportsPasswordRetrieval() {
+        return false;
+    }
+    
+    @Override
+    public boolean isScramSupported() {
         return false;
     }
 }

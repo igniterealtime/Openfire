@@ -9,7 +9,11 @@
                  org.jivesoftware.openfire.cluster.NodeID,
                  org.jivesoftware.openfire.cluster.ClusterNodeInfo"
 %>
-<%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="org.jivesoftware.util.Base64" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.util.Log" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.cache.Cache" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.text.NumberFormat" %>
@@ -20,8 +24,8 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
 <html>
 <head>
@@ -82,19 +86,21 @@
 	List<ClusterNodeInfo> members = (List<ClusterNodeInfo>) CacheFactory.getClusterNodesInfo();
     Map<NodeID, NodeRuntimeStats.NodeInfo> nodeInfoMap = NodeRuntimeStats.getNodeInfo();
 
-    // Sort it according to name
-    Collections.sort(members, new Comparator<ClusterNodeInfo>() {
-        public int compare(ClusterNodeInfo member1, ClusterNodeInfo member2) {
-            String name1 = member1.getHostName() + " (" + member1.getNodeID() + ")";
-            String name2 = member2.getHostName() + " (" + member2.getNodeID() + ")";
-            return name1.toLowerCase().compareTo(name2.toLowerCase().toLowerCase());
-        }
-    });
+    if (members.size() > 1) {
+	    // Sort it according to name
+	    Collections.sort(members, new Comparator<ClusterNodeInfo>() {
+	        public int compare(ClusterNodeInfo member1, ClusterNodeInfo member2) {
+	            String name1 = member1.getHostName() + " (" + member1.getNodeID() + ")";
+	            String name2 = member2.getHostName() + " (" + member2.getNodeID() + ")";
+	            return name1.toLowerCase().compareTo(name2.toLowerCase().toLowerCase());
+	        }
+	    });
+    }
 
     // If no UID was used, use the UID from the first member in the member list
     byte[] byteArray;
     if (uid == null) {
-        byteArray = members.get(0).getNodeID().toByteArray();
+        byteArray = members.isEmpty() ? new byte[] {0} : members.get(0).getNodeID().toByteArray();
     } else {
         byteArray = Base64.decode(uid, Base64.URL_SAFE);
     }

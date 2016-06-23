@@ -49,34 +49,44 @@ public class DroppableFrame extends JFrame implements DropTargetListener, DragSo
         dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent DragSourceDropEvent) {
     }
 
+    @Override
     public void dragEnter(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dragExit(DragSourceEvent DragSourceEvent) {
     }
 
+    @Override
     public void dragOver(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dropActionChanged(DragSourceDragEvent DragSourceDragEvent) {
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dropTargetDragEvent) {
         dropTargetDragEvent.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
     }
 
+    @Override
     public void dragExit(DropTargetEvent dropTargetEvent) {
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dropTargetDragEvent) {
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dropTargetDragEvent) {
     }
 
+    @Override
     public void drop(DropTargetDropEvent dropTargetDropEvent) {
         try {
             Transferable transferable = dropTargetDropEvent.getTransferable();
@@ -100,16 +110,13 @@ public class DroppableFrame extends JFrame implements DropTargetListener, DragSo
                 dropTargetDropEvent.rejectDrop();
             }
         }
-        catch (IOException io) {
+        catch (IOException | UnsupportedFlavorException io) {
             io.printStackTrace();
-            dropTargetDropEvent.rejectDrop();
-        }
-        catch (UnsupportedFlavorException ufe) {
-            ufe.printStackTrace();
             dropTargetDropEvent.rejectDrop();
         }
     }
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dragGestureEvent) {
 
     }

@@ -54,6 +54,7 @@ public class BasicModule implements Module {
      *
      * @return The name of the module
      */
+    @Override
     public String getName() {
         return name;
     }
@@ -65,6 +66,7 @@ public class BasicModule implements Module {
      *
      * @param server the server hosting this module.
      */
+    @Override
     public void initialize(XMPPServer server) {
     }
 
@@ -76,6 +78,7 @@ public class BasicModule implements Module {
      * @throws IllegalStateException If start is called before initialize
      *                               successfully returns
      */
+    @Override
     public void start() throws IllegalStateException {
     }
 
@@ -84,6 +87,7 @@ public class BasicModule implements Module {
      * <p>Inheriting classes that choose to override this method MUST
      * call this stop() method before accessing BasicModule resources.</p>
      */
+    @Override
     public void stop() {
     }
 
@@ -91,6 +95,7 @@ public class BasicModule implements Module {
      * <p>Destroys the module.</p>
      * <p>Does nothing in the basic module.</p>
      */
+    @Override
     public void destroy() {
     }
 }

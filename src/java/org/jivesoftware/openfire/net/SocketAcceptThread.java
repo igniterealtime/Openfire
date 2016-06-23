@@ -35,34 +35,27 @@ import java.net.InetAddress;
  * changes to the system property.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 public class SocketAcceptThread extends Thread {
 
     /**
      * Holds information about the port on which the server will listen for connections.
      */
-    private ServerPort serverPort;
+    private final int tcpPort;
+    private InetAddress bindInterface;
 
     private SocketAcceptingMode acceptingMode;
 
-    public SocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
+    public SocketAcceptThread( int tcpPort, InetAddress bindInterface )
             throws IOException {
-        super("Socket Listener at port " + serverPort.getPort());
-        // Listen on a specific network interface if it has been set.
-        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-        InetAddress bindInterface = null;
-        if (interfaceName != null) {
-            if (interfaceName.trim().length() > 0) {
-                bindInterface = InetAddress.getByName(interfaceName);
-                // Create the new server port based on the new bind address
-                serverPort = new ServerPort(serverPort.getPort(),
-                        serverPort.getDomainNames().get(0), interfaceName, serverPort.isSecure(),
-                        serverPort.getSecurityType(), serverPort.getType());
-            }
-        }
-        this.serverPort = serverPort;
+        super("Socket Listener at port " + tcpPort);
+        this.tcpPort = tcpPort;
+        this.bindInterface = bindInterface;
+
         // Set the blocking reading mode to use
-        acceptingMode = new BlockingAcceptingMode(connManager, serverPort, bindInterface);
+        acceptingMode = new BlockingAcceptingMode(tcpPort, bindInterface);
     }
 
     /**
@@ -71,7 +64,7 @@ public class SocketAcceptThread extends Thread {
      * @return the port the socket is bound to.
      */
     public int getPort() {
-        return serverPort.getPort();
+        return tcpPort;
     }
 
     /**
@@ -80,7 +73,7 @@ public class SocketAcceptThread extends Thread {
      * @return information about the port on which the server is listening for connections.
      */
     public ServerPort getServerPort() {
-        return serverPort;
+        return new ServerPort(tcpPort, null, bindInterface.getHostName(), false, null, ServerPort.Type.server);
     }
 
     /**

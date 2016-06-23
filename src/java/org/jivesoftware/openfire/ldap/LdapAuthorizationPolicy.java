@@ -68,6 +68,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      * @param username  The username requested.import org.jivesoftware.openfire.ldap.*;
      * @param principal The principal requesting the username.
      */
+    @Override
     public boolean authorize(String username, String principal) {
         return getAuthorized(username).contains(principal);
     }
@@ -83,7 +84,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
         // Un-escape Node
         username = JID.unescapeNode(username);
 
-        Collection<String> authorized = new ArrayList<String>();
+        Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);
@@ -124,6 +125,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The short name of the Policy
      */
+    @Override
     public String name() {
         return "LDAP Authorization Policy";
     }
@@ -133,6 +135,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      *
      * @return The description of the Policy.
      */
+    @Override
     public String description() {
         return "Provider for authorization using LDAP. Checks if the authenticated principal is in the user's LDAP object using the authorizeField property.";
     }

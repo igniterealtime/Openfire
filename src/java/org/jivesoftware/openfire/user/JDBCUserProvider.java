@@ -133,7 +133,8 @@ public class JDBCUserProvider implements UserProvider {
 		emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
 	}
 
-	public User loadUser(String username) throws UserNotFoundException {
+	@Override
+    public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
                 throw new UserNotFoundException("Cannot load user of remote server: " + username);
@@ -164,18 +165,21 @@ public class JDBCUserProvider implements UserProvider {
 		}
 	}
 
-	public User createUser(String username, String password, String name, String email)
+	@Override
+    public User createUser(String username, String password, String name, String email)
 			throws UserAlreadyExistsException {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
-	public void deleteUser(String username) {
+	@Override
+    public void deleteUser(String username) {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
-	public int getUserCount() {
+	@Override
+    public int getUserCount() {
 		int count = 0;
 		Connection con = null;
 		PreparedStatement pstmt = null;
@@ -197,17 +201,19 @@ public class JDBCUserProvider implements UserProvider {
 		return count;
 	}
 
-	public Collection<User> getUsers() {
+	@Override
+    public Collection<User> getUsers() {
 		Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
 		return new UserCollection(usernames.toArray(new String[usernames.size()]));
 	}
 
-	public Collection<String> getUsernames() {
+	@Override
+    public Collection<String> getUsernames() {
 		return getUsernames(0, Integer.MAX_VALUE);
 	}
 
 	private Collection<String> getUsernames(int startIndex, int numResults) {
-		List<String> usernames = new ArrayList<String>(500);
+		List<String> usernames = new ArrayList<>(500);
 		Connection con = null;
 		PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -249,43 +255,51 @@ public class JDBCUserProvider implements UserProvider {
         return usernames;
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
     
-	public void setName(String username, String name) throws UserNotFoundException {
+	@Override
+    public void setName(String username, String name) throws UserNotFoundException {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
-	public void setEmail(String username, String email) throws UserNotFoundException {
+	@Override
+    public void setEmail(String username, String email) throws UserNotFoundException {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
-	public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
+	@Override
+    public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
-	public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
+	@Override
+    public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
 		// Reject the operation since the provider is read-only
 		throw new UnsupportedOperationException();
 	}
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
         if (searchSQL == null) {
             throw new UnsupportedOperationException();
         }
-        return new LinkedHashSet<String>(Arrays.asList("Username", "Name", "Email"));
+        return new LinkedHashSet<>(Arrays.asList("Username", "Name", "Email"));
     }
 
-	public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
+	@Override
+    public Collection<User> findUsers(Set<String> fields, String query) throws UnsupportedOperationException {
 		return findUsers(fields, query, 0, Integer.MAX_VALUE);
 	}
 
-	public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
+	@Override
+    public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
 		if (searchSQL == null) {
@@ -309,7 +323,7 @@ public class JDBCUserProvider implements UserProvider {
 			query = query.substring(0, query.length() - 1);
 		}
 
-        List<String> usernames = new ArrayList<String>(50);
+        List<String> usernames = new ArrayList<>(50);
         Connection con = null;
         PreparedStatement pstmt = null;
         int queries=0;
@@ -319,7 +333,7 @@ public class JDBCUserProvider implements UserProvider {
             sql.append(searchSQL);
             boolean first = true;
             if (fields.contains("Username")) {
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(usernameField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -329,7 +343,7 @@ public class JDBCUserProvider implements UserProvider {
                 if (!first) {
                     sql.append(" AND");
                 }
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(nameField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -339,7 +353,7 @@ public class JDBCUserProvider implements UserProvider {
                 if (!first) {
                     sql.append(" AND");
                 }
-                sql.append(" ");
+                sql.append(' ');
                 sql.append(emailField);
                 sql.append(" LIKE ?");
                 queries++;
@@ -387,14 +401,17 @@ public class JDBCUserProvider implements UserProvider {
         return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return IS_READ_ONLY;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }
@@ -416,10 +433,10 @@ public class JDBCUserProvider implements UserProvider {
                 sb.delete(0, sb.length());
                 count = 0;
             }
-            sb.append(element).append(",");
+            sb.append(element).append(',');
             count++;
         }
-        sb.append(".");
+        sb.append('.');
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 

@@ -28,13 +28,14 @@ public class Echo implements Runnable {
 
     DatagramSocket socket = null;
     byte password[] = null;
-    List<DatagramListener> listeners = new ArrayList<DatagramListener>();
+    List<DatagramListener> listeners = new ArrayList<>();
     boolean enabled = true;
 
     public Echo(int port) throws UnknownHostException, SocketException {
         this.socket = new DatagramSocket(port, InetAddress.getByName("0.0.0.0"));
     }
 
+    @Override
     public void run() {
         try {
             //System.out.println("Listening for ECHO: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort());
@@ -56,16 +57,7 @@ public class Echo implements Runnable {
                     for (int i = 0; i < 3; i++)
                         socket.send(packet);
             }
-        }
-        catch (UnknownHostException uhe) {
-            if (enabled) {
-            }
-        }
-        catch (SocketException se) {
-            if (enabled) {
-            }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             if (enabled) {
             }
         }

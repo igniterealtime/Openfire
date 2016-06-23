@@ -21,26 +21,29 @@ package org.jivesoftware.openfire.http;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.XMLConstants;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
@@ -51,17 +54,20 @@ public class HttpSessionManager {
 	private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
 
     private SessionManager sessionManager;
-    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>(
+    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>(
     		JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
     private SessionListener sessionListener = new SessionListener() {
+        @Override
         public void connectionOpened(HttpSession session, HttpConnection connection) {
         }
 
+        @Override
         public void connectionClosed(HttpSession session, HttpConnection connection) {
         }
 
+        @Override
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());
         }
@@ -74,38 +80,13 @@ public class HttpSessionManager {
     	
         JiveGlobals.migrateProperty("xmpp.httpbind.worker.threads");
         JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
-    	
-        this.sessionManager = SessionManager.getInstance();
-        init();
     }
 
-    public void init() {
-        Log.warn("HttpSessionManager.init() recreate sendPacketPool");
-        // Configure a pooled executor to handle async routing for incoming packets
-        // with a default size of 16 threads ("xmpp.httpbind.worker.threads"); also
-        // uses an unbounded task queue and configurable keep-alive (default: 60 secs)
-        
-        // Note: server supports up to 254 client threads by default (@see HttpBindManager)
-        // BOSH installations expecting heavy loads may want to allocate additional threads 
-        // to this worker pool to ensure timely delivery of inbound packets
-        
-        int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", 
-				// use deprecated property as default (shared with ConnectionManagerImpl)
-				JiveGlobals.getIntProperty("xmpp.client.processing.threads", 8));
-        int keepAlive = JiveGlobals.getIntProperty("xmpp.httpbind.worker.timeout", 60);
-
-        sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS, 
-			new LinkedBlockingQueue<Runnable>(), // unbounded task queue
-	        new ThreadFactory() { // custom thread factory for BOSH workers
-	            final AtomicInteger counter = new AtomicInteger(1);
-	            public Thread newThread(Runnable runnable) {
-	                Thread thread = new Thread(Thread.currentThread().getThreadGroup(), runnable,
-	                                    "httpbind-worker-" + counter.getAndIncrement());
-	                thread.setDaemon(true);
-	                return thread;
-	            }
-	    	});
-    }
+    /**
+     * @deprecated As of Openfire 4.0.0, the functionality of this method was added to the implementation of #start().
+     */
+    @Deprecated
+    public void init() {}
 
 	private int getCorePoolSize(int maxPoolSize) {
 		return (maxPoolSize/4)+1;
@@ -113,18 +94,41 @@ public class HttpSessionManager {
 
     /**
      * Starts the services used by the HttpSessionManager.
+     *
+     * (Re)creates and configures a pooled executor to handle async routing for incoming packets with a configurable
+     * (through property "xmpp.httpbind.worker.threads") amount of threads; also uses an unbounded task queue and
+     * configurable ("xmpp.httpbind.worker.timeout") keep-alive.
+     *
+     * Note: Apart from the processing threads configured in this class, the server also uses a threadpool to perform
+     * the network IO (as configured in ({@link HttpBindManager}). BOSH installations expecting heavy loads may want to
+     * allocate additional threads to this worker pool to ensure timely delivery of inbound packets
      */
     public void start() {
-        inactivityTask = new HttpSessionReaper();
-        TaskEngine.getInstance().schedule(inactivityTask, 30 * JiveConstants.SECOND,
-                30 * JiveConstants.SECOND);
+        Log.info( "Starting instance" );
+
+        this.sessionManager = SessionManager.getInstance();
+
+        final int maxClientPoolSize = JiveGlobals.getIntProperty( "xmpp.client.processing.threads", 8 );
+        final int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", maxClientPoolSize );
+        final int keepAlive = JiveGlobals.getIntProperty( "xmpp.httpbind.worker.timeout", 60 );
+
+        sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(), // unbounded task queue
+                new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
+        );
+
         sendPacketPool.prestartCoreThread();
+
+        // Periodically check for Sessions that need a cleanup.
+        inactivityTask = new HttpSessionReaper();
+        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, 30 * JiveConstants.SECOND );
     }
 
     /**
      * Stops any services and cleans up any resources used by the HttpSessionManager.
      */
     public void stop() {
+        Log.info( "Stopping instance" );
         inactivityTask.cancel();
         for (HttpSession session : sessionMap.values()) {
             session.close();
@@ -164,7 +168,7 @@ public class HttpSessionManager {
         // TODO Check if IP address is allowed to connect to the server
 
         // Default language is English ("en").
-        String language = rootNode.attributeValue("xml:lang");
+        String language = rootNode.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI));
         if (language == null || "".equals(language)) {
             language = "en";
         }
@@ -177,7 +181,7 @@ public class HttpSessionManager {
         	version = "1.5";
         }
 
-        HttpSession session = createSession(connection.getRequestId(), address, connection);
+        HttpSession session = createSession(connection.getRequestId(), address, connection, Locale.forLanguageTag(language));
         session.setWait(Math.min(wait, getMaxWait()));
         session.setHold(hold);
         session.setSecure(connection.isSecure());
@@ -193,9 +197,6 @@ public class HttpSessionManager {
         }
     	session.resetInactivityTimeout();
         
-        // Store language and version information in the connection.
-        session.setLanguage(language);
-        
         String [] versionString = version.split("\\.");
         session.setMajorVersion(Integer.parseInt(versionString[0]));
         session.setMinorVersion(Integer.parseInt(versionString[1]));
@@ -204,14 +205,7 @@ public class HttpSessionManager {
         try {
             connection.deliverBody(createSessionCreationResponse(session), true);
         }
-        catch (HttpConnectionClosedException e) {
-            Log.error("Error creating session.", e);
-            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
-        }
-        catch (DocumentException e) {
-            Log.error("Error creating session.", e);
-            throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
-        } catch (IOException e) {
+        catch (HttpConnectionClosedException | DocumentException | IOException e) {
             Log.error("Error creating session.", e);
             throw new HttpBindException("Internal server error", BoshBindingError.internalServerError);
         }
@@ -299,11 +293,11 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
-    private HttpSession createSession(long rid, InetAddress address, HttpConnection connection) throws UnauthorizedException {
+    private HttpSession createSession(long rid, InetAddress address, HttpConnection connection, Locale language) throws UnauthorizedException {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, connection);
+        HttpSession session = sessionManager.createClientHttpSession(rid, address, streamID, connection, language);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         session.addSessionCloseListener(sessionListener);
@@ -323,8 +317,7 @@ public class HttpSessionManager {
     }
 
     private static String createSessionCreationResponse(HttpSession session) throws DocumentException {
-        Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
         response.addAttribute("from", session.getServerName());
         response.addAttribute("authid", session.getStreamID().getID());

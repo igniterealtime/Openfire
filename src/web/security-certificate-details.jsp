@@ -1,97 +1,96 @@
 <%@ page errorPage="error.jsp"%>
 
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStore"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
-<%@ page import="org.jivesoftware.openfire.net.SSLConfig"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="java.security.KeyStore" %>
-<%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
+<%@ page import="java.security.cert.X509Certificate" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <jsp:useBean id="now" class="java.util.Date"/>
 <%  webManager.init(request, response, session, application, out );
 
-    final String type  = ParamUtils.getParameter(request, "type");
-    final String alias = ParamUtils.getParameter(request, "alias");
+    final String alias            = ParamUtils.getParameter( request, "alias" );
+    final String storePurposeText = ParamUtils.getParameter( request, "connectionType" );
+    final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
     final Map<String, String> errors = new HashMap<String, String>();
 
-    KeyStore store = null;
-
-    if (type == null)
+    ConnectionType connectionType;
+    try
     {
-        errors.put("type", "The store type has not been specified.");
+        connectionType = ConnectionType.valueOf( storePurposeText );
+    } catch (RuntimeException ex) {
+        errors.put( "connectionType", ex.getMessage() );
+        connectionType = null;
     }
-    else if (alias == null) {
+
+    pageContext.setAttribute( "connectionType", connectionType );
+
+    if (alias == null) {
         errors.put("alias", "The alias has not been specified.");
     }
     else
     {
         try
         {
-            switch (type)
-            {
-                case "s2s":
-                    store = SSLConfig.gets2sTrustStore();
-                    break;
-
-                case "c2s":
-                    store = SSLConfig.getc2sTrustStore();
-                    break;
-
-                case "server":
-                    store = SSLConfig.getKeyStore();
-                    break;
-
-                default:
-                    throw new Exception("Unknown store type: " + type);
+            final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+            final CertificateStore store;
+            if (isTrustStore) {
+                store = certificateStoreManager.getTrustStore( connectionType );
+            } else {
+                store = certificateStoreManager.getIdentityStore( connectionType );
             }
 
             // Get the certificate
-            final X509Certificate certificate = (X509Certificate) store.getCertificate(alias);
+            final X509Certificate certificate = (X509Certificate) store.getStore().getCertificate( alias );
 
-            if (certificate == null) {
-                errors.put("alias", "alias");
+            if ( certificate == null ) {
+                errors.put( "alias", "alias" );
             } else {
-                pageContext.setAttribute("certificate", certificate);
+                pageContext.setAttribute( "certificate", certificate );
             }
         }
-        catch (Exception e)
+        catch ( Exception e )
         {
             e.printStackTrace();
-            errors.put("type", e.getMessage());
+            errors.put( "type", e.getMessage() );
         }
     }
 
     // Handle a "go back" click:
-    if (request.getParameter("back") != null) {
-        if ("server".equals(type)) {
-            response.sendRedirect("security-keystore.jsp");
+    if ( request.getParameter( "back" ) != null ) {
+        if ( isTrustStore ) {
+            response.sendRedirect( "security-truststore.jsp?connectionType=" + connectionType );
         } else {
-            response.sendRedirect("security-truststore.jsp?type=" + type);
+            response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType );
         }
         return;
     }
 
-    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute( "errors", errors );
 %>
 
 <html>
 <head>
     <title><fmt:message key="ssl.certificate.details.title"/></title>
+    <meta name="pageID" content="security-certificate-store-management"/>
     <c:choose>
-        <c:when test="${param.type eq 'server'}">
-            <meta name="pageID" content="security-keystore"/>
+        <c:when test="${isTrustStore}">
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
         </c:when>
         <c:otherwise>
-            <meta name="pageID" content="security-truststore-${param.type}"/>
+            <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-identity-store"/>
         </c:otherwise>
     </c:choose>
 </head>
@@ -414,6 +413,7 @@
                 </tr>
                 <c:if test="${not empty certificate.sigAlgParams}">
                     <%
+
                         final X509Certificate certificate = (X509Certificate) pageContext.getAttribute("certificate");
                         final AlgorithmParameters sigParams = AlgorithmParameters.getInstance(certificate.getSigAlgName());
                         sigParams.init( certificate.getSigAlgParams() );
@@ -450,7 +450,8 @@
     <br/>
 
     <form action="security-certificate-details.jsp">
-        <input type="hidden" name="type" value="${param.type}"/>
+        <input type="hidden" name="connectionType" value="${connectionType}"/>
+        <input type="hidden" name="isTrustStore" value="${param.isTrustStore}"/>
         <div style="text-align: center;">
             <input type="submit" name="back" value="<fmt:message key="session.details.back_button"/>">
         </div>

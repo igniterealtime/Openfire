@@ -94,10 +94,12 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         super("Presence manager");
     }
 
+    @Override
     public boolean isAvailable(User user) {
         return sessionManager.getActiveSessionCount(user.getUsername()) > 0;
     }
 
+    @Override
     public Presence getPresence(User user) {
         if (user == null) {
             return null;
@@ -123,11 +125,12 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         return presence;
     }
 
+    @Override
     public Collection<Presence> getPresences(String username) {
         if (username == null) {
             return null;
         }
-        List<Presence> presences = new ArrayList<Presence>();
+        List<Presence> presences = new ArrayList<>();
 
         for (ClientSession session : sessionManager.getSessions(username)) {
             presences.add(session.getPresence());
@@ -135,6 +138,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         return Collections.unmodifiableCollection(presences);
     }
 
+    @Override
     public String getLastPresenceStatus(User user) {
         String username = user.getUsername();
         String presenceStatus = null;
@@ -161,6 +165,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         return presenceStatus;
     }
 
+    @Override
     public long getLastActivity(User user) {
         String username = user.getUsername();
         long lastActivity = NULL_LONG;
@@ -186,6 +191,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         return lastActivity;
     }
 
+    @Override
     public void userAvailable(Presence presence) {
         // Delete the last unavailable presence of this user since the user is now
         // available. Only perform this operation if this is an available presence sent to
@@ -228,6 +234,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
     }
 
+    @Override
     public void userUnavailable(Presence presence) {
         // Only save the last presence status and keep track of the time when the user went
         // offline if this is an unavailable presence sent to THE SERVER and the presence belongs
@@ -294,6 +301,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
     }
 
+    @Override
     public void handleProbe(Presence packet) throws UnauthorizedException {
         String username = packet.getTo().getNode();
         try {
@@ -327,17 +335,22 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
     }
 
+    @Override
     public boolean canProbePresence(JID prober, String probee) throws UserNotFoundException {
+        if (probee.equals(prober.getNode()) && XMPPServer.getInstance().isLocal(prober)) {
+            return true;
+        }
         RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
         return item.getSubStatus() == RosterItem.SUB_FROM
                 || item.getSubStatus() == RosterItem.SUB_BOTH;
     }
 
+    @Override
     public void probePresence(JID prober, JID probee) {
         try {
             if (server.isLocal(probee)) {
                 // Local probers should receive presences of probee in all connected resources
-                Collection<JID> proberFullJIDs = new ArrayList<JID>();
+                Collection<JID> proberFullJIDs = new ArrayList<>();
                 if (prober.getResource() == null && server.isLocal(prober)) {
                     for (ClientSession session : sessionManager.getSessions(prober.getNode())) {
                         proberFullJIDs.add(session.getAddress());
@@ -449,6 +462,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
     }
 
+    @Override
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
         if (XMPPServer.getInstance().isLocal(userJID) && userManager.isRegisteredUser(userJID.getNode())) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
@@ -460,7 +474,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
                 // Ensure that unavailable presence is sent to all receipient's resources
-                Collection<JID> recipientFullJIDs = new ArrayList<JID>();
+                Collection<JID> recipientFullJIDs = new ArrayList<>();
                 if (server.isLocal(recipientJID)) {
                     for (ClientSession targetSession : sessionManager
                             .getSessions(recipientJID.getNode())) {
@@ -483,15 +497,18 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
     }
 
+    @Override
     public void userCreated(User user, Map<String, Object> params) {
         // Do nothing
     }
 
+    @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete user information
         deleteOfflinePresenceFromDB(user.getUsername());
     }
 
+    @Override
     public void userModified(User user, Map<String, Object> params) {
         // Do nothing
     }

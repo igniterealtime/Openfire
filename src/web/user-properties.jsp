@@ -35,8 +35,8 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 
-<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters //
@@ -270,7 +270,7 @@
             <fmt:message key="user.properties.registered" />:
         </td>
         <td>
-            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
         </td>
     </tr>
     <tr>

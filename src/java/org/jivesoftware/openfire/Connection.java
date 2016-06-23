@@ -20,20 +20,22 @@
 
 package org.jivesoftware.openfire;
 
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.xmpp.packet.Packet;
-
+import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.xmpp.packet.Packet;
 
 /**
  * Represents a connection on the server.
  *
  * @author Iain Shigeoka
  */
-public interface Connection {
-
+public interface Connection extends Closeable {
+	
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -144,28 +146,12 @@ public interface Connection {
      *      <li>Call notifyEvent all listeners that the channel is shutting down.
      *      <li>Close the socket.
      * </ul>
-     *
-     * An invocation of this method is equal to invoking {@link #close(boolean)} with a parameter
-     * that is false.
+     * Note this method overrides the base interface to suppress exceptions. However,
+     * it otherwise fulfills the requirements of the {@link Closeable#close()} contract
+     * (idempotent, try-with-resources, etc.)
      */
+    @Override
     public void close();
-
-    /**
-     * Close this session including associated socket connection. The order of
-     * events for closing the session is:
-     * <ul>
-     *      <li>Set closing flag to prevent redundant shutdowns.
-     *      <li>Call notifyEvent all listeners that the channel is shutting down.
-     *      <li>Close the socket.
-     * </ul>
-     *
-     * This method takes into account the connection state of the peer. Specifically,
-     * when the peer is known to be in a disconnected state, no data will be sent
-     * (otherwise, this method can trigger the delivery of an end-of-stream signal).
-     *
-     * @param peerIsKnownToBeDisconnected should be set to true when the peer is known to no longer be available.
-     */
-    public void close( boolean peerIsKnownToBeDisconnected );
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors
@@ -284,21 +270,6 @@ public interface Connection {
     public void setXMPPVersion(int majorVersion, int minorVersion);
 
     /**
-     * Returns the language code that should be used for this connection
-     * (e.g. "en").
-     *
-     * @return the language code for the connection.
-     */
-    public String getLanguage();
-
-    /**
-     * Sets the language code that should be used for this connection (e.g. "en").
-     *
-     * @param language the language code.
-     */
-    public void setLanaguage(String language);
-
-    /**
      * Returns true if the connection is using compression.
      *
      * @return true if the connection is using compression.
@@ -369,8 +340,25 @@ public interface Connection {
      *       otherwise a {@link org.jivesoftware.openfire.net.ServerTrustManager} will be used.
      * @param authentication policy to use for authenticating the remote peer.
      * @throws Exception if an error occured while securing the connection.
+     * @deprecated Use {@link #startTLS(boolean)} instead.
      */
+    @Deprecated
     void startTLS(boolean clientMode, String remoteServer, ClientAuth authentication) throws Exception;
+
+    /**
+     * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
+     * connection the server requesting the TLS negotiation will be the client and the other server
+     * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
+     * negotiation must pass <code>true</code> in the <tt>clientMode</tt> parameter and the server
+     * receiving the TLS request must pass <code>false</code> in the <tt>clientMode</tt> parameter.<p>
+     *
+     * In the case of client-2-server the XMPP server must pass <code>false</code> in the
+     * <tt>clientMode</tt> parameter since it will behave as the server in the TLS negotiation.
+     *
+     * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
+     * @throws Exception if an error occured while securing the connection.
+     */
+    void startTLS(boolean clientMode) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter
@@ -386,6 +374,15 @@ public interface Connection {
      * TLS. However, it is possible to use compression without TLS.
      */
     void startCompression();
+
+    /**
+     * Returns a representation of the desired state for this connection. Note that this is different from the current
+     * state of the connection. For example, TLS can be required by configuration, but while the connection has yet to
+     * be fully initialized, the current state might not be TLS-encrypted.
+     *
+     * @return The desired configuration for the connection (never null).
+     */
+    ConnectionConfiguration getConfiguration();
 
     /**
      * Enumeration of possible compression policies required to interact with the server.
@@ -425,7 +422,14 @@ public interface Connection {
          * TLS is not available. Entities that request a TLS negotiation will get a stream
          * error and their connections will be closed.
          */
-        disabled
+        disabled,
+
+        /**
+         * A policy that requires connections to be encrypted immediately (as opposed to the
+         * 'required' policy, that allows for an initially unencrypted connection to become
+         * encrypted through StartTLS.
+         */
+        legacyMode
     }
 
     /**
@@ -455,4 +459,10 @@ public interface Connection {
          */
         needed
     }
+
+    /**
+     * Used to specify operational status for the corresponding connection
+     */
+    enum State { OPEN, CLOSED }
+
 }

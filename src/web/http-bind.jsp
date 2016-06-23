@@ -22,11 +22,11 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="org.jivesoftware.util.Log" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.openfire.http.FlashCrossDomainServlet" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -83,12 +83,21 @@
 
 <%
     Map<String, String> errorMap = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
     if (request.getParameter("update") != null) {
-        errorMap = handleUpdate(request);
-        // Log the event
-        webManager.logEvent("updated HTTP bind settings", null);
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errorMap.put("csrf", "CSRF Failure!");
+        } else {
+            errorMap = handleUpdate(request);
+            // Log the event
+            webManager.logEvent("updated HTTP bind settings", null);
+        }
     }
 
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     boolean isHttpBindEnabled = serverManager.isHttpBindEnabled();
     int port = serverManager.getHttpBindUnsecurePort();
     int securePort = serverManager.getHttpBindSecurePort();
@@ -148,6 +157,7 @@
 } %>
 
 <form action="http-bind.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <div class="jive-contentBox" style="-moz-border-radius: 3px;">
         <table cellpadding="3" cellspacing="0" border="0">

@@ -40,7 +40,7 @@ import java.io.ObjectOutput;
  *
  * @author Daniel Henninger
  */
-public class ServiceAddedEvent implements ClusterTask {
+public class ServiceAddedEvent implements ClusterTask<Void> {
     private String subdomain;
     private String description;
     private Boolean isHidden;
@@ -54,10 +54,12 @@ public class ServiceAddedEvent implements ClusterTask {
         this.isHidden = isHidden;
     }
 
-    public Object getResult() {
+    @Override
+    public Void getResult() {
         return null;
     }
 
+    @Override
     public void run() {
         // If it's registered already, no need to create it.  Most likely this is because the service
         // is provided by an internal component that registered at startup.  This scenario, however,
@@ -68,11 +70,13 @@ public class ServiceAddedEvent implements ClusterTask {
         }
     }
 
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, subdomain);
         ExternalizableUtil.getInstance().writeSafeUTF(out, description);
     }
 
+    @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         description = ExternalizableUtil.getInstance().readSafeUTF(in);

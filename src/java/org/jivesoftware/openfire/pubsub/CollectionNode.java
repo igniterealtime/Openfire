@@ -48,7 +48,7 @@ public class CollectionNode extends Node {
      * value is the child node. A map is used to ensure uniqueness and in particular
      * a ConcurrentHashMap for concurrency reasons.
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<String, Node>();
+    private Map<String, Node> nodes = new ConcurrentHashMap<>();
     /**
      * Policy that defines who may associate leaf nodes with a collection.
      */
@@ -57,7 +57,7 @@ public class CollectionNode extends Node {
      * Users that are allowed to associate leaf nodes with this collection node. This collection
      * is going to be used only when the associationPolicy is <tt>whitelist</tt>.
      */
-    private Collection<JID> associationTrusted = new ArrayList<JID>();
+    private Collection<JID> associationTrusted = new ArrayList<>();
     /**
      * Max number of leaf nodes that this collection node might have. A value of -1 means
      * that there is no limit.
@@ -86,7 +86,7 @@ public class CollectionNode extends Node {
         else if ("pubsub#leaf_node_association_whitelist".equals(field.getVariable()) ||
         		"pubsub#children_association_whitelist".equals(field.getVariable())) {
             // Get the new list of users that may add leaf nodes to this collection node
-            associationTrusted = new ArrayList<JID>();
+            associationTrusted = new ArrayList<>();
             for (String value : field.getValues()) {
                 try {
                     addAssociationTrusted(new JID(value));
@@ -103,7 +103,7 @@ public class CollectionNode extends Node {
         }
         else if ("pubsub#children".endsWith(field.getVariable())) {
         	values = field.getValues();
-        	ArrayList<Node> childrenNodes = new ArrayList<Node>(values.size());
+        	ArrayList<Node> childrenNodes = new ArrayList<>(values.size());
         	
         	// Check all nodes for their existence 
         	for (String nodeId : values)
@@ -117,7 +117,7 @@ public class CollectionNode extends Node {
               	childrenNodes.add(childNode);
 			}
         	// Remove any children not in the new list.
-        	ArrayList<Node> toRemove = new ArrayList<Node>(nodes.values());
+        	ArrayList<Node> toRemove = new ArrayList<>(nodes.values());
         	toRemove.removeAll(childrenNodes);
         	
         	for (Node node : toRemove)
@@ -285,7 +285,7 @@ public class CollectionNode extends Node {
 
     private void broadcastCollectionNodeEvent(Node child, Message notification) {
         // Get affected subscriptions (of this node and all parent nodes)
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        Collection<NodeSubscription> subscriptions = new ArrayList<>();
         subscriptions.addAll(getSubscriptions(child));
         for (CollectionNode parentNode : getParents()) {
             subscriptions.addAll(parentNode.getSubscriptions(child));
@@ -305,7 +305,7 @@ public class CollectionNode extends Node {
      *         that a new child was added or deleted.
      */
     private Collection<NodeSubscription> getSubscriptions(Node child) {
-        Collection<NodeSubscription> subscriptions = new ArrayList<NodeSubscription>();
+        Collection<NodeSubscription> subscriptions = new ArrayList<>();
         for (NodeSubscription subscription : getSubscriptions()) {
             if (subscription.canSendChildNodeEvent(child)) {
                 subscriptions.add(subscription);

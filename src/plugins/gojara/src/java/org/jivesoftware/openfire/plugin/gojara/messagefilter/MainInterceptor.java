@@ -1,11 +1,13 @@
 package org.jivesoftware.openfire.plugin.gojara.messagefilter;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -19,7 +21,6 @@ import org.jivesoftware.openfire.plugin.gojara.sessions.TransportSessionManager;
 import org.jivesoftware.openfire.plugin.gojara.utils.XpathHelper;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ import org.xmpp.packet.Presence;
 public class MainInterceptor implements PacketInterceptor {
 
 	private static final Logger Log = LoggerFactory.getLogger(MainInterceptor.class);
-	private Set<String> activeTransports = new ConcurrentHashSet<String>();
+	private Set<String> activeTransports = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	/**
 	 * For referencing the abstract remote Processors
 	 */

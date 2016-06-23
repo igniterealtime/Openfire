@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -71,7 +72,7 @@ public class LdapUserProvider implements UserProvider {
         JiveGlobals.migrateProperty("ldap.searchFields");
 
         manager = LdapManager.getInstance();
-        searchFields = new LinkedHashMap<String,String>();
+        searchFields = new LinkedHashMap<>();
         String fieldList = JiveGlobals.getProperty("ldap.searchFields");
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
@@ -92,6 +93,7 @@ public class LdapUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -133,7 +135,39 @@ public class LdapUserProvider implements UserProvider {
             }
             // Escape the username so that it can be used as a JID.
             username = JID.escapeNode(username);
-            return new User(username, name, email, creationDate, modificationDate);
+            
+            // As defined by RFC5803.
+            Attribute authPassword = attrs.get("authPassword");
+            User user = new User(username, name, email, creationDate, modificationDate);
+            if (authPassword != null) {
+            	// The authPassword attribute can be multivalued.
+            	// Not sure if this is the right API to loop through them.
+            	NamingEnumeration values = authPassword.getAll();
+            	while (values.hasMore()) {
+            		Attribute authPasswordValue = (Attribute) values.next();
+	        		String[] parts = ((String) authPasswordValue.get()).split("$");
+	        		String[] authInfo = parts[1].split(":");
+	        		String[] authValue = parts[2].split(":");
+	
+	        		String scheme = parts[0].trim();
+	
+	            	// We only support SCRAM-SHA-1 at the moment.
+	        		if ("SCRAM-SHA-1".equals(scheme)) {
+	            		int iterations = Integer.valueOf(authInfo[0].trim());
+	            		String salt = authInfo[1].trim();
+	            		String storedKey = authValue[0].trim();
+	            		String serverKey = authValue[1].trim();
+	            		
+	            		user.setSalt(salt);
+	            		user.setStoredKey(storedKey);
+	            		user.setServerKey(serverKey);
+	            		user.setIterations(iterations);
+	            		
+	            		break;
+	        		}
+            	}
+            }
+            return user;
         }
         catch (Exception e) {
             throw new UserNotFoundException(e);
@@ -150,16 +184,19 @@ public class LdapUserProvider implements UserProvider {
         }
     }
 
+    @Override
     public User createUser(String username, String password, String name, String email)
             throws UserAlreadyExistsException
     {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void deleteUser(String username) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public int getUserCount() {
         // Cache user count for 5 minutes.
         if (userCount != -1 && System.currentTimeMillis() < expiresStamp) {
@@ -173,6 +210,7 @@ public class LdapUserProvider implements UserProvider {
         return this.userCount;
     }
 
+    @Override
     public Collection<String> getUsernames() {
         return manager.retrieveList(
                 manager.getUsernameField(),
@@ -184,10 +222,12 @@ public class LdapUserProvider implements UserProvider {
         );
     }
     
+    @Override
     public Collection<User> getUsers() {
         return getUsers(-1, -1);
     }
 
+    @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         List<String> userlist = manager.retrieveList(
                 manager.getUsernameField(),
@@ -200,28 +240,33 @@ public class LdapUserProvider implements UserProvider {
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 
+    @Override
     public void setName(String username, String name) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setEmail(String username, String email) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setCreationDate(String username, Date creationDate) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException {
         return Collections.unmodifiableSet(searchFields.keySet());
     }
 
     public void setSearchFields(String fieldList) {
-        this.searchFields = new LinkedHashMap<String,String>();
+        this.searchFields = new LinkedHashMap<>();
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
@@ -242,12 +287,14 @@ public class LdapUserProvider implements UserProvider {
         JiveGlobals.setProperty("ldap.searchFields", fieldList);
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query)
             throws UnsupportedOperationException
     {
         return findUsers(fields, query, -1, -1);
     }
 
+    @Override
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
@@ -262,7 +309,7 @@ public class LdapUserProvider implements UserProvider {
         //are returned from the directory
         filter.append("(&(");
         filter.append(MessageFormat.format(manager.getSearchFilter(),"*"));
-        filter.append(")");
+        filter.append(')');
         if (fields.size() > 1) {
             filter.append("(|");
         }
@@ -270,13 +317,13 @@ public class LdapUserProvider implements UserProvider {
             String attribute = searchFields.get(field);
             // Make the query be a wildcard search by default. So, if the user searches for
             // "John", make the sanitized search be "John*" instead.
-            filter.append("(").append(attribute).append("=")
+            filter.append('(').append(attribute).append('=')
             	.append(LdapManager.sanitizeSearchFilter(query)).append("*)");
         }
         if (fields.size() > 1) {
-            filter.append(")");
+            filter.append(')');
         }
-        filter.append(")");
+        filter.append(')');
         List<String> userlist = manager.retrieveList(
                 manager.getUsernameField(),
                 filter.toString(),
@@ -288,14 +335,17 @@ public class LdapUserProvider implements UserProvider {
         return new UserCollection(userlist.toArray(new String[userlist.size()]));
     }
 
+    @Override
     public boolean isReadOnly() {
         return true;
     }
 
+    @Override
     public boolean isNameRequired() {
         return false;
     }
 
+    @Override
     public boolean isEmailRequired() {
         return false;
     }

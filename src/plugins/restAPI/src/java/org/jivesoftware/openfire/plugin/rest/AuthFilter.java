@@ -46,6 +46,11 @@ public class AuthFilter implements ContainerRequestFilter {
 			throw new WebApplicationException(Status.FORBIDDEN);
 		}
 		
+		// Let the preflight request through the authentication
+		if ("OPTIONS".equals(containerRequest.getMethod())) {
+			return containerRequest;
+		}
+		
 		// To be backwards compatible to userservice 1.*
 		if ("restapi/v1/userservice".equals(containerRequest.getPath())) {
 			return containerRequest;
@@ -77,7 +82,7 @@ public class AuthFilter implements ContainerRequestFilter {
 		}
 
 		// HTTP Basic Auth or Shared Secret key
-		if (plugin.isHttpBasicAuth()) {
+		if ("basic".equals(plugin.getHttpAuth())) {
 			String[] usernameAndPassword = BasicAuth.decode(auth);
 
 			// If username or password fail

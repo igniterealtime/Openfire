@@ -40,30 +40,8 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 public interface AuthProvider {
 
     /**
-     * Returns true if this AuthProvider supports authentication using plain-text
-     * passwords according to JEP--0078. Plain text authentication is not secure
-     * and should generally only be used for a TLS/SSL connection.
-     *
-     * @return true if plain text password authentication is supported by
-     *      this AuthProvider.
-     */
-    boolean isPlainSupported();
-
-    /**
-     * Returns true if this AuthProvider supports digest authentication
-     * according to JEP-0078.
-     *
-     * @return true if digest authentication is supported by this
-     *      AuthProvider.
-     */
-    boolean isDigestSupported();
-
-    /**
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
-     *
-     * If {@link #isPlainSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
      *
      * @param username the username or full JID.
      * @param password the password
@@ -74,25 +52,6 @@ public interface AuthProvider {
      */
     void authenticate(String username, String password) throws UnauthorizedException,
             ConnectionException, InternalUnauthenticatedException;
-
-    /**
-     * Returns if the username, token, and digest are valid; otherwise this
-     * method throws an UnauthorizedException.<p>
-     *
-     * If {@link #isDigestSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
-     *
-     * @param username the username or full JID.
-     * @param token the token that was used with plain-text password to
-     *      generate the digest.
-     * @param digest the digest generated from plain-text password and unique token.
-     * @throws UnauthorizedException if the username and password
-     *      do not match any existing user.
-     * @throws ConnectionException it there is a problem connecting to user and group sytem
-     * @throws InternalUnauthenticatedException if there is a problem authentication Openfire iteself into the user and group system
-     */
-    void authenticate(String username, String token, String digest)
-            throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException;
 
     /**
      * Returns the user's password. This method should throw an UnsupportedOperationException
@@ -129,4 +88,6 @@ public interface AuthProvider {
      *         backend user store.
      */
     public boolean supportsPasswordRetrieval();
+
+    boolean isScramSupported();
 }

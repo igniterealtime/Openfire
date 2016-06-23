@@ -28,7 +28,7 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +122,7 @@ public class GetListGroups extends AdHocCommand {
         for (Group group : GroupManager.getInstance().getGroups(nStart, maxItems)) {
             boolean isSharedGroup = RosterManager.isSharedGroup(group);
             Map<String, String> properties = group.getProperties();
-            Map<String,Object> fields = new HashMap<String,Object>();
+            Map<String,Object> fields = new HashMap<>();
             fields.put("name", group.getName());
             fields.put("desc", group.getDescription());
             fields.put("count", group.getMembers().size() + group.getAdmins().size());
@@ -155,7 +155,7 @@ public class GetListGroups extends AdHocCommand {
 
     @Override
 	protected List<AdHocCommand.Action> getActions(SessionData data) {
-        return Arrays.asList(AdHocCommand.Action.complete);
+        return Collections.singletonList(Action.complete);
     }
 
     @Override

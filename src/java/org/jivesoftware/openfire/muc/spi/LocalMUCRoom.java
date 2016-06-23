@@ -269,6 +269,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private boolean canAnyoneDiscoverJID;
 
     /**
+     * The minimal role of persons that are allowed to send private messages in the room.
+     */
+    private String canSendPrivateMessage;
+
+    /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
@@ -999,7 +1004,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 item.addAttribute("affiliation", "none");
                 item.addAttribute("role", "none");
                 if (alternateJID != null) {
-                    fragment.addElement("destroy").addAttribute("jid", alternateJID.toFullJID());
+                    fragment.addElement("destroy").addAttribute("jid", alternateJID.toString());
                 }
                 if (reason != null && reason.length() > 0) {
                     Element destroy = fragment.element("destroy");
@@ -1061,7 +1066,18 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {
+    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException {
+        switch (senderRole.getRole()) { // intended fall-through
+            case none:
+                throw new ForbiddenException();
+            default:
+            case visitor:
+                if (canSendPrivateMessage.equals( "participants" )) throw new ForbiddenException();
+            case participant:
+                if (canSendPrivateMessage.equals( "moderators" )) throw new ForbiddenException();
+            case moderator:
+                if (canSendPrivateMessage.equals( "none" )) throw new ForbiddenException();
+        }
         String resource = packet.getTo().getResource();
         List<MUCRole> occupants = occupantsByNickname.get(resource.toLowerCase());
         if (occupants == null || occupants.size() == 0) {
@@ -1377,6 +1393,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             if (role.isLocal()) {
                 role.setAffiliation(newAffiliation);
                 role.setRole(newRole);
+                // Set the new presence, so that the updated affiliation and role is reflected in the presence stanza.
+                role.setPresence(role.getPresence());
                 // Notify the other cluster nodes to update the occupant
                 CacheFactory.doClusterTask(new UpdateOccupant(this, role));
                 // Prepare a new presence to be sent to all the room occupants
@@ -1831,7 +1849,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
             else {
                 newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
-            	newAffiliation = MUCRole.Affiliation.member;
+            	newAffiliation = MUCRole.Affiliation.none;
             }
             Log.info("New affiliation: " + newAffiliation);
             try {
@@ -1848,7 +1866,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                             x.element("item").addElement("reason").setText(reason);
                         }
                         x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
-                        kickPresence(presence, senderRole.getUserAddress());
+                        kickPresence(presence, senderRole.getUserAddress(), senderRole.getNickname());
                     }
                 }
     			updatedPresences.addAll(thisOccupant);
@@ -1869,19 +1887,34 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         return lockedTime > 0 && creationDate.getTime() != lockedTime;
     }
 
+    /**
+     * Handles occupants updating their presence in the chatroom. Assumes the user updates their presence whenever their
+     * availability in the room changes. This method should not be called to handle other presence related updates, such
+     * as nickname changes.
+     * {@inheritDoc}
+     */
     @Override
-    public void presenceUpdated(MUCRole occupantRole, Presence newPresence) {
-        // Ask other cluster nodes to update the presence of the occupant
-        UpdatePresence request = new UpdatePresence(this, newPresence.createCopy(), occupantRole.getNickname());
-        CacheFactory.doClusterTask(request);
+    public void presenceUpdated(final MUCRole occupantRole, final Presence newPresence) {
+        final String occupantNickName = occupantRole.getNickname();
 
-        // Update the presence of the occupant
-        request = new UpdatePresence(this, newPresence.createCopy(), occupantRole.getNickname());
-        request.setOriginator(true);
-        request.run();
+        // Update the presence of the occupant on the local node with the occupant's new availability. Updates the
+        // local node first so the remote nodes receive presence that correctly reflects the occupant's new
+        // availability and previously existing role and affiliation with the room.
+        final UpdatePresence localUpdateRequest = new UpdatePresence(this, newPresence.createCopy(), occupantNickName);
+        localUpdateRequest.setOriginator(true);
+        localUpdateRequest.run();
 
-        // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence().createCopy(), false);
+        // Get the new, updated presence for the occupant in the room. The presence reflects the occupant's updated
+        // availability and their existing association.
+        final Presence updatedPresence = occupantRole.getPresence().createCopy();
+
+        // Ask other cluster nodes to update the presence of the occupant. Uses the updated presence from the local
+        // MUC role.
+        final UpdatePresence clusterUpdateRequest = new UpdatePresence(this, updatedPresence, occupantNickName);
+        CacheFactory.doClusterTask(clusterUpdateRequest);
+
+        // Broadcast updated presence of occupant.
+        broadcastPresence(updatedPresence, false);
     }
 
     /**
@@ -2241,7 +2274,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public Presence kickOccupant(JID jid, JID actorJID, String reason)
+    public Presence kickOccupant(JID jid, JID actorJID, String actorNickname, String reason)
             throws NotAllowedException {
         // Update the presence with the new role and inform all occupants
         Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.none);
@@ -2257,7 +2290,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
 
             // Effectively kick the occupant from the room
-            kickPresence(updatedPresence, actorJID);
+            kickPresence(updatedPresence, actorJID, actorNickname);
 
             //Inform the other occupants that user has been kicked
             broadcastPresence(updatedPresence, false);
@@ -2272,18 +2305,22 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param kickPresence the presence of the occupant to kick from the room.
      * @param actorJID The JID of the actor that initiated the kick or <tt>null</tt> if the info
+     * @param nick The actor nickname.
      * was not provided.
      */
-    private void kickPresence(Presence kickPresence, JID actorJID) {
+    private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
         List<MUCRole> occupants = new ArrayList<>(occupantsByNickname.get(kickPresence.getFrom().getResource().toLowerCase()));
         for (MUCRole kickedRole : occupants) {
-            kickPresence = kickPresence.createCopy();
             // Add the actor's JID that kicked this user from the room
             if (actorJID != null && actorJID.toString().length() > 0) {
                 Element frag = kickPresence.getChildElement(
                         "x", "http://jabber.org/protocol/muc#user");
-                frag.element("item").addElement("actor").addAttribute("jid", actorJID.toBareJID());
+                Element actor = frag.element("item").addElement("actor");
+                actor.addAttribute("jid", actorJID.toBareJID());
+                if (nick != null) {
+                    actor.addAttribute("nick", nick);
+                }
             }
             // Send the unavailable presence to the banned user
             kickedRole.send(kickPresence);
@@ -2308,6 +2345,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         this.canAnyoneDiscoverJID = canAnyoneDiscoverJID;
     }
 
+    @Override
+    public String canSendPrivateMessage() {
+        return canSendPrivateMessage == null ? "anyone" : canSendPrivateMessage;
+    }
+
+    @Override
+    public void setCanSendPrivateMessage(String role) {
+        if ( role == null ) {
+            role = "(null)";
+        }
+
+        switch( role.toLowerCase() ) {
+            case "none":
+            case "moderators":
+            case "participants":
+            case "anyone":
+                this.canSendPrivateMessage = role.toLowerCase();
+                break;
+            default:
+                Log.warn( "Illegal value for muc#roomconfig_allowpm: '{}'. Defaulting to 'anyone'", role.toLowerCase() );
+                this.canSendPrivateMessage = "anyone";
+        }
+    }
     @Override
     public boolean canOccupantsChangeSubject() {
         return canOccupantsChangeSubject;
@@ -2362,7 +2422,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             for (MUCRole occupant : occupantsByFullJID.values()) {
                 if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
                     try {
-                        presences.add(kickOccupant(occupant.getRoleAddress(), null,
+                        presences.add(kickOccupant(occupant.getRoleAddress(), null, null,
                                 LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
                     }
                     catch (NotAllowedException e) {

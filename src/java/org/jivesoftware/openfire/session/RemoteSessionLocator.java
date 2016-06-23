@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.openfire.StreamID;
 import org.xmpp.packet.JID;
 
 /**
@@ -78,7 +79,7 @@ public interface RemoteSessionLocator {
      * @param streamID the stream ID that uniquely identifies the session.
      * @return a session surrogate of an incoming server session hosted by a remote cluster node.
      */
-    IncomingServerSession getIncomingServerSession(byte[] nodeID, String streamID);
+    IncomingServerSession getIncomingServerSession(byte[] nodeID, StreamID streamID);
 
     /**
      * Returns a session surrogate of an outgoing server session hosted by a remote cluster node. It is

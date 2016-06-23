@@ -53,6 +53,18 @@
 
     // Validate input
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (doTest) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            doTest = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (doTest) {
         if (from == null) {
             errors.put("from", "");
@@ -215,6 +227,7 @@ function checkClick(el) {
 <%  } %>
 
 <form action="system-emailtest.jsp" method="post" name="f" onsubmit="return checkClick(this);">
+        <input type="hidden" name="csrf" value="${csrf}">
 
 <table cellpadding="3" cellspacing="0" border="0">
 <tbody>

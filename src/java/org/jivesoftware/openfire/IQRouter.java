@@ -444,6 +444,16 @@ public class IQRouter extends BasicModule {
         routingTable.routePacket(reply.getTo(), reply, true);
     }
 
+    /**
+     * Determines if this instance has support (formally: has a IQ Handler) for the provided namespace.
+     *
+     * @param namespace Identifier of functionality (cannot be null)
+     * @return true if the functionality identified by the namespace is supported, otherwise false.
+     */
+    public boolean supports( String namespace ) {
+        return getHandler( namespace ) != null;
+    }
+
     private IQHandler getHandler(String namespace) {
         IQHandler handler = namespace2Handlers.get(namespace);
         if (handler == null) {

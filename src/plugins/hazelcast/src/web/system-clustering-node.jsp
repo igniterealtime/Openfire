@@ -86,19 +86,21 @@
 	List<ClusterNodeInfo> members = (List<ClusterNodeInfo>) CacheFactory.getClusterNodesInfo();
     Map<NodeID, NodeRuntimeStats.NodeInfo> nodeInfoMap = NodeRuntimeStats.getNodeInfo();
 
-    // Sort it according to name
-    Collections.sort(members, new Comparator<ClusterNodeInfo>() {
-        public int compare(ClusterNodeInfo member1, ClusterNodeInfo member2) {
-            String name1 = member1.getHostName() + " (" + member1.getNodeID() + ")";
-            String name2 = member2.getHostName() + " (" + member2.getNodeID() + ")";
-            return name1.toLowerCase().compareTo(name2.toLowerCase().toLowerCase());
-        }
-    });
+    if (members.size() > 1) {
+	    // Sort it according to name
+	    Collections.sort(members, new Comparator<ClusterNodeInfo>() {
+	        public int compare(ClusterNodeInfo member1, ClusterNodeInfo member2) {
+	            String name1 = member1.getHostName() + " (" + member1.getNodeID() + ")";
+	            String name2 = member2.getHostName() + " (" + member2.getNodeID() + ")";
+	            return name1.toLowerCase().compareTo(name2.toLowerCase().toLowerCase());
+	        }
+	    });
+    }
 
     // If no UID was used, use the UID from the first member in the member list
     byte[] byteArray;
     if (uid == null) {
-        byteArray = members.get(0).getNodeID().toByteArray();
+        byteArray = members.isEmpty() ? new byte[] {0} : members.get(0).getNodeID().toByteArray();
     } else {
         byteArray = Base64.decode(uid, Base64.URL_SAFE);
     }

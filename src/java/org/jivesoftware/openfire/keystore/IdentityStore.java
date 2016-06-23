@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.operator.OperatorCreationException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.util.CertificateManager;
@@ -7,7 +8,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import java.io.IOException;
 import java.security.*;
@@ -40,26 +40,21 @@ public class IdentityStore extends CertificateStore
 {
     private static final Logger Log = LoggerFactory.getLogger( IdentityStore.class );
 
-//    protected final KeyManagerFactory keyFactory;
-
     public IdentityStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         super( configuration, createIfAbsent );
-//        try
-//        {
-//            keyFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
-//            keyFactory.init( store, configuration.getPassword() );
-//        }
-//        catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException ex )
-//        {
-//            throw new CertificateStoreConfigException( "Unable to load store of type '" + configuration.getType() + "' from location '" + configuration.getFile() + "'", ex );
-//        }
-    }
 
-//    public KeyManager[] getKeyManagers()
-//    {
-//        return keyFactory.getKeyManagers();
-//    }
+        try
+        {
+            final KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance( KeyManagerFactory.getDefaultAlgorithm() );
+            keyManagerFactory.init( this.getStore(), configuration.getPassword() );
+        }
+        catch ( NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex )
+        {
+            throw new CertificateStoreConfigException( "Unable to initialize identity store (a common cause: the password for a key is different from the password of the entire store).", ex );
+        }
+
+    }
 
     /**
      * Creates a Certificate Signing Request based on the private key and certificate identified by the provided alias.
@@ -105,7 +100,7 @@ public class IdentityStore extends CertificateStore
 
             return pemCSR;
         }
-        catch ( IOException | NoSuchProviderException | SignatureException | InvalidKeyException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException e )
+        catch ( IOException | KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | OperatorCreationException e )
         {
             throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"'", e );
         }
@@ -200,7 +195,7 @@ public class IdentityStore extends CertificateStore
         final X509Certificate x509Certificate = (X509Certificate) certificate;
 
         // First certificate in the chain should correspond with the certificate in the store
-        if ( !x509Certificate.getSerialNumber().equals( certificates.get( 0 ).getSerialNumber() ) )
+        if ( !x509Certificate.getPublicKey().equals(certificates.get(0).getPublicKey()) )
         {
             return false;
         }
@@ -394,12 +389,12 @@ public class IdentityStore extends CertificateStore
         {
             case "RSA":
                 keySize = JiveGlobals.getIntProperty( "cert.rsa.keysize", 2048 );
-                signAlgorithm = "SHA1WITHRSAENCRYPTION";
+                signAlgorithm = "SHA256WITHRSAENCRYPTION";
                 break;
 
             case "DSA":
                 keySize = JiveGlobals.getIntProperty( "cert.dsa.keysize", 1024 );
-                signAlgorithm = "SHA1withDSA";
+                signAlgorithm = "SHA256withDSA";
                 break;
 
             default:
@@ -408,8 +403,7 @@ public class IdentityStore extends CertificateStore
 
         final String name = JiveGlobals.getProperty( "xmpp.domain" ).toLowerCase();
         final String alias = name + "_" + algorithm.toLowerCase();
-        final String distinctName = "cn=" + name;
-        final int validityInDays = 60;
+        final int validityInDays = 5*365;
 
         Log.info( "Generating a new private key and corresponding self-signed certificate for domain name '{}', using the {} algorithm (sign-algorithm: {} with a key size of {} bits). Certificate will be valid for {} days.", name, algorithm, signAlgorithm, keySize, validityInDays );
         // Generate public and private keys
@@ -418,7 +412,7 @@ public class IdentityStore extends CertificateStore
             final KeyPair keyPair = generateKeyPair( algorithm.toUpperCase(), keySize );
 
             // Create X509 certificate with keys and specified domain
-            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, distinctName, distinctName, name, signAlgorithm );
+            final X509Certificate cert = CertificateManager.createX509V3Certificate( keyPair, validityInDays, name, name, name, signAlgorithm );
 
             // Store new certificate and private key in the key store
             store.setKeyEntry( alias, keyPair.getPrivate(), configuration.getPassword(), new X509Certificate[]{cert} );

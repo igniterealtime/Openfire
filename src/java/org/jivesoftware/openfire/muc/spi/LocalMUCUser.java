@@ -394,7 +394,7 @@ public class LocalMUCUser implements MUCUser {
                         // User is sending an IQ result packet to another room occupant
                         role.getChatRoom().sendPrivatePacket(packet, role);
                     }
-                    catch (NotFoundException e) {
+                    catch (NotFoundException | ForbiddenException e) {
                         // Do nothing. No error will be sent to the sender of the IQ result packet
                     }
                 }

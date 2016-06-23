@@ -1074,17 +1074,15 @@ public class HttpSession extends LocalClientSession {
 
     protected String createEmptyBody(boolean terminate)
     {
-        final Element body = DocumentHelper.createElement("body");
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addNamespace("", "http://jabber.org/protocol/httpbind");
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
         return body.asXML();
     }
 
     private String createSessionRestartResponse()
     {
-        final Element response = DocumentHelper.createElement("body");
-        response.addNamespace("", "http://jabber.org/protocol/httpbind");
+        final Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
 
         final Element features = response.addElement("stream:features");
@@ -1154,7 +1152,7 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Deliverable {
+    static class Deliverable {
         private final String text;
         private final Collection<String> packets;
 
@@ -1171,7 +1169,10 @@ public class HttpSession extends LocalClientSession {
             	if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
             		// use string-based operation here to avoid cascading xmlns wonkery
             		StringBuilder packetXml = new StringBuilder(packet.toXML());
-            		packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
+                    final int noslash = packetXml.indexOf( ">" );
+                    final int slash = packetXml.indexOf( "/>" );
+                    final int insertAt = ( noslash - 1 == slash ? slash : noslash );
+            		packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
             		this.packets.add(packetXml.toString());
             	} else {
             		this.packets.add(packet.toXML());

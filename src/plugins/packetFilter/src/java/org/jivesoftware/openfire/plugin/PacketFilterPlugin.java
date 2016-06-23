@@ -40,7 +40,6 @@ public class PacketFilterPlugin implements Plugin, PacketInterceptor, PropertyEv
 
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
 		// register with interceptor manager
-		Log.info("Packet Filter loaded...");
 		interceptorManager.addInterceptor(this);
 		pluginManager = manager;
 		pf = PacketFilter.getInstance();

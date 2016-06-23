@@ -167,7 +167,7 @@
            <%= user.getName() %> &nbsp;
        </td>
        <td width="15%">
-           <%= JiveGlobals.formatDate(user.getCreationDate()) %> &nbsp;
+           <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
        </td>
         <td width="25%">
             <% long logoutTime = presenceManager.getLastActivity(user);

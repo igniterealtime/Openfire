@@ -31,6 +31,7 @@
 <%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.xmpp.packet.Presence"%>
 <%@ page import="java.io.UnsupportedEncodingException"%>
@@ -53,7 +54,21 @@
 	boolean success = ParamUtils.getBooleanParameter(request,"updatesuccess");
 	String username = StringUtils.escapeHTMLTags(ParamUtils.getParameter(request, "username"));
 	JID jid = webManager.getXMPPServer().createJID(username, null);
-	
+
+	    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+        String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+        if (add != null || delete != null) {
+            if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+                add = null;
+                delete = null;
+            }
+        }
+        csrfParam = StringUtils.randomString(15);
+        CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+        pageContext.setAttribute("csrf", csrfParam);
+
+
     if(add != null) {
     	try {
     		Group group = webManager.getGroupManager().getGroup(add);
@@ -191,7 +206,7 @@
  %></td>
 
 					<td width="5%"><a
-						href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&delete=<%=groupName%>"
+						href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&delete=<%=groupName%>&csrf=${csrf}"
 						title="<fmt:message key="global.click_delete" />"><img
 							src="images/delete-16x16.gif" width="16" height="16" border="0"
 							alt="<fmt:message key="global.click_delete" />"></a></td>
@@ -319,7 +334,7 @@
  %></td>
 
 					<td width="5%"><a
-						href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&add=<%=groupName%>"
+						href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&add=<%=groupName%>&csrf=${csrf}"
 						title="<fmt:message key="global.click_add" />"> <img
 							src="images/add-16x16.gif" width="16" height="16" border="0"
 							alt="<fmt:message key="global.click_add" />"></a></td>

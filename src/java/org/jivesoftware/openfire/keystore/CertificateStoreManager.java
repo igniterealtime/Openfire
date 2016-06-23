@@ -43,32 +43,34 @@ public class CertificateStoreManager extends BasicModule
         {
             try
             {
+                Log.debug( "(identity store for connection type '{}') Initializing store...", type );
                 final CertificateStoreConfiguration identityStoreConfiguration = getIdentityStoreConfiguration( type );
-                typeToIdentityStore.put( type, identityStoreConfiguration );
                 if ( !identityStores.containsKey( identityStoreConfiguration ) )
                 {
                     final IdentityStore store = new IdentityStore( identityStoreConfiguration, false );
                     identityStores.put( identityStoreConfiguration, store );
                 }
+                typeToIdentityStore.put( type, identityStoreConfiguration );
             }
             catch ( CertificateStoreConfigException | IOException e )
             {
-                Log.warn( "Unable to instantiate identity store for type '" + type + "'", e );
+                Log.warn( "(identity store for connection type '{}') Unable to instantiate store ", type, e );
             }
 
             try
             {
+                Log.debug( "(trust store for connection type '{}') Initializing store...", type );
                 final CertificateStoreConfiguration trustStoreConfiguration = getTrustStoreConfiguration( type );
-                typeToTrustStore.put( type, trustStoreConfiguration );
                 if ( !trustStores.containsKey( trustStoreConfiguration ) )
                 {
                     final TrustStore store = new TrustStore( trustStoreConfiguration, false );
                     trustStores.put( trustStoreConfiguration, store );
                 }
+                typeToTrustStore.put( type, trustStoreConfiguration );
             }
             catch ( CertificateStoreConfigException | IOException e )
             {
-                Log.warn( "Unable to instantiate trust store for type '" + type + "'", e );
+                Log.warn( "(trust store for connection type '{}') Unable to instantiate store ", type, e );
             }
         }
     }
@@ -86,16 +88,22 @@ public class CertificateStoreManager extends BasicModule
     public IdentityStore getIdentityStore( ConnectionType type )
     {
         final CertificateStoreConfiguration configuration = typeToIdentityStore.get( type );
+        if (configuration == null) {
+            return null;
+        }
         return identityStores.get( configuration );
     }
 
     public TrustStore getTrustStore( ConnectionType type )
     {
         final CertificateStoreConfiguration configuration = typeToTrustStore.get( type );
+        if (configuration == null) {
+            return null;
+        }
         return trustStores.get( configuration );
     }
 
-    public void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public void replaceIdentityStore( ConnectionType type, CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -114,7 +122,7 @@ public class CertificateStoreManager extends BasicModule
             if ( !identityStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
-                final IdentityStore store = new IdentityStore( configuration, true );
+                final IdentityStore store = new IdentityStore( configuration, createIfAbsent );
                 identityStores.put( configuration, store );
             }
 
@@ -143,7 +151,7 @@ public class CertificateStoreManager extends BasicModule
         JiveGlobals.setProperty( type.getPrefix() + "keypass", new String( configuration.getPassword() ) );
     }
 
-    public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration ) throws CertificateStoreConfigException
+    public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         if ( type == null)
         {
@@ -162,7 +170,7 @@ public class CertificateStoreManager extends BasicModule
             if ( !trustStores.containsKey( configuration ) )
             {
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
-                final TrustStore store = new TrustStore( configuration, true );
+                final TrustStore store = new TrustStore( configuration, createIfAbsent );
                 trustStores.put( configuration, store );
             }
 

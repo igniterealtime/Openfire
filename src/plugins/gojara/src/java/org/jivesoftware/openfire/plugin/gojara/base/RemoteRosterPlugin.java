@@ -54,7 +54,6 @@ public class RemoteRosterPlugin implements Plugin {
 	private GojaraAdminManager gojaraAdminManager = GojaraAdminManager.getInstance();
 	
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
-		Log.info("Starting RemoteRoster Plugin");
 		pluginManager = manager;
 		iManager.addInterceptor(mainInterceptor);
 		manageExternalComponents();
@@ -125,7 +124,6 @@ public class RemoteRosterPlugin implements Plugin {
 	}
 
 	public void destroyPlugin() {
-		Log.info("Destroying GoJara");
 		mainInterceptor.freeze();
 		iManager.removeInterceptor(mainInterceptor);
 		PropertyEventDispatcher.removeListener(_settingsObserver);

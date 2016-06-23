@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.util.CookieUtils,
                  java.text.DateFormat,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
@@ -67,6 +68,7 @@
     String password = ParamUtils.getParameter(request, "roomconfig_roomsecret");
     String confirmPassword = ParamUtils.getParameter(request, "roomconfig_roomsecret2");
     String whois = ParamUtils.getParameter(request, "roomconfig_whois");
+    String allowpm = ParamUtils.getParameter(request, "roomconfig_allowpm");
     String publicRoom = ParamUtils.getParameter(request, "roomconfig_publicroom");
     String persistentRoom = ParamUtils.getParameter(request, "roomconfig_persistentroom");
     String moderatedRoom = ParamUtils.getParameter(request, "roomconfig_moderatedroom");
@@ -105,6 +107,18 @@
 
     // Handle an save
     Map<String, String> errors = new HashMap<String, String>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (save) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            save = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
     if (save) {
         // do validation
 
@@ -122,6 +136,9 @@
         }
         if (whois == null) {
             errors.put("roomconfig_whois","roomconfig_whois");
+        }
+        if ( allowpm == null || !( allowpm.equals( "anyone" ) || allowpm.equals( "moderators" ) || allowpm.equals( "participants" ) || allowpm.equals( "none" )) ) {
+            errors.put("roomconfig_allowpm","romconfig_allowpm");
         }
         if (create && errors.size() == 0) {
             if (roomName == null || roomName.contains("@")) {
@@ -231,6 +248,10 @@
             field.addValue(whois);
             dataForm.addField(field);
 
+            field = new XFormFieldImpl("muc#roomconfig_allowpm");
+            field.addValue( allowpm );
+            dataForm.addField(field);
+
             field = new XFormFieldImpl("muc#roomconfig_enablelogging");
             field.addValue((enableLog == null) ? "0": "1");
             dataForm.addField(field);
@@ -303,6 +324,7 @@
             broadcastParticipant = "true";
             broadcastVisitor = "true";
             whois = "moderator";
+            allowpm = "anyone";
             publicRoom = "true";
             // Rooms created from the admin console are always persistent
             persistentRoom = "true";
@@ -320,6 +342,7 @@
             password = room.getPassword();
             confirmPassword = room.getPassword();
             whois = (room.canAnyoneDiscoverJID() ? "anyone" : "moderator");
+            allowpm = room.canSendPrivateMessage();
             publicRoom = Boolean.toString(room.isPublicRoom());
             persistentRoom = Boolean.toString(room.isPersistent());
             moderatedRoom = Boolean.toString(room.isModerated());
@@ -369,6 +392,8 @@
             <% } else if (errors.get("roomconfig_roomsecret2") != null) { %>
                 <fmt:message key="muc.room.edit.form.new_password" />
             <% } else if (errors.get("roomconfig_whois") != null) { %>
+                <fmt:message key="muc.room.edit.form.role" />
+            <% } else if (errors.get("roomconfig_allowpm") != null) { %>
                 <fmt:message key="muc.room.edit.form.role" />
             <% } else if (errors.get("roomName") != null) { %>
                 <fmt:message key="muc.room.edit.form.valid_hint" />
@@ -445,6 +470,7 @@
 <% if (!create) { %>
     <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 <% } %>
+    <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="save" value="true">
 <input type="hidden" name="create" value="<%= create %>">
 <input type="hidden" name="roomconfig_persistentroom" value="<%= persistentRoom %>">
@@ -540,6 +566,16 @@
                         </select>
                     </td>
                  </tr>
+                <tr>
+                    <td><fmt:message key="muc.room.edit.form.allowpm" />:</td>
+                    <td><select name="roomconfig_allowpm">
+                        <option value="none" <% if ("none".equals( allowpm )) out.write("selected");%>><fmt:message key="muc.form.conf.none" /></option>
+                        <option value="moderators" <% if ("moderators".equals( allowpm )) out.write("selected");%>><fmt:message key="muc.room.edit.form.moderator" /></option>
+                        <option value="participants" <% if ("participants".equals( allowpm )) out.write("selected");%>><fmt:message key="muc.room.edit.form.participant" /></option>
+                        <option value="anyone" <% if ("anyone".equals( allowpm )) out.write("selected");%>><fmt:message key="muc.room.edit.form.anyone" /></option>
+                    </select>
+                    </td>
+                </tr>
          </tbody>
          </table>
 

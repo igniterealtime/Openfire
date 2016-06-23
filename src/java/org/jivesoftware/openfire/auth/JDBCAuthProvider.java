@@ -257,57 +257,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
                 return password;
         }
     }
-        
-    @Override
-    public void authenticate(String username, String token, String digest)
-            throws UnauthorizedException
-    {
-        if (passwordTypes.size() != 1 || passwordTypes.get(0) != PasswordType.plain) {
-            throw new UnsupportedOperationException("Digest authentication not supported for "
-                    + "password type " + passwordTypes.get(0));
-        }
-        if (username == null || token == null || digest == null) {
-            throw new UnauthorizedException();
-        }
-        username = username.trim().toLowerCase();
-        if (username.contains("@")) {
-            // Check that the specified domain matches the server's domain
-            int index = username.indexOf("@");
-            String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                username = username.substring(0, index);
-            } else {
-                // Unknown domain. Return authentication failed.
-                throw new UnauthorizedException();
-            }
-        }
-        String password;
-        try {
-            password = getPasswordValue(username);
-        }
-        catch (UserNotFoundException unfe) {
-            throw new UnauthorizedException();
-        }
-        String anticipatedDigest = AuthFactory.createDigest(token, password);
-        if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-            throw new UnauthorizedException();
-        }
-
-        // Got this far, so the user must be authorized.
-        createUser(username);
-    }
-
-    @Override
-    public boolean isPlainSupported() {
-        // If the auth SQL is defined, plain text authentication is supported.
-        return (passwordSQL != null);
-    }
-
-    @Override
-    public boolean isDigestSupported() {
-        // The auth SQL must be defined and the password type is supported.
-        return (passwordSQL != null && passwordTypes.size() == 1 && passwordTypes.get(0) == PasswordType.plain);
-    }
 
     @Override
     public String getPassword(String username) throws UserNotFoundException,

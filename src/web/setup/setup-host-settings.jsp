@@ -29,7 +29,7 @@
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
-    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", true);
+    boolean anonymousAuthentication = JiveGlobals.getXMLProperty("xmpp.auth.anonymous", false);
     String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
     String encryptionKey = ParamUtils.getParameter(request, "encryptionKey");
 

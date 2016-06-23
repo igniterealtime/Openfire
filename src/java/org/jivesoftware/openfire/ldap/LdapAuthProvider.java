@@ -72,16 +72,6 @@ public class LdapAuthProvider implements AuthProvider {
     }
 
     @Override
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    @Override
-    public boolean isDigestSupported() {
-        return false;
-    }
-
-    @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
         if (username == null || password == null || "".equals(password.trim())) {
             throw new UnauthorizedException();
@@ -144,11 +134,6 @@ public class LdapAuthProvider implements AuthProvider {
         if (authCache != null) {
             authCache.put(username, StringUtils.hash(password));
         }
-    }
-
-    @Override
-    public void authenticate(String username, String token, String digest) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Digest authentication not currently supported.");
     }
 
     @Override

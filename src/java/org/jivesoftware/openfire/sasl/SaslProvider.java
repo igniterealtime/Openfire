@@ -33,11 +33,14 @@ public class SaslProvider extends Provider {
     /**
      * Constructs a the JiveSoftware SASL provider.
      */
-    public SaslProvider() {
-        super("JiveSoftware", 1.0, "JiveSoftware SASL provider v1.0, implementing server mechanisms for: PLAIN, SCRAM-SHA-1");
-        // Add SaslServer supporting the PLAIN SASL mechanism
-        put("SaslServerFactory.PLAIN", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
-        // Add SaslServer supporting the SCRAM-SHA-1 SASL mechanism
-        put("SaslServerFactory.SCRAM-SHA-1", "org.jivesoftware.openfire.sasl.SaslServerFactoryImpl");
+    public SaslProvider()
+    {
+        super("JiveSoftware", 1.1, "JiveSoftware Openfire SASL provider v1.1" );
+
+        final SaslServerFactoryImpl serverFactory = new SaslServerFactoryImpl();
+        for ( final String name : serverFactory.getMechanismNames( null ) )
+        {
+            put( "SaslServerFactory." + name, serverFactory.getClass().getCanonicalName() );
+        }
     }
 }

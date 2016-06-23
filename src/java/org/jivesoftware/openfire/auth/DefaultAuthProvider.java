@@ -97,47 +97,6 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     @Override
-    public void authenticate(String username, String token, String digest) throws UnauthorizedException {
-        if (username == null || token == null || digest == null) {
-            throw new UnauthorizedException();
-        }
-        username = username.trim().toLowerCase();
-        if (username.contains("@")) {
-            // Check that the specified domain matches the server's domain
-            int index = username.indexOf("@");
-            String domain = username.substring(index + 1);
-            if (domain.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                username = username.substring(0, index);
-            } else {
-                // Unknown domain. Return authentication failed.
-                throw new UnauthorizedException();
-            }
-        }
-        try {
-            String password = getPassword(username);
-            String anticipatedDigest = AuthFactory.createDigest(token, password);
-            if (!digest.equalsIgnoreCase(anticipatedDigest)) {
-                throw new UnauthorizedException();
-            }
-        }
-        catch (UserNotFoundException unfe) {
-            throw new UnauthorizedException();
-        }
-        // Got this far, so the user must be authorized.
-    }
-
-    @Override
-    public boolean isPlainSupported() {
-        return true;
-    }
-
-    @Override
-    public boolean isDigestSupported() {
-        boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-        return !scramOnly;
-    }
-
-    @Override
     public String getPassword(String username) throws UserNotFoundException {
         if (!supportsPasswordRetrieval()) {
             // Reject the operation since the provider is read-only

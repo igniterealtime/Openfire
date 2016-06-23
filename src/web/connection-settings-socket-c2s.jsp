@@ -4,6 +4,8 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 <%@ page import="java.util.HashMap" %>
@@ -22,8 +24,20 @@
     final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
     final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
 
-    final boolean update = request.getParameter( "update" ) != null;
+    boolean update = request.getParameter( "update" ) != null;
     final Map<String, String> errors = new HashMap<>();
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (update) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            update = false;
+            errors.put("csrf", "CSRF Failure!");
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if ( update && errors.isEmpty() )
     {
@@ -126,6 +140,7 @@
 </p>
 
 <form action="connection-settings-socket-c2s.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 
     <fmt:message key="ssl.settings.client.plaintext.boxtitle" var="plaintextboxtitle"/>
     <admin:contentBox title="${plaintextboxtitle}">

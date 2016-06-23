@@ -126,6 +126,7 @@ public abstract class MUCEventDelegate {
             room.setPublicRoom("1".equals(roomConfig.get("muc#roomconfig_publicroom")));
             room.setCanOccupantsInvite("1".equals(roomConfig.get("muc#roomconfig_allowinvites")));
             room.setCanAnyoneDiscoverJID("anyone".equals(roomConfig.get("muc#roomconfig_whois")));
+            room.setCanSendPrivateMessage( roomConfig.get("muc#roomconfig_allowpm") );
             room.setChangeNickname("1".equals(roomConfig.get("x-muc#roomconfig_canchangenick")));
             room.setRegistrationEnabled("1".equals(roomConfig.get("x-muc#roomconfig_registration")));
             room.setPersistent("1".equals(roomConfig.get("muc#roomconfig_persistentroom")));

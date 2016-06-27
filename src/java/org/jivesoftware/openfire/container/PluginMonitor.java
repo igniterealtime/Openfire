@@ -277,6 +277,13 @@ public class PluginMonitor
                             } );
                         }
 
+                        // Before running any plugin, make sure that the admin plugin is loaded. It is a dependency
+                        // of all plugins that attempt to modify the admin panel.
+                        if ( pluginManager.getPlugin( "admin" ) == null )
+                        {
+                            pluginManager.loadPlugin( dirs.getFirst().get( 0 ) );
+                        }
+
                         // Hierarchies could be processed in parallel. This is likely to be beneficial during the first
                         // execution of this monitor, as during later executions, most plugins will likely already be loaded.
                         final int parallelProcessMax = JiveGlobals.getIntProperty( "plugins.loading.max-parallel", 4 );

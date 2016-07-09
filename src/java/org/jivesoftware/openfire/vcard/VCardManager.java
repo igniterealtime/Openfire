@@ -100,6 +100,10 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
                 vcardCache.remove(username);
             }
         });
+        
+        // Add custom Hypercare event listener for setting the name property equal to the vCard
+        // GIVEN + FAMILY fields
+        VCardEventDispatcher.addListener(new HypercareVCardListener());
     }
 
     /**

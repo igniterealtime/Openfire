@@ -59,7 +59,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultCache<K, V> implements Cache<K, V> {
 
-	private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
+    private static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
+    private static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
+
+    private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
 
     /**
      * The map the keys and values are stored in.
@@ -133,6 +136,8 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     @Override
     public synchronized V put(K key, V value) {
+        checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
+        checkNotNull(value, NULL_VALUE_IS_NOT_ALLOWED);
         // Delete an old entry if it exists.
         V answer = remove(key);
 
@@ -174,6 +179,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     @Override
     public synchronized V get(Object key) {
+        checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
@@ -200,6 +206,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     @Override
     public synchronized V remove(Object key) {
+        checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         DefaultCache.CacheObject<V> cacheObject = map.get(key);
         // If the object is not in cache, stop trying to remove it.
         if (cacheObject == null) {
@@ -285,6 +292,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
         @Override
         public boolean contains(Object o) {
+            checkNotNull(o, NULL_KEY_IS_NOT_ALLOWED);
             Iterator<V> it = iterator();
             while (it.hasNext()) {
                 if (it.next().equals(o)) {
@@ -391,6 +399,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     @Override
     public boolean containsKey(Object key) {
+        checkNotNull(key, NULL_KEY_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
@@ -409,28 +418,15 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     @Override
     public boolean containsValue(Object value) {
+        checkNotNull(value, NULL_VALUE_IS_NOT_ALLOWED);
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
         deleteExpiredEntries();
-
-        if(value == null) {
-            return containsNullValue();
-        }
 
         Iterator it = values().iterator();
         while(it.hasNext()) {
             if(value.equals(it.next())) {
                  return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean containsNullValue() {
-        Iterator it = values().iterator();
-        while(it.hasNext()) {
-            if(it.next() == null) {
-                return true;
             }
         }
         return false;
@@ -701,6 +697,12 @@ public class DefaultCache<K, V> implements Cache<K, V> {
         public CacheObject(V object, int size) {
             this.object = object;
             this.size = size;
+        }
+    }
+
+    private void checkNotNull(final Object argument, final String message) {
+        if (argument == null) {
+            throw new NullPointerException(message);
         }
     }
 }

@@ -27,6 +27,7 @@ import org.apache.mina.transport.socket.SocketAcceptor;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.util.JiveGlobals;
@@ -49,30 +50,45 @@ public class DebuggerPlugin implements Plugin, PropertyEventListener {
 
     private InterpretedXMLPrinter interpretedPrinter;
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(final PluginManager pluginManager, final File pluginDirectory) {
+        if (pluginManager.isExecuted()) {
+            addInterceptors();
+        } else {
+            pluginManager.addPluginManagerListener(new PluginManagerListener() {
+                public void pluginsMonitored() {
+                    // Stop listening for plugin events
+                    pluginManager.removePluginManagerListener(this);
+                    // Start listeners
+                    addInterceptors();
+                }
+            });
+        }
+    }
+
+    private void addInterceptors() {
         // Add filter to filter chain builder
         ConnectionManagerImpl connManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
         defaultPortFilter = new RawPrintFilter("C2S");
         SocketAcceptor socketAcceptor = connManager.getSocketAcceptor();
         if (socketAcceptor != null) {
-            socketAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", defaultPortFilter);
+            socketAcceptor.getFilterChain().addFirst("rawDebugger", defaultPortFilter);
         }
         oldPortFilter = new RawPrintFilter("SSL");
         SocketAcceptor sslAcceptor = connManager.getSSLSocketAcceptor();
         if (sslAcceptor != null) {
-            sslAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", oldPortFilter);
+            sslAcceptor.getFilterChain().addFirst("rawDebugger", oldPortFilter);
         }
 
         componentPortFilter = new RawPrintFilter("ExComp");
         SocketAcceptor componentAcceptor = connManager.getComponentAcceptor();
         if (componentAcceptor != null) {
-            componentAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", componentPortFilter);
+            componentAcceptor.getFilterChain().addFirst("rawDebugger", componentPortFilter);
         }
 
         multiplexerPortFilter = new RawPrintFilter("CM");
         SocketAcceptor multiplexerAcceptor = connManager.getMultiplexerSocketAcceptor();
         if (multiplexerAcceptor != null) {
-            multiplexerAcceptor.getFilterChain().addBefore("xmpp", "rawDebugger", multiplexerPortFilter);
+            multiplexerAcceptor.getFilterChain().addFirst("rawDebugger", multiplexerPortFilter);
         }
 
         interpretedPrinter = new InterpretedXMLPrinter();

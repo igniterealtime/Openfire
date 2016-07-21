@@ -9,6 +9,15 @@ import javax.ws.rs.core.Response;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.group.ConcurrentGroupList;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCChannelType;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.MUCRoomEntity;
@@ -18,20 +27,12 @@ import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntities;
 import org.jivesoftware.openfire.plugin.rest.entity.ParticipantEntity;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ExceptionType;
 import org.jivesoftware.openfire.plugin.rest.exceptions.ServiceException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
-import org.jivesoftware.openfire.group.ConcurrentGroupList;
-import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.plugin.rest.utils.MUCRoomUtils;
 import org.jivesoftware.openfire.plugin.rest.utils.UserUtils;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 /**
  * The Class MUCRoomController.
@@ -578,7 +579,13 @@ public class MUCRoomController {
 		MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName)
 				.getChatRoom(roomName.toLowerCase());
 		try {
-			room.addNone(UserUtils.checkAndGetJID(jid), room.getRole());
+			  JID userJid = UserUtils.checkAndGetJID(jid);
+			  
+			  // Send a presence to other room members
+			  List<Presence> addNonePresence = room.addNone(userJid, room.getRole());
+			  for (Presence presence : addNonePresence) {
+			    room.send(presence);
+			  }
 		} catch (ForbiddenException e) {
 			throw new ServiceException("Could not delete affiliation", jid, ExceptionType.NOT_ALLOWED, Response.Status.FORBIDDEN, e);
 		} catch (ConflictException e) {

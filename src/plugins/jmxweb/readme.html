@@ -99,6 +99,14 @@ It also includes the mbeans from the java-monitor probe for openfire.
 <li>xmpp.jmx.enabled (true or false)</li>
 <li>xmpp.jmx.secure (true or false)</li>
 </ul>
+<p>If you want your admin users to recieve periodic summary emails of JMX, configure Opefire email service and add the following to System Properties via the Web Admin Console.</p>
+
+<ul>
+<li>jmxweb.email.monitoring - (true or false)</li>
+<li>jmxweb.crontrigger.schedule - (a <a href="http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-06.html">cron-trigger expression</a>. The default setting is "0 0 0/12 * * ?" which means run report daily, twice a day at 12 midnight and 12 noon.)</li>
+<li>jmxweb.admin.username - any valid admin user name. Required if >xmpp.jmx.secure is set to true</li>
+<li>jmxweb.admin.password - the password for above admin user. Required if >xmpp.jmx.secure is set to true</li>
+</ul>
 <p><img src="http://community.igniterealtime.org/servlet/JiveServlet/downloadImage/38-1735-33840/Image2.jpg" style="width: 620px; height: 349px;" __jive_id="33840" /></p>
 <h2>How to use</h2>
 <p><span>To access hawtio, point your browser at </span><a href="http://your-server:7070/hawtio" rel="nofollow" target="_blank">http://your-server:7070/hawtio</a></p>

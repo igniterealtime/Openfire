@@ -164,7 +164,7 @@
            <a href="../../user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
        </td>
        <td width="33">
-           <%= user.getName() %> &nbsp;
+           <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
        </td>
        <td width="15%">
            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>

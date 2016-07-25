@@ -76,6 +76,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         super("Connection Manager");
 
         InetAddress bindAddress = null;
+        InetAddress adminConsoleBindAddress = null;
+
         try
         {
             bindAddress = getListenAddress();
@@ -83,6 +85,19 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         catch ( UnknownHostException e )
         {
             Log.warn( "Unable to resolve bind address: ", e );
+        }
+
+        try
+        {
+            adminConsoleBindAddress = getAdminConsoleListenAddress();
+            if( adminConsoleBindAddress == null )
+            {
+                adminConsoleBindAddress = bindAddress;
+            }
+        }
+        catch( UnknownHostException e )
+        {
+            Log.warn(  "Unable to resolve admin console bind address: ", e );
         }
 
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
@@ -230,7 +245,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 null,
                 Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use webAdminSslListener instead.
                 null,
-                bindAddress,
+                adminConsoleBindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
                 null // Should we have compression on the admin console?
@@ -245,7 +260,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 null,
                 Connection.TLSPolicy.legacyMode.name(),
                 null,
-                bindAddress,
+                adminConsoleBindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.WEBADMIN ),
                 null // Should we have compression on the admin console?
@@ -341,6 +356,26 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
         return bindInterface;
+    }
+
+    /**
+     * Returns the specific network interface on which the Openfire administration
+     * console should be configured to listen, or null when no such preference
+     * has been configured.
+     *
+     * @return A network interface or null.
+     * @throws UnknownHostException When the configured network name cannot be resolved.
+     */
+    public InetAddress getAdminConsoleListenAddress() throws UnknownHostException
+    {
+        String acInterfaceName = JiveGlobals.getXMLProperty( "adminConsole.interface" );
+        InetAddress acBindInterface = null;
+        if (acInterfaceName != null) {
+            if (acInterfaceName.trim().length() > 0) {
+                acBindInterface = InetAddress.getByName(acInterfaceName);
+            }
+        }
+        return acBindInterface;
     }
 
     /**

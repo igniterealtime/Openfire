@@ -45,6 +45,8 @@ class ConversationLogEntry {
     private final JID sender;
     
     private final String nickname;
+
+    private final String stanza;
     
     private final long roomID;
 
@@ -61,6 +63,7 @@ class ConversationLogEntry {
         this.date = date;
         this.subject = message.getSubject();
         this.body = message.getBody();
+        this.stanza = message.toString();
         this.sender = sender;
         this.roomID = room.getID();
         this.nickname = message.getFrom().getResource();
@@ -120,4 +123,10 @@ class ConversationLogEntry {
         return roomID;
     }
 
+    /**
+     * Returns the string representation of the message.
+     *
+     * @return string representation of the stanza.
+     */
+    public String getStanza() { return stanza; }
 }

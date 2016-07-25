@@ -260,7 +260,8 @@ CREATE TABLE ofMucConversationLog (
   nickname            NVARCHAR(255)  NULL,
   logTime             CHAR(15)       NOT NULL,
   subject             NVARCHAR(255)  NULL,
-  body                TEXT           NULL
+  body                TEXT           NULL,
+  stanza                TEXT           NULL
 );
 CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
 

@@ -1,13 +1,10 @@
 package com.reucon.openfire.plugin.archive.xep0313;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.TimeZone;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -31,17 +28,17 @@ import com.reucon.openfire.plugin.archive.xep0059.XmppResultSet;
 /**
  * XEP-0313 IQ Query Handler
  */
-public class IQQueryHandler extends AbstractIQHandler implements
+abstract class IQQueryHandler extends AbstractIQHandler implements
 		ServerFeaturesProvider {
 
 	private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
-	private static final String NAMESPACE = "urn:xmpp:mam:0";
-	private static final String MODULE_NAME = "Message Archive Management Query Handler";
+	protected final String NAMESPACE;
 
-	XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
+	private final XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
 
-	protected IQQueryHandler() {
-		super(MODULE_NAME, "query", NAMESPACE);
+	IQQueryHandler(final String moduleName, final String namespace) {
+		super(moduleName, "query", namespace);
+		NAMESPACE = namespace;
 	}
 
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
@@ -73,6 +70,8 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			}
 		}
 
+		sendMidQuery(packet, session);
+
 		final QueryRequest queryRequest = new QueryRequest(packet.getChildElement(), archiveJid);
 		Collection<ArchivedMessage> archivedMessages = retrieveMessages(queryRequest);
 
@@ -80,17 +79,21 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			sendMessageResult(session, queryRequest, archivedMessage);
 		}
 
-		sendFinalMessage(session, queryRequest);
-
-		sendAcknowledgementResult(packet, session);
+		sendEndQuery(packet, session, queryRequest);
 
 		return null;
 	}
 
+	protected void sendMidQuery(IQ packet, LocalClientSession session) {
+		// Default: Do nothing.
+	}
+
+	protected abstract void sendEndQuery(IQ packet, LocalClientSession session, QueryRequest queryRequest);
+
 	/**
 	 * Create error response to send to client
-	 * @param packet
-	 * @return
+	 * @param packet IQ stanza received
+	 * @return IQ stanza to be sent.
 	 */
 	private IQ buildErrorResponse(IQ packet) {
         IQ reply = IQ.createResultIQ(packet);
@@ -268,4 +271,18 @@ public class IQQueryHandler extends AbstractIQHandler implements
 		return Collections.singleton(NAMESPACE).iterator();
 	}
 
+	void completeFinElement(QueryRequest queryRequest, Element fin) {
+		if(queryRequest.getQueryid() != null) {
+			fin.addAttribute("queryid", queryRequest.getQueryid());
+		}
+
+		XmppResultSet resultSet = queryRequest.getResultSet();
+		if (resultSet != null) {
+			fin.add(resultSet.createResultElement());
+
+			if(resultSet.isComplete()) {
+				fin.addAttribute("complete", "true");
+			}
+		}
+	}
 }

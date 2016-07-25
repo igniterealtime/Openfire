@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.plugin;
 import java.io.File;
 import java.io.FileFilter;
 
+import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support1;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.archive.ArchiveIndexer;
 import org.jivesoftware.openfire.archive.ArchiveInterceptor;
@@ -73,6 +74,7 @@ public class MonitoringPlugin implements Plugin {
 	private IndexManager indexManager;
 	private Xep0136Support xep0136Support;
 	private Xep0313Support xep0313Support;
+	private Xep0313Support1 xep0313Support1;
 
 	public MonitoringPlugin() {
 		instance = this;
@@ -161,6 +163,9 @@ public class MonitoringPlugin implements Plugin {
 
 		xep0313Support = new Xep0313Support(XMPPServer.getInstance());
 		xep0313Support.start();
+
+		xep0313Support1 = new Xep0313Support1(XMPPServer.getInstance());
+		xep0313Support1.start();
 
 		// Check if we Enterprise is installed and stop loading this plugin if
 		// found

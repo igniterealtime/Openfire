@@ -55,7 +55,7 @@ public class DefaultAuthProvider implements AuthProvider {
 	    private static final String LOAD_PASSWORD =
 	            "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
 	    private static final String TEST_PASSWORD =
-	            "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey FROM ofUser WHERE username=?";
+	            "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey,serverKey FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
             "UPDATE ofUser SET plainPassword=?, encryptedPassword=?, storedKey=?, serverKey=?, salt=?, iterations=? WHERE username=?";
     
@@ -66,6 +66,88 @@ public class DefaultAuthProvider implements AuthProvider {
      */
     public DefaultAuthProvider() {
 
+    }
+
+    private class UserInfo {
+        String plainText;
+        String encrypted;
+        int iterations;
+        String salt;
+        String storedKey;
+        String serverKey;
+    }
+
+    private UserInfo getUserInfo(String username) throws UnsupportedOperationException, UserNotFoundException {
+        if (!isScramSupported()) {
+            // Reject the operation since the provider  does not support SCRAM
+            throw new UnsupportedOperationException();
+        }
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(TEST_PASSWORD);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new UserNotFoundException(username);
+            }
+            UserInfo userInfo = new UserInfo();
+            userInfo.plainText = rs.getString(1);
+            userInfo.encrypted = rs.getString(2);
+            userInfo.iterations = rs.getInt(3);
+            userInfo.salt = rs.getString(4);
+            userInfo.storedKey = rs.getString(5);
+            if (userInfo.encrypted != null) {
+                try {
+                    userInfo.plainText = AuthFactory.decryptPassword(userInfo.encrypted);
+                }
+                catch (UnsupportedOperationException uoe) {
+                    // Ignore and return plain password instead.
+                }
+            }
+            if (userInfo.plainText != null) {
+                boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+                if (scramOnly) {
+                    // If we have a password here, but we're meant to be scramOnly, we should reset it.
+                    setPassword(username, userInfo.plainText);
+                }
+                if (userInfo.salt == null) {
+                    // RECURSE
+                    return getUserInfo(username);
+                }
+            }
+            // Good to go.
+            return userInfo;
+        }
+        catch (SQLException sqle) {
+            Log.error("User SQL failure:", sqle);
+            throw new UserNotFoundException(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+    @Override
+    public String getSalt(String username) throws UserNotFoundException {
+        return getUserInfo(username).salt;
+    }
+
+    @Override
+    public int getIterations(String username) throws UserNotFoundException {
+        return getUserInfo(username).iterations;
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UserNotFoundException {
+        return getUserInfo(username).storedKey;
+    }
+
+    @Override
+    public String getServerKey(String username) throws UserNotFoundException {
+        return getUserInfo(username).serverKey;
     }
 
     @Override

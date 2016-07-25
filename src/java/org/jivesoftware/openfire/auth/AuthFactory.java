@@ -293,4 +293,17 @@ public class AuthFactory {
         // TODO Auto-generated method stub
         return authProvider.isScramSupported();
     }
+
+    public static String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getSalt(username);
+    }
+    public static int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getIterations(username);
+    }
+    public static String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getServerKey(username);
+    }
+    public static String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return authProvider.getStoredKey(username);
+    }
 }

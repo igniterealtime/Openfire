@@ -448,7 +448,27 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         // TODO Auto-generated method stub
         return false;
     }
-    
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Support a subset of JDBCAuthProvider properties when updated via REST,
      * web GUI, or other sources. Provider strings (and related settings) must

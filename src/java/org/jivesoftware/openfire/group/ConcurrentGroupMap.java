@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.xmpp.packet.JID;
 
@@ -119,7 +120,7 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
 				if (result == null) {
 					result = new HashSet<>();
 					// add all the groups into the group set
-					Iterator<K> iterator = keySet().iterator();
+					Iterator<K> iterator = ((ConcurrentMap) this).keySet().iterator(); // Cast prevents Java compatibility issue as described in OF-1116. Remove the cast when Java 7 support is dropped from Openfire.
 					while (iterator.hasNext()) {
 						K key = iterator.next();
 						Group group = Group.resolveFrom(key);

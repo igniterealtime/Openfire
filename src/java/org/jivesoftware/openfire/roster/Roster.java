@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.PresenceManager;
@@ -78,12 +79,12 @@ public class Roster implements Cacheable, Externalizable {
     /**
      * Roster item cache - table: key jabberid string; value roster item.
      */
-    protected ConcurrentHashMap<String, RosterItem> rosterItems = new ConcurrentHashMap<>();
+    protected ConcurrentMap<String, RosterItem> rosterItems = new ConcurrentHashMap<>();
     /**
      * Contacts with subscription FROM that only exist due to shared groups
      * key: jabberid string; value: groups why the implicit roster item exists (aka invisibleSharedGroups).
      */
-    protected ConcurrentHashMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<>();
+    protected ConcurrentMap<String, Set<String>> implicitFrom = new ConcurrentHashMap<>();
 
     private RosterItemProvider rosterItemProvider;
     private String username;

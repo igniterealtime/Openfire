@@ -21,12 +21,10 @@
 package org.jivesoftware.openfire.filetransfer.proxy;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -94,9 +92,9 @@ public class FileTransferProxy extends BasicModule
     private IQHandlerInfo info;
     private RoutingTable routingTable;
     private PacketRouter router;
-    private String proxyIP;
     private ProxyConnectionManager connectionManager;
 
+    // The address to operate on. Null for any address.
     private InetAddress bindInterface;
 
 
@@ -136,14 +134,17 @@ public class FileTransferProxy extends BasicModule
                 IQ reply = IQ.createResultIQ(packet);
                 Element newChild = reply.setChildElement("query",
                         FileTransferManager.NAMESPACE_BYTESTREAMS);
-                Element response = newChild.addElement("streamhost");
-                response.addAttribute("jid", getServiceDomain());
-                response.addAttribute("host", proxyIP);
-                response.addAttribute("port", String.valueOf(connectionManager.getProxyPort()));
+                for ( InetAddress address : getAddresses() )
+                {
+                    Element response = newChild.addElement( "streamhost" );
+                    response.addAttribute( "jid", getServiceDomain() );
+                    response.addAttribute( "host", address.getHostAddress() );
+                    response.addAttribute( "port", String.valueOf( connectionManager.getProxyPort() ) );
+                }
                 router.route(reply);
                 return true;
             }
-            else if (packet.getType() == IQ.Type.set && childElement != null) {
+            else if (packet.getType() == IQ.Type.set) {
                 String sid = childElement.attributeValue("sid");
                 JID from = packet.getFrom();
                 JID to = new JID(childElement.elementTextTrim("activate"));
@@ -170,37 +171,81 @@ public class FileTransferProxy extends BasicModule
     }
 
     @Override
-	public void initialize(XMPPServer server) {
+    public void initialize( XMPPServer server )
+    {
         super.initialize(server);
 
         proxyServiceName = JiveGlobals.getProperty("xmpp.proxy.service", "proxy");
         routingTable = server.getRoutingTable();
         router = server.getPacketRouter();
 
-        // Load the external IP and port information
-        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
-        bindInterface = null;
-        if (interfaceName != null) {
-            if (interfaceName.trim().length() > 0) {
-                try {
-                    bindInterface = InetAddress.getByName(interfaceName);
-                }
-                catch (UnknownHostException e) {
-                    Log.error("Error binding to network.interface", e);
-                }
+        final String hardCodedProxyIP = JiveGlobals.getProperty( "xmpp.proxy.externalip" );
+        final String interfaceName = JiveGlobals.getXMLProperty( "network.interface" );
+        if ( hardCodedProxyIP != null && !hardCodedProxyIP.trim().isEmpty() )
+        {
+            // First choice: a hardcoded IP address, if one exists.
+            try
+            {
+                bindInterface = InetAddress.getByName( hardCodedProxyIP.trim() );
+            }
+            catch ( UnknownHostException e )
+            {
+                Log.error( "Error binding to xmpp.proxy.externalip '{}'", interfaceName, e );
             }
         }
+        else if ( interfaceName != null && !interfaceName.trim().isEmpty() )
+        {
+            // No hardcoded IP? Let's see if we hardcoded a specific interface, then use its address.
+            try
+            {
+                bindInterface = InetAddress.getByName( interfaceName.trim() );
+            }
+            catch ( UnknownHostException e )
+            {
+                Log.error( "Error binding to network.interface '{}'", interfaceName, e );
+            }
+        }
+        else
+        {
+            // If no configuration is available, use all available addresses.
+            bindInterface = null;
+        }
 
-        try {
-            proxyIP = JiveGlobals.getProperty("xmpp.proxy.externalip",
-                    (bindInterface != null ? bindInterface.getHostAddress()
-                            : InetAddress.getLocalHost().getHostAddress()));
-        }
-        catch (UnknownHostException e) {
-            Log.error("Couldn't discover local host", e);
-        }
-        
         connectionManager = new ProxyConnectionManager(getFileTransferManager(server));
+    }
+
+    /**
+     * Returns the IP address(es) that are used.
+     */
+    private Set<InetAddress> getAddresses()
+    {
+        final Set<InetAddress> result = new HashSet<>();
+        if ( bindInterface != null )
+        {
+            result.add( bindInterface );
+        }
+        else
+        {
+            // When there's no specific address configured, return all available addresses.
+            try
+            {
+                final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+                while ( networkInterfaces.hasMoreElements() )
+                {
+                    final NetworkInterface networkInterface = networkInterfaces.nextElement();
+                    final Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                    while ( inetAddresses.hasMoreElements() )
+                    {
+                        result.add( inetAddresses.nextElement() );
+                    }
+                }
+            }
+            catch ( SocketException e )
+            {
+                Log.error( "Error determining all addresses for this server", e );
+            }
+        }
+        return result;
     }
 
     private FileTransferManager getFileTransferManager(XMPPServer server) {

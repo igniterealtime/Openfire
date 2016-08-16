@@ -20,17 +20,7 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +35,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
@@ -55,6 +46,7 @@ import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.HistoryStrategy;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCEventDispatcher;
@@ -167,6 +159,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * The handler of search requests ('jabber:iq:search' namespace).
      */
     private IQMUCSearchHandler searchHandler = null;
+
+    /**
+     * Plugin (etc) provided IQ Handlers for MUC:
+     */
+    private Map<String,IQHandler> iqHandlers = null;
 
     /**
      * The total time all agents took to chat *
@@ -294,6 +291,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
+    public void addIQHandler(IQHandler iqHandler) {
+        if (this.iqHandlers == null) {
+            this.iqHandlers = new HashMap<>();
+        }
+        this.iqHandlers.put(iqHandler.getInfo().getNamespace(), iqHandler);
+    }
+
+    @Override
+    public void removeIQHandler(IQHandler iqHandler) {
+        if (this.iqHandlers != null) {
+            if (iqHandler == this.iqHandlers.get(iqHandler.getInfo().getNamespace())) {
+                this.iqHandlers.remove(iqHandler.getInfo().getNamespace());
+            }
+        }
+    }
+
+    @Override
     public String getDescription() {
         return chatDescription;
     }
@@ -402,6 +416,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             router.route( IQ.createResultIQ(iq) );
         }
         else {
+            IQHandler h = this.iqHandlers.get(namespace);
+            if (h != null) {
+                try {
+                    IQ reply = h.handleIQ(iq);
+                    if (reply != null) {
+                        router.route(reply);
+                    }
+                } catch (UnauthorizedException e) {
+                    IQ reply = IQ.createResultIQ(iq);
+                    reply.setType(IQ.Type.error);
+                    reply.setError(PacketError.Condition.service_unavailable);
+                }
+            }
             return false;
         }
         return true;
@@ -1527,6 +1554,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
                 else {
                     features.add("muc_temporary");
+                }
+                if (!extraDiscoFeatures.isEmpty()) {
+                    features.addAll(extraDiscoFeatures);
                 }
             }
         }

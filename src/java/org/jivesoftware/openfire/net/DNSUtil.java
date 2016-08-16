@@ -88,6 +88,9 @@ public class DNSUtil {
         List<HostAddress> results = new LinkedList<>();
         if (dnsOverride != null) {
             HostAddress hostAddress = dnsOverride.get(domain);
+            if (hostAddress == null) {
+                hostAddress = dnsOverride.get("*");
+            }
             if (hostAddress != null) {
                 results.add(hostAddress);
                 return results;

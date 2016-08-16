@@ -608,7 +608,7 @@ public class SASLAuthentication {
     private static void initMechanisms()
     {
 
-        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI" );
+        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI,EXTERNAL" );
         final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
         mechanisms = new HashSet<>();
         while ( st.hasMoreTokens() )

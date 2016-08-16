@@ -262,16 +262,20 @@ public class SASLAuthentication {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
 
-                    // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server.
+                    // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server,
+                    // yet, most of the XMPP implemenations of DIGEST-MD5 will actually use the domain name. To account for that,
+                    // here, we'll use the host name, unless DIGEST-MD5 is being negotiated!
                     final String fqhn = JiveGlobals.getProperty( "xmpp.fqdn", XMPPServer.getInstance().getServerInfo().getHostname() );
+                    final String fqdn = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+                    final String serverName = ( mechanismName.equals( "DIGEST-MD5" ) ? fqdn : fqhn );
 
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
-                    props.put( "com.sun.security.sasl.digest.realm", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
+                    props.put( "com.sun.security.sasl.digest.realm", fqdn );
 
-                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", fqhn, props, new XMPPCallbackHandler() );
+                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );

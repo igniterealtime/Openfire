@@ -80,11 +80,7 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.DataForm.Type;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 import org.xmpp.resultsetmanagement.ResultSet;
 
 /**
@@ -335,10 +331,26 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     return;
                 }
             }
-            // The packet is a normal packet that should possibly be sent to the room                
-            JID recipient = packet.getTo();
-            String roomName = recipient != null ? recipient.getNode() : null;
-            getChatUser(packet.getFrom(), roomName).process(packet);
+
+            if ( packet.getTo().getNode() == null )
+            {
+                // This was addressed at the service itself, which by now should have been handled.
+                if ( packet instanceof IQ && ((IQ) packet).isRequest() )
+                {
+                    final IQ reply = IQ.createResultIQ( (IQ) packet );
+                    reply.setChildElement( ((IQ) packet).getChildElement().createCopy() );
+                    reply.setError( PacketError.Condition.feature_not_implemented );
+                    router.route( reply );
+                }
+                Log.debug( "Ignoring stanza addressed at conference service: {}", packet.toXML() );
+            }
+            else
+            {
+                // The packet is a normal packet that should possibly be sent to the room
+                JID recipient = packet.getTo();
+                String roomName = recipient != null ? recipient.getNode() : null;
+                getChatUser( packet.getFrom(), roomName ).process( packet );
+            }
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -385,6 +397,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // a component
             IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
             router.route(reply);
+        }
+        else if ("urn:xmpp:ping".equals(namespace)) {
+            router.route( IQ.createResultIQ(iq) );
         }
         else {
             return false;

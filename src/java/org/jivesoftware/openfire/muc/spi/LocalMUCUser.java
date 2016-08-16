@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -223,10 +224,8 @@ public class LocalMUCUser implements MUCUser {
         JID recipient = packet.getTo();
         String group = recipient.getNode();
         if (group == null) {
-            // Ignore packets to the groupchat server
-            // In the future, we'll need to support TYPE_IQ queries to the server for MUC
-            Log.info(LocaleUtils.getLocalizedString("muc.error.not-supported") + " "
-                    + packet.toString());
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
         else {
             MUCRole role = roles.get(group);
@@ -371,13 +370,18 @@ public class LocalMUCUser implements MUCUser {
         lastPacketTime = System.currentTimeMillis();
         JID recipient = packet.getTo();
         String group = recipient.getNode();
-        if (group == null) {
-            // Ignore packets to the groupchat server
-            // In the future, we'll need to support TYPE_IQ queries to the server for MUC
-            Log.info(LocaleUtils.getLocalizedString("muc.error.not-supported") + " "
-                    + packet.toString());
+        if (group == null)
+        {
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            if ( packet.isRequest() )
+            {
+                sendErrorPacket( packet, PacketError.Condition.feature_not_implemented );
+            }
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
-        else {
+        else
+        {
+            // Packets to a specific node/group/room
             MUCRole role = roles.get(group);
             if (role == null) {
                 // If a non-occupant sends a disco to an address of the form <room@service/nick>,
@@ -599,6 +603,9 @@ public class LocalMUCUser implements MUCUser {
                     }
                 }
             }
+        } else {
+            // Packets to the groupchat server. This should not occur (should be handled by MultiUserChatServiceImpl instead)
+            Log.warn( LocaleUtils.getLocalizedString( "muc.error.not-supported" ) + " " + packet.toString() );
         }
     }
 

@@ -79,7 +79,7 @@
 
                     // Log the event
                     webManager.logEvent( "deleted SSL cert from " + connectionType + " with alias " + alias, null );
-                    response.sendRedirect( "security-keystore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
+                    response.sendRedirect( "security-truststore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
                 catch ( Exception e )
@@ -221,7 +221,7 @@
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
                                     <td width="1" align="center">
-                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true&csrf=csrf"
+                                        <a href="security-truststore.jsp?connectionType=${connectionType}&alias=${alias}&delete=true&csrf=${csrf}"
                                            title="<fmt:message key="global.click_delete"/>"
                                            onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
                                                 ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>

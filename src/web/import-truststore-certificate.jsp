@@ -140,6 +140,7 @@
 
     <!-- BEGIN 'Import Certificate' -->
     <form action="import-truststore-certificate.jsp?connectionType=${connectionType}" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
         <fmt:message key="ssl.import.certificate.truststore.boxtitle" var="title"/>
         <admin:contentBox title="${title}">
             <table cellpadding="3" cellspacing="0" border="0">

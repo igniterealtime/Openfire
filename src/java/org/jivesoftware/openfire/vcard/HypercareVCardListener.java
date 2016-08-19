@@ -30,7 +30,7 @@ public class HypercareVCardListener implements VCardListener {
 		String fullName = "";
 		if (firstName!= null) {
 			if (lastName != null) {
-				fullName = firstName.getStringValue() + lastName.getStringValue();
+				fullName = firstName.getStringValue() + " " + lastName.getStringValue();
 			} else {
 				fullName = firstName.getStringValue();
 			}

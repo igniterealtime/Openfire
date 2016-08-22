@@ -549,16 +549,17 @@ public class SASLAuthentication {
             String principal = "";
             ArrayList<String> principals = new ArrayList<>();
             Connection connection = session.getConnection();
-            if (connection.getPeerCertificates().length < 1) {
+            Certificate[] peerCertificates = connection.getPeerCertificates();
+            if (peerCertificates == null || peerCertificates.length < 1) {
                 Log.debug("SASLAuthentication: EXTERNAL authentication requested, but no certificates found.");
                 authenticationFailed(session, Failure.NOT_AUTHORIZED);
                 return Status.failed; 
             }
 
-            final KeyStore keyStore   = connection.getConfiguration().getIdentityStore().getStore();
-            final KeyStore trustStore = connection.getConfiguration().getTrustStore().getStore();
-
-            final X509Certificate trusted = CertificateManager.getEndEntityCertificate( connection.getPeerCertificates(), keyStore, trustStore );
+            final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+            final KeyStore keyStore   = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S ).getStore();
+            final KeyStore trustStore = certificateStoreManager.getTrustStore( ConnectionType.SOCKET_C2S ).getStore();
+            final X509Certificate trusted = CertificateManager.getEndEntityCertificate(peerCertificates, keyStore, trustStore );
 
             if (trusted == null) {
                 Log.debug("SASLAuthentication: EXTERNAL authentication requested, but EE cert untrusted.");

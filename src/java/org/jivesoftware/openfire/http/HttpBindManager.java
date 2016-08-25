@@ -547,6 +547,7 @@ public final class HttpBindManager {
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+        context.setAllowNullPathInfo(true);
         context.addServlet(new ServletHolder(new HttpBindServlet()),"/*");
         if (isHttpCompressionEnabled()) {
 	        Filter gzipFilter = new AsyncGzipFilter() {
@@ -578,6 +579,7 @@ public final class HttpBindManager {
         initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
+        context.setAllowNullPathInfo(true);
         context.addServlet(new ServletHolder(new FlashCrossDomainServlet()),"");
     }
 

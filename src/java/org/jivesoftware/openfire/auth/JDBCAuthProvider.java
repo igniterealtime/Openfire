@@ -225,6 +225,11 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
             }
             return OpenBSDBCrypt.checkPassword(hashed, plainText.toCharArray());
         }
+        if (passwordTypes.get(lastIndex) == PasswordType.hmailserver) {
+            String salttext = hashed.substring(0, 6);
+            String plainTextSaltedHash = salttext.concat(StringUtils.hash(salttext.concat(plainText), "SHA-256")).toLowerCase();
+            return plainTextSaltedHash.equals(hashed);
+        }
 
         return hashPassword(plainText).equals(hashed);
     }
@@ -252,6 +257,11 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
                 new SecureRandom().nextBytes(salt);
                 int cost = (bcryptCost < 4 || bcryptCost > 31) ? DEFAULT_BCRYPT_COST : bcryptCost;
                 return OpenBSDBCrypt.generate(password.toCharArray(), salt, cost);
+            case hmailserver:
+                salt = new byte[3];
+                new SecureRandom().nextBytes(salt);
+                String salttext = javax.xml.bind.DatatypeConverter.printHexBinary(salt).toLowerCase();
+                return salttext.concat(StringUtils.hash(salttext.concat(password), "SHA-256")).toLowerCase();
             case plain:
             default:
                 return password;
@@ -416,7 +426,17 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         /**
           * The password is stored as a bcrypt hash.
           */
-        bcrypt;
+        bcrypt,
+        /**
+         * The password is stored as a salted SHA-256 value. 
+         * To be more specific, the password is stored in the format: 
+         * concat("010a0f",sha256(concat("010a0f","plaintextPassword"))) , 
+         * where "010a0f" is a three byte salt in hex text format (lower case), 
+         * "plaintextPassword" is the plain text password, 
+         * and the output is a string of hex text (lower case). 
+         * This is the default format used by hMailServer to store passwords in its database.
+         */
+        hmailserver;
    }
 
     /**

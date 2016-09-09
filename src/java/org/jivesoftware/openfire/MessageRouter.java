@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire;
 
+import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.carbons.Sent;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -31,6 +32,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -39,6 +41,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -135,6 +138,16 @@ public class MessageRouter extends BasicModule {
                 if (isAcceptable) {
                     boolean isPrivate = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2")) != null;
                     try {
+                    	// Hypercare: Add a delay timestamp for ALL messages, not just when they are stored offline
+                    	// if there is already a delay stamp, we shouldn't add another.
+                        Element delaytest = packet.getChildElement("delay", "urn:xmpp:delay");
+                        if (delaytest == null) {
+                            // Add a delayed delivery (XEP-0203) element to the message.
+                        	Date creationDate = new Date();
+                            Element delay = packet.addChildElement("delay", "urn:xmpp:delay");
+                            delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                            delay.addAttribute("stamp", XMPPDateTimeFormat.format(creationDate));
+                        }
                         // Deliver stanza to requested route
                         routingTable.routePacket(recipientJID, packet, false);
                     } catch (Exception e) {

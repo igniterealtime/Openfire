@@ -53,6 +53,11 @@
                   url="system-email.jsp"
                   description="${sidebar.server-email.descr}"/>
 
+            <!-- SMS -->
+            <item id="system-sms" name="${sidebar.server-sms}"
+                  url="system-sms.jsp"
+                  description="${sidebar.server-sms.descr}"/>
+
             <!-- Security Audit Viewer -->
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"

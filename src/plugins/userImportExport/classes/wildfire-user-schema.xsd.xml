@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema xmlns:xs="http://www.w3c.org/2001/XMLSchema" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
    <xs:element name="Openfire">
       <xs:complexType>
          <xs:sequence>
@@ -11,8 +11,8 @@
    <xs:element name="User">
       <xs:complexType>
          <xs:all>
-            <xs:element ref="Username" use="required" />
-            <xs:element ref="Password" use="required" />
+            <xs:element ref="Username" />
+            <xs:element ref="Password" />
             <xs:element ref="Email" />
             <xs:element ref="Name" />
             <xs:element ref="CreationDate" />

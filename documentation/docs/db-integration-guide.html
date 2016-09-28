@@ -150,6 +150,28 @@
     &lt;/jive&gt;
 </pre>
 
+<p>Another option is to use an AdminProvider. AdminProvider instances are responsible for listing
+    the administrators users dynamically. The default use the <tt>authorizedUsernames</tt> setting
+    previously explained. JDBCAdminProvider allows to list the administrators from a SQL query.
+    For example:</p>
+
+<pre>
+&lt;jive&gt;
+  ...
+  &lt;provider&gt;
+    ...
+    &lt;admin&gt;
+      &lt;className&gt;org.jivesoftware.openfire.admin.JDBCAdminProvider&lt;/className&gt;
+    &lt;/admin&gt;
+    ...
+  &lt;/provider&gt;
+  &lt;jdbcAdminProvider&gt;
+    &lt;getAdminsSQL&gt;SELECT userid FROM user_account WHERE administrator='Y'&lt;/getAdminsSQL&gt;
+  &lt;/jdbcAdminProvider&gt;
+  ...
+&lt;/jive&gt;
+</pre>
+
 <h3>User Integration</h3>
 
 <p>Optionally, Openfire can load user data from your custom database. If you enable user integration

@@ -373,8 +373,14 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
         } else if (obj instanceof Date) {
             out.writeByte(8);
             out.writeLong(((Date) obj).getTime());
-        } else {
+        } else if(obj instanceof byte[]){
             out.writeByte(9);
+            // write length
+            out.writeInt(((byte[]) obj).length);
+            // write byte array
+            out.write((byte[]) obj);
+        } else {
+            out.writeByte(10);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(obj);
@@ -404,6 +410,10 @@ public class ClusterExternalizableUtil implements ExternalizableUtilStrategy {
         } else if (type == 8) {
             return new Date(in.readLong());
         } else if (type == 9) {
+            byte[] buf = new byte[in.readInt()];
+            in.readFully(buf);
+            return buf;
+        } else if (type == 10) {
             int len = in.readInt();
             byte[] buf = new byte[len];
             in.readFully(buf);

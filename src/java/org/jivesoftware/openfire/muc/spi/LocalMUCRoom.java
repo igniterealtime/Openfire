@@ -1393,8 +1393,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             if (role.isLocal()) {
                 role.setAffiliation(newAffiliation);
                 role.setRole(newRole);
-                // Set the new presence, so that the updated affiliation and role is reflected in the presence stanza.
-                role.setPresence(role.getPresence());
                 // Notify the other cluster nodes to update the occupant
                 CacheFactory.doClusterTask(new UpdateOccupant(this, role));
                 // Prepare a new presence to be sent to all the room occupants

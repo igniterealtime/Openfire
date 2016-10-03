@@ -162,16 +162,7 @@ public class LocalMUCRole implements MUCRole {
         }
         this.presence = newPresence;
         this.presence.setFrom(getRoleAddress());
-        if (extendedInformation != null) {
-            // Remove any previous extendedInformation, then re-add it.
-            Element mucUser = presence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc#user"));
-            if (mucUser != null) {
-                // Remove any previous extendedInformation, then re-add it.
-                presence.getElement().remove(mucUser);
-            }
-            Element exi = extendedInformation.createCopy();
-            presence.getElement().add(exi);
-        }
+        updatePresence();
     }
 
     @Override
@@ -297,8 +288,21 @@ public class LocalMUCRole implements MUCRole {
         ElementUtil.setProperty(extendedInformation, "x.item:jid", user.getAddress().toString());
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
+        updatePresence();
     }
 
+    private void updatePresence() {
+        if (extendedInformation != null && presence != null) {
+            // Remove any previous extendedInformation, then re-add it.
+            Element mucUser = presence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc#user"));
+            if (mucUser != null) {
+                // Remove any previous extendedInformation, then re-add it.
+                presence.getElement().remove(mucUser);
+            }
+            Element exi = extendedInformation.createCopy();
+            presence.getElement().add(exi);
+        }
+    }
 
 	@Override
 	public int hashCode() {

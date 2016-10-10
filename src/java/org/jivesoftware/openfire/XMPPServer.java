@@ -587,6 +587,7 @@ public class XMPPServer {
         for (Module module : modules.values()) {
             boolean started = false;
             try {
+                logger.debug( "Starting module: " + module.getName() );
                 module.start();
             }
             catch (Exception e) {
@@ -594,7 +595,7 @@ public class XMPPServer {
                     module.stop();
                     module.destroy();
                 }
-                logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                logger.error( "An exception occurred while starting module '{}'.", module.getName(), e );
             }
         }
     }

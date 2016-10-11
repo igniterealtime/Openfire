@@ -1,10 +1,12 @@
 package org.jivesoftware.util;
 
-import org.jsmpp.InvalidResponseException;
-import org.jsmpp.PDUException;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.jsmpp.bean.*;
 import org.jsmpp.extra.NegativeResponseException;
-import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
@@ -12,10 +14,7 @@ import org.jsmpp.util.TimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A service to send SMS messages.<p>
@@ -23,6 +22,8 @@ import java.util.Map;
  * This class is configured with a set of Jive properties. Note that each service provider can require a different set
  * of properties to be set.
  * <ul>
+ * <li><tt>sms.smpp.connections.maxAmount</tt> -- the maximum amount of connections. The default value is one.
+ * <li><tt>sms.smpp.connections.idleMillis</tt> -- time (in ms) after which idle connections are allowed to be evicted. Defaults to two minutes.
  * <li><tt>sms.smpp.host</tt> -- the host name of your SMPP Server or SMSC, i.e. smsc.example.org. The default value is "localhost".
  * <li><tt>sms.smpp.port</tt> -- the port on which the SMSC is listening. Defaults to 2775.
  * <li><tt>sms.smpp.systemId</tt> -- the 'user name' to use when connecting to the SMSC.
@@ -58,25 +59,38 @@ public class SmsService
     }
 
     /**
+     * Pool of SMPP sessions that is used to transmit messages to the SMSC.
+     */
+    private final SMPPSessionPool sessionPool;
+
+    private SmsService()
+    {
+        sessionPool = new SMPPSessionPool();
+        PropertyEventDispatcher.addListener( sessionPool );
+    }
+
+    /**
      * Causes a new SMS message to be sent.
      *
      * Note that the message is sent asynchronously. This method does not block. A successful invocation does not
      * guarantee successful delivery
      *
-     * @param message The body of the message (cannot be null or empty).
+     * @param message   The body of the message (cannot be null or empty).
      * @param recipient The address / phone number to which the message is to be send (cannot be null or empty).
      */
     public void send( String message, String recipient )
     {
-        if ( message == null || message.isEmpty() ) {
+        if ( message == null || message.isEmpty() )
+        {
             throw new IllegalArgumentException( "Argument 'message' cannot be null or an empty String." );
         }
 
-        if ( recipient == null || recipient.isEmpty() ) {
+        if ( recipient == null || recipient.isEmpty() )
+        {
             throw new IllegalArgumentException( "Argument 'recipient' cannot be null or an empty String." );
         }
 
-        TaskEngine.getInstance().submit(new SmsTask( message, recipient ) );
+        TaskEngine.getInstance().submit( new SmsTask( sessionPool, message, recipient ) );
     }
 
     /**
@@ -87,31 +101,29 @@ public class SmsService
      * while sending the message are thrown by this method (which can be useful to test the configuration of this
      * service).
      *
-     * @param message The body of the message (cannot be null or empty).
+     * @param message   The body of the message (cannot be null or empty).
      * @param recipient The address / phone number to which the message is to be send (cannot be null or empty).
-     * @throws PDUException
-     * @throws ResponseTimeoutException
-     * @throws InvalidResponseException
-     * @throws NegativeResponseException
-     * @throws IOException
+     * @throws Exception On any problem.
      */
-    public void sendImmediately( String message, String recipient ) throws PDUException, ResponseTimeoutException, InvalidResponseException, NegativeResponseException, IOException
+    public void sendImmediately( String message, String recipient ) throws Exception
     {
-        if ( message == null || message.isEmpty() ) {
+        if ( message == null || message.isEmpty() )
+        {
             throw new IllegalArgumentException( "Argument 'message' cannot be null or an empty String." );
         }
 
-        if ( recipient == null || recipient.isEmpty() ) {
+        if ( recipient == null || recipient.isEmpty() )
+        {
             throw new IllegalArgumentException( "Argument 'recipient' cannot be null or an empty String." );
         }
 
         try
         {
-            new SmsTask( message, recipient ).sendMessage();
+            new SmsTask( sessionPool, message, recipient ).sendMessage();
         }
-        catch ( PDUException | ResponseTimeoutException | InvalidResponseException | NegativeResponseException | IOException e )
+        catch ( Exception e )
         {
-            Log.error( "An exception occurred while sending a SMS message (to '{}')", recipient, e);
+            Log.error( "An exception occurred while sending a SMS message (to '{}')", recipient, e );
             throw e;
         }
     }
@@ -121,8 +133,9 @@ public class SmsService
      * translated in a somewhat more helpful error message.
      *
      * The list of error messages was taken from http://www.smssolutions.net/tutorials/smpp/smpperrorcodes/
+     *
      * @param ex The exception in which to search for a command status.
-     * @return
+     * @return a human readable error message.
      */
     public static String getDescriptiveMessage( Throwable ex )
     {
@@ -207,24 +220,15 @@ public class SmsService
      */
     private static class SmsTask implements Runnable
     {
-        // SMSC connection settings
-        private final String host       = JiveGlobals.getProperty(    "sms.smpp.host",      "localhost" );
-        private final int port          = JiveGlobals.getIntProperty( "sms.smpp.port",      2775        );
-        private final String systemId   = JiveGlobals.getProperty(    "sms.smpp.systemId"               );
-        private final String password   = JiveGlobals.getProperty(    "sms.smpp.password"               );
-        private final String systemType = JiveGlobals.getProperty(    "sms.smpp.systemType"             );
-
-        // Settings that apply to 'receiving' SMS. Should not apply to this implementation, as we're not receiving anything..
-        private final TypeOfNumber receiveTon           = JiveGlobals.getEnumProperty( "sms.smpp.receive.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
-        private final NumberingPlanIndicator receiveNpi = JiveGlobals.getEnumProperty( "sms.smpp.receive.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
+        private final ObjectPool<SMPPSession> sessionPool;
 
         // Settings that apply to source of an SMS message.
-        private final TypeOfNumber sourceTon           = JiveGlobals.getEnumProperty( "sms.smpp.source.ton",   TypeOfNumber.class, TypeOfNumber.UNKNOWN );
-        private final NumberingPlanIndicator sourceNpi = JiveGlobals.getEnumProperty( "sms.smpp.source.npi",   NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
-        private final String sourceAddress             = JiveGlobals.getProperty(     "sms.smpp.source.address" );
+        private final TypeOfNumber sourceTon = JiveGlobals.getEnumProperty( "sms.smpp.source.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
+        private final NumberingPlanIndicator sourceNpi = JiveGlobals.getEnumProperty( "sms.smpp.source.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
+        private final String sourceAddress = JiveGlobals.getProperty( "sms.smpp.source.address" );
 
         // Settings that apply to destination of an SMS message.
-        private final TypeOfNumber destinationTon           = JiveGlobals.getEnumProperty( "sms.smpp.destination.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
+        private final TypeOfNumber destinationTon = JiveGlobals.getEnumProperty( "sms.smpp.destination.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
         private final NumberingPlanIndicator destinationNpi = JiveGlobals.getEnumProperty( "sms.smpp.destination.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
 
         private final String destinationAddress;
@@ -243,8 +247,9 @@ public class SmsService
         private final byte smDefaultMsgId = 0;
 
 
-        SmsTask( String message, String destinationAddress )
+        SmsTask( ObjectPool<SMPPSession> sessionPool, String message, String destinationAddress )
         {
+            this.sessionPool = sessionPool;
             this.message = message.getBytes();
             this.destinationAddress = destinationAddress;
         }
@@ -256,19 +261,17 @@ public class SmsService
             {
                 sendMessage();
             }
-            catch ( PDUException | ResponseTimeoutException | InvalidResponseException | NegativeResponseException | IOException e )
+            catch ( Exception e )
             {
-                Log.error( "An exception occurred while sending a SMS message (to '{}')", destinationAddress, e);
+                Log.error( "An exception occurred while sending a SMS message (to '{}')", destinationAddress, e );
             }
         }
 
-        public void sendMessage() throws IOException, PDUException, InvalidResponseException, NegativeResponseException, ResponseTimeoutException
+        public void sendMessage() throws Exception
         {
-            final SMPPSession session = new SMPPSession();
+            final SMPPSession session = sessionPool.borrowObject();
             try
             {
-                session.connectAndBind( host, port, new BindParameter( BindType.BIND_TX, systemId, password, systemType, receiveTon, receiveNpi, null ) );
-
                 final String messageId = session.submitShortMessage(
                     serviceType,
                     sourceTon, sourceNpi, sourceAddress,
@@ -280,8 +283,157 @@ public class SmsService
             }
             finally
             {
-                session.unbindAndClose();
+                sessionPool.returnObject( session );
             }
+        }
+    }
+
+    /**
+     * A factory of SMPPSession instances that are used in an object pool.
+     *
+     * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+     */
+    private static class SMPPSessionFactory extends BasePooledObjectFactory<SMPPSession>
+    {
+        private static final Logger Log = LoggerFactory.getLogger( SMPPSessionFactory.class );
+
+        @Override
+        public SMPPSession create() throws Exception
+        {
+            // SMSC connection settings
+            final String host = JiveGlobals.getProperty( "sms.smpp.host", "localhost" );
+            final int port = JiveGlobals.getIntProperty( "sms.smpp.port", 2775 );
+            final String systemId = JiveGlobals.getProperty( "sms.smpp.systemId" );
+            final String password = JiveGlobals.getProperty( "sms.smpp.password" );
+            final String systemType = JiveGlobals.getProperty( "sms.smpp.systemType" );
+
+            // Settings that apply to 'receiving' SMS. Should not apply to this implementation, as we're not receiving anything..
+            final TypeOfNumber receiveTon = JiveGlobals.getEnumProperty( "sms.smpp.receive.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
+            final NumberingPlanIndicator receiveNpi = JiveGlobals.getEnumProperty( "sms.smpp.receive.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
+
+            Log.debug( "Creating a new sesssion (host: '{}', port: '{}', systemId: '{}'.", host, port, systemId );
+            final SMPPSession session = new SMPPSession();
+            session.connectAndBind( host, port, new BindParameter( BindType.BIND_TX, systemId, password, systemType, receiveTon, receiveNpi, null ) );
+            Log.debug( "Created a new session with ID '{}'.", session.getSessionId() );
+            return session;
+        }
+
+        @Override
+        public boolean validateObject( PooledObject<SMPPSession> pooledObject )
+        {
+            final SMPPSession session = pooledObject.getObject();
+            final boolean isValid = session.getSessionState().isTransmittable(); // updated by the SMPPSession internal enquireLink timer.
+            Log.debug( "Ran a check to see if session with ID '{}' is valid. Outcome: {}", session.getSessionId(), isValid );
+            return isValid;
+        }
+
+        @Override
+        public void destroyObject( PooledObject<SMPPSession> pooledObject ) throws Exception
+        {
+            final SMPPSession session = pooledObject.getObject();
+            Log.debug( "Destroying a pooled session with ID '{}'.", session.getSessionId() );
+            session.unbindAndClose();
+        }
+
+        @Override
+        public PooledObject<SMPPSession> wrap( SMPPSession smppSession )
+        {
+            return new DefaultPooledObject<>( smppSession );
+        }
+    }
+
+    /**
+     * Implementation of an Object pool that manages instances of SMPPSession. The intend of this pool is to have a
+     * single session, that's allowed to be idle for at least two minutes before being closed.
+     *
+     * The pool reacts to Openfire property changes, clearing all (inactive) sessions when a property used to create
+     * a session is modified. Note that sessions that are borrowed from the pool are not affected by such a change. When
+     * a property change occurs while a session is borrowed, a warning is logged (the property change will be applied
+     * when that session is eventually rotated out of the pool by the eviction strategy.
+     *
+     * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+     */
+    private static class SMPPSessionPool extends GenericObjectPool<SMPPSession> implements PropertyEventListener
+    {
+        private static final Logger Log = LoggerFactory.getLogger( SMPPSessionPool.class );
+
+        SMPPSessionPool()
+        {
+            super( new SMPPSessionFactory() );
+            setMaxTotal( JiveGlobals.getIntProperty( "sms.smpp.connections.maxAmount", 1 ) );
+            setNumTestsPerEvictionRun( getMaxTotal() );
+
+            setMinEvictableIdleTimeMillis( JiveGlobals.getLongProperty( "sms.smpp.connections.idleMillis", 1000 * 60 * 2 ) );
+            if ( getMinEvictableIdleTimeMillis() > 0 )
+            {
+                setTimeBetweenEvictionRunsMillis( getMinEvictableIdleTimeMillis() / 10 );
+            }
+
+            setTestOnBorrow( true );
+            setTestWhileIdle( true );
+        }
+
+        void processPropertyChange( String propertyName )
+        {
+            final Set<String> ofInterest = new HashSet<>();
+            ofInterest.add( "sms.smpp.host" );
+            ofInterest.add( "sms.smpp.port" );
+            ofInterest.add( "sms.smpp.systemId" );
+            ofInterest.add( "sms.smpp.password" );
+            ofInterest.add( "sms.smpp.systemType" );
+            ofInterest.add( "sms.smpp.receive.ton" );
+            ofInterest.add( "sms.smpp.receive.npi" );
+
+            if ( ofInterest.contains( propertyName ) )
+            {
+                Log.debug( "Property change for '{}' detected. Clearing all (inactive) sessions.", propertyName );
+                if ( getNumActive() > 0 )
+                {
+                    // This can occur when an SMS is being sent while the property is being updated at the same time.
+                    Log.warn( "Note that property change for '{}' will not affect one or more sessions that are currently actively used (although changes will be applied after the session is rotated out, due to time-based eviction)." );
+                }
+                clear();
+            }
+
+            // No need to clear the sessions for these properties:
+            if ( propertyName.equals( "sms.smpp.connections.maxAmount" ) )
+            {
+                setMaxTotal( JiveGlobals.getIntProperty( "sms.smpp.connections.maxAmount", 1 ) );
+                setNumTestsPerEvictionRun( getMaxTotal() );
+            }
+
+            if ( propertyName.equals( "sms.smpp.connections.idleMillis" ) )
+            {
+                setMinEvictableIdleTimeMillis( JiveGlobals.getLongProperty( "sms.smpp.connections.idleMillis", 1000 * 60 * 2 ) );
+                if ( getMinEvictableIdleTimeMillis() > 0 )
+                {
+                    setTimeBetweenEvictionRunsMillis( getMinEvictableIdleTimeMillis() / 10 );
+                }
+            }
+        }
+
+        @Override
+        public void propertySet( String property, Map<String, Object> params )
+        {
+            processPropertyChange( property );
+        }
+
+        @Override
+        public void propertyDeleted( String property, Map<String, Object> params )
+        {
+            processPropertyChange( property );
+        }
+
+        @Override
+        public void xmlPropertySet( String property, Map<String, Object> params )
+        {
+            processPropertyChange( property );
+        }
+
+        @Override
+        public void xmlPropertyDeleted( String property, Map<String, Object> params )
+        {
+            processPropertyChange( property );
         }
     }
 }

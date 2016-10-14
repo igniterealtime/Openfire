@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -580,6 +581,38 @@ public class PluginManager
         }
     }
 
+    public boolean reloadPlugin( String pluginName )
+    {
+        Log.debug( "Reloading plugin '{}'..." );
+
+        final Plugin plugin = getPlugin( pluginName );
+        if ( plugin == null )
+        {
+            Log.warn( "Unable to reload plugin '{}'. No such plugin loaded.", pluginName );
+            return false;
+        }
+
+        final Path path = getPluginPath( plugin );
+        if ( path == null )
+        {
+            // When there's a plugin, there should be a path. If there isn't, our code is buggy.
+            throw new IllegalStateException( "Unable to determine installation path of plugin: " + pluginName );
+        }
+
+        try
+        {
+            Files.setLastModifiedTime( path, FileTime.fromMillis( 0 ) );
+        }
+        catch ( IOException e )
+        {
+            Log.warn( "Unable to reload plugin '{}'. Unable to reset the 'last modified time' of the plugin path. Try removing and restoring the plugin jar file manually." );
+            return false;
+        }
+
+        pluginMonitor.runNow( false );
+        return true;
+    }
+
     /**
      * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then any resources will be
      * released. The name should be the canonical name of the plugin (based on the plugin directory name) and not the
@@ -594,7 +627,7 @@ public class PluginManager
      *
      * @param pluginName the name of the plugin to unload.
      */
-    public void unloadPlugin( String pluginName )
+    void unloadPlugin( String pluginName )
     {
         Log.debug( "Unloading plugin '{}'...", pluginName );
 

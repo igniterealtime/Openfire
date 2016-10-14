@@ -96,7 +96,7 @@
         for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
             if (reloadPlugin.equals(pluginDir.getName())) {
-                pluginManager.unloadPlugin(reloadPlugin);
+                pluginManager.reloadPlugin(reloadPlugin);
                 // Log the event
                 webManager.logEvent("reloaded plugin "+reloadPlugin, null);
                 response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");

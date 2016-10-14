@@ -55,7 +55,7 @@
 			if(is2Reload) {
 				String pluginName  = pluginManager.getName(plugin);
 				String pluginDir = pluginManager.getPluginDirectory(plugin).getName();
-				pluginManager.unloadPlugin(pluginDir);
+				pluginManager.reloadPlugin(pluginDir);
             
 				// Log the event
 				admin.logEvent("reloaded plugin "+ pluginName, null);

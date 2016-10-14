@@ -642,15 +642,14 @@ public class PluginManager
             // See if any child plugins are defined.
             if ( parentPluginMap.containsKey( plugin ) )
             {
-                String[] childPlugins =
-                        parentPluginMap.get( plugin ).toArray( new String[ parentPluginMap.get( plugin ).size() ] );
-                parentPluginMap.remove( plugin );
+                String[] childPlugins = parentPluginMap.get( plugin ).toArray( new String[ parentPluginMap.get( plugin ).size() ] );
                 for ( String childPlugin : childPlugins )
                 {
                     Log.debug( "Unloading child plugin: '{}'.", childPlugin );
                     childPluginMap.remove( plugins.get( childPlugin ) );
                     unloadPlugin( childPlugin );
                 }
+                parentPluginMap.remove( plugin );
             }
 
             Path webXML = pluginDirectory.resolve( pluginName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );

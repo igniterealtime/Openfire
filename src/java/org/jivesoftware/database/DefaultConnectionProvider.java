@@ -20,11 +20,6 @@
 
 package org.jivesoftware.database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
-
 import org.jivesoftware.util.JiveGlobals;
 import org.logicalcobwebs.proxool.ConnectionPoolDefinitionIF;
 import org.logicalcobwebs.proxool.ProxoolException;
@@ -32,6 +27,11 @@ import org.logicalcobwebs.proxool.ProxoolFacade;
 import org.logicalcobwebs.proxool.admin.SnapshotIF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * Default Jive connection provider, which uses an internal connection pool.<p>
@@ -94,7 +94,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     public void start() {
         proxoolURL = "proxool.openfire:"+getDriver()+":"+getServerURL();
         settings = new Properties();
-        settings.setProperty("proxool.maximum-activetime", Integer.toString(activeTimeout));
+        settings.setProperty("proxool.maximum-active-time", Integer.toString(activeTimeout));
         settings.setProperty("proxool.maximum-connection-count", Integer.toString(getMaxConnections()));
         settings.setProperty("proxool.minimum-connection-count", Integer.toString(getMinConnections()));
         settings.setProperty("proxool.maximum-connection-lifetime", Integer.toString((int)(86400000 * getConnectionTimeout())));

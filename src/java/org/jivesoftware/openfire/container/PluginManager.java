@@ -1047,4 +1047,9 @@ public class PluginManager
             }
         }
     }
+
+    public boolean isMonitorTaskRunning()
+    {
+        return pluginMonitor.isTaskRunning();
+    }
 }

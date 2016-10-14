@@ -45,6 +45,8 @@ public class PluginMonitor
 
     private ScheduledExecutorService executor;
 
+    private boolean isTaskRunning = false;
+
     public PluginMonitor( final PluginManager pluginManager )
     {
         this.pluginManager = pluginManager;
@@ -84,6 +86,11 @@ public class PluginMonitor
         }
     }
 
+    public boolean isTaskRunning()
+    {
+        return isTaskRunning;
+    }
+
     /**
      * Immediately run a check of the plugin directory.
      */
@@ -111,6 +118,7 @@ public class PluginMonitor
             // Prevent two tasks from running in parallel by using the plugin monitor itself as a mutex.
             synchronized ( PluginMonitor.this )
             {
+                isTaskRunning = true;
                 try
                 {
                     // The directory that contains all plugins.
@@ -318,6 +326,10 @@ public class PluginMonitor
                 catch ( Throwable e )
                 {
                     Log.error( "An unexpected exception occurred:", e );
+                }
+                finally
+                {
+                    isTaskRunning = false;
                 }
             }
         }

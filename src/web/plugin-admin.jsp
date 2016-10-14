@@ -557,7 +557,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
         <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
     </td>
     <td width="1%" align="center" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
-        <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
+        <a href="plugin-admin.jsp?csrf=${csrf}&reloadplugin=<%= dirName %>"
            title="<fmt:message key="plugin.admin.click_reload" />"
                 ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
     </td>

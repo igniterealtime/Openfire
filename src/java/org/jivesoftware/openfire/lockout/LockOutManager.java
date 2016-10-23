@@ -249,7 +249,7 @@ public class LockOutManager {
 				// If group wan't found in cache, load it up and put it there.
 				if (flag == null) {
 					flag = provider.getDisabledStatus(username);
-					lockOutCache.put(username, flag);
+					if (flag != null) lockOutCache.put(username, flag);
 				}
 			}
 		}

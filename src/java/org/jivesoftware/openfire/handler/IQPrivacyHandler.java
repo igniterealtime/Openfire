@@ -51,7 +51,7 @@ public class IQPrivacyHandler extends IQHandler
 
     private IQHandlerInfo info;
     private PrivacyListManager manager = PrivacyListManager.getInstance();
-    private PrivacyListProvider provider = new PrivacyListProvider();
+    private PrivacyListProvider provider = PrivacyListProvider.getInstance();
 
     public IQPrivacyHandler() {
         super("Blocking Communication Handler");

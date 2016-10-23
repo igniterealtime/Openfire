@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
  */
 public class PrivacyListProvider {
 
+    private static final PrivacyListProvider instance = new PrivacyListProvider();
+    
 	private static final Logger Log = LoggerFactory.getLogger(PrivacyListProvider.class);
 
     private static final String PRIVACY_LIST_COUNT =
@@ -71,11 +73,20 @@ public class PrivacyListProvider {
     private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /**
-     * Stores the total number of privacy lists.
+     * Boolean used to optimize getters when the database is empty
      */
-    private AtomicInteger privacyListCount;
+    private AtomicBoolean databaseContainsPrivacyLists;
 
-    public PrivacyListProvider() {
+    /**
+     * Returns the unique instance of this class.
+     *
+     * @return the unique instance of this class.
+     */
+    public static PrivacyListProvider getInstance() {
+        return instance;
+    }
+    
+    private PrivacyListProvider() {
         super();
         // Initialize the pool of sax readers
         for (int i=0; i<POOL_SIZE; i++) {
@@ -84,13 +95,10 @@ public class PrivacyListProvider {
             xmlReaders.add(xmlReader);
         }
 
-        // Load the total number of privacy lists in the database. We're looking
-        // for the (very common) special case that there are no privacy lists stored.
-        // In that case, we can optimize away many database calls. In the future, a
-        // better general-case solution may be to cache all privacy lists defined
-        // if there are less than, say, 500.
-        privacyListCount = new AtomicInteger(0);
-        loadPrivacyListCount();
+        // Checks if the PrivacyLists database is empty. 
+        // In that case, we can optimize away many database calls. 
+        databaseContainsPrivacyLists = new AtomicBoolean(false);
+        loadDatabaseContainsPrivacyLists();
     }
 
     /**
@@ -102,7 +110,7 @@ public class PrivacyListProvider {
      */
     public Map<String, Boolean> getPrivacyLists(String username) {
         // If there are no privacy lists stored, this method is a no-op.
-        if (privacyListCount.get() == 0) {
+        if (!databaseContainsPrivacyLists.get()) {
             return Collections.emptyMap();
         }
 
@@ -139,7 +147,7 @@ public class PrivacyListProvider {
      */
     public PrivacyList loadPrivacyList(String username, String listName) {
         // If there are no privacy lists stored, this method is a no-op.
-        if (privacyListCount.get() == 0) {
+        if (!databaseContainsPrivacyLists.get()) {
             return null;
         }
 
@@ -203,7 +211,7 @@ public class PrivacyListProvider {
      */
     public PrivacyList loadDefaultPrivacyList(String username) {
         // If there are no privacy lists stored, this method is a no-op.
-        if (privacyListCount.get() == 0) {
+        if (!databaseContainsPrivacyLists.get()) {
             return null;
         }
 
@@ -280,9 +288,7 @@ public class PrivacyListProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        // Set the privacy list count to -1. We don't know how many privacy lists there
-        // are, but it's not "0", which is the case we care about.
-        privacyListCount.set(-1);
+        databaseContainsPrivacyLists.set(true);
     }
 
     /**
@@ -310,6 +316,7 @@ public class PrivacyListProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+        databaseContainsPrivacyLists.set(true);
     }
 
     /**
@@ -320,7 +327,7 @@ public class PrivacyListProvider {
      */
     public void deletePrivacyList(String username, String listName) {
         // If there are no privacy lists stored, this method is a no-op.
-        if (privacyListCount.get() == 0) {
+        if (!databaseContainsPrivacyLists.get()) {
             return;
         }
         Connection con = null;
@@ -338,9 +345,7 @@ public class PrivacyListProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        // Set the privacy list count to -1. We don't know how many privacy lists there
-        // are, but it's probably not "0", which is the case we care about.
-        privacyListCount.set(-1);
+        databaseContainsPrivacyLists.set(true);
     }
 
     /**
@@ -350,7 +355,7 @@ public class PrivacyListProvider {
      */
     public void deletePrivacyLists(String username) {
         // If there are no privacy lists stored, this method is a no-op.
-        if (privacyListCount.get() == 0) {
+        if (!databaseContainsPrivacyLists.get()) {
             return;
         }
         Connection con = null;
@@ -367,15 +372,13 @@ public class PrivacyListProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
-        // Set the privacy list count to -1. We don't know how many privacy lists there
-        // are, but it's probably not "0", which is the case we care about.
-        privacyListCount.set(-1);
+        databaseContainsPrivacyLists.set(true);
     }
 
     /**
-     * Loads the total number of privacy lists stored in the database.
+     * Loads the total number of privacy lists stored in the database to know if we must use them.
      */
-    private void loadPrivacyListCount() {
+    private void loadDatabaseContainsPrivacyLists() {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -384,7 +387,7 @@ public class PrivacyListProvider {
             pstmt = con.prepareStatement(PRIVACY_LIST_COUNT);
             rs = pstmt.executeQuery();
             rs.next();
-            privacyListCount.set(rs.getInt(1));
+            databaseContainsPrivacyLists.set(rs.getInt(1) != 0);
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);

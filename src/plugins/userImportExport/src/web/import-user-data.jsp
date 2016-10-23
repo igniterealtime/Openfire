@@ -10,6 +10,7 @@
 
 <%
     boolean importUsers = request.getParameter("importUsers") != null;
+    boolean xep227Support = request.getParameter("xep227support") != null;
    
     ImportExportPlugin plugin = (ImportExportPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("userimportexport");
     List<String> duplicateUsers = new ArrayList<String>();
@@ -23,14 +24,16 @@
         FileItem fi = (FileItem) i.next();
         FileItem pd = (FileItem) i.next();
         String previousDomain = pd.getString();
+        FileItem xsup = (FileItem) i.next();
+        xep227Support = new Boolean( xsup.getString() );
         
-        if (plugin.validateImportFile(fi)) {
+        if (plugin.validateImportFile(fi, xep227Support)) {
             try {
                 if (isEmpty(previousDomain)) {
-                    duplicateUsers.addAll(plugin.importUserData(fi, null));
+                    duplicateUsers.addAll(plugin.importUserData(fi, null, xep227Support));
                 }
                 else if (!isEmpty(previousDomain)) {
-                    duplicateUsers.addAll(plugin.importUserData(fi, previousDomain));
+                    duplicateUsers.addAll(plugin.importUserData(fi, previousDomain, xep227Support));
                 }
                 else {
                     errors.put("missingDomain", "missingDomain");
@@ -143,6 +146,10 @@ Use the form below to import a user data XML file.
     See the migration section of the <a href="../../plugin-admin.jsp?plugin=userimportexport&showReadme=true&decorator=none">readme</a> for details.
     </p>
     Replace Domain: <input type="text" size="20" maxlength="150" name="previousDomain" value=""/>
+    
+    <p>
+    <input type="checkbox" name="xep227support" <%= xep227Support ? "checked" : "" %> value="true" id="rb03"/> <label for="rb03"><b>XEP-0227</b></label> - Import using format defined in <a href="http://www.xmpp.org/extensions/xep-0227.html" target="_blank">XEP-0227</a>.
+    
 </div>
 <input type="submit" value="Import">
 

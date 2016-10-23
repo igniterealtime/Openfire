@@ -275,10 +275,17 @@ function dodelete(propName) {
 <input type="hidden" name="propName" value="">
 
 <style type="text/css">
-.hidebox {
+.nameColumn {
     text-overflow : ellipsis;
     overflow : hidden;
     white-space : nowrap;
+    max-width : 200px;
+}
+.valueColumn {
+    text-overflow : ellipsis;
+    overflow : hidden;
+    white-space : nowrap;
+    max-width : 300px;
 }
 </style>
 
@@ -311,22 +318,14 @@ function dodelete(propName) {
     %>
     <tr class="<%= (n.equals(propName) ? "hilite" : "") %>">
 
-        <td>
-            <div class="hidebox" style="width:200px;">
-                <span title="<%= StringUtils.escapeForXML(n) %>">
-                <%= StringUtils.escapeHTMLTags(n) %>
-                </span>
-            </div>
-        </td>
-        <td>
-            <div class="hidebox" style="width:300px;">
-                <% if (JiveGlobals.isPropertyEncrypted(n) || 
+        <td class="nameColumn"><%= StringUtils.escapeHTMLTags(n) %></td>
+        <td class="valueColumn">
+                <% if (JiveGlobals.isPropertyEncrypted(n) ||
                        JiveGlobals.isPropertySensitive(n)) { %>
                 <span style="color:#999;"><i>hidden</i></span>
                 <% } else { %>
-                <span title="<%= ("".equals(v) ? "&nbsp;" : v) %>"><%= ("".equals(v) ? "&nbsp;" : v) %></span>
+                <%= ("".equals(v) ? "&nbsp;" : v) %>
                 <% } %>
-            </div>
         </td>
         <td align="center"><a href="#" onclick="doedit('<%= StringUtils.replace(StringUtils.escapeHTMLTags(n),"'","''") %>');"
                 ><img src="images/edit-16x16.gif" width="16" height="16"

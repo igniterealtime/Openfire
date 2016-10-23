@@ -39,8 +39,11 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
+    Map<String,String> errors = new HashMap<String,String>();
+
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errors.put("csrf", "CSRF Failure!");
             save = false;
         }
     }
@@ -55,7 +58,6 @@
 
     EmailService service = EmailService.getInstance();
     // Save the email settings if requested
-    Map<String,String> errors = new HashMap<String,String>();
     if (save) {
         if (host != null) {
             service.setHost(host);
@@ -234,7 +236,7 @@
 		</tr>
 		</table>
 	</div>
-
+<input type="hidden" name="csrf" value="${csrf}"/>
 <input type="submit" name="save" value="<fmt:message key="system.email.save" />">
 <input type="submit" name="test" value="<fmt:message key="system.email.send_test" />">
 </form>

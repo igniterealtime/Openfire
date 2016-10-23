@@ -20,28 +20,19 @@
 
 package org.jivesoftware.util;
 
+import org.apache.commons.lang.StringUtils;
+import org.jivesoftware.database.DbConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.TimerTask;
-
-import org.apache.commons.lang.StringUtils;
-import org.jivesoftware.database.DbConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Controls Jive properties. Jive properties are only meant to be set and retrieved
@@ -563,6 +554,33 @@ public class JiveGlobals {
         else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Returns an enum constant Jive property. If the specified property doesn't exist, or if it's value cannot be parsed
+     * as an enum constant, the <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param enumType the {@code Class} object of the enum type from which to return a constant.
+     * @param defaultValue value returned if the property doesn't exist or it's value could not be parsed.
+     * @param <E> The enum type whose constant is to be returned.
+     * @return the property value (as an enum constant) or <tt>defaultValue</tt>.
+     */
+    public static <E extends Enum<E>> E getEnumProperty( String name, Class<E> enumType, E defaultValue )
+    {
+        String value = getProperty( name );
+        if ( value != null )
+        {
+            try
+            {
+                return E.valueOf( enumType, value );
+            }
+            catch ( IllegalArgumentException e )
+            {
+                // Ignore
+            }
+        }
+        return defaultValue;
     }
 
     /**

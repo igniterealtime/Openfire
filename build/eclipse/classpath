@@ -174,5 +174,6 @@
 	<classpathentry kind="lib" path="src/plugins/jmxweb/lib/quartz-2.2.2.jar"/>
 	<classpathentry kind="lib" path="src/plugins/jmxweb/lib/genson-1.4.jar"/>
 	<classpathentry kind="lib" path="src/plugins/jmxweb/lib/itextpdf-5.4.1.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jsmpp.jar"/>
 	<classpathentry kind="output" path="work/classes"/>
 </classpath>

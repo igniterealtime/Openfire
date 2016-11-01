@@ -420,6 +420,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="Group">
@@ -427,6 +428,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>900</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="Roster">
@@ -434,6 +436,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>21600</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     <map name="User">
@@ -441,6 +444,7 @@
         <read-backup-data>true</read-backup-data>
         <max-size policy="PER_NODE">100000</max-size>
         <max-idle-seconds>3600</max-idle-seconds>
+        <time-to-live-seconds>1800</time-to-live-seconds>
         <eviction-policy>LRU</eviction-policy>
     </map>
     

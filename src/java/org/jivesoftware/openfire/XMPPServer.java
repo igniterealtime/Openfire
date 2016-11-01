@@ -560,19 +560,15 @@ public class XMPPServer {
 
     private void initModules() {
         for (Module module : modules.values()) {
-            boolean isInitialized = false;
             try {
                 module.initialize(this);
-                isInitialized = true;
             }
             catch (Exception e) {
                 e.printStackTrace();
                 // Remove the failed initialized module
                 this.modules.remove(module.getClass());
-                if (isInitialized) {
-                    module.stop();
-                    module.destroy();
-                }
+                module.stop();
+                module.destroy();
                 logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
@@ -585,16 +581,12 @@ public class XMPPServer {
      */
     private void startModules() {
         for (Module module : modules.values()) {
-            boolean started = false;
             try {
+                logger.debug( "Starting module: " + module.getName() );
                 module.start();
             }
             catch (Exception e) {
-                if (started && module != null) {
-                    module.stop();
-                    module.destroy();
-                }
-                logger.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                logger.error( "An exception occurred while starting module '{}'.", module.getName(), e );
             }
         }
     }

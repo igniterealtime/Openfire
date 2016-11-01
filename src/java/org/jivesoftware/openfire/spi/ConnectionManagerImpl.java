@@ -20,24 +20,19 @@
 
 package org.jivesoftware.openfire.spi;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.*;
-
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.buffer.SimpleBufferAllocator;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.SocketSendingTracker;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -45,6 +40,13 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener
 {
@@ -274,24 +276,32 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private synchronized void startListeners()
     {
         // Check if plugins have been loaded
+        Log.debug( "Received a request to start listeners. Have plugins been loaded?" );
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        if (!pluginManager.isExecuted()) {
-            pluginManager.addPluginManagerListener(new PluginManagerListener() {
-                public void pluginsMonitored() {
+        if ( !pluginManager.isExecuted() )
+        {
+            Log.debug( "Plugins not yet loaded. Waiting for plugins to be loaded..." );
+            pluginManager.addPluginManagerListener( new PluginManagerListener()
+            {
+                public void pluginsMonitored()
+                {
+                    Log.debug( "Received plugin monitor event! Plugins should now be loaded." );
                     // Stop listening for plugin events
-                    XMPPServer.getInstance().getPluginManager().removePluginManagerListener(this);
+                    XMPPServer.getInstance().getPluginManager().removePluginManagerListener( this );
                     // Start listeners
                     startListeners();
                 }
-            });
+            } );
             return;
         }
 
+        Log.debug( "Starting listeners..." );
         for ( final ConnectionListener listener : getListeners() )
         {
             try
             {
                 listener.start();
+                Log.debug( "Started '{}' (port {}) listener.", listener.getType(), listener.getPort() );
             }
             catch ( RuntimeException ex )
             {
@@ -303,6 +313,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         try
         {
             HttpBindManager.getInstance().start();
+            Log.debug( "Started HTTP client listener." );
         }
         catch ( RuntimeException ex )
         {

@@ -67,8 +67,6 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import com.lowagie.text.RomanList;
-
 /**
  * Manages all conversations in the system. Optionally, conversations (messages plus meta-data) can be archived to the database. Archiving of
  * conversation data is enabled by default, but can be disabled by setting "conversation.metadataArchiving" to <tt>false</tt>. Archiving of messages
@@ -157,7 +155,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		this.conversationEventsQueue = new ConversationEventsQueue(this, taskEngine);
 	}
 
-	public void start() {
+	@Override
+   public void start() {
 		metadataArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.metadataArchiving", true);
 		messageArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.messageArchiving", false);
 		if (messageArchivingEnabled && !metadataArchivingEnabled) {
@@ -268,27 +267,33 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		// Register a statistic.
 		Statistic conversationStat = new Statistic() {
 
-			public String getName() {
+			@Override
+         public String getName() {
 				return LocaleUtils.getLocalizedString("stat.conversation.name", MonitoringConstants.NAME);
 			}
 
-			public Type getStatType() {
+			@Override
+         public Type getStatType() {
 				return Type.count;
 			}
 
-			public String getDescription() {
+			@Override
+         public String getDescription() {
 				return LocaleUtils.getLocalizedString("stat.conversation.desc", MonitoringConstants.NAME);
 			}
 
-			public String getUnits() {
+			@Override
+         public String getUnits() {
 				return LocaleUtils.getLocalizedString("stat.conversation.units", MonitoringConstants.NAME);
 			}
 
-			public double sample() {
+			@Override
+         public double sample() {
 				return getConversationCount();
 			}
 
-			public boolean isPartialSample() {
+			@Override
+         public boolean isPartialSample() {
 				return false;
 			}
 		};
@@ -296,7 +301,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		InternalComponentManager.getInstance().addListener(this);
 	}
 
-	public void stop() {
+	@Override
+   public void stop() {
 		archiveTask.cancel();
 		archiveTask = null;
 		cleanupTask.cancel();
@@ -577,7 +583,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			List<Conversation> conversationList = new ArrayList<Conversation>(conversations.values());
 			// Sort the conversations by creation date.
 			Collections.sort(conversationList, new Comparator<Conversation>() {
-				public int compare(Conversation c1, Conversation c2) {
+				@Override
+            public int compare(Conversation c1, Conversation c2) {
 					return c1.getStartDate().compareTo(c2.getStartDate());
 				}
 			});
@@ -958,7 +965,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		return roomJID.toString();
 	}
 
-	public void componentInfoReceived(IQ iq) {
+	@Override
+   public void componentInfoReceived(IQ iq) {
 		// Check if the component is a gateway
 		boolean gatewayFound = false;
 		Element childElement = iq.getChildElement();
@@ -974,11 +982,13 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		}
 	}
 
-	public void componentRegistered(JID componentJID) {
+	@Override
+   public void componentRegistered(JID componentJID) {
 		// Do nothing
 	}
 
-	public void componentUnregistered(JID componentJID) {
+	@Override
+   public void componentUnregistered(JID componentJID) {
 		// Remove stored information about this component
 		gateways.remove(componentJID.getDomain());
 	}
@@ -997,7 +1007,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 */
 	private class ArchivingTask implements Runnable {
 
-		public void run() {
+		@Override
+      public void run() {
 			synchronized (this) {
 				if (archivingRunning) {
 					return;
@@ -1102,7 +1113,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 */
 	private class ConversationPropertyListener implements PropertyEventListener {
 
-		public void propertySet(String property, Map<String, Object> params) {
+		@Override
+      public void propertySet(String property, Map<String, Object> params) {
 			if (property.equals("conversation.metadataArchiving")) {
 				String value = (String) params.get("value");
 				metadataArchivingEnabled = Boolean.valueOf(value);
@@ -1171,7 +1183,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			}
 		}
 
-		public void propertyDeleted(String property, Map<String, Object> params) {
+		@Override
+      public void propertyDeleted(String property, Map<String, Object> params) {
 			if (property.equals("conversation.metadataArchiving")) {
 				metadataArchivingEnabled = true;
 			} else if (property.equals("conversation.messageArchiving")) {
@@ -1196,11 +1209,13 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			}
 		}
 
-		public void xmlPropertySet(String property, Map<String, Object> params) {
+		@Override
+      public void xmlPropertySet(String property, Map<String, Object> params) {
 			// Ignore.
 		}
 
-		public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+		@Override
+      public void xmlPropertyDeleted(String property, Map<String, Object> params) {
 			// Ignore.
 		}
 	}

@@ -67,7 +67,6 @@ public class IQQueryHandler extends AbstractIQHandler implements
 
 		// Default to user's own archive
 		JID archiveJid = packet.getFrom();
-
 		if(packet.getElement().attribute("to") != null) {
 			archiveJid = new JID(packet.getElement().attribute("to").getStringValue());
 			// Only allow queries to users own archives
@@ -233,7 +232,6 @@ public class IQQueryHandler extends AbstractIQHandler implements
 			// If we can't parse stanza then we have no message to send to client, abort
 			return;
 		}
-
 		session.process(messagePacket);
 	}
 

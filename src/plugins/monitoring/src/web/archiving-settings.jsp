@@ -161,12 +161,13 @@
     boolean update = request.getParameter("update") != null;
     boolean messageArchiving = conversationManager.isMessageArchivingEnabled();
     boolean roomArchiving = conversationManager.isRoomArchivingEnabled();
+    boolean roomArchivingStanzas = conversationManager.isRoomArchivingStanzasEnabled();
     int idleTime = ParamUtils.getIntParameter(request, "idleTime", conversationManager.getIdleTime());
     int maxTime = ParamUtils.getIntParameter(request, "maxTime", conversationManager.getMaxTime());
-    
+
     int maxAge = ParamUtils.getIntParameter(request, "maxAge", conversationManager.getMaxAge());
     int maxRetrievable = ParamUtils.getIntParameter(request, "maxRetrievable", conversationManager.getMaxRetrievable());
-    
+
     boolean rebuildIndex = request.getParameter("rebuild") != null;
 
     if (request.getParameter("cancel") != null) {
@@ -186,6 +187,7 @@
         boolean metadataArchiving = request.getParameter("metadataArchiving") != null;
         messageArchiving = request.getParameter("messageArchiving") != null;
         roomArchiving = request.getParameter("roomArchiving") != null;
+        roomArchivingStanzas = request.getParameter("roomArchivingStanzas") != null;
         String roomsArchived = request.getParameter("roomsArchived");
 
         // Validate params
@@ -214,10 +216,11 @@
             conversationManager.setMetadataArchivingEnabled(metadataArchiving);
             conversationManager.setMessageArchivingEnabled(messageArchiving);
             conversationManager.setRoomArchivingEnabled(roomArchiving);
+            conversationManager.setRoomArchivingStanzasEnabled(roomArchivingStanzas);
             conversationManager.setRoomsArchived(StringUtils.stringToCollection(roomsArchived));
             conversationManager.setIdleTime(idleTime);
             conversationManager.setMaxTime(maxTime);
-            
+
             conversationManager.setMaxAge(maxAge);
             conversationManager.setMaxRetrievable(maxRetrievable);
 
@@ -282,6 +285,10 @@
                         <td><input type="checkbox" name="roomArchiving" <%= conversationManager.isRoomArchivingEnabled() ? "checked" : ""%> /></td>
                     </tr>
                     <tr>
+                        <td><fmt:message key="archive.settings.group_chats.stanzas"/></td>
+                        <td><input type="checkbox" name="roomArchivingStanzas" <%= conversationManager.isRoomArchivingStanzasEnabled() ? "checked" : ""%> /></td>
+                    </tr>
+                    <tr>
                         <td><fmt:message key="archive.settings.certain_rooms"/></td>
                         <td><textarea name="roomsArchived" cols="30" rows="2" wrap="virtual"><%= StringUtils.collectionToString(conversationManager.getRoomsArchived()) %></textarea></td>
                     </tr>
@@ -300,7 +307,7 @@
                 <td><input type="text" name="maxTime" size="10" maxlength="10" value="<%= conversationManager.getMaxTime()%>" /></td>
                 <td></td>
             </tr>
-            
+
             <tr>
                 <td><label class="jive-label"><fmt:message key="archive.settings.max.age"/>:</label><br>
                 <fmt:message key="archive.settings.max.age.description"/><br><br>
@@ -308,14 +315,14 @@
                 <td><input type="text" name="maxAge" size="10" maxlength="10" value="<%= conversationManager.getMaxAge()%>" /></td>
                 <td></td>
             </tr>
-            
+
             <tr>
                 <td><label class="jive-label"><fmt:message key="archive.settings.max.retrievable"/>:</label><br>
                 <fmt:message key="archive.settings.max.retrievable.description"/><br><br></td>
                 <td><input type="text" name="maxRetrievable" size="10" maxlength="10" value="<%= conversationManager.getMaxRetrievable()%>" /></td>
                 <td></td>
             </tr>
-            
+
         </tbody>
     </table>
 

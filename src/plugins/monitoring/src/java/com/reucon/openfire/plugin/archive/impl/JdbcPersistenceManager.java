@@ -112,6 +112,45 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			+ "INNER JOIN ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID "
 			+ "WHERE ofConversation.lastActivity > ?";
 
+	public static final String SELECT_ACTIVE_CONVERSATIONS_ORACLE = "select SUBSET.conversationID,"
+				+ "SUBSET.room,"
+				+ "SUBSET.isExternal,"
+				+ "SUBSET.startDate,"
+				+ "SUBSET.lastActivity,"
+				+ "SUBSET.messageCount,"
+				+ "SUBSET.joinedDate,"
+				+ "SUBSET.leftDate,"
+				+ "SUBSET.bareJID,"
+				+ "SUBSET.jidResource,"
+				+ "SUBSET.nickname,"
+				+ "SUBSET.fromJID,"
+				+ "SUBSET.toJID,"
+				+ "SUBSET.sentDate,"
+				+ "MAR.body from ("
+				+ "SELECT DISTINCT ofConversation.conversationID as conversationID,"
+				+ "ofConversation.room as room,"
+				+ "ofConversation.isExternal as isExternal,"
+				+ "ofConversation.startDate as startDate,"
+				+ "ofConversation.lastActivity as lastActivity,"
+				+ "ofConversation.messageCount as messageCount,"
+				+ "ofConParticipant.joinedDate as joinedDate,"
+				+ "ofConParticipant.leftDate as leftDate,"
+				+ "ofConParticipant.bareJID as bareJID,"
+				+ "ofConParticipant.jidResource as jidResource,"
+				+ "ofConParticipant.nickname as nickname,"
+				+ "ofMessageArchive.fromJID as fromJID,"
+				+ "ofMessageArchive.toJID as toJID,"
+				+ "ofMessageArchive.sentDate as sentDate,"
+				+ "ofMessageArchive.MESSAGEID as msgId "
+				+ "FROM ofConversation "
+				+ "INNER JOIN ofConParticipant ON ofConversation.conversationID = ofConParticipant.conversationID "
+				+ "INNER JOIN ofMessageArchive ON ofConParticipant.conversationID = ofMessageArchive.conversationID "
+				+ "where ofConversation.lastActivity > ? ) SUBSET "
+				+ "INNER JOIN ofMessageArchive MAR ON MAR.conversationID = SUBSET.conversationID "
+				+ "where MAR.MESSAGEID = SUBSET.msgId "
+				+ "and MAR.sentDate = SUBSET.sentDate "
+				+ "and MAR.fromJID = SUBSET.fromJID "
+				+ "and MAR.toJID = SUBSET.toJID";
 	// public static final String SELECT_ACTIVE_CONVERSATIONS =
 	// "SELECT c.conversationId,c.startTime,c.endTime,c.ownerJid,c.ownerResource,withJid,c.withResource,"
 	// + " c.subject,c.thread "
@@ -130,6 +169,17 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
 			+ "FROM ofMessageArchive "
 			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID ";
+
+	public static final String SELECT_MESSAGE_ORACLE = "SELECT "
+			+ "ofMessageArchive.fromJID, "
+			+ "ofMessageArchive.toJID, "
+			+ "ofMessageArchive.sentDate, "
+			+ "ofMessageArchive.stanza, "
+			+ "ofMessageArchive.messageID "
+			+ "FROM ofMessageArchive";
+	public static final String SELECT_CONVERSATIONS_BY_OWNER = "SELECT DISTINCT ofConParticipant.conversationID FROM ofConParticipant WHERE "
+			+ CONVERSATION_OWNER_JID
+			+ " = ?";
 
 	 public static final String COUNT_MESSAGES = "SELECT COUNT(DISTINCT ofMessageArchive.messageID) "
 			+ "FROM ofMessageArchive "
@@ -369,6 +419,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	@Override
 	public Collection<ArchivedMessage> findMessages(Date startDate,
 			Date endDate, String ownerJid, String withJid, XmppResultSet xmppResultSet) {
+		final boolean isOracleDB = isOracleDB();
 
 		final StringBuilder querySB;
 		final StringBuilder whereSB;
@@ -376,7 +427,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 		final TreeMap<Long, ArchivedMessage> archivedMessages = new TreeMap<Long, ArchivedMessage>();
 
-		querySB = new StringBuilder(SELECT_MESSAGES);
+		querySB = new StringBuilder( isOracleDB ? SELECT_MESSAGE_ORACLE : SELECT_MESSAGES );
 		whereSB = new StringBuilder();
 		limitSB = new StringBuilder();
 
@@ -391,7 +442,12 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			appendWhere(whereSB, MESSAGE_SENT_DATE, " <= ?");
 		}
 		if (ownerJid != null) {
-			appendWhere(whereSB, CONVERSATION_OWNER_JID, " = ?");
+			if( isOracleDB ) {
+				appendWhere( whereSB, "ofMessageArchive.conversationID in ( ", SELECT_CONVERSATIONS_BY_OWNER, " )" );
+			}
+			else {
+				appendWhere(whereSB, CONVERSATION_OWNER_JID, " = ?");
+			}
 		}
 		if(withJid != null) {
 			appendWhere(whereSB, "( ", MESSAGE_TO_JID, " = ? OR ", MESSAGE_FROM_JID, " = ? )");
@@ -485,6 +541,11 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		}
 
 		return archivedMessages.values();
+	}
+
+	private boolean isOracleDB()
+	{
+		return DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle;
 	}
 
 	private Integer countMessages(Date startDate, Date endDate,
@@ -586,7 +647,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		ResultSet rs = null;
 		try {
 			con = DbConnectionManager.getConnection();
-			pstmt = con.prepareStatement(SELECT_ACTIVE_CONVERSATIONS);
+			pstmt = con.prepareStatement( isOracleDB() ? SELECT_ACTIVE_CONVERSATIONS_ORACLE : SELECT_ACTIVE_CONVERSATIONS );
 
 			pstmt.setLong(1, now - conversationTimeout * 60L * 1000L);
 			rs = pstmt.executeQuery();

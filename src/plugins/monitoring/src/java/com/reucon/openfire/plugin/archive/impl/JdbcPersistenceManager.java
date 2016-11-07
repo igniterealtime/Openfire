@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -442,6 +443,36 @@ public class JdbcPersistenceManager implements PersistenceManager {
 				limitSB.append(" BETWEEN ").append(firstIndex+1);
 				limitSB.append(" AND ").append(firstIndex+max);
 			}
+			else if( isOracleDB() ) {
+				try {
+					final Statement statement = DbConnectionManager.getConnection().createStatement();
+					final ResultSet resultSet = statement.executeQuery( "select VERSION from PRODUCT_COMPONENT_VERSION P where P.PRODUCT like 'Oracle Database%'" );
+					resultSet.next();
+					final String versionString = resultSet.getString( "VERSION" );
+					final String[] versionParts = versionString.split( "\\." );
+					final int majorVersion = Integer.parseInt( versionParts[ 0 ] );
+					final int minorVersion = Integer.parseInt( versionParts[ 1 ] );
+
+					if( ( majorVersion == 12 && minorVersion >= 1 ) || majorVersion > 12 ) {
+						limitSB.append(" LIMIT ").append(max);
+						limitSB.append(" OFFSET ").append(firstIndex);
+					}
+					else {
+						querySB.insert( 0, "SELECT * FROM ( " );
+						limitSB.append( " ) WHERE rownum BETWEEN " )
+						.append( firstIndex + 1 )
+						.append( " AND " )
+						.append( firstIndex + max );
+					}
+				} catch( SQLException e ) {
+					Log.warn( "Unable to determine oracle database version using fallback", e );
+					querySB.insert( 0, "SELECT * FROM ( " );
+					limitSB.append( " ) WHERE rownum BETWEEN " )
+					.append( firstIndex + 1 )
+					.append( " AND " )
+					.append( firstIndex + max );
+				}
+			}
 			else {
 				limitSB.append(" LIMIT ").append(max);
 				limitSB.append(" OFFSET ").append(firstIndex);
@@ -485,6 +516,11 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		}
 
 		return archivedMessages.values();
+	}
+
+	private boolean isOracleDB()
+	{
+		return DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle;
 	}
 
 	private Integer countMessages(Date startDate, Date endDate,

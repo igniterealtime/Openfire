@@ -7,11 +7,12 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.dom4j.*;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
 
-		LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
+		Session session = sessionManager.getSession(packet.getFrom());
 
 		// If no session was found then answer with an error (if possible)
         if (session == null) {
@@ -53,17 +54,30 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
         }
 
 		if(packet.getType().equals(IQ.Type.get)) {
-			sendSupportedFieldsResult(packet, session);
-			return null;
+			return buildSupportedFieldsResult(packet, session);
 		}
 
 		// Default to user's own archive
-		JID archiveJid = packet.getFrom();
+		JID archiveJid = packet.getTo();
+		if (archiveJid == null) {
+			archiveJid = packet.getFrom().asBareJID();
+		}
+		Log.debug("Archive requested is {}", archiveJid);
 
-		if(packet.getElement().attribute("to") != null) {
-			archiveJid = new JID(packet.getElement().attribute("to").getStringValue());
-			// Only allow queries to users own archives
-			if(!archiveJid.toBareJID().equals(packet.getFrom().toBareJID())) {
+		// Now decide the type.
+		boolean muc = false;
+		if (!XMPPServer.getInstance().isLocal(archiveJid)) {
+			Log.debug("Archive is not local (user)");
+			return buildErrorResponse(packet);
+		}
+
+		JID requestor = packet.getFrom().asBareJID();
+		Log.debug("Requestor is {} for muc=={}", requestor, muc);
+
+		// Auth checking.
+		if(!archiveJid.equals(requestor)) { // Not user's own
+			// ... disallow unless admin.
+			if (!XMPPServer.getInstance().getAdmins().contains(requestor)) {
 				return buildForbiddenResponse(packet);
 			}
 		}
@@ -82,11 +96,11 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 		return null;
 	}
 
-	protected void sendMidQuery(IQ packet, LocalClientSession session) {
+	protected void sendMidQuery(IQ packet, Session session) {
 		// Default: Do nothing.
 	}
 
-	protected abstract void sendEndQuery(IQ packet, LocalClientSession session, QueryRequest queryRequest);
+	protected abstract void sendEndQuery(IQ packet, Session session, QueryRequest queryRequest);
 
 	/**
 	 * Create error response to send to client
@@ -161,7 +175,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 	 * @param packet Received query packet
 	 * @param session Client session to respond to
 	 */
-	private void sendAcknowledgementResult(IQ packet, LocalClientSession session) {
+	private void sendAcknowledgementResult(IQ packet, Session session) {
 		IQ result = IQ.createResultIQ(packet);
 		session.process(result);
 	}
@@ -171,7 +185,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 	 * @param session Client session to respond to
 	 * @param queryRequest Received query request
 	 */
-	private void sendFinalMessage(LocalClientSession session,
+	private void sendFinalMessage(Session session,
 			final QueryRequest queryRequest) {
 
 		Message finalMessage = new Message();
@@ -200,12 +214,18 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 	 * @param archivedMessage Message to send to client
 	 * @return
 	 */
-	private void sendMessageResult(LocalClientSession session,
+	private void sendMessageResult(Session session,
 			QueryRequest queryRequest, ArchivedMessage archivedMessage) {
 
-		if(archivedMessage.getStanza() == null) {
-			// Don't send legacy archived messages (that have no stanza)
-			return;
+		String stanzaText = archivedMessage.getStanza();
+		if(stanzaText == null || stanzaText.equals("")) {
+			// Try creating a fake one from the body.
+			if (archivedMessage.getBody() != null && !archivedMessage.getBody().equals("")) {
+				stanzaText = String.format("<message from=\"{}\" to=\"{}\" type=\"chat\"><body>{}</body>", archivedMessage.getWithJid(), archivedMessage.getWithJid(), archivedMessage.getBody());
+			} else {
+				// Don't send legacy archived messages (that have no stanza)
+				return;
+			}
 		}
 
 		Message messagePacket = new Message();
@@ -214,7 +234,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
 		Document stanza;
 		try {
-			stanza = DocumentHelper.parseText(archivedMessage.getStanza());
+			stanza = DocumentHelper.parseText(stanzaText);
 			fwd = new Forwarded(stanza.getRootElement(), archivedMessage.getTime(), null);
 		} catch (DocumentException e) {
 			Log.error("Failed to parse message stanza.", e);
@@ -233,7 +253,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 	 * @param packet Incoming query (form field request) packet
 	 * @param session Session with client
 	 */
-	private void sendSupportedFieldsResult(IQ packet, LocalClientSession session) {
+	private IQ buildSupportedFieldsResult(IQ packet, Session session) {
 
 		IQ result = IQ.createResultIQ(packet);
 
@@ -248,7 +268,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
 		query.add(form.getElement());
 
-		session.process(result);
+		return result;
 	}
 
 	@Override

@@ -53,7 +53,6 @@ public class Forwarded extends PacketExtension {
                 // Set the Full JID as the "from" attribute
                 delayInfo.addAttribute("from", delayFrom.toString());
             }
-            element.add(delayInfo);
         }
         element.add(copy);
     }

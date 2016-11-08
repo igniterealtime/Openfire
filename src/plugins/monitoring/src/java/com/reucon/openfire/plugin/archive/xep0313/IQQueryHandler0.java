@@ -3,6 +3,7 @@ package com.reucon.openfire.plugin.archive.xep0313;
 import org.dom4j.*;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -21,12 +22,12 @@ class IQQueryHandler0 extends IQQueryHandler {
 	}
 
 	@Override
-	protected void sendMidQuery(IQ packet, LocalClientSession session) {
+	protected void sendMidQuery(IQ packet, Session session) {
 		sendAcknowledgementResult(packet, session);
 	}
 
 	@Override
-	protected void sendEndQuery(IQ packet, LocalClientSession session, QueryRequest queryRequest) {
+	protected void sendEndQuery(IQ packet, Session session, QueryRequest queryRequest) {
 		sendFinalMessage(session, queryRequest);
 	}
 
@@ -35,7 +36,7 @@ class IQQueryHandler0 extends IQQueryHandler {
 	 * @param packet Received query packet
 	 * @param session Client session to respond to
 	 */
-	private void sendAcknowledgementResult(IQ packet, LocalClientSession session) {
+	private void sendAcknowledgementResult(IQ packet, Session session) {
 		IQ result = IQ.createResultIQ(packet);
 		session.process(result);
 	}
@@ -45,7 +46,7 @@ class IQQueryHandler0 extends IQQueryHandler {
 	 * @param session Client session to respond to
 	 * @param queryRequest Received query request
 	 */
-	private void sendFinalMessage(LocalClientSession session,
+	private void sendFinalMessage(Session session,
 			final QueryRequest queryRequest) {
 
 		Message finalMessage = new Message();

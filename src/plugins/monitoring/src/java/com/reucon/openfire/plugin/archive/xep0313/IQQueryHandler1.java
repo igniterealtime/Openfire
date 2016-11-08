@@ -2,6 +2,7 @@ package com.reucon.openfire.plugin.archive.xep0313;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -19,7 +20,7 @@ class IQQueryHandler1 extends IQQueryHandler {
 	}
 
 	@Override
-	protected void sendEndQuery(IQ packet, LocalClientSession session, QueryRequest queryRequest) {
+	protected void sendEndQuery(IQ packet, Session session, QueryRequest queryRequest) {
 		sendAcknowledgementResult(packet, session, queryRequest);
 	}
 
@@ -28,7 +29,7 @@ class IQQueryHandler1 extends IQQueryHandler {
 	 * @param packet Received query packet
 	 * @param session Client session to respond to
 	 */
-	private void sendAcknowledgementResult(IQ packet, LocalClientSession session, QueryRequest queryRequest) {
+	private void sendAcknowledgementResult(IQ packet, Session session, QueryRequest queryRequest) {
 		IQ result = IQ.createResultIQ(packet);
 		Element fin = result.setChildElement("fin", NAMESPACE);
 		completeFinElement(queryRequest, fin);

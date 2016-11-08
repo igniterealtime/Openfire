@@ -129,11 +129,13 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			+ "ofMessageArchive.toJID, " + "ofMessageArchive.sentDate, " + "ofMessageArchive.stanza, "
 			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
 			+ "FROM ofMessageArchive "
-			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID ";
+			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID "
+			+ "WHERE ofMessageArchive.stanza != NULL OR ofMessageArchive.body != NULL";
 
 	 public static final String COUNT_MESSAGES = "SELECT COUNT(DISTINCT ofMessageArchive.messageID) "
 			+ "FROM ofMessageArchive "
-			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID ";
+			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID "
+			+ "WHERE ofMessageArchive.stanza != NULL OR ofMessageArchive.body != NULL";
 
 	public boolean createMessage(ArchivedMessage message) {
 		/* read only */

@@ -9,6 +9,7 @@ import java.util.Iterator;
 import org.dom4j.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.XMPPDateTimeFormat;
@@ -16,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
+import org.xmpp.packet.*;
 
 import com.reucon.openfire.plugin.archive.model.ArchivedMessage;
 import com.reucon.openfire.plugin.archive.xep.AbstractIQHandler;
@@ -212,34 +210,21 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 
 		Message messagePacket = new Message();
 		messagePacket.setTo(session.getAddress());
-
-		Element result = messagePacket.addChildElement("result", NAMESPACE);
-		result.addAttribute("id", archivedMessage.getId().toString());
-		if(queryRequest.getQueryid() != null) {
-			result.addAttribute("queryid", queryRequest.getQueryid());
-		}
-
-		Element forwarded = result.addElement("forwarded", "urn:xmpp:forward:0");
-		Element delay = forwarded.addElement("delay", "urn:xmpp:delay");
-
-		delay.addAttribute("stamp", XMPPDateTimeFormat.format(archivedMessage.getTime()));
+		Forwarded fwd;
 
 		Document stanza;
 		try {
 			stanza = DocumentHelper.parseText(archivedMessage.getStanza());
-			if ( stanza.getRootElement().getNamespaceURI() == null || stanza.getRootElement().getNamespaceURI().isEmpty() )
-			{
-				// OF-1132: If no 'xmlns' is set for the stanza then as per XML namespacing rules it would inherit the
-				// 'urn:xmpp:forward:0' namespace, which is wrong (see XEP-0297).
-				stanza.getRootElement().setQName( QName.get( stanza.getRootElement().getName(), "jabber:client") );
-			}
-			forwarded.add(stanza.getRootElement());
+			fwd = new Forwarded(stanza.getRootElement(), archivedMessage.getTime(), null);
 		} catch (DocumentException e) {
 			Log.error("Failed to parse message stanza.", e);
 			// If we can't parse stanza then we have no message to send to client, abort
 			return;
 		}
 
+		if (fwd == null) return; // Shouldn't be possible.
+
+		messagePacket.addExtension(new Result(fwd, NAMESPACE, queryRequest.getQueryid(), archivedMessage.getId().toString()));
 		session.process(messagePacket);
 	}
 

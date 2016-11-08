@@ -99,6 +99,7 @@ public class DefaultAuthProvider implements AuthProvider {
             userInfo.iterations = rs.getInt(3);
             userInfo.salt = rs.getString(4);
             userInfo.storedKey = rs.getString(5);
+            userInfo.serverKey = rs.getString(6);
             if (userInfo.encrypted != null) {
                 try {
                     userInfo.plainText = AuthFactory.decryptPassword(userInfo.encrypted);

@@ -427,7 +427,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     IQ reply = IQ.createResultIQ(iq);
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.service_unavailable);
+                    router.route(reply);
                 }
+                return true;
             }
             return false;
         }

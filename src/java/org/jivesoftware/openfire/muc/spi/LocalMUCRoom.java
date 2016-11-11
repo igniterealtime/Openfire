@@ -1072,11 +1072,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new ForbiddenException();
             default:
             case visitor:
-                if (canSendPrivateMessage.equals( "participants" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "participants" )) throw new ForbiddenException();
             case participant:
-                if (canSendPrivateMessage.equals( "moderators" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "moderators" )) throw new ForbiddenException();
             case moderator:
-                if (canSendPrivateMessage.equals( "none" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "none" )) throw new ForbiddenException();
         }
         String resource = packet.getTo().getResource();
         List<MUCRole> occupants = occupantsByNickname.get(resource.toLowerCase());

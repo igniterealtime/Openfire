@@ -19,13 +19,13 @@
 <%
     final ConnectionType connectionType = ConnectionType.SOCKET_S2S;
     final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-
     final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
 
     final boolean update = request.getParameter( "update" ) != null;
     final boolean closeSettings = request.getParameter( "closeSettings" ) != null;
     final boolean serverAllowed = request.getParameter( "serverAllowed" ) != null;
     final boolean serverBlocked = request.getParameter( "serverBlocked" ) != null;
+    final boolean permissionUpdate = request.getParameter( "permissionUpdate" ) != null;
     final String configToDelete = ParamUtils.getParameter( request, "deleteConf" );
 
     final Map<String, String> errors = new HashMap<>();
@@ -44,6 +44,13 @@
 
         // Log the event
         webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort);
+        response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
+    }
+    else if ( permissionUpdate && errors.isEmpty() )
+    {
+        final String permissionFilter = ParamUtils.getParameter( request, "permissionFilter" );
+        RemoteServerManager.setPermissionPolicy(permissionFilter);
+        webManager.logEvent( "Updated s2s permission policy to: " + permissionFilter, null);
         response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
     }
     else if ( closeSettings && errors.isEmpty() )
@@ -177,6 +184,7 @@
         response.sendRedirect( "connection-settings-socket-s2s.jsp?success=delete" );
     }
 
+    pageContext.setAttribute("permissionPolicy", RemoteServerManager.getPermissionPolicy().toString());
     pageContext.setAttribute( "errors",                  errors );
     pageContext.setAttribute( "plaintextConfiguration",  plaintextConfiguration );
     // pageContext.setAttribute( "clientIdle",              JiveGlobals.getIntProperty(     ConnectionSettings.Client.IDLE_TIMEOUT,    6*60*1000 ) );
@@ -332,7 +340,7 @@
         <table cellpadding="3" cellspacing="0" border="0">
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="permissionFilter" value="blacklist" id="rb05" ${'blacklist' eq param.permissionFilter ? 'checked' : ''}>
+                    <input type="radio" name="permissionFilter" value="blacklist" id="rb05" ${permissionPolicy eq 'blacklist' ? 'checked' : ''}>
                 </td>
                 <td width="99%">
                     <label for="rb05">
@@ -342,7 +350,7 @@
             </tr>
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="permissionFilter" value="whitelist" id="rb06" ${'whitelist' eq param.permissionFilter ? 'checked' : ''}>
+                    <input type="radio" name="permissionFilter" value="whitelist" id="rb06" ${permissionPolicy eq 'whitelist' ? 'checked' : ''}>
                 </td>
                 <td width="99%">
                     <label for="rb06">

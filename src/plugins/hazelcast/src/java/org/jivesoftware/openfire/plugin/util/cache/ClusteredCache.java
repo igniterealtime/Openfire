@@ -160,7 +160,7 @@ public class ClusteredCache implements Cache {
     }
 
     public void setMaxLifetime(long maxLifetime) {
-    	CacheFactory.setMaxSizeProperty(getName(), maxLifetime);
+    	CacheFactory.setMaxLifetimeProperty(getName(), maxLifetime);
     }
 
     public void destroy() {

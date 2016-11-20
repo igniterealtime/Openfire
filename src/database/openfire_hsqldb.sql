@@ -389,8 +389,8 @@ INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference
 // The value is the size in megabytes that the .log file can reach before an automatic
 // checkpoint occurs. A checkpoint rewrites the .script file and clears the .log file
 // see http://www.hsqldb.org/doc/guide/ch04.html#hsqldb.log_size
-SET LOGSIZE 20
+SET FILES LOG SIZE 20;
 
 // This controls the frequency of file sync for the log file.
 // see http://www.hsqldb.org/doc/guide/ch09.html#set_write_delay-section
-SET WRITE_DELAY 1000 MILLIS;
+SET FILES WRITE DELAY 1000 MILLIS;

@@ -304,6 +304,10 @@
                 </td>
             </tr>
             <tr>
+                <td class="c1"><fmt:message key="index.process_owner" /></td>
+                <td class="c2"><%= System.getProperty("user.name") %></td>
+            </tr>
+            <tr>
                 <td class="c1"><fmt:message key="index.memory" /></td>
                 <td>
                 <%    // The java runtime

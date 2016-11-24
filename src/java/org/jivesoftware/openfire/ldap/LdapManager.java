@@ -2234,6 +2234,21 @@ public class LdapManager {
      *         search filter string.
      */
     public static String sanitizeSearchFilter(final String value) {
+      return sanitizeSearchFilter(value, false);
+      
+    }
+      
+    /**
+     * Escapes any special chars (RFC 4515) from a string representing
+     * a search filter assertion value, with the exception of the '*' wildcard sign
+     *
+     * @param value The input string.
+     *
+     * @return A assertion value string ready for insertion into a 
+     *         search filter string.
+     */
+    public static String sanitizeSearchFilter(final String value, boolean acceptWildcard ) {
+
 
             StringBuilder result = new StringBuilder();
 
@@ -2246,7 +2261,7 @@ public class LdapManager {
 	            	case '&':		result.append("\\26");	break;
 	            	case '(':		result.append("\\28");	break;
 	            	case ')':		result.append("\\29");	break;
-	            	case '*':		result.append("\\2a");	break;
+	            	case '*':		result.append(acceptWildcard ? "*" : "\\2a");	break;
 	            	case ':':		result.append("\\3a");	break;
 	            	case '\\':		result.append("\\5c");	break;
 	            	case '|':		result.append("\\7c");	break;

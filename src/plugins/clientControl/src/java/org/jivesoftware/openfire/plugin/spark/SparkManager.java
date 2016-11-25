@@ -333,26 +333,168 @@ public class SparkManager implements Component {
      * @param responseElement the feature response element.
      */
     private void buildFeatureSet(Element responseElement) {
-        // Check for broadcast service.
+        // Check for ACCOUNT REGISTRATION feature
+        boolean accountsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("accounts.enabled", "true"));
+        if (accountsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "accounts-reg");
+        }
+
+        // Check for ADD CONTACTS feature
+        boolean addcontactsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("addcontacts.enabled", "true"));
+        if (addcontactsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "add-contacts");
+        }
+
+        // Check for ADD GROUPS feature
+        boolean addgroupsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("addgroups.enabled", "true"));
+        if (addgroupsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "add-groups");
+        }
+
+        // Check for ADVANCED CONFIGURATION feature
+        boolean advancedEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("advanced.enabled", "true"));
+        if (advancedEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "advanced-config");
+        }
+
+        // Check for AVATARS feature
+        boolean avatarsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("avatars.enabled", "true"));
+        if (avatarsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "avatar-tab");
+        }
+
+        // Check for BROADCASTING feature
         boolean broadcastEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("broadcast.enabled", "true"));
         if (broadcastEnabled) {
             responseElement.addElement("feature").addAttribute("var", "broadcast");
         }
 
+        // Check for CONTACT & GROUP REMOVALS feature
+        boolean removalsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("removals.enabled", "true"));
+        if (removalsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "removals");
+        }
+
+        // Check for CONTACT & GROUP RENAMES feature
+        boolean renamesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("renames.enabled", "true"));
+        if (renamesEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "renames");
+        }
+
+        // Check for FILE TRANSFER feature
         boolean fileTransferEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("transfer.enabled", "true"));
         if (fileTransferEnabled) {
             responseElement.addElement("feature").addAttribute("var", "file-transfer");
         }
 
+        // Check for HELP FORUMS feature
+        boolean helpforumsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("helpforums.enabled", "true"));
+        if (helpforumsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "help-forums");
+        }
+
+        // Check for HELP USER GUIDE feature
+        boolean helpuserguideEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("helpuserguide.enabled", "true"));
+        if (helpuserguideEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "help-userguide");
+        }
+
+        // Check for HISTORY SETTINGS feature
+        boolean historyEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("history.enabled", "true"));
+        if (historyEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "history-settings");
+        }
+
+        // Check for HOST NAME CHANGE feature
+        boolean hostnameEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("hostname.enabled", "true"));
+        if (hostnameEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "host-name");
+        }
+
+        // Check for LOGIN AS INVISIBLE feature
+        boolean invisibleloginEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("invisiblelogin.enabled", "true"));
+        if (invisibleloginEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "invisible-login");
+        }
+
+        // Check for LOGOUT & EXIT feature
+        boolean logoutexitEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("logoutexit.enabled", "true"));
+        if (logoutexitEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "logout-exit");
+        }
+
+        // Check for MOVE & COPY CONTACTS feature
+        boolean movecopyEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("movecopy.enabled", "true"));
+        if (movecopyEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "move-copy");
+        }
+
+        // Check for MUC feature
         boolean mucEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("muc.enabled", "true"));
         if (mucEnabled) {
             responseElement.addElement("feature").addAttribute("var", "muc");
         }
 
+        // Check for PASSWORD CHANGE feature
+        boolean passwordchangeEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("passwordchange.enabled", "true"));
+        if (passwordchangeEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "password-change");
+        }
+
+        // Check for PERSON SEARCH FIELD feature
+        boolean personsearchEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("personsearch.enabled", "true"));
+        if (personsearchEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "person-search");
+        }
+
+        // Check for PLUGINS MENU feature
+        boolean pluginsEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("plugins.enabled", "true"));
+        if (pluginsEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "plugins-menu");
+        }
+
+        // Check for PREFERENCES MENU feature        
+        boolean preferencesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("preferences.enabled", "true"));
+        if (preferencesEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "preferences-menu");
+        }
+
+        // Check for PRESENCE STATUS CHANGE feature        
+        boolean presenceEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("presence.enabled", "true"));
+        if (presenceEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "presence-status");
+        }
+
+        // Check for PROFILE & AVATAR EDITING feature
         boolean vcardEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("vcard.enabled", "true"));
         if (vcardEnabled) {
             responseElement.addElement("feature").addAttribute("var", "vcard");
         }
+
+        // Check for SAVE PASSWORD & AUTOLOGIN feature
+        boolean savepassandautologinEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("savepassandautologin.enabled", "true"));
+        if (savepassandautologinEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "save-password");
+        }
+
+        // Check for UPDATES feature
+        boolean updatesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("updates.enabled", "true"));
+        if (updatesEnabled) {
+            responseElement.addElement("feature").addAttribute("var", "updates");
+        }
+
+        // Check for VIEW NOTES feature        
+        boolean viewnotesEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("viewnotes.enabled", "true"));
+        if (viewnotesEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "view-notes");
+        }
+
+        // Check for VIEW TASK LIST feature        
+        boolean viewtasklistEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("viewtasklist.enabled", "true"));
+        if (viewtasklistEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "view-tasks");
+        }
+
     }
 
     /**

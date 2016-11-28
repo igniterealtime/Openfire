@@ -29,6 +29,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;

@@ -37,8 +37,10 @@
 <%@ page import="org.apache.commons.fileupload.FileItem" %>
 <%@ page import="org.apache.commons.fileupload.FileUploadException" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -96,7 +98,7 @@
         for (Plugin plugin : plugins) {
             File pluginDir = pluginManager.getPluginDirectory(plugin);
             if (reloadPlugin.equals(pluginDir.getName())) {
-                pluginManager.unloadPlugin(reloadPlugin);
+                pluginManager.reloadPlugin(reloadPlugin);
                 // Log the event
                 webManager.logEvent("reloaded plugin "+reloadPlugin, null);
                 response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
@@ -421,51 +423,42 @@
 </head>
 
 <body>
-
-<% if ("true".equals(request.getParameter("deletesuccess"))) { %>
-
-<div class="success">
-   <fmt:message key="plugin.admin.deleted_success"/>
-</div>
-<br>
-
-<% }
-else if ("false".equals(request.getParameter("deletesuccess"))) { %>
-
-<div class="error">
-    <fmt:message key="plugin.admin.deleted_failure"/>
-</div>
-<br>
-
-<% } %>
-
-<% if ("true".equals(request.getParameter("reloadsuccess"))) { %>
-
-<div class="success">
-   <fmt:message key="plugin.admin.reload_success"/>
-</div>
-<br>
-
-<% } %>
-
-<% if ("true".equals(request.getParameter("uploadsuccess"))) { %>
-
-<div class="success">
-   <fmt:message key="plugin.admin.uploaded_success"/>
-</div>
-<br>
-
-<% }
-else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
-
-<div class="error">
-    <fmt:message key="plugin.admin.uploaded_failure"/>
-</div>
-<br>
-
-<% } %>
-
-<p>
+    <c:if test="${param.deletesuccess eq 'true'}">
+        <admin:infobox type="success">
+            <fmt:message key="plugin.admin.deleted_success" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${param.deletesuccess eq 'false'}">
+        <admin:infobox type="error">
+            <fmt:message key="plugin.admin.deleted_failure" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${param.reloadsuccess eq 'true'}">
+        <admin:infobox type="success">
+            <fmt:message key="plugin.admin.reload_success" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${param.reloadsuccess eq 'false'}">
+        <admin:infobox type="success">
+            <fmt:message key="plugin.admin.reload_failure" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${param.uploadsuccess eq 'true'}">
+        <admin:infobox type="success">
+            <fmt:message key="plugin.admin.uploaded_success" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${param.uploadsuccess eq 'false'}">
+        <admin:infobox type="error">
+            <fmt:message key="plugin.admin.uploaded_failure" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${ webManager.XMPPServer.pluginManager.monitorTaskRunning }">
+        <admin:infobox type="info">
+            <fmt:message key="plugin.admin.monitortask_running" />
+        </admin:infobox>
+    </c:if>
+    <p>
     <fmt:message key="plugin.admin.info"/>
 </p>
 
@@ -557,7 +550,7 @@ else if ("false".equals(request.getParameter("uploadsuccess"))) { %>
         <%= pluginAuthor != null ? pluginAuthor : "" %>  &nbsp;
     </td>
     <td width="1%" align="center" valign="top" class="<%= update != null ? "update-top" : "line-bottom-border"%>">
-        <a href="plugin-admin.jsp?reloadplugin=<%= dirName %>"
+        <a href="plugin-admin.jsp?csrf=${csrf}&reloadplugin=<%= dirName %>"
            title="<fmt:message key="plugin.admin.click_reload" />"
                 ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" />"></a>
     </td>

@@ -161,7 +161,6 @@
     boolean update = request.getParameter("update") != null;
     boolean messageArchiving = conversationManager.isMessageArchivingEnabled();
     boolean roomArchiving = conversationManager.isRoomArchivingEnabled();
-    boolean roomArchivingStanzas = conversationManager.isRoomArchivingStanzasEnabled();
     int idleTime = ParamUtils.getIntParameter(request, "idleTime", conversationManager.getIdleTime());
     int maxTime = ParamUtils.getIntParameter(request, "maxTime", conversationManager.getMaxTime());
     
@@ -187,7 +186,6 @@
         boolean metadataArchiving = request.getParameter("metadataArchiving") != null;
         messageArchiving = request.getParameter("messageArchiving") != null;
         roomArchiving = request.getParameter("roomArchiving") != null;
-        roomArchivingStanzas = request.getParameter("roomArchivingStanzas") != null;
         String roomsArchived = request.getParameter("roomsArchived");
 
         // Validate params
@@ -216,7 +214,6 @@
             conversationManager.setMetadataArchivingEnabled(metadataArchiving);
             conversationManager.setMessageArchivingEnabled(messageArchiving);
             conversationManager.setRoomArchivingEnabled(roomArchiving);
-            conversationManager.setRoomArchivingStanzasEnabled(roomArchivingStanzas);
             conversationManager.setRoomsArchived(StringUtils.stringToCollection(roomsArchived));
             conversationManager.setIdleTime(idleTime);
             conversationManager.setMaxTime(maxTime);
@@ -283,10 +280,6 @@
                     <tr>
                         <td><fmt:message key="archive.settings.group_chats"/></td>
                         <td><input type="checkbox" name="roomArchiving" <%= conversationManager.isRoomArchivingEnabled() ? "checked" : ""%> /></td>
-                    </tr>
-                    <tr>
-                        <td><fmt:message key="archive.settings.group_chats.stanzas"/></td>
-                        <td><input type="checkbox" name="roomArchivingStanzas" <%= conversationManager.isRoomArchivingStanzasEnabled() ? "checked" : ""%> /></td>
                     </tr>
                     <tr>
                         <td><fmt:message key="archive.settings.certain_rooms"/></td>

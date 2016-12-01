@@ -115,6 +115,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 * Flag that indicates if messages of group chats (in MUC rooms) should be archived.
 	 */
 	private boolean roomArchivingEnabled;
+	private boolean roomArchivingStanzasEnabled;
 	/**
 	 * List of room names to archive. When list is empty then all rooms are archived (if roomArchivingEnabled is enabled).
 	 */
@@ -162,6 +163,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			metadataArchivingEnabled = true;
 		}
 		roomArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.roomArchiving", false);
+		roomArchivingStanzasEnabled = JiveGlobals.getBooleanProperty("conversation.roomArchivingStanzas", false);
 		roomsArchived = StringUtils.stringToCollection(JiveGlobals.getProperty("conversation.roomsArchived", ""));
 		if (roomArchivingEnabled && !metadataArchivingEnabled) {
 			Log.warn("Metadata archiving must be enabled when room archiving is enabled. Overriding setting.");
@@ -391,6 +393,11 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		return roomArchivingEnabled;
 	}
 
+
+	public boolean isRoomArchivingStanzasEnabled() {
+		return roomArchivingStanzasEnabled;
+	}
+
 	/**
 	 * Sets whether message archiving is enabled for group chats. When enabled, all messages in group conversations are stored in the database unless
 	 * a list of rooms was specified in {@link #getRoomsArchived()} . Note: it's not possible for meta-data archiving to be disabled when room
@@ -407,7 +414,12 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			this.metadataArchivingEnabled = true;
 		}
 	}
-
+	
+	public void setRoomArchivingStanzasEnabled(boolean enabled) {
+		this.roomArchivingStanzasEnabled = enabled;
+		JiveGlobals.setProperty("conversation.roomArchivingStanzas", Boolean.toString(enabled));
+		// Force metadata archiving enabled.
+	}
 	/**
 	 * Returns list of room names whose messages will be archived. When room archiving is enabled and this list is empty then messages of all local
 	 * rooms will be archived. However, when name of rooms are defined in this list then only messages of those rooms will be archived.
@@ -738,7 +750,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 * @param date
 	 *            date when the message was sent.
 	 */
-	void processRoomMessage(JID roomJID, JID sender, String nickname, String body, Date date) {
+	void processRoomMessage(JID roomJID, JID sender, String nickname, String body, String stanza, Date date) {
 		String conversationKey = getRoomConversationKey(roomJID);
 		synchronized (conversationKey.intern()) {
 			Conversation conversation = conversations.get(conversationKey);
@@ -776,7 +788,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 				JID jid = new JID(roomJID + "/" + nickname);
 				if (body != null) {
 					/* OF-677 - Workaround to prevent null messages being archived */
-					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, "", false));
+					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, roomArchivingStanzasEnabled ? stanza : "", false));
 				}
 			}
 			// Notify listeners of the conversation update.
@@ -1094,6 +1106,9 @@ public class ConversationManager implements Startable, ComponentEventListener{
 				if (roomArchivingEnabled) {
 					metadataArchivingEnabled = true;
 				}
+			} else if( property.equals( "conversation.roomArchivingStanzas" ) ) {
+				String value = (String) params.get( "value" );
+				roomArchivingStanzasEnabled = Boolean.valueOf( value );
 			} else if (property.equals("conversation.roomsArchived")) {
 				String value = (String) params.get("value");
 				roomsArchived = StringUtils.stringToCollection(value);
@@ -1149,6 +1164,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 				messageArchivingEnabled = false;
 			} else if (property.equals("conversation.roomArchiving")) {
 				roomArchivingEnabled = false;
+			} else if (property.equals("conversation.roomArchivingStanzas")) {
+				roomArchivingStanzasEnabled = false;
 			} else if (property.equals("conversation.roomsArchived")) {
 				roomsArchived = Collections.emptyList();
 			} else if (property.equals("conversation.idleTime")) {

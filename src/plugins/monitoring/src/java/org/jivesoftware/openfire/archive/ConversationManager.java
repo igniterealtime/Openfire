@@ -115,6 +115,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 * Flag that indicates if messages of group chats (in MUC rooms) should be archived.
 	 */
 	private boolean roomArchivingEnabled;
+	private boolean roomArchivingStanzasEnabled_;
 	/**
 	 * List of room names to archive. When list is empty then all rooms are archived (if roomArchivingEnabled is enabled).
 	 */
@@ -154,7 +155,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		this.conversationEventsQueue = new ConversationEventsQueue(this, taskEngine);
 	}
 
-	public void start() {
+	@Override
+   public void start() {
 		metadataArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.metadataArchiving", true);
 		messageArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.messageArchiving", false);
 		if (messageArchivingEnabled && !metadataArchivingEnabled) {
@@ -162,6 +164,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			metadataArchivingEnabled = true;
 		}
 		roomArchivingEnabled = JiveGlobals.getBooleanProperty("conversation.roomArchiving", false);
+		roomArchivingStanzasEnabled_ = JiveGlobals.getBooleanProperty("conversation.roomArchivingStanzas", false);
 		roomsArchived = StringUtils.stringToCollection(JiveGlobals.getProperty("conversation.roomsArchived", ""));
 		if (roomArchivingEnabled && !metadataArchivingEnabled) {
 			Log.warn("Metadata archiving must be enabled when room archiving is enabled. Overriding setting.");
@@ -196,7 +199,7 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			Log.info("Monitoring plugin max time value deleted. Must be left over from stalled userCreation plugin run.");
 			JiveGlobals.deleteProperty("conversation.maxTimeDebug");
 		}
-		
+
 		// Schedule a task to do conversation cleanup.
 		cleanupTask = new TimerTask() {
 			@Override
@@ -264,27 +267,33 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		// Register a statistic.
 		Statistic conversationStat = new Statistic() {
 
-			public String getName() {
+			@Override
+         public String getName() {
 				return LocaleUtils.getLocalizedString("stat.conversation.name", MonitoringConstants.NAME);
 			}
 
-			public Type getStatType() {
+			@Override
+         public Type getStatType() {
 				return Type.count;
 			}
 
-			public String getDescription() {
+			@Override
+         public String getDescription() {
 				return LocaleUtils.getLocalizedString("stat.conversation.desc", MonitoringConstants.NAME);
 			}
 
-			public String getUnits() {
+			@Override
+         public String getUnits() {
 				return LocaleUtils.getLocalizedString("stat.conversation.units", MonitoringConstants.NAME);
 			}
 
-			public double sample() {
+			@Override
+         public double sample() {
 				return getConversationCount();
 			}
 
-			public boolean isPartialSample() {
+			@Override
+         public boolean isPartialSample() {
 				return false;
 			}
 		};
@@ -292,7 +301,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		InternalComponentManager.getInstance().addListener(this);
 	}
 
-	public void stop() {
+	@Override
+   public void stop() {
 		archiveTask.cancel();
 		archiveTask = null;
 		cleanupTask.cancel();
@@ -391,6 +401,11 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		return roomArchivingEnabled;
 	}
 
+
+	public boolean isRoomArchivingStanzasEnabled() {
+	   return roomArchivingStanzasEnabled_;
+	}
+
 	/**
 	 * Sets whether message archiving is enabled for group chats. When enabled, all messages in group conversations are stored in the database unless
 	 * a list of rooms was specified in {@link #getRoomsArchived()} . Note: it's not possible for meta-data archiving to be disabled when room
@@ -406,6 +421,12 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		if (enabled) {
 			this.metadataArchivingEnabled = true;
 		}
+	}
+
+	public void setRoomArchivingStanzasEnabled(boolean enabled) {
+	   this.roomArchivingStanzasEnabled_ = enabled;
+	   JiveGlobals.setProperty("conversation.roomArchivingStanzas", Boolean.toString(enabled));
+	   // Force metadata archiving enabled.
 	}
 
 	/**
@@ -562,7 +583,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			List<Conversation> conversationList = new ArrayList<Conversation>(conversations.values());
 			// Sort the conversations by creation date.
 			Collections.sort(conversationList, new Comparator<Conversation>() {
-				public int compare(Conversation c1, Conversation c2) {
+				@Override
+            public int compare(Conversation c1, Conversation c2) {
 					return c1.getStartDate().compareTo(c2.getStartDate());
 				}
 			});
@@ -738,7 +760,12 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 * @param date
 	 *            date when the message was sent.
 	 */
-	void processRoomMessage(JID roomJID, JID sender, String nickname, String body, Date date) {
+	void processRoomMessage( JID roomJID,
+	                         JID sender,
+	                         String nickname,
+	                         String body,
+	                         String stanza,
+	                         Date date) {
 		String conversationKey = getRoomConversationKey(roomJID);
 		synchronized (conversationKey.intern()) {
 			Conversation conversation = conversations.get(conversationKey);
@@ -776,7 +803,13 @@ public class ConversationManager implements Startable, ComponentEventListener{
 				JID jid = new JID(roomJID + "/" + nickname);
 				if (body != null) {
 					/* OF-677 - Workaround to prevent null messages being archived */
-					messageQueue.add(new ArchivedMessage(conversation.getConversationID(), sender, jid, date, body, "", false));
+               messageQueue.add( new ArchivedMessage( conversation.getConversationID(),
+                                                      sender,
+                                                      jid,
+                                                      date,
+                                                      body,
+                                                      roomArchivingStanzasEnabled_ ? stanza : "",
+                                                      false ) );
 				}
 			}
 			// Notify listeners of the conversation update.
@@ -932,7 +965,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		return roomJID.toString();
 	}
 
-	public void componentInfoReceived(IQ iq) {
+	@Override
+   public void componentInfoReceived(IQ iq) {
 		// Check if the component is a gateway
 		boolean gatewayFound = false;
 		Element childElement = iq.getChildElement();
@@ -948,11 +982,13 @@ public class ConversationManager implements Startable, ComponentEventListener{
 		}
 	}
 
-	public void componentRegistered(JID componentJID) {
+	@Override
+   public void componentRegistered(JID componentJID) {
 		// Do nothing
 	}
 
-	public void componentUnregistered(JID componentJID) {
+	@Override
+   public void componentUnregistered(JID componentJID) {
 		// Remove stored information about this component
 		gateways.remove(componentJID.getDomain());
 	}
@@ -971,7 +1007,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 */
 	private class ArchivingTask implements Runnable {
 
-		public void run() {
+		@Override
+      public void run() {
 			synchronized (this) {
 				if (archivingRunning) {
 					return;
@@ -986,9 +1023,9 @@ public class ConversationManager implements Startable, ComponentEventListener{
 
 					pstmt = con.prepareStatement(INSERT_MESSAGE);
 					ArchivedMessage message;
-					
+
 					int msgCount = getArchivedMessageCount();
-					
+
 					int count = 0;
 					while ((message = messageQueue.poll()) != null) {
 						pstmt.setInt(1, ++msgCount);
@@ -1076,7 +1113,8 @@ public class ConversationManager implements Startable, ComponentEventListener{
 	 */
 	private class ConversationPropertyListener implements PropertyEventListener {
 
-		public void propertySet(String property, Map<String, Object> params) {
+		@Override
+      public void propertySet(String property, Map<String, Object> params) {
 			if (property.equals("conversation.metadataArchiving")) {
 				String value = (String) params.get("value");
 				metadataArchivingEnabled = Boolean.valueOf(value);
@@ -1094,6 +1132,9 @@ public class ConversationManager implements Startable, ComponentEventListener{
 				if (roomArchivingEnabled) {
 					metadataArchivingEnabled = true;
 				}
+         } else if( property.equals( "conversation.roomArchivingStanzas" ) ) {
+            String value = (String) params.get( "value" );
+            roomArchivingStanzasEnabled_ = Boolean.valueOf( value );
 			} else if (property.equals("conversation.roomsArchived")) {
 				String value = (String) params.get("value");
 				roomsArchived = StringUtils.stringToCollection(value);
@@ -1142,13 +1183,16 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			}
 		}
 
-		public void propertyDeleted(String property, Map<String, Object> params) {
+		@Override
+      public void propertyDeleted(String property, Map<String, Object> params) {
 			if (property.equals("conversation.metadataArchiving")) {
 				metadataArchivingEnabled = true;
 			} else if (property.equals("conversation.messageArchiving")) {
 				messageArchivingEnabled = false;
 			} else if (property.equals("conversation.roomArchiving")) {
 				roomArchivingEnabled = false;
+			} else if (property.equals("conversation.roomArchivingStanzas")) {
+			   roomArchivingStanzasEnabled_ = false;
 			} else if (property.equals("conversation.roomsArchived")) {
 				roomsArchived = Collections.emptyList();
 			} else if (property.equals("conversation.idleTime")) {
@@ -1165,11 +1209,13 @@ public class ConversationManager implements Startable, ComponentEventListener{
 			}
 		}
 
-		public void xmlPropertySet(String property, Map<String, Object> params) {
+		@Override
+      public void xmlPropertySet(String property, Map<String, Object> params) {
 			// Ignore.
 		}
 
-		public void xmlPropertyDeleted(String property, Map<String, Object> params) {
+		@Override
+      public void xmlPropertyDeleted(String property, Map<String, Object> params) {
 			// Ignore.
 		}
 	}

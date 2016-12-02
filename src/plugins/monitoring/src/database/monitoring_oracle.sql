@@ -28,15 +28,15 @@ CREATE INDEX ofConParticipant_conv_idx ON ofConParticipant (conversationID, bare
 CREATE INDEX ofConParticipant_jid_idx ON ofConParticipant (bareJID);
 
 CREATE TABLE ofMessageArchive (
-   messageID		 INTEGER		  NULL,
+   messageID         INTEGER              NULL,
    conversationID    INTEGER          NOT NULL,
    fromJID           VARCHAR2(1024)   NOT NULL,
-   fromJIDResource   VARCHAR2(255)    NULL,
+   fromJIDResource   VARCHAR2(255)        NULL,
    toJID             VARCHAR2(1024)   NOT NULL,
-   toJIDResource   VARCHAR2(255)      NULL,
+   toJIDResource     VARCHAR2(255)        NULL,
    sentDate          INTEGER          NOT NULL,
-   stanza			 LONG			  NULL,
-   body              LONG
+   stanza            CLOB                 NULL,
+   body              CLOB
 );
 CREATE INDEX ofMessageArchive_con_idx ON ofMessageArchive (conversationID);
 

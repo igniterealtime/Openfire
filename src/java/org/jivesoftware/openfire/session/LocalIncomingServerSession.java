@@ -112,7 +112,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
+        String toDomain = xpp.getAttributeValue("", "to");
         int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+
+        if (toDomain == null) {
+            toDomain = serverName;
+        }
         
         try {
             // Get the stream ID for the new session
@@ -127,7 +132,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(serverName).append("\"");
+            openingStream.append(" from=\"").append(toDomain).append("\"");
             if (fromDomain != null) {
                 openingStream.append(" to=\"").append(fromDomain).append("\"");
             }

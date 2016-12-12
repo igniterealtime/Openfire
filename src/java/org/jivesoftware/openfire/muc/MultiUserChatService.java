@@ -20,6 +20,7 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -398,4 +399,37 @@ public interface MultiUserChatService extends Component {
      * @return true if the MUC service is hidden and externally managed.
      */
     boolean isHidden();
+
+    /**
+     * Add a IQHandler to MUC rooms and services. If the IQHandler only supports one or
+     * other, it should quietly ignore it.
+     */
+    void addIQHandler(IQHandler handler);
+    void removeIQHandler(IQHandler handler);
+
+    /**
+     * Adds an extra Disco feature to the list of features returned for the conference service.
+     * @param feature Feature to add.
+     */
+    void addExtraFeature(String feature);
+
+    /**
+     * Removes an extra Disco feature from the list of features returned for the conference service.
+     * @param feature Feature to remove.
+     */
+    void removeExtraFeature(String feature);
+
+    /**
+     * Adds an extra Disco identity to the list of identities returned for the conference service.
+     * @param category Category for identity.  e.g. conference
+     * @param name Descriptive name for identity.  e.g. Public Chatrooms
+     * @param type Type for identity.  e.g. text
+     */
+    void addExtraIdentity(String category, String name, String type);
+
+    /**
+     * Removes an extra Disco identity from the list of identities returned for the conference service.
+     * @param name Name of identity to remove.
+     */
+    void removeExtraIdentity(String name);
 }

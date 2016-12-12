@@ -548,11 +548,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         if (packet.getType() == Message.Type.error) {
             // Errors should be dropped at this point.
+            Log.debug("Error stanza to bare JID discarded: {}", packet.toXML());
             return true; // Not offline.
         }
 
         if (packet.getType() == Message.Type.groupchat) {
             // Surreal message type; cannot occur.
+            Log.debug("Groupchat stanza to bare JID discarded: {}", packet.toXML());
             return false; // Maybe offline has an idea?
         }
 
@@ -581,8 +583,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             return true;
         }
 
-        if (JiveGlobals.getBooleanProperty("route.really-all-resources", false))
-        	return true;
+        if (JiveGlobals.getBooleanProperty("route.really-all-resources", false)) {
+            return true;
+        }
 
         // Get the highest priority sessions for normal processing.
         List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);

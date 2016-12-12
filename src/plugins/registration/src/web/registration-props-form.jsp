@@ -33,6 +33,7 @@
     boolean saveWelcome = request.getParameter("savemessage") != null;
     boolean saveGroup = request.getParameter("savegroup") != null;
     boolean saveHeader = request.getParameter("saveheader") != null;
+    boolean savePrivacyList = request.getParameter("saveprivacylist") != null;
 
     boolean imEnabled = ParamUtils.getBooleanParameter(request, "imenabled", false);
     boolean emailEnabled = ParamUtils.getBooleanParameter(request, "emailenabled", false);
@@ -57,7 +58,11 @@
     String group = ParamUtils.getParameter(request, "groupname");
 
     String header = ParamUtils.getParameter(request, "header");
-
+    
+    boolean privacyListEnabled = ParamUtils.getBooleanParameter(request, "privacylistenabled", false);
+    String privacyList = ParamUtils.getParameter(request, "privacylist");
+    String privacyListName = ParamUtils.getParameter(request, "privacylistname");
+    
     RegistrationPlugin plugin = (RegistrationPlugin) XMPPServer.getInstance().getPluginManager().getPlugin("registration");
 
     Map<String, String> errors = new HashMap<String, String>();
@@ -125,6 +130,7 @@
         plugin.setReCaptchaNoScript(reCaptchaNoScript);
         plugin.setReCaptchaPublicKey(reCaptchaPublicKey);
         plugin.setReCaptchaPrivateKey(reCaptchaPrivateKey);
+        plugin.setPrivacyListEnabled(privacyListEnabled);
         
         if (groupEnabled) {
             group = plugin.getGroup();
@@ -192,15 +198,31 @@
         }
     }
     
+    if (savePrivacyList) {
+        if (privacyList == null || privacyList.trim().length() < 1) {
+            errors.put("invalidPrivacyList", "invalidPrivacyList");
+        } else if (privacyListName == null || privacyListName.trim().length() < 1) {
+            errors.put("invalidPrivacyListName", "invalidPrivacyListName");
+        } else {
+            plugin.setPrivacyListName(privacyListName);
+            plugin.setPrivacyList(privacyList);
+            response.sendRedirect("registration-props-form.jsp?privacyListSaved=true");
+            return;
+        }
+    }
+    
     imEnabled = plugin.imNotificationEnabled();
     emailEnabled = plugin.emailNotificationEnabled();
     welcomeEnabled = plugin.welcomeEnabled();
     groupEnabled = plugin.groupEnabled();
     webEnabled = plugin.webEnabled();
+    privacyListEnabled = plugin.privacyListEnabled();
     
     welcomeMessage = plugin.getWelcomeMessage();
     group = plugin.getGroup();
     header = plugin.getHeader();
+    privacyListName = plugin.getPrivacyListName();
+    privacyList = plugin.getPrivacyList();
     reCaptchaEnabled = plugin.reCaptchaEnabled();
     reCaptchaNoScript = plugin.reCaptchaNoScript();
     reCaptchaPublicKey = plugin.getReCaptchaPublicKey();
@@ -283,6 +305,10 @@ function addEmailContact() {
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="groupenabled" <%=(groupEnabled) ? "checked" : "" %>></td>
             <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_add_user_to_group" /></td>
+        </tr>
+        <tr>
+            <td width="1%" align="center" nowrap><input type="checkbox" name="privacylistenabled" <%=(privacyListEnabled) ? "checked" : "" %>></td>
+            <td width="99%" align="left" colspan="2"><fmt:message key="registration.props.form.enable_default_privacy_list" /></td>
         </tr>
         <tr>
             <td width="1%" align="center" nowrap><input type="checkbox" name="webenabled" <%=(webEnabled) ? "checked" : "" %>></td>
@@ -554,12 +580,60 @@ function addEmailContact() {
             <% if (errors.containsKey("groupNotFound")) { %> 
             <span class="jive-error-text"><br><fmt:message key="registration.props.form.default_group_invalid" /></span>
             <% } %>
+            </td>
         </tr>
     </tbody>
     </table>
     
    <br>
     <input type="submit" value="<fmt:message key="registration.props.form.default_group_save" />"/>
+    </div>
+</form>
+<br>
+
+<form action="registration-props-form.jsp?saveprivacylist=true" method="post">
+<div class="jive-contentBoxHeader"><fmt:message key="registration.props.form.privacy_list" /></div>
+<div class="jive-contentBox">
+    <p><fmt:message key="registration.props.form.privacy_list_details" /></p>
+   
+    <% if (ParamUtils.getBooleanParameter(request, "privacyListSaved")) { %>
+
+    <div class="jive-success">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+            <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0"></td>
+            <td class="jive-icon-label"><fmt:message key="registration.props.form.privacy_list_saved" /></td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+   
+    <% } %>
+
+    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <tbody>
+        <tr>            
+            <td width="15%" valign="top">Default Privacy List Name:</td>
+            <td width="85%"><input type="text" name="privacylistname" size="30" maxlength="100" value="<%= (privacyListName != null ? privacyListName : "") %>"/>
+            <% if (errors.containsKey("invalidPrivacyListName")) { %> 
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.privacy_list_name_invalid" /></span>
+            <% } %>  
+            </td>
+        </tr>  
+        <tr>              
+            <td width="15%" valign="top">Default Privacy List:</td>
+            <td width="85%"><textarea cols="45" rows="5" wrap="virtual" name="privacylist"><%= (privacyList != null ? privacyList : "") %></textarea>
+            <% if (errors.containsKey("invalidPrivacyList")) { %> 
+            <span class="jive-error-text"><br><fmt:message key="registration.props.form.privacy_list_invalid" /></span>
+            <% } %>
+            </td>
+        </tr>  
+    </tbody>
+    </table>
+    
+   <br>
+    <input type="submit" value="<fmt:message key="registration.props.form.default_privacy_list_save" />"/>
     </div>
 </form>
 

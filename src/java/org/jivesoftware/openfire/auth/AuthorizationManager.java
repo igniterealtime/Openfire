@@ -165,7 +165,7 @@ public class AuthorizationManager {
                             return false;
                         }
                         try {
-                            UserManager.getUserProvider().createUser(username, StringUtils.randomString(8), null, null);
+                            UserManager.getInstance().createUser(username, StringUtils.randomString(8), null, null);
                             if (Log.isDebugEnabled()) {
                                 Log.info("AuthorizationManager: User "+username+" created.");
                             }

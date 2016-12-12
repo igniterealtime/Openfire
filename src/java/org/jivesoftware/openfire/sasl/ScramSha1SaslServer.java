@@ -140,13 +140,11 @@ public class ScramSha1SaslServer implements SaslServer {
      *   - the number of iterations
      */
     private byte[] generateServerFirstMessage(final byte[] response) throws SaslException {
-        String clientFirstMessage = new String(response, StandardCharsets.US_ASCII);
-        
+        String clientFirstMessage = new String(response, StandardCharsets.UTF_8);
         Matcher m = CLIENT_FIRST_MESSAGE.matcher(clientFirstMessage);
         if (!m.matches()) {
         	throw new SaslException("Invalid first client message");
         }
-        
 //        String gs2Header = m.group(1);
 //        String gs2CbindFlag = m.group(2);
 //        String gs2CbindName = m.group(3);
@@ -154,7 +152,6 @@ public class ScramSha1SaslServer implements SaslServer {
         clientFirstMessageBare = m.group(5);
         username = m.group(6);
         String clientNonce = m.group(7);
-        
         nonce = clientNonce + UUID.randomUUID().toString();
 
         try {
@@ -164,15 +161,14 @@ public class ScramSha1SaslServer implements SaslServer {
             throw new SaslException(e.getMessage(), e);
 		}
         
-        return serverFirstMessage.getBytes(StandardCharsets.US_ASCII);
+ return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
      * Final response returns the server signature.
      */
     private byte[] generateServerFinalMessage(final byte[] response) throws SaslException {
-        String clientFinalMessage = new String(response, StandardCharsets.US_ASCII);
-        
+        String clientFinalMessage = new String(response, StandardCharsets.UTF_8);
         Matcher m = CLIENT_FINAL_MESSAGE.matcher(clientFinalMessage);
         if (!m.matches()) {
         	throw new SaslException("Invalid client final message");
@@ -211,7 +207,7 @@ public class ScramSha1SaslServer implements SaslServer {
                 throw new SaslException("Authentication failed");
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
-            		.getBytes(StandardCharsets.US_ASCII);
+            		.getBytes(StandardCharsets.UTF_8);
         } catch (UserNotFoundException | NoSuchAlgorithmException e) {
             throw new SaslException(e.getMessage(), e);
         }

@@ -1620,6 +1620,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 if (!nickname.equals(members.get(bareJID))) {
                     throw new ConflictException();
                 }
+            } else if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().length() == 0)) {
+                throw new ConflictException();
             }
             // Check that the room always has an owner
             if (owners.contains(bareJID) && owners.size() == 1) {

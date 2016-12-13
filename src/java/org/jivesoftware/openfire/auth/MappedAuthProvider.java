@@ -139,4 +139,48 @@ public class MappedAuthProvider implements AuthProvider
 
         return false;
     }
+
+    @Override
+    public String getSalt(String username) throws UserNotFoundException
+    {
+        final AuthProvider provider = mapper.getAuthProvider( username );
+        if ( provider == null )
+        {
+            throw new UserNotFoundException();
+        }
+        return provider.getSalt( username );
+    }
+
+    @Override
+    public int getIterations(String username) throws UserNotFoundException
+    {
+        final AuthProvider provider = mapper.getAuthProvider( username );
+        if ( provider == null )
+        {
+            throw new UserNotFoundException();
+        }
+        return provider.getIterations( username );
+    }
+
+    @Override
+    public String getServerKey(String username) throws UserNotFoundException
+    {
+        final AuthProvider provider = mapper.getAuthProvider( username );
+        if ( provider == null )
+        {
+            throw new UserNotFoundException();
+        }
+        return provider.getServerKey( username );
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UserNotFoundException
+    {
+        final AuthProvider provider = mapper.getAuthProvider( username );
+        if ( provider == null )
+        {
+            throw new UserNotFoundException();
+        }
+        return provider.getStoredKey( username );
+    }
 }

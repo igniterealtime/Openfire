@@ -38,7 +38,6 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -315,13 +314,13 @@ public class ScramSha1SaslServer implements SaslServer {
      */
     private byte[] getSalt(final String username) {
         try {
-            String saltshaker = UserManager.getUserProvider().loadUser(username).getSalt();
+            String saltshaker = AuthFactory.getSalt(username);
             byte[] salt;
             if (saltshaker == null) {
                 Log.debug("No salt found, so resetting password.");
                 String password = AuthFactory.getPassword(username);
                 AuthFactory.setPassword(username, password);
-                salt = DatatypeConverter.parseBase64Binary(UserManager.getUserProvider().loadUser(username).getSalt());
+                salt = DatatypeConverter.parseBase64Binary(AuthFactory.getSalt(username));
             } else {
                 salt = DatatypeConverter.parseBase64Binary(saltshaker);
             }
@@ -338,14 +337,14 @@ public class ScramSha1SaslServer implements SaslServer {
      * Retrieve the iteration count from the database for a given username.
      */
     private int getIterations(final String username) throws UserNotFoundException {
-    	return UserManager.getUserProvider().loadUser(username).getIterations();
+    	return AuthFactory.getIterations(username);
     }
     
     /**
      * Retrieve the server key from the database for a given username.
      */
     private byte[] getServerKey(final String username) throws UserNotFoundException {
-        final String serverKey = UserManager.getUserProvider().loadUser( username ).getServerKey();
+        final String serverKey = AuthFactory.getServerKey(username);
         if (serverKey == null) {
             return null;
         } else {
@@ -357,7 +356,7 @@ public class ScramSha1SaslServer implements SaslServer {
      * Retrieve the stored key from the database for a given username.
      */
     private byte[] getStoredKey(final String username) throws UserNotFoundException {
-        final String storedKey = UserManager.getUserProvider().loadUser( username ).getStoredKey();
+        final String storedKey = AuthFactory.getStoredKey(username);
         if (storedKey == null) {
             return null;
         } else {

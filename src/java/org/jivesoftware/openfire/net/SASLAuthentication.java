@@ -410,9 +410,6 @@ public class SASLAuthentication {
             challenge = new byte[0];
         }
         String challenge_b64 = StringUtils.encodeBase64(challenge).trim();
-        if ("".equals(challenge_b64)) {
-            challenge_b64 = "="; // Must be padded if null
-        }
         reply.append(
                 "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
         reply.append(challenge_b64);
@@ -432,6 +429,9 @@ public class SASLAuthentication {
         reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
         if (successData != null) {
             String successData_b64 = StringUtils.encodeBase64(successData).trim();
+            if ("".equals(successData_b64)) {
+                successData_b64 = "="; // Must be padded if null
+            }
             reply.append('>').append(successData_b64).append("</success>");
         }
         else {

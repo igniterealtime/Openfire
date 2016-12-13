@@ -392,6 +392,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (childElement != null) {
             namespace = childElement.getNamespaceURI();
         }
+        if (namespace == null) {
+            // Can't process IQ packet without namespace set
+            return false;
+        }
         if ("jabber:iq:register".equals(namespace)) {
             IQ reply = registerHandler.handleIQ(iq);
             router.route(reply);

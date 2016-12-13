@@ -387,7 +387,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         rolesToBroadcastPresence.add("moderator");
         rolesToBroadcastPresence.add("participant");
         rolesToBroadcastPresence.add("visitor");
-        GroupEventDispatcher.addListener(this);
     }
 
     @Override

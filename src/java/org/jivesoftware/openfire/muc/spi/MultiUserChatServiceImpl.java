@@ -415,7 +415,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         else if ("urn:xmpp:ping".equals(namespace)) {
             router.route( IQ.createResultIQ(iq) );
         }
-        else {
+        else if (this.iqHandlers != null) {
             IQHandler h = this.iqHandlers.get(namespace);
             if (h != null) {
                 try {
@@ -431,6 +431,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
                 return true;
             }
+            return false;
+        } else {
             return false;
         }
         return true;

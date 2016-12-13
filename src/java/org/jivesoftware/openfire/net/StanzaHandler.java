@@ -649,12 +649,13 @@ public abstract class StanzaHandler {
 
         if (streamError != null) {
             StringBuilder sb = new StringBuilder(250);
+            if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append(STREAM_ID_FACTORY.createStreamID()).append("\" ");
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");

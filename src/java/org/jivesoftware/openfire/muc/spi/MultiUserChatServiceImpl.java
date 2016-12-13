@@ -749,6 +749,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                     catch (IllegalArgumentException e) {
                         // The room does not exist so do nothing
+                        if (room != null && room instanceof LocalMUCRoom)
+                            GroupEventDispatcher.removeListener((LocalMUCRoom) room);
                         room = null;
                     }
                 }
@@ -763,7 +765,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void refreshChatRoom(String roomName) {
-        rooms.remove(roomName);
+    	MUCRoom room = rooms.remove(roomName);
+        if (room != null && room instanceof LocalMUCRoom)
+        	GroupEventDispatcher.removeListener((LocalMUCRoom) room);
         getChatRoom(roomName);
     }
 

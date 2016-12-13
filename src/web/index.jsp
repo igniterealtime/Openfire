@@ -69,9 +69,7 @@
 
 <%! long lastRSSFetch = 0;
     SyndFeed lastBlogFeed = null;
-    SyndFeed lastReleaseFeed = null;
     String blogFeedRSS = "https://community.igniterealtime.org/blogs/ignite/feeds/posts";
-    String releaseFeedRSS = "https://community.igniterealtime.org/community/feeds/messages?community=2017";
 
 %>
 <% // Get parameters //
@@ -375,14 +373,13 @@
             <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
             <h4><fmt:message key="index.cs_blog" /></h4>
             <% long nowTime = System.currentTimeMillis();
-                if (lastBlogFeed == null || lastReleaseFeed == null || nowTime - lastRSSFetch > 21600000) {
+                if (lastBlogFeed == null || nowTime - lastRSSFetch > 21600000) {
 
                     FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
                     FeedFetcher feedFetcher = new HttpClientWithTimeoutFeedFetcher(feedInfoCache);
 
                     try {
                         lastBlogFeed = feedFetcher.retrieveFeed(new URL(blogFeedRSS));
-                        lastReleaseFeed = feedFetcher.retrieveFeed(new URL(releaseFeedRSS));
 
                         lastRSSFetch = nowTime;
                     }
@@ -395,7 +392,7 @@
                 if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
 
                     List entries = lastBlogFeed.getEntries();
-                    for (int i = 0; i < entries.size() && i < 3; i++) {
+                    for (int i = 0; i < entries.size() && i < 7; i++) {
                         SyndEntry entry = (SyndEntry) entries.get(i); %>
                         <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
                         <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
@@ -405,19 +402,6 @@
                     <fmt:message key="index.cs_blog.unavailable" />
                  <% }
 
-                 %><div class="jive-bottom-line"></div><%
-                if (lastReleaseFeed != null && !lastReleaseFeed.getEntries().isEmpty()) {
-
-                    List entries = lastReleaseFeed.getEntries();
-                    for (int i = 0; i < entries.size() && i < 3; i++) {
-                        SyndEntry entry = (SyndEntry) entries.get(i); %>
-                        <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
-                        <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
-                    <% }
-
-                } else { %>
-                    <fmt:message key="index.cs_blog.unavailable" />
-                 <% }
             %>
 
         </div>

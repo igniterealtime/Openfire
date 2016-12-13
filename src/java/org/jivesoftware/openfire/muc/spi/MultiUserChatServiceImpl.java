@@ -766,15 +766,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     private void removeChatRoom(String roomName, boolean notify) {
         MUCRoom room = rooms.remove(roomName);
-		Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
-		if (room instanceof LocalMUCRoom)
-			GroupEventDispatcher.removeListener((LocalMUCRoom) room);
         if (room != null) {
+            Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
+            if (room instanceof LocalMUCRoom)
+    			GroupEventDispatcher.removeListener((LocalMUCRoom) room);
             totalChatTime += room.getChatLength();
             if (notify) {
                 // Notify other cluster nodes that a room has been removed
                 CacheFactory.doClusterTask(new RoomRemovedEvent((LocalMUCRoom)room));
             }
+        } else {
+            Log.info("No chat room during removal: " + roomName);
         }
     }
 

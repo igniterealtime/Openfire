@@ -152,9 +152,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
 
 	            // Indicate the TLS policy to use for this connection
-	            Connection.TLSPolicy tlsPolicy =
-	                    ServerDialback.isEnabled() ? Connection.TLSPolicy.optional :
-	                            Connection.TLSPolicy.required;
+	            Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
 	            boolean hasCertificates = false;
 	            try {
 	                hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;

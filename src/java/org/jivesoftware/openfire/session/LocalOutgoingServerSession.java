@@ -312,6 +312,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         }
                         log.debug( "Unable to secure and authenticate the connection with TLS & SASL." );
                     }
+                    else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                        log.debug("I have no StartTLS yet I must TLS");
+                        connection.close();
+                        return null;
+                    }
                     // Check if we are going to try server dialback (XMPP 1.0)
                     else if (ServerDialback.isEnabled() && features.element("dialback") != null) {
                         log.debug( "Both us and the remote server support the 'dialback' feature. Authenticate the connection with dialback..." );
@@ -340,9 +345,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
 
             log.debug( "Something went wrong so close the connection and try server dialback over a plain connection" );
-            if (connection != null) {
+            if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                log.debug("I have no StartTLS yet I must TLS");
                 connection.close();
+                return null;
             }
+            connection.close();
         }
         catch (SSLHandshakeException e)
         {

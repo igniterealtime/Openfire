@@ -483,6 +483,14 @@ public class ServerDialback {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain:" + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
 
         log.debug( "Validating domain...");
+        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
+                !connection.isSecure()) {
+            connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
+            // Close the underlying connection
+            connection.close();
+            return false;
+        }
+
         if (!RemoteServerManager.canAccess(remoteDomain)) {
             connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
             // Close the underlying connection

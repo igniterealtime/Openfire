@@ -47,9 +47,6 @@ public class CrowdAuthProvider implements AuthProvider {
      * Returns if the username and password are valid; otherwise this
      * method throws an UnauthorizedException.<p>
      *
-     * If {@link #isPlainSupported()} returns false, this method should
-     * throw an UnsupportedOperationException.
-     *
      * @param username the username or full JID.
      * @param password the password
      * @throws UnauthorizedException if the username and password do

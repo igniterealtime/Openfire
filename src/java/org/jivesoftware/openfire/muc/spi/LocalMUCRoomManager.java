@@ -10,8 +10,7 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 
 /**
  * this class supports the simple LocalMUCRoom management including remove,add and query.
- * @author wuchang
- * @email 583424568@qq.com
+ * @author <a href="mailto:583424568@qq.com">wuchang</a>
  * 2016-1-14
  */
 public class LocalMUCRoomManager {

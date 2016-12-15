@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -417,8 +413,6 @@ public class CertificateManager {
     /**
      * Returns true if the specified certificate is a self-signed certificate.
      *
-     * @param keyStore key store that holds the certificate to verify.
-     * @param alias alias of the certificate in the key store.
      * @return true if the specified certificate is a self-signed certificate.
      * @throws KeyStoreException if an error happens while usign the keystore
      */
@@ -436,8 +430,6 @@ public class CertificateManager {
      * certificates need to get their issuer information entered to be able to generate a Certificate
      * Signing Request (CSR).
      *
-     * @param keyStore key store that holds the certificate to verify.
-     * @param alias alias of the certificate in the key store.
      * @return true if the specified certificate is ready to be signed by a Certificate Authority.
      * @throws KeyStoreException if an error happens while usign the keystore
      */
@@ -456,7 +448,7 @@ public class CertificateManager {
      * requests are required by Certificate Authorities as part of their signing process. The signing request
      * contains information about the certificate issuer, subject DN, subject alternative names and public key.
      * Private keys are not included. After the Certificate Authority verified and signed the certificate a new
-     * certificate is going to be returned. Use {@link #installReply(java.security.KeyStore, java.security.KeyStore, String, String, java.io.InputStream)}
+     * certificate is going to be returned. Use {@link #installReply(java.security.KeyStore, java.security.KeyStore, char[], String, java.io.InputStream)}
      * to import the CA reply.
      *
      * @param cert the certificate to create a signing request.

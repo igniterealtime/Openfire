@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: 2979 $
- * $Date: 2005-10-18 19:46:58 -0300 (Tue, 18 Oct 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -634,7 +630,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sets the minimal role of persons that are allowed to send private messages in the room. The provided value is
      * any one of: "anyone", "moderators", "participants", "none". If another value is set, "anyone" is used instead.
      *
-     * @role The minimal role of persons that are allowed to send private messages in the room (never null).
+     * @param role The minimal role of persons that are allowed to send private messages in the room (never null).
      */
     public void setCanSendPrivateMessage(String role);
 

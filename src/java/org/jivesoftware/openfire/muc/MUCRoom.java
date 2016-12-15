@@ -629,6 +629,8 @@ public interface MUCRoom extends Externalizable, Result {
     /**
      * Sets the minimal role of persons that are allowed to send private messages in the room. The provided value is
      * any one of: "anyone", "moderators", "participants", "none". If another value is set, "anyone" is used instead.
+     *
+     * @param role The minimal role of persons that are allowed to send private messages in the room (never null).
      */
     public void setCanSendPrivateMessage(String role);
 

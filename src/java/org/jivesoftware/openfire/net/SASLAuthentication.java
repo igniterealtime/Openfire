@@ -27,6 +27,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
@@ -265,15 +266,14 @@ public class SASLAuthentication {
                     // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server,
                     // yet, most of the XMPP implemenations of DIGEST-MD5 will actually use the domain name. To account for that,
                     // here, we'll use the host name, unless DIGEST-MD5 is being negotiated!
-                    final String fqhn = JiveGlobals.getProperty( "xmpp.fqdn", XMPPServer.getInstance().getServerInfo().getHostname() );
-                    final String fqdn = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                    final String serverName = ( mechanismName.equals( "DIGEST-MD5" ) ? fqdn : fqhn );
+                    final XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
+                    final String serverName = ( mechanismName.equals( "DIGEST-MD5" ) ? serverInfo.getXMPPDomain() : serverInfo.getHostname() );
 
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
-                    props.put( "com.sun.security.sasl.digest.realm", fqdn );
+                    props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )

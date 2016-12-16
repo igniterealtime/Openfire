@@ -721,6 +721,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         else {
             historyRequest.sendHistory(joinRole, roomHistory);
         }
+        Message roomSubject = roomHistory.getChangedSubject();
+        if (roomSubject != null) {
+            joinRole.send(roomSubject);
+        }
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
             setEmptyDate(null);

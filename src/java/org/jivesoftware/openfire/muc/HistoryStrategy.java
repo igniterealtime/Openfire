@@ -185,14 +185,11 @@ public class HistoryStrategy {
         boolean subjectChange = isSubjectChangeRequest(packet);
         if (subjectChange) {
             roomSubject = packet;
+            return;
         }
 
         // store message according to active strategy
-        if (strategyType == Type.none && subjectChange) {
-            history.clear();
-            history.add(packet);
-        }
-        else if (strategyType == Type.all || subjectChange) {
+        if (strategyType == Type.all) {
             history.add(packet);
         }
         else if (strategyType == Type.number) {

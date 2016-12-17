@@ -70,7 +70,7 @@
             errors.put("csrf", "CSRF Failure!");
         }
     }
-    csrfParam = StringUtils.randomString(15);
+    csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
     if (update) {

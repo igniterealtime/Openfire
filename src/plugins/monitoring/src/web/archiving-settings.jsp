@@ -4,6 +4,8 @@
 <%@ page import="org.jivesoftware.openfire.archive.ConversationManager, org.jivesoftware.util.ByteFormat, org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 
@@ -169,6 +171,16 @@
     int maxRetrievable = ParamUtils.getIntParameter(request, "maxRetrievable", conversationManager.getMaxRetrievable());
     
     boolean rebuildIndex = request.getParameter("rebuild") != null;
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        rebuildIndex = false;
+        update = false;
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (request.getParameter("cancel") != null) {
         response.sendRedirect("archiving-settings.jsp");
@@ -257,6 +269,7 @@
 </p>
 
 <form action="archiving-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <table class="settingsTable" cellpadding="3" cellspacing="0" border="0" width="90%">
         <thead>
             <tr>

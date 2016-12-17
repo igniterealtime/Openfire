@@ -275,7 +275,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="password" size="20" maxlength="50"
-         value="<%= ((password!=null) ? password : "") %>"><br>
+         value="<%= ((password!=null) ? StringUtils.escapeForXML(password) : "") %>"><br>
 
         <%  if (errors.get("password") != null) { %>
             <span class="jive-error-text">
@@ -311,7 +311,7 @@ function checkClick() {
     </td>
     <td>
         <input type="text" name="email" size="40" maxlength="150"
-         value="<%= ((email!=null) ? email : currentEmail) %>"><br>
+         value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : StringUtils.escapeForXML(currentEmail)) %>"><br>
 
         <%  if (errors.get("email") != null) { %>
             <span class="jive-error-text">
@@ -330,7 +330,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPassword" size="20" maxlength="50"
-         value="<%= ((newPassword!=null) ? newPassword : "") %>"><br>
+         value="<%= ((newPassword!=null) ? StringUtils.escapeForXML(newPassword) : "") %>"><br>
 
         <%  if (errors.get("newPassword") != null) { %>
             <span class="jive-error-text">
@@ -349,7 +349,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPasswordConfirm" size="20" maxlength="50"
-         value="<%= ((newPasswordConfirm!=null) ? newPasswordConfirm : "") %>"><br>
+         value="<%= ((newPasswordConfirm!=null) ? StringUtils.escapeForXML(newPasswordConfirm) : "") %>"><br>
         <%  if (errors.get("newPasswordConfirm") != null) { %>
             <span class="jive-error-text">
             <fmt:message key="setup.admin.settings.valid_confirm" />

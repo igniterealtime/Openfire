@@ -1,5 +1,8 @@
 <%@ page import="org.jivesoftware.openfire.plugin.spark.manager.FileTransferFilterManager" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.plugin.ClientControlPlugin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -34,7 +37,17 @@
     String viewtasklistEnabledString = JiveGlobals.getProperty("viewtasklist.enabled", "true");
 
     boolean submit = request.getParameter("submit") != null;
-    
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        submit = false;
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
     if (submit) {
 		accountsEnabledString = request.getParameter("accountsEnabled");
 		addcontactsEnabledString = request.getParameter("addcontactsEnabled");
@@ -149,6 +162,7 @@
 </p>
 
 <form name="f" action="client-features.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
 	<div style="display:inline-block;width:600px;margin:10px;">
 	    <table class="jive-table" cellspacing="0" width="600" >
 	        <th><fmt:message key="client.feature"/></th>

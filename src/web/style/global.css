@@ -587,6 +587,9 @@ pre, tt {
 .jive-table .jive-even td {
     background-color:#FBFBFB;
 }
+.jive-table .jive-highlight td {
+    background-color:#FFFFCC;
+}
 .jive-table tfoot td {
     background-color:#EEEEEE;
     border-bottom:1px solid #CCCCCC;

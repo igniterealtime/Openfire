@@ -15,12 +15,22 @@
 <%
     final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecords = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
+    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClient = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
+    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
 
     boolean detectedRecordForHostname = false;
-    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecords )
+    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsClient )
     {
-        if ( hostname.equalsIgnoreCase(  dnsSrvRecord.getHost() ) )
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+        {
+            detectedRecordForHostname = true;
+            break;
+        }
+    }
+
+    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsServer )
+    {
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
         {
             detectedRecordForHostname = true;
             break;
@@ -29,7 +39,8 @@
 
     pageContext.setAttribute( "xmppDomain", xmppDomain );
     pageContext.setAttribute( "hostname", hostname );
-    pageContext.setAttribute( "dnsSrvRecords", dnsSrvRecords );
+    pageContext.setAttribute( "dnsSrvRecordsClient", dnsSrvRecordsClient );
+    pageContext.setAttribute( "dnsSrvRecordsServer", dnsSrvRecordsServer );
     pageContext.setAttribute( "detectedRecordForHostname", detectedRecordForHostname );
 %>
 
@@ -53,7 +64,7 @@
         </admin:infobox>
         <fmt:message key="system.dns.srv.check.xmppdomain_equals_hostname.description" var="plaintextboxcontent"/>
     </c:when>
-    <c:when test="${empty dnsSrvRecords}">
+    <c:when test="${empty dnsSrvRecordsServer and empty dnsSrvRecordsClient}">
         <admin:infobox type="warning">
             <fmt:message key="system.dns.srv.check.no-records.one-liner" />
         </admin:infobox>
@@ -81,21 +92,26 @@
     <c:out value="${plaintextboxcontent}"/>
 </admin:contentBox>
 
-<c:if test="${not empty dnsSrvRecords}">
-    <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-            <thead>
+<c:if test="${not empty dnsSrvRecordsClient or not empty dnsSrvRecordsServer}">
+
+    <fmt:message key="system.dns.srv.check.recordbox.title" var="plaintextboxtitle"/>
+    <admin:contentBox title="${plaintextboxtitle}">
+
+        <p><fmt:message key="system.dns.srv.check.recordbox.description"/></p>
+
+        <div class="jive-table">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <thead>
                 <tr>
                     <th>&nbsp;</th>
-                    <th nowrap><fmt:message key="server.session.label.host" /></th>
-                    <th nowrap colspan="3"><fmt:message key="server.session.label.connection" /></th>
-                    <th nowrap><fmt:message key="server.session.label.creation" /></th>
-                    <th nowrap><fmt:message key="server.session.label.last_active" /></th>
-                    <th nowrap><fmt:message key="server.session.label.close_connect" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.client-host" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
                 </tr>
-            </thead>
-            <tbody>
-                <c:forEach var="dnsSrvRecord" items="${dnsSrvRecords}" varStatus="varStatus">
+                </thead>
+                <tbody>
+                <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClient}" varStatus="varStatus">
                     <c:choose>
                         <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
                             <c:set var="cssClass" value="jive-highlight"/>
@@ -112,10 +128,49 @@
                         <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
                     </tr>
                 </c:forEach>
-            </tbody>
-        </table>
-    </div>
+                </tbody>
+            </table>
+        </div>
+
+        <br/>
+
+        <div class="jive-table">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <thead>
+                <tr>
+                    <th>&nbsp;</th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.server-host" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
+                    <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServer}" varStatus="varStatus">
+                    <c:choose>
+                        <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
+                            <c:set var="cssClass" value="jive-highlight"/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="cssClass" value="${varStatus.count % 2 eq 0 ? 'jive-even' : 'jive-odd' }"/>
+                        </c:otherwise>
+                    </c:choose>
+                    <tr class="${cssClass}">
+                        <td width="1%" nowrap><c:out value="${varStatus.count}"/></td>
+                        <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
+                        <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
+                        <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
+                        <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+
+    </admin:contentBox>
 </c:if>
+
+<br/>
 
 <p>
     <fmt:message key="system.dns.srv.check.rationale" />

@@ -40,9 +40,11 @@
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrfStatus = true;
 
     if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
         submit = false;
+        csrfStatus = false;
     }
     csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
@@ -157,6 +159,19 @@
 </div>
 <br>
 <% }%>
+<% if (csrfStatus == false) { %>
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="global.csrf.failed" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+<% } %>
 <p>
     <fmt:message key="client.features.info"/>
 </p>

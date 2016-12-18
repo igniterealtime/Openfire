@@ -63,11 +63,13 @@
     Map<String,String> errors = new HashMap<String,String>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrfStatus = true;
 
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
-            errors.put("csrf", "CSRF Failure!");
+            errors.put("csrf", "csrf");
+            csrfStatus = false;
         }
     }
     csrfParam = StringUtils.randomString(16);
@@ -160,6 +162,22 @@
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="audit.policy.settings.saved_successfully" />
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
+
+        <%
+        }
+        else if (csrfStatus == false) {
+        %>
+
+    <div class="jive-error">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <td class="jive-icon-label">
+        <fmt:message key="global.csrf.failed" />
         </td></tr>
     </tbody>
     </table>

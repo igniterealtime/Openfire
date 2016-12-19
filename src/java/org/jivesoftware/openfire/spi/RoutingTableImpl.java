@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
+import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -477,7 +478,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		        }
 		    }
 		}
-		else {
+		else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
+            routed = false;
+        }
+        else {
 		    // Return a promise of a remote session. This object will queue packets pending
 		    // to be sent to remote servers
 		    OutgoingSessionPromise.getInstance().process(packet);

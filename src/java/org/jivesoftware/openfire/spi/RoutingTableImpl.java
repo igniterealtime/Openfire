@@ -479,7 +479,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		    }
 		}
 		else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
-            Log.info( "Unable to authenticate: Remote domain is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted)." );
+            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
             routed = false;
         }
         else {

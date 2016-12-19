@@ -160,17 +160,7 @@
 <br>
 <% }%>
 <% if (csrfStatus == false) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="global.csrf.failed" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
+    <admin:infobox type="error"><fmt:message key="global.csrf.failed" /></admin:infobox>
 <% } %>
 <p>
     <fmt:message key="client.features.info"/>

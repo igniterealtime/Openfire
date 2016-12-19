@@ -138,7 +138,12 @@ public class AdminConsolePlugin implements Plugin {
         // Create a connector for https traffic if it's enabled.
         sslEnabled = false;
         try {
-            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
+            IdentityStore identityStore = null;
+            if (XMPPServer.getInstance().getCertificateStoreManager() == null){
+            	Log.warn( "Admin console: CertifcateStoreManager has not been initialized yet. HTTPS will be unavailable." );
+            } else {
+            	identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.WEBADMIN );
+            }
             if (identityStore != null && adminSecurePort > 0 )
             {
                 if ( identityStore.getAllCertificates().isEmpty() )

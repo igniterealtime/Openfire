@@ -45,7 +45,7 @@ CREATE INDEX ofMessageArchive_tojid_idx ON ofMessageArchive (toJID);
 CREATE TABLE ofRRDs (
    id            VARCHAR(100)        NOT NULL,
    updatedDate   BIGINT              NOT NULL,
-   bytes         VARBINARY           NULL,
+   bytes         BLOB           NULL,
    CONSTRAINT ofRRDs_pk PRIMARY KEY (id)
 );
 

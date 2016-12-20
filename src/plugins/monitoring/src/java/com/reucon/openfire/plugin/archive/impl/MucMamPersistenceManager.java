@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.JID;
@@ -47,37 +48,37 @@ public class MucMamPersistenceManager implements PersistenceManager {
     private static final String ORDER_BY = " ORDER BY logTime";
     @Override
     public boolean createMessage(ArchivedMessage message) {
-        return false;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public int processAllMessages(ArchivedMessageConsumer callback) {
-        return 0;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public boolean createConversation(Conversation conversation) {
-        return false;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public boolean updateConversationEnd(Conversation conversation) {
-        return false;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public boolean createParticipant(Participant participant, Long conversationId) {
-        return false;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public List<Conversation> findConversations(String[] participants, Date startDate, Date endDate) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public Collection<Conversation> findConversations(Date startDate, Date endDate, String owner, String with, XmppResultSet xmppResultSet) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
@@ -159,7 +160,7 @@ public class MucMamPersistenceManager implements PersistenceManager {
                 msgs.add(archivedMessage);
             }
         } catch (SQLException e) {
-            // TODO ???
+            Log.error("SQL failure during MAM-MUC: ", e);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, connection);
         }
@@ -183,21 +184,21 @@ public class MucMamPersistenceManager implements PersistenceManager {
 
     @Override
     public Collection<Conversation> getActiveConversations(int conversationTimeout) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public List<Conversation> getConversations(Collection<Long> conversationIds) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public Conversation getConversation(String ownerJid, String withJid, Date start) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 
     @Override
     public Conversation getConversation(Long conversationId) {
-        return null;
+        throw new UnsupportedOperationException("MAM-MUC cannot perform this operation");
     }
 }

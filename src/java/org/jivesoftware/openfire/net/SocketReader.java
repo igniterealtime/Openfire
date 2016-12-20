@@ -400,7 +400,7 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
@@ -429,7 +429,7 @@ public abstract class SocketReader implements Runnable {
             sb.append("'?>");
             // Append stream header
             sb.append("<stream:stream ");
-            sb.append("from=\"").append(serverName).append("\" ");
+            sb.append("from=\"").append(host).append("\" ");
             sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");

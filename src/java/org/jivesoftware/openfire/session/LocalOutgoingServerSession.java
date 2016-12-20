@@ -267,7 +267,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("\""); // OF-673
+            openingStream.append(" from=\"").append(localDomain).append("\""); // OF-673
             openingStream.append(" to=\"").append(remoteDomain).append("\"");
             openingStream.append(" version=\"1.0\">");
             connection.deliverRawText(openingStream.toString());

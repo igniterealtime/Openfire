@@ -215,7 +215,7 @@ public class GroupManager {
                     JID userJid = new JID(user);
                     if (XMPPServer.getInstance().isLocal(userJid)) {
                         String username = userJid.getNode();
-                        synchronized (username.intern()) {
+                        synchronized ((getClass().getSimpleName() + username).intern()) {
                             groupMetaCache.remove(username);
                         }
                     }
@@ -480,7 +480,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(userName);
         if (groupNames == null) {
-            synchronized(userName.intern()) {
+            synchronized((getClass().getSimpleName() + userName).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
                 	// assume this is a local user

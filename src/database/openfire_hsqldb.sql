@@ -253,6 +253,7 @@ CREATE TABLE ofMucMember (
 
 CREATE TABLE ofMucConversationLog (
   roomID              BIGINT        NOT NULL,
+  messageID         BIGINT      NOT NULL,
   sender              VARCHAR(1024) NOT NULL,
   nickname            VARCHAR(255)  NULL,
   logTime             CHAR(15)      NOT NULL,
@@ -261,6 +262,7 @@ CREATE TABLE ofMucConversationLog (
   stanza             LONGVARCHAR    NULL
 );
 CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
+CREATE INDEX ofMucConversationLog_msg_id ON ofMucConversationLog (messageID);
 
 // PubSub Tables
 
@@ -378,7 +380,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 24);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 25);
 
 // Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

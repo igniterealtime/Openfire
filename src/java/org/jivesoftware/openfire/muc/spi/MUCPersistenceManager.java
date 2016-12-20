@@ -129,8 +129,8 @@ public class MUCPersistenceManager {
     private static final String DELETE_USER_MUCAFFILIATION =
         "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
-        "INSERT INTO ofMucConversationLog (roomID,sender,nickname,logTime,subject,body,stanza) " +
-        "VALUES (?,?,?,?,?,?,?)";
+        "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) " +
+        "SELECT ?,COUNT(*),?,?,?,?,?,? FROM ofMucConversationLog";
 
     /* Map of subdomains to their associated properties */
     private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();

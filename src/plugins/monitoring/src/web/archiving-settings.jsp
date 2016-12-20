@@ -50,7 +50,7 @@
         else {
             var rebuildProgress = document.getElementById('rebuildProgress');
             rebuildProgress.innerHTML = "100";
-            Effect.Fade('rebuildElement');
+            // Effect.Fade('rebuildElement');
         }
     }
 </script>
@@ -174,9 +174,14 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
+    Map errors = new HashMap();
+    String errorMessage = "";
+
     if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
         rebuildIndex = false;
         update = false;
+        errors.put("csrf", "");
+        errorMessage = "Archive Index rebuild failed.";
     }
     csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
@@ -188,12 +193,13 @@
     }
 
     if (rebuildIndex) {
-        archiveIndexer.rebuildIndex();
+        if (archiveIndexer.rebuildIndex() == null) {
+            errors.put("rebuildIndex", "");
+            errorMessage = "Archive Index rebuild failed.";
+        }
     }
 
     // Update the session kick policy if requested
-    Map errors = new HashMap();
-    String errorMessage = "";
     if (update) {
         // New settings for message archiving.
         boolean metadataArchiving = request.getParameter("metadataArchiving") != null;

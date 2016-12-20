@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedListNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
 
     private static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
     private static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
+    private static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", true);
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
 
@@ -701,8 +703,16 @@ public class DefaultCache<K, V> implements Cache<K, V> {
     }
 
     private void checkNotNull(final Object argument, final String message) {
-        if (argument == null) {
-            throw new NullPointerException(message);
+        try {
+            if (argument == null) {
+                throw new NullPointerException(message);
+            }
+        } catch (NullPointerException e) {
+            if (allowNull) {
+                Log.error("Ignoring null store in Cache: ", e); // Gives us a trace for debugging.
+            } else {
+                throw e;
+            }
         }
     }
 }

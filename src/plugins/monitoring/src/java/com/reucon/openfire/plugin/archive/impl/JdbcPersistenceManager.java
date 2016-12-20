@@ -170,7 +170,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			+ "ofMessageArchive.messageID, " + "ofConParticipant.bareJID "
 			+ "FROM ofMessageArchive "
 			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID "
-			+ "WHERE ofMessageArchive.stanza != NULL OR ofMessageArchive.body != NULL";
+			+ "WHERE (ofMessageArchive.stanza IS NOT NULL OR ofMessageArchive.body IS NOT NULL) ";
 
 	public static final String SELECT_MESSAGE_ORACLE = "SELECT "
 			+ "ofMessageArchive.fromJID, "
@@ -186,7 +186,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 	 public static final String COUNT_MESSAGES = "SELECT COUNT(DISTINCT ofMessageArchive.messageID) "
 			+ "FROM ofMessageArchive "
 			+ "INNER JOIN ofConParticipant ON ofMessageArchive.conversationID = ofConParticipant.conversationID "
-			+ "WHERE ofMessageArchive.stanza != NULL OR ofMessageArchive.body != NULL";
+			+ "WHERE (ofMessageArchive.stanza IS NOT NULL OR ofMessageArchive.body IS NOT NULL) ";
 
 	public boolean createMessage(ArchivedMessage message) {
 		/* read only */
@@ -456,7 +456,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			appendWhere(whereSB, "( ", MESSAGE_TO_JID, " = ? OR ", MESSAGE_FROM_JID, " = ? )");
 		}
 		if (whereSB.length() != 0) {
-			querySB.append(" WHERE ").append(whereSB);
+			querySB.append(" AND ").append(whereSB);
 		}
 
 		if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.sqlserver) {
@@ -588,7 +588,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 
 		querySB = new StringBuilder(COUNT_MESSAGES);
 		if (whereClause != null && whereClause.length() != 0) {
-			querySB.append(" WHERE ").append(whereClause);
+			querySB.append(" AND ").append(whereClause);
 		}
 
 		Connection con = null;
@@ -618,7 +618,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 		StringBuilder querySB;
 
 		querySB = new StringBuilder(COUNT_MESSAGES);
-		querySB.append(" WHERE ");
+		querySB.append(" AND ");
 		if (whereClause != null && whereClause.length() != 0) {
 			querySB.append(whereClause);
 			querySB.append(" AND ");

@@ -15,7 +15,7 @@ public class Xep0313Support1 extends AbstractXepSupport {
 	private static final String NAMESPACE = "urn:xmpp:mam:1";
 
 	public Xep0313Support1(XMPPServer server) {
-		super(server, NAMESPACE,NAMESPACE, "XEP-0313 IQ Dispatcher");
+		super(server, NAMESPACE,NAMESPACE, "XEP-0313 IQ Dispatcher", true);
 
 		this.iqHandlers = new ArrayList<>();
 		iqHandlers.add(new IQQueryHandler1());

@@ -709,7 +709,7 @@ public class DefaultCache<K, V> implements Cache<K, V> {
             }
         } catch (NullPointerException e) {
             if (allowNull) {
-                Log.error("Ignoring null store in Cache: ", e); // Gives us a trace for debugging.
+                Log.debug("Allowing storage of null within Cache: ", e); // Gives us a trace for debugging.
             } else {
                 throw e;
             }

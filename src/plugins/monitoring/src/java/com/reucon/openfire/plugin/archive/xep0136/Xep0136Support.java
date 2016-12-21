@@ -17,7 +17,7 @@ public class Xep0136Support extends AbstractXepSupport {
 	private static final String IQ_NAMESPACE = "urn:xmpp:archive";
 
 	public Xep0136Support(XMPPServer server) {
-		super(server, NAMESPACE_AUTO,IQ_NAMESPACE, "XEP-0136 IQ Dispatcher");
+		super(server, NAMESPACE_AUTO,IQ_NAMESPACE, "XEP-0136 IQ Dispatcher", false);
 
 		iqHandlers = new ArrayList<IQHandler>();
 

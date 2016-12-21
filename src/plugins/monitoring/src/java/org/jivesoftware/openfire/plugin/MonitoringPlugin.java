@@ -22,6 +22,7 @@ package org.jivesoftware.openfire.plugin;
 import java.io.File;
 import java.io.FileFilter;
 
+import com.reucon.openfire.plugin.archive.impl.MucMamPersistenceManager;
 import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support1;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.archive.ArchiveIndexer;
@@ -52,6 +53,9 @@ import com.reucon.openfire.plugin.archive.impl.ArchiveManagerImpl;
 import com.reucon.openfire.plugin.archive.impl.JdbcPersistenceManager;
 import com.reucon.openfire.plugin.archive.xep0136.Xep0136Support;
 import com.reucon.openfire.plugin.archive.xep0313.Xep0313Support;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * Openfire Monitoring plugin.
@@ -70,11 +74,13 @@ public class MonitoringPlugin implements Plugin {
 	private static MonitoringPlugin instance;
 	private boolean enabled = true;
 	private PersistenceManager persistenceManager;
+	private PersistenceManager mucPersistenceManager;
 	private ArchiveManager archiveManager;
 	private IndexManager indexManager;
 	private Xep0136Support xep0136Support;
 	private Xep0313Support xep0313Support;
 	private Xep0313Support1 xep0313Support1;
+	private Logger Log;
 
 	public MonitoringPlugin() {
 		instance = this;
@@ -129,7 +135,12 @@ public class MonitoringPlugin implements Plugin {
 		return indexManager;
 	}
 
-	public PersistenceManager getPersistenceManager() {
+	public PersistenceManager getPersistenceManager(JID jid) {
+		Log.debug("Getting PersistenceManager for {}", jid);
+		if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(jid) != null) {
+			Log.debug("Using MucPersistenceManager");
+			return mucPersistenceManager;
+		}
 		return persistenceManager;
 	}
 
@@ -145,6 +156,7 @@ public class MonitoringPlugin implements Plugin {
 	}
 
 	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+		Log = LoggerFactory.getLogger(MonitoringPlugin.class);
 
 		/* Configuration */
 		conversationTimeout = JiveGlobals.getIntProperty(
@@ -154,6 +166,7 @@ public class MonitoringPlugin implements Plugin {
 				false);
 
 		persistenceManager = new JdbcPersistenceManager();
+		mucPersistenceManager = new MucMamPersistenceManager();
 
 		archiveManager = new ArchiveManagerImpl(persistenceManager,
 				indexManager, conversationTimeout);

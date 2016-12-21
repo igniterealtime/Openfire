@@ -12,6 +12,9 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
@@ -68,14 +71,45 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 		boolean muc = false;
 		if (!XMPPServer.getInstance().isLocal(archiveJid)) {
 			Log.debug("Archive is not local (user)");
-			return buildErrorResponse(packet);
+			if (XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(archiveJid) == null) {
+				Log.debug("No chat service for this domain");
+				return buildErrorResponse(packet);
+			} else {
+				muc = true;
+				Log.debug("MUC");
+			}
 		}
 
 		JID requestor = packet.getFrom().asBareJID();
 		Log.debug("Requestor is {} for muc=={}", requestor, muc);
 
 		// Auth checking.
-		if(!archiveJid.equals(requestor)) { // Not user's own
+		if(muc) {
+			MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(archiveJid);
+			MUCRoom room = service.getChatRoom(archiveJid.getNode());
+			if (room == null) {
+				return buildErrorResponse(packet);
+			}
+			boolean pass = false;
+			if (service.isSysadmin(requestor)) {
+				pass = true;
+			}
+			MUCRole.Affiliation aff =  room.getAffiliation(requestor);
+			if (aff != MUCRole.Affiliation.outcast) {
+				if (aff == MUCRole.Affiliation.owner || aff == MUCRole.Affiliation.admin) {
+					pass = true;
+				} else if (room.isMembersOnly()) {
+					if (aff == MUCRole.Affiliation.member) {
+						pass = true;
+					}
+				} else {
+					pass = true;
+				}
+			}
+			if (!pass) {
+				return buildForbiddenResponse(packet);
+			}
+		} else if(!archiveJid.equals(requestor)) { // Not user's own
 			// ... disallow unless admin.
 			if (!XMPPServer.getInstance().getAdmins().contains(requestor)) {
 				return buildForbiddenResponse(packet);
@@ -162,7 +196,7 @@ abstract class IQQueryHandler extends AbstractIQHandler implements
 			Log.error("Error parsing query date filters.", e);
 		}
 
-		return getPersistenceManager().findMessages(
+		return getPersistenceManager(queryRequest.getArchive()).findMessages(
 				startDate,
 				endDate,
 				queryRequest.getArchive().toBareJID(),

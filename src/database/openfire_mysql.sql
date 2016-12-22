@@ -250,7 +250,7 @@ CREATE TABLE ofMucConversationLog (
   body                TEXT          NULL,
   stanza                TEXT          NULL,
   INDEX ofMucConversationLog_time_idx (logTime),
-  INDEX ofMucConversationLog_msg_id (messageID);
+  INDEX ofMucConversationLog_msg_id (messageID)
 );
 
 # PubSub Tables

@@ -137,22 +137,22 @@
         <td>
         <% if(counter == 0 && size > 1) { %>
           <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&changePos=true&down=true&index=<%=counter%>">
-          <img src="images/arrow_down.gif" width="16" height="16" border="0"></a>
+          <img src="../images/arrow_down.gif" width="16" height="16" border="0"></a>
 
-          <img src="images/blank.gif" width="16" height="16">
+          <img src="../images/blank.gif" width="16" height="16">
         <% } %>
 
 
         <% if(counter > 0 && counter < size - 1){ %>
-         <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&changePos=true&down=true&index=<%=counter%>"><img src="images/arrow_down.gif" width="16" height="16" border="0"></a>
+         <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&changePos=true&down=true&index=<%=counter%>"><img src="../images/arrow_down.gif" width="16" height="16" border="0"></a>
          <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&changePos=true&up=true&index=<%=counter%>">
-          <img src="images/arrow_up.gif" width="16" height="16" border="0"></a>
+          <img src="../images/arrow_up.gif" width="16" height="16" border="0"></a>
         <%}%>
 
         <% if(counter > 0 && counter ==  size - 1){ %>
-         <img src="images/blank.gif" width="16" height="16">
+         <img src="../images/blank.gif" width="16" height="16">
           <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&changePos=true&up=true&index=<%=counter%>">
-            <img src="images/arrow_up.gif" width="16" height="16" border="0"></a>
+            <img src="../images/arrow_up.gif" width="16" height="16" border="0"></a>
         <%}%>
 
         <% if(size == 1){%>
@@ -175,7 +175,7 @@
             <% }%>
 
             <td>
-                <a href="create-element.jsp?wgID=<%= wgID%>&edit=true&index=<%= counter%>"><img src="images/edit-16x16.gif" border="0" /></a></td>
+                <a href="create-element.jsp?wgID=<%= wgID%>&edit=true&index=<%= counter%>"><img src="../images/edit-16x16.gif" border="0" /></a></td>
            <% } else {
             if(element.getAnswerType() == WorkgroupForm.FormEnum.hidden){
             String variableName = element.getVariable();
@@ -197,7 +197,7 @@
 
            <% }}  %>
 
-            <td> <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&delete=true&index=<%=counter%>"><img src="images/delete-16x16.gif" border="0"></a></td>
+            <td> <a href="workgroup-dataform.jsp?wgID=<%=wgID%>&delete=true&index=<%=counter%>"><img src="../images/delete-16x16.gif" border="0"></a></td>
         </tr>
 
         <% counter++; }%>

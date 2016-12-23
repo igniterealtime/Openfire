@@ -95,7 +95,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
             };
             ctx = manager.getContext();
             Attributes attrs = ctx.getAttributes(userDN, attributes);
-            Attribute authorizeField_a = attrs.get(manager.getNameField());
+            Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
                 for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {
                     authorized.add((String)e.nextElement());

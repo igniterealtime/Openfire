@@ -4,6 +4,7 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.plugin.MonitoringPlugin;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
@@ -26,8 +27,8 @@ public abstract class AbstractIQHandler extends IQHandler {
 		return info;
 	}
 
-	protected PersistenceManager getPersistenceManager() {
-		return MonitoringPlugin.getInstance().getPersistenceManager();
+	protected PersistenceManager getPersistenceManager(JID jid) {
+		return MonitoringPlugin.getInstance().getPersistenceManager(jid);
 	}
 
 	protected IndexManager getIndexManager() {

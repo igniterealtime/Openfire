@@ -4,6 +4,8 @@
 <%@ page import="org.jivesoftware.openfire.archive.ConversationManager, org.jivesoftware.util.ByteFormat, org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 
@@ -48,7 +50,7 @@
         else {
             var rebuildProgress = document.getElementById('rebuildProgress');
             rebuildProgress.innerHTML = "100";
-            Effect.Fade('rebuildElement');
+            // Effect.Fade('rebuildElement');
         }
     }
 </script>
@@ -161,6 +163,7 @@
     boolean update = request.getParameter("update") != null;
     boolean messageArchiving = conversationManager.isMessageArchivingEnabled();
     boolean roomArchiving = conversationManager.isRoomArchivingEnabled();
+    boolean roomArchivingStanzas = conversationManager.isRoomArchivingStanzasEnabled();
     int idleTime = ParamUtils.getIntParameter(request, "idleTime", conversationManager.getIdleTime());
     int maxTime = ParamUtils.getIntParameter(request, "maxTime", conversationManager.getMaxTime());
     
@@ -168,6 +171,21 @@
     int maxRetrievable = ParamUtils.getIntParameter(request, "maxRetrievable", conversationManager.getMaxRetrievable());
     
     boolean rebuildIndex = request.getParameter("rebuild") != null;
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    Map errors = new HashMap();
+    String errorMessage = "";
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        rebuildIndex = false;
+        update = false;
+        errors.put("csrf", "");
+        errorMessage = "Archive Index rebuild failed.";
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     if (request.getParameter("cancel") != null) {
         response.sendRedirect("archiving-settings.jsp");
@@ -175,17 +193,19 @@
     }
 
     if (rebuildIndex) {
-        archiveIndexer.rebuildIndex();
+        if (archiveIndexer.rebuildIndex() == null) {
+            errors.put("rebuildIndex", "");
+            errorMessage = "Archive Index rebuild failed.";
+        }
     }
 
     // Update the session kick policy if requested
-    Map errors = new HashMap();
-    String errorMessage = "";
     if (update) {
         // New settings for message archiving.
         boolean metadataArchiving = request.getParameter("metadataArchiving") != null;
         messageArchiving = request.getParameter("messageArchiving") != null;
         roomArchiving = request.getParameter("roomArchiving") != null;
+        roomArchivingStanzas = request.getParameter("roomArchivingStanzas") != null;
         String roomsArchived = request.getParameter("roomsArchived");
 
         // Validate params
@@ -214,6 +234,7 @@
             conversationManager.setMetadataArchivingEnabled(metadataArchiving);
             conversationManager.setMessageArchivingEnabled(messageArchiving);
             conversationManager.setRoomArchivingEnabled(roomArchiving);
+            conversationManager.setRoomArchivingStanzasEnabled(roomArchivingStanzas);
             conversationManager.setRoomsArchived(StringUtils.stringToCollection(roomsArchived));
             conversationManager.setIdleTime(idleTime);
             conversationManager.setMaxTime(maxTime);
@@ -254,6 +275,7 @@
 </p>
 
 <form action="archiving-settings.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
     <table class="settingsTable" cellpadding="3" cellspacing="0" border="0" width="90%">
         <thead>
             <tr>
@@ -280,6 +302,10 @@
                     <tr>
                         <td><fmt:message key="archive.settings.group_chats"/></td>
                         <td><input type="checkbox" name="roomArchiving" <%= conversationManager.isRoomArchivingEnabled() ? "checked" : ""%> /></td>
+                    </tr>
+                    <tr>
+                        <td><fmt:message key="archive.settings.group_chats.stanzas"/></td>
+                        <td><input type="checkbox" name="roomArchivingStanzas" <%= conversationManager.isRoomArchivingStanzasEnabled() ? "checked" : ""%> /></td>
                     </tr>
                     <tr>
                         <td><fmt:message key="archive.settings.certain_rooms"/></td>

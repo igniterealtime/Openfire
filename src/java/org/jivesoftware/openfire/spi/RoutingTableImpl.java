@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
+import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
@@ -477,7 +478,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 		        }
 		    }
 		}
-		else {
+		else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+            Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
+            routed = false;
+        }
+        else {
 		    // Return a promise of a remote session. This object will queue packets pending
 		    // to be sent to remote servers
 		    OutgoingSessionPromise.getInstance().process(packet);
@@ -546,6 +551,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Get the sessions with non-negative priority for message carbons processing.
         List<ClientSession> nonNegativePrioritySessions = getNonNegativeSessions(sessions, 0);
 
+        if (packet.getType() == Message.Type.error) {
+            // Errors should be dropped at this point.
+            Log.debug("Error stanza to bare JID discarded: {}", packet.toXML());
+            return true; // Not offline.
+        }
+
+        if (packet.getType() == Message.Type.groupchat) {
+            // Surreal message type; cannot occur.
+            Log.debug("Groupchat stanza to bare JID discarded: {}", packet.toXML());
+            return false; // Maybe offline has an idea?
+        }
+
         if (nonNegativePrioritySessions.isEmpty()) {
             // No session is available so store offline
             Log.debug("Unable to route packet. No session is available so store offline. {} ", packet.toXML());
@@ -554,8 +571,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Check for message carbons enabled sessions and send the message to them.
         for (ClientSession session : nonNegativePrioritySessions) {
+            if (packet.getType() == Message.Type.headline) {
+                // Headline messages are broadcast.
+                session.process(packet);
             // Deliver to each session, if is message carbons enabled.
-            if (shouldCarbonCopyToResource(session, packet, isPrivate)) {
+            } else if (shouldCarbonCopyToResource(session, packet, isPrivate)) {
                 session.process(packet);
             // Deliver to each session if property route.really-all-resources is true
             // (in case client does not support carbons)
@@ -563,9 +583,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 session.process(packet);
             }
         }
-        
-        if (JiveGlobals.getBooleanProperty("route.really-all-resources", false))
-        	return true;
+
+        if (packet.getType() == Message.Type.headline) {
+            return true;
+        }
+
+        if (JiveGlobals.getBooleanProperty("route.really-all-resources", false)) {
+            return true;
+        }
 
         // Get the highest priority sessions for normal processing.
         List<ClientSession> highestPrioritySessions = getHighestPrioritySessions(nonNegativePrioritySessions);

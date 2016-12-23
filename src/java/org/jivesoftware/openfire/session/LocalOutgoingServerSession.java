@@ -267,7 +267,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("\""); // OF-673
+            openingStream.append(" from=\"").append(localDomain).append("\""); // OF-673
             openingStream.append(" to=\"").append(remoteDomain).append("\"");
             openingStream.append(" version=\"1.0\">");
             connection.deliverRawText(openingStream.toString());
@@ -312,6 +312,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         }
                         log.debug( "Unable to secure and authenticate the connection with TLS & SASL." );
                     }
+                    else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                        log.debug("I have no StartTLS yet I must TLS");
+                        connection.close();
+                        return null;
+                    }
                     // Check if we are going to try server dialback (XMPP 1.0)
                     else if (ServerDialback.isEnabled() && features.element("dialback") != null) {
                         log.debug( "Both us and the remote server support the 'dialback' feature. Authenticate the connection with dialback..." );
@@ -340,9 +345,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
 
             log.debug( "Something went wrong so close the connection and try server dialback over a plain connection" );
-            if (connection != null) {
+            if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                log.debug("I have no StartTLS yet I must TLS");
                 connection.close();
+                return null;
             }
+            connection.close();
         }
         catch (SSLHandshakeException e)
         {

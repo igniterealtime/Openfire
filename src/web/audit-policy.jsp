@@ -63,14 +63,16 @@
     Map<String,String> errors = new HashMap<String,String>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrfStatus = true;
 
     if (update) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
-            errors.put("csrf", "CSRF Failure!");
+            errors.put("csrf", "csrf");
+            csrfStatus = false;
         }
     }
-    csrfParam = StringUtils.randomString(15);
+    csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
     if (update) {
@@ -165,6 +167,11 @@
     </table>
     </div><br>
 
+        <%
+        }
+        else if (csrfStatus == false) {
+        %>
+    <admin:infobox type="error"><fmt:message key="global.csrf.failed" /></admin:infobox>
         <%
         }
     }

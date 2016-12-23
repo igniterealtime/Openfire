@@ -25,7 +25,9 @@
 <%@ page import="org.jivesoftware.database.ProfiledConnection"%>
 <%@ page import="org.jivesoftware.database.ProfiledConnectionEntry"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -45,6 +47,17 @@
     String enableStats = ParamUtils.getParameter(request,"enableStats");
     int refresh = ParamUtils.getIntParameter(request,"refresh", -1);
     boolean doSortByTime = ParamUtils.getBooleanParameter(request,"doSortByTime");
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean csrf_check = true;
+
+    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+        csrf_check = false;
+        doClear = false;
+    }
+    csrfParam = StringUtils.randomString(16);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
 
     // Var for the alternating colors
     int rowColor = 0;
@@ -56,16 +69,18 @@
         response.sendRedirect("server-db-stats.jsp");
     }
 
-    // Enable/disable stats
-    if ("true".equals(enableStats) && ! DbConnectionManager.isProfilingEnabled()) {
-        DbConnectionManager.setProfilingEnabled(true);
-        // Log the event
-        webManager.logEvent("enabled db profiling", null);
-    }
-    else if ("false".equals(enableStats) && DbConnectionManager.isProfilingEnabled()) {
-        DbConnectionManager.setProfilingEnabled(false);
-        // Log the event
-        webManager.logEvent("disabled db profiling", null);
+    if (csrf_check) {
+        // Enable/disable stats
+        if ("true".equals(enableStats) && ! DbConnectionManager.isProfilingEnabled()) {
+            DbConnectionManager.setProfilingEnabled(true);
+            // Log the event
+            webManager.logEvent("enabled db profiling", null);
+        }
+        else if ("false".equals(enableStats) && DbConnectionManager.isProfilingEnabled()) {
+            DbConnectionManager.setProfilingEnabled(false);
+            // Log the event
+            webManager.logEvent("disabled db profiling", null);
+        }
     }
 
     boolean showQueryStats = DbConnectionManager.isProfilingEnabled();

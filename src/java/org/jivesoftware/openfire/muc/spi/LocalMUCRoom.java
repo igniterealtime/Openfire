@@ -387,7 +387,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         rolesToBroadcastPresence.add("moderator");
         rolesToBroadcastPresence.add("participant");
         rolesToBroadcastPresence.add("visitor");
-        GroupEventDispatcher.addListener(this);
     }
 
     @Override
@@ -721,6 +720,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         else {
             historyRequest.sendHistory(joinRole, roomHistory);
+        }
+        Message roomSubject = roomHistory.getChangedSubject();
+        if (roomSubject != null) {
+            joinRole.send(roomSubject);
         }
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
@@ -1072,11 +1075,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 throw new ForbiddenException();
             default:
             case visitor:
-                if (canSendPrivateMessage.equals( "participants" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "participants" )) throw new ForbiddenException();
             case participant:
-                if (canSendPrivateMessage.equals( "moderators" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "moderators" )) throw new ForbiddenException();
             case moderator:
-                if (canSendPrivateMessage.equals( "none" )) throw new ForbiddenException();
+                if (canSendPrivateMessage().equals( "none" )) throw new ForbiddenException();
         }
         String resource = packet.getTo().getResource();
         List<MUCRole> occupants = occupantsByNickname.get(resource.toLowerCase());
@@ -1621,6 +1624,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 if (!nickname.equals(members.get(bareJID))) {
                     throw new ConflictException();
                 }
+            } else if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().length() == 0)) {
+                throw new ConflictException();
             }
             // Check that the room always has an owner
             if (owners.contains(bareJID) && owners.size() == 1) {

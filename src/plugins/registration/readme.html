@@ -67,7 +67,22 @@ The registration plugin has three items that can be configured:
 notify them whenever a new user registers.</li>
 <li>Welcome Message - A message that will be sent to a user when they first register.</li>
 <li>Default Group - A group that all users will be added to when they first register.</li>
-<li>Web Page Registration - Allows users to create accounts via a web page.
+<li>Web Page Registration - Allows users to create accounts via a web page.</li>
+<li>Default Privacy List - A privacy list added and set as default for all users when they register.</li>
+
+<h2>Default Privacy List</h2>
+<p>The format used is an XML that should look like :
+<pre><code>&lt;list&gt;
+&lt;item action="deny" order="100" type="subscription" value="none"&gt;
+     &lt;message/&gt;
+     &lt;presence-in/&gt;
+     &lt;presence-out/&gt;
+&lt;/item&gt;
+&lt;/list&gt;
+</code></pre>
+The enclosing list tag is needed, but none of its attributes are read. Inside it you can have multiple items.
+</p>
+</li>
 
 <h2>Using the Plugin</h2>
 <p>

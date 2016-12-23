@@ -4,6 +4,7 @@
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
+<%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="javax.xml.bind.DatatypeConverter" %>
 <%@ page import="java.security.AlgorithmParameters" %>
 <%@ page import="java.security.cert.X509Certificate" %>
@@ -79,6 +80,7 @@
     }
 
     pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "alias", StringUtils.escapeHTMLTags(alias) );
 %>
 
 <html>
@@ -120,7 +122,7 @@
 <c:if test="${empty errors}">
     <p>
         <fmt:message key="ssl.certificate.details.intro">
-            <fmt:param value="${param.alias}"/>
+            <fmt:param value="${alias}"/>
             <fmt:param>
                 <c:choose>
                     <c:when test="${param.type eq 'c2s'}"><fmt:message key="ssl.certificates.truststore.c2s-title"/></c:when>

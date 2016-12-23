@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,12 +60,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERTaggedObject;
-import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -417,8 +408,6 @@ public class CertificateManager {
     /**
      * Returns true if the specified certificate is a self-signed certificate.
      *
-     * @param keyStore key store that holds the certificate to verify.
-     * @param alias alias of the certificate in the key store.
      * @return true if the specified certificate is a self-signed certificate.
      * @throws KeyStoreException if an error happens while usign the keystore
      */
@@ -436,8 +425,6 @@ public class CertificateManager {
      * certificates need to get their issuer information entered to be able to generate a Certificate
      * Signing Request (CSR).
      *
-     * @param keyStore key store that holds the certificate to verify.
-     * @param alias alias of the certificate in the key store.
      * @return true if the specified certificate is ready to be signed by a Certificate Authority.
      * @throws KeyStoreException if an error happens while usign the keystore
      */
@@ -456,7 +443,7 @@ public class CertificateManager {
      * requests are required by Certificate Authorities as part of their signing process. The signing request
      * contains information about the certificate issuer, subject DN, subject alternative names and public key.
      * Private keys are not included. After the Certificate Authority verified and signed the certificate a new
-     * certificate is going to be returned. Use {@link #installReply(java.security.KeyStore, java.security.KeyStore, String, String, java.io.InputStream)}
+     * certificate is going to be returned. Use {@link #installReply(java.security.KeyStore, java.security.KeyStore, char[], String, java.io.InputStream)}
      * to import the CA reply.
      *
      * @param cert the certificate to create a signing request.
@@ -1025,7 +1012,7 @@ public class CertificateManager {
         // add subjectAlternativeName extension
         boolean critical = subjectDN.getRDNs().length == 0;
         ASN1Sequence othernameSequence = new DERSequence(new ASN1Encodable[]{
-                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERTaggedObject(true, 0, new DERUTF8String(domain))});
+                new ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.5"), new DERUTF8String( domain )});
         GeneralName othernameGN = new GeneralName(GeneralName.otherName, othernameSequence);
         GeneralNames subjectAltNames = new GeneralNames(new GeneralName[]{othernameGN});
         certBuilder.addExtension(Extension.subjectAlternativeName, critical, subjectAltNames);

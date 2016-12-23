@@ -27,6 +27,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
@@ -265,15 +266,14 @@ public class SASLAuthentication {
                     // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server,
                     // yet, most of the XMPP implemenations of DIGEST-MD5 will actually use the domain name. To account for that,
                     // here, we'll use the host name, unless DIGEST-MD5 is being negotiated!
-                    final String fqhn = JiveGlobals.getProperty( "xmpp.fqdn", XMPPServer.getInstance().getServerInfo().getHostname() );
-                    final String fqdn = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-                    final String serverName = ( mechanismName.equals( "DIGEST-MD5" ) ? fqdn : fqhn );
+                    final XMPPServerInfo serverInfo = XMPPServer.getInstance().getServerInfo();
+                    final String serverName = ( mechanismName.equals( "DIGEST-MD5" ) ? serverInfo.getXMPPDomain() : serverInfo.getHostname() );
 
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
                     props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString( !JiveGlobals.getBooleanProperty( "xmpp.auth.anonymous" ) ) );
-                    props.put( "com.sun.security.sasl.digest.realm", fqdn );
+                    props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
@@ -305,7 +305,7 @@ public class SASLAuthentication {
                     // Decode any data that is provided in the client response.
                     final String encoded = doc.getTextTrim();
                     final byte[] decoded;
-                    if ( encoded == null || encoded.isEmpty() )
+                    if ( encoded == null || encoded.isEmpty() || encoded.equals("=") ) // java SaslServer cannot handle a null.
                     {
                         decoded = new byte[ 0 ];
                     }
@@ -404,20 +404,29 @@ public class SASLAuthentication {
         return false;
     }
 
-    private static void sendChallenge(Session session, byte[] challenge) {
+    private static void sendElement(Session session, String element, byte[] data) {
         StringBuilder reply = new StringBuilder(250);
-        if (challenge == null) {
-            challenge = new byte[0];
+        reply.append("<");
+        reply.append(element);
+        reply.append(" xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
+        if (data != null) {
+            reply.append(">");
+            String data_b64 = StringUtils.encodeBase64(data).trim();
+            if ("".equals(data_b64)) {
+                data_b64 = "=";
+            }
+            reply.append(data_b64);
+            reply.append("</");
+            reply.append(element);
+            reply.append(">");
+        } else {
+            reply.append("/>");
         }
-        String challenge_b64 = StringUtils.encodeBase64(challenge).trim();
-        if ("".equals(challenge_b64)) {
-            challenge_b64 = "="; // Must be padded if null
-        }
-        reply.append(
-                "<challenge xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">");
-        reply.append(challenge_b64);
-        reply.append("</challenge>");
         session.deliverRawText(reply.toString());
+    }
+
+    private static void sendChallenge(Session session, byte[] challenge) {
+        sendElement(session, "challenge", challenge);
     }
 
     private static void authenticationSuccessful(LocalSession session, String username,
@@ -428,16 +437,7 @@ public class SASLAuthentication {
             authenticationFailed(session, Failure.ACCOUNT_DISABLED);
             return;
         }
-        StringBuilder reply = new StringBuilder(80);
-        reply.append("<success xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
-        if (successData != null) {
-            String successData_b64 = StringUtils.encodeBase64(successData).trim();
-            reply.append('>').append(successData_b64).append("</success>");
-        }
-        else {
-            reply.append("/>");
-        }
-        session.deliverRawText( reply.toString() );
+        sendElement(session, "success", successData);
         // We only support SASL for c2s
         if (session instanceof ClientSession) {
             ((LocalClientSession) session).setAuthToken(new AuthToken(username));

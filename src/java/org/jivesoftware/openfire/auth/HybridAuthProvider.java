@@ -232,4 +232,24 @@ public class HybridAuthProvider implements AuthProvider {
         // TODO Auto-generated method stub
         return false;
     }
+
+    @Override
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
 }

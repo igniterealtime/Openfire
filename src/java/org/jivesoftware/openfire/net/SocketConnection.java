@@ -154,6 +154,9 @@ public class SocketConnection implements Connection {
         xmlSerializer = new XMLSocketWriter(writer, this);
 
         instances.put(this, "");
+
+        // Default this sensibly.
+        this.tlsPolicy = this.getConfiguration().getTlsPolicy();
     }
 
     /**

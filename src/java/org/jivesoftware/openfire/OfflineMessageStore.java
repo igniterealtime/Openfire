@@ -70,7 +70,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         "INSERT INTO ofOffline (username, messageID, creationDate, messageSize, stanza) " +
         "VALUES (?, ?, ?, ?, ?)";
     private static final String LOAD_OFFLINE =
-        "SELECT stanza, creationDate FROM ofOffline WHERE username=?";
+        "SELECT stanza, creationDate FROM ofOffline WHERE username=? ORDER BY creationDate ASC";
     private static final String LOAD_OFFLINE_MESSAGE =
         "SELECT stanza FROM ofOffline WHERE username=? AND creationDate=?";
     private static final String SELECT_SIZE_OFFLINE =

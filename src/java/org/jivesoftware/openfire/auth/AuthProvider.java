@@ -90,4 +90,8 @@ public interface AuthProvider {
     public boolean supportsPasswordRetrieval();
 
     boolean isScramSupported();
+    String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException;
+    int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException;
+    String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException;
 }

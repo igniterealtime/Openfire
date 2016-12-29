@@ -315,6 +315,7 @@ public class XMPPServer {
         }
 
         JiveGlobals.migrateProperty("xmpp.domain");
+        JiveGlobals.migrateProperty("xmpp.fqdn");
 
         JiveGlobals.migrateProperty(Log.LOG_DEBUG_ENABLED);
         Log.setDebugEnabled(JiveGlobals.getBooleanProperty(Log.LOG_DEBUG_ENABLED, false));

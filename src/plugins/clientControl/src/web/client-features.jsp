@@ -23,6 +23,7 @@
     String historyEnabledString = JiveGlobals.getProperty("history.enabled", "true");
     String hostnameEnabledString = JiveGlobals.getProperty("hostname.enabled", "true");
     String invisibleloginEnabledString = JiveGlobals.getProperty("invisiblelogin.enabled", "true");
+    String anonymousloginEnabledString = JiveGlobals.getProperty("anonymouslogin.enabled", "true");
     String logoutexitEnabledString = JiveGlobals.getProperty("logoutexit.enabled", "true");
     String movecopyEnabledString = JiveGlobals.getProperty("movecopy.enabled", "true");
     String passwordchangeEnabledString = JiveGlobals.getProperty("passwordchange.enabled", "true");
@@ -65,6 +66,7 @@
 		historyEnabledString = request.getParameter("historyEnabled");
 		hostnameEnabledString = request.getParameter("hostnameEnabled");
 		invisibleloginEnabledString = request.getParameter("invisibleloginEnabled");
+		anonymousloginEnabledString = request.getParameter("anonymousloginEnabled");
 		logoutexitEnabledString = request.getParameter("logoutexitEnabled");
 		movecopyEnabledString = request.getParameter("movecopyEnabled");
 		passwordchangeEnabledString = request.getParameter("passwordchangeEnabled");
@@ -92,6 +94,7 @@
 		JiveGlobals.setProperty("history.enabled", historyEnabledString);
 		JiveGlobals.setProperty("hostname.enabled", hostnameEnabledString);
 		JiveGlobals.setProperty("invisiblelogin.enabled", invisibleloginEnabledString);
+		JiveGlobals.setProperty("anonymouslogin.enabled", anonymousloginEnabledString);
 		JiveGlobals.setProperty("logoutexit.enabled", logoutexitEnabledString);
 		JiveGlobals.setProperty("movecopy.enabled", movecopyEnabledString);
 		JiveGlobals.setProperty("passwordchange.enabled", passwordchangeEnabledString);
@@ -120,6 +123,7 @@
 	boolean historyEnabled = Boolean.parseBoolean(historyEnabledString);
 	boolean hostnameEnabled = Boolean.parseBoolean(hostnameEnabledString);
 	boolean invisibleloginEnabled = Boolean.parseBoolean(invisibleloginEnabledString);
+	boolean anonymousloginEnabled = Boolean.parseBoolean(anonymousloginEnabledString);
 	boolean logoutexitEnabled = Boolean.parseBoolean(logoutexitEnabledString);
 	boolean movecopyEnabled = Boolean.parseBoolean(movecopyEnabledString);
 	boolean passwordchangeEnabled = Boolean.parseBoolean(passwordchangeEnabledString);
@@ -316,6 +320,17 @@
 	                <input type="radio" name="hostnameEnabled" value="false" <%= !hostnameEnabled ? "checked" : "" %> />
 	            </td>
 	        </tr>
+	        <tr>
+	            <td><b><fmt:message key="client.features.invisiblelogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	                     <fmt:message key="client.features.invisiblelogin.description" />
+	                  </span></td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="invisibleloginEnabled" value="true" <%= invisibleloginEnabled ? "checked" : "" %> />
+	            </td>
+	            <td width="1%" nowrap>
+	                <input type="radio" name="invisibleloginEnabled" value="false" <%= !invisibleloginEnabled ? "checked" : "" %> />
+	            </td>
+	        </tr>
 	    </table>
 	</div>
 	        
@@ -327,14 +342,14 @@
 	        <th><fmt:message key="client.features.enabled"/></th>
 	        <th><fmt:message key="client.features.disabled"/></th>
 	        <tr>
-	            <td><b><fmt:message key="client.features.invisiblelogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
-	                     <fmt:message key="client.features.invisiblelogin.description" />
+	            <td><b><fmt:message key="client.features.anonymouslogin" /></b> - <fmt:message key="client.features.spark.only" /><br/><span class="jive-description">
+	                     <fmt:message key="client.features.anonymouslogin.description" />
 	                  </span></td>
 	            <td width="1%" nowrap>
-	                <input type="radio" name="invisibleloginEnabled" value="true" <%= invisibleloginEnabled ? "checked" : "" %> />
+	                <input type="radio" name="anonymousloginEnabled" value="true" <%= anonymousloginEnabled ? "checked" : "" %> />
 	            </td>
 	            <td width="1%" nowrap>
-	                <input type="radio" name="invisibleloginEnabled" value="false" <%= !invisibleloginEnabled ? "checked" : "" %> />
+	                <input type="radio" name="anonymousloginEnabled" value="false" <%= !anonymousloginEnabled ? "checked" : "" %> />
 	            </td>
 	        </tr>	        
 	        <tr>

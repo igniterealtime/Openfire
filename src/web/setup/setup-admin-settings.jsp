@@ -16,6 +16,7 @@
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -73,7 +74,7 @@
         }
         try {
             AuthFactory.authenticate("admin", "admin");
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             errors.put("password", "password");
         }
         if (email == null) {
@@ -258,7 +259,7 @@ function checkClick() {
         AuthFactory.authenticate("admin", "admin");
         defaultPassword = true;
     }
-    catch (Exception e) {
+    catch (UnauthorizedException e) {
         // Ignore.
     }
     if (defaultPassword) {

@@ -43,7 +43,7 @@
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     boolean csrfStatus = true;
 
-    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+    if (submit == true && (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
         submit = false;
         csrfStatus = false;
     }

@@ -416,6 +416,12 @@ public class SparkManager implements Component {
         if (invisibleloginEnabled) {
             responseElement.addElement("feature").addAttribute("var", "invisible-login");
         }
+        
+        // Check for LOGIN ANONYMOUSLY feature        
+        boolean anonymousloginEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("anonymouslogin.enabled", "true"));
+        if (anonymousloginEnabled) {
+        	responseElement.addElement("feature").addAttribute("var", "anonymous-login");
+        }
 
         // Check for LOGOUT & EXIT feature
         boolean logoutexitEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("logoutexit.enabled", "true"));

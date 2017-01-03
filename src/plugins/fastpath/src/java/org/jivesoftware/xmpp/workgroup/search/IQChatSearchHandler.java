@@ -1,8 +1,5 @@
 /**
 
- * $RCSfile$
- * $Revision: 19360 $
- * $Date: 2005-07-21 10:04:49 -0700 (Thu, 21 Jul 2005) $
  *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *

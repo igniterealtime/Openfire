@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: 23996 $
- * $Date: 2005-11-21 13:50:46 -0800 (Mon, 21 Nov 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -205,7 +201,6 @@ public class Schedule {
            }
 
            /**
-            *
             * @param minute
             */
            public void setMinute(int minute) {

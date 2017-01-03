@@ -1,9 +1,6 @@
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%--
-  -	$RCSfile$
-  -	$Revision: $
-  -	$Date: $
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -

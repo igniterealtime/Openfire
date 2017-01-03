@@ -5,7 +5,6 @@ import org.jivesoftware.openfire.plugin.gojara.database.DatabaseManager;
 import org.xmpp.packet.Packet;
 
 /**
- * 
  * This class is only for logging messages between the gateway and the
  * registered clients. It uses the database to save the packets from the past 60
  * (configurable) minutes.

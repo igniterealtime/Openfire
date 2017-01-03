@@ -1,8 +1,4 @@
 /**
- * $RCSfile: DefaultVCardProvider.java,v $
- * $Revision: 3062 $
- * $Date: 2005-11-11 13:26:30 -0300 (Fri, 11 Nov 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

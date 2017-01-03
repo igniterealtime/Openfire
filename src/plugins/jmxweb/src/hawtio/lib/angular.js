@@ -5666,7 +5666,6 @@ function composeProtocolHostPort(protocol, host, port) {
 }
 
 /**
- *
  * @param {string} begin
  * @param {string} whole
  * @param {string} otherwise

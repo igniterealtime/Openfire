@@ -4,9 +4,6 @@
 <%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="java.text.DecimalFormat"%>
 <%--
-  -	$RCSfile$
-  -	$Revision: $
-  -	$Date: $
   -
   - Copyright (C) 2005-2008 Jive Software. All rights reserved.
   -

@@ -1,7 +1,4 @@
 /**
- * $Revision: 1722 $
- * $Date: 2005-07-28 15:19:16 -0700 (Thu, 28 Jul 2005) $
- *
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

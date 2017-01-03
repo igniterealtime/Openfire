@@ -1,8 +1,4 @@
 /**
- * $RCSfile: PacketDelivererImpl.java,v $
- * $Revision: 2715 $
- * $Date: 2005-08-23 22:16:45 -0300 (Tue, 23 Aug 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

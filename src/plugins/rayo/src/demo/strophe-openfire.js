@@ -205,7 +205,6 @@ Openfire.Connection.prototype = {
 
 
     /** 
-     *
      * Private Function: _onopen websocket event handler
      *
      */    
@@ -695,7 +694,6 @@ Openfire.Connection.prototype = {
 
 
     /** 
-     *
      * Private Function: _onclose websocket event handler
      *
      */    
@@ -731,7 +729,6 @@ Openfire.Connection.prototype = {
     },
 
     /** 
-     *
      * Private Function: _onmessage websocket event handler
      *
      */    
@@ -799,7 +796,6 @@ Openfire.Connection.prototype = {
     },
     
     /** 
-     *
      * Private Function: _textToXML convert text to DOM Document object
      *
      */    

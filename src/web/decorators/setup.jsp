@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 2701 $
-  -	$Date: 2005-08-19 16:48:22 -0700 (Fri, 19 Aug 2005) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -

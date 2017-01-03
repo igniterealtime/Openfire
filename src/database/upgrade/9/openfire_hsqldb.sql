@@ -1,5 +1,3 @@
-// $Revision:  $
-// $Date:  $
 
 // Increase size of username field
 ALTER TABLE jiveUser ALTER COLUMN username VARCHAR(64);

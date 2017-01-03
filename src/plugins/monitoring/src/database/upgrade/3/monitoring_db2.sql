@@ -1,5 +1,3 @@
--- $Revision$
--- $Date$
 
 ALTER TABLE ofMessageArchive ADD COLUMN messageID BIGINT NULL;
 ALTER TABLE ofMessageArchive ADD COLUMN stanza LONG VARCHAR NULL;

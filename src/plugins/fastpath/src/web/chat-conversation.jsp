@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 22570 $
-  -	$Date: 2005-10-10 21:07:40 -0700 (Mon, 10 Oct 2005) $
 --%>
 <%@ page
 import="org.jivesoftware.openfire.fastpath.history.AgentChatSession,

@@ -1,5 +1,3 @@
--- $Revision: 795 $
--- $Date: 2005-01-06 07:44:42 -0300 (Thu, 06 Jan 2005) $
 
 -- Update the jiveVersion table to new definition.
 DROP TABLE jiveVersion;

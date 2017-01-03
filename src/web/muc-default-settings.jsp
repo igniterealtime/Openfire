@@ -1,6 +1,4 @@
 <%--
-  -	$Revision$
-  -	$Date$
   -
   - Copyright (C) 2004-2010 Jive Software. All rights reserved.
   -

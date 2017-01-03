@@ -1,11 +1,9 @@
 /*
  * File:        KeyTable.js
  * Version:     1.1.7
- * CVS:         $Idj$
  * Description: Keyboard navigation for HTML tables
  * Author:      Allan Jardine (www.sprymedia.co.uk)
  * Created:     Fri Mar 13 21:24:02 GMT 2009
- * Modified:    $Date$ by $Author$
  * Language:    Javascript
  * License:     GPL v2 or BSD 3 point style
  * Project:     Just a little bit of fun :-)

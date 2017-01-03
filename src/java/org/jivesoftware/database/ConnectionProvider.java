@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision$
- * $Date$
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * TLicensed under the Apache License, Version 2.0 (the "License");

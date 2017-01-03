@@ -1,8 +1,4 @@
 /**
- * $RCSfile: PresenceManagerImpl.java,v $
- * $Revision: 3128 $
- * $Date: 2005-11-30 15:31:54 -0300 (Wed, 30 Nov 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

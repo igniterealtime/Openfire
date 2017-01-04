@@ -24,7 +24,6 @@
 package com.sun.voip.server;
 
 /**
- *
  * @author jerry
  */
 public interface DirectCallStatusListener {

@@ -8,7 +8,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 
 /**
- * 
  * Gateways can be limited to a special user group. This manager helps you to
  * check if the gateways is limited and if a user is in this group
  * 

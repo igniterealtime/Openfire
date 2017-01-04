@@ -1,7 +1,4 @@
 /**
- * $Revision$
- * $Date$
- *
  * Copyright 2006-2011 Daniel Henninger.  All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
@@ -29,7 +26,6 @@ import org.jivesoftware.smack.sasl.SASLMechanism;
 import org.jivesoftware.smack.util.Base64;
 
 /**
- *
  */
 public class FacebookConnectSASLMechanism extends SASLMechanism {
 

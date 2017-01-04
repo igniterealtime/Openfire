@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 1638 $
-  -	$Date: 2005-07-18 10:16:48 -0700 (Mon, 18 Jul 2005) $
 --%>
 
 <%@ page import="org.jivesoftware.util.ParamUtils,

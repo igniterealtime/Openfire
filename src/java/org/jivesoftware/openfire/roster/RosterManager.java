@@ -1,8 +1,4 @@
 /**
- * $RCSfile: RosterManager.java,v $
- * $Revision: 3138 $
- * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

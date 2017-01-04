@@ -1,8 +1,4 @@
 /**
- * $RCSfile: RosterItem.java,v $
- * $Revision: 3080 $
- * $Date: 2005-11-15 01:28:23 -0300 (Tue, 15 Nov 2005) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

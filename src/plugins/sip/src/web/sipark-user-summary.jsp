@@ -1,7 +1,4 @@
 <%--
-  -	$RCSfile$
-  -	$Revision: 3710 $
-  -	$Date: 2006-04-05 11:53:01 -0700 (Wed, 05 Apr 2006) $
   -
   - Copyright (C) 2004-2008 Jive Software. All rights reserved.
   -

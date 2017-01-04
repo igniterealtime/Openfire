@@ -106,7 +106,6 @@ public class TransportSessionManager {
 	}
 
 	/**
-	 * 
 	 * Removes registration from our database.
 	 * 
 	 * @param transport

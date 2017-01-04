@@ -1,7 +1,4 @@
 /**
- * $Revision$
- * $Date$
- *
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +18,6 @@ package org.jivesoftware.openfire.archive;
 import org.jivesoftware.util.StringUtils;
 
 /**
- *
  */
 public class ConversationInfo {
 

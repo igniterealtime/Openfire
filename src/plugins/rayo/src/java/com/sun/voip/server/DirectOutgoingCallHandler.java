@@ -32,7 +32,6 @@ import com.sun.voip.CallParticipant;
 import com.sun.voip.Logger;
 
 /**
- *
  * @author jerry
  */
 public class DirectOutgoingCallHandler implements SipListener {

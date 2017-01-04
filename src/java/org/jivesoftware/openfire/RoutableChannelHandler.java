@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: 569 $
- * $Date: 2004-12-01 15:31:18 -0300 (Wed, 01 Dec 2004) $
- *
  * Copyright (C) 2004-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +20,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 /**
- *
  *
  * @author Matt Tucker
  */

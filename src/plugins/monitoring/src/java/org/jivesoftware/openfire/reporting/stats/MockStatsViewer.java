@@ -1,8 +1,4 @@
 /**
- * $RCSfile  $
- * $Revision  $
- * $Date  $
- *
  * Copyright (C) 2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +22,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- *
  */
 public class MockStatsViewer implements StatsViewer {
     private StatsEngine engine;

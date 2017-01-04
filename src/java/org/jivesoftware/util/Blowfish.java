@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: 3657 $
- * $Date: 2002-09-09 08:31:31 -0700 (Mon, 09 Sep 2002) $
- *
  * Adapted from Markus Hahn's Blowfish package so that all functionality is
  * in a single source file. Please visit the following URL for his excellent
  * package: http://www.hotpixel.net/software.html

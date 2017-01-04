@@ -1,8 +1,4 @@
 /**
- * $RCSfile$
- * $Revision: $
- * $Date: $
- *
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +22,6 @@ import org.jivesoftware.openfire.sip.sipaccount.SipComponent;
 import org.xmpp.packet.PacketExtension;
 
 /**
- *
  * CallLog packet extension Class.
  *
  * @author Thiago Rocha Camargo

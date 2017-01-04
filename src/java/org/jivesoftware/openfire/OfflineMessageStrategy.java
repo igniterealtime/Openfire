@@ -1,8 +1,4 @@
 /**
- * $RCSfile: OfflineMessageStrategy.java,v $
- * $Revision: 3114 $
- * $Date: 2005-11-23 18:12:54 -0300 (Wed, 23 Nov 2005) $
- *
  * Copyright (C) 2005-2008 Jive Software. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

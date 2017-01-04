@@ -33,7 +33,6 @@ public abstract class RemoteRosterPropertyListener implements PropertyEventListe
 	}
 
 	/**
-	 * 
 	 * If there were changes we are interested in, this template method get
 	 * called. The property string is truncated. Method gets triggered, if the
 	 * property contains substring "plugin.remoteroster.jids."

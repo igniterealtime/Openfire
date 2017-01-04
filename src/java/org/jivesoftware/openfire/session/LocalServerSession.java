@@ -1,5 +1,4 @@
 /**
- * 
  */
 package org.jivesoftware.openfire.session;
 

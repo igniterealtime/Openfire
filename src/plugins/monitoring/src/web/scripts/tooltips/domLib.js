@@ -1,4 +1,3 @@
-/** $Id: domLib.js 2321 2006-06-12 06:45:41Z dallen $ */
 // {{{ license
 
 /*

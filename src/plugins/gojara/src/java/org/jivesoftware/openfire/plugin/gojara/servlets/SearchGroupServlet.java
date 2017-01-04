@@ -23,7 +23,6 @@ import org.jivesoftware.openfire.group.GroupManager;
 public class SearchGroupServlet extends HttpServlet {
 
 	/**
-	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 

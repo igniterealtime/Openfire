@@ -1,6 +1,4 @@
 <%--
-  -	$Revision: 985 $
-  -	$Date: 2005-02-18 10:35:44 -0800 (Fri, 18 Feb 2005) $
 --%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>

@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.group;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -670,6 +671,40 @@ public class GroupManager {
         }
         for (JID user : group.getMembers()) {
         	groupMetaCache.remove(user.getNode());
+        }
+
+        final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
+        if (showInRoster != null )
+        {
+            switch ( showInRoster.toLowerCase() )
+            {
+                case "everybody":
+                    groupMetaCache.clear();
+                    break;
+
+                case "spefgroups":
+                    final String groupList = group.getProperties().get( "sharedRoster.groupList" );
+                    if ( groupList != null )
+                    {
+                        final StringTokenizer tokenizer = new StringTokenizer( groupList, ",\t\n\r\f" );
+                        while ( tokenizer.hasMoreTokens() )
+                        {
+                            final String spefgroup = tokenizer.nextToken().trim();
+                            try
+                            {
+                                final Group nested = getGroup( spefgroup );
+                                evictCachedUsersForGroup( nested );
+                            }
+                            catch ( GroupNotFoundException e )
+                            {
+                                Log.debug( "While evicting cached users for group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), spefgroup, e );
+                            }
+                        }
+                    }
+                    break;
+
+
+            }
         }
     }
 

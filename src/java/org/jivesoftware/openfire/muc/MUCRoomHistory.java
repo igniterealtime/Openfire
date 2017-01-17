@@ -22,6 +22,8 @@ import org.dom4j.Namespace;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -38,6 +40,7 @@ import java.util.ListIterator;
  * @author Gaston Dombiak
  */
 public final class MUCRoomHistory {
+    private static final Logger Log = LoggerFactory.getLogger(MUCRoomHistory.class);
 
     private MUCRoom room;
 
@@ -164,15 +167,21 @@ public final class MUCRoomHistory {
                         continue;
                     }
                     Element added = message.addChildElement(child.getName(), child.getNamespaceURI());
+                    if (!child.getText().isEmpty()) {
+                        added.setText(child.getText());
+                    }
                     for (Attribute attr : (List<Attribute>)child.attributes()) {
-                        added.add(attr);
+                        added.addAttribute(attr.getQName(), attr.getValue());
                     }
                     for (Element el : (List<Element>)child.elements()) {
-                        added.add(el);
+                        added.add(el.createCopy());
                     }
                 }
+                if (element.attribute("id") != null) {
+                    message.setID(element.attributeValue("id"));
+                }
             } catch (Exception ex) {
-                // log.error("Failed to parse payload XML", ex);
+                Log.error("Failed to parse payload XML", ex);
             }
         }
         message.setSubject(subject);

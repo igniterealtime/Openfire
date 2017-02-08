@@ -660,6 +660,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         else {
                             // Room does not exist and delegate does not recognize it and does
                             // not allow room creation
+                            GroupEventDispatcher.removeListener(room);
                             throw new NotAllowedException();
 
                         }
@@ -673,6 +674,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             if (!allowedToCreate.includes(bareJID)) {
                                 // The user is not in the list of allowed JIDs to create a room so raise
                                 // an exception
+                                GroupEventDispatcher.removeListener(room);
                                 throw new NotAllowedException();
                             }
                         }
@@ -720,6 +722,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                     catch (IllegalArgumentException e) {
                         // The room does not exist so do nothing
+                        GroupEventDispatcher.removeListener(room);
                         room = null;
                     }
                 }

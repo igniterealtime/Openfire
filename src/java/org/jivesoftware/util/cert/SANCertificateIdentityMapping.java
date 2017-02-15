@@ -125,7 +125,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      * @param item A byte array representation of a subjectAltName 'otherName' entry (cannot be null).
      * @return an xmpp address, or null when the otherName entry does not relate to XMPP (or fails to parse).
      */
-    public static String parseOtherName( byte[] item )
+    public String parseOtherName( byte[] item )
     {
         if ( item == null || item.length == 0 )
         {
@@ -160,6 +160,10 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
                     return parseOtherNameXmppAddr( value );
 
                 default:
+                    String otherName = parseOtherName(typeId, value);
+                    if (otherName != null) {
+                        return otherName;
+                    }
                     Log.debug( "Ignoring subjectAltName 'otherName' type-id '{}' that's neither id-on-xmppAddr nor id-on-dnsSRV.", typeId.getId() );
                     return null;
             }
@@ -171,6 +175,17 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
         }
     }
 
+    /**
+     * Allow sub-class to support additional OID values, possibly taking typeId into account
+     *
+     * @param typeId The ASN.1 object identifier (cannot be null).
+     * @param value The ASN.1 representation of the value (cannot be null).
+     * @return The parsed otherName String value.
+     */
+    protected String parseOtherName(ASN1ObjectIdentifier typeId, ASN1Primitive value) {
+        return null;
+    }
+    
     /**
      * Parses a SRVName value as specified by RFC 4985.
      *

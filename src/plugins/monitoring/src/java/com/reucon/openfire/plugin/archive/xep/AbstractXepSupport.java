@@ -78,6 +78,7 @@ public abstract class AbstractXepSupport {
 				MultiUserChatManager manager = server.getMultiUserChatManager();
 				for (MultiUserChatService mucService : manager.getMultiUserChatServices()) {
 					mucService.addIQHandler(iqHandler);
+					mucService.addExtraFeature(namespace);
 				}
 			}
 		}
@@ -110,6 +111,7 @@ public abstract class AbstractXepSupport {
 				MultiUserChatManager manager = server.getMultiUserChatManager();
 				for (MultiUserChatService mucService : manager.getMultiUserChatServices()) {
 					mucService.removeIQHandler(iqHandler);
+					mucService.removeExtraFeature(namespace);
 				}
 			}
 		}

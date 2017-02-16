@@ -331,13 +331,16 @@ public class SASLAuthentication {
                     {
                         // Flag that indicates if certificates of the remote server should be validated.
                         final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
-                        if ( verify && verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                        if ( verify )
                         {
-                            ( (LocalIncomingServerSession) session ).tlsAuth();
-                        }
-                        else
-                        {
-                            throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
+                            if ( verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                            {
+                                ( (LocalIncomingServerSession) session ).tlsAuth();
+                            }
+                            else
+                            {
+                                throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
+                            }
                         }
                     }
 

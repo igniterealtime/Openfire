@@ -109,8 +109,6 @@ public class DefaultAuthProvider implements AuthProvider {
                 if (scramOnly) {
                     // If we have a password here, but we're meant to be scramOnly, we should reset it.
                     setPassword(username, userInfo.plainText);
-                }
-                if (userInfo.salt == null) {
                     // RECURSE
                     return getUserInfo(username);
                 }

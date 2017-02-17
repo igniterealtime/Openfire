@@ -42,7 +42,15 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      * @see <a href="https://tools.ietf.org/html/rfc4985">RFC 4985</a>
      */
     public static final String OTHERNAME_SRV_OID = "1.3.6.1.5.5.7.8.7";
+    
+    /**
+     * User Principal Name (UPN) Object Identifier.
+     *
+     * @see <a href="http://www.oid-info.com/get/1.3.6.1.4.1.311.20.2.3">User Principal Name (UPN)</a>
+     */
+    public static final String OTHERNAME_UPN_OID = "1.3.6.1.4.1.311.20.2.3";
 
+    
     /**
      * Returns the JID representation of an XMPP entity contained as a SubjectAltName extension
      * in the certificate. If none was found then return an empty list.
@@ -71,7 +79,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
                 switch ( type )
                 {
                     case 0:
-                        // OtherName: search for "id-on-xmppAddr" or 'sRVName'
+                        // OtherName: search for "id-on-xmppAddr" or 'sRVName' or 'userPrincipalName'
                         result = parseOtherName( (byte[]) value );
                         break;
                     case 2:
@@ -158,6 +166,9 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
 
                 case OTHERNAME_XMPP_OID:
                     return parseOtherNameXmppAddr( value );
+                    
+                case OTHERNAME_UPN_OID:
+                    return parseOtherNameUpn( value );
 
                 default:
                     String otherName = parseOtherName(typeId, value);
@@ -195,7 +206,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      * @param srvName The ASN.1 representation of the srvName value (cannot be null).
      * @return an XMPP address value, or null when the record does not relate to XMPP.
      */
-    public static String parseOtherNameDnsSrv( ASN1Primitive srvName )
+    protected String parseOtherNameDnsSrv( ASN1Primitive srvName )
     {
         // RFC 4985 says that this should be a IA5 String. Lets be tolerant and allow all text-based values.
         final String value = ( (ASN1String) srvName ).getString();
@@ -222,9 +233,33 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      * @param xmppAddr The ASN.1 representation of the xmppAddr value (cannot be null).
      * @return The parsed xmppAddr value.
      */
-    public static String parseOtherNameXmppAddr( ASN1Primitive xmppAddr )
+    protected String parseOtherNameXmppAddr( ASN1Primitive xmppAddr )
     {
         // RFC 6120 says that this should be a UTF8String. Lets be tolerant and allow all text-based values.
         return ( (ASN1String) xmppAddr ).getString();
     }
+    
+    /**
+     * Parse a UPN value 
+     *
+     * @param otherName The ASN.1 representation of the UPN (cannot be null).
+     * @return The parsed UPN value.
+     */
+    protected String parseOtherNameUpn( ASN1Primitive value )
+    {
+        String otherName = null;
+        if (value instanceof ASN1TaggedObject) {
+            ASN1TaggedObject taggedObject = (ASN1TaggedObject) value;
+            ASN1Primitive objectPrimitive = taggedObject.getObject();
+            if (objectPrimitive instanceof ASN1String) {
+                otherName = ((ASN1String)objectPrimitive).getString();
+            }
+        }
+        if (otherName == null) {
+            Log.warn("UPN type unexpected, UPN extraction failed: " + value.getClass().getName() + ":" + value.toString());
+        } else {
+            Log.debug("UPN from certificate has value of: " + otherName );
+        }
+        return otherName;
+    }    
 }

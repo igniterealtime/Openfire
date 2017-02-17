@@ -78,6 +78,9 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     private UserInfo getUserInfo(String username) throws UnsupportedOperationException, UserNotFoundException {
+        return getUserInfo(username, false);
+    }
+    private UserInfo getUserInfo(String username, boolean recurse) throws UnsupportedOperationException, UserNotFoundException {
         if (!isScramSupported()) {
             // Reject the operation since the provider  does not support SCRAM
             throw new UnsupportedOperationException();
@@ -108,15 +111,15 @@ public class DefaultAuthProvider implements AuthProvider {
                     // Ignore and return plain password instead.
                 }
             }
-            if (userInfo.plainText != null) {
-                boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-                if (scramOnly) {
-                    // If we have a password here, but we're meant to be scramOnly, we should reset it.
-                    setPassword(username, userInfo.plainText);
-                }
-                if (userInfo.salt == null) {
-                    // RECURSE
-                    return getUserInfo(username);
+            if (!recurse) {
+                if (userInfo.plainText != null) {
+                    boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
+                    if (scramOnly || userInfo.salt == null) {
+                        // If we have a password here, but we're meant to be scramOnly, we should reset it.
+                        setPassword(username, userInfo.plainText);
+                        // RECURSE
+                        return getUserInfo(username, true);
+                    }
                 }
             }
             // Good to go.

@@ -477,20 +477,24 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * <p>Indicate a state change.</p>
      * <p>Use nulls to indicate fields that should not be changed.</p>
      */
-    private static class Change {
+    public static class Change {
         public Change(RosterItem.RecvType recv, RosterItem.SubType sub, RosterItem.AskType ask) {
             newRecv = recv;
             newSub = sub;
             newAsk = ask;
         }
 
-        public RosterItem.RecvType newRecv;
-        public RosterItem.SubType newSub;
-        public RosterItem.AskType newAsk;
+        public RosterItem.RecvType getNewRecv() { return newRecv; }
+        public RosterItem.SubType  getNewSub()  { return newSub; }
+        public RosterItem.AskType  getNewAsk()  { return newAsk; }
+        
+        private RosterItem.RecvType newRecv;
+        private RosterItem.SubType newSub;
+        private RosterItem.AskType newAsk;
     }
 
     /**
-     * Determine and call the update method based on the item's subscription state.
+     * Determine the changes to apply to the item, according to its subscription state.
      * The method also turns the action and sending status into an integer code
      * for easier processing (switch statements).
      * <p/>
@@ -500,22 +504,35 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * where X is subscribe, subscribed, etc.
      * </p>
      *
+     * @param  item      The item to be updated
+     * @param  action    The new state change request
+     * @param  isSending True if the roster owner of the item is sending the new state change request
+     * @return Change    changes to apply to the item 
+     */
+    public static Change getStateChange(RosterItem.SubType itemSubType, Presence.Type action, boolean isSending) {
+        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(itemSubType);
+        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
+        return changeTable.get(action);
+    }
+    
+    /**
+     * Determine and call the update method based on the item's subscription state.
+     * <p/>
+     *
      * @param item      The item to be updated
      * @param action    The new state change request
      * @param isSending True if the roster owner of the item is sending the new state change request
      */
     private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
-        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(item.getSubStatus());
-        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
-        Change change = changeTable.get(action);
-        if (change.newAsk != null && change.newAsk != item.getAskStatus()) {
-            item.setAskStatus(change.newAsk);
+        Change change = getStateChange(item.getSubStatus(), action, isSending);
+        if (change.getNewAsk() != null && change.getNewAsk() != item.getAskStatus()) {
+            item.setAskStatus(change.getNewAsk());
         }
-        if (change.newSub != null && change.newSub != item.getSubStatus()) {
-            item.setSubStatus(change.newSub);
+        if (change.getNewSub() != null && change.getNewSub() != item.getSubStatus()) {
+            item.setSubStatus(change.getNewSub());
         }
-        if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
-            item.setRecvStatus(change.newRecv);
+        if (change.getNewRecv() != null && change.getNewRecv() != item.getRecvStatus()) {
+            item.setRecvStatus(change.getNewRecv());
         }
     }
 

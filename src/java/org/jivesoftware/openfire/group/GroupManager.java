@@ -175,7 +175,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -186,7 +188,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -197,7 +201,9 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
             @Override
@@ -208,20 +214,11 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
+                if(member != null) {
+	                groupMetaCache.remove(member);
+                }
             }
 
-            private void evictCachedUserForGroup(String user) {
-                if(user != null) {
-                    JID userJid = new JID(user);
-                    if (XMPPServer.getInstance().isLocal(userJid)) {
-                        String username = userJid.getNode();
-                        synchronized (username.intern()) {
-                            groupMetaCache.remove(username);
-                        }
-                    }
-                 }
-            }
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {
@@ -590,7 +587,7 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String key = user.getNode();
+        String key = user.toBareJID();
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {

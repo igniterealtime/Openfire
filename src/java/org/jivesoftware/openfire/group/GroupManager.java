@@ -171,9 +171,7 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                if(member != null) {
-	                groupMetaCache.remove(member);
-                }
+                evictCachedUserForGroup(member);
             }
 
             @Override
@@ -184,9 +182,7 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("member");
-                if(member != null) {
-	                groupMetaCache.remove(member);
-                }
+                evictCachedUserForGroup(member);
             }
 
             @Override
@@ -197,9 +193,7 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                if(member != null) {
-	                groupMetaCache.remove(member);
-                }
+                evictCachedUserForGroup(member);
             }
 
             @Override
@@ -210,11 +204,27 @@ public class GroupManager {
                 
                 // Remove only the collection of groups the member belongs to.
                 String member = (String) params.get("admin");
-                if(member != null) {
-	                groupMetaCache.remove(member);
-                }
+                evictCachedUserForGroup(member);
             }
 
+            private void evictCachedUserForGroup(String user) {
+                if(user != null) {
+
+                    // remove userJID cache
+                    synchronized (user.intern()) {
+                        groupMetaCache.remove(user);
+                    }
+
+                    // remove userNode cache
+                    JID userJid = new JID(user);
+                    if (XMPPServer.getInstance().isLocal(userJid)) {
+                        String username = userJid.getNode();
+                        synchronized ((getClass().getSimpleName() + username).intern()) {
+                            groupMetaCache.remove(username);
+                        }
+                    }
+                 }
+            }
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {

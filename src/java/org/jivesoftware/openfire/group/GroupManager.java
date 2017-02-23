@@ -211,7 +211,7 @@ public class GroupManager {
                 if(user != null) {
 
                     // remove userJID cache
-                    synchronized (user.intern()) {
+                    synchronized((getClass().getSimpleName() + user).intern()) {
                         groupMetaCache.remove(user);
                     }
 
@@ -484,7 +484,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(userName);
         if (groupNames == null) {
-            synchronized(userName.intern()) {
+            synchronized((getClass().getSimpleName() + userName).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
                 	// assume this is a local user
@@ -597,7 +597,7 @@ public class GroupManager {
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
-            synchronized(key.intern()) {
+            synchronized((getClass().getSimpleName() + key).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(user);

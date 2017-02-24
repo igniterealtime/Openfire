@@ -206,18 +206,6 @@ public class GroupManager {
                 String member = (String) params.get("admin");
                 evictCachedUserForGroup(member);
             }
-
-            private void evictCachedUserForGroup(String user) {
-                if(user != null) {
-                    JID userJid = new JID(user);
-                    if (XMPPServer.getInstance().isLocal(userJid)) {
-                        String username = userJid.getNode();
-                        synchronized ((getClass().getSimpleName() + username).intern()) {
-                            groupMetaCache.remove(username);
-                        }
-                    }
-                 }
-            }
         });
 
         UserEventDispatcher.addListener(new UserEventListener() {
@@ -477,7 +465,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(userName);
         if (groupNames == null) {
-            synchronized((getClass().getSimpleName() + userName).intern()) {
+            synchronized((SHARED_GROUPS_KEY + userName).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(userName);
                 if (groupNames == null) {
                 	// assume this is a local user
@@ -586,11 +574,11 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        String key = user.getNode();
+        String key = user.toBareJID();
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
-            synchronized(key.intern()) {
+            synchronized((GROUP_NAMES_KEY + key).intern()) {
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(user);
@@ -667,10 +655,10 @@ public class GroupManager {
     private void evictCachedUsersForGroup(Group group) {
         // Evict cached information for affected users
         for (JID user : group.getAdmins()) {
-        	groupMetaCache.remove(user.getNode());
+            evictCachedUserForGroup(user.toBareJID());
         }
         for (JID user : group.getMembers()) {
-        	groupMetaCache.remove(user.getNode());
+            evictCachedUserForGroup(user.toBareJID());
         }
 
         final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
@@ -715,5 +703,24 @@ public class GroupManager {
                 groupMetaCache.remove(entry.getKey());
             }
         }
+    }
+    
+    private void evictCachedUserForGroup(String user) {
+        if(user != null) {
+
+            // remove userJID cache
+            synchronized((GROUP_NAMES_KEY + user).intern()) {
+                groupMetaCache.remove(user);
+            }
+
+            // remove userNode cache
+            JID userJid = new JID(user);
+            if (XMPPServer.getInstance().isLocal(userJid)) {
+                String username = userJid.getNode();
+                synchronized ((SHARED_GROUPS_KEY + username).intern()) {
+                    groupMetaCache.remove(username);
+                }
+            }
+            }
     }
 }

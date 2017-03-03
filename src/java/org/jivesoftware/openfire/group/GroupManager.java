@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
@@ -144,6 +145,17 @@ public class GroupManager {
                         {
                             groupMetaCache.remove(GROUP_NAMES_KEY);
                             groupMetaCache.remove(SHARED_GROUPS_KEY);
+
+                            String originalValue = (String) params.get("originalValue");
+                            String newValue = (String) group.getProperties().get("sharedRoster.showInRoster");
+
+                            // 'showInRoster' has changed
+                            if (!StringUtils.equals(originalValue, newValue)) {
+
+                                if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
+                                    evictCachedUserSharedGroups();
+                                }
+                            }
                         }
                     }
                     // clean up cache for old group name
@@ -587,7 +599,11 @@ public class GroupManager {
 
         Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
         if (groupNames == null) {
+<<<<<<< HEAD
             synchronized((key + MUTEX_SUFFIX_USER).intern()) {
+=======
+            synchronized(USER_GROUPS_KEY.intern()) {
+>>>>>>> Clear groupMetaCache when sharing/unsharing a group with all users
                 groupNames = (Collection<String>)groupMetaCache.get(key);
                 if (groupNames == null) {
                     groupNames = provider.getGroupNames(user);
@@ -667,14 +683,14 @@ public class GroupManager {
 
             // remove cache for getGroups
             String groupsKey = USER_GROUPS_KEY + user.toBareJID();
-            synchronized (groupsKey.intern()) {
+            synchronized (USER_GROUPS_KEY.intern()) {
                 groupMetaCache.remove(groupsKey);
             }
 
             // remove cache for getSharedGroups
             if (XMPPServer.getInstance().isLocal(user)) {
                 String sharedGroupsKey = USER_SHARED_GROUPS_KEY + user.getNode();
-                synchronized (sharedGroupsKey.intern()) {
+                synchronized (USER_SHARED_GROUPS_KEY.intern()) {
                     groupMetaCache.remove(sharedGroupsKey);
                 }
             }
@@ -696,7 +712,7 @@ public class GroupManager {
             switch ( showInRoster.toLowerCase() )
             {
                 case "everybody":
-                    groupMetaCache.clear();
+                    evictCachedUserSharedGroups();
                     break;
 
                 case "spefgroups":
@@ -730,6 +746,17 @@ public class GroupManager {
         {
             if (entry.getKey().startsWith(GROUP_NAMES_KEY)) {
                 groupMetaCache.remove(entry.getKey());
+            }
+        }
+    }
+
+    private void evictCachedUserSharedGroups() {
+        synchronized (USER_SHARED_GROUPS_KEY.intern()) {
+            for(Map.Entry<String, Object> entry : groupMetaCache.entrySet())
+            {
+                if (entry.getKey().startsWith(USER_SHARED_GROUPS_KEY)) {
+                    groupMetaCache.remove(entry.getKey());
+                }
             }
         }
     }

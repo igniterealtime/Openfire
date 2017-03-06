@@ -9,7 +9,7 @@
     <description>Prints XML traffic to the stdout (raw and interpreted XML)</description>
     <author>Jive Software</author>
     <version>1.7.0</version>
-    <date>06/03/2017</date>
+    <date>03/06/2017</date>
     <minServerVersion>4.0.0</minServerVersion>
 
    <adminconsole>

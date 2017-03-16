@@ -159,6 +159,11 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-annotations</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.jetty.spdy</groupId>
             <artifactId>spdy-http-server</artifactId>
             <version>${jetty.version}</version>
@@ -300,6 +305,11 @@
             <version>1.9</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.4.2</version>
+        </dependency>
+        <dependency>
             <groupId>com.cenqua.shaj</groupId>
             <artifactId>shaj</artifactId>
             <version>0.5</version>
@@ -313,6 +323,11 @@
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
             <version>1.8.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsmpp</groupId>
+            <artifactId>jsmpp</artifactId>
+            <version>2.2.4</version>
         </dependency>
 
         <!-- Database Drivers -->

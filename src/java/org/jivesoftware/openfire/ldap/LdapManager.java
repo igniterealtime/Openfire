@@ -253,6 +253,7 @@ public class LdapManager {
         JiveGlobals.migrateProperty("ldap.pagedResultsSize");
         JiveGlobals.migrateProperty("ldap.clientSideSorting");
         JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
+        JiveGlobals.migrateProperty("ldap.encodeMultibyteCharacters");
 
         String host = properties.get("ldap.host");
         if (host != null) {
@@ -2268,11 +2269,19 @@ public class LdapManager {
                         // regular 1-byte UTF-8 char
             			result.append(String.valueOf(c));
                     }
-                    else if (c >= 0x080) { 
+                    else if (c >= 0x080) {
                         // higher-order 2, 3 and 4-byte UTF-8 chars
-                        byte[] utf8bytes = String.valueOf(c).getBytes(StandardCharsets.UTF_8);
-                        for (byte b : utf8bytes) {
-                            result.append(String.format("\\%02x", b));
+                        if ( JiveGlobals.getBooleanProperty( "ldap.encodeMultibyteCharacters", false ) )
+                        {
+                            byte[] utf8bytes = String.valueOf( c ).getBytes( StandardCharsets.UTF_8 );
+                            for ( byte b : utf8bytes )
+                            {
+                                result.append( String.format( "\\%02x", b ) );
+                            }
+                        }
+                        else
+                        {
+                            result.append(String.valueOf(c));
                         }
                     }
                 }

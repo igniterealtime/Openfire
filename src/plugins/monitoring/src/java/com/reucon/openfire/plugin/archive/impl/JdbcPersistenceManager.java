@@ -178,7 +178,7 @@ public class JdbcPersistenceManager implements PersistenceManager {
 			+ "ofMessageArchive.sentDate, "
 			+ "ofMessageArchive.stanza, "
 			+ "ofMessageArchive.messageID "
-			+ "FROM ofMessageArchive";
+			+ "FROM ofMessageArchive WHERE 1 = 1";
 	public static final String SELECT_CONVERSATIONS_BY_OWNER = "SELECT DISTINCT ofConParticipant.conversationID FROM ofConParticipant WHERE "
 			+ CONVERSATION_OWNER_JID
 			+ " = ?";

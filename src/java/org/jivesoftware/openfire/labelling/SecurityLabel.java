@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.labelling;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.xmpp.packet.PacketExtension;
 
 /**
@@ -8,7 +9,11 @@ import org.xmpp.packet.PacketExtension;
  * Note that this does not (intentionally) know anything about the label elements
  * themselves.
  */
-public class SecurityLabel extends PacketExtension{
+public class SecurityLabel extends PacketExtension {
+    public SecurityLabel(Element el) {
+        super(el);
+    }
+
     public SecurityLabel(final String displayMarking, final String fgcolour, final String bgcolour, Element label) {
         super("securitylabel", "urn:xmpp:sec-label:0");
         assert label != null : "Security Label element must not be null";
@@ -36,4 +41,9 @@ public class SecurityLabel extends PacketExtension{
     public Element getLabel() {
         return (Element)this.element.element("label").elements().get(0);
     }
+
+    static {
+        registeredExtensions.put(QName.get("securitylabel", "urn:xmpp:sec-label:0"), SecurityLabel.class);
+    }
+
 }

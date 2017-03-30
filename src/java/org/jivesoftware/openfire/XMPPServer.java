@@ -35,8 +35,12 @@ import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
+import org.jivesoftware.openfire.labelling.AccessControlDecisionFunction;
+import org.jivesoftware.openfire.labelling.MessageInterceptor;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
 import org.jivesoftware.openfire.muc.MultiUserChatManager;
@@ -141,6 +145,13 @@ public class XMPPServer {
     private boolean shuttingDown;
     private XMPPServerInfoImpl xmppServerInfo;
 
+    /*
+     * Provider for fine-grained access control, based on:
+     * "clearances" (user authorization data) and
+     * "labels" (per-item, user-supplied, access control data).
+     */
+    private AccessControlDecisionFunction accessControlDecisionFunction;
+
     /**
      * Returns a singleton instance of XMPPServer.
      *
@@ -172,6 +183,35 @@ public class XMPPServer {
             throw new IllegalStateException("Not initialized yet");
         }
         return xmppServerInfo;
+    }
+
+    /**
+     * Returns an ACDF object, which can perform decisions.
+     *
+     * @return AccessControlDecisionFunction implementation
+     */
+    public AccessControlDecisionFunction getAccessControlDecisionFunction() {
+        return accessControlDecisionFunction;
+    }
+
+    /**
+     * Sets the AccessControlDecisionFunction implementation.
+     *
+     * @param acdf AccessControlDecisionFunction object.
+     */
+    public void setAccessControlDecisionFunction(AccessControlDecisionFunction acdf) {
+        this.accessControlDecisionFunction = acdf;
+        if (acdf == null) {
+            getIQDiscoInfoHandler().removeServerFeature("urn:xmpp:sec-label:0");
+            for (PacketInterceptor i : InterceptorManager.getInstance().getInterceptors()) {
+                if (i instanceof MessageInterceptor) {
+                    InterceptorManager.getInstance().removeInterceptor(i);
+                }
+            }
+        } else {
+            InterceptorManager.getInstance().addInterceptor(new MessageInterceptor());
+            getIQDiscoInfoHandler().addServerFeature("urn:xmpp:sec-label:0");
+        }
     }
 
     /**

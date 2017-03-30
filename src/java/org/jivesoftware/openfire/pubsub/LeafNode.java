@@ -25,6 +25,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.labelling.AccessControlDecisionFunction;
+import org.jivesoftware.openfire.labelling.SecurityLabel;
+import org.jivesoftware.openfire.labelling.SecurityLabelException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.forms.DataForm;
@@ -230,6 +234,7 @@ public class LeafNode extends Node {
                 itemID = item.attributeValue("id");
                 List entries = item.elements();
                 payload = entries.isEmpty() ? null : (Element) entries.get(0);
+                SecurityLabel securityLabel = (entries.size() < 2) ? null : new SecurityLabel((Element)entries.get(1));
                 
                 // Make sure that the published item has a unique ID if NOT assigned by publisher
                 if (itemID == null) {
@@ -239,6 +244,7 @@ public class LeafNode extends Node {
                 // Create a new published item
                 newItem = new PublishedItem(this, publisher, itemID, new Date(CacheFactory.getClusterTime()));
                 newItem.setPayload(payload);
+                newItem.setSecurityLabel(securityLabel);
                 // Add the new item to the list of published items
                 newPublishedItems.add(newItem);
                 setLastPublishedItem(newItem);
@@ -323,6 +329,16 @@ public class LeafNode extends Node {
         items.addAttribute("node", getNodeID());
         
         for (PublishedItem publishedItem : publishedItems) {
+            AccessControlDecisionFunction acdf = XMPPServer.getInstance().getAccessControlDecisionFunction();
+            SecurityLabel securityLabel = null;
+            if (acdf != null) {
+                try {
+                    securityLabel = acdf.check(acdf.getClearance(originalRequest.getFrom()), publishedItem.getSecurityLabel(), originalRequest.getFrom());
+                } catch (SecurityLabelException e) {
+                    continue;
+                }
+            }
+
             Element item = items.addElement("item");
             if (isItemRequired()) {
                 item.addAttribute("id", publishedItem.getID());
@@ -330,6 +346,9 @@ public class LeafNode extends Node {
             if ((forceToIncludePayload || isPayloadDelivered()) &&
                     publishedItem.getPayload() != null) {
                 item.add(publishedItem.getPayload().createCopy());
+                if (securityLabel != null) {
+                    item.add(securityLabel.getElement().createCopy());
+                }
             }
         }
         // Send the result

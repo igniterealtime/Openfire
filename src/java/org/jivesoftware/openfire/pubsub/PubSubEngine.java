@@ -401,10 +401,14 @@ public class PubSubEngine {
             }
             // Check that the payload (if any) contains only one child element
             if (entries.size() > 1) {
-                Element pubsubError = DocumentHelper.createElement(QName.get(
-                        "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
+                Element label = (Element)entries.get(1);
+                // It's OK if this is only a security label.
+                if (entries.size() > 2 || !label.getNamespace().getName().equals("urn:xmpp:seclabel:0")) {
+                    Element pubsubError = DocumentHelper.createElement(QName.get(
+                            "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
+                    sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+                    return;
+                }
             }
             items.add(item);
         }

@@ -24,6 +24,10 @@ import java.util.Date;
 import java.util.List;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.labelling.AccessControlDecisionFunction;
+import org.jivesoftware.openfire.labelling.SecurityLabel;
+import org.jivesoftware.openfire.labelling.SecurityLabelException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
@@ -613,6 +617,16 @@ public class NodeSubscription {
         if (!canSendEvents()) {
             return false;
         }
+        AccessControlDecisionFunction acdf = XMPPServer.getInstance().getAccessControlDecisionFunction();
+        if (acdf != null) {
+            try {
+                acdf.check(acdf.getClearance(this.jid), publishedItem.getSecurityLabel(), null);
+            } catch (SecurityLabelException e) {
+                Log.debug("Dropped item publish due to SecurityLabel: ", e);
+                return false;
+            }
+        }
+
         // Check that any defined keyword was matched (applies only if an item was published)
         if (publishedItem != null && !isKeywordMatched(publishedItem)) {
             return false;

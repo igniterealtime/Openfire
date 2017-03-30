@@ -333,6 +333,7 @@ CREATE TABLE ofPubsubItem (
   jid                 VARCHAR(1024) NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
   payload             TEXT          NULL,
+  label               TEXT          NULL,
   CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
 
@@ -384,7 +385,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 25);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 26);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

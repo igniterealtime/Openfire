@@ -57,17 +57,23 @@ public class XMPPServerInfoImpl implements XMPPServerInfo {
 
     @Override
     public String getHostname()
-	{
+    {
+        final String fqdn = JiveGlobals.getProperty( "xmpp.fqdn" );
+        if ( fqdn != null && !fqdn.trim().isEmpty() )
+        {
+            return fqdn.trim().toLowerCase();
+        }
+
         try
         {
-    	    return JiveGlobals.getProperty( "xmpp.fqdn",  InetAddress.getLocalHost().getCanonicalHostName() ).toLowerCase();
+            return InetAddress.getLocalHost().getCanonicalHostName().toLowerCase();
         }
         catch (UnknownHostException ex)
         {
             Log.warn( "Unable to determine local hostname.", ex );
             return "localhost";
         }
-	}
+    }
 
 	@Override
     public void setHostname( String fqdn )

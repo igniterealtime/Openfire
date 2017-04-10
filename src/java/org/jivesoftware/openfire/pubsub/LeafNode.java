@@ -283,6 +283,9 @@ public class LeafNode extends Node {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
             PubSubPersistenceManager.removePublishedItem(item);
+            if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
+                lastPublished = null;
+            }
         }
         if (isNotifiedOfRetract()) {
             // Broadcast notification deletion to subscribers

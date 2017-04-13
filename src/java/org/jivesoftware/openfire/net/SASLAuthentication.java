@@ -608,22 +608,49 @@ public class SASLAuthentication {
         return result;
     }
 
+    /**
+     * Returns a collection of SASL mechanism names that forms the source pool from which the mechanisms that are
+     * eventually being offered to peers are obtained.
+     **
+     * When a mechanism is not returned by this method, it will never be offered, but when a mechanism is returned
+     * by this method, there is no guarantee that it will be offered.
+     *
+     * Apart from being returned in this method, an implementation must be available (see {@link #getImplementedMechanisms()}
+     * and configuration or other characteristics of this server must not prevent a particular mechanism from being
+     * used (see @{link {@link #getSupportedMechanisms()}}.
+     *
+     * @return A collection of mechanisms that are considered for use in this instance of Openfire.
+     */
+    public static List<String> getEnabledMechanisms()
+    {
+        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5","SCRAM-SHA-1","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+    }
+
+    /**
+     * Sets the collection of mechanism names that the system administrator allows to be used.
+     *
+     * @param mechanisms A collection of mechanisms that are considered for use in this instance of Openfire. Null to reset the default setting.
+     * @see #getEnabledMechanisms()
+     */
+    public static void setEnabledMechanisms( List<String> mechanisms )
+    {
+        JiveGlobals.setProperty( "sasl.mechs", mechanisms );
+        initMechanisms();
+    }
+
     private static void initMechanisms()
     {
-
-        final String configuration = JiveGlobals.getProperty("sasl.mechs", "ANONYMOUS,PLAIN,DIGEST-MD5,CRAM-MD5,SCRAM-SHA-1,JIVE-SHAREDSECRET,GSSAPI,EXTERNAL" );
-        final StringTokenizer st = new StringTokenizer(configuration, " ,\t\n\r\f");
+        final List<String> propertyValues = getEnabledMechanisms();
         mechanisms = new HashSet<>();
-        while ( st.hasMoreTokens() )
+        for ( final String propertyValue : propertyValues )
         {
-            final String mechanism = st.nextToken().toUpperCase();
             try
             {
-                addSupportedMechanism( mechanism );
+                addSupportedMechanism( propertyValue );
             }
             catch ( Exception ex )
             {
-                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", mechanism, ex );
+                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", propertyValue, ex );
             }
         }
     }

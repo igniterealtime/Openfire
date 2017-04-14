@@ -62,7 +62,7 @@ public class MotDPlugin implements Plugin {
    }
 
    public void setEnabled(boolean enable) {
-      JiveGlobals.setProperty(ENABLED, enable ? Boolean.toString(true) : Boolean.toString(false));
+      JiveGlobals.setProperty(ENABLED, Boolean.toString(enable));
    }
 
    public boolean isEnabled() {

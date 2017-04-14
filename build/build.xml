@@ -568,6 +568,7 @@
                 windowtitle="Openfire ${version} Javadoc"
                 overview="${src.java.dir}/overview.html"
                 failonerror="yes"
+		Encoding="UTF-8"
 				additionalparam="${javadoc.additionalparams}"
                 >
             <sourcepath>

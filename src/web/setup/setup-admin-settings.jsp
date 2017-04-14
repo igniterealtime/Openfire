@@ -126,8 +126,9 @@
     }
 
     if (addAdmin && !doTest) {
-        final String admin = request.getParameter("administrator");
+        String admin = request.getParameter("administrator");
         if (admin != null) {
+            admin = JID.escapeNode( admin );
             if (ldap) {
                 // Try to verify that the username exists in LDAP
                 Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
@@ -459,7 +460,7 @@ if (errors.size() > 0) { %>
 %>
     <tr valign="top">
         <td>
-            <%= authJID.getNode()%>
+            <%= JID.unescapeNode( authJID.getNode() )%>
         </td>
         <td width="1%" align="center">
             <a href="setup-admin-settings.jsp?ldap=true&test=true&username=<%= URLEncoder.encode(authJID.getNode(), "UTF-8") %>"

@@ -191,13 +191,11 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                 // If the DiscoItemsProvider has no items for the requested name and node 
                 // then answer a not found error
                 reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.item_not_found);
             }
         }
         else {
             // If we didn't find a DiscoItemsProvider then answer a not found error
             reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.item_not_found);
         }
 
         return reply;

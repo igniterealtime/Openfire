@@ -44,6 +44,9 @@ public class HazelcastPlugin extends TimerTask implements Plugin {
     private static final long CLUSTER_STARTUP_DELAY_TIME = 
     		JiveGlobals.getLongProperty("hazelcast.startup.delay.seconds", 5);
     
+    private static final String TRANSFORMERFACTORY = "javax.xml.transform.TransformerFactory";
+    private static String OLDTRANSFORMERFACTORY;
+    
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
     	// start cluster using a separate thread after a short delay
     	// this will allow other plugins to initialize during startup
@@ -66,10 +69,16 @@ public class HazelcastPlugin extends TimerTask implements Plugin {
             logger.warn("Conflicting clustering plugins found; remove Coherence and/or Enterprise jar files");
             throw new IllegalStateException("Clustering plugin configuration conflict (Coherence)");
         }
+        
+        // https://github.com/hazelcast/hazelcast/issues/6614
+        OLDTRANSFORMERFACTORY = System.getProperty(TRANSFORMERFACTORY);
+        System.setProperty(TRANSFORMERFACTORY, "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
+        
         ClusterManager.startup();
 	}
 
     public void destroyPlugin() {
+    	System.setProperty(TRANSFORMERFACTORY, OLDTRANSFORMERFACTORY);
         // Shutdown is initiated by XMPPServer before unloading plugins
     	if (!XMPPServer.getInstance().isShuttingDown()) {
     		ClusterManager.shutdown();
